@@ -1,0 +1,5995 @@
+# Copyright (C) 2024 theAlThemist
+# This file is distributed under the Themeforest Split Licence.
+msgid ""
+msgstr ""
+"Project-Id-Version: Lafka Plugin 7.1.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/lafka-plugin\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2024-12-08T17:15:21+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.9.0\n"
+"X-Domain: lafka-plugin\n"
+
+#. Plugin Name of the plugin
+msgid "Lafka Plugin"
+msgstr ""
+
+#. Plugin URI of the plugin
+#. Author URI of the plugin
+msgid "http://www.althemist.com/"
+msgstr ""
+
+#. Description of the plugin
+msgid "Plugin containing the Lafka theme functionality"
+msgstr ""
+
+#. Author of the plugin
+msgid "theAlThemist"
+msgstr ""
+
+#: importer/lafka-wordpress-importer.php:129
+#: importer/lafka-wordpress-importer.php:138
+#: importer/lafka-wordpress-importer.php:189
+#: importer/lafka-wordpress-importer.php:193
+#: importer/lafka-wordpress-importer.php:202
+msgid "Sorry, there has been an error."
+msgstr ""
+
+#: importer/lafka-wordpress-importer.php:130
+msgid "The file does not exist, please try again."
+msgstr ""
+
+#: importer/lafka-wordpress-importer.php:173
+msgid "All done."
+msgstr ""
+
+#: importer/lafka-wordpress-importer.php:173
+msgid "Have fun!"
+msgstr ""
+
+#: importer/lafka-wordpress-importer.php:174
+msgid "Remember to update the passwords and roles of imported users."
+msgstr ""
+
+#: importer/lafka-wordpress-importer.php:194
+msgid "The export file could not be found at <code>%s</code>. It is likely that this was caused by a permissions problem."
+msgstr ""
+
+#: importer/lafka-wordpress-importer.php:210
+msgid "This WXR file (version %s) may not be supported by this version of the importer. Please consider updating."
+msgstr ""
+
+#: importer/lafka-wordpress-importer.php:235
+msgid "Failed to import author %s. Their posts will be attributed to the current user."
+msgstr ""
+
+#: importer/lafka-wordpress-importer.php:261
+msgid "Assign Authors"
+msgstr ""
+
+#: importer/lafka-wordpress-importer.php:262
+msgid "To make it easier for you to edit and save the imported content, you may want to reassign the author of the imported item to an existing user of this site. For example, you may want to import all the entries as <code>admin</code>s entries."
+msgstr ""
+
+#: importer/lafka-wordpress-importer.php:264
+msgid "If a new user is created by WordPress, a new password will be randomly generated and the new user&#8217;s role will be set as %s. Manually changing the new user&#8217;s details will be necessary."
+msgstr ""
+
+#: importer/lafka-wordpress-importer.php:274
+msgid "Import Attachments"
+msgstr ""
+
+#: importer/lafka-wordpress-importer.php:277
+msgid "Download and import file attachments"
+msgstr ""
+
+#: importer/lafka-wordpress-importer.php:281
+msgid "Submit"
+msgstr ""
+
+#: importer/lafka-wordpress-importer.php:294
+msgid "Import author:"
+msgstr ""
+
+#: importer/lafka-wordpress-importer.php:306
+msgid "or create new user with login name:"
+msgstr ""
+
+#: importer/lafka-wordpress-importer.php:309
+msgid "as a new user:"
+msgstr ""
+
+#: importer/lafka-wordpress-importer.php:317
+msgid "assign posts to an existing user:"
+msgstr ""
+
+#: importer/lafka-wordpress-importer.php:319
+msgid "or assign posts to an existing user:"
+msgstr ""
+
+#: importer/lafka-wordpress-importer.php:320
+msgid "- Select -"
+msgstr ""
+
+#: importer/lafka-wordpress-importer.php:370
+msgid "Failed to create new user for %s. Their posts will be attributed to the current user."
+msgstr ""
+
+#: importer/lafka-wordpress-importer.php:423
+msgid "Failed to import category %s"
+msgstr ""
+
+#: importer/lafka-wordpress-importer.php:469
+msgid "Failed to import post tag %s"
+msgstr ""
+
+#: importer/lafka-wordpress-importer.php:524
+#: importer/lafka-wordpress-importer.php:748
+msgid "Failed to import %s %s"
+msgstr ""
+
+#: importer/lafka-wordpress-importer.php:617
+msgid "Failed to import &#8220;%s&#8221;: Invalid post type %s"
+msgstr ""
+
+#: importer/lafka-wordpress-importer.php:653
+msgid "%s &#8220;%s&#8221; already exists."
+msgstr ""
+
+#: importer/lafka-wordpress-importer.php:715
+msgid "Failed to import %s &#8220;%s&#8221;"
+msgstr ""
+
+#: importer/lafka-wordpress-importer.php:884
+msgid "Menu item skipped due to missing menu slug"
+msgstr ""
+
+#: importer/lafka-wordpress-importer.php:891
+msgid "Menu item skipped due to invalid menu slug: %s"
+msgstr ""
+
+#: importer/lafka-wordpress-importer.php:954
+msgid "Fetching attachments is not enabled"
+msgstr ""
+
+#: importer/lafka-wordpress-importer.php:967
+msgid "Invalid file type"
+msgstr ""
+
+#: importer/lafka-wordpress-importer.php:1006
+msgid "Could not create temporary file."
+msgstr ""
+
+#. translators: 1: The WordPress error message. 2: The WordPress error code.
+#: importer/lafka-wordpress-importer.php:1025
+msgid "Request failed due to an error: %1$s (%2$s)"
+msgstr ""
+
+#. translators: 1: The HTTP error message. 2: The HTTP error code.
+#: importer/lafka-wordpress-importer.php:1041
+msgid "Remote server returned the following unexpected result: %1$s (%2$s)"
+msgstr ""
+
+#: importer/lafka-wordpress-importer.php:1053
+msgid "Remote server did not respond"
+msgstr ""
+
+#: importer/lafka-wordpress-importer.php:1060
+msgid "Zero size file downloaded"
+msgstr ""
+
+#: importer/lafka-wordpress-importer.php:1065
+msgid "Downloaded file has incorrect size"
+msgstr ""
+
+#: importer/lafka-wordpress-importer.php:1071
+msgid "Remote file is too large, limit is %s"
+msgstr ""
+
+#: importer/lafka-wordpress-importer.php:1103
+msgid "Sorry, this file type is not permitted for security reasons."
+msgstr ""
+
+#: importer/lafka-wordpress-importer.php:1118
+msgid "The uploaded file could not be moved"
+msgstr ""
+
+#: importer/lafka-wordpress-importer.php:1230
+msgid "Import WordPress"
+msgstr ""
+
+#: importer/lafka-wordpress-importer.php:1237
+msgid "A new version of this importer is available. Please update to version %s to ensure compatibility with newer export files."
+msgstr ""
+
+#: importer/lafka-wordpress-importer.php:1252
+msgid "Howdy! Upload your WordPress eXtended RSS (WXR) file and we&#8217;ll import the posts, pages, comments, custom fields, categories, and tags into this site."
+msgstr ""
+
+#: importer/lafka-wordpress-importer.php:1253
+msgid "Choose a WXR (.xml) file to upload, then click Upload file and import."
+msgstr ""
+
+#: importer/parsers.php:45
+#: importer/parsers.php:86
+#: importer/parsers.php:94
+msgid "There was an error when reading this WXR file"
+msgstr ""
+
+#: importer/parsers.php:46
+msgid "Details are shown above. The importer will now try again with a different parser..."
+msgstr ""
+
+#: importer/parsers.php:98
+#: importer/parsers.php:103
+#: importer/parsers.php:340
+#: importer/parsers.php:575
+msgid "This does not appear to be a WXR file, missing/invalid WXR version number"
+msgstr ""
+
+#: incl/addons/admin/class-lafka-product-addon-admin.php:27
+#: incl/addons/admin/views/html-global-admin.php:9
+msgid "Lafka Global Add-ons"
+msgstr ""
+
+#: incl/addons/admin/class-lafka-product-addon-admin.php:59
+msgid "Add-on saved successfully"
+msgstr ""
+
+#: incl/addons/admin/class-lafka-product-addon-admin.php:74
+msgid "Error: Global Add-on not found"
+msgstr ""
+
+#: incl/addons/admin/class-lafka-product-addon-admin.php:102
+#: incl/addons/admin/class-lafka-product-addon-admin.php:135
+msgid "Global Add-on Group"
+msgstr ""
+
+#: incl/addons/admin/class-lafka-product-addon-admin.php:114
+msgid "Add-on deleted successfully"
+msgstr ""
+
+#: incl/addons/admin/class-lafka-product-addon-admin.php:181
+msgid "Lafka Add-ons"
+msgstr ""
+
+#: incl/addons/admin/views/html-addon-option.php:8
+msgid "Default Label"
+msgstr ""
+
+#: incl/addons/admin/views/html-addon-panel.php:10
+msgid "Close all"
+msgstr ""
+
+#: incl/addons/admin/views/html-addon-panel.php:10
+msgid "Expand all"
+msgstr ""
+
+#: incl/addons/admin/views/html-addon-panel.php:28
+msgid "New add-on"
+msgstr ""
+
+#: incl/addons/admin/views/html-addon-panel.php:33
+msgid "Global Addon Exclusion"
+msgstr ""
+
+#: incl/addons/admin/views/html-addon-panel.php:34
+msgid "Check this to exclude this product from all Global Addons"
+msgstr ""
+
+#: incl/addons/admin/views/html-addon-panel.php:40
+msgid "All addon fields require a name."
+msgstr ""
+
+#: incl/addons/admin/views/html-addon-panel.php:83
+msgid "Min / max characters"
+msgstr ""
+
+#: incl/addons/admin/views/html-addon-panel.php:87
+msgid "Min / max"
+msgstr ""
+
+#: incl/addons/admin/views/html-addon-panel.php:172
+msgid "Are you sure you want то remove this add-on?"
+msgstr ""
+
+#: incl/addons/admin/views/html-addon-panel.php:259
+msgid "Are you sure you want delete this option?"
+msgstr ""
+
+#: incl/addons/admin/views/html-addon-panel.php:351
+#: incl/addons/admin/views/html-addon-panel.php:355
+#: incl/addons/admin/views/html-addon.php:113
+#: incl/addons/admin/views/html-addon.php:117
+#: incl/metaboxes.php:943
+msgid "Price"
+msgstr ""
+
+#: incl/addons/admin/views/html-addon.php:10
+msgid "Remove"
+msgstr ""
+
+#: incl/addons/admin/views/html-addon.php:11
+msgid "Click to toggle"
+msgstr ""
+
+#: incl/addons/admin/views/html-addon.php:12
+msgid "Group"
+msgstr ""
+
+#: incl/addons/admin/views/html-addon.php:14
+msgid "Checkboxes"
+msgstr ""
+
+#: incl/addons/admin/views/html-addon.php:15
+msgid "Radio buttons"
+msgstr ""
+
+#: incl/addons/admin/views/html-addon.php:16
+msgid "Textarea"
+msgstr ""
+
+#: incl/addons/admin/views/html-addon.php:25
+#: incl/swatches/classes/class-admin.php:284
+#: incl/wpml/addons/class-wcml-lafka-product-addons.php:249
+#: shortcodes/partials/contact-form.php:6
+#: shortcodes/shortcodes_to_vc_mapping.php:1364
+#: shortcodes/shortcodes_to_vc_mapping.php:2248
+msgid "Name"
+msgstr ""
+
+#: incl/addons/admin/views/html-addon.php:34
+msgid "Maximum Number of Selectable Options"
+msgstr ""
+
+#: incl/addons/admin/views/html-addon.php:44
+msgid "Required Fields"
+msgstr ""
+
+#: incl/addons/admin/views/html-addon.php:49
+msgid "Mark fields group as required"
+msgstr ""
+
+#: incl/addons/admin/views/html-addon.php:55
+msgid "Use in Variations "
+msgstr ""
+
+#: incl/addons/admin/views/html-addon.php:61
+msgid "Mark fields group to be used in variations"
+msgstr ""
+
+#: incl/addons/admin/views/html-addon.php:68
+msgid "Choose attribute on which the variation is based."
+msgstr ""
+
+#: incl/addons/admin/views/html-addon.php:70
+msgid "Then you will be able to set different addon prices for each attribute value."
+msgstr ""
+
+#: incl/addons/admin/views/html-addon.php:72
+msgid "NOTE: Products which have addons with variable prices must have default variation."
+msgstr ""
+
+#: incl/addons/admin/views/html-addon.php:91
+#: incl/wpml/addons/class-wcml-lafka-product-addons.php:251
+msgid "Description"
+msgstr ""
+
+#: incl/addons/admin/views/html-addon.php:103
+#: incl/swatches/classes/class-admin.php:335
+#: incl/swatches/variation-swatches.php:42
+#: incl/wpml/addons/class-wcml-lafka-product-addons.php:261
+msgid "Label"
+msgstr ""
+
+#: incl/addons/admin/views/html-addon.php:104
+#: incl/swatches/classes/class-admin.php:320
+#: incl/swatches/variation-swatches.php:41
+#: shortcodes/shortcodes_to_vc_mapping.php:690
+#: shortcodes/shortcodes_to_vc_mapping.php:995
+#: shortcodes/shortcodes_to_vc_mapping.php:1118
+msgid "Image"
+msgstr ""
+
+#: incl/addons/admin/views/html-addon.php:119
+msgid "Min / Max"
+msgstr ""
+
+#: incl/addons/admin/views/html-addon.php:120
+msgid "Default Value"
+msgstr ""
+
+#: incl/addons/admin/views/html-addon.php:127
+msgid "New&nbsp;Option"
+msgstr ""
+
+#: incl/addons/admin/views/html-global-admin-add.php:9
+msgid "Add/Edit Lafka Global Add-on"
+msgstr ""
+
+#: incl/addons/admin/views/html-global-admin-add.php:15
+msgid "Global Add-on Reference"
+msgstr ""
+
+#: incl/addons/admin/views/html-global-admin-add.php:19
+msgid "Give this global add-on a reference/name to make it recognisable."
+msgstr ""
+
+#: incl/addons/admin/views/html-global-admin-add.php:24
+#: incl/addons/admin/views/html-global-admin.php:16
+msgid "Priority"
+msgstr ""
+
+#: incl/addons/admin/views/html-global-admin-add.php:28
+msgid "Give this global addon a priority - this will determine the order in which multiple groups of addons get displayed on the frontend. Per-product add-ons will always have priority 10."
+msgstr ""
+
+#: incl/addons/admin/views/html-global-admin-add.php:33
+msgid "Applied to..."
+msgstr ""
+
+#: incl/addons/admin/views/html-global-admin-add.php:36
+msgid "Choose some options&hellip;"
+msgstr ""
+
+#: incl/addons/admin/views/html-global-admin-add.php:37
+#: incl/addons/admin/views/html-global-admin.php:36
+msgid "All Products"
+msgstr ""
+
+#: incl/addons/admin/views/html-global-admin-add.php:38
+msgid "Product category notifications"
+msgstr ""
+
+#: incl/addons/admin/views/html-global-admin-add.php:43
+msgid "Category:"
+msgstr ""
+
+#: incl/addons/admin/views/html-global-admin-add.php:49
+msgid "Choose categories which should show these addons (or apply to all products)."
+msgstr ""
+
+#: incl/addons/admin/views/html-global-admin-add.php:54
+msgid "Add-ons"
+msgstr ""
+
+#: incl/addons/admin/views/html-global-admin-add.php:67
+msgid "Save Global Add-on"
+msgstr ""
+
+#: incl/addons/admin/views/html-global-admin.php:9
+msgid "Add Global Add-on"
+msgstr ""
+
+#: incl/addons/admin/views/html-global-admin.php:14
+msgid "Reference"
+msgstr ""
+
+#: incl/addons/admin/views/html-global-admin.php:15
+msgid "Number of Fields"
+msgstr ""
+
+#: incl/addons/admin/views/html-global-admin.php:17
+msgid "Applies to..."
+msgstr ""
+
+#: incl/addons/admin/views/html-global-admin.php:18
+msgid "Actions"
+msgstr ""
+
+#: incl/addons/admin/views/html-global-admin.php:46
+#: incl/combos/includes/admin/class-lafka-combos-admin-order.php:249
+#: incl/combos/includes/admin/class-lafka-combos-admin.php:307
+msgid "Edit"
+msgstr ""
+
+#: incl/addons/admin/views/html-global-admin.php:46
+msgid "Delete"
+msgstr ""
+
+#: incl/addons/admin/views/html-global-admin.php:54
+msgid "No global add-ons exists yet."
+msgstr ""
+
+#: incl/addons/admin/views/html-global-admin.php:54
+msgid "Add one?"
+msgstr ""
+
+#: incl/addons/includes/class-lafka-product-addon-display.php:47
+msgid "Options total:"
+msgstr ""
+
+#: incl/addons/includes/class-lafka-product-addon-display.php:48
+msgid "Sub total:"
+msgstr ""
+
+#: incl/addons/includes/class-lafka-product-addon-display.php:49
+msgid "characters remaining"
+msgstr ""
+
+#: incl/addons/includes/class-lafka-product-addon-display.php:271
+msgid "Select options"
+msgstr ""
+
+#: incl/addons/includes/fields/class-lafka-addon-field-textarea.php:19
+#: incl/addons/includes/fields/class-product-addon-field-list.php:15
+msgid "\"%s\" is a required field."
+msgstr ""
+
+#: incl/addons/includes/fields/class-lafka-addon-field-textarea.php:32
+msgid "The minimum allowed length for \"%s - %s\" is %s."
+msgstr ""
+
+#: incl/addons/includes/fields/class-lafka-addon-field-textarea.php:36
+msgid "The maximum allowed length for \"%s - %s\" is %s."
+msgstr ""
+
+#: incl/addons/includes/fields/class-lafka-addon-field-textarea.php:43
+msgid "The minimum allowed amount for \"%s - %s\" is %s."
+msgstr ""
+
+#: incl/addons/includes/fields/class-lafka-addon-field-textarea.php:49
+msgid "The maximum allowed amount for \"%s - %s\" is %s."
+msgstr ""
+
+#: incl/addons/includes/fields/class-lafka-addon-field-textarea.php:61
+msgid "Please enter a value greater than 0 for \"%s - %s\"."
+msgstr ""
+
+#: incl/addons/includes/fields/class-lafka-addon-field-textarea.php:66
+msgid "Only letters are allowed for \"%s - %s\"."
+msgstr ""
+
+#: incl/addons/includes/fields/class-lafka-addon-field-textarea.php:71
+msgid "Only digits are allowed for \"%s - %s\"."
+msgstr ""
+
+#: incl/addons/includes/fields/class-lafka-addon-field-textarea.php:76
+msgid "Only letters and digits are allowed for \"%s - %s\"."
+msgstr ""
+
+#: incl/addons/includes/fields/class-lafka-addon-field-textarea.php:81
+msgid "A valid email address is required for \"%s - %s\"."
+msgstr ""
+
+#: incl/addons/includes/fields/class-product-addon-field-list.php:21
+msgid "Select up to %d \"%s\"."
+msgstr ""
+
+#: incl/addons/includes/groups/class-lafka-product-addon-groups.php:51
+msgid "Unable to retrieve data. Invalid global add ons group or product ID."
+msgstr ""
+
+#: incl/addons/includes/groups/class-lafka-product-addon-groups.php:83
+msgid "Unable to delete group. Invalid global add ons group ID."
+msgstr ""
+
+#: incl/addons/templates/addon-end.php:4
+msgid "Select up to"
+msgstr ""
+
+#: incl/addons/templates/addon-end.php:4
+msgid "items"
+msgstr ""
+
+#: incl/addons/templates/addon-start.php:30
+msgid "Required field"
+msgstr ""
+
+#: incl/combos/includes/admin/class-lafka-combos-admin-ajax.php:190
+msgid "The selected product cannot be combined. Please select a simple product, a variable product, or a simple/variable subscription."
+msgstr ""
+
+#: incl/combos/includes/admin/class-lafka-combos-admin-ajax.php:194
+msgid "The selected product is invalid."
+msgstr ""
+
+#: incl/combos/includes/admin/class-lafka-combos-admin-ajax.php:360
+msgid "The submitted configuration is invalid."
+msgstr ""
+
+#: incl/combos/includes/admin/class-lafka-combos-admin-ajax.php:366
+msgctxt "edit combo in order: formatted validation message"
+msgid "%1$s %2$s"
+msgstr ""
+
+#: incl/combos/includes/admin/class-lafka-combos-admin-ajax.php:558
+#: incl/combos/includes/admin/class-lafka-combos-admin-order.php:166
+msgctxt "combined items stock change note sku with id format"
+msgid "%1$s:%2$s"
+msgstr ""
+
+#: incl/combos/includes/admin/class-lafka-combos-admin-ajax.php:564
+#: incl/combos/includes/admin/class-lafka-combos-admin-order.php:179
+msgctxt "combined items stock change note format"
+msgid "%1$s (%2$s) &ndash; %3$s"
+msgstr ""
+
+#: incl/combos/includes/admin/class-lafka-combos-admin-ajax.php:566
+msgctxt "combined items change note format"
+msgid "%1$s (%2$s)"
+msgstr ""
+
+#: incl/combos/includes/admin/class-lafka-combos-admin-ajax.php:573
+msgid "Deleted combined line items: %s"
+msgstr ""
+
+#: incl/combos/includes/admin/class-lafka-combos-admin-ajax.php:577
+#: incl/combos/includes/admin/class-lafka-combos-admin-order.php:189
+msgid "Added combined line items: %s"
+msgstr ""
+
+#: incl/combos/includes/admin/class-lafka-combos-admin-ajax.php:581
+msgid "Adjusted combined line items: %s"
+msgstr ""
+
+#: incl/combos/includes/admin/class-lafka-combos-admin-notices.php:297
+msgid "Update database"
+msgstr ""
+
+#: incl/combos/includes/admin/class-lafka-combos-admin-notices.php:317
+msgid "run it manually"
+msgstr ""
+
+#: incl/combos/includes/admin/class-lafka-combos-admin-notices.php:318
+msgid " The process seems to be taking a little longer than usual, so let's try to %s."
+msgstr ""
+
+#: incl/combos/includes/admin/class-lafka-combos-admin-notices.php:333
+msgid " If this message persists, please restore your database from a backup."
+msgstr ""
+
+#: incl/combos/includes/admin/class-lafka-combos-admin-order.php:171
+msgctxt "combined items stock change note format"
+msgid "%1$s (%2$s)"
+msgstr ""
+
+#: incl/combos/includes/admin/class-lafka-combos-admin-order.php:251
+#: incl/combos/includes/admin/class-lafka-combos-admin.php:306
+msgid "Configure"
+msgstr ""
+
+#: incl/combos/includes/admin/class-lafka-combos-admin-order.php:285
+msgid "Done"
+msgstr ""
+
+#: incl/combos/includes/admin/class-lafka-combos-admin-post-types.php:41
+#: incl/combos/includes/admin/class-lafka-combos-admin.php:338
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:1382
+#: incl/combos/includes/class-lafka-combos-display.php:203
+#: incl/combos/includes/class-lafka-combos-display.php:205
+#: incl/combos/includes/class-wc-combined-item.php:2175
+#: incl/combos/includes/class-wc-product-combo.php:1316
+msgid "Insufficient stock"
+msgstr ""
+
+#: incl/combos/includes/admin/class-lafka-combos-admin-post-types.php:46
+msgid "View Report"
+msgstr ""
+
+#: incl/combos/includes/admin/class-lafka-combos-admin.php:148
+msgid "The installed version of <strong>Product Combos</strong> is not compatible with the <code>selectSW</code> library found on your system. Please update Product Combos to the latest version."
+msgstr ""
+
+#: incl/combos/includes/admin/class-lafka-combos-admin.php:179
+msgid "Product Combos does not collect, store or share any personal data."
+msgstr ""
+
+#: incl/combos/includes/admin/class-lafka-combos-admin.php:308
+msgid "Failed to initialize form. If this issue persists, please reload the page and try again."
+msgstr ""
+
+#: incl/combos/includes/admin/class-lafka-combos-admin.php:309
+msgid "Failed to validate configuration. If this issue persists, please reload the page and try again."
+msgstr ""
+
+#: incl/combos/includes/admin/class-lafka-combos-admin.php:382
+msgid "You are currently viewing a filtered version of this report for <strong>%1$s</strong>. <a href=\"%2$s\" class=\"wc_pb_forward\">Clear Filter</a>"
+msgstr ""
+
+#: incl/combos/includes/admin/export/class-lafka-combos-product-export.php:46
+#: incl/combos/includes/admin/import/class-lafka-combos-product-import.php:42
+#: incl/combos/includes/admin/import/class-lafka-combos-product-import.php:65
+msgid "Combined Items (JSON-encoded)"
+msgstr ""
+
+#: incl/combos/includes/admin/export/class-lafka-combos-product-export.php:47
+#: incl/combos/includes/admin/import/class-lafka-combos-product-import.php:43
+#: incl/combos/includes/admin/import/class-lafka-combos-product-import.php:66
+msgid "Min Combo Size"
+msgstr ""
+
+#: incl/combos/includes/admin/export/class-lafka-combos-product-export.php:48
+#: incl/combos/includes/admin/import/class-lafka-combos-product-import.php:44
+#: incl/combos/includes/admin/import/class-lafka-combos-product-import.php:67
+msgid "Max Combo Size"
+msgstr ""
+
+#: incl/combos/includes/admin/export/class-lafka-combos-product-export.php:49
+#: incl/combos/includes/admin/import/class-lafka-combos-product-import.php:45
+#: incl/combos/includes/admin/import/class-lafka-combos-product-import.php:68
+msgid "Combo Layout"
+msgstr ""
+
+#: incl/combos/includes/admin/export/class-lafka-combos-product-export.php:50
+#: incl/combos/includes/admin/import/class-lafka-combos-product-import.php:46
+#: incl/combos/includes/admin/import/class-lafka-combos-product-import.php:69
+msgid "Combo Group Mode"
+msgstr ""
+
+#: incl/combos/includes/admin/export/class-lafka-combos-product-export.php:51
+#: incl/combos/includes/admin/import/class-lafka-combos-product-import.php:47
+#: incl/combos/includes/admin/import/class-lafka-combos-product-import.php:70
+msgid "Combo Cart Editing"
+msgstr ""
+
+#: incl/combos/includes/admin/export/class-lafka-combos-product-export.php:52
+#: incl/combos/includes/admin/import/class-lafka-combos-product-import.php:48
+#: incl/combos/includes/admin/import/class-lafka-combos-product-import.php:71
+msgid "Combo Sold Individually"
+msgstr ""
+
+#: incl/combos/includes/admin/export/class-lafka-combos-product-export.php:53
+#: incl/combos/includes/admin/import/class-lafka-combos-product-import.php:49
+#: incl/combos/includes/admin/import/class-lafka-combos-product-import.php:72
+msgid "Combo Form Location"
+msgstr ""
+
+#: incl/combos/includes/admin/export/class-lafka-combos-product-export.php:54
+#: incl/combos/includes/admin/import/class-lafka-combos-product-import.php:50
+#: incl/combos/includes/admin/import/class-lafka-combos-product-import.php:73
+msgid "Combo Sells"
+msgstr ""
+
+#: incl/combos/includes/admin/export/class-lafka-combos-product-export.php:55
+#: incl/combos/includes/admin/import/class-lafka-combos-product-import.php:51
+#: incl/combos/includes/admin/import/class-lafka-combos-product-import.php:74
+msgid "Combo Sells Title"
+msgstr ""
+
+#: incl/combos/includes/admin/export/class-lafka-combos-product-export.php:56
+#: incl/combos/includes/admin/import/class-lafka-combos-product-import.php:52
+#: incl/combos/includes/admin/import/class-lafka-combos-product-import.php:75
+msgid "Combo Sells Discount"
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:91
+msgid "&quot;%1$s&quot; is not purchasable just yet. But, fear not &ndash; setting up pricing options only takes a minute! <ul class=\"pb_notice_list\"><li>To give &quot;%1$s&quot; a static base price, navigate to <strong>Product Data > General</strong> and fill in the <strong>Regular Price</strong> field.</li><li>To preserve the prices and taxes of individual combined products, go to <strong>Product Data > Combined Products</strong> and enable <strong>Priced Individually</strong> for each combined product whose price must be preserved.</li></ul> Then, save your changes."
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:124
+msgid "No"
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:125
+#: shortcodes/shortcodes_to_vc_mapping.php:1247
+#: shortcodes/shortcodes_to_vc_mapping.php:2152
+#: shortcodes/shortcodes_to_vc_mapping.php:2159
+msgid "Yes"
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:126
+msgid "Matching configurations only"
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:130
+msgid "Allow only one of this combo to be bought in a single order. Choose the <strong>Matching configurations only</strong> option to only prevent <strong>identically configured</strong> combos from being purchased together."
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:154
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:1348
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:1405
+msgid "Combined Products"
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:173
+msgid "Main Combo Settings"
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:206
+msgid "By default, the sale of a product within a combo has the same effect on its stock as an individual sale. There are no separate inventory settings for combined items. However, managing stock at combo level can be very useful for allocating combo stock quota, or for keeping track of combined item sales."
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:238
+msgid "Unassembled"
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:239
+msgid "Combined products preserve their individual dimensions, weight and shipping classes. A virtual container item keeps them grouped together in the cart."
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:244
+msgid "Assembled"
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:245
+msgid "Combined products are assembled and shipped in a new physical container with the specified dimensions, weight and shipping class. The entire combo appears as a single physical item.</br></br>To ship a combined product outside this container, navigate to the <strong>Combined Products</strong> tab, expand its settings and enable <strong>Shipped Individually</strong>. Combined products that are <strong>Shipped Individually</strong> preserve their own dimensions, weight and shipping classes."
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:255
+msgid "Combo type"
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:276
+msgid "What happened to the shipping options?"
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:277
+msgid "The contents of this combo preserve their dimensions, weight and shipping classes. Unassembled combos do not have a physical container &ndash; or any shipping options to configure."
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:288
+msgid "Assembled weight"
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:289
+msgid "Controls whether to ignore or preserve the weight of assembled combined items.</br></br> <strong>Ignore</strong> &ndash; The specified Weight is the total weight of the entire combo.</br></br> <strong>Preserve</strong> &ndash; The specified Weight is treated as a container weight. The total weight of the combo is the sum of: i) the container weight, and ii) the weight of all assembled combined items."
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:292
+msgid "Ignore"
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:293
+msgid "Preserve"
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:358
+msgid "Product Combos has detected that your server may have failed to process and save some of the data on this page. Please get in touch with your server's host or administrator and (kindly) ask them to increase the number of variables that PHP scripts can post and process%1$s."
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:358
+msgid " (currently %s)"
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:446
+msgid "Please add at least one product to the combo before publishing. To add products, click on the <strong>Combined Products</strong> tab."
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:467
+msgid "Your changes have not been saved &ndash; please wait for the <strong>WooCommerce Product Combos Data Update</strong> routine to complete before creating new combos or making changes to existing ones."
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:487
+msgid "%1$s is only supported by unassembled combos with an empty base price."
+msgid_plural "%1$s are only supported by unassembled combos with an emptybase price."
+msgstr[0] ""
+msgstr[1] ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:489
+msgid "The chosen <strong>Item Grouping</strong> option is invalid. %s"
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:498
+msgid "This combo does not contain any mandatory items. To control the minimum and/or maximum number of items that customers must choose in this combo, use the <strong>Min Combo Items</strong> and <strong>Max Combo Size</strong> fields under <strong>Product Data > Combined Products</strong>."
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:560
+msgid "<strong>%s</strong> was not saved. WooCommerce Subscriptions version 2.0 or higher is required in order to combo Subscription products."
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:570
+msgid "<strong>%s</strong> is sold individually and cannot be combined more than once."
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:641
+msgid "<strong>%s</strong> is sold individually &ndash; its <strong>Min Quantity</strong> cannot be higher than 1."
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:648
+msgid "The minimum quantity of <strong>%s</strong> was not valid and has been reset. Please enter a non-negative integer <strong>Min Quantity</strong> value."
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:667
+msgid "<strong>%s</strong> is sold individually &ndash; <strong>Max Quantity</strong> cannot be higher than 1."
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:675
+msgid "The maximum quantity of <strong>%s</strong> was not valid and has been reset. Please enter a positive integer equal to or higher than <strong>Min Quantity</strong>, or leave the <strong>Max Quantity</strong> field empty for an unlimited maximum quantity."
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:698
+msgid "The default quantity of <strong>%s</strong> was not valid and has been reset. Please enter an integer between the <strong>Min Quantity</strong> and <strong>Max Quantity</strong>."
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:714
+msgid "The <strong>Discount</strong> of <strong>%s</strong> was not valid and has been reset. Please enter a positive number between 0-100."
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:756
+msgid "Failed to save <strong>Filter Variations</strong> for <strong>%s</strong>. Please choose at least one variation."
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:806
+msgid "The default variation attribute values of <strong>%s</strong> are inconsistent with the set of active variations and have been reset."
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:843
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:853
+msgid "To hide <strong>%s</strong> from the single-product template, please enable the <strong>Override Default Selections</strong> option and choose default variation attribute values."
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:913
+msgid "Filter Variations"
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:916
+msgid "Check to enable only a subset of the available variations."
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:929
+msgid "Choose variations&hellip;"
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:968
+msgid "Search for variations&hellip;"
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:980
+msgid "Override Default Selections"
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:982
+msgid "In effect for this combo only. When <strong>Filter Variations</strong> is enabled, double-check your selections to make sure they correspond to an active variation."
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:1046
+msgid "Optional"
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:1048
+msgid "Check this option to mark the combined product as optional."
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:1054
+msgid "Min Quantity"
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:1056
+msgid "The minimum quantity of this combined product."
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:1062
+msgid "Max Quantity"
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:1064
+msgid "The maximum quantity of this combined product. Leave the field empty for an unlimited maximum quantity."
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:1070
+msgid "Default Quantity"
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:1072
+msgid "The default quantity of this combined product."
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:1080
+msgid "Shipped Individually"
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:1082
+msgid "Check this option if this combined item is shipped separately from the combo."
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:1090
+msgid "Priced Individually"
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:1092
+msgid "Check this option to have the price of this combined item added to the base price of the combo."
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:1098
+msgid "Discount %"
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:1100
+msgid "Discount applied to the price of this combined product when Priced Individually is checked. If a Discount is applied to a combined product which has a sale price defined, the sale price will be overridden."
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:1133
+msgid "Visibility"
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:1136
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:1156
+msgid "Product details"
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:1137
+msgid "Controls the visibility of the combined item in the single-product template of this combo."
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:1141
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:1161
+msgid "Cart/checkout"
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:1142
+msgid "Controls the visibility of the combined item in cart/checkout templates."
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:1146
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:1166
+msgid "Order details"
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:1147
+msgid "Controls the visibility of the combined item in order-details and e-mail templates."
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:1153
+msgid "Price Visibility"
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:1157
+msgid "Controls the visibility of the combined-item price in the single-product template of this combo."
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:1162
+msgid "Controls the visibility of the combined-item price in cart/checkout templates."
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:1167
+msgid "Controls the visibility of the combined-item price in order-details and e-mail templates."
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:1173
+msgid "Override Title"
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:1175
+msgid "Check this option to override the default product title."
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:1188
+msgid "Override Short Description"
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:1190
+msgid "Check this option to override the default short product description."
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:1203
+msgid "Hide Thumbnail"
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:1205
+msgid "Check this option to hide the thumbnail image of this combined product."
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:1226
+msgctxt "combined product id"
+msgid "Item ID: %s"
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:1242
+#: shortcodes/shortcodes_to_vc_mapping.php:427
+#: shortcodes/shortcodes_to_vc_mapping.php:1691
+msgid "Layout"
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:1243
+msgid "Select the <strong>Tabular</strong> option to have the thumbnails, descriptions and quantities of combined products arranged in a table. Recommended for displaying multiple combined products with configurable quantities."
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:1276
+msgid "Form Location"
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:1305
+msgid "Item Grouping"
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:1306
+msgid "Controls the grouping of parent/child line items in cart/order templates."
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:1322
+msgid "Edit in Cart"
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:1324
+msgid "Whether the combo can be edited in the cart or not."
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:1389
+msgid "Low stock"
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:1406
+msgid "You have not added any products to this combo."
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:1407
+msgid "Add some now?"
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:1425
+msgid "Add a combined product&hellip;"
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:1432
+msgctxt "new combined product button"
+msgid "Add Product"
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:1433
+msgid "Search for a product&hellip;"
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:1460
+msgid "Basic Settings"
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php:1464
+msgid "Advanced Settings"
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/views/html-combined-product.php:19
+msgctxt "combined product sku"
+msgid "SKU: %s"
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/views/html-combined-product.php:22
+msgid "Drag and drop to set order"
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/views/html-combo-edit-form.php:15
+#: incl/combos/includes/wc-pc-template-functions.php:588
+msgid "Product"
+msgstr ""
+
+#: incl/combos/includes/admin/meta-boxes/views/html-combo-edit-form.php:16
+#: incl/combos/includes/wc-pc-template-functions.php:589
+msgid "Quantity"
+msgstr ""
+
+#: incl/combos/includes/admin/reports/class-lafka-combos-report-insufficient-stock.php:30
+msgid "No products found with insufficient stock."
+msgstr ""
+
+#: incl/combos/includes/admin/reports/class-lafka-combos-report-insufficient-stock.php:183
+msgid "Combined product"
+msgstr ""
+
+#: incl/combos/includes/admin/reports/class-lafka-combos-report-insufficient-stock.php:184
+msgid "Combo"
+msgstr ""
+
+#: incl/combos/includes/admin/reports/class-lafka-combos-report-insufficient-stock.php:185
+msgid "Units required"
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-cart.php:51
+#: incl/combos/includes/class-lafka-combos-cart.php:60
+#: incl/combos/includes/class-lafka-combos-display.php:67
+#: incl/combos/includes/class-lafka-combos-display.php:76
+#: incl/combos/includes/class-lafka-combos-order.php:58
+#: incl/combos/includes/class-lafka-combos-order.php:67
+#: incl/combos/includes/compatibility/class-lafka-combos-compatibility.php:59
+#: incl/combos/includes/compatibility/class-lafka-combos-compatibility.php:68
+#: incl/combos/includes/modules/class-lafka-combos-modules.php:43
+#: incl/combos/includes/modules/class-lafka-combos-modules.php:50
+#: incl/combos/lafka-product-combos.php:50
+#: incl/combos/lafka-product-combos.php:59
+#: incl/shipping-areas/class-lafka-shipping-areas.php:49
+msgid "Foul!"
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-cart.php:174
+msgid "The submitted combo configuration could not be added to the cart."
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-cart.php:180
+#: incl/combos/includes/class-lafka-combos-order.php:391
+msgid "A combo with this ID does not exist."
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-cart.php:538
+msgid "&quot;%1$s&quot; cannot be purchased &ndash; some of its contents are missing from your cart."
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-cart.php:556
+msgid "The quantity of &quot;%1$s&quot; cannot be lower than %2$d."
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-cart.php:559
+#: incl/combos/includes/class-lafka-combos-cart.php:573
+#: incl/combos/includes/class-lafka-combos-cart.php:596
+#: incl/combos/includes/class-lafka-combos-cart.php:623
+#: incl/combos/includes/class-lafka-combos-cart.php:691
+#: incl/combos/includes/class-lafka-combos-cart.php:737
+#: incl/combos/includes/class-lafka-combos-stock-manager.php:228
+#: incl/combos/includes/class-lafka-combos-stock-manager.php:246
+#: incl/combos/includes/class-lafka-combos-stock-manager.php:260
+#: incl/combos/includes/class-lafka-combos-stock-manager.php:280
+#: incl/combos/includes/class-lafka-combos-stock-manager.php:302
+#: incl/combos/includes/compatibility/modules/class-lafka-combos-cp-compatibility.php:589
+msgid "&quot;%1$s&quot; cannot be added to your cart. %2$s"
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-cart.php:561
+#: incl/combos/includes/class-lafka-combos-cart.php:575
+#: incl/combos/includes/class-lafka-combos-cart.php:625
+#: incl/combos/includes/class-lafka-combos-cart.php:693
+#: incl/combos/includes/class-lafka-combos-cart.php:739
+#: incl/combos/includes/class-lafka-combos-stock-manager.php:248
+#: incl/combos/includes/class-lafka-combos-stock-manager.php:262
+#: incl/combos/includes/class-lafka-combos-stock-manager.php:282
+#: incl/combos/includes/class-lafka-combos-stock-manager.php:304
+#: incl/combos/includes/compatibility/modules/class-lafka-combos-cp-compatibility.php:591
+msgid "&quot;%1$s&quot; cannot be purchased. %2$s"
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-cart.php:570
+msgid "The quantity of &quot;%1$s&quot; cannot be higher than %2$d."
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-cart.php:593
+#: incl/combos/includes/compatibility/modules/class-lafka-combos-cp-compatibility.php:586
+msgid "&quot;%s&quot; cannot be purchased."
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-cart.php:617
+msgid "The chosen &quot;%s&quot; variation cannot be purchased."
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-cart.php:619
+msgid "The chosen &quot;%s&quot; variation is unavailable."
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-cart.php:681
+msgid "%1$s is a required &quot;%2$s&quot; field."
+msgid_plural "%1$s are required &quot;%2$s&quot; fields."
+msgstr[0] ""
+msgstr[1] ""
+
+#: incl/combos/includes/class-lafka-combos-cart.php:684
+msgid "Please choose &quot;%s&quot; options&hellip;"
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-cart.php:686
+msgid "&quot;%s&quot; is missing some required options."
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-cart.php:734
+#: incl/combos/includes/class-lafka-combos-display.php:222
+msgid "Please choose at least 1 item."
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-cart.php:1211
+msgid "Cart update failed. The quantity of &quot;%s&quot; must be a multiple of %d."
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-cart.php:1217
+msgid "Cart update failed. The quantity of &quot;%s&quot; must be at least %d."
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-cart.php:1223
+msgid "Cart update failed. The quantity of &quot;%s&quot; cannot be higher than %d."
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-cart.php:1321
+msgid "You cannot add another &quot;%s&quot; to your cart."
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-cart.php:1323
+#: incl/combos/includes/class-lafka-combos-cart.php:1850
+msgid "You have already added an identical &quot;%s&quot; to your cart. You cannot add another one."
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-cart.php:1366
+#: incl/combos/includes/class-lafka-combos-cart.php:1374
+#: incl/combos/includes/class-lafka-combos-cart.php:1407
+msgid "The requested configuration of &quot;%s&quot; cannot be purchased at the moment."
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-display.php:199
+msgid "Total: "
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-display.php:200
+msgid "Subtotal: "
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-display.php:201
+msgctxt "\"Total/Subtotal\" string followed by price followed by price suffix"
+msgid "%1$s%2$s%3$s"
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-display.php:202
+msgctxt "Sale/strikeout price"
+msgid "<del>%1$s</del> <ins>%2$s</ins>"
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-display.php:203
+msgctxt "insufficiently stocked items template"
+msgid "<p class=\"stock out-of-stock insufficient-stock\">%1$s &rarr; %2$s</p>"
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-display.php:204
+msgctxt "backordered items template"
+msgid "<p class=\"stock available-on-backorder\">%1$s &rarr; %2$s</p>"
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-display.php:205
+msgctxt "insufficiently stocked item exists template"
+msgid "<p class=\"stock out-of-stock insufficient-stock\">%s</p>"
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-display.php:206
+msgctxt "backordered item exists template"
+msgid "<p class=\"stock available-on-backorder\">%s</p>"
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-display.php:207
+msgid "Please choose product options."
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-display.php:208
+msgid "Please choose %s options."
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-display.php:209
+msgid "Please enter valid amounts."
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-display.php:210
+msgid "Please enter a valid %s amount."
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-display.php:211
+msgctxt "string list item"
+msgid "&quot;%s&quot;"
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-display.php:212
+#: incl/combos/includes/class-lafka-combos-helpers.php:322
+msgctxt "string list item separator"
+msgid "%1$s, %2$s"
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-display.php:213
+#: incl/combos/includes/class-lafka-combos-helpers.php:320
+msgctxt "string list item last separator"
+msgid "%1$s and %2$s"
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-display.php:214
+#: incl/combos/includes/class-lafka-combos-helpers.php:286
+msgctxt "qty string"
+msgid " &times; %s"
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-display.php:215
+msgctxt "suffix"
+msgid " &mdash; %s"
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-display.php:216
+#: incl/combos/includes/class-wc-combined-item.php:1842
+msgid "optional"
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-display.php:217
+#: incl/combos/includes/class-lafka-combos-display.php:1326
+msgid "Includes"
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-display.php:218
+msgctxt "title followed by meta"
+msgid "%1$s &ndash; %2$s"
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-display.php:219
+#: incl/combos/includes/class-lafka-combos-helpers.php:297
+msgctxt "title, quantity, price, suffix"
+msgid "%1$s%2$s%3$s%4$s"
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-display.php:220
+#: incl/combos/includes/wc-pc-template-functions.php:89
+msgid "This product is currently unavailable."
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-display.php:221
+msgid "Please resolve all pending issues before adding this product to your cart."
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-display.php:223
+#: incl/combos/includes/class-wc-product-combo.php:1137
+msgctxt "subscription price html"
+msgid "%1$s,</br>%2$s"
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-display.php:224
+#: incl/combos/includes/class-wc-product-combo.php:1132
+msgctxt "subscription price html"
+msgid "%1$s, and</br>%2$s"
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-display.php:374
+msgid "You are currently editing &quot;%1$s&quot;. When finished, click the <strong>Update Cart</strong> button."
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-display.php:666
+#: incl/combos/includes/class-lafka-combos-display.php:689
+#: incl/combos/includes/class-lafka-combos-display.php:1418
+#: incl/combos/includes/class-lafka-combos-display.php:1434
+msgctxt "combined product subtotal"
+msgid "%1$s: %2$s"
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-display.php:666
+#: incl/combos/includes/class-lafka-combos-display.php:689
+#: incl/combos/includes/class-lafka-combos-display.php:1418
+#: incl/combos/includes/class-lafka-combos-display.php:1434
+msgid "Subtotal"
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-display.php:934
+#: incl/combos/includes/class-lafka-combos-display.php:950
+msgctxt "edit in cart link text"
+msgid "Edit"
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-display.php:935
+msgctxt "edit in cart text"
+msgid "%1$s<br/><a class=\"edit_combo_in_cart_text edit_in_cart_text\" rel=\"no-follow\" href=\"%2$s\"><small>%3$s</small></a>"
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-display.php:951
+msgctxt "edit in cart text"
+msgid "%1$s<br/><a class=\"edit_combo_in_cart_text edit_in_cart_text\" href=\"%2$s\"><small>%3$s</small></a>"
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-display.php:1051
+#: incl/combos/includes/class-lafka-combos-order.php:1046
+msgid "Part of"
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-helpers.php:249
+msgctxt "product title followed by meta and sku in parenthesis"
+msgid "%1$s &ndash; %2$s (%3$s)"
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-helpers.php:251
+msgctxt "sku followed by product title and meta"
+msgid "%1$s &ndash; %2$s &ndash; %3$s"
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-helpers.php:255
+msgctxt "product title followed by sku in parenthesis"
+msgid "%1$s (%2$s)"
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-helpers.php:257
+msgctxt "sku followed by product title"
+msgid "%1$s &ndash; %2$s"
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-helpers.php:261
+msgctxt "product title followed by meta in parenthesis"
+msgid "%1$s (%2$s)"
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-helpers.php:263
+msgctxt "product title followed by meta"
+msgid "%1$s &ndash; %2$s"
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-helpers.php:290
+msgctxt "price suffix"
+msgid " &ndash; %s"
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-helpers.php:294
+msgctxt "suffix"
+msgid " &ndash; %s"
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-install.php:63
+msgid "Product combo"
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-order.php:381
+msgid "The submitted combo configuration could not be added to this order."
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-order.php:499
+msgctxt "combined order item qty meta key"
+msgid "Qty"
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-order.php:505
+msgctxt "combined order item SKU meta key"
+msgid "SKU"
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-product-prices.php:734
+msgid "%1$s <span class=\"combined_item_price_quantity\">each</span>"
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-stock-manager.php:225
+msgid "Only 1 &quot;%s&quot; may be purchased."
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-stock-manager.php:243
+msgid "&quot;%s&quot; is out of stock."
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-stock-manager.php:257
+msgid "There is not enough stock of &quot;%1$s&quot; (%2$s remaining)."
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-stock-manager.php:277
+msgid "There is not enough stock of &quot;%1$s&quot; (%2$s in stock, %3$s in your cart)."
+msgstr ""
+
+#: incl/combos/includes/class-lafka-combos-stock-manager.php:299
+msgid "The product is currently unavailable."
+msgstr ""
+
+#: incl/combos/includes/class-wc-combined-item.php:2181
+#: incl/combos/includes/class-wc-combined-item.php:2198
+msgid "(only %s left in stock)"
+msgstr ""
+
+#: incl/combos/includes/class-wc-product-combo.php:746
+#: incl/combos/includes/class-wc-product-combo.php:1144
+msgctxt "subscription price html"
+msgid "%1$s<span class=\"combined_subscriptions_price_html\"> one time%2$s</span>"
+msgstr ""
+
+#: incl/combos/includes/class-wc-product-combo.php:1150
+#: incl/combos/includes/class-wc-product-combo.php:1210
+#: incl/combos/includes/class-wc-product-combo.php:1231
+msgctxt "Price range: from"
+msgid "%1$s%2$s"
+msgstr ""
+
+#: incl/combos/includes/class-wc-product-combo.php:1390
+msgid "Update Cart"
+msgstr ""
+
+#: incl/combos/includes/class-wc-product-combo.php:2761
+#: incl/metaboxes.php:105
+#: incl/metaboxes.php:114
+#: incl/metaboxes.php:123
+#: incl/metaboxes.php:132
+#: incl/metaboxes.php:141
+#: incl/metaboxes.php:430
+#: shortcodes/shortcodes_to_vc_mapping.php:675
+msgid "Default"
+msgstr ""
+
+#: incl/combos/includes/class-wc-product-combo.php:2762
+msgid "The add-to-cart form is displayed inside the single-product summary."
+msgstr ""
+
+#: incl/combos/includes/class-wc-product-combo.php:2765
+msgid "Before Tabs"
+msgstr ""
+
+#: incl/combos/includes/class-wc-product-combo.php:2766
+msgid "The add-to-cart form is displayed before the single-product tabs. Usually allocates the entire page width for displaying form content. Note that some themes may not support this option."
+msgstr ""
+
+#: incl/combos/includes/class-wc-product-combo.php:2781
+#: incl/metaboxes.php:125
+#: incl/metaboxes.php:134
+#: incl/metaboxes.php:143
+#: shortcodes/shortcodes_to_vc_mapping.php:380
+msgid "Standard"
+msgstr ""
+
+#: incl/combos/includes/class-wc-product-combo.php:2782
+msgid "Tabular"
+msgstr ""
+
+#: incl/combos/includes/class-wc-product-combo.php:2783
+#: shortcodes/shortcodes_to_vc_mapping.php:429
+#: shortcodes/shortcodes_to_vc_mapping.php:1693
+msgid "Grid"
+msgstr ""
+
+#: incl/combos/includes/class-wc-product-combo.php:2855
+msgid "Grouped"
+msgstr ""
+
+#: incl/combos/includes/class-wc-product-combo.php:2860
+msgid "Flat"
+msgstr ""
+
+#: incl/combos/includes/class-wc-product-combo.php:2865
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-method.php:219
+#: shortcodes/shortcodes_to_vc_mapping.php:250
+msgid "None"
+msgstr ""
+
+#: incl/combos/includes/compatibility/class-lafka-combos-compatibility.php:314
+msgid "Composite Products"
+msgstr ""
+
+#: incl/combos/includes/compatibility/class-lafka-combos-compatibility.php:315
+msgid "WooCommerce Composite Products"
+msgstr ""
+
+#: incl/combos/includes/compatibility/class-lafka-combos-compatibility.php:317
+#: incl/combos/includes/compatibility/class-lafka-combos-compatibility.php:333
+#: incl/combos/includes/compatibility/class-lafka-combos-compatibility.php:376
+msgid "The installed version of <strong>%1$s</strong> is not supported by <strong>Product Combos</strong>. Please update <a href=\"%2$s\" target=\"_blank\">%3$s</a> to version <strong>%4$s</strong> or higher."
+msgstr ""
+
+#: incl/combos/includes/compatibility/class-lafka-combos-compatibility.php:330
+msgid "Product Add-Ons"
+msgstr ""
+
+#: incl/combos/includes/compatibility/class-lafka-combos-compatibility.php:331
+msgid "WooCommerce Product Add-Ons"
+msgstr ""
+
+#: incl/combos/includes/compatibility/class-lafka-combos-compatibility.php:341
+msgid "The <strong>Tabular Layout</strong> mini-extension has been rolled into <strong>Product Combos</strong>. Please deactivate and remove the <strong>Product Combos - Tabular Layout</strong> feature plugin."
+msgstr ""
+
+#: incl/combos/includes/compatibility/class-lafka-combos-compatibility.php:347
+msgid "The <strong>Combo-Sells</strong> mini-extension has been rolled into <strong>Product Combos</strong>. Please deactivate and remove the <strong>Product Combos - Combo-Sells</strong> feature plugin."
+msgstr ""
+
+#: incl/combos/includes/compatibility/class-lafka-combos-compatibility.php:353
+msgid "The <strong>Min/Max Items</strong> mini-extension has been rolled into <strong>Product Combos</strong>. Please deactivate and remove the <strong>Product Combos - Min/Max Items</strong> feature plugin. If you have localized Min/Max Items in your language, please be aware that all localizable strings have been moved into the Product Combos text domain."
+msgstr ""
+
+#: incl/combos/includes/compatibility/class-lafka-combos-compatibility.php:362
+msgid "Product Combos - Top Add to Cart Button"
+msgstr ""
+
+#: incl/combos/includes/compatibility/class-lafka-combos-compatibility.php:363
+msgid "The installed version of <strong>%1$s</strong> is not supported by <strong>Product Combos</strong>. Please update <strong>%1$s</strong> to version <strong>%2$s</strong> or higher."
+msgstr ""
+
+#: incl/combos/includes/compatibility/class-lafka-combos-compatibility.php:374
+msgid "Product Combos - Bulk Discounts"
+msgstr ""
+
+#: incl/combos/includes/compatibility/modules/class-lafka-combos-addons-compatibility.php:124
+msgid "Disable Add-Ons"
+msgstr ""
+
+#: incl/combos/includes/compatibility/modules/class-lafka-combos-addons-compatibility.php:126
+msgid "Check this option to disable any Product Add-Ons associated with this combined product."
+msgstr ""
+
+#: incl/combos/includes/compatibility/modules/class-lafka-combos-cp-compatibility.php:499
+msgid "This item cannot be purchased at the moment."
+msgstr ""
+
+#: incl/combos/includes/compatibility/modules/class-lafka-combos-cp-compatibility.php:727
+#: incl/combos/includes/compatibility/modules/class-lafka-combos-cp-compatibility.php:758
+msgid "No selection"
+msgstr ""
+
+#: incl/combos/includes/compatibility/modules/class-lafka-combos-cp-compatibility.php:911
+msgid "Please check your &quot;%1$s&quot; configuration: %2$s"
+msgstr ""
+
+#: incl/combos/includes/compatibility/modules/class-lafka-combos-et-compatibility.php:89
+msgid "Unavailable when using the Divi builder."
+msgstr ""
+
+#: incl/combos/includes/compatibility/modules/class-lafka-combos-pip-compatibility.php:369
+#: incl/combos/includes/compatibility/modules/class-lafka-combos-pip-compatibility.php:371
+msgid "Packaged in:"
+msgstr ""
+
+#: incl/combos/includes/compatibility/modules/class-lafka-combos-subscriptions-compatibility.php:75
+msgid "&quot;%1$s&quot; cannot be purchased due to payment gateway restrictions."
+msgstr ""
+
+#: incl/combos/includes/compatibility/modules/class-lafka-combos-wl-compatibility.php:164
+#: incl/combos/includes/compatibility/modules/class-lafka-combos-wl-compatibility.php:179
+msgid "*"
+msgstr ""
+
+#: incl/combos/includes/compatibility/modules/class-lafka-combos-wl-compatibility.php:164
+msgid "For up-to-date pricing details, please add the product to your cart."
+msgstr ""
+
+#: incl/combos/includes/modules/combo-sells/includes/admin/class-lafka-combos-bs-admin.php:46
+msgid "Combo-sells"
+msgstr ""
+
+#: incl/combos/includes/modules/combo-sells/includes/admin/class-lafka-combos-bs-admin.php:65
+#: incl/combos/includes/modules/combo-sells/includes/admin/class-lafka-combos-bs-admin.php:68
+msgid "Supported product types: Simple, Simple subscription."
+msgstr ""
+
+#: incl/combos/includes/modules/combo-sells/includes/admin/class-lafka-combos-bs-admin.php:65
+#: incl/combos/includes/modules/combo-sells/includes/admin/class-lafka-combos-bs-admin.php:68
+msgid "Supports Simple products only."
+msgstr ""
+
+#: incl/combos/includes/modules/combo-sells/includes/admin/class-lafka-combos-bs-admin.php:66
+msgid "Combo-sells are optional products that can be selected and added to the cart along with this product. %s"
+msgstr ""
+
+#: incl/combos/includes/modules/combo-sells/includes/admin/class-lafka-combos-bs-admin.php:75
+msgid "Combo-sells title"
+msgstr ""
+
+#: incl/combos/includes/modules/combo-sells/includes/admin/class-lafka-combos-bs-admin.php:76
+msgid "Text to display above the combo-sells section."
+msgstr ""
+
+#: incl/combos/includes/modules/combo-sells/includes/admin/class-lafka-combos-bs-admin.php:77
+msgid "e.g. \"Frequently Bought Together\""
+msgstr ""
+
+#: incl/combos/includes/modules/combo-sells/includes/admin/class-lafka-combos-bs-admin.php:86
+msgid "Combo-sells discount"
+msgstr ""
+
+#: incl/combos/includes/modules/combo-sells/includes/admin/class-lafka-combos-bs-admin.php:87
+msgid "Discount to apply to combo-sells (%). Accepts values from 0 to 100."
+msgstr ""
+
+#: incl/combos/includes/modules/combo-sells/includes/admin/class-lafka-combos-bs-admin.php:141
+msgid "Invalid combo-sells discount value. Please enter a positive number between 0-100."
+msgstr ""
+
+#: incl/combos/includes/modules/combo-sells/includes/class-lafka-combos-bs-display.php:221
+msgctxt "combo-sell discount"
+msgid "%s&#37; (applied by %2$s)"
+msgstr ""
+
+#: incl/combos/includes/modules/combo-sells/includes/class-lafka-combos-bs-display.php:226
+msgid "Discount"
+msgstr ""
+
+#: incl/combos/includes/modules/min-max-items/includes/admin/class-lafka-combos-mmi-admin.php:45
+msgid "Min Combo Items"
+msgstr ""
+
+#: incl/combos/includes/modules/min-max-items/includes/admin/class-lafka-combos-mmi-admin.php:47
+msgid "Minimum total number of items in the combo."
+msgstr ""
+
+#: incl/combos/includes/modules/min-max-items/includes/admin/class-lafka-combos-mmi-admin.php:55
+msgid "Max Combo Items"
+msgstr ""
+
+#: incl/combos/includes/modules/min-max-items/includes/admin/class-lafka-combos-mmi-admin.php:57
+msgid "Maximum total number of items in the combo."
+msgstr ""
+
+#: incl/combos/includes/modules/min-max-items/includes/class-lafka-combos-mmi-cart.php:71
+msgid "&quot;%s&quot; cannot be added to the cart"
+msgstr ""
+
+#: incl/combos/includes/modules/min-max-items/includes/class-lafka-combos-mmi-cart.php:75
+#: incl/combos/includes/modules/min-max-items/includes/class-lafka-combos-mmi-cart.php:137
+msgid "please choose 1 item"
+msgid_plural "please choose %s items"
+msgstr[0] ""
+msgstr[1] ""
+
+#: incl/combos/includes/modules/min-max-items/includes/class-lafka-combos-mmi-cart.php:77
+#: incl/combos/includes/modules/min-max-items/includes/class-lafka-combos-mmi-cart.php:139
+msgid "please choose at least 1 item"
+msgid_plural "please choose at least %s items"
+msgstr[0] ""
+msgstr[1] ""
+
+#: incl/combos/includes/modules/min-max-items/includes/class-lafka-combos-mmi-cart.php:79
+#: incl/combos/includes/modules/min-max-items/includes/class-lafka-combos-mmi-cart.php:141
+msgid "please limit your selection to 1 item"
+msgid_plural "please choose up to %s items"
+msgstr[0] ""
+msgstr[1] ""
+
+#: incl/combos/includes/modules/min-max-items/includes/class-lafka-combos-mmi-cart.php:83
+msgid " (you have chosen 1)"
+msgstr ""
+
+#: incl/combos/includes/modules/min-max-items/includes/class-lafka-combos-mmi-cart.php:85
+msgid " (you have chosen %s)"
+msgstr ""
+
+#: incl/combos/includes/modules/min-max-items/includes/class-lafka-combos-mmi-cart.php:88
+msgctxt "add-to-cart validation error: action, resolution, status"
+msgid "%1$s &ndash; %2$s%3$s."
+msgstr ""
+
+#: incl/combos/includes/modules/min-max-items/includes/class-lafka-combos-mmi-cart.php:134
+msgid "&quot;%s&quot; cannot be purchased"
+msgstr ""
+
+#: incl/combos/includes/modules/min-max-items/includes/class-lafka-combos-mmi-cart.php:144
+msgctxt "cart validation error: action, resolution"
+msgid "%1$s &ndash; %2$s."
+msgstr ""
+
+#: incl/combos/includes/modules/min-max-items/includes/class-lafka-combos-mmi-display.php:45
+msgid "Please choose an item."
+msgstr ""
+
+#: incl/combos/includes/modules/min-max-items/includes/class-lafka-combos-mmi-display.php:46
+msgid "Please choose 1 item.%s"
+msgstr ""
+
+#: incl/combos/includes/modules/min-max-items/includes/class-lafka-combos-mmi-display.php:47
+msgid "Please choose at least 1 item.%s"
+msgstr ""
+
+#: incl/combos/includes/modules/min-max-items/includes/class-lafka-combos-mmi-display.php:48
+msgid "Please choose up to 1 item.%s"
+msgstr ""
+
+#: incl/combos/includes/modules/min-max-items/includes/class-lafka-combos-mmi-display.php:49
+msgid "Please choose at least %1$s items.%2$s"
+msgstr ""
+
+#: incl/combos/includes/modules/min-max-items/includes/class-lafka-combos-mmi-display.php:50
+msgid "Please choose up to %1$s items.%2$s"
+msgstr ""
+
+#: incl/combos/includes/modules/min-max-items/includes/class-lafka-combos-mmi-display.php:51
+msgid "Please choose %1$s items.%2$s"
+msgstr ""
+
+#: incl/combos/includes/modules/min-max-items/includes/class-lafka-combos-mmi-display.php:52
+msgid "%s items selected"
+msgstr ""
+
+#: incl/combos/includes/modules/min-max-items/includes/class-lafka-combos-mmi-display.php:53
+msgid "1 item selected"
+msgstr ""
+
+#: incl/combos/includes/modules/min-max-items/includes/class-lafka-combos-mmi-display.php:54
+msgctxt "validation error status format"
+msgid "<span class=\"combined_items_selection_status\">%s</span>"
+msgstr ""
+
+#: incl/combos/includes/wc-pc-template-functions.php:97
+msgid "&quot;%1$s&quot; is not purchasable just yet. But, fear not &ndash; setting up pricing options only takes a minute! <ul class=\"pb_notice_list\"><li>To give &quot;%1$s&quot; a static base price, navigate to <strong>Product Data > General</strong> and fill in the <strong>Regular Price</strong> field.</li><li>To preserve the prices and taxes of individual combined products, go to <strong>Product Data > Combined Products</strong> and enable <strong>Priced Individually</strong> for each combined product whose price must be preserved.</li></ul>Note: This message is visible to store managers only."
+msgstr ""
+
+#: incl/combos/includes/wc-pc-template-functions.php:99
+msgid "Please make sure that all products contained in this combo have a price. WooCommerce does not allow products with a blank price to be purchased. Note: This message is visible to store managers only."
+msgstr ""
+
+#: incl/combos/includes/wc-pc-template-functions.php:101
+msgid "Please enable <strong>Mixed Checkout</strong> under <strong>WooCommerce > Settings > Subscriptions</strong>. Combos that contain subscription-type products cannot be purchased when <strong>Mixed Checkout</strong> is disabled. Note: This message is visible to store managers only."
+msgstr ""
+
+#: incl/combos/includes/wc-pc-template-functions.php:426
+msgid " for %s"
+msgstr ""
+
+#: incl/combos/includes/wc-pc-template-functions.php:430
+msgid " from %s"
+msgstr ""
+
+#: incl/combos/includes/wc-pc-template-functions.php:444
+msgid " &quot;%s&quot;"
+msgstr ""
+
+#: incl/combos/templates/single-product/combined-item-image.php:42
+msgid "Combined product placeholder image"
+msgstr ""
+
+#: incl/combos/templates/single-product/combined-item-optional.php:21
+msgid "Add%1$s%2$s%3$s"
+msgstr ""
+
+#: incl/combos/templates/single-product/combined-item-title.php:27
+msgid "View product"
+msgstr ""
+
+#: incl/combos/templates/single-product/combined-product-unavailable.php:26
+msgid "Temporarily unavailable"
+msgstr ""
+
+#: incl/combos/templates/single-product/combined-product-variable.php:34
+msgid "Required option"
+msgstr ""
+
+#: incl/customizer/class-lafka-customizer.php:23
+msgid "Lafka Options"
+msgstr ""
+
+#: incl/customizer/class-lafka-customizer.php:38
+msgid "Social Share Links"
+msgstr ""
+
+#: incl/customizer/class-lafka-customizer.php:39
+msgid "Configure globally the social networks share links. They can be overridden for each post, page or portfolio on the edit page."
+msgstr ""
+
+#: incl/customizer/class-lafka-customizer.php:59
+msgid "Enable social share links on single post, page and portfolio."
+msgstr ""
+
+#: incl/customizer/class-lafka-customizer.php:81
+msgid "Enable social share links on single product pages."
+msgstr ""
+
+#: incl/metaboxes.php:30
+msgid "Page Layout Options"
+msgstr ""
+
+#: incl/metaboxes.php:43
+msgid "Page Layout Options is disabled for this page, because the page is set as Blog page from Settings->Reading."
+msgstr ""
+
+#: incl/metaboxes.php:49
+msgid "Page Layout Options is disabled for this page, because the page is set as Shop page."
+msgstr ""
+
+#: incl/metaboxes.php:100
+msgid "You can define layout specific options here."
+msgstr ""
+
+#: incl/metaboxes.php:103
+msgid "Choose Page Layout"
+msgstr ""
+
+#: incl/metaboxes.php:107
+msgid "Full-Width"
+msgstr ""
+
+#: incl/metaboxes.php:109
+msgid "Boxed"
+msgstr ""
+
+#: incl/metaboxes.php:112
+msgid "Top Menu Bar"
+msgstr ""
+
+#: incl/metaboxes.php:116
+msgid "Show"
+msgstr ""
+
+#: incl/metaboxes.php:118
+msgid "Hide"
+msgstr ""
+
+#: incl/metaboxes.php:121
+msgid "Footer size"
+msgstr ""
+
+#: incl/metaboxes.php:127
+#: incl/metaboxes.php:145
+msgid "Fullwidth"
+msgstr ""
+
+#: incl/metaboxes.php:130
+msgid "Footer style"
+msgstr ""
+
+#: incl/metaboxes.php:136
+msgid "Reveal"
+msgstr ""
+
+#: incl/metaboxes.php:139
+msgid "Header size"
+msgstr ""
+
+#: incl/metaboxes.php:154
+#: incl/woocommerce-metaboxes.php:106
+#: incl/woocommerce-metaboxes.php:229
+msgid "Header Style"
+msgstr ""
+
+#: incl/metaboxes.php:163
+#: incl/woocommerce-metaboxes.php:108
+#: incl/woocommerce-metaboxes.php:140
+#: shortcodes/shortcodes_to_vc_mapping.php:1394
+msgid "Normal"
+msgstr ""
+
+#: incl/metaboxes.php:167
+#: incl/woocommerce-metaboxes.php:109
+#: incl/woocommerce-metaboxes.php:141
+msgid "Transparent - Light Scheme"
+msgstr ""
+
+#: incl/metaboxes.php:168
+#: incl/woocommerce-metaboxes.php:110
+#: incl/woocommerce-metaboxes.php:142
+msgid "Transparent - Dark Scheme"
+msgstr ""
+
+#: incl/metaboxes.php:203
+msgid "Manage Images"
+msgstr ""
+
+#: incl/metaboxes.php:203
+msgid "Select Title Background Image"
+msgstr ""
+
+#: incl/metaboxes.php:203
+msgid "Select"
+msgstr ""
+
+#: incl/metaboxes.php:206
+msgid "Page Subtitle"
+msgstr ""
+
+#: incl/metaboxes.php:208
+#: incl/woocommerce-metaboxes.php:121
+#: incl/woocommerce-metaboxes.php:257
+msgid "Title alignment"
+msgstr ""
+
+#: incl/metaboxes.php:309
+msgid "Page Structure Options"
+msgstr ""
+
+#: incl/metaboxes.php:322
+msgid "Page Structure Options are disabled for this page, because the page is set as Blog page from Settings->Reading."
+msgstr ""
+
+#: incl/metaboxes.php:327
+msgid "Page Structure Options are disabled for this page, because the page is set as Shop page."
+msgstr ""
+
+#: incl/metaboxes.php:391
+msgid "You can configure the page structure, using this options."
+msgstr ""
+
+#: incl/metaboxes.php:395
+msgid "Choose Top Menu"
+msgstr ""
+
+#: incl/metaboxes.php:404
+msgid "Show Title"
+msgstr ""
+
+#: incl/metaboxes.php:411
+msgid "Show Breadcrumb"
+msgstr ""
+
+#: incl/metaboxes.php:420
+msgid "Featured Image in Single Post View"
+msgstr ""
+
+#: incl/metaboxes.php:428
+msgid "Show Social Share Links"
+msgstr ""
+
+#: incl/metaboxes.php:437
+msgid "Main Sidebar"
+msgstr ""
+
+#: incl/metaboxes.php:450
+#: incl/metaboxes.php:468
+#: incl/metaboxes.php:488
+#: incl/metaboxes.php:518
+msgid "default"
+msgstr ""
+
+#: incl/metaboxes.php:466
+msgid "Main Sidebar Position"
+msgstr ""
+
+#: incl/metaboxes.php:469
+#: incl/shipping-areas/shortcodes/shortcode-lafka-shipping-areas-to-vc.php:51
+#: incl/woocommerce-metaboxes.php:123
+#: incl/woocommerce-metaboxes.php:146
+#: shortcodes/shortcodes_to_vc_mapping.php:103
+#: shortcodes/shortcodes_to_vc_mapping.php:184
+#: shortcodes/shortcodes_to_vc_mapping.php:1139
+#: shortcodes/shortcodes_to_vc_mapping.php:2142
+msgid "Left"
+msgstr ""
+
+#: incl/metaboxes.php:470
+#: incl/shipping-areas/shortcodes/shortcode-lafka-shipping-areas-to-vc.php:49
+#: shortcodes/shortcodes_to_vc_mapping.php:105
+#: shortcodes/shortcodes_to_vc_mapping.php:186
+#: shortcodes/shortcodes_to_vc_mapping.php:1140
+#: shortcodes/shortcodes_to_vc_mapping.php:2143
+msgid "Right"
+msgstr ""
+
+#: incl/metaboxes.php:474
+msgid "Off Canvas Sidebar"
+msgstr ""
+
+#: incl/metaboxes.php:504
+msgid "Footer Sidebar"
+msgstr ""
+
+#: incl/metaboxes.php:609
+#: incl/metaboxes.php:613
+#: incl/metaboxes.php:617
+#: incl/metaboxes.php:621
+msgid "Revolution Slider"
+msgstr ""
+
+#: incl/metaboxes.php:634
+msgid "Revolution slider is disabled for this page, because the page is set as Blog page from Settings->Reading."
+msgstr ""
+
+#: incl/metaboxes.php:640
+msgid "Revolution slider is disabled for this page, because the page is set as Shop page."
+msgstr ""
+
+#: incl/metaboxes.php:662
+msgid "You can choose a Revolution slider to be attached. It will show up on the top of this page/post."
+msgstr ""
+
+#: incl/metaboxes.php:665
+msgid "Select slider"
+msgstr ""
+
+#: incl/metaboxes.php:673
+#: shortcodes/shortcodes_to_vc_mapping.php:734
+#: shortcodes/shortcodes_to_vc_mapping.php:922
+#: shortcodes/shortcodes_to_vc_mapping.php:1160
+#: shortcodes/shortcodes_to_vc_mapping.php:1282
+msgid "none"
+msgstr ""
+
+#: incl/metaboxes.php:693
+msgid "Place before header"
+msgstr ""
+
+#: incl/metaboxes.php:755
+msgid "Video Background"
+msgstr ""
+
+#: incl/metaboxes.php:768
+msgid "Video Background options are disabled for this page, because the page is set as Blog page from Settings->Reading."
+msgstr ""
+
+#: incl/metaboxes.php:774
+msgid "Video Background options are disabled for this page, because the page is set as Shop page."
+msgstr ""
+
+#: incl/metaboxes.php:810
+msgid "Define the video background options for this page/post."
+msgstr ""
+
+#: incl/metaboxes.php:813
+#: shortcodes/shortcodes_to_vc_mapping.php:2096
+msgid "YouTube video URL"
+msgstr ""
+
+#: incl/metaboxes.php:817
+msgid "Start time in seconds"
+msgstr ""
+
+#: incl/metaboxes.php:821
+msgid "End time in seconds"
+msgstr ""
+
+#: incl/metaboxes.php:826
+#: shortcodes/shortcodes_to_vc_mapping.php:208
+msgid "Loop"
+msgstr ""
+
+#: incl/metaboxes.php:830
+msgid "Mute"
+msgstr ""
+
+#: incl/metaboxes.php:899
+msgid "Menu Entry Fields"
+msgstr ""
+
+#: incl/metaboxes.php:914
+msgid "The currency for all price fields will be the one set up in WooCommerce"
+msgstr ""
+
+#: incl/metaboxes.php:917
+msgid "The currency for all price fields will be the one set up in Theme Options -> Restaurant Menu"
+msgstr ""
+
+#: incl/metaboxes.php:921
+msgid "Item Price"
+msgstr ""
+
+#: incl/metaboxes.php:926
+msgid "Item Weight"
+msgstr ""
+
+#: incl/metaboxes.php:930
+msgid "Units (g)"
+msgstr ""
+
+#: incl/metaboxes.php:934
+msgid "Fill up to three option->price pairs. E.g. Small -> +5, Big -> 10"
+msgstr ""
+
+#: incl/metaboxes.php:939
+msgid "Option"
+msgstr ""
+
+#: incl/metaboxes.php:952
+msgid "Ingredients"
+msgstr ""
+
+#: incl/metaboxes.php:957
+#: incl/nutrition/admin/views/html-nutrition-panel.php:18
+#: incl/nutrition/templates/nutrition-info.php:23
+msgid "Allergens"
+msgstr ""
+
+#: incl/metaboxes.php:962
+msgid "Nutrition Information:"
+msgstr ""
+
+#: incl/metaboxes.php:973
+msgid "Menu Entry External Links:"
+msgstr ""
+
+#: incl/metaboxes.php:975
+msgid "First Button Title"
+msgstr ""
+
+#: incl/metaboxes.php:980
+msgid "First Button Url"
+msgstr ""
+
+#: incl/metaboxes.php:984
+msgid "Short Description"
+msgstr ""
+
+#: incl/metaboxes.php:1069
+msgid "Featured Image"
+msgstr ""
+
+#: incl/metaboxes.php:1110
+msgid "Remove featured image"
+msgstr ""
+
+#: incl/metaboxes.php:1113
+msgid "Select Featured Image"
+msgstr ""
+
+#: incl/metaboxes.php:1113
+msgid "Set Featured Image"
+msgstr ""
+
+#: incl/metaboxes.php:1113
+msgid "Set featured image"
+msgstr ""
+
+#: incl/metaboxes.php:1163
+msgid "Menu Entry Options"
+msgstr ""
+
+#: incl/metaboxes.php:1190
+msgid "Custom Content:"
+msgstr ""
+
+#: incl/metaboxes.php:1195
+msgid "Don't use the menu entry gallery and all fields. Use only the content."
+msgstr ""
+
+#: incl/metaboxes.php:1197
+msgid "Menu entry gallery will appear as:"
+msgstr ""
+
+#: incl/metaboxes.php:1200
+msgid "Flex Slider"
+msgstr ""
+
+#: incl/metaboxes.php:1202
+msgid "Cloud Zoom"
+msgstr ""
+
+#: incl/metaboxes.php:1204
+msgid "Image List"
+msgstr ""
+
+#: incl/metaboxes.php:1266
+msgid "Product Video"
+msgstr ""
+
+#: incl/metaboxes.php:1292
+msgid "Product Video to be displayed on the product page (YouTube, Vimeo, Self-hosted)."
+msgstr ""
+
+#: incl/metaboxes.php:1295
+msgid "Video URL"
+msgstr ""
+
+#: incl/metaboxes.php:1348
+msgid "Product Gallery Type"
+msgstr ""
+
+#: incl/metaboxes.php:1373
+msgid "Use Theme Options Setting"
+msgstr ""
+
+#: incl/metaboxes.php:1374
+msgid "WooCommerce Default Gallery"
+msgstr ""
+
+#: incl/metaboxes.php:1375
+msgid "Image List Gallery"
+msgstr ""
+
+#: incl/metaboxes.php:1376
+msgid "Mosaic Images Gallery"
+msgstr ""
+
+#: incl/metaboxes.php:1378
+msgid "Choose between default WooCommerce gallery and image list gallery."
+msgstr ""
+
+#: incl/nutrition/admin/class-lafka-nutrition-admin.php:28
+msgid "Lafka Nutrition Facts"
+msgstr ""
+
+#: incl/nutrition/admin/views/html-nutrition-panel.php:19
+msgid "Enter the list of allergens as they will appear in the frontend."
+msgstr ""
+
+#: incl/nutrition/admin/views/html-nutrition-panel.php:20
+msgid "Milk, Eggs, Peanuts"
+msgstr ""
+
+#: incl/nutrition/includes/class-lafka-nutrition-config.php:12
+msgid "Energy (Calories)"
+msgstr ""
+
+#: incl/nutrition/includes/class-lafka-nutrition-config.php:13
+msgid "Energy"
+msgstr ""
+
+#: incl/nutrition/includes/class-lafka-nutrition-config.php:14
+msgid "Cal"
+msgstr ""
+
+#: incl/nutrition/includes/class-lafka-nutrition-config.php:19
+msgid "Protein (Grams)"
+msgstr ""
+
+#: incl/nutrition/includes/class-lafka-nutrition-config.php:20
+msgid "Protein"
+msgstr ""
+
+#: incl/nutrition/includes/class-lafka-nutrition-config.php:21
+#: incl/nutrition/includes/class-lafka-nutrition-config.php:28
+#: incl/nutrition/includes/class-lafka-nutrition-config.php:35
+#: incl/nutrition/includes/class-lafka-nutrition-config.php:49
+#: incl/nutrition/includes/class-lafka-nutrition-config.php:56
+#: incl/nutrition/includes/class-lafka-nutrition-config.php:63
+#: incl/nutrition/includes/class-lafka-nutrition-config.php:70
+#: incl/nutrition/includes/class-lafka-nutrition-config.php:77
+msgid "g"
+msgstr ""
+
+#: incl/nutrition/includes/class-lafka-nutrition-config.php:26
+msgid "Fat (Grams)"
+msgstr ""
+
+#: incl/nutrition/includes/class-lafka-nutrition-config.php:27
+msgid "Fat"
+msgstr ""
+
+#: incl/nutrition/includes/class-lafka-nutrition-config.php:33
+msgid "Saturated Fat (Grams)"
+msgstr ""
+
+#: incl/nutrition/includes/class-lafka-nutrition-config.php:34
+msgid "Sat Fat"
+msgstr ""
+
+#: incl/nutrition/includes/class-lafka-nutrition-config.php:40
+msgid "Cholesterol (mg)"
+msgstr ""
+
+#: incl/nutrition/includes/class-lafka-nutrition-config.php:41
+msgid "Cholest."
+msgstr ""
+
+#: incl/nutrition/includes/class-lafka-nutrition-config.php:42
+msgid "mg"
+msgstr ""
+
+#: incl/nutrition/includes/class-lafka-nutrition-config.php:47
+msgid "Carbohydrates (Grams)"
+msgstr ""
+
+#: incl/nutrition/includes/class-lafka-nutrition-config.php:48
+msgid "Carbs"
+msgstr ""
+
+#: incl/nutrition/includes/class-lafka-nutrition-config.php:54
+msgid "Sugars (Grams)"
+msgstr ""
+
+#: incl/nutrition/includes/class-lafka-nutrition-config.php:55
+msgid "Sugars"
+msgstr ""
+
+#: incl/nutrition/includes/class-lafka-nutrition-config.php:61
+msgid "Sodium (Grams)"
+msgstr ""
+
+#: incl/nutrition/includes/class-lafka-nutrition-config.php:62
+msgid "Sodium"
+msgstr ""
+
+#: incl/nutrition/includes/class-lafka-nutrition-config.php:68
+msgid "Fibre (Grams)"
+msgstr ""
+
+#: incl/nutrition/includes/class-lafka-nutrition-config.php:69
+msgid "Fibre"
+msgstr ""
+
+#: incl/nutrition/includes/class-lafka-nutrition-config.php:75
+msgid "Salt (Grams)"
+msgstr ""
+
+#: incl/nutrition/includes/class-lafka-nutrition-config.php:76
+msgid "Salt"
+msgstr ""
+
+#: incl/nutrition/templates/nutrition-info.php:14
+#: incl/nutrition/templates/nutrition-info.php:19
+msgid "DI"
+msgstr ""
+
+#: incl/nutrition/templates/nutrition-info.php:19
+msgid "Recommended Daily Intake based on 2000 calories diet"
+msgstr ""
+
+#: incl/nutrition/templates/weight-info.php:11
+msgid "Serving size"
+msgstr ""
+
+#: incl/order-hours/Lafka_Order_Hours.php:152
+msgid "Open"
+msgstr ""
+
+#: incl/order-hours/Lafka_Order_Hours.php:155
+msgid "Closed"
+msgstr ""
+
+#: incl/order-hours/settings/Lafka_Order_Hours_Admin.php:33
+#: incl/order-hours/settings/Lafka_Order_Hours_Admin.php:34
+msgid "Lafka Order Hours"
+msgstr ""
+
+#: incl/order-hours/settings/Lafka_Order_Hours_Admin.php:45
+#: incl/order-hours/settings/Lafka_Order_Hours_Admin.php:240
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:642
+msgid "Status"
+msgstr ""
+
+#: incl/order-hours/settings/Lafka_Order_Hours_Admin.php:52
+msgid "Message"
+msgstr ""
+
+#: incl/order-hours/settings/Lafka_Order_Hours_Admin.php:59
+msgid "Closed Store Message"
+msgstr ""
+
+#: incl/order-hours/settings/Lafka_Order_Hours_Admin.php:70
+msgid "Disable Add to Cart"
+msgstr ""
+
+#: incl/order-hours/settings/Lafka_Order_Hours_Admin.php:81
+#: shortcodes/shortcodes_to_vc_mapping.php:1376
+msgid "Countdown"
+msgstr ""
+
+#: incl/order-hours/settings/Lafka_Order_Hours_Admin.php:92
+msgid "Handle All Branches Closed"
+msgstr ""
+
+#: incl/order-hours/settings/Lafka_Order_Hours_Admin.php:98
+msgid "Enable All Branches Closed Message"
+msgstr ""
+
+#: incl/order-hours/settings/Lafka_Order_Hours_Admin.php:108
+msgid "All Branches Closed Message"
+msgstr ""
+
+#: incl/order-hours/settings/Lafka_Order_Hours_Admin.php:119
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:210
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:488
+msgid "Force Override Store Schedule"
+msgstr ""
+
+#: incl/order-hours/settings/Lafka_Order_Hours_Admin.php:126
+msgid "Turn-on Force Override"
+msgstr ""
+
+#: incl/order-hours/settings/Lafka_Order_Hours_Admin.php:137
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:218
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:503
+msgid "Ordering Status"
+msgstr ""
+
+#: incl/order-hours/settings/Lafka_Order_Hours_Admin.php:148
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:224
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:514
+msgid "Days Schedule"
+msgstr ""
+
+#: incl/order-hours/settings/Lafka_Order_Hours_Admin.php:155
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:226
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:519
+msgid "Open Hours Periods"
+msgstr ""
+
+#: incl/order-hours/settings/Lafka_Order_Hours_Admin.php:166
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:231
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:533
+msgid "Holidays Schedule"
+msgstr ""
+
+#: incl/order-hours/settings/Lafka_Order_Hours_Admin.php:173
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:233
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:538
+msgid "Holidays Calendar"
+msgstr ""
+
+#: incl/order-hours/settings/Lafka_Order_Hours_Admin.php:184
+msgid "Cache Management"
+msgstr ""
+
+#: incl/order-hours/settings/Lafka_Order_Hours_Admin.php:191
+msgid "Enable Shopping Cart Cache Clearing"
+msgstr ""
+
+#: incl/order-hours/settings/Lafka_Order_Hours_Admin.php:214
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:48
+msgid "Settings Saved"
+msgstr ""
+
+#: incl/order-hours/settings/Lafka_Order_Hours_Admin.php:229
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:87
+msgid "Save Settings"
+msgstr ""
+
+#: incl/order-hours/settings/Lafka_Order_Hours_Admin.php:238
+msgid "WooCommerce main store current time"
+msgstr ""
+
+#: incl/order-hours/settings/Lafka_Order_Hours_Admin.php:255
+msgid "Enter message that will appear below \"Add to Cart\" and instead of \"Checkout\" and \"Place Order\" links."
+msgstr ""
+
+#: incl/order-hours/settings/Lafka_Order_Hours_Admin.php:268
+msgid "Disable add to cart when closed for orders."
+msgstr ""
+
+#: incl/order-hours/settings/Lafka_Order_Hours_Admin.php:281
+msgid "Countdown the time to the next opening. Shown next to the closed store message."
+msgstr ""
+
+#: incl/order-hours/settings/Lafka_Order_Hours_Admin.php:282
+msgid "NOTE: Countdown will not be shown if shop status is forced. Countdown will not take into account the vacation schedule. "
+msgstr ""
+
+#: incl/order-hours/settings/Lafka_Order_Hours_Admin.php:295
+msgid "Show message in the location confirmation popup when all branches are closed and disable branch selection."
+msgstr ""
+
+#: incl/order-hours/settings/Lafka_Order_Hours_Admin.php:308
+msgid "The message when all branches are closed."
+msgstr ""
+
+#: incl/order-hours/settings/Lafka_Order_Hours_Admin.php:321
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:498
+msgid "Override current working time schedule and change the store status."
+msgstr ""
+
+#: incl/order-hours/settings/Lafka_Order_Hours_Admin.php:332
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:220
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:507
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:184
+msgid "Disabled"
+msgstr ""
+
+#: incl/order-hours/settings/Lafka_Order_Hours_Admin.php:335
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:221
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:508
+msgid "Enabled"
+msgstr ""
+
+#: incl/order-hours/settings/Lafka_Order_Hours_Admin.php:344
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:228
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:523
+msgid "Drag over the table to create order hours periods. Use X and Copy icons to delete or duplicate periods."
+msgstr ""
+
+#: incl/order-hours/settings/Lafka_Order_Hours_Admin.php:364
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:239
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:547
+msgid "Click on Text Box to Open Calendar and Select Your Holidays"
+msgstr ""
+
+#: incl/order-hours/settings/Lafka_Order_Hours_Admin.php:377
+msgid "Shopping Cart cache will be cleared on each request."
+msgstr ""
+
+#: incl/order-hours/settings/Lafka_Order_Hours_Admin.php:378
+msgid "This will ensure that the presence of \"Checkout\" button in the cart is in sync with store status. Cart content stays intact."
+msgstr ""
+
+#: incl/shipping-areas/class-lafka-shipping-areas.php:42
+msgid "Cloning is forbidden."
+msgstr ""
+
+#: incl/shipping-areas/class-lafka-shipping-areas.php:158
+#: incl/shipping-areas/class-lafka-shipping-areas.php:166
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-method.php:65
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-method.php:121
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-method.php:217
+#: incl/shipping-areas/shortcodes/shortcode-lafka-shipping-areas-to-vc.php:7
+msgid "Lafka Shipping Areas"
+msgstr ""
+
+#: incl/shipping-areas/class-lafka-shipping-areas.php:159
+#: incl/shipping-areas/class-lafka-shipping-areas.php:160
+msgid "Lafka Shipping Area"
+msgstr ""
+
+#: incl/shipping-areas/class-lafka-shipping-areas.php:161
+#: incl/swatches/classes/class-admin.php:303
+#: lafka-plugin.php:318
+msgid "Add New"
+msgstr ""
+
+#: incl/shipping-areas/class-lafka-shipping-areas.php:162
+msgid "Add New Lafka Shipping Area"
+msgstr ""
+
+#: incl/shipping-areas/class-lafka-shipping-areas.php:163
+msgid "New Lafka Shipping Area"
+msgstr ""
+
+#: incl/shipping-areas/class-lafka-shipping-areas.php:164
+msgid "Edit Lafka Shipping Area"
+msgstr ""
+
+#: incl/shipping-areas/class-lafka-shipping-areas.php:165
+msgid "View Lafka Shipping Area"
+msgstr ""
+
+#: incl/shipping-areas/class-lafka-shipping-areas.php:167
+msgid "Search Lafka Shipping Areas"
+msgstr ""
+
+#: incl/shipping-areas/class-lafka-shipping-areas.php:169
+msgid "Nothing found."
+msgstr ""
+
+#: incl/shipping-areas/class-lafka-shipping-areas.php:170
+msgid "Nothing found in Trash."
+msgstr ""
+
+#: incl/shipping-areas/class-lafka-shipping-areas.php:194
+#: incl/shipping-areas/class-lafka-shipping-areas.php:203
+msgid "Lafka Branch Locations"
+msgstr ""
+
+#: incl/shipping-areas/class-lafka-shipping-areas.php:195
+msgid "Branch Location"
+msgstr ""
+
+#: incl/shipping-areas/class-lafka-shipping-areas.php:196
+msgid "Search Branch Location"
+msgstr ""
+
+#: incl/shipping-areas/class-lafka-shipping-areas.php:197
+msgid "All Branch Location"
+msgstr ""
+
+#: incl/shipping-areas/class-lafka-shipping-areas.php:198
+msgid "Edit Branch Location"
+msgstr ""
+
+#: incl/shipping-areas/class-lafka-shipping-areas.php:199
+msgid "Update Branch Location"
+msgstr ""
+
+#: incl/shipping-areas/class-lafka-shipping-areas.php:200
+msgid "Add New Branch Location"
+msgstr ""
+
+#: incl/shipping-areas/class-lafka-shipping-areas.php:201
+msgid "Go to Branch Locations"
+msgstr ""
+
+#: incl/shipping-areas/class-lafka-shipping-areas.php:202
+msgid "No Branch Locations found"
+msgstr ""
+
+#: incl/shipping-areas/class-lafka-shipping-areas.php:273
+msgid "There are no shipping options available. Please ensure that your address has been entered correctly, or contact us if you need any help."
+msgstr ""
+
+#: incl/shipping-areas/class-lafka-shipping-areas.php:300
+msgid "Select time..."
+msgstr ""
+
+#: incl/shipping-areas/class-lafka-shipping-areas.php:346
+#: incl/shipping-areas/class-lafka-shipping-areas.php:357
+msgid "Please enter Delivery/Pickup time."
+msgstr ""
+
+#: incl/shipping-areas/class-lafka-shipping-areas.php:362
+msgid "Delivery/Pickup Time"
+msgstr ""
+
+#: incl/shipping-areas/class-lafka-shipping-areas.php:414
+#: incl/shipping-areas/class-lafka-shipping-areas.php:625
+#: incl/shipping-areas/class-lafka-shipping-areas.php:777
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:702
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:920
+#: incl/shipping-areas/includes/class-lafka-branch-locations.php:167
+#: incl/shipping-areas/includes/class-lafka-branch-locations.php:331
+msgid "Delivery"
+msgstr ""
+
+#: incl/shipping-areas/class-lafka-shipping-areas.php:417
+#: incl/shipping-areas/class-lafka-shipping-areas.php:628
+#: incl/shipping-areas/class-lafka-shipping-areas.php:783
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:704
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:921
+#: incl/shipping-areas/includes/class-lafka-branch-locations.php:334
+msgid "Pickup"
+msgstr ""
+
+#: incl/shipping-areas/class-lafka-shipping-areas.php:420
+msgid "Order Type:"
+msgstr ""
+
+#: incl/shipping-areas/class-lafka-shipping-areas.php:426
+msgid "Date:"
+msgstr ""
+
+#: incl/shipping-areas/class-lafka-shipping-areas.php:432
+msgid "Time:"
+msgstr ""
+
+#: incl/shipping-areas/class-lafka-shipping-areas.php:440
+msgid "Branch:"
+msgstr ""
+
+#: incl/shipping-areas/class-lafka-shipping-areas.php:449
+msgid "Picked Delivery Location:"
+msgstr ""
+
+#: incl/shipping-areas/class-lafka-shipping-areas.php:562
+msgid "unavailable. Maximum orders reached."
+msgstr ""
+
+#: incl/shipping-areas/class-lafka-shipping-areas.php:632
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:90
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:91
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:306
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:309
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:640
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:685
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:888
+msgid "Order Type"
+msgstr ""
+
+#: incl/shipping-areas/class-lafka-shipping-areas.php:640
+#: shortcodes/shortcodes_to_vc_mapping.php:1414
+msgid "Date"
+msgstr ""
+
+#: incl/shipping-areas/class-lafka-shipping-areas.php:648
+#: incl/shipping-areas/class-lafka-shipping-areas.php:791
+msgid "Time"
+msgstr ""
+
+#: incl/shipping-areas/class-lafka-shipping-areas.php:658
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:684
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-method.php:125
+msgid "Branch"
+msgstr ""
+
+#: incl/shipping-areas/class-lafka-shipping-areas.php:669
+msgid "Picked Delivery Location"
+msgstr ""
+
+#: incl/shipping-areas/class-lafka-shipping-areas.php:689
+msgid "Address not found! You can pinpoint Your Location on the map."
+msgstr ""
+
+#: incl/shipping-areas/class-lafka-shipping-areas.php:691
+msgid "Address not found! Pinpoint Your Location on the map to Continue"
+msgstr ""
+
+#: incl/shipping-areas/class-lafka-shipping-areas.php:696
+msgid "Pinpoint your location on the map if it's not accurately marked."
+msgstr ""
+
+#: incl/shipping-areas/class-lafka-shipping-areas.php:703
+msgid "Please Precise Your Location"
+msgstr ""
+
+#: incl/shipping-areas/class-lafka-shipping-areas.php:725
+msgid "Please precise your address on the map."
+msgstr ""
+
+#: incl/shipping-areas/class-lafka-shipping-areas.php:790
+msgid "Toggle Time Pickers"
+msgstr ""
+
+#: incl/shipping-areas/class-lafka-shipping-areas.php:791
+msgid "Specify"
+msgstr ""
+
+#: incl/shipping-areas/class-lafka-shipping-areas.php:793
+msgid "(optional)"
+msgstr ""
+
+#: incl/shipping-areas/class-lafka-shipping-areas.php:795
+msgid "required"
+msgstr ""
+
+#: incl/shipping-areas/class-lafka-shipping-areas.php:801
+msgid "Select Date"
+msgstr ""
+
+#: incl/shipping-areas/class-lafka-shipping-areas.php:809
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:56
+msgid "Clear"
+msgstr ""
+
+#: incl/shipping-areas/class-lafka-shipping-areas.php:809
+msgid "Time Entries"
+msgstr ""
+
+#: incl/shipping-areas/class-lafka-shipping-areas.php:910
+msgid "Open delivery location with Google Maps"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-api.php:74
+msgid "API response is empty."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-api.php:122
+msgid "Origin and/or destination of this pairing could not be geocoded."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-api.php:123
+msgid "No route could be found between the origin and destination."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-api.php:124
+msgid "Requested route is too long and cannot be processed."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-api.php:125
+msgid "Unknown error."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:55
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:312
+msgid "Geocode"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:57
+msgid "Geocode was not successful for the following reason"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:58
+msgid "The entered address leads to approximate result. Please precise the address or pick from the map."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:59
+#: incl/swatches/classes/class-admin.php:90
+msgid "Choose an image"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:60
+#: incl/swatches/classes/class-admin.php:91
+msgid "Use image"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:78
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:80
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:290
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:294
+msgid "Branch Manager"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:80
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:82
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:294
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:295
+msgid "Choose Branch Manager&hellip;"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:87
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:301
+msgid "Selected user will see only the orders for this or any other assigned to him branches. The user will also get new orders push and email notifications only for his branches."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:92
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:310
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:663
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:545
+msgid "Delivery and Pickup"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:93
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:311
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:664
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:546
+msgid "Only Delivery"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:94
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:312
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:665
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:547
+msgid "Only Pickup"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:96
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:314
+msgid "Specify which order types will be accepted by the branch."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:99
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:319
+msgid "Estimated Delivery/Prep Time"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:101
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:323
+msgid "Enter the average delivery/prep time for this branch. Will be displayed in the branch info box."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:104
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:327
+msgid "Branch Location Image"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:110
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:335
+#: incl/swatches/classes/class-admin.php:155
+#: incl/swatches/classes/class-admin.php:326
+#: incl/woocommerce-metaboxes.php:30
+#: incl/woocommerce-metaboxes.php:166
+msgid "Upload/Add image"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:112
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:337
+#: incl/swatches/classes/class-admin.php:156
+#: incl/swatches/classes/class-admin.php:327
+#: incl/woocommerce-metaboxes.php:32
+#: incl/woocommerce-metaboxes.php:168
+msgid "Remove image"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:115
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:340
+msgid "The image will be shown on the popup for selecting the branch."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:118
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:122
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:345
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:351
+#: incl/shipping-areas/shortcodes/shortcode-lafka-shipping-areas-to-vc.php:22
+msgid "Shipping Areas"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:121
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:350
+msgid "Choose Shipping Areas&hellip;"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:129
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:358
+msgid "Choose Lafka Shipping Areas covered by this branch."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:132
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:363
+msgid "Radius Restriction"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:134
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:367
+msgid "Suitable for radius based delivery restrictions. This option is only used for the initial check (popup) of the delivery availability based on the user address."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:137
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:372
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-method.php:134
+msgid "Distance Unit"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:139
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:376
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-method.php:141
+#: incl/shipping-areas/shortcodes/shortcode-lafka-shipping-areas-to-vc.php:95
+msgid "Metric (km)"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:140
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:377
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-method.php:142
+#: incl/shipping-areas/shortcodes/shortcode-lafka-shipping-areas-to-vc.php:96
+msgid "Imperial (miles)"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:144
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:383
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:645
+#: incl/shipping-areas/includes/class-lafka-branch-locations.php:174
+msgid "Address"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:145
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:386
+msgid "Enter a location"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:148
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:390
+msgid "The full address for the branch to calculate distance shipping and apply radius restrictions."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:149
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:391
+msgid "Note: Branch Location will be active only if it is properly geocoded."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:151
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:393
+msgid "Instructions"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:151
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:393
+msgid "Enter an address in the textbox and geocode or click on the map to set the location."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:158
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:403
+msgid "Branch Specific Delivery/Pickup Date Time Settings"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:162
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:412
+msgid "Override Global Delivery/Pickup Date Time Settings"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:168
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:421
+msgid "Make Delivery/Pickup date and time fields mandatory"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:172
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:426
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:818
+msgid "Number of days ahead to order"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:174
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:430
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:359
+msgid "Enter for how many days ahead user can make an order. The following days will be disabled in the calendar on the checkout page."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:177
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:824
+msgid "Time Slot Duration"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:178
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:374
+msgid "Minutes"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:179
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:439
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:376
+msgid "Enter the time in minutes for the slots in which the user can request the order to be completed."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:182
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:444
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:830
+msgid "Orders Per Time Slot"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:184
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:448
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:392
+msgid "Enter the number of orders which can be made in one time slot. If the number is reached for particular time slot, the users will still be able to see it, but it will be disabled."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:188
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:455
+msgid "Branch Specific Order Hours Settings"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:192
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:464
+msgid "Override Global Order Hours Settings"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:198
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:471
+msgid "Use WordPress default"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:201
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:474
+msgid "Time Zone"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:214
+msgid "Override current working time schedule and change the store status"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:408
+msgid "Override Global Delivery/Pickup Date Time"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:417
+msgid "Mandatory Delivery/Pickup Date Time"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:435
+msgid "Time Slot Duration (Minutes)"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:460
+msgid "Override Global Order Hours"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:493
+msgid "Turn on Force Override"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:644
+msgid "Manager"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:907
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-method.php:130
+msgid "All Branches"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations-admin.php:919
+msgid "All Order Types"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations.php:84
+msgid "Please wait"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations.php:85
+msgid "Select from branches serving your area"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations.php:86
+msgid "Select a branch"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations.php:87
+msgid "Please type your address and select suggestion or click on \"Use current location...\"."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations.php:88
+msgid "Something is wrong. Please try again."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations.php:89
+msgid "Sorry, your address cannot be served by any of our branches."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations.php:90
+msgid "No results found."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations.php:91
+msgid "Geocoder failed due to"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations.php:92
+msgid "Please enter precise address."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations.php:93
+#: incl/shipping-areas/includes/class-lafka-branch-locations.php:257
+msgid "Please select branch to continue."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations.php:170
+msgid "Local pickup"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations.php:176
+msgid "Enter a delivery address"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations.php:178
+msgid "Use current location"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations.php:180
+msgid "or detect my current location"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations.php:193
+msgid "Sorry, no location available to order for this address."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations.php:219
+msgid "Select Branch"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations.php:236
+msgid "Start Order"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations.php:261
+msgid "Please select order type."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations.php:265
+msgid "Please type your address and select suggested address or click on \"Use current location\"."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations.php:271
+msgid "Something is wrong. No such branch location."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations.php:342
+msgid "from"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations.php:345
+msgid "To"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations.php:349
+msgid "Change"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations.php:357
+msgid "Select Location"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-branch-locations.php:371
+msgid "Something is wrong. No session."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:29
+msgid "Lafka Shipping Settings"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:64
+msgid "General"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:65
+msgid "Advanced"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:67
+msgid "Delivery/Pickup Date Time"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:69
+msgid "Branch Locations"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:122
+msgid "Note: Google Maps API Key may already be set in"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:123
+#: lafka-plugin.php:365
+msgid "Theme Options"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:124
+msgid "In this case it will be pre-filled."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:126
+msgid "If you don't have API key, see how to "
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:127
+msgid "Generate Google Maps JavaScript API key"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:128
+msgid "(Enable following APIs: Places API, Geocoding API, Distance Matrix API)"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:143
+msgid "If your main API Key has restrictions by HTTP referrers (web sites) you will need to enter a secondary API Key for the server to serve Distance Matrix API requests which is used for calculation of distance based shipping rates."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:144
+msgid "This Key can not be restricted by HTTP referrers (web sites) and only need the Distance Matrix API activated."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:159
+msgid "At checkout, show only the available shipping method with the lowest cost. Might be more than one if cost is the same."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:161
+msgid "Note: If there is \"Local pickup\", it always be included in the list as an option."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:176
+msgid "At cart page, hide the shipping costs."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:185
+msgid "Always show the delivery map"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:186
+msgid "Show the delivery map when Google fail to geocode the delivery address"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:199
+msgid "A map can be shown at checkout that let users pick their precise delivery location."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:214
+msgid "Make it mandatory to pick delivery address from map."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:229
+msgid "Makes postcode field optional in address and checkout forms and disables post code restrictions."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:244
+msgid "Remove State field from the checkout form."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:246
+msgid "This is useful when google address lookup doesn't return state for some countries and customers can't complete their order."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:262
+msgid "Show request and response data from Google calls."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:270
+msgid "Geocode WooCommerce Store Address on Checkout"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:271
+msgid "Pick Store Location from Map"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:284
+msgid "This location will be used as starting point when calculating dynamic shipping rates and as center point when using radius as shipping method restriction."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:286
+msgid "IMPORTANT: It is highly recommended to use the \"Pick Store Location from Map\" option whenever possible. Otherwise large amount of google traffic will be generated, which will cause slow performance and may generate additional costs."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:288
+msgid "NOTE: If you have set up Branch Locations (Products -> Lafka Branch Locations) and are using them in the shipping methods, then selected Branch Location will be used for calculating the radius restriction."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:306
+msgid "Try to Geocode WooCommerce Store Address and save the coordinates"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:308
+msgid "Or click on the map to pinpoint the exact store location. Note that this will not change the address set in WooCommerce settings."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:311
+msgid "Sydney, NSW"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:328
+msgid "Enable Delivery/Pickup date and time fields in the checkout page."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:343
+msgid "Make Delivery/Pickup date and time fields mandatory."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:400
+msgid "Branch Location entries can be managed from \"Products\" -> \"Lafka Branch Locations\""
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:401
+msgid "Manage Lafka Branch Locations"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:416
+msgid "Enable order details form to appear on page load."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:419
+msgid "Modal popup will be shown, allowing the user to choose order type, enter his address and select branch location where he will get or pick order from."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:434
+msgid "Show close button on the popup with order details form."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:437
+msgid "Allows users to enter the site without providing any details. They will be able to pick store and provide details at later stage, but will not be forced to do so. Works only if \"Different Products in Branches\" is disabled."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:452
+msgid "Allow entering of partial addresses in the Location Confirmation Popup."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:455
+msgid "In some areas Google doesn't resolve to the full addresses. If you operate in such areas, you can enable this option to allow entering partial addresses in the popup. The users will be able to enter the site and can precise their location at checkout."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:471
+msgid "Rectangle coordinates to set strict bounds where google will look to autocomplete the address. Enter the coordinates, separated by commas in the following format"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:473
+msgid "East longitude, North latitude, South latitude, West longitude"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:475
+msgid "For example, to restrict to New York addresses, enter:"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:487
+msgid "Choose up to 5 countries"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:488
+msgid "Country / Region"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:495
+msgid "Limit Google address autocomplete to up to 5 countries. This is the maximum allowed number by Google."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:510
+msgid "Branches can have different products."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:513
+msgid "Assigning products to branches can be done from the Products screen in WooCommerce. NOTE: Clear all transient fields from WooCommerce -> Status -> Tools to make sure related products works correctly."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:521
+msgid "Mini Cart"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:522
+msgid "Cart"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:523
+msgid "Checkout"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:524
+msgid "Shop and Category"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:537
+msgid "Choose where to show the branch and order type info box."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:560
+msgid "Choose what options will the customers have to choose for order type."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:575
+msgid "Disable address fields for \"Pickup\" order type on checkout page."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:583
+msgid "Branch Images"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:584
+msgid "Dropdown"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:597
+msgid "Choose how branches will be selected from the popup."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:612
+msgid "Disable \"Use Current Location\" link."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:615
+msgid "Remove \"Use Current Location\" link next to user address input which allows automatic location address population."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:630
+msgid "Do not send emails to branch manager about orders."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:633
+msgid "By default, branch managers receive emails about new, canceled and failed orders for their branches. This can be disabled with this setting."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:657
+msgid "Draw Shipping Area"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:737
+msgid "Google Maps API Key"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:743
+msgid "Secondary Google Maps API Key"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:749
+msgid "Show only lowest cost shipping method"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:755
+msgid "Hide shipping costs at cart page"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:761
+msgid "Pick Precise Delivery Address from Map"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:767
+msgid "Mandatory to pick address"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:776
+msgid "Optional Postcode Field"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:782
+msgid "Disable State Field on Checkout"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:788
+msgid "Debug Mode"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:791
+msgid "Set Store Location"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:797
+msgid "Pick Store Location"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:806
+msgid "Enable Date Time Picker"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:812
+msgid "Mandatory"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:846
+msgid "Location Confirmation Popup"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:852
+msgid "Closable Popup"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:858
+msgid "Allow Partial Address"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:864
+msgid "Google Autocomplete Predictions Area Bounds"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:870
+msgid "Google Autocomplete Predictions Limit By Countries"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:876
+msgid "Different Products in Branches"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:882
+msgid "Show Branches Info Box in"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:894
+msgid "Hide Address Fields"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:900
+msgid "Branch Selection Type"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:906
+msgid "Disable Current Location"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:912
+msgid "Disable Order Emails to Branch Managers"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-method.php:63
+msgid "Lafka Shipping Areas Method"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-method.php:64
+msgid "Shipping method to be used with Lafka Shipping Areas"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-method.php:118
+#: incl/shipping-areas/shortcodes/shortcode-lafka-shipping-areas-to-vc.php:15
+#: shortcodes/shortcodes_to_vc_mapping.php:887
+#: shortcodes/shortcodes_to_vc_mapping.php:1033
+#: shortcodes/shortcodes_to_vc_mapping.php:1230
+#: shortcodes/shortcodes_to_vc_mapping.php:1339
+#: shortcodes/shortcodes_to_vc_mapping.php:1417
+#: shortcodes/shortcodes_to_vc_mapping.php:1683
+#: shortcodes/shortcodes_to_vc_mapping.php:2281
+#: widgets/wc_widgets/LafkaProductFilterWidget.php:75
+msgid "Title"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-method.php:120
+msgid "This controls the title which the user sees during checkout."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-method.php:129
+msgid "Select branch (if defined), where the shipping method will apply. Or set \"All Branches\" to ignore this check."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-method.php:138
+msgid "Choose what distance unit to use."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-method.php:146
+msgid "Shipping Rate"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-method.php:152
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-method.php:158
+msgid "Flat Rate"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-method.php:153
+msgid "By driving distance"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-method.php:154
+msgid "By fixed rate + per driving distance"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-method.php:169
+msgid "Fixed Rate"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-method.php:171
+msgid "Enter a fixed shipping rate."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-method.php:176
+msgid "Distance Unit Rate"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-method.php:178
+msgid "Enter the rate per shipping distance unit."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-method.php:183
+msgid "Round Up Distance"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-method.php:185
+msgid "Round up the calculated shipping distance with decimal to the nearest absolute number."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-method.php:190
+msgid "Tax status"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-method.php:195
+msgid "Taxable"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-method.php:196
+msgctxt "Tax status"
+msgid "None"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-method.php:200
+msgid "Minimum order amount"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-method.php:202
+msgid "Enter the minimum order amount which is needed to apply the rate."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-method.php:207
+msgid "Location Based Restrictions"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-method.php:211
+msgid "Restrict by"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-method.php:214
+msgid "Select a method for restriction"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-method.php:218
+msgid "Radius"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-method.php:224
+msgid "Delivery Area"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-method.php:227
+msgid "Select lafka shipping area or specify the area by radius"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-method.php:233
+msgid "Maximum radius"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-method.php:235
+msgid "Maximum radius in (km/miles) from the store/branch address. If set to \"All Branches\", the WooCommerce store address will be used."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-method.php:262
+msgid "Minimum order amount for %1$s is %2$s. You need just %3$s more for %1$s. %4$s"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-method.php:266
+msgid "Continue Shopping"
+msgstr ""
+
+#: incl/shipping-areas/shortcodes/shortcode-lafka-shipping-areas-to-vc.php:10
+#: shortcodes/shortcodes_to_vc_mapping.php:128
+#: shortcodes/shortcodes_to_vc_mapping.php:140
+#: shortcodes/shortcodes_to_vc_mapping.php:232
+#: shortcodes/shortcodes_to_vc_mapping.php:373
+#: shortcodes/shortcodes_to_vc_mapping.php:423
+#: shortcodes/shortcodes_to_vc_mapping.php:511
+#: shortcodes/shortcodes_to_vc_mapping.php:758
+#: shortcodes/shortcodes_to_vc_mapping.php:780
+#: shortcodes/shortcodes_to_vc_mapping.php:882
+#: shortcodes/shortcodes_to_vc_mapping.php:1028
+#: shortcodes/shortcodes_to_vc_mapping.php:1187
+#: shortcodes/shortcodes_to_vc_mapping.php:1226
+#: shortcodes/shortcodes_to_vc_mapping.php:1335
+#: shortcodes/shortcodes_to_vc_mapping.php:1380
+#: shortcodes/shortcodes_to_vc_mapping.php:1439
+#: shortcodes/shortcodes_to_vc_mapping.php:1478
+#: shortcodes/shortcodes_to_vc_mapping.php:1517
+#: shortcodes/shortcodes_to_vc_mapping.php:1556
+#: shortcodes/shortcodes_to_vc_mapping.php:1595
+#: shortcodes/shortcodes_to_vc_mapping.php:1620
+#: shortcodes/shortcodes_to_vc_mapping.php:1678
+#: shortcodes/shortcodes_to_vc_mapping.php:1724
+#: shortcodes/shortcodes_to_vc_mapping.php:1784
+#: shortcodes/shortcodes_to_vc_mapping.php:1990
+msgid "Lafka Shortcodes"
+msgstr ""
+
+#: incl/shipping-areas/shortcodes/shortcode-lafka-shipping-areas-to-vc.php:11
+msgid "Delivery map with defined areas"
+msgstr ""
+
+#: incl/shipping-areas/shortcodes/shortcode-lafka-shipping-areas-to-vc.php:17
+msgid "Enter shipping areas map title."
+msgstr ""
+
+#: incl/shipping-areas/shortcodes/shortcode-lafka-shipping-areas-to-vc.php:24
+msgid "Choose and setup lafka shipping areas to be shown on the map."
+msgstr ""
+
+#: incl/shipping-areas/shortcodes/shortcode-lafka-shipping-areas-to-vc.php:29
+msgid "Shipping Area"
+msgstr ""
+
+#: incl/shipping-areas/shortcodes/shortcode-lafka-shipping-areas-to-vc.php:31
+msgid "Enter area title to pick a area."
+msgstr ""
+
+#: incl/shipping-areas/shortcodes/shortcode-lafka-shipping-areas-to-vc.php:36
+#: incl/shipping-areas/shortcodes/shortcode-lafka-shipping-areas-to-vc.php:107
+msgid "Label Text"
+msgstr ""
+
+#: incl/shipping-areas/shortcodes/shortcode-lafka-shipping-areas-to-vc.php:38
+msgid "Enter text for area label."
+msgstr ""
+
+#: incl/shipping-areas/shortcodes/shortcode-lafka-shipping-areas-to-vc.php:44
+msgid "Label Position"
+msgstr ""
+
+#: incl/shipping-areas/shortcodes/shortcode-lafka-shipping-areas-to-vc.php:47
+#: incl/woocommerce-metaboxes.php:124
+#: incl/woocommerce-metaboxes.php:147
+#: shortcodes/shortcodes_to_vc_mapping.php:1138
+#: shortcodes/shortcodes_to_vc_mapping.php:2144
+msgid "Center"
+msgstr ""
+
+#: incl/shipping-areas/shortcodes/shortcode-lafka-shipping-areas-to-vc.php:48
+msgid "Top"
+msgstr ""
+
+#: incl/shipping-areas/shortcodes/shortcode-lafka-shipping-areas-to-vc.php:50
+msgid "Bottom"
+msgstr ""
+
+#: incl/shipping-areas/shortcodes/shortcode-lafka-shipping-areas-to-vc.php:53
+msgid "Select where in the area to position the label."
+msgstr ""
+
+#: incl/shipping-areas/shortcodes/shortcode-lafka-shipping-areas-to-vc.php:57
+#: incl/shipping-areas/shortcodes/shortcode-lafka-shipping-areas-to-vc.php:118
+#: incl/swatches/classes/class-admin.php:313
+#: incl/swatches/variation-swatches.php:40
+#: shortcodes/shortcodes_to_vc_mapping.php:1403
+msgid "Color"
+msgstr ""
+
+#: incl/shipping-areas/shortcodes/shortcode-lafka-shipping-areas-to-vc.php:59
+msgid "Select area color."
+msgstr ""
+
+#: incl/shipping-areas/shortcodes/shortcode-lafka-shipping-areas-to-vc.php:66
+msgid "Map Height"
+msgstr ""
+
+#: incl/shipping-areas/shortcodes/shortcode-lafka-shipping-areas-to-vc.php:68
+msgid "Enter map height in pixels. It will fill the width of the container."
+msgstr ""
+
+#: incl/shipping-areas/shortcodes/shortcode-lafka-shipping-areas-to-vc.php:73
+msgid "Circular Area"
+msgstr ""
+
+#: incl/shipping-areas/shortcodes/shortcode-lafka-shipping-areas-to-vc.php:75
+msgid "Draw circular area around store location with specified radius, label and color."
+msgstr ""
+
+#: incl/shipping-areas/shortcodes/shortcode-lafka-shipping-areas-to-vc.php:80
+msgid "Area Radius"
+msgstr ""
+
+#: incl/shipping-areas/shortcodes/shortcode-lafka-shipping-areas-to-vc.php:82
+msgid "Enter area radius."
+msgstr ""
+
+#: incl/shipping-areas/shortcodes/shortcode-lafka-shipping-areas-to-vc.php:92
+msgid "Radius Distance Unit"
+msgstr ""
+
+#: incl/shipping-areas/shortcodes/shortcode-lafka-shipping-areas-to-vc.php:98
+msgid "Select radius distance unit."
+msgstr ""
+
+#: incl/shipping-areas/shortcodes/shortcode-lafka-shipping-areas-to-vc.php:109
+msgid "Enter text for the circular area label."
+msgstr ""
+
+#: incl/shipping-areas/shortcodes/shortcode-lafka-shipping-areas-to-vc.php:120
+msgid "Select circular area color."
+msgstr ""
+
+#: incl/shipping-areas/shortcodes/shortcode-lafka-shipping-areas-to-vc.php:129
+#: shortcodes/shortcodes_to_vc_mapping.php:215
+#: shortcodes/shortcodes_to_vc_mapping.php:339
+#: shortcodes/shortcodes_to_vc_mapping.php:498
+#: shortcodes/shortcodes_to_vc_mapping.php:744
+#: shortcodes/shortcodes_to_vc_mapping.php:870
+msgid "CSS box"
+msgstr ""
+
+#: incl/shipping-areas/shortcodes/shortcode-lafka-shipping-areas-to-vc.php:131
+#: shortcodes/shortcodes_to_vc_mapping.php:217
+#: shortcodes/shortcodes_to_vc_mapping.php:341
+#: shortcodes/shortcodes_to_vc_mapping.php:500
+#: shortcodes/shortcodes_to_vc_mapping.php:746
+#: shortcodes/shortcodes_to_vc_mapping.php:872
+#: shortcodes/shortcodes_to_vc_mapping.php:2146
+#: shortcodes/shortcodes_to_vc_mapping.php:2153
+#: shortcodes/shortcodes_to_vc_mapping.php:2160
+msgid "Design Options"
+msgstr ""
+
+#: incl/swatches/classes/class-admin.php:207
+msgid "Select terms"
+msgstr ""
+
+#: incl/swatches/classes/class-admin.php:218
+msgid "Select all"
+msgstr ""
+
+#: incl/swatches/classes/class-admin.php:219
+msgid "Select none"
+msgstr ""
+
+#: incl/swatches/classes/class-admin.php:220
+msgid "Add new"
+msgstr ""
+
+#: incl/swatches/classes/class-admin.php:280
+msgid "Add new term"
+msgstr ""
+
+#: incl/swatches/classes/class-admin.php:290
+#: shortcodes/shortcodes_to_vc_mapping.php:2250
+msgid "Slug"
+msgstr ""
+
+#: incl/swatches/classes/class-admin.php:302
+#: incl/wpml/addons/class-wcml-lafka-product-addons.php:584
+msgid "Cancel"
+msgstr ""
+
+#: incl/swatches/classes/class-admin.php:363
+msgid "Wrong request"
+msgstr ""
+
+#: incl/swatches/classes/class-admin.php:367
+msgid "Not enough data"
+msgstr ""
+
+#: incl/swatches/classes/class-admin.php:371
+msgid "Taxonomy is not exists"
+msgstr ""
+
+#: incl/swatches/classes/class-admin.php:375
+msgid "This term is exists"
+msgstr ""
+
+#: incl/swatches/classes/class-admin.php:389
+msgid "Added successfully"
+msgstr ""
+
+#: incl/woocommerce-functions.php:36
+msgid "Enable this option to show the variation in catalog views. <br> NOTE: This will have following effects on the default WooCommerce representation of products, in order to have more fast food look:<br>- Product price will be hidden in catalogs<br>- \"From - To\" price in product view will be hidden if there is default variation<br>- Variation weight entries won't be shown in the \"Additional Information\" tab on Product view"
+msgstr ""
+
+#: incl/woocommerce-functions.php:37
+msgid "Show in Catalog?"
+msgstr ""
+
+#: incl/woocommerce-functions.php:56
+msgid "Lafka variations in catalog"
+msgstr ""
+
+#: incl/woocommerce-functions.php:57
+msgid "Show all"
+msgstr ""
+
+#: incl/woocommerce-functions.php:58
+msgid "Hide all"
+msgstr ""
+
+#: incl/woocommerce-metaboxes.php:24
+#: incl/woocommerce-metaboxes.php:157
+msgid "Title background image"
+msgstr ""
+
+#: incl/woocommerce-metaboxes.php:115
+#: incl/woocommerce-metaboxes.php:243
+#: shortcodes/shortcodes_to_vc_mapping.php:895
+#: shortcodes/shortcodes_to_vc_mapping.php:1041
+msgid "Subtitle"
+msgstr ""
+
+#: incl/wpml/addons/class-wcml-lafka-product-addons.php:226
+msgid "You can translate strings related to global lafka add-ons on the %sWPML String Translation page%s. Use the search on the top of that page to find the strings."
+msgstr ""
+
+#: incl/wpml/addons/class-wcml-lafka-product-addons.php:246
+msgid "Product Lafka Add-ons Group \"%s\""
+msgstr ""
+
+#: incl/wpml/addons/class-wcml-lafka-product-addons.php:258
+msgid "Options"
+msgstr ""
+
+#: incl/wpml/addons/class-wcml-lafka-product-addons.php:343
+msgid "You can translate the Group Name, Group Description and every Option Label of your product add-on on the %sWooCommerce product translation page%s"
+msgstr ""
+
+#: incl/wpml/addons/class-wcml-lafka-product-addons.php:581
+#: incl/wpml/addons/class-wcml-lafka-product-addons.php:604
+msgid "Multi-currency settings"
+msgstr ""
+
+#: incl/wpml/addons/class-wcml-lafka-product-addons.php:582
+msgid "Here you can set different prices for the %s in multiple currencies:"
+msgstr ""
+
+#: incl/wpml/addons/class-wcml-lafka-product-addons.php:583
+#: widgets/wc_widgets/LafkaProductFilterWidget.php:282
+msgid "Apply"
+msgstr ""
+
+#: incl/wpml/addons/class-wcml-lafka-product-addons.php:605
+msgid "Calculate prices in other currencies automatically"
+msgstr ""
+
+#: incl/wpml/addons/class-wcml-lafka-product-addons.php:606
+msgid "Set prices in other currencies manually"
+msgstr ""
+
+#: lafka-plugin.php:258
+#: lafka-plugin.php:269
+#: shortcodes/shortcodes_to_vc_mapping.php:776
+msgid "Restaurant Menu"
+msgstr ""
+
+#: lafka-plugin.php:259
+msgid "Menu Entry"
+msgstr ""
+
+#: lafka-plugin.php:260
+#: lafka-plugin.php:261
+msgid "Add New Menu Entry"
+msgstr ""
+
+#: lafka-plugin.php:262
+msgid "Edit Restaurant Menu Entry"
+msgstr ""
+
+#: lafka-plugin.php:263
+msgid "New Menu Entry"
+msgstr ""
+
+#: lafka-plugin.php:264
+msgid "View Menu Entry"
+msgstr ""
+
+#: lafka-plugin.php:265
+msgid "Search Menu Entries"
+msgstr ""
+
+#: lafka-plugin.php:266
+msgid "No Menu Entries Found"
+msgstr ""
+
+#: lafka-plugin.php:267
+msgid "No Menu Entries found in Trash"
+msgstr ""
+
+#: lafka-plugin.php:268
+msgid "Parent Menu Entry:"
+msgstr ""
+
+#: lafka-plugin.php:290
+msgid "restaurant-menu"
+msgstr ""
+
+#: lafka-plugin.php:309
+#: lafka-plugin.php:323
+msgid "Menu Categories"
+msgstr ""
+
+#: lafka-plugin.php:310
+msgid "Menu Category"
+msgstr ""
+
+#: lafka-plugin.php:311
+msgid "Search Menu Categories"
+msgstr ""
+
+#: lafka-plugin.php:312
+msgid "Popular Menu Categories"
+msgstr ""
+
+#: lafka-plugin.php:313
+msgid "All Menu Categories"
+msgstr ""
+
+#: lafka-plugin.php:314
+msgid "Parent Menu Category"
+msgstr ""
+
+#: lafka-plugin.php:315
+msgid "Parent Menu Category:"
+msgstr ""
+
+#: lafka-plugin.php:316
+msgid "Edit Menu Category"
+msgstr ""
+
+#: lafka-plugin.php:317
+msgid "Update Menu Category"
+msgstr ""
+
+#: lafka-plugin.php:319
+msgid "New Menu Category"
+msgstr ""
+
+#: lafka-plugin.php:320
+msgid "Separate Menu Categories with commas"
+msgstr ""
+
+#: lafka-plugin.php:321
+msgid "Add or remove Menu Category"
+msgstr ""
+
+#: lafka-plugin.php:322
+msgid "Choose from the most used Menu Categories"
+msgstr ""
+
+#: lafka-plugin.php:452
+msgid "Confirm importing settings from"
+msgstr ""
+
+#: lafka-plugin.php:453
+msgid ". Current Theme Options will be overwritten. Continue?"
+msgstr ""
+
+#: lafka-plugin.php:454
+msgid "Options successfully imported. Reloading."
+msgstr ""
+
+#: lafka-plugin.php:455
+msgid "There was a problem with the upload. Error"
+msgstr ""
+
+#: lafka-plugin.php:839
+msgid "Share"
+msgstr ""
+
+#: lafka-plugin.php:843
+msgid "Share on Facebook"
+msgstr ""
+
+#: lafka-plugin.php:849
+msgid "Share on Twitter"
+msgstr ""
+
+#: lafka-plugin.php:855
+msgid "Share on Pinterest"
+msgstr ""
+
+#: lafka-plugin.php:862
+msgid "Share on LinkedIn"
+msgstr ""
+
+#: lafka-plugin.php:868
+msgid "Share on VK"
+msgstr ""
+
+#: shortcodes/partials/contact-form.php:7
+#: shortcodes/partials/contact-form.php:125
+#: shortcodes/shortcodes_to_vc_mapping.php:1365
+msgid "E-Mail Address"
+msgstr ""
+
+#: shortcodes/partials/contact-form.php:8
+#: shortcodes/partials/contact-form.php:131
+#: shortcodes/shortcodes_to_vc_mapping.php:1366
+msgid "Phone"
+msgstr ""
+
+#: shortcodes/partials/contact-form.php:9
+#: shortcodes/partials/contact-form.php:137
+#: shortcodes/shortcodes_to_vc_mapping.php:1367
+msgid "Street Address"
+msgstr ""
+
+#: shortcodes/partials/contact-form.php:10
+#: shortcodes/partials/contact-form.php:143
+#: shortcodes/shortcodes_to_vc_mapping.php:1368
+msgid "Subject"
+msgstr ""
+
+#: shortcodes/partials/contact-form.php:13
+msgid "Please enter %s."
+msgstr ""
+
+#: shortcodes/partials/contact-form.php:14
+msgid "Please enter a message."
+msgstr ""
+
+#: shortcodes/partials/contact-form.php:15
+msgid "Calculation result was not correct."
+msgstr ""
+
+#: shortcodes/partials/contact-form.php:16
+msgid "Email Address Invalid."
+msgstr ""
+
+#: shortcodes/partials/contact-form.php:17
+msgid "Message was not sent. Try Again."
+msgstr ""
+
+#: shortcodes/partials/contact-form.php:18
+msgid "Thanks! Your message has been sent."
+msgstr ""
+
+#: shortcodes/partials/contact-form.php:100
+msgid "Someone sent a message from %s"
+msgstr ""
+
+#: shortcodes/partials/contact-form.php:111
+msgid "Send us a message"
+msgstr ""
+
+#: shortcodes/partials/contact-form.php:118
+msgid "Your Name"
+msgstr ""
+
+#: shortcodes/partials/contact-form.php:148
+msgid "Message Text"
+msgstr ""
+
+#: shortcodes/partials/contact-form.php:155
+msgid "Prove you're a human"
+msgstr ""
+
+#: shortcodes/partials/contact-form.php:163
+msgid "Send message"
+msgstr ""
+
+#: shortcodes/partials/vendors_list.php:13
+msgid "By date"
+msgstr ""
+
+#: shortcodes/partials/vendors_list.php:16
+msgid "By Alphabetically"
+msgstr ""
+
+#: shortcodes/partials/vendors_list.php:19
+msgid "By Category"
+msgstr ""
+
+#: shortcodes/partials/vendors_list.php:33
+msgid "Sort"
+msgstr ""
+
+#: shortcodes/partials/vendors_list.php:60
+msgid "No vendor found!"
+msgstr ""
+
+#: shortcodes/shortcodes.php:304
+msgid "Next &raquo;"
+msgstr ""
+
+#: shortcodes/shortcodes.php:305
+msgid "&laquo; Back"
+msgstr ""
+
+#: shortcodes/shortcodes.php:473
+msgid "show all"
+msgstr ""
+
+#: shortcodes/shortcodes.php:509
+#: shortcodes/shortcodes.php:521
+msgid "View more"
+msgstr ""
+
+#: shortcodes/shortcodes.php:517
+msgid "No image available"
+msgstr ""
+
+#: shortcodes/shortcodes.php:1120
+msgid "Our Location"
+msgstr ""
+
+#: shortcodes/shortcodes.php:1129
+msgid "Get Directions"
+msgstr ""
+
+#: shortcodes/shortcodes.php:1130
+msgid "Fill in your address or zipcode to calculate the route"
+msgstr ""
+
+#: shortcodes/shortcodes.php:1133
+msgid "Address or postcode"
+msgstr ""
+
+#: shortcodes/shortcodes.php:1134
+msgid "Calculate route"
+msgstr ""
+
+#: shortcodes/shortcodes.php:1720
+#: shortcodes/shortcodes_to_vc_mapping.php:1684
+msgid "Recently viewed products"
+msgstr ""
+
+#: shortcodes/shortcodes.php:2047
+msgid "Placeholder"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:20
+msgid "Center-Center"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:21
+msgid "Top-Left"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:22
+msgid "Top-Center"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:23
+msgid "Top-Right"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:24
+msgid "Center-Left"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:25
+msgid "Center-Right"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:26
+msgid "Bottom-Left"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:27
+msgid "Bottom-Center"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:28
+msgid "Bottom-Right"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:46
+msgid "Text before counter"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:49
+msgid "Enter text to be shown before counter."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:53
+msgid "Counting number"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:56
+msgid "Enter the number to count to."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:61
+msgid "Text after counter"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:64
+msgid "Enter text to be shown after counter."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:69
+msgid "Add icon?"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:70
+msgid "Add icon to the counter."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:74
+#: shortcodes/shortcodes_to_vc_mapping.php:1006
+#: shortcodes/shortcodes_to_vc_mapping.php:1129
+msgid "Icon color"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:77
+#: shortcodes/shortcodes_to_vc_mapping.php:1008
+#: shortcodes/shortcodes_to_vc_mapping.php:1131
+msgid "Select icon color."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:96
+msgid "Counter style"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:97
+msgid "Select counter style."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:104
+#: shortcodes/shortcodes_to_vc_mapping.php:185
+msgid "Centered"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:108
+msgid "Counter alignment"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:109
+msgid "Select counter alignment style."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:113
+msgid "Text color"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:116
+msgid "Choose color for the counter text."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:124
+msgid "Counter"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:127
+msgid "Configure counter"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:136
+msgid "Typed"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:139
+msgid "Animated typing"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:144
+msgid "Text before typing rotator"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:147
+msgid "Enter text to be shown before typing rotator."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:151
+msgid "Rotating strings"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:154
+msgid "Enter strings to be rotated, separated by comma, (e.g. One,Two,Tree). Please only use letters and numbers. No special characters. If it’s necessary to use special characters, please use HTML Entities instead (e.g. “&amp;amp;” instead of “&”)"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:159
+msgid "Text after typing rotator"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:162
+msgid "Enter text to be shown after typing rotator."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:177
+msgid "Typed style"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:178
+msgid "Select style."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:189
+#: shortcodes/shortcodes_to_vc_mapping.php:515
+#: shortcodes/shortcodes_to_vc_mapping.php:1135
+msgid "Alignment"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:190
+msgid "Select alignment style."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:194
+msgid "Static text color"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:197
+msgid "Choose color for the static text."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:201
+msgid "Typed text color"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:204
+msgid "Choose color for the typed text."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:210
+msgid "Start from beginning after the last string."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:224
+msgid "Content Slider"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:233
+msgid "Slide any content"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:238
+msgid "Widget title"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:239
+msgid "Enter text used as widget title (Note: located above content element)."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:264
+#: shortcodes/shortcodes_to_vc_mapping.php:1821
+msgid "Autoplay"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:265
+msgid "Select auto rotate for pageable in seconds (Note: disabled by default)."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:269
+msgid "Full-Height slider"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:271
+msgid "Display slider in full height"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:275
+msgid "Prev / Next navigation"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:277
+msgid "Enable Prev / Next navigation"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:284
+#: shortcodes/shortcodes_to_vc_mapping.php:724
+#: shortcodes/shortcodes_to_vc_mapping.php:788
+msgid "Light"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:285
+#: shortcodes/shortcodes_to_vc_mapping.php:725
+#: shortcodes/shortcodes_to_vc_mapping.php:787
+msgid "Dark"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:288
+msgid "Navigation Color"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:289
+msgid "Choose light or dark navigation, depending on the background."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:293
+msgid "Pause On Hover"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:295
+msgid "Should the slider pause on hover"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:300
+msgid "Pagination"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:302
+msgid "Enable pagination"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:308
+msgid "Bullets"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:309
+msgid "Numbers"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:312
+msgid "Pagination Type"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:313
+msgid "Select pagination type."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:323
+#: shortcodes/shortcodes_to_vc_mapping.php:738
+#: shortcodes/shortcodes_to_vc_mapping.php:926
+#: shortcodes/shortcodes_to_vc_mapping.php:1164
+#: shortcodes/shortcodes_to_vc_mapping.php:1286
+msgid "Fade"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:324
+msgid "Slide"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:325
+msgid "Slide-Flip"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:328
+msgid "Transition"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:329
+msgid "Select transition effect."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:333
+msgid "Extra class name"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:335
+msgid "If you wish to style particular content element differently, then use this field to add a class name and then lafka to it in your css file."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:335
+msgid "NOTE: If video backgrounds are used in slides content, the loop slides option would be automatically disabled for compatibility reasons."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:359
+#: shortcodes/shortcodes_to_vc_mapping.php:360
+msgid "Section"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:369
+msgid "Blog Posts"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:372
+msgid "Output Blog posts with customizable Blog style"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:377
+msgid "Blog style"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:381
+msgid "Masonry Tiles"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:382
+msgid "Mozaic"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:384
+msgid "Choose how the posts will appear."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:388
+#: shortcodes/shortcodes_to_vc_mapping.php:486
+#: shortcodes/shortcodes_to_vc_mapping.php:859
+msgid "Sorting direction"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:391
+#: shortcodes/shortcodes_to_vc_mapping.php:489
+msgid "WordPress Default"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:392
+#: shortcodes/shortcodes_to_vc_mapping.php:490
+#: shortcodes/shortcodes_to_vc_mapping.php:863
+#: shortcodes/shortcodes_to_vc_mapping.php:1429
+#: shortcodes/shortcodes_to_vc_mapping.php:2010
+msgid "Ascending"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:393
+#: shortcodes/shortcodes_to_vc_mapping.php:491
+#: shortcodes/shortcodes_to_vc_mapping.php:862
+#: shortcodes/shortcodes_to_vc_mapping.php:1428
+#: shortcodes/shortcodes_to_vc_mapping.php:2011
+msgid "Descending"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:395
+#: shortcodes/shortcodes_to_vc_mapping.php:493
+#: shortcodes/shortcodes_to_vc_mapping.php:865
+msgid "Choose the date sorting direction."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:399
+msgid "Posts per page"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:402
+msgid "Enter the number of posts displayed per page. Leave blank for default."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:406
+#: shortcodes/shortcodes_to_vc_mapping.php:479
+#: shortcodes/shortcodes_to_vc_mapping.php:852
+msgid "Offset"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:409
+#: shortcodes/shortcodes_to_vc_mapping.php:482
+msgid "Set number of posts to be skipped."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:419
+msgid "Latest Posts"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:422
+msgid "Show Latest Posts"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:430
+#: shortcodes/shortcodes_to_vc_mapping.php:1694
+msgid "Carousel"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:437
+#: shortcodes/shortcodes_to_vc_mapping.php:1451
+#: shortcodes/shortcodes_to_vc_mapping.php:1490
+#: shortcodes/shortcodes_to_vc_mapping.php:1529
+#: shortcodes/shortcodes_to_vc_mapping.php:1568
+#: shortcodes/shortcodes_to_vc_mapping.php:1607
+#: shortcodes/shortcodes_to_vc_mapping.php:1633
+#: shortcodes/shortcodes_to_vc_mapping.php:1702
+#: shortcodes/shortcodes_to_vc_mapping.php:1749
+msgid "Columns"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:440
+msgid "Number of columns"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:449
+#: shortcodes/shortcodes_to_vc_mapping.php:794
+msgid "Filter By Category"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:466
+msgid "Enter category names."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:471
+msgid "Number of posts"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:474
+msgid "Enter the number of posts to be displayed."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:507
+msgid "Banner"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:510
+msgid "Output configurable banner"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:518
+msgid "Choose alginment style for the banner."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:522
+msgid "Icon library"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:524
+#: shortcodes/shortcodes_to_vc_mapping.php:934
+#: shortcodes/shortcodes_to_vc_mapping.php:1057
+msgid "Font Awesome 5"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:525
+msgid "Open Iconic"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:526
+msgid "Typicons"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:527
+msgid "Entypo"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:528
+msgid "Linecons"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:529
+#: shortcodes/shortcodes_to_vc_mapping.php:935
+#: shortcodes/shortcodes_to_vc_mapping.php:1058
+#: shortcodes/shortcodes_to_vc_mapping.php:2051
+#: shortcodes/shortcodes_to_vc_mapping.php:2057
+#: shortcodes/shortcodes_to_vc_mapping.php:2062
+msgid "Elegant Icons Font"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:530
+#: shortcodes/shortcodes_to_vc_mapping.php:936
+#: shortcodes/shortcodes_to_vc_mapping.php:1059
+#: shortcodes/shortcodes_to_vc_mapping.php:2052
+#: shortcodes/shortcodes_to_vc_mapping.php:2058
+#: shortcodes/shortcodes_to_vc_mapping.php:2063
+msgid "Fast Food Icons"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:534
+msgid "Select icon library."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:538
+#: shortcodes/shortcodes_to_vc_mapping.php:554
+#: shortcodes/shortcodes_to_vc_mapping.php:570
+#: shortcodes/shortcodes_to_vc_mapping.php:586
+#: shortcodes/shortcodes_to_vc_mapping.php:601
+#: shortcodes/shortcodes_to_vc_mapping.php:617
+#: shortcodes/shortcodes_to_vc_mapping.php:634
+#: shortcodes/shortcodes_to_vc_mapping.php:945
+#: shortcodes/shortcodes_to_vc_mapping.php:961
+#: shortcodes/shortcodes_to_vc_mapping.php:978
+#: shortcodes/shortcodes_to_vc_mapping.php:1068
+#: shortcodes/shortcodes_to_vc_mapping.php:1084
+#: shortcodes/shortcodes_to_vc_mapping.php:1101
+#: shortcodes/shortcodes_to_vc_mapping.php:1840
+#: shortcodes/shortcodes_to_vc_mapping.php:1859
+#: shortcodes/shortcodes_to_vc_mapping.php:1877
+#: shortcodes/shortcodes_to_vc_mapping.php:1895
+#: shortcodes/shortcodes_to_vc_mapping.php:1913
+#: shortcodes/shortcodes_to_vc_mapping.php:1931
+msgid "Icon"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:550
+#: shortcodes/shortcodes_to_vc_mapping.php:566
+#: shortcodes/shortcodes_to_vc_mapping.php:582
+#: shortcodes/shortcodes_to_vc_mapping.php:613
+#: shortcodes/shortcodes_to_vc_mapping.php:630
+#: shortcodes/shortcodes_to_vc_mapping.php:647
+#: shortcodes/shortcodes_to_vc_mapping.php:957
+#: shortcodes/shortcodes_to_vc_mapping.php:974
+#: shortcodes/shortcodes_to_vc_mapping.php:991
+#: shortcodes/shortcodes_to_vc_mapping.php:1080
+#: shortcodes/shortcodes_to_vc_mapping.php:1097
+#: shortcodes/shortcodes_to_vc_mapping.php:1114
+#: shortcodes/shortcodes_to_vc_mapping.php:1853
+#: shortcodes/shortcodes_to_vc_mapping.php:1872
+#: shortcodes/shortcodes_to_vc_mapping.php:1890
+#: shortcodes/shortcodes_to_vc_mapping.php:1908
+#: shortcodes/shortcodes_to_vc_mapping.php:1926
+#: shortcodes/shortcodes_to_vc_mapping.php:1944
+msgid "Select icon from library."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:651
+msgid "Pre-Title"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:654
+msgid "Enter the banner pre-title."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:658
+msgid "Special Pre-Title Font"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:660
+msgid "Recommended to be used only with short texts (5 to 6 characters)."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:664
+msgid "Main Title"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:667
+msgid "Enter the banner main title."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:672
+msgid "Main Title Font Size"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:676
+#: shortcodes/shortcodes_to_vc_mapping.php:1395
+msgid "Big"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:678
+msgid "Choose predefined main title font size."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:683
+msgid "Sub-Title"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:686
+msgid "Enter Sub-Title."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:693
+msgid "Choose image for the banner. (Actual size will be used)"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:697
+#: shortcodes/shortcodes_to_vc_mapping.php:1308
+msgid "Link"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:700
+msgid "Enter the URL where the banner will lead to."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:704
+msgid "Open in"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:706
+msgid "New window"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:707
+msgid "Same window"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:710
+msgid "Open link in new window or current."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:714
+#: shortcodes/shortcodes_to_vc_mapping.php:1301
+msgid "Button Text"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:717
+#: shortcodes/shortcodes_to_vc_mapping.php:1304
+msgid "Enter text for the button."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:721
+#: shortcodes/shortcodes_to_vc_mapping.php:784
+msgid "Color Scheme"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:727
+msgid "Choose the color scheme."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:731
+#: shortcodes/shortcodes_to_vc_mapping.php:919
+#: shortcodes/shortcodes_to_vc_mapping.php:1157
+#: shortcodes/shortcodes_to_vc_mapping.php:1279
+msgid "Appear Animation"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:735
+#: shortcodes/shortcodes_to_vc_mapping.php:923
+#: shortcodes/shortcodes_to_vc_mapping.php:1161
+#: shortcodes/shortcodes_to_vc_mapping.php:1283
+msgid "From Left"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:736
+#: shortcodes/shortcodes_to_vc_mapping.php:924
+#: shortcodes/shortcodes_to_vc_mapping.php:1162
+#: shortcodes/shortcodes_to_vc_mapping.php:1284
+msgid "From Right"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:737
+#: shortcodes/shortcodes_to_vc_mapping.php:925
+#: shortcodes/shortcodes_to_vc_mapping.php:1163
+#: shortcodes/shortcodes_to_vc_mapping.php:1285
+msgid "From Bottom"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:740
+#: shortcodes/shortcodes_to_vc_mapping.php:928
+#: shortcodes/shortcodes_to_vc_mapping.php:1166
+#: shortcodes/shortcodes_to_vc_mapping.php:1288
+msgid "Choose how the element will appear."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:754
+msgid "CloudZoom gallery"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:757
+msgid "Output CloudZoom gallery"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:762
+msgid "Images"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:765
+msgid "Choose images for the gallery."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:779
+msgid "Customisable Menu List"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:790
+msgid "Choose color scheme."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:811
+msgid "Enter menu category names."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:816
+msgid "Lightbox"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:818
+msgid "Show link that opens the featured image in lightbox"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:822
+msgid "Sortable"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:824
+msgid "Enable Sortable"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:825
+msgid "Show menu categories on top and filter entries from specific categories."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:830
+msgid "Hide Images"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:832
+#: shortcodes/shortcodes_to_vc_mapping.php:839
+#: shortcodes/shortcodes_to_vc_mapping.php:1959
+msgid "Enable"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:833
+msgid "No images in the menu and menu entries."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:837
+msgid "Simple Menu List"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:840
+msgid "No links to single menu entry page."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:844
+msgid "Number of Menu Entries Listed"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:847
+msgid "Enter the number of menu entries to be displayed."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:855
+msgid "Set number of menu entries to be skipped. ( Number of Menu Entries must be filled )"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:879
+msgid "Icon Teaser"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:883
+msgid "Icon teaser"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:890
+#: shortcodes/shortcodes_to_vc_mapping.php:1036
+msgid "Enter title"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:898
+#: shortcodes/shortcodes_to_vc_mapping.php:1044
+msgid "Enter subtitle"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:902
+#: shortcodes/shortcodes_to_vc_mapping.php:1048
+msgid "Title/Subtitle Color"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:905
+#: shortcodes/shortcodes_to_vc_mapping.php:1051
+msgid "Choose Title/Subtitle color."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:909
+msgid "Align"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:915
+msgid "Choose alignment"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:932
+msgid "Icon library / Custom Image"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:937
+#: shortcodes/shortcodes_to_vc_mapping.php:1060
+msgid "Use Custom Image"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:941
+#: shortcodes/shortcodes_to_vc_mapping.php:1064
+msgid "Select icon library or select image."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:998
+#: shortcodes/shortcodes_to_vc_mapping.php:1121
+msgid "Choose image instead of icon. (60 x 60 size will be used)"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1014
+#: shortcodes/shortcodes_to_vc_mapping.php:1172
+msgid "Text"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1017
+#: shortcodes/shortcodes_to_vc_mapping.php:1175
+msgid "Enter the text that will be used with the icon"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1025
+msgid "Icon Box"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1029
+msgid "Icon box"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1055
+msgid "Icon Library / Custom Image"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1142
+msgid "Choose icon alignment."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1146
+msgid "Icon Style"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1149
+msgid "Circle"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1150
+msgid "Square"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1151
+msgid "Clean"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1153
+msgid "Choose icon style."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1183
+msgid "Map"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1186
+msgid "Map with location"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1191
+msgid "Location Title"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1194
+msgid "Will appear when hover over the location."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1199
+msgid "Latitude"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1202
+msgid "Enter location latitude."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1206
+msgid "Longitude"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1209
+msgid "Enter location longitude."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1209
+msgctxt "theme-options"
+msgid "Go to %s and get your location coordinates: </br>(e.g. Latitude: 40.588372 / Longitude: -74.240112)"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1213
+msgid "Map height"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1216
+msgid "Map height in px."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1222
+msgid "Pricing Table"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1225
+msgid "Create pricing tables"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1233
+msgid "Enter the table title."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1238
+msgid "Sub Title"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1241
+msgid "Enter sub title."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1245
+msgid "Styled for Dark Background"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1251
+msgid "Price Bills"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1254
+msgid "Enter the bills price for this package. e.g. 157."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1258
+msgid "Price Coins"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1261
+msgid "Enter the coins for the price. e.g. 49 , for a price of 157.49"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1265
+msgid "Currency Symbol"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1268
+msgid "Enter the currency symbol for the price. e.g. $."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1272
+msgid "Period"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1275
+msgid "e.g. per month."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1294
+msgid "Content"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1297
+msgid "Enter the pricing table content"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1311
+msgid "Enter the URL for the button."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1315
+msgid "Accent Color"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1318
+msgid "Choose accent color of the pricing table."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1322
+msgid "Featured"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1324
+msgid "Mark as featured"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1331
+msgid "Contact Form"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1334
+msgid "Configurable Contact Form"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1342
+msgid "Enter contact form title."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1347
+msgid "Receiving Email Address"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1350
+msgid "Email address for receing the contact form email."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1355
+msgid "Use Captcha"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1357
+msgid "Use simple captcha for the contact form"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1361
+msgid "Select Fields for the Contact Form"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1370
+msgid "Choose which fields to be displayed on the contact form. Selcted fields will also be required fields. The message textarea will be always displayed."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1379
+msgid "Customized Countdown"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1384
+msgid "Expire Date"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1387
+msgid "Enter the end date for the counter."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1387
+msgid "Use following format YYYY/MM/DD HH:MM:SS, e.g. 2020/04/25 17:45:00"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1398
+msgid "Size"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1399
+msgid "Select counter size."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1406
+msgid "Choose counter color."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1415
+msgid "ID"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1416
+msgid "Author"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1418
+msgid "Modified"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1419
+msgid "Random"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1420
+msgid "Comment count"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1421
+msgid "Menu order"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1422
+msgid "Menu order and title"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1423
+msgid "Include"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1436
+msgid "Top Rated Products Carousel"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1440
+#: shortcodes/shortcodes_to_vc_mapping.php:1557
+msgid "List all products on sale in carousel"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1444
+#: shortcodes/shortcodes_to_vc_mapping.php:1483
+#: shortcodes/shortcodes_to_vc_mapping.php:1522
+#: shortcodes/shortcodes_to_vc_mapping.php:1561
+#: shortcodes/shortcodes_to_vc_mapping.php:1600
+#: shortcodes/shortcodes_to_vc_mapping.php:1625
+msgid "Per page"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1447
+#: shortcodes/shortcodes_to_vc_mapping.php:1564
+#: shortcodes/shortcodes_to_vc_mapping.php:1603
+#: shortcodes/shortcodes_to_vc_mapping.php:1629
+msgid "How much items per page to show"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1454
+#: shortcodes/shortcodes_to_vc_mapping.php:1571
+#: shortcodes/shortcodes_to_vc_mapping.php:1610
+#: shortcodes/shortcodes_to_vc_mapping.php:1637
+#: shortcodes/shortcodes_to_vc_mapping.php:1752
+msgid "How much columns grid"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1458
+#: shortcodes/shortcodes_to_vc_mapping.php:1497
+#: shortcodes/shortcodes_to_vc_mapping.php:1536
+#: shortcodes/shortcodes_to_vc_mapping.php:1575
+#: shortcodes/shortcodes_to_vc_mapping.php:1641
+#: shortcodes/shortcodes_to_vc_mapping.php:1735
+#: shortcodes/shortcodes_to_vc_mapping.php:1789
+msgid "Order by"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1461
+#: shortcodes/shortcodes_to_vc_mapping.php:1500
+#: shortcodes/shortcodes_to_vc_mapping.php:1539
+#: shortcodes/shortcodes_to_vc_mapping.php:1578
+#: shortcodes/shortcodes_to_vc_mapping.php:1647
+#: shortcodes/shortcodes_to_vc_mapping.php:1738
+msgid "Select how to sort retrieved products. More at %s."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1465
+#: shortcodes/shortcodes_to_vc_mapping.php:1504
+#: shortcodes/shortcodes_to_vc_mapping.php:1543
+#: shortcodes/shortcodes_to_vc_mapping.php:1582
+#: shortcodes/shortcodes_to_vc_mapping.php:1742
+#: shortcodes/shortcodes_to_vc_mapping.php:1797
+msgid "Order way"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1468
+#: shortcodes/shortcodes_to_vc_mapping.php:1507
+#: shortcodes/shortcodes_to_vc_mapping.php:1546
+#: shortcodes/shortcodes_to_vc_mapping.php:1585
+#: shortcodes/shortcodes_to_vc_mapping.php:1657
+#: shortcodes/shortcodes_to_vc_mapping.php:1745
+msgid "Designates the ascending or descending order. More at %s."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1475
+msgid "Recent Products Carousel"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1479
+msgid "Lists recent products in carousel"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1486
+#: shortcodes/shortcodes_to_vc_mapping.php:1525
+msgid "The \"per_page\" shortcode determines how many products to show on the page"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1493
+#: shortcodes/shortcodes_to_vc_mapping.php:1532
+msgid "The columns attribute controls how many columns wide the products should be before wrapping."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1514
+msgid "Featured Products Carousel"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1518
+msgid "Display products set as featured in carousel"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1553
+msgid "Sale Products Carousel"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1592
+msgid "Best Selling Products Carousel"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1596
+msgid "List best selling products in carousel"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1617
+msgid "Product Category Carousel"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1621
+msgid "Show products from category in carousel"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1651
+msgid "Sort order"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1661
+msgid "Category"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1668
+msgid "Product category lists"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1675
+msgid "Recently Viewed Products"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1679
+msgid "List recently viewed products"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1686
+msgid "Title for the shortcode."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1696
+msgid "Choose between grid and carousel layout."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1705
+msgid "How many products to be displayed on a row."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1710
+msgid "Number of Products"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1713
+msgid "Number of products to show."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1721
+msgid "Product Categories Carousel"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1725
+msgid "Display categories in carousel"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1729
+#: shortcodes/shortcodes_to_vc_mapping.php:1756
+msgid "Number"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1731
+msgid "The `number` field is used to display the number of products."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1758
+msgid "Hide empty"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1762
+msgid "Categories"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1768
+msgid "List of product categories"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1781
+msgid "Products Slider"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1785
+msgid "Display Products in slider"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1793
+msgid "Select how to sort retrieved products. More at %s. Default by Title"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1800
+msgid "Designates the ascending or descending order. More at %s. Default by ASC"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1804
+msgid "Products"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1813
+msgid "Enter List of Products"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1822
+msgid "On"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1829
+msgid "Autoplay Timeout"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1832
+msgid "Autoplay interval timeout in seconds."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1957
+msgid "List View"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1961
+msgid "Display products in list view. NOTE: Columns attribute will be discarded."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1987
+msgid "WCMp Vendors List"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1991
+msgid "Displays registered vendors"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1995
+msgid "Order By"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1997
+msgid "Date Registered"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1998
+msgid "Vendor Name"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:1999
+msgid "Product Category"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:2002
+msgid "Sort vendors by chosen order parameter."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:2007
+msgid "Order Way"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:2013
+msgid "Designates the ascending or descending order."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:2018
+msgid "Number of Vendors Listed"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:2021
+msgid "Enter the number of vendors to be displayed. NOTE: If leaved empty, all vendors will be listed."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:2026
+msgid "Hide Sorting Options"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:2028
+msgid "Hide \"Sort\" dropdown"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:2099
+msgid "Paste the YouTube URL."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:2100
+#: shortcodes/shortcodes_to_vc_mapping.php:2108
+#: shortcodes/shortcodes_to_vc_mapping.php:2115
+#: shortcodes/shortcodes_to_vc_mapping.php:2123
+#: shortcodes/shortcodes_to_vc_mapping.php:2131
+msgid "Lafka Video Background"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:2104
+msgid "Video Opacity"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:2107
+msgid "Set opacity fot the video."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:2112
+msgid "Raster"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:2114
+msgid "Enable Raster effect"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:2119
+msgid "Start time"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:2122
+msgid "Set the seconds the video should start at."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:2127
+msgid "End time"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:2130
+msgid "Set the seconds the video should stop at."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:2139
+msgid "General row alignment"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:2150
+msgid "Allow content overflow"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:2157
+msgid "Fixed Background"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:2173
+msgid "Dysplay Style"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:2176
+msgid "Classic Style"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:2177
+msgid "Lafka Style"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:2180
+msgid "Choose between the standard VC style and Lafka style."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:2189
+msgid "Line Accent"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:2191
+msgid "Append line accent to the text."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:2195
+msgid "Special Font"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:2197
+msgid "Use special font for the heading."
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:2246
+#: shortcodes/shortcodes_to_vc_mapping.php:2284
+msgid "Id"
+msgstr ""
+
+#: shortcodes/shortcodes_to_vc_mapping.php:2276
+msgid "Sku"
+msgstr ""
+
+#: widgets/LafkaAboutWidget.php:12
+msgid "Shows excerpt of the About us page"
+msgstr ""
+
+#: widgets/LafkaAboutWidget.php:26
+msgid "Read more"
+msgstr ""
+
+#: widgets/LafkaAboutWidget.php:34
+msgid "About %s store"
+msgstr ""
+
+#: widgets/LafkaAboutWidget.php:42
+#: widgets/LafkaContactsWidget.php:67
+#: widgets/LafkaLatestMenuEntriesWidget.php:95
+#: widgets/LafkaPaymentOptionsWidget.php:84
+#: widgets/LafkaPopularPostsWidget.php:99
+msgid "Title:"
+msgstr ""
+
+#: widgets/LafkaAboutWidget.php:46
+msgid "Choose the About us page:"
+msgstr ""
+
+#: widgets/LafkaContactsWidget.php:12
+msgid "Shows contact details"
+msgstr ""
+
+#: widgets/LafkaContactsWidget.php:56
+msgid "Have a Question?"
+msgstr ""
+
+#: widgets/LafkaContactsWidget.php:71
+msgid "Store working time:"
+msgstr ""
+
+#: widgets/LafkaContactsWidget.php:75
+msgid "Address:"
+msgstr ""
+
+#: widgets/LafkaContactsWidget.php:79
+msgid "Phone number:"
+msgstr ""
+
+#: widgets/LafkaContactsWidget.php:83
+msgid "Fax number:"
+msgstr ""
+
+#: widgets/LafkaContactsWidget.php:87
+msgid "Email address:"
+msgstr ""
+
+#: widgets/LafkaLatestMenuEntriesWidget.php:10
+msgid "List Restaurant Menu Entries with configurable options."
+msgstr ""
+
+#: widgets/LafkaLatestMenuEntriesWidget.php:11
+msgid "Lafka Latest Menu Entries"
+msgstr ""
+
+#: widgets/LafkaLatestMenuEntriesWidget.php:38
+msgid "Latest Menu Entries"
+msgstr ""
+
+#: widgets/LafkaLatestMenuEntriesWidget.php:98
+msgid "Number of entries to show:"
+msgstr ""
+
+#: widgets/LafkaPaymentOptionsWidget.php:10
+msgid "Display a list of available payment methods and seal code"
+msgstr ""
+
+#: widgets/LafkaPaymentOptionsWidget.php:37
+msgid "Payment Options"
+msgstr ""
+
+#: widgets/LafkaPaymentOptionsWidget.php:61
+msgid "American Express"
+msgstr ""
+
+#: widgets/LafkaPaymentOptionsWidget.php:62
+msgid "Cirrus"
+msgstr ""
+
+#: widgets/LafkaPaymentOptionsWidget.php:63
+msgid "Maestro"
+msgstr ""
+
+#: widgets/LafkaPaymentOptionsWidget.php:64
+msgid "Mastercard"
+msgstr ""
+
+#: widgets/LafkaPaymentOptionsWidget.php:65
+msgid "Visa"
+msgstr ""
+
+#: widgets/LafkaPaymentOptionsWidget.php:66
+msgid "Cash on delivery"
+msgstr ""
+
+#: widgets/LafkaPaymentOptionsWidget.php:67
+msgid "Direct Debit"
+msgstr ""
+
+#: widgets/LafkaPaymentOptionsWidget.php:68
+msgid "PayPal"
+msgstr ""
+
+#: widgets/LafkaPaymentOptionsWidget.php:69
+msgid "Cheque"
+msgstr ""
+
+#: widgets/LafkaPaymentOptionsWidget.php:70
+msgid "Google checkout"
+msgstr ""
+
+#: widgets/LafkaPaymentOptionsWidget.php:71
+msgid "2Checkout"
+msgstr ""
+
+#: widgets/LafkaPaymentOptionsWidget.php:72
+msgid "Delta"
+msgstr ""
+
+#: widgets/LafkaPaymentOptionsWidget.php:73
+msgid "Discover"
+msgstr ""
+
+#: widgets/LafkaPaymentOptionsWidget.php:74
+msgid "Moneybookers"
+msgstr ""
+
+#: widgets/LafkaPaymentOptionsWidget.php:75
+msgid "SOLO"
+msgstr ""
+
+#: widgets/LafkaPaymentOptionsWidget.php:76
+msgid "Switch"
+msgstr ""
+
+#: widgets/LafkaPaymentOptionsWidget.php:77
+msgid "Western Union"
+msgstr ""
+
+#: widgets/LafkaPaymentOptionsWidget.php:78
+msgid "Sage Pay"
+msgstr ""
+
+#: widgets/LafkaPaymentOptionsWidget.php:79
+msgid "iDEAL "
+msgstr ""
+
+#: widgets/LafkaPaymentOptionsWidget.php:96
+msgid "Seal code:"
+msgstr ""
+
+#: widgets/LafkaPopularPostsWidget.php:13
+msgid "The most popular posts on your site"
+msgstr ""
+
+#: widgets/LafkaPopularPostsWidget.php:15
+msgid "Lafka Popular Posts"
+msgstr ""
+
+#: widgets/LafkaPopularPostsWidget.php:24
+msgid "Popular Posts"
+msgstr ""
+
+#: widgets/LafkaPopularPostsWidget.php:103
+msgid "Number of posts to show:"
+msgstr ""
+
+#: widgets/wc_widgets/LafkaProductFilterWidget.php:20
+msgid "Shows a custom attribute in a widget which lets you narrow down the list of products when viewing product categories, using default attribute types."
+msgstr ""
+
+#: widgets/wc_widgets/LafkaProductFilterWidget.php:22
+msgid "Lafka Product Filter"
+msgstr ""
+
+#: widgets/wc_widgets/LafkaProductFilterWidget.php:74
+msgid "Filter by"
+msgstr ""
+
+#: widgets/wc_widgets/LafkaProductFilterWidget.php:80
+msgid "Attribute"
+msgstr ""
+
+#: widgets/wc_widgets/LafkaProductFilterWidget.php:86
+msgid "Query type"
+msgstr ""
+
+#: widgets/wc_widgets/LafkaProductFilterWidget.php:88
+msgid "AND"
+msgstr ""
+
+#: widgets/wc_widgets/LafkaProductFilterWidget.php:89
+msgid "OR"
+msgstr ""
+
+#. translators: %s: taxonomy name
+#: widgets/wc_widgets/LafkaProductFilterWidget.php:244
+msgid "Any %s"
+msgstr ""
+
+#: widgets/wc_widgets/LafkaProductFilterWidget.php:316
+msgctxt "enhanced select"
+msgid "No matches found"
+msgstr ""

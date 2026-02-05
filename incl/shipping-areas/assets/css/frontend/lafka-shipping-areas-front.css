@@ -1,0 +1,424 @@
+#shipping_method li {
+    opacity: 0.75;
+}
+
+#lafka-pick-delivery-address-checkout-map {
+    height: 400px;
+}
+
+.lafka-geocode-debug-info {
+    word-wrap: break-word;
+}
+
+button.button.lafka-disabled {
+    opacity: 0.5;
+    cursor: default;
+    background: #333333;
+}
+
+.pac-container {
+    z-index: 200102;
+}
+
+#lafka_select_branch_modal {
+    position: relative;
+    background: #FFF;
+    padding: 20px;
+    width: auto;
+    max-width: 600px;
+    margin: 20px auto;
+    border-radius: 6px;
+}
+
+.lafka-all-stores-closed {
+    text-align: center;
+}
+
+.lafka-all-stores-closed-countdown {
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+.lafka-all-stores-closed-countdown .count_holder_small {
+    font-size: 24px;
+}
+
+a.lafka-branch-delivery, a.lafka-branch-pickup, .lafka-branch-user-address, .lafka-branch-selection {
+    display: none;
+}
+
+.lafka-branch-order-type, .lafka-branch-user-address {
+    margin-bottom: 25px;
+}
+
+.lafka-branch-order-type {
+    background-color: #f8f8f8;
+    padding: 2px 2px 0 8px;
+    border-bottom: 1px solid #e1e1e1;
+}
+
+.lafka-branch-order-type a {
+    display: inline-block;
+    padding: 10px 20px;
+    border-radius: 6px 6px 0 0;
+    background-color: #f8f8f8;
+    text-decoration: none;
+    color: #333333;
+    text-transform: uppercase;
+}
+
+.lafka-branch-order-type a:hover {
+    color: #333333;
+    background-color: #e1e1e1;
+}
+
+.lafka-branch-order-type a.lafka-selected {
+    background-color: #ffffff;
+    position: relative;
+    bottom: -2px;
+}
+
+.lafka-branch-user-address input#lafka_branch_select_user_address {
+    width: 100%;
+    margin: 8px 0 12px 0;
+}
+
+a.lafka-branch-auto-locate {
+    text-decoration: none !important;
+    color: #333333;
+}
+div.lafka-branch-select-images {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-wrap: wrap;
+    flex-wrap: wrap;
+    -webkit-justify-content: flex-start;
+    justify-content: flex-start;
+}
+
+span.lafka-branch-select-image {
+    display: inline-block;
+    width: 31%;
+    text-align: center;
+    color: #333333;
+    border: 2px solid #e1e1e1;
+    border-radius: 6px;
+    margin-right: 3px;
+    vertical-align: top;
+    padding: 15px 8px;
+    position: relative;
+    z-index: 1;
+}
+
+span.lafka-branch-select-image a, span.lafka-branch-select-image a .lafka-branch-select-name {
+    color: #333333;
+    text-decoration: none;
+    display: block;
+}
+
+span.lafka-branch-select-image.lafka-branch-selected-image {
+    box-shadow: 0 0px 40px 0 rgba(0, 0, 0, 0.2);
+    z-index: 100;
+}
+
+span.lafka-branch-select-image a {
+    display: block;
+}
+
+span.lafka-branch-select-image a img {
+    margin-bottom: 8px;
+    width: 100%;
+    max-width: 120px;
+}
+
+.lafka-branch-selection, .lafka-branch-select-message {
+    margin-bottom: 30px;
+}
+
+a.lafka-branch-delivery, a.lafka-branch-pickup {
+    text-decoration: none !important;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+a.lafka-branch-delivery:before, a.lafka-branch-pickup:before {
+    display: inline-block;
+    font-family: Flaticon;
+    content: "\f11e";
+    margin-right: 8px;
+    font-size: 21px;
+    vertical-align: middle;
+    font-weight: normal;
+}
+
+a.lafka-branch-pickup:before {
+    content: "\f125";
+}
+
+.lafka-branch-select-tip {
+    display: block;
+    width: 100%;
+    font-size: 14px;
+    color: #333333;
+    margin-bottom: 8px;
+}
+
+h3.lafka-address-not-found, h3.lafka-address-marked {
+    display: none;
+}
+
+.woocommerce form.checkout h3.lafka-address-not-found, .woocommerce form.checkout h3.lafka-address-marked {
+    font-size: 16px;
+    font-weight: normal;
+    padding: 10px;
+    border-radius: 6px;
+    color: #ffffff;
+    background-color: #333333;
+    position: relative;
+    margin-bottom: 25px;
+}
+
+.woocommerce form.checkout h3.lafka-address-not-found:after, .woocommerce form.checkout h3.lafka-address-marked:after {
+    width: 8px;
+    height: 8px;
+    display: block;
+    content: "";
+    -webkit-transform: rotate(45deg);
+    transform: rotate(45deg);
+    position: absolute;
+    bottom: -4px;
+    left: 20px;
+    background-color: #333333;
+}
+
+.woocommerce form.checkout h3.lafka-address-marked, .woocommerce form.checkout h3.lafka-address-marked:after {
+    color: #333333;
+    background-color: #f1f1f1;
+}
+
+.lafka-change-branch {
+    display: block;
+    padding: 8px;
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.04);
+    color: #666666;
+    font-size: 14px;
+    text-align: left;
+    margin: 2px 0;
+    position: relative;
+}
+
+#products-wrapper .lafka-change-branch {
+    width: 100%;
+    max-width: 400px;
+    float: right;
+    clear: both;
+    margin-bottom: 20px;
+}
+
+body > div.widget.woocommerce.widget_shopping_cart .widget_shopping_cart_content .lafka-change-branch {
+    margin-top: 5px;
+}
+
+.cart-collaterals .lafka-change-branch, #order_review .lafka-change-branch {
+    margin-bottom: 25px;
+}
+
+.lafka-change-branch span strong {
+    font-weight: normal;
+    color: #333333;
+}
+
+.lafka-change-branch span {
+    display: inline-block;
+    padding: 2px 0;
+    width: calc(100% - 55px);
+}
+
+.lafka-change-branch span > span {
+    display: inline;
+    padding: 0;
+    width: auto;
+}
+
+.lafka-change-branch.lafka-pickup-info span:last-of-type {
+    position: absolute;
+    top: 7px;
+    right: 7px;
+    width: auto;
+}
+
+a.lafka-change-branch-button {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    font-size: 0px;
+    vertical-align: middle;
+    margin-left: 4px;
+    text-decoration: none !important;
+    position: absolute;
+    top: 5px;
+    right: 5px;
+}
+
+.lafka-change-branch.lafka-pickup-info a.lafka-change-branch-button {
+    position: relative;
+    top: auto;
+    right: auto;
+}
+
+a.lafka-change-branch-button:before, .lafka-change-branch-button-select:before {
+    display: block;
+    font-family: 'Font Awesome 5 Free';
+    font-weight: 900;
+    content: "\f303";
+    font-size: 10px;
+    border-radius: 50px;
+    color: #ffffff;
+    background-color: #333333;
+    width: 20px;
+    height: 20px;
+    line-height: 20px;
+    text-align: center;
+}
+
+.lafka-change-branch-button-select:before {
+    display: inline-block;
+    margin: 0px 4px 0 0;
+    vertical-align: middle;
+    content: "\f06a";
+    font-size: 14px;
+}
+
+a.lafka-change-branch-button:hover:before, .lafka-change-branch-button-select:hover:before {
+    background-color: #333333;
+}
+
+.lafka-change-branch-button-select {
+    color: #333333;
+    text-decoration: none !important;
+}
+
+.lafka-checkout-datetime-container {
+    border-radius: 8px;
+    border: 1px solid #f1f1f1;
+    padding: 15px;
+    margin-bottom: 30px;
+}
+
+.lafka-delivery-time-toggle {
+    display: block;
+    padding: 15px;
+    background-color: #f8f8f8;
+    border-radius: 8px;
+    text-decoration: none !important;
+    color: #333333;
+    text-transform: uppercase;
+    font-weight: 500;
+    font-size: 13px;
+}
+
+.lafka-delivery-time-toggle:before {
+    font-family: 'Font Awesome 5 Free';
+    font-weight: 400;
+    content: "\f017";
+    display: inline-block;
+    margin-right: 4px;
+    vertical-align: middle;
+    font-size: 24px;
+}
+
+.lafka-checkout-datetime-fields {
+    padding: 15px;
+    height: 65px;
+}
+
+.lafka-checkout-datetime-fields input#lafka_checkout_date {
+    padding-top: 16px;
+}
+
+.lafka-checkout-datetime-fields input#lafka_checkout_date, .lafka-checkout-datetime-fields span.select2-container {
+    display: inline-block;
+    vertical-align: top;
+}
+
+.lafka-checkout-datetime-fields span.select2-container {
+    width: auto !important;
+    min-width: 150px;
+}
+
+.lafka-checkout-datetime-fields .lafka-datetime-clear {
+    display: inline-block;
+    width: 45px;
+    height: 45px;
+    line-height: 45px;
+    border: 1px solid #e1e1e1;
+    border-radius: 6px;
+    font-size: 0;
+    text-align: center;
+    text-decoration: none !important;
+}
+
+.lafka-checkout-datetime-fields .lafka-datetime-clear:before {
+    font-family: 'Font Awesome 5 Free';
+    font-weight: 400;
+    content: "\f057";
+    display: block;
+    margin-right: 4px;
+    vertical-align: middle;
+    font-size: 24px;
+    width: 45px;
+    height: 45px;
+    line-height: 45px;
+}
+
+.lafka-checkout-datetime-fields .lafka-datetime-clear:hover {
+    background-color: #f1f1f1;
+}
+
+.lafka-checkout-datetime-fields .lafka-datetime-clear:hover:before {
+    color: #333333;
+}
+
+form.checkout tr.woocommerce-shipping-totals, form.checkout tr.order-total, form.checkout h3.lafka-address-not-found, form.checkout h3.lafka-address-marked {
+    opacity: 0;
+}
+.lafka-estimated-time {
+    display: block !important;
+    float: left;
+    width: 45px !important;
+    height: 45px;
+    border: 1px solid #e1e1e1;
+    border-radius: 3px;
+    margin-right: 8px;
+    font-size: 9px;
+    text-align: center;
+    padding-top: 3px !important;
+    background-color: #fff;
+}
+.lafka-estimated-time:before {
+    font-family: 'Font Awesome 5 Free';
+    font-weight: 400;
+    content: "\f017";
+    display: block;
+    font-size: 16px;
+    width: 100%;
+    color: #9db55d;
+}
+.lafka-branch-select-dropdown label, .lafka-branch-select-dropdown select {
+    width: 100%;
+}
+.lafka-branch-select-dropdown label {
+    margin-bottom: 8px;
+    display: block;
+}
+.lafka-branch-select-dropdown select {
+    padding: 15px;
+    border-radius: 6px;
+    background-color: #f6f6f6;
+}
+.woocommerce-message[data-lafka-notice="minimum-amount"] {
+    display: none;
+}

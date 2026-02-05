@@ -1,0 +1,146 @@
+<wpml-config>
+    <custom-fields>
+        <custom-field action="copy">lafka_title_background</custom-field>
+        <custom-field action="copy">lafka_rev_slider_before_header</custom-field>
+        <custom-field action="copy">lafka_video_bckgr_loop</custom-field>
+        <custom-field action="copy">lafka_video_bckgr_mute</custom-field>
+        <custom-field action="copy">lafka_prtfl_custom_content</custom-field>
+        <custom-field action="copy">lafka_transparent_header</custom-field>
+        <custom-field action="copy">lafka_layout</custom-field>
+        <custom-field action="copy">lafka_top_header</custom-field>
+        <custom-field action="copy">lafka_bottom_header</custom-field>
+        <custom-field action="copy">lafka_footer_style</custom-field>
+        <custom-field action="copy">lafka_pre_footer</custom-field>
+        <custom-field action="copy">lafka_show_title_page</custom-field>
+        <custom-field action="copy">lafka_show_breadcrumb</custom-field>
+        <custom-field action="copy">lafka_show_sidebar</custom-field>
+        <custom-field action="copy">lafka_show_share</custom-field>
+        <custom-field action="copy">lafka_custom_sidebar</custom-field>
+        <custom-field action="translate">lafka_rev_slider</custom-field>
+        <custom-field action="copy">lafka_video_bckgr_url</custom-field>
+        <custom-field action="copy">lafka_video_bckgr_start</custom-field>
+        <custom-field action="copy">lafka_video_bckgr_end</custom-field>
+        <custom-field action="copy">lafka_super_slider_ids</custom-field>
+        <custom-field action="translate">lafka_ingredients</custom-field>
+        <custom-field action="translate">lafka_allergens</custom-field>
+        <custom-field action="translate">lafka_ext_link_button_title</custom-field>
+        <custom-field action="translate">lafka_ext_link_url</custom-field>
+        <custom-field action="translate">lafka_add_description</custom-field>
+        <custom-field action="copy">lafka_featured_imgid_2</custom-field>
+        <custom-field action="copy">lafka_featured_imgid_3</custom-field>
+        <custom-field action="copy">lafka_featured_imgid_4</custom-field>
+        <custom-field action="copy">lafka_featured_imgid_5</custom-field>
+        <custom-field action="copy">lafka_featured_imgid_6</custom-field>
+        <custom-field action="copy">lafka_prtfl_gallery</custom-field>
+        <custom-field action="translate">lafka_page_subtitle</custom-field>
+        <custom-field action="copy">lafka_title_background_imgid</custom-field>
+        <custom-field action="copy">lafka_title_alignment</custom-field>
+        <custom-field action="copy">lafka_footer_size</custom-field>
+        <custom-field action="copy">lafka_header_size</custom-field>
+        <custom-field action="copy">lafka_show_footer_sidebar</custom-field>
+        <custom-field action="copy">lafka_show_offcanvas_sidebar</custom-field>
+        <custom-field action="copy">lafka_custom_footer_sidebar</custom-field>
+        <custom-field action="copy">lafka_custom_offcanvas_sidebar</custom-field>
+        <custom-field action="copy">lafka_header_syle</custom-field>
+        <custom-field action="copy">lafka_top_menu</custom-field>
+        <custom-field action="copy">lafka_single_product_gallery_type</custom-field>
+        <custom-field action="copy">lafka_item_price1</custom-field>
+        <custom-field action="copy">lafka_item_price2</custom-field>
+        <custom-field action="copy">lafka_item_price3</custom-field>
+        <custom-field action="copy">lafka_item_single_price</custom-field>
+        <custom-field action="copy">lafka_item_size1</custom-field>
+        <custom-field action="copy">lafka_item_size2</custom-field>
+        <custom-field action="copy">lafka_item_size3</custom-field>
+        <custom-field action="translate">lafka_item_weight</custom-field>
+        <custom-field action="translate">lafka_item_weight_unit</custom-field>
+        <custom-field action="copy">lafka_nutrition_carbs</custom-field>
+        <custom-field action="copy">lafka_nutrition_energy</custom-field>
+        <custom-field action="copy">lafka_nutrition_fat</custom-field>
+        <custom-field action="copy">lafka_nutrition_protein</custom-field>
+        <custom-field action="copy">lafka_nutrition_satfat</custom-field>
+        <custom-field action="copy">lafka_nutrition_sodium</custom-field>
+        <custom-field action="copy">lafka_nutrition_sugars</custom-field>
+        <custom-field action="copy">lafka_product_video_url</custom-field>
+        <custom-field action="copy">lafka_show_feat_image_in_post</custom-field>
+        <custom-field action="copy">lafka_sidebar_position</custom-field>
+        <custom-field action="copy">lafka_term_header_alignment</custom-field>
+        <custom-field action="copy">lafka_term_header_img_id</custom-field>
+        <custom-field action="copy">lafka_term_header_style</custom-field>
+        <custom-field action="translate">lafka_term_header_subtitle</custom-field>
+
+    </custom-fields>
+    <custom-types>
+        <custom-type translate="1">lafka-foodmenu</custom-type>
+        <custom-type translate="1">lafka_glb_addon</custom-type>
+    </custom-types>
+    <taxonomies>
+        <taxonomy translate="1">lafka_foodmenu_category</taxonomy>
+        <taxonomy translate="1">product_cat</taxonomy>
+    </taxonomies>
+    <shortcodes>
+        <shortcode>
+            <tag>lafka_counter</tag>
+            <attributes>
+                <attribute>txt_before_counter</attribute>
+                <attribute>txt_after_counter</attribute>
+            </attributes>
+        </shortcode>
+        <shortcode>
+            <tag>lafka_typed</tag>
+            <attributes>
+                <attribute>txt_before_typed</attribute>
+                <attribute>txt_after_typed</attribute>
+            </attributes>
+        </shortcode>
+        <shortcode>
+            <tag>lafka_banner</tag>
+            <attributes>
+                <attribute>title</attribute>
+                <attribute>subtitle</attribute>
+                <attribute type="link" encoding="vc_link">link</attribute>
+                <attribute>button_text</attribute>
+            </attributes>
+        </shortcode>
+        <shortcode>
+            <tag>lafka_icon_teaser</tag>
+            <attributes>
+                <attribute>title</attribute>
+                <attribute>subtitle</attribute>
+            </attributes>
+        </shortcode>
+        <shortcode>
+            <tag>lafka_icon_box</tag>
+            <attributes>
+                <attribute>title</attribute>
+                <attribute>subtitle</attribute>
+            </attributes>
+        </shortcode>
+        <shortcode>
+            <tag>lafka_map</tag>
+            <attributes>
+                <attribute>location_title</attribute>
+            </attributes>
+        </shortcode>
+        <shortcode>
+            <tag>lafka_pricing_table</tag>
+            <attributes>
+                <attribute>title</attribute>
+                <attribute>subtitle</attribute>
+                <attribute>button_text</attribute>
+                <attribute type="link" encoding="vc_link">link</attribute>
+            </attributes>
+        </shortcode>
+        <shortcode>
+            <tag>lafka_contact_form</tag>
+            <attributes>
+                <attribute>title</attribute>
+            </attributes>
+        </shortcode>
+    </shortcodes>
+    <admin-texts>
+        <key name="lafka_order_hours_options">
+            <key name="lafka_order_hours_message"/>
+            <key name="lafka_order_hours_closed_stores_message"/>
+        </key>
+    </admin-texts>
+</wpml-config>

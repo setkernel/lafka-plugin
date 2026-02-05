@@ -1,0 +1,91 @@
+.hidden {
+    display: none !important;
+    visibility: hidden !important;
+}
+
+.lafka-wcs-swatches {
+    overflow: hidden;
+    padding: 5px;
+}
+
+.lafka-wcs-swatches .swatch {
+    -webkit-transition: all 0.3s;
+    -moz-transition: all 0.3s;
+    -ms-transition: all 0.3s;
+    -o-transition: all 0.3s;
+    transition: all 0.3s;
+    display: inline-block;
+    width: 30px;
+    height: 30px;
+    line-height: 30px;
+    text-align: center;
+    margin-right: 15px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    position: relative;
+    opacity: 0.5;
+}
+
+.lafka-wcs-swatches .swatch.selected {
+    -webkit-box-shadow: 0 0 7px;
+    -moz-box-shadow: 0 0 7px;
+    box-shadow: 0 0 7px;
+    border-color: #999;
+    opacity: 1;
+}
+
+.lafka-wcs-swatches .swatch.disabled {
+    opacity: 0.1;
+}
+
+.lafka-wcs-swatches .swatch-color {
+    text-indent: -9999px;
+}
+
+.lafka-wcs-swatches .swatch-color.selected {
+    border-color: transparent;
+}
+
+.lafka-wcs-swatches .swatch-color.selected:before {
+    -webkit-transform: rotate(45deg);
+    -moz-transform: rotate(45deg);
+    transform: rotate(45deg);
+    content: "";
+    width: 6px;
+    height: 10px;
+    display: block;
+    border: solid #fff;
+    border-width: 0 2px 2px 0;
+    position: absolute;
+    top: 8px;
+    left: 11px;
+}
+
+.lafka-wcs-swatches .swatch-label {
+    background-color: #f1f1f1;
+}
+
+.lafka-wcs-swatches .swatch-image {
+    overflow: hidden;
+    width: 60px;
+    height: 60px;
+}
+
+.combined_product_summary .lafka-wcs-swatches .swatch-image {
+    border-radius: 0;
+    transition: none;
+}
+
+.combined_product_summary .lafka-wcs-swatches .swatch-image.selected,
+.combined_product_summary .lafka-wcs-swatches .swatch-image:hover {
+    border-bottom: 3px solid #333333 !important;
+}
+
+.lafka-wcs-swatches .swatch-image.selected::before,
+.lafka-wcs-swatches .swatch-image:hover::before {
+    top: 22px;
+    left: 26px;
+    border-width: 0 4px 4px 0;
+    width: 10px;
+    height: 16px;
+}

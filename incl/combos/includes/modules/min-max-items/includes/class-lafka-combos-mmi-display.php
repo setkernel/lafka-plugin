@@ -1,0 +1,81 @@
+<?php
+// Exit if accessed directly.
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+/**
+ * Display-related functions and filters.
+ *
+ * @class    WC_LafkaCombos_MMI_Display
+ * @version  6.6.0
+ */
+class WC_LafkaCombos_MMI_Display {
+
+	/**
+	 * Setup hooks.
+	 */
+	public static function init() {
+
+		// Validation script.
+		add_action( 'woocommerce_combo_add_to_cart', array( __CLASS__, 'enqueue_script' ) );
+		add_action( 'woocommerce_composite_add_to_cart', array( __CLASS__, 'enqueue_script' ) );
+
+		// Add min/max data to template for use by validation script.
+		add_filter( 'woocommerce_combo_price_data', array( __CLASS__, 'script_data' ), 10, 2 );
+	}
+
+	/*
+	|--------------------------------------------------------------------------
+	| Filter/action hooks.
+	|--------------------------------------------------------------------------
+	*/
+
+	/**
+	 * Validation script.
+	 */
+	public static function enqueue_script() {
+
+		$suffix = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
+
+		wp_register_script( 'wc-pb-min-max-items-add-to-cart', WC_LafkaCombos()->plugin_url() . '/assets/js/frontend/add-to-cart-combo-min-max-items' . $suffix . '.js', array( 'wc-add-to-cart-combo' ), WC_LafkaCombos()->version );
+		wp_enqueue_script( 'wc-pb-min-max-items-add-to-cart' );
+
+		$params = array(
+			'i18n_min_zero_max_qty_error_singular' => __( 'Please choose an item.', 'lafka-plugin' ),
+			'i18n_min_max_qty_error_singular'      => sprintf( __( 'Please choose 1 item.%s', 'lafka-plugin' ), '' ),
+			'i18n_min_qty_error_singular'          => sprintf( __( 'Please choose at least 1 item.%s', 'lafka-plugin' ), '' ),
+			'i18n_max_qty_error_singular'          => sprintf( __( 'Please choose up to 1 item.%s', 'lafka-plugin' ), '' ),
+			'i18n_min_qty_error_plural'            => sprintf( __( 'Please choose at least %1$s items.%2$s', 'lafka-plugin' ), '%q', '' ),
+			'i18n_max_qty_error_plural'            => sprintf( __( 'Please choose up to %1$s items.%2$s', 'lafka-plugin' ), '%q', '' ),
+			'i18n_min_max_qty_error_plural'        => sprintf( __( 'Please choose %1$s items.%2$s', 'lafka-plugin' ), '%q', '' ),
+			'i18n_qty_error_plural'                => __( '%s items selected', 'lafka-plugin' ),
+			'i18n_qty_error_singular'              => __( '1 item selected', 'lafka-plugin' ),
+			'i18n_qty_error_status_format'         => _x( '<span class="combined_items_selection_status">%s</span>', 'validation error status format', 'lafka-plugin' )
+		);
+
+		wp_localize_script( 'wc-pb-min-max-items-add-to-cart', 'wc_pb_min_max_items_params', $params );
+	}
+
+	/**
+	 * Pass min/max container values to the single-product script.
+	 *
+	 * @param  array              $data
+	 * @param  WC_Product_Combo  $product
+	 * @return void
+	 */
+	public static function script_data( $data, $product ) {
+
+		$min = $product->get_min_combo_size();
+		$max = $product->get_max_combo_size();
+
+		if ( '' !== $min || '' !== $max ) {
+			$data[ 'size_min' ] = $min;
+			$data[ 'size_max' ] = $max;
+		}
+
+		return $data;
+	}
+}
+
+WC_LafkaCombos_MMI_Display::init();
