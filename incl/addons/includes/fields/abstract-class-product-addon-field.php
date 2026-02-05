@@ -1,3 +1,4 @@
+<?php defined( 'ABSPATH' ) || exit; ?>
 <?php
 /**
  * Lafka_Product_Addon_Field

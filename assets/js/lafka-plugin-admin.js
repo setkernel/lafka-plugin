@@ -14,7 +14,8 @@
 
             url: ajaxurl,
             multipart_params: {
-                'action': 'lafka_options_upload'
+                'action': 'lafka_options_upload',
+                'security': localise.options_upload_nonce
             },
 
             filters: {

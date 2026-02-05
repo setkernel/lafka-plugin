@@ -170,10 +170,10 @@ if (!function_exists('lafka_typed_shortcode')) {
 		<?php if (is_array($rotating_strings_arr) && count($rotating_strings_arr) > 1 && $rotating_strings_arr[0] != ''): ?>
 			<script>
 				//<![CDATA[
-				(function ($) {
+				(function () {
 					"use strict";
-					$(document).ready(function () {
-						$("#<?php echo esc_js($unique_id) ?>").typed({
+					document.addEventListener("DOMContentLoaded", function () {
+						new Typed("#<?php echo esc_js($unique_id) ?>", {
 							strings: [<?php
 			foreach ($rotating_strings_arr as $str):
 				echo '"' . esc_js($str) . '",';
@@ -190,8 +190,8 @@ if (!function_exists('lafka_typed_shortcode')) {
 							loop: <?php echo esc_js($loop == 'yes' ? 'true' : 'false') ?>,
 							showCursor: true
 						});
-					})
-				})(window.jQuery);
+					});
+				})();
 				//]]>
 			</script>
 		<?php endif; ?>
@@ -243,8 +243,10 @@ if (!function_exists('lafka_blogposts_shortcode')) {
 			$query_args['offset'] = $lafka_blogposts_param_offset;
 		}
 
-		// The query
-		query_posts($query_args);
+		// The query - use WP_Query and temporarily replace global for pagination support
+		global $wp_query;
+		$original_query = $wp_query;
+		$wp_query = new WP_Query($query_args);
 
 		switch ($lafka_blogposts_param_blog_style) {
 			 case 'lafka_blog_masonry':
@@ -312,7 +314,8 @@ if (!function_exists('lafka_blogposts_shortcode')) {
 		<?php
 		$output .= ob_get_clean();
 
-		wp_reset_query();
+		$wp_query = $original_query;
+		wp_reset_postdata();
 
 		return $output;
 	}
@@ -638,7 +641,7 @@ if (!function_exists('lafka_latest_posts_shortcode')) {
 		$lafka_is_latest_posts = true;
 
 		// The query
-		query_posts($query_args);
+		$lafka_latest_query = new WP_Query($query_args);
 
 		$js_config_output = '';
 
@@ -699,9 +702,9 @@ if (!function_exists('lafka_latest_posts_shortcode')) {
 
 		$output = '<div id="' . esc_attr($unique_id) . '" class="' . esc_attr(implode(' ', $shortcode_classes)) . '">';
 
-		if (have_posts()) {
-			while (have_posts()) {
-				the_post();
+		if ($lafka_latest_query->have_posts()) {
+			while ($lafka_latest_query->have_posts()) {
+				$lafka_latest_query->the_post();
 				// Capture each post
 				ob_start();
 
@@ -713,7 +716,7 @@ if (!function_exists('lafka_latest_posts_shortcode')) {
 
 		$output .= '</div>';
 
-		wp_reset_query();
+		wp_reset_postdata();
 
 		return $output;
 	}
@@ -900,7 +903,7 @@ if (!function_exists('lafka_icon_teaser_shortcode')) {
         );
 
         // Enqueue font-awesome.
-        wp_enqueue_style('vc_font_awesome_5');
+        wp_enqueue_style('font_awesome_6');
 
         $unique_id = uniqid('lafka_icon_teaser_');
 
@@ -994,7 +997,7 @@ if (!function_exists('lafka_icon_box_shortcode')) {
         );
 
         // Enqueue font-awesome.
-        wp_enqueue_style('vc_font_awesome_5');
+        wp_enqueue_style('font_awesome_6');
 
         $iconbox_styling_classes = array('lafka-iconbox', $alignment, $icon_style);
         if($type === 'custom_image') {
@@ -1970,16 +1973,13 @@ if (!function_exists('lafka_woo_products_slider_shortcode')) {
                 'timeout' => 5
                         ), $atts);
 
-        $meta_query = WC()->query->get_meta_query();
-
         $args = array(
                 'post_type' => 'product',
                 'post_status' => 'publish',
                 'ignore_sticky_posts' => 1,
                 'orderby' => $atts['orderby'],
                 'order' => $atts['order'],
-                'posts_per_page' => -1,
-                'meta_query' => $meta_query
+                'posts_per_page' => 50,
         );
 
         if (!empty($atts['skus'])) {

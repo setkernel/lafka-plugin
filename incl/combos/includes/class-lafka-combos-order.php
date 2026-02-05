@@ -862,13 +862,13 @@ class WC_LafkaCombos_Order {
 				if ( $product->get_weight() > 0 ) {
 					$product->set_weight( '' );
 				}
-				if ( $product->length > 0 ) {
+				if ( (float) $product->get_length() > 0 ) {
 					$product->set_length( 0.001 );
 				}
-				if ( $product->height > 0 ) {
+				if ( (float) $product->get_height() > 0 ) {
 					$product->set_height( 0.001 );
 				}
-				if ( $product->width > 0 ) {
+				if ( (float) $product->get_width() > 0 ) {
 					$product->set_width( 0.001 );
 				}
 			}
@@ -884,13 +884,13 @@ class WC_LafkaCombos_Order {
 					if ( $product->get_weight() > 0 ) {
 						$product->set_weight( '' );
 					}
-					if ( $product->length > 0 ) {
+					if ( (float) $product->get_length() > 0 ) {
 						$product->set_length( 0.001 );
 					}
-					if ( $product->height > 0 ) {
+					if ( (float) $product->get_height() > 0 ) {
 						$product->set_height( 0.001 );
 					}
-					if ( $product->width > 0 ) {
+					if ( (float) $product->get_width() > 0 ) {
 						$product->set_width( 0.001 );
 					}
 				}

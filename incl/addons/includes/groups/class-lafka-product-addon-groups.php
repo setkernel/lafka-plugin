@@ -1,3 +1,4 @@
+<?php defined( 'ABSPATH' ) || exit; ?>
 <?php
 
 class Lafka_Product_Addon_Groups {
@@ -9,6 +10,11 @@ class Lafka_Product_Addon_Groups {
 	 * @return array
 	 */
 	static public function get_all_global_groups() {
+		static $cached_groups = null;
+		if ( null !== $cached_groups ) {
+			return $cached_groups;
+		}
+
 		$global_groups = array();
 
 		$args = array(
@@ -17,7 +23,6 @@ class Lafka_Product_Addon_Groups {
 			'order'           => 'ASC',
 			'post_type'       => 'lafka_glb_addon',
 			'post_status'     => 'any',
-			'suppress_filters' => true
 		);
 
 		$global_group_posts = get_posts( $args );
@@ -26,7 +31,8 @@ class Lafka_Product_Addon_Groups {
 			$global_groups[] = Product_Addon_Global_Group::get_group( $global_group_post );
 		}
 
-		return $global_groups;
+		$cached_groups = $global_groups;
+		return $cached_groups;
 	}
 
 	/**

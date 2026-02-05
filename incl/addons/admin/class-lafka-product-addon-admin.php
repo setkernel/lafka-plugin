@@ -54,6 +54,7 @@ class Lafka_Product_Addon_Admin {
 		if ( ! empty( $_GET['add'] ) || ! empty( $_GET['edit'] ) ) {
 
 			if ( $_POST ) {
+				check_admin_referer( 'lafka_save_global_addons' );
 
 				if ( $edit_id = $this->save_global_addons() ) {
 					echo '<div class="updated"><p>' . esc_html__( 'Add-on saved successfully', 'lafka-plugin' ) . '</p></div>';
@@ -252,23 +253,23 @@ class Lafka_Product_Addon_Admin {
 		$product_addons = array();
 
 		if ( isset( $_POST[ 'product_addon_name' ] ) ) {
-			$addon_name         = $_POST['product_addon_name'];
-			$addon_limit         = $_POST['product_addon_limit'];
-			$addon_description  = $_POST['product_addon_description'];
-			$addon_type         = $_POST['product_addon_type'];
-			$addon_position     = $_POST['product_addon_position'];
-			$addon_variations     = isset($_POST['product_addon_variations']) ? $_POST['product_addon_variations'] : 0;
-			$addon_variation_attribute = isset($_POST['product_addon_variation_attribute']) ? $_POST['product_addon_variation_attribute'] : array();
-			$addon_required     = isset( $_POST['product_addon_required'] ) ? $_POST['product_addon_required'] : array();
+			$addon_name         = array_map( 'sanitize_text_field', wp_unslash( $_POST['product_addon_name'] ) );
+			$addon_limit        = array_map( 'absint', $_POST['product_addon_limit'] );
+			$addon_description  = array_map( 'sanitize_text_field', wp_unslash( $_POST['product_addon_description'] ) );
+			$addon_type         = array_map( 'sanitize_text_field', wp_unslash( $_POST['product_addon_type'] ) );
+			$addon_position     = array_map( 'sanitize_text_field', wp_unslash( $_POST['product_addon_position'] ) );
+			$addon_variations     = isset($_POST['product_addon_variations']) ? array_map( 'absint', $_POST['product_addon_variations'] ) : 0;
+			$addon_variation_attribute = isset($_POST['product_addon_variation_attribute']) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['product_addon_variation_attribute'] ) ) : array();
+			$addon_required     = isset( $_POST['product_addon_required'] ) ? array_map( 'absint', $_POST['product_addon_required'] ) : array();
 
-			$addon_option_label = $_POST['product_addon_option_label'];
-			$addon_option_image = $_POST['product_addon_option_image'];
-			$addon_option_price = $_POST['product_addon_option_price'];
+			$addon_option_label = array_map( function( $labels ) { return array_map( 'sanitize_text_field', wp_unslash( $labels ) ); }, $_POST['product_addon_option_label'] );
+			$addon_option_image = array_map( function( $images ) { return array_map( 'absint', $images ); }, $_POST['product_addon_option_image'] );
+			$addon_option_price = array_map( function( $prices ) { return array_map( 'wc_clean', $prices ); }, $_POST['product_addon_option_price'] );
 
-			$addon_option_min   = $_POST['product_addon_option_min'];
-			$addon_option_max   = $_POST['product_addon_option_max'];
+			$addon_option_min   = array_map( function( $mins ) { return array_map( 'absint', $mins ); }, $_POST['product_addon_option_min'] );
+			$addon_option_max   = array_map( function( $maxes ) { return array_map( 'absint', $maxes ); }, $_POST['product_addon_option_max'] );
 
-			$addon_option_default = $_POST['product_addon_option_default'];
+			$addon_option_default = array_map( function( $defaults ) { return is_array( $defaults ) ? array_map( 'sanitize_text_field', $defaults ) : sanitize_text_field( $defaults ); }, wp_unslash( $_POST['product_addon_option_default'] ) );
 
 			for ( $i = 0; $i < sizeof( $addon_name ); $i++ ) {
 
@@ -285,22 +286,22 @@ class Lafka_Product_Addon_Admin {
 				$option_default  	= $addon_option_default[ $i ];
 
 				for ( $ii = 0; $ii < sizeof( $option_label ); $ii++ ) {
-					$label 	= sanitize_text_field( stripslashes( $option_label[ $ii ] ) );
-					$image = sanitize_text_field( stripslashes( $option_image[ $ii ] ) );
+					$label 	= sanitize_text_field( $option_label[ $ii ] );
+					$image = sanitize_text_field( $option_image[ $ii ] );
 					if ( isset( $option_price[ $ii ] ) ) {
-						$price = wc_format_decimal( sanitize_text_field( stripslashes( $option_price[ $ii ] ) ) );
+						$price = wc_format_decimal( sanitize_text_field( $option_price[ $ii ] ) );
 					} else {
 					    $price = array();
 						foreach ( $option_price as $attribute_name => $attribute_value ) {
                             foreach ($attribute_value as $attribute_slug => $attribute_price){
-	                            $price[$attribute_name][ $attribute_slug ] = wc_format_decimal( sanitize_text_field( stripslashes( $attribute_price[ $ii ] ) ) );
+	                            $price[$attribute_name][ $attribute_slug ] = wc_format_decimal( sanitize_text_field( $attribute_price[ $ii ] ) );
                             }
 						}
 					}
 
-					$min	= sanitize_text_field( stripslashes( $option_min[ $ii ] ) );
-					$max	= sanitize_text_field( stripslashes( $option_max[ $ii ] ) );
-					$default 	= sanitize_text_field( stripslashes( $option_default[ $ii ] ) );
+					$min	= sanitize_text_field( $option_min[ $ii ] );
+					$max	= sanitize_text_field( $option_max[ $ii ] );
+					$default 	= sanitize_text_field( $option_default[ $ii ] );
 
 					$addon_options[] = array(
 						'label'   => $label,
@@ -317,10 +318,10 @@ class Lafka_Product_Addon_Admin {
 				}
 
 				$data                = array();
-				$data['name']        = sanitize_text_field( stripslashes( $addon_name[ $i ] ) );
-				$data['limit']        = sanitize_text_field( stripslashes( $addon_limit[ $i ] ) );
-				$data['description'] = wp_kses_post( stripslashes( $addon_description[ $i ] ) );
-				$data['type']        = sanitize_text_field( stripslashes( $addon_type[ $i ] ) );
+				$data['name']        = sanitize_text_field( $addon_name[ $i ] );
+				$data['limit']        = sanitize_text_field( $addon_limit[ $i ] );
+				$data['description'] = wp_kses_post( $addon_description[ $i ] );
+				$data['type']        = sanitize_text_field( $addon_type[ $i ] );
 				$data['position']    = absint( $addon_position[ $i ] );
 				$data['variations'] = isset( $addon_variations[ $i ] ) ? 1 : 0;
 				$data['attribute'] = absint( empty( $addon_variation_attribute[ $i ] ) ? 0 : $addon_variation_attribute[ $i ] );

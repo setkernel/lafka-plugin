@@ -1,3 +1,4 @@
+<?php defined( 'ABSPATH' ) || exit; ?>
 <?php
 /** @var array $addon */
 foreach ( $addon['options'] as $i => $option ) :

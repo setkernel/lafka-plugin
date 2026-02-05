@@ -9,6 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     <h2><?php esc_html_e( 'Add/Edit Lafka Global Add-on', 'lafka-plugin' ) ?></h2><br/>
 
 	<form method="POST" action="">
+		<?php wp_nonce_field( 'lafka_save_global_addons' ); ?>
 		<table class="form-table global-addons-form meta-box-sortables">
 			<tr>
 				<th>

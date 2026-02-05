@@ -1,3 +1,4 @@
+<?php defined( 'ABSPATH' ) || exit; ?>
 <?php
 /**
  * Map all Lafka shortcodes to VC
@@ -2301,7 +2302,7 @@ if (!function_exists('lafka_icon_element_fonts_enqueue')) {
 	function lafka_icon_element_fonts_enqueue($font) {
 		switch ($font) {
 			case 'fontawesome':
-				wp_enqueue_style('vc_font_awesome_5');
+				wp_enqueue_style('font_awesome_6');
 				break;
 			case 'openiconic':
 				wp_enqueue_style('vc_openiconic');

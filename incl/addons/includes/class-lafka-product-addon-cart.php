@@ -50,7 +50,7 @@ class Lafka_Product_Addon_Cart {
 			if ( empty( $price ) && ! empty( $_POST['credit_called'] ) ) {
 				// $_POST['credit_called'] is an array.
 				if ( isset( $_POST['credit_called'][ $cart_item['data']->get_id() ] ) ) {
-					$price = (float) $_POST['credit_called'][ $cart_item['data']->get_id() ];
+					$price = (float) wc_format_decimal( sanitize_text_field( wp_unslash( $_POST['credit_called'][ $cart_item['data']->get_id() ] ) ) );
 				}
 			}
 
@@ -287,8 +287,6 @@ class Lafka_Product_Addon_Cart {
 	 * @return array Cart item meta
 	 */
 	public function re_add_cart_item_data( $cart_item_meta, $product, $order ) {
-		$is_pre_30 = version_compare( WC_VERSION, '3.0.0', '<' );
-
 		// Disable validation.
 		remove_filter( 'woocommerce_add_to_cart_validation', array( $this, 'validate_add_cart_item' ), 999, 3 );
 
@@ -313,25 +311,13 @@ class Lafka_Product_Addon_Cart {
 
 						$value = array();
 
-						if ( $is_pre_30 ) {
-							foreach ( $product['item_meta'] as $key => $meta ) {
-								if ( stripos( $key, $addon['name'] ) === 0 ) {
-									if ( 1 < count( $meta ) ) {
-										$value[] = array_map( 'sanitize_title', $meta );
-									} else {
-										$value[] = sanitize_title( $meta );
-									}
+						foreach ( $product->get_meta_data() as $meta ) {
+							if ( stripos( $meta->key, $addon['name'] ) === 0 ) {
+								if ( 1 < count( $meta->value ) ) {
+									$value[] = array_map( 'sanitize_title', $meta->value );
+								} else {
+									$value[] = sanitize_title( $meta->value );
 								}
-							}
-						} else {
-							foreach ( $product->get_meta_data() as $meta ) {
-								if ( stripos( $meta->key, $addon['name'] ) === 0 ) {
-									if ( 1 < count( $meta->value ) ) {
-										$value[] = array_map( 'sanitize_title', $meta->value );
-									} else {
-										$value[] = sanitize_title( $meta->value );
-									}
-								} 
 							}
 						}
 
@@ -345,20 +331,10 @@ class Lafka_Product_Addon_Cart {
 						include_once( dirname( __FILE__ ) . '/fields/class-lafka-addon-field-textarea.php' );
 						$value = array();
 
-						if ( $is_pre_30 ) {
-							foreach ( $product['item_meta'] as $key => $meta ) {
-								foreach ( $addon['options'] as $option ) {
-									if ( stripos( $key, $addon['name'] ) === 0 && stristr( $key, $option['label'] ) ) {
-										$value[ sanitize_title( $option['label'] ) ] = $meta;
-									}
-								}
-							}
-						} else {
-							foreach ( $product->get_meta_data() as $meta ) {
-								foreach ( $addon['options'] as $option ) {
-									if ( stripos( $meta->key, $addon['name'] ) === 0 && stristr( $meta->key, $option['label'] ) ) {
-										$value[ sanitize_title( $option['label'] ) ] = $meta->value;
-									}
+						foreach ( $product->get_meta_data() as $meta ) {
+							foreach ( $addon['options'] as $option ) {
+								if ( stripos( $meta->key, $addon['name'] ) === 0 && stristr( $meta->key, $option['label'] ) ) {
+									$value[ sanitize_title( $option['label'] ) ] = $meta->value;
 								}
 							}
 						}

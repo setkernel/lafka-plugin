@@ -29,19 +29,13 @@ if (!class_exists('WC_Product_Addons_Helper')) {
 			$raw_addons = array();
 			$parent_id  = wp_get_post_parent_id( $post_id );
 
-			if ( defined( 'WC_VERSION' ) && version_compare( WC_VERSION, '3.0.0', '<' ) ) {
-				$product_terms  = apply_filters( 'get_product_addons_product_terms', wp_get_post_terms( $post_id, 'product_cat', array( 'fields' => 'ids' ) ), $post_id );
-				$exclude        = get_post_meta( $post_id, '_product_addons_exclude_global', true );
-				$product_addons = array_filter( (array) get_post_meta( $post_id, '_product_addons', true ) );
-			} else {
-				$product = wc_get_product( $post_id );
-				if ( ! $product ) {
-					return array();
-				}
-				$product_terms  = apply_filters( 'get_product_addons_product_terms', wc_get_object_terms( $product->get_id(), 'product_cat', 'term_id' ), $product->get_id() );
-				$exclude        = $product->get_meta( '_product_addons_exclude_global' );
-				$product_addons = array_filter( (array) $product->get_meta( '_product_addons' ) );
+			$product = wc_get_product( $post_id );
+			if ( ! $product ) {
+				return array();
 			}
+			$product_terms  = apply_filters( 'get_product_addons_product_terms', wc_get_object_terms( $product->get_id(), 'product_cat', 'term_id' ), $product->get_id() );
+			$exclude        = $product->get_meta( '_product_addons_exclude_global' );
+			$product_addons = array_filter( (array) $product->get_meta( '_product_addons' ) );
 
 			// Product Parent Level Addons.
 			if ( $inc_parent && $parent_id ) {
@@ -51,25 +45,28 @@ if (!class_exists('WC_Product_Addons_Helper')) {
 			// Product Level Addons.
 			$raw_addons[10]['product'] = apply_filters( 'get_product_addons_fields', $product_addons, $post_id );
 
-			// Global level addons (all products).
+			// Global level addons (all products) — cached per request.
 			if ( '1' !== $exclude && $inc_global ) {
-				$args = array(
-					'posts_per_page'   => - 1,
-					'orderby'          => 'meta_value',
-					'order'            => 'ASC',
-					'meta_key'         => '_priority',
-					'post_type'        => 'lafka_glb_addon',
-					'post_status'      => 'publish',
-					'suppress_filters' => true,
-					'meta_query'       => array(
-						array(
-							'key'   => '_all_products',
-							'value' => '1',
+				static $global_all_products_cache = null;
+				if ( null === $global_all_products_cache ) {
+					$args = array(
+						'posts_per_page'   => - 1,
+						'orderby'          => 'meta_value',
+						'order'            => 'ASC',
+						'meta_key'         => '_priority',
+						'post_type'        => 'lafka_glb_addon',
+						'post_status'      => 'publish',
+						'meta_query'       => array(
+							array(
+								'key'   => '_all_products',
+								'value' => '1',
+							),
 						),
-					),
-				);
+					);
+					$global_all_products_cache = get_posts( $args );
+				}
 
-				$global_addons = get_posts( $args );
+				$global_addons = $global_all_products_cache;
 
 				if ( $global_addons ) {
 					foreach ( $global_addons as $global_addon ) {
@@ -78,27 +75,31 @@ if (!class_exists('WC_Product_Addons_Helper')) {
 					}
 				}
 
-				// Global level addons (categories).
+				// Global level addons (categories) — cached by category set.
 				if ( $product_terms ) {
-					$args = apply_filters( 'get_product_addons_global_query_args', array(
-						'posts_per_page'   => - 1,
-						'orderby'          => 'meta_value',
-						'order'            => 'ASC',
-						'meta_key'         => '_priority',
-						'post_type'        => 'lafka_glb_addon',
-						'post_status'      => 'publish',
-						'suppress_filters' => true,
-						'tax_query'        => array(
-							array(
-								'taxonomy'         => 'product_cat',
-								'field'            => 'id',
-								'terms'            => $product_terms,
-								'include_children' => false,
+					static $category_addons_cache = array();
+					$cat_key = implode( ',', $product_terms );
+					if ( ! isset( $category_addons_cache[ $cat_key ] ) ) {
+						$args = apply_filters( 'get_product_addons_global_query_args', array(
+							'posts_per_page'   => - 1,
+							'orderby'          => 'meta_value',
+							'order'            => 'ASC',
+							'meta_key'         => '_priority',
+							'post_type'        => 'lafka_glb_addon',
+							'post_status'      => 'publish',
+							'tax_query'        => array(
+								array(
+									'taxonomy'         => 'product_cat',
+									'field'            => 'id',
+									'terms'            => $product_terms,
+									'include_children' => false,
+								),
 							),
-						),
-					), $product_terms );
+						), $product_terms );
+						$category_addons_cache[ $cat_key ] = get_posts( $args );
+					}
 
-					$global_addons = get_posts( $args );
+					$global_addons = $category_addons_cache[ $cat_key ];
 
 					if ( $global_addons ) {
 						foreach ( $global_addons as $global_addon ) {

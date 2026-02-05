@@ -1,16 +1,15 @@
 <?php
 /*
   Plugin Name: Lafka Plugin
-  Plugin URI: http://www.althemist.com/
-  Description: Plugin containing the Lafka theme functionality
-  Version: 7.1.0
-  Author: theAlThemist
-  Author URI: http://www.althemist.com/
-  Author Email: visibleone@gmail.com
+  Plugin URI: https://github.com/setkernel/lafka-plugin
+  Description: Companion plugin for the Lafka WooCommerce theme. Originally by theAlThemist, now community-maintained.
+  Version: 8.0.0
+  Author: theAlThemist, Contributors
+  Author URI: https://github.com/setkernel/lafka-plugin
   WC requires at least: 8
   WC tested up to: 9
-  License: Themeforest Split Licence
-  License URI: -
+  License: GPL v2 or later
+  License URI: https://www.gnu.org/licenses/gpl-2.0.html
  */
 defined( 'ABSPATH' ) || exit;
 
@@ -28,8 +27,10 @@ if ( ! function_exists('lafka_write_log')) {
 	}
 }
 
-// Check if WooCommerce is active
-if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) || class_exists('WooCommerce') ) {
+// Check if WooCommerce is active (supports regular plugins and MU-plugins)
+if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) )
+	|| ( is_multisite() && array_key_exists( 'woocommerce/woocommerce.php', get_site_option( 'active_sitewide_plugins', array() ) ) )
+	|| class_exists( 'WooCommerce' ) ) {
 	define('LAFKA_PLUGIN_IS_WOOCOMMERCE', TRUE);
 } else {
 	define('LAFKA_PLUGIN_IS_WOOCOMMERCE', FALSE);
@@ -42,14 +43,18 @@ if (class_exists('bbPress')) {
 	define('LAFKA_PLUGIN_IS_BBPRESS', FALSE);
 }
 
-if ( in_array( 'revslider/revslider.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) || class_exists('RevSliderBase') ) {
+if ( in_array( 'revslider/revslider.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) )
+	|| ( is_multisite() && array_key_exists( 'revslider/revslider.php', get_site_option( 'active_sitewide_plugins', array() ) ) )
+	|| class_exists( 'RevSliderBase' ) ) {
 	define('LAFKA_PLUGIN_IS_REVOLUTION', TRUE);
 } else {
 	define('LAFKA_PLUGIN_IS_REVOLUTION', FALSE);
 }
 
 // Check if WC Marketplace is active
-if ( in_array( 'dc-woocommerce-multi-vendor/dc_product_vendor.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) || class_exists('WCMp') ) {
+if ( in_array( 'dc-woocommerce-multi-vendor/dc_product_vendor.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) )
+	|| ( is_multisite() && array_key_exists( 'dc-woocommerce-multi-vendor/dc_product_vendor.php', get_site_option( 'active_sitewide_plugins', array() ) ) )
+	|| class_exists( 'WCMp' ) ) {
 	define('LAFKA_PLUGIN_IS_WC_MARKETPLACE', TRUE);
 } else {
 	define('LAFKA_PLUGIN_IS_WC_MARKETPLACE', FALSE);
@@ -393,15 +398,15 @@ if (!function_exists('lafka_register_plugin_scripts')) {
 		wp_enqueue_script('countdown', get_template_directory_uri() . "/js/count/jquery.countdown.min.js", array('jquery'), '2.0.0', true);
 
 		// Flatpickr
-		wp_register_script( 'flatpickr', plugins_url( 'assets/js/flatpickr/flatpickr.min.js', __FILE__ ), array( 'jquery' ), '4.6.9', true );
+		wp_register_script( 'flatpickr', plugins_url( 'assets/js/flatpickr/flatpickr.min.js', __FILE__ ), array( 'jquery' ), '4.6.13', true );
 		$flatpickr_locale = apply_filters( 'lafka_flatpickr_locale', strtok( get_locale(), '_' ), get_locale() );
 		if ( file_exists( untrailingslashit( plugin_dir_path( LAFKA_PLUGIN_FILE ) . "assets/js/flatpickr/l10n/$flatpickr_locale.js" ) ) ) {
-			wp_register_script( 'flatpickr-local', plugins_url( "assets/js/flatpickr/l10n/$flatpickr_locale.js", __FILE__ ), array( 'flatpickr' ), '4.6.9', true );
+			wp_register_script( 'flatpickr-local', plugins_url( "assets/js/flatpickr/l10n/$flatpickr_locale.js", __FILE__ ), array( 'flatpickr' ), '4.6.13', true );
 		} else if ( file_exists( untrailingslashit( get_stylesheet_directory() . "/lafka_plugin_templates/flatpickr_l10n/$flatpickr_locale.js" ) ) ) {
-			wp_register_script( 'flatpickr-local', get_stylesheet_directory_uri() . "/lafka_plugin_templates/flatpickr_l10n/$flatpickr_locale.js", array( 'flatpickr' ), '4.6.9', true );
+			wp_register_script( 'flatpickr-local', get_stylesheet_directory_uri() . "/lafka_plugin_templates/flatpickr_l10n/$flatpickr_locale.js", array( 'flatpickr' ), '4.6.13', true );
 		}
 
-		wp_register_style( 'flatpickr', plugins_url( 'assets/js/flatpickr/flatpickr.min.css', __FILE__ ), array(), '4.6.9' );
+		wp_register_style( 'flatpickr', plugins_url( 'assets/js/flatpickr/flatpickr.min.css', __FILE__ ), array(), '4.6.13' );
 
 		// magnific
 		wp_enqueue_script('magnific', get_template_directory_uri() . "/js/magnific/jquery.magnific-popup.min.js", array('jquery'), '1.0.0', true);
@@ -411,7 +416,7 @@ if (!function_exists('lafka_register_plugin_scripts')) {
 		wp_enqueue_script('appear', get_template_directory_uri() . "/js/jquery.appear.min.js", array('jquery'), '1.0.0', true);
 
 		// appear
-		wp_enqueue_script('typed', get_template_directory_uri() . "/js/typed.min.js", array('jquery'), '1.0.0', true);
+		wp_enqueue_script('typed', get_template_directory_uri() . "/js/typed.min.js", array(), '2.0.16', true);
 
 		// nice-select
 		wp_enqueue_script('nice-select', get_template_directory_uri() . "/js/jquery.nice-select.min.js", array('jquery'), '1.0.0', true);
@@ -434,8 +439,8 @@ add_action('admin_enqueue_scripts', 'lafka_register_admin_plugin_scripts');
 if (!function_exists('lafka_register_admin_plugin_scripts')) {
 	function lafka_register_admin_plugin_scripts() {
 		// Flatpickr
-		wp_register_script( 'flatpickr', plugins_url( 'assets/js/flatpickr/flatpickr.min.js', __FILE__ ), array( 'jquery' ), '4.6.9', true );
-		wp_register_style( 'flatpickr', plugins_url( 'assets/js/flatpickr/flatpickr.min.css', __FILE__ ), array(), '4.6.9' );
+		wp_register_script( 'flatpickr', plugins_url( 'assets/js/flatpickr/flatpickr.min.js', __FILE__ ), array( 'jquery' ), '4.6.13', true );
+		wp_register_style( 'flatpickr', plugins_url( 'assets/js/flatpickr/flatpickr.min.css', __FILE__ ), array(), '4.6.13' );
 
 		// Schedule
 		wp_register_script( 'lafka-schedule', plugins_url( 'assets/js/schedule/jquery.schedule.min.js', __FILE__ ), array(
@@ -453,7 +458,8 @@ if (!function_exists('lafka_register_admin_plugin_scripts')) {
 			'confirm_import_2' => esc_html__('. Current Theme Options will be overwritten. Continue?', 'lafka-plugin'),
 			'import_success' => esc_html__('Options successfully imported. Reloading.', 'lafka-plugin'),
 			'upload_error' => esc_html__('There was a problem with the upload. Error', 'lafka-plugin'),
-			'export_url' => esc_url( add_query_arg( 'action', 'lafka_options_export', admin_url( 'admin-post.php' ) ) )
+			'export_url' => esc_url( add_query_arg( 'action', 'lafka_options_export', admin_url( 'admin-post.php' ) ) ),
+			'options_upload_nonce' => wp_create_nonce( 'lafka_options_upload_nonce' )
 		));
 
 		$screen    = get_current_screen();
@@ -976,13 +982,13 @@ if ( ! function_exists( 'lafka_output_info_tooltips' ) ) {
 		for ( $i = 1; $i <= 3; $i ++ ) {
 			if (function_exists( 'lafka_get_option' ) && lafka_get_option( 'promo_tooltip_' . $i . '_trigger_text' ) && ( $position === lafka_get_option( 'promo_tooltip_' . $i . '_position' ) || $show_in_listing && lafka_get_option( 'promo_tooltip_' . $i . '_show_in_listing' ) ) ) {
 				?>
-                <div class="lafka-promo-wrapper<?php if($position) echo ' lafka-promo-'.$position ?>">
+                <div class="lafka-promo-wrapper<?php if($position) echo ' lafka-promo-' . esc_attr( $position ) ?>">
                     <div class="lafka-promo-text">
-						<?php echo lafka_get_option( 'promo_tooltip_' . $i . '_text' ) ?>
+						<?php echo wp_kses_post( lafka_get_option( 'promo_tooltip_' . $i . '_text' ) ) ?>
                         <span class="lafka-promo-trigger">
-                            <?php echo lafka_get_option( 'promo_tooltip_' . $i . '_trigger_text' ) ?>
+                            <?php echo wp_kses_post( lafka_get_option( 'promo_tooltip_' . $i . '_trigger_text' ) ) ?>
                             <span class="lafka-promo-content">
-                                <?php echo lafka_get_option( 'promo_tooltip_' . $i . '_content' ) ?>
+                                <?php echo wp_kses_post( lafka_get_option( 'promo_tooltip_' . $i . '_content' ) ) ?>
                             </span>
                         </span>
                     </div>
@@ -997,14 +1003,19 @@ if ( ! function_exists( 'lafka_output_info_tooltips' ) ) {
 add_action('wp_ajax_lafka_options_upload', 'lafka_options_upload');
 if ( ! function_exists( 'lafka_options_upload' ) ) {
 	function lafka_options_upload() {
-		if(isset($_FILES['file']['tmp_name'])) {
-			$lafka_transfer_content = Lafka_Transfer_Content::getInstance();
-			return $lafka_transfer_content->importSettings( $_FILES['file']['tmp_name'], false, false, false, true );
-		} else {
-			return false;
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
 		}
 
-		wp_die();
+		check_ajax_referer( 'lafka_options_upload_nonce', 'security' );
+
+		if ( isset( $_FILES['file']['tmp_name'] ) ) {
+			$lafka_transfer_content = Lafka_Transfer_Content::getInstance();
+			$result = $lafka_transfer_content->importSettings( $_FILES['file']['tmp_name'], false, false, false, true );
+			wp_send_json_success( $result );
+		} else {
+			wp_send_json_error( array( 'message' => 'No file provided' ) );
+		}
 	}
 }
 
@@ -1035,11 +1046,17 @@ if ( ! function_exists( 'lafka_options_export' ) ) {
 	}
 }
 
-// Allow HTML descriptions in WordPress Menu (related to Mega menu)
+// Allow safe HTML descriptions in WordPress Menu (related to Mega menu)
 remove_filter('nav_menu_description', 'strip_tags');
+add_filter('nav_menu_description', 'wp_kses_post');
 
-// Allow Shortcodes in the Excerpt field
-add_filter('the_excerpt', 'do_shortcode');
+// Allow Shortcodes in the Excerpt field (only when shortcode brackets are present)
+add_filter('the_excerpt', function( $excerpt ) {
+	if ( false !== strpos( $excerpt, '[' ) ) {
+		return do_shortcode( $excerpt );
+	}
+	return $excerpt;
+});
 
 add_action( 'after_setup_theme', 'lafka_after_setup_theme' );
 if ( ! function_exists( 'lafka_after_setup_theme' ) ) {

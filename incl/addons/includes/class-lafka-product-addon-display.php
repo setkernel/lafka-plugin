@@ -234,18 +234,26 @@ class Lafka_Product_Addon_Display {
 	 * @return bool
 	 */
 	protected function check_required_addons( $product_id ) {
+		static $cache = array();
+		if ( isset( $cache[ $product_id ] ) ) {
+			return $cache[ $product_id ];
+		}
+
 		// No parent add-ons, but yes to global.
 		$addons = WC_Product_Addons_Helper::get_product_addons( $product_id, false, false, true );
 
+		$result = false;
 		if ( $addons && ! empty( $addons ) ) {
 			foreach ( $addons as $addon ) {
 				if ( '1' == $addon['required'] ) {
-					return true;
+					$result = true;
+					break;
 				}
 			}
 		}
 
-		return false;
+		$cache[ $product_id ] = $result;
+		return $result;
 	}
 
 	/**
@@ -326,11 +334,7 @@ class Lafka_Product_Addon_Display {
 	 * @return bool
 	 */
 	public function prevent_purchase_at_grouped_level( $purchasable, $product ) {
-		if ( version_compare( WC_VERSION, '3.0.0', '<' ) ) {
-			$product_id = $product->parent->id;
-		} else {
-			$product_id = $product->get_parent_id();
-		}
+		$product_id = $product->get_parent_id();
 
 		if ( $product && ! $product->is_type( 'variation' ) && $product_id && is_single( $product_id ) && $this->check_required_addons( $product->get_id() ) ) {
 			$purchasable = false;

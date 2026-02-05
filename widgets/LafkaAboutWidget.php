@@ -14,18 +14,17 @@ class LafkaAboutWidget extends WP_Widget {
 	}
 
 	public function widget($args, $instance) {
-		extract($args);
 		$title = esc_attr(apply_filters('widget_title', $instance['title']));
 
-		echo wp_kses_post($before_widget);
+		echo wp_kses_post($args['before_widget']);
 		if (!empty($title)) {
-			echo wp_kses_post($before_title . $title . $after_title);
+			echo wp_kses_post($args['before_title'] . $title . $args['after_title']);
 		}
 		?>
 		<?php echo lafka_get_excerpt_by_id(intval($instance['aboutus_page'])) ?>
 		<a class="r_more" href="<?php echo esc_url(get_permalink(intval($instance['aboutus_page']))) ?>"><?php esc_html_e('Read more', 'lafka-plugin') ?>...</a>
 		<?php
-		echo wp_kses_post($after_widget);
+		echo wp_kses_post($args['after_widget']);
 	}
 
 	public function form($instance) {

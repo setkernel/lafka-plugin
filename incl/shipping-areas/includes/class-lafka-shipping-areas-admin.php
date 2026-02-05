@@ -116,7 +116,7 @@ class Lafka_Shipping_Areas_Admin {
                name="lafka_shipping_areas_general[<?php echo esc_attr( $args['label_for'] ); ?>]"
                class="lafka-admin-maps-api-key"
                type="text"
-               value="<?php echo ! empty( $options[ $args['label_for'] ] ) ? ( $options[ $args['label_for'] ] ) : ( $google_maps_api_key ); ?>"
+               value="<?php echo ! empty( $options[ $args['label_for'] ] ) ? esc_attr( $options[ $args['label_for'] ] ) : esc_attr( $google_maps_api_key ); ?>"
         >
         <p class="description">
 			<?php esc_html_e( 'Note: Google Maps API Key may already be set in', 'lafka-plugin' ); ?>
@@ -137,7 +137,7 @@ class Lafka_Shipping_Areas_Admin {
                name="lafka_shipping_areas_general[<?php echo esc_attr( $args['label_for'] ); ?>]"
                class="lafka-admin-maps-api-key"
                type="text"
-               value="<?php echo isset( $options[ $args['label_for'] ] ) ? ( $options[ $args['label_for'] ] ) : ( '' ); ?>"
+               value="<?php echo isset( $options[ $args['label_for'] ] ) ? esc_attr( $options[ $args['label_for'] ] ) : ''; ?>"
         >
         <p class="description">
 			<?php esc_html_e( 'If your main API Key has restrictions by HTTP referrers (web sites) you will need to enter a secondary API Key for the server to serve Distance Matrix API requests which is used for calculation of distance based shipping rates.', 'lafka-plugin' ); ?>
@@ -386,7 +386,7 @@ class Lafka_Shipping_Areas_Admin {
                type="number"
                min="1"
                max="1000"
-               value="<?php echo isset( $options[ $args['label_for'] ] ) ? ( $options[ $args['label_for'] ] ) : ( '' ); ?>"
+               value="<?php echo isset( $options[ $args['label_for'] ] ) ? esc_attr( $options[ $args['label_for'] ] ) : ''; ?>"
         >
         <p class="description">
 			<?php esc_html_e( 'Enter the number of orders which can be made in one time slot. If the number is reached for particular time slot, the users will still be able to see it, but it will be disabled.', 'lafka-plugin' ); ?>

@@ -279,15 +279,15 @@ if ( ! function_exists( 'lafka_woocommerce_custom_cat_fields_save' ) ) {
 		}
 
 		if ( isset( $_POST['lafka_term_header_style'] ) && in_array($taxonomy, array('product_cat', 'product_tag') ) ) {
-			update_term_meta( $term_id, 'lafka_term_header_style', $_POST['lafka_term_header_style'] );
+			update_term_meta( $term_id, 'lafka_term_header_style', sanitize_text_field( wp_unslash( $_POST['lafka_term_header_style'] ) ) );
 		}
 
 		if ( isset( $_POST['lafka_term_header_subtitle'] ) && in_array($taxonomy, array('product_cat', 'product_tag') ) ) {
-			update_term_meta( $term_id, 'lafka_term_header_subtitle', $_POST['lafka_term_header_subtitle'] );
+			update_term_meta( $term_id, 'lafka_term_header_subtitle', sanitize_text_field( wp_unslash( $_POST['lafka_term_header_subtitle'] ) ) );
 		}
 
 		if ( isset( $_POST['lafka_term_header_alignment'] ) && in_array($taxonomy, array('product_cat', 'product_tag') ) ) {
-			update_term_meta( $term_id, 'lafka_term_header_alignment', $_POST['lafka_term_header_alignment'] );
+			update_term_meta( $term_id, 'lafka_term_header_alignment', sanitize_text_field( wp_unslash( $_POST['lafka_term_header_alignment'] ) ) );
 		}
 	}
 }

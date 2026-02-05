@@ -260,10 +260,10 @@ class WC_LafkaCombos_Cart {
 				 * We will not rely on $_REQUEST because checkbox names may not exist in $_POST but they may well exist in $_GET, for instance when editing a combo from the cart.
 				 */
 
-				$posted_data = $_POST;
+				$posted_data = wp_unslash( $_POST );
 
 				if ( empty( $_POST[ 'add-to-cart' ] ) && ! empty( $_GET[ 'add-to-cart' ] ) ) {
-					$posted_data = $_GET;
+					$posted_data = wp_unslash( $_GET );
 				}
 
 				/**
@@ -330,9 +330,9 @@ class WC_LafkaCombos_Cart {
 							if ( isset( $posted_data[ $combined_item_taxonomy_request_key ] ) && '' !== $posted_data[ $combined_item_taxonomy_request_key ] ) {
 
 								if ( $attribute->is_taxonomy() ) {
-									$value = sanitize_title( stripslashes( $posted_data[ $combined_item_taxonomy_request_key ] ) );
+									$value = sanitize_title( $posted_data[ $combined_item_taxonomy_request_key ] );
 								} else {
-									$value = html_entity_decode( wc_clean( stripslashes( $posted_data[ $combined_item_taxonomy_request_key ] ) ), ENT_QUOTES, get_bloginfo( 'charset' ) );
+									$value = html_entity_decode( wc_clean( $posted_data[ $combined_item_taxonomy_request_key ] ), ENT_QUOTES, get_bloginfo( 'charset' ) );
 								}
 
 								$attr_stamp[ $taxonomy ] = $value;
