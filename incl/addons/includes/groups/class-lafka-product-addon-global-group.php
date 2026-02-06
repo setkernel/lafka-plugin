@@ -11,7 +11,7 @@ class Product_Addon_Global_Group {
 	 * @param WP_Post $post
 	 * @return array
 	 */
-	static public function get_group( $post ) {
+	public static function get_group( $post ) {
 		if ( ! is_a( $post, 'WP_Post' ) ) {
 			throw new Exception( 'Product_Addon_Global_Group::Invalid argument supplied to get_group' );
 		}
@@ -38,7 +38,7 @@ class Product_Addon_Global_Group {
 			'name'                   => $post->post_title,
 			'priority'               => $priority,
 			'restrict_to_categories' => $categories,
-			'fields'                 => $fields
+			'fields'                 => $fields,
 		);
 	}
 
@@ -51,7 +51,7 @@ class Product_Addon_Global_Group {
 	 * @param array $args
 	 * @return array
 	 */
-	static public function create_group( $args ) {
+	public static function create_group( $args ) {
 		// Make sure the args only has keys we are expecting
 		try {
 			Product_Addon_Group_Validator::is_valid_global_addons_group_update( $args );
@@ -62,9 +62,9 @@ class Product_Addon_Global_Group {
 		// All is well, create the post
 		$new_post_id = wp_insert_post(
 			array(
-				'post_title'	=> 'Untitled',
-				'post_status'	=> 'publish',
-				'post_type'		=> 'lafka_glb_addon',
+				'post_title'  => 'Untitled',
+				'post_status' => 'publish',
+				'post_type'   => 'lafka_glb_addon',
 			)
 		);
 
@@ -82,7 +82,7 @@ class Product_Addon_Global_Group {
 	 * @param array $args
 	 * @return array
 	 */
-	static public function update_group( $post, $args ) {
+	public static function update_group( $post, $args ) {
 		// Make sure this is a global add-ons $post
 		if ( 'lafka_glb_addon' !== $post->post_type ) {
 			return new WP_Error( 'internal_error', 'Attempted to update a post which is not a global add-ons group custom post type' );
@@ -137,8 +137,8 @@ class Product_Addon_Global_Group {
 	protected static function set_name( $post, $name ) {
 		wp_update_post(
 			array(
-				'ID' => $post->ID,
-				'post_title' => $name
+				'ID'         => $post->ID,
+				'post_title' => $name,
 			)
 		);
 	}
@@ -173,7 +173,6 @@ class Product_Addon_Global_Group {
 		} else {
 			update_post_meta( $post->ID, '_all_products', 0 );
 		}
-
 	}
 
 	/**

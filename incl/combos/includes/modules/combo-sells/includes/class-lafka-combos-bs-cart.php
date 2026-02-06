@@ -65,9 +65,9 @@ class WC_LafkaCombos_BS_Cart {
 		if ( ! empty( $combo_sell_ids ) ) {
 
 			// Construct a dummy combo to collect the posted form content.
-			$combo        = WC_LafkaCombos_BS_Product::get_combo( $combo_sell_ids, $product );
+			$combo          = WC_LafkaCombos_BS_Product::get_combo( $combo_sell_ids, $product );
 			$combined_items = $combo->get_combined_items();
-			$configuration = WC_LafkaCombos()->cart->get_posted_combo_configuration( $combo );
+			$configuration  = WC_LafkaCombos()->cart->get_posted_combo_configuration( $combo );
 
 			foreach ( $combined_items as $combined_item_id => $combined_item ) {
 
@@ -77,19 +77,19 @@ class WC_LafkaCombos_BS_Cart {
 					continue;
 				}
 
-				if ( isset( $combined_item_configuration[ 'optional_selected' ] ) && 'no' === $combined_item_configuration[ 'optional_selected' ] ) {
+				if ( isset( $combined_item_configuration['optional_selected'] ) && 'no' === $combined_item_configuration['optional_selected'] ) {
 					continue;
 				}
 
-				if ( isset( $combined_item_configuration[ 'quantity' ] ) && absint( $combined_item_configuration[ 'quantity' ] ) === 0 ) {
+				if ( isset( $combined_item_configuration['quantity'] ) && absint( $combined_item_configuration['quantity'] ) === 0 ) {
 					continue;
 				}
 
-				$combo_sell_quantity = isset( $combined_item_configuration[ 'quantity' ] ) ? absint( $combined_item_configuration[ 'quantity' ] ) : $combined_item->get_quantity();
+				$combo_sell_quantity = isset( $combined_item_configuration['quantity'] ) ? absint( $combined_item_configuration['quantity'] ) : $combined_item->get_quantity();
 
 				$combo_sells_add_to_cart_configuration[ $combined_item_id ] = array(
 					'product_id' => $combined_item->get_product()->get_id(),
-					'quantity'   => $combo_sell_quantity
+					'quantity'   => $combo_sell_quantity,
 				);
 			}
 		}
@@ -118,7 +118,7 @@ class WC_LafkaCombos_BS_Cart {
 
 		if ( $add ) {
 
-			$product         = wc_get_product( $product_id );
+			$product        = wc_get_product( $product_id );
 			$combo_sell_ids = WC_LafkaCombos_BS_Product::get_combo_sell_ids( $product );
 
 			if ( ! empty( $combo_sell_ids ) ) {
@@ -150,18 +150,18 @@ class WC_LafkaCombos_BS_Cart {
 	public static function combo_sells_add_to_cart( $parent_cart_item_key, $parent_id, $parent_quantity, $variation_id, $variation, $cart_item_data ) {
 
 		// Only proceed if the product was added to the cart via a form or query string.
-		if ( empty( $_REQUEST[ 'add-to-cart' ] ) || absint( $_REQUEST[ 'add-to-cart' ] ) !== absint( $parent_id ) ) {
+		if ( empty( $_REQUEST['add-to-cart'] ) || absint( $_REQUEST['add-to-cart'] ) !== absint( $parent_id ) ) {
 			return;
 		}
 
-		$product = $variation_id > 0 ? wc_get_product( $parent_id ) : WC()->cart->cart_contents[ $parent_cart_item_key ][ 'data' ];
+		$product = $variation_id > 0 ? wc_get_product( $parent_id ) : WC()->cart->cart_contents[ $parent_cart_item_key ]['data'];
 
 		$combo_sells_configuration = self::get_posted_combo_sells_configuration( $product );
 
 		if ( ! empty( $combo_sells_configuration ) ) {
 			foreach ( $combo_sells_configuration as $combo_sell_configuration ) {
 				// Add the combo-sell to the cart.
-				$combo_sell_cart_item_key = WC()->cart->add_to_cart( $combo_sell_configuration[ 'product_id' ], $combo_sell_configuration[ 'quantity' ] );
+				$combo_sell_cart_item_key = WC()->cart->add_to_cart( $combo_sell_configuration['product_id'], $combo_sell_configuration['quantity'] );
 			}
 		}
 
@@ -177,7 +177,7 @@ class WC_LafkaCombos_BS_Cart {
 	 */
 	public static function combo_sells_add_to_cart_message_html( $message, $products ) {
 
-		if ( isset( self::$bypass_filters[ 'add_to_cart_message_html' ] ) && self::$bypass_filters[ 'add_to_cart_message_html' ] === 1 ) {
+		if ( isset( self::$bypass_filters['add_to_cart_message_html'] ) && self::$bypass_filters['add_to_cart_message_html'] === 1 ) {
 			return $message;
 		}
 
@@ -189,12 +189,12 @@ class WC_LafkaCombos_BS_Cart {
 		if ( ! empty( $combo_sells_configuration ) ) {
 
 			foreach ( $combo_sells_configuration as $combo_sell_configuration ) {
-				$products[ $combo_sell_configuration[ 'product_id' ] ] = $combo_sell_configuration[ 'quantity' ];
+				$products[ $combo_sell_configuration['product_id'] ] = $combo_sell_configuration['quantity'];
 			}
 
-			self::$bypass_filters[ 'add_to_cart_message_html' ] = 1;
+			self::$bypass_filters['add_to_cart_message_html'] = 1;
 			$message = wc_add_to_cart_message( $products, true );
-			self::$bypass_filters[ 'add_to_cart_message_html' ] = 0;
+			self::$bypass_filters['add_to_cart_message_html'] = 0;
 		}
 
 		return $message;
@@ -214,7 +214,7 @@ class WC_LafkaCombos_BS_Cart {
 			return;
 		}
 
-		$combo_sells_by_id       = array();
+		$combo_sells_by_id        = array();
 		$cart_item_parent_product = array();
 		$search_cart_item_keys    = array();
 		$apply_to_cart_item_keys  = array();
@@ -232,7 +232,7 @@ class WC_LafkaCombos_BS_Cart {
 
 			$search_cart_item_keys[] = $cart_item_key;
 
-			if ( ! $cart_item[ 'data' ]->is_type( array( 'simple', 'subscription' ) ) ) {
+			if ( ! $cart_item['data']->is_type( array( 'simple', 'subscription' ) ) ) {
 				continue;
 			}
 
@@ -268,7 +268,7 @@ class WC_LafkaCombos_BS_Cart {
 				continue;
 			}
 
-			$product = $cart_item[ 'data' ];
+			$product = $cart_item['data'];
 
 			if ( $product->is_type( 'variation' ) ) {
 				$product = wc_get_product( $product->get_parent_id() );
@@ -287,29 +287,29 @@ class WC_LafkaCombos_BS_Cart {
 
 						$combo_sells_by_id[ $combo_sell_id ] = array(
 							'parent_key' => $cart_item_key,
-							'discount'   => $cart_item_combo_sells_discount
+							'discount'   => $cart_item_combo_sells_discount,
 						);
 
-					// Keep the highest discount.
-					} elseif ( $cart_item_combo_sells_discount > $combo_sells_by_id[ $combo_sell_id ][ 'discount' ] ) {
+						// Keep the highest discount.
+					} elseif ( $cart_item_combo_sells_discount > $combo_sells_by_id[ $combo_sell_id ]['discount'] ) {
 
 						$combo_sells_by_id[ $combo_sell_id ] = array(
 							'parent_key' => $cart_item_key,
-							'discount'   => $cart_item_combo_sells_discount
+							'discount'   => $cart_item_combo_sells_discount,
 						);
 					}
 				}
 			}
 
 			// Clean up keys.
-			if ( isset( $cart_item[ 'combo_sells' ] ) ) {
-				unset( WC()->cart->cart_contents[ $cart_item_key ][ 'combo_sells' ] );
+			if ( isset( $cart_item['combo_sells'] ) ) {
+				unset( WC()->cart->cart_contents[ $cart_item_key ]['combo_sells'] );
 			}
-			if ( isset( $cart_item[ 'combo_sell_of' ] ) ) {
-				unset( WC()->cart->cart_contents[ $cart_item_key ][ 'combo_sell_of' ] );
+			if ( isset( $cart_item['combo_sell_of'] ) ) {
+				unset( WC()->cart->cart_contents[ $cart_item_key ]['combo_sell_of'] );
 			}
-			if ( isset( $cart_item[ 'combo_sell_discount' ] ) ) {
-				unset( WC()->cart->cart_contents[ $cart_item_key ][ 'combo_sell_discount' ] );
+			if ( isset( $cart_item['combo_sell_discount'] ) ) {
+				unset( WC()->cart->cart_contents[ $cart_item_key ]['combo_sell_discount'] );
 			}
 		}
 
@@ -325,20 +325,20 @@ class WC_LafkaCombos_BS_Cart {
 			}
 
 			// Found a new combo-sell?
-			if ( isset( $combo_sells_by_id[ $cart_item[ 'product_id' ] ] ) ) {
+			if ( isset( $combo_sells_by_id[ $cart_item['product_id'] ] ) ) {
 
-				$parent_cart_item_key = $combo_sells_by_id[ $cart_item[ 'product_id' ] ][ 'parent_key' ];
+				$parent_cart_item_key = $combo_sells_by_id[ $cart_item['product_id'] ]['parent_key'];
 
-				WC()->cart->cart_contents[ $cart_item_key ][ 'combo_sell_of' ] = $parent_cart_item_key;
+				WC()->cart->cart_contents[ $cart_item_key ]['combo_sell_of'] = $parent_cart_item_key;
 
-				if ( $combo_sells_by_id[ $cart_item[ 'product_id' ] ][ 'discount' ] ) {
-					WC()->cart->cart_contents[ $cart_item_key ][ 'combo_sell_discount' ] = $combo_sells_by_id[ $cart_item[ 'product_id' ] ][ 'discount' ];
+				if ( $combo_sells_by_id[ $cart_item['product_id'] ]['discount'] ) {
+					WC()->cart->cart_contents[ $cart_item_key ]['combo_sell_discount'] = $combo_sells_by_id[ $cart_item['product_id'] ]['discount'];
 				}
 
-				if ( ! isset( WC()->cart->cart_contents[ $parent_cart_item_key ][ 'combo_sells' ] ) ) {
-					WC()->cart->cart_contents[ $parent_cart_item_key ][ 'combo_sells' ] = array( $cart_item_key );
-				} elseif ( ! in_array( $cart_item_key, WC()->cart->cart_contents[ $parent_cart_item_key ][ 'combo_sells' ] ) ) {
-					WC()->cart->cart_contents[ $parent_cart_item_key ][ 'combo_sells' ][] = $cart_item_key;
+				if ( ! isset( WC()->cart->cart_contents[ $parent_cart_item_key ]['combo_sells'] ) ) {
+					WC()->cart->cart_contents[ $parent_cart_item_key ]['combo_sells'] = array( $cart_item_key );
+				} elseif ( ! in_array( $cart_item_key, WC()->cart->cart_contents[ $parent_cart_item_key ]['combo_sells'] ) ) {
+					WC()->cart->cart_contents[ $parent_cart_item_key ]['combo_sells'][] = $cart_item_key;
 				}
 			}
 		}
@@ -354,14 +354,14 @@ class WC_LafkaCombos_BS_Cart {
 				continue;
 			}
 
-			$combo        = WC_LafkaCombos_BS_Product::get_combo( array( $cart_item[ 'product_id' ] ), $cart_item_parent_product[ $parent_item_key ] );
+			$combo          = WC_LafkaCombos_BS_Product::get_combo( array( $cart_item['product_id'] ), $cart_item_parent_product[ $parent_item_key ] );
 			$combined_items = $combo->get_combined_items();
 			$combined_item  = ! empty( $combined_items ) ? current( $combined_items ) : false;
 
 			if ( $combined_item ) {
 
 				if ( 'filters' === WC_LafkaCombos_Product_Prices::get_combined_cart_item_discount_method() ) {
-					$cart_item[ 'data' ]->combined_cart_item = $combined_item;
+					$cart_item['data']->combined_cart_item = $combined_item;
 				}
 			}
 		}

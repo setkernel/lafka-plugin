@@ -107,33 +107,32 @@ class WC_LafkaCombos_Min_Max_Compatibility {
 			$input_qty    = 1;
 			$group_of_qty = 0;
 
-			if ( isset( self::$unfiltered_args[ 'min_value' ] ) ) {
-				if ( self::$unfiltered_args[ 'min_value' ] > 0 || self::$unfiltered_args[ 'min_value' ] === 0 ) {
-					$min_qty = absint( self::$unfiltered_args[ 'min_value' ] );
+			if ( isset( self::$unfiltered_args['min_value'] ) ) {
+				if ( self::$unfiltered_args['min_value'] > 0 || self::$unfiltered_args['min_value'] === 0 ) {
+					$min_qty = absint( self::$unfiltered_args['min_value'] );
 				}
-			} elseif ( isset( $data[ 'min_value' ] ) && ( $data[ 'min_value' ] > 0 || $data[ 'min_value' ] === 0 ) ) {
-				$min_qty = absint( $data[ 'min_value' ] );
+			} elseif ( isset( $data['min_value'] ) && ( $data['min_value'] > 0 || $data['min_value'] === 0 ) ) {
+				$min_qty = absint( $data['min_value'] );
 			}
 
-			if ( isset( self::$unfiltered_args[ 'max_value' ] ) ) {
-				if ( self::$unfiltered_args[ 'max_value' ] > 0 || self::$unfiltered_args[ 'max_value' ] === 0 ) {
-					$max_qty = absint( self::$unfiltered_args[ 'max_value' ] );
+			if ( isset( self::$unfiltered_args['max_value'] ) ) {
+				if ( self::$unfiltered_args['max_value'] > 0 || self::$unfiltered_args['max_value'] === 0 ) {
+					$max_qty = absint( self::$unfiltered_args['max_value'] );
 				}
-			} elseif ( isset( $data[ 'max_value' ] ) && ( $data[ 'max_value' ] > 0 || $data[ 'max_value' ] === 0 ) ) {
-				$max_qty = absint( $data[ 'max_value' ] );
+			} elseif ( isset( $data['max_value'] ) && ( $data['max_value'] > 0 || $data['max_value'] === 0 ) ) {
+				$max_qty = absint( $data['max_value'] );
 			}
 
-			if ( isset( self::$unfiltered_args[ 'input_value' ] ) ) {
-				$input_qty = absint( self::$unfiltered_args[ 'input_value' ] );
-			} elseif ( isset( $data[ 'input_value' ] ) ) {
-				$input_qty = absint( $data[ 'input_value' ] );
+			if ( isset( self::$unfiltered_args['input_value'] ) ) {
+				$input_qty = absint( self::$unfiltered_args['input_value'] );
+			} elseif ( isset( $data['input_value'] ) ) {
+				$input_qty = absint( $data['input_value'] );
 			}
-
 
 			if ( ! isset( $product->wc_mmq_combined_item ) ) {
 
-				if ( isset( $data[ 'group_of' ] ) ) {
-					$group_of_qty = $data[ 'group_of' ];
+				if ( isset( $data['group_of'] ) ) {
+					$group_of_qty = $data['group_of'];
 				} elseif ( $product instanceof WC_Product ) {
 					$group_of_qty = absint( $product->get_meta( 'group_of_quantity', true ) );
 				}
@@ -151,14 +150,14 @@ class WC_LafkaCombos_Min_Max_Compatibility {
 			}
 
 			if ( empty( $max_qty ) || $max_qty >= $min_qty ) {
-				$data[ 'min_value' ]   = $min_qty;
-				$data[ 'max_value' ]   = $max_qty;
-				$data[ 'input_value' ] = $input_qty;
+				$data['min_value']   = $min_qty;
+				$data['max_value']   = $max_qty;
+				$data['input_value'] = $input_qty;
 			} else {
-				$data[ 'min_value' ]   = $min_qty;
-				$data[ 'max_value' ]   = $min_qty;
-				$data[ 'input_value' ] = $min_qty;
-				$data[ 'step' ]        = 1;
+				$data['min_value']   = $min_qty;
+				$data['max_value']   = $min_qty;
+				$data['input_value'] = $min_qty;
+				$data['step']        = 1;
 			}
 		}
 
@@ -185,9 +184,9 @@ class WC_LafkaCombos_Min_Max_Compatibility {
 
 			$data = array(
 				'group_of'    => absint( $group_of_quantity ),
-				'min_value'   => $variation_data[ 'min_qty' ],
-				'max_value'   => $variation_data[ 'max_qty' ],
-				'input_value' => isset( $variation_data[ 'input_value' ] ) ? $variation_data[ 'input_value' ] : $variation_data[ 'min_qty' ]
+				'min_value'   => $variation_data['min_qty'],
+				'max_value'   => $variation_data['max_qty'],
+				'input_value' => isset( $variation_data['input_value'] ) ? $variation_data['input_value'] : $variation_data['min_qty'],
 			);
 
 			self::$unfiltered_args = $data;
@@ -196,9 +195,9 @@ class WC_LafkaCombos_Min_Max_Compatibility {
 
 			self::$unfiltered_args = false;
 
-			$variation_data[ 'min_qty' ]     = $fixed_args[ 'min_value' ];
-			$variation_data[ 'max_qty' ]     = $fixed_args[ 'max_value' ];
-			$variation_data[ 'input_value' ] = $fixed_args[ 'input_value' ];
+			$variation_data['min_qty']     = $fixed_args['min_value'];
+			$variation_data['max_qty']     = $fixed_args['max_value'];
+			$variation_data['input_value'] = $fixed_args['input_value'];
 		}
 
 		return $variation_data;
@@ -236,9 +235,9 @@ class WC_LafkaCombos_Min_Max_Compatibility {
 
 			if ( $combo_container_item = wc_pc_get_combined_cart_item_container( $cart_item ) ) {
 
-				$combo = $combo_container_item[ 'data' ];
+				$combo = $combo_container_item['data'];
 
-				if ( 'combo' === $combo->get_type() && $combined_item = $combo->get_combined_item( $cart_item[ 'combined_item_id' ] ) ) {
+				if ( 'combo' === $combo->get_type() && $combined_item = $combo->get_combined_item( $cart_item['combined_item_id'] ) ) {
 					$product->wc_mmq_combined_item = $combined_item;
 				}
 			}

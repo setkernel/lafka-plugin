@@ -16,15 +16,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-$is_out_of_stock = isset( $custom_product_data[ 'is_out_of_stock' ] ) && 'yes' === $custom_product_data[ 'is_out_of_stock' ];
+$is_out_of_stock = isset( $custom_product_data['is_out_of_stock'] ) && 'yes' === $custom_product_data['is_out_of_stock'];
 
 ?><div class="cart unavailable_item" data-title="<?php echo esc_attr( $combined_item->get_title() ); ?>" data-product_variations="<?php echo htmlspecialchars( json_encode( array() ) ); ?>" data-product_title="<?php echo esc_attr( $combined_item->get_product()->get_title() ); ?>" data-visible="<?php echo $combined_item->is_visible() ? 'yes' : 'no'; ?>" data-optional_suffix="<?php echo esc_attr( $combined_item->get_optional_suffix() ); ?>" data-optional="<?php echo $combined_item->is_optional() ? 'yes' : 'no'; ?>" data-type="<?php echo $combined_item->get_product()->get_type(); ?>" data-combined_item_id="<?php echo $combined_item->get_id(); ?>" data-custom_data="<?php echo esc_attr( json_encode( $custom_product_data ) ); ?>" data-product_id="<?php echo $combined_item->get_product()->get_id(); ?>" data-combo_id="<?php echo $combo->get_id(); ?>">
 	<div class="combined_item_wrap">
 		<div class="combined_item_cart_content">
 			<div class="combined_item_cart_details">
-				<p class="combined_item_unavailable <?php echo $is_out_of_stock ? 'stock out-of-stock' : ''; ?>"><?php
+				<p class="combined_item_unavailable <?php echo $is_out_of_stock ? 'stock out-of-stock' : ''; ?>">
+				<?php
 					echo $is_out_of_stock ? __( 'Out of stock', 'woocommerce' ) : __( 'Temporarily unavailable', 'lafka-plugin' );
-				?></p>
+				?>
+				</p>
 			</div>
 		</div>
 	</div>

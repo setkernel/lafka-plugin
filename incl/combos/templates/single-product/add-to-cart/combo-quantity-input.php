@@ -22,14 +22,17 @@ do_action( 'woocommerce_before_add_to_cart_quantity' );
 
 if ( ! $product->is_sold_individually() ) {
 
-	woocommerce_quantity_input( array(
-		'min_value'   => apply_filters( 'woocommerce_quantity_input_min', 1, $product ),
-		'max_value'   => apply_filters( 'woocommerce_quantity_input_max', $product->backorders_allowed() ? '' : $product->get_stock_quantity(), $product ),
-		'input_value' => ( isset( $_REQUEST[ 'quantity' ] ) ? wc_stock_amount( $_REQUEST[ 'quantity' ] ) : 1 )
-	) );
+	woocommerce_quantity_input(
+		array(
+			'min_value'   => apply_filters( 'woocommerce_quantity_input_min', 1, $product ),
+			'max_value'   => apply_filters( 'woocommerce_quantity_input_max', $product->backorders_allowed() ? '' : $product->get_stock_quantity(), $product ),
+			'input_value' => ( isset( $_REQUEST['quantity'] ) ? wc_stock_amount( $_REQUEST['quantity'] ) : 1 ),
+		)
+	);
 
 } else {
-	?><input class="qty" type="hidden" name="quantity" value="1" /><?php
+	?><input class="qty" type="hidden" name="quantity" value="1" />
+	<?php
 }
 
 do_action( 'woocommerce_after_add_to_cart_quantity' );

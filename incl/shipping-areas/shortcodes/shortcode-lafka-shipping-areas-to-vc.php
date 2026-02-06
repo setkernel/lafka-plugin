@@ -6,7 +6,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 return array(
 	'name'        => esc_html__( 'Lafka Shipping Areas', 'lafka-plugin' ),
 	'base'        => 'lafka_shipping_areas',
-	'icon'        => plugins_url( '../../assets/image/VC_logo_alth.png', dirname( __FILE__ ) ),
+	'icon'        => plugins_url( '../../assets/image/VC_logo_alth.png', __DIR__ ),
 	'category'    => esc_html__( 'Lafka Shortcodes', 'lafka-plugin' ),
 	'description' => esc_html__( 'Delivery map with defined areas', 'lafka-plugin' ),
 	'params'      => array(
@@ -73,7 +73,7 @@ return array(
 			'heading'    => esc_html__( 'Circular Area', 'lafka-plugin' ),
 			'param_name' => 'circle_area',
 			'value'      => array( esc_html__( 'Draw circular area around store location with specified radius, label and color.', 'lafka-plugin' ) => 'yes' ),
-			'std'        => 'no'
+			'std'        => 'no',
 		),
 		array(
 			'type'             => 'textfield',
@@ -84,8 +84,8 @@ return array(
 			'std'              => '',
 			'dependency'       => array(
 				'element' => 'circle_area',
-				'value'   => 'yes'
-			)
+				'value'   => 'yes',
+			),
 		),
 		array(
 			'type'             => 'dropdown',
@@ -99,8 +99,8 @@ return array(
 			'edit_field_class' => 'vc_col-sm-6',
 			'dependency'       => array(
 				'element' => 'circle_area',
-				'value'   => 'yes'
-			)
+				'value'   => 'yes',
+			),
 		),
 		array(
 			'type'        => 'textfield',
@@ -110,8 +110,8 @@ return array(
 			'std'         => '',
 			'dependency'  => array(
 				'element' => 'circle_area',
-				'value'   => 'yes'
-			)
+				'value'   => 'yes',
+			),
 		),
 		array(
 			'type'        => 'colorpicker',
@@ -121,8 +121,8 @@ return array(
 			'std'         => '',
 			'dependency'  => array(
 				'element' => 'circle_area',
-				'value'   => 'yes'
-			)
+				'value'   => 'yes',
+			),
 		),
 		array(
 			'type'       => 'css_editor',

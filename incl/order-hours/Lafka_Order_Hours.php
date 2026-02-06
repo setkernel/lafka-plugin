@@ -67,7 +67,7 @@ class Lafka_Order_Hours {
 		$this->handle_shop_status();
 
 		if ( is_admin() ) {
-			include_once( dirname( __FILE__ ) . '/settings/Lafka_Order_Hours_Admin.php' );
+			include_once __DIR__ . '/settings/Lafka_Order_Hours_Admin.php';
 			new Lafka_Order_Hours_Admin();
 		}
 	}
@@ -149,10 +149,16 @@ class Lafka_Order_Hours {
 	 */
 	public static function get_shop_status( $branch_timezone = null, $branch_schedule = null, $force_override_check = null, $force_override_status = null, $holidays_calendar = null ) {
 		if ( self::is_shop_open( $branch_timezone, $branch_schedule, $force_override_check, $force_override_status, $holidays_calendar ) ) {
-			return (object) array( 'code' => 'open', 'value' => esc_html__( 'Open', 'lafka-plugin' ) );
+			return (object) array(
+				'code'  => 'open',
+				'value' => esc_html__( 'Open', 'lafka-plugin' ),
+			);
 		}
 
-		return (object) array( 'code' => 'closed', 'value' => esc_html__( 'Closed', 'lafka-plugin' ) );
+		return (object) array(
+			'code'  => 'closed',
+			'value' => esc_html__( 'Closed', 'lafka-plugin' ),
+		);
 	}
 
 	/**
@@ -175,7 +181,7 @@ class Lafka_Order_Hours {
 			}
 
 			$counter = 0;
-			for ( $day_of_week = $numeric_day_of_the_week - 1; $day_of_week < $day_of_week + 6; $day_of_week ++ ) {
+			for ( $day_of_week = $numeric_day_of_the_week - 1; $day_of_week < $day_of_week + 6; $day_of_week++ ) {
 				if ( $counter > 6 ) {
 					return false;
 				}
@@ -193,7 +199,7 @@ class Lafka_Order_Hours {
 					}
 				}
 
-				$counter ++;
+				++$counter;
 			}
 		}
 
@@ -263,14 +269,14 @@ class Lafka_Order_Hours {
 			$branch_holidays_calendar     = get_term_meta( $branch_id, 'lafka_branch_order_hours_holidays_calendar', true );
 		}
 
-		$shop_status                  = Lafka_Order_Hours::get_shop_status( $branch_timezone, $branch_schedule, $branch_force_override_check, $branch_force_override_status, $branch_holidays_calendar );
+		$shop_status                  = self::get_shop_status( $branch_timezone, $branch_schedule, $branch_force_override_check, $branch_force_override_status, $branch_holidays_calendar );
 		$shop_status->branch_timezone = $branch_timezone;
 
 		return $shop_status;
 	}
 
 	public function handle_shop_status() {
-		if ( ! Lafka_Order_Hours::is_shop_open() ) {
+		if ( ! self::is_shop_open() ) {
 
 			// Add classes to body
 			add_filter( 'body_class', array( $this, 'add_body_class' ) );
@@ -301,7 +307,7 @@ class Lafka_Order_Hours {
 
 		if ( isset( self::$lafka_order_hours_options['lafka_order_hours_message'] ) && self::$lafka_order_hours_options['lafka_order_hours_message'] ) {
 			?>
-            <div class="lafka-closed-store-message"><?php echo esc_html( self::$lafka_order_hours_options['lafka_order_hours_message'] ) ?>
+			<div class="lafka-closed-store-message"><?php echo esc_html( self::$lafka_order_hours_options['lafka_order_hours_message'] ); ?>
 				<?php
 				if ( isset( self::$lafka_order_hours_options['lafka_order_hours_message_countdown'] ) && self::$lafka_order_hours_options['lafka_order_hours_message_countdown'] ) {
 					$lafka_branch_location_id_in_session = null;
@@ -313,7 +319,7 @@ class Lafka_Order_Hours {
 						$opening_datetime = self::get_next_opening_time( $timezone_object );
 					} else {
 						$all_legit_branch_locations = Lafka_Shipping_Areas::get_all_legit_branch_locations();
-						$opening_datetime           = Lafka_Order_Hours::get_first_opening_branch_datetime( $all_legit_branch_locations );
+						$opening_datetime           = self::get_first_opening_branch_datetime( $all_legit_branch_locations );
 					}
 
 					if ( $opening_datetime ) {
@@ -323,23 +329,23 @@ class Lafka_Order_Hours {
 							$countdown_output_format = '{dn} {dl} {hn}:{mnn}:{snn}';
 						}
 						?>
-                        <div class="count_holder_small">
-                            <div class="lafka_order_hours_countdown"
-                                 data-diff-days="<?php echo esc_attr( $difference->d ); ?>"
-                                 data-diff-hours="<?php echo esc_attr( $difference->h ); ?>"
-                                 data-diff-minutes="<?php echo esc_attr( $difference->i ); ?>"
-                                 data-diff-seconds="<?php echo esc_attr( $difference->s ); ?>"
-                                 data-output-format="<?php echo esc_attr( $countdown_output_format ); ?>"
-                            ></div>
-                            <div class="clear"></div>
-                        </div>
+						<div class="count_holder_small">
+							<div class="lafka_order_hours_countdown"
+								data-diff-days="<?php echo esc_attr( $difference->d ); ?>"
+								data-diff-hours="<?php echo esc_attr( $difference->h ); ?>"
+								data-diff-minutes="<?php echo esc_attr( $difference->i ); ?>"
+								data-diff-seconds="<?php echo esc_attr( $difference->s ); ?>"
+								data-output-format="<?php echo esc_attr( $countdown_output_format ); ?>"
+							></div>
+							<div class="clear"></div>
+						</div>
 						<?php
 					}
 				}
 				?>
-            </div>
-		<?php }
-
+			</div>
+			<?php
+		}
 	}
 
 	public function get_closed_store_message() {

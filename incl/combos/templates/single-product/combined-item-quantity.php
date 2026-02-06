@@ -19,24 +19,30 @@ if ( ! defined( 'ABSPATH' ) ) {
 if ( $hide_input ) {
 
 	?><div class="quantity <?php echo 'tabular' !== $layout ? 'quantity_hidden' : ''; ?>">
-		<input class="qty combined_qty" type="hidden" name="<?php echo $input_name; ?>" value="<?php echo $quantity_min; ?>" /><?php
+		<input class="qty combined_qty" type="hidden" name="<?php echo $input_name; ?>" value="<?php echo $quantity_min; ?>" />
+		<?php
 
 		if ( 'tabular' === $layout && ( $quantity_min > 0 || $combined_item->is_in_stock() ) ) {
 			echo $quantity_min;
 		}
 
-	?></div><?php
+		?>
+	</div>
+	<?php
 
 } else {
 
 	ob_start();
 
-	woocommerce_quantity_input( array(
-		'input_name'  => $input_name,
-		'min_value'   => $quantity_min,
-		'max_value'   => $quantity_max,
-		'input_value' => isset( $_REQUEST[ $input_name ] ) ? absint( $_REQUEST[ $input_name ] ) : apply_filters( 'woocommerce_combined_product_quantity', $quantity_default, $quantity_min, $quantity_max, $combined_item )
-	), $combined_item->product );
+	woocommerce_quantity_input(
+		array(
+			'input_name'  => $input_name,
+			'min_value'   => $quantity_min,
+			'max_value'   => $quantity_max,
+			'input_value' => isset( $_REQUEST[ $input_name ] ) ? absint( $_REQUEST[ $input_name ] ) : apply_filters( 'woocommerce_combined_product_quantity', $quantity_default, $quantity_min, $quantity_max, $combined_item ),
+		),
+		$combined_item->product
+	);
 
 	echo preg_replace( '/(class=\"[^\"]*qty)([\"\ ])/', '$1 combined_qty$2', ob_get_clean() );
 }

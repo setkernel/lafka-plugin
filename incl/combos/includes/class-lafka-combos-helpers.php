@@ -35,7 +35,6 @@ class WC_LafkaCombos_Helpers {
 			if ( $group_id = self::cache_get( $group_key . '_id' ) ) {
 				$value = self::cache_get( $group_key . '_' . $group_id . '_' . $key );
 			}
-
 		} elseif ( isset( self::$cache[ $key ] ) ) {
 			$value = self::$cache[ $key ];
 		}
@@ -82,7 +81,6 @@ class WC_LafkaCombos_Helpers {
 			if ( $group_id = self::cache_get( $group_key . '_id' ) ) {
 				self::cache_delete( $group_key . '_' . $group_id . '_' . $key );
 			}
-
 		} elseif ( isset( self::$cache[ $key ] ) ) {
 			unset( self::$cache[ $key ] );
 		}
@@ -321,7 +319,7 @@ class WC_LafkaCombos_Helpers {
 			} else {
 				$item_string = sprintf( _x( '%1$s, %2$s', 'string list item separator', 'lafka-plugin' ), $item_string, $item );
 			}
-			$loop++;
+			++$loop;
 		}
 
 		return $item_string;
@@ -349,14 +347,14 @@ class WC_LafkaCombos_Helpers {
 					'b'      => array(),
 					'i'      => array(),
 					'span'   => array(
-						'class' => array()
+						'class' => array(),
 					),
 
 					// Links.
 					'a'      => array(
 						'href'   => array(),
-						'target' => array()
-					)
+						'target' => array(),
+					),
 				);
 				break;
 
@@ -385,13 +383,13 @@ class WC_LafkaCombos_Helpers {
 			if ( ! isset( $meta->id ) ) {
 				$meta_data_to_set[] = array(
 					'key'   => $meta->key,
-					'value' => $meta->value
+					'value' => $meta->value,
 				);
 			}
 		}
 
 		foreach ( $meta_data_to_set as $meta ) {
-			$clone->add_meta_data( $meta[ 'key' ], $meta[ 'value' ], true );
+			$clone->add_meta_data( $meta['key'], $meta['value'], true );
 		}
 
 		return $clone;

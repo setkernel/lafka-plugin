@@ -22,8 +22,10 @@ if ( $title === '' ) {
 	return;
 }
 
-?><h4 class="combined_product_title product_title"><?php
+?><h4 class="combined_product_title product_title">
+<?php
 		$title = '<span class="combined_product_title_inner">' . WC_LafkaCombos_Helpers::format_product_shop_title( $title, $quantity, '', $title_suffix ) . '</span>';
 		$link  = $permalink ? apply_filters( 'woocommerce_combined_item_link_html', ' <span class="combined_product_title_link"><a class="combined_product_permalink" href="' . $permalink . '" target="_blank" aria-label="' . __( 'View product', 'lafka-plugin' ) . '"></a></span>', $combined_item, $combo ) : '';
 		echo $title . $link;
-?></h4>
+?>
+</h4>

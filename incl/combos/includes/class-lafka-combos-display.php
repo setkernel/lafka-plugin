@@ -82,8 +82,8 @@ class WC_LafkaCombos_Display {
 	protected function __construct() {
 
 		// Single product template functions and hooks.
-		require_once( WC_LafkaCombos_ABSPATH . 'includes/wc-pc-template-functions.php' );
-		require_once( WC_LafkaCombos_ABSPATH . 'includes/wc-pc-template-hooks.php' );
+		require_once WC_LafkaCombos_ABSPATH . 'includes/wc-pc-template-functions.php';
+		require_once WC_LafkaCombos_ABSPATH . 'includes/wc-pc-template-hooks.php';
 
 		// Front end combo add-to-cart script.
 		add_action( 'wp_enqueue_scripts', array( $this, 'frontend_scripts' ), 100 );
@@ -128,13 +128,13 @@ class WC_LafkaCombos_Display {
 		add_filter( 'woocommerce_cart_item_class', array( $this, 'cart_item_class' ), 10, 3 );
 
 		// Filter cart item count.
-		add_filter( 'woocommerce_cart_contents_count',  array( $this, 'cart_contents_count' ) );
+		add_filter( 'woocommerce_cart_contents_count', array( $this, 'cart_contents_count' ) );
 
 		// Item data.
 		add_filter( 'woocommerce_get_item_data', array( $this, 'cart_item_data' ), 10, 2 );
 
 		// Hide thumbnail in cart when 'Hide thumbnail' option is selected.
-		add_filter( 'woocommerce_cart_item_thumbnail', array( $this, 'cart_item_thumbnail' ), 10, 3);
+		add_filter( 'woocommerce_cart_item_thumbnail', array( $this, 'cart_item_thumbnail' ), 10, 3 );
 
 		// Filter cart widget items.
 		add_action( 'woocommerce_before_mini_cart', array( $this, 'add_cart_widget_filters' ) );
@@ -194,50 +194,53 @@ class WC_LafkaCombos_Display {
 		 *
 		 * @param  array
 		 */
-		$params = apply_filters( 'woocommerce_combo_front_end_params', array(
-			'i18n_free'                      => __( 'Free!', 'woocommerce' ),
-			'i18n_total'                     => __( 'Total: ', 'lafka-plugin' ),
-			'i18n_subtotal'                  => __( 'Subtotal: ', 'lafka-plugin' ),
-			'i18n_price_format'              => sprintf( _x( '%1$s%2$s%3$s', '"Total/Subtotal" string followed by price followed by price suffix', 'lafka-plugin' ), '%t', '%p', '%s' ),
-			'i18n_strikeout_price_string'    => sprintf( _x( '<del>%1$s</del> <ins>%2$s</ins>', 'Sale/strikeout price', 'lafka-plugin' ), '%f', '%t' ),
-			'i18n_insufficient_stock_list'   => sprintf( _x( '<p class="stock out-of-stock insufficient-stock">%1$s &rarr; %2$s</p>', 'insufficiently stocked items template', 'lafka-plugin' ), __( 'Insufficient stock', 'lafka-plugin' ), '%s' ),
-			'i18n_on_backorder_list'         => sprintf( _x( '<p class="stock available-on-backorder">%1$s &rarr; %2$s</p>', 'backordered items template', 'lafka-plugin' ), __( 'Available on backorder', 'woocommerce' ), '%s' ),
-			'i18n_insufficient_stock_status' => sprintf( _x( '<p class="stock out-of-stock insufficient-stock">%s</p>', 'insufficiently stocked item exists template', 'lafka-plugin' ), __( 'Insufficient stock', 'lafka-plugin' ) ),
-			'i18n_on_backorder_status'       => sprintf( _x( '<p class="stock available-on-backorder">%s</p>', 'backordered item exists template', 'lafka-plugin' ), __( 'Available on backorder', 'woocommerce' ) ),
-			'i18n_select_options'            => __( 'Please choose product options.', 'lafka-plugin' ),
-			'i18n_select_options_for'        => __( 'Please choose %s options.', 'lafka-plugin' ),
-			'i18n_enter_valid_price'         => __( 'Please enter valid amounts.', 'lafka-plugin' ),
-			'i18n_enter_valid_price_for'     => __( 'Please enter a valid %s amount.', 'lafka-plugin' ),
-			'i18n_string_list_item'          => _x( '&quot;%s&quot;', 'string list item', 'lafka-plugin' ),
-			'i18n_string_list_sep'           => sprintf( _x( '%1$s, %2$s', 'string list item separator', 'lafka-plugin' ), '%s', '%v' ),
-			'i18n_string_list_last_sep'      => sprintf( _x( '%1$s and %2$s', 'string list item last separator', 'lafka-plugin' ), '%s', '%v' ),
-			'i18n_qty_string'                => _x( ' &times; %s', 'qty string', 'lafka-plugin' ),
-			'i18n_optional_string'           => _x( ' &mdash; %s', 'suffix', 'lafka-plugin' ),
-			'i18n_optional'                  => __( 'optional', 'lafka-plugin' ),
-			'i18n_contents'                  => __( 'Includes', 'lafka-plugin' ),
-			'i18n_title_meta_string'         => sprintf( _x( '%1$s &ndash; %2$s', 'title followed by meta', 'lafka-plugin' ), '%t', '%m' ),
-			'i18n_title_string'              => sprintf( _x( '%1$s%2$s%3$s%4$s', 'title, quantity, price, suffix', 'lafka-plugin' ), '<span class="item_title">%t</span>', '<span class="item_qty">%q</span>', '', '<span class="item_suffix">%o</span>' ),
-			'i18n_unavailable_text'          => __( 'This product is currently unavailable.', 'lafka-plugin' ),
-			'i18n_validation_alert'          => __( 'Please resolve all pending issues before adding this product to your cart.', 'lafka-plugin' ),
-			'i18n_zero_qty_error'            => __( 'Please choose at least 1 item.', 'lafka-plugin' ),
-			'i18n_recurring_price_join'      => sprintf( _x( '%1$s,</br>%2$s', 'subscription price html', 'lafka-plugin' ), '%r', '%c' ),
-			'i18n_recurring_price_join_last' => sprintf( _x( '%1$s, and</br>%2$s', 'subscription price html', 'lafka-plugin' ), '%r', '%c' ),
-			'discounted_price_decimals'      => WC_LafkaCombos_Product_Prices::get_discounted_price_precision(),
-			'currency_symbol'                => get_woocommerce_currency_symbol(),
-			'currency_position'              => esc_attr( stripslashes( get_option( 'woocommerce_currency_pos' ) ) ),
-			'currency_format_num_decimals'   => wc_pc_price_num_decimals(),
-			'currency_format_decimal_sep'    => esc_attr( stripslashes( get_option( 'woocommerce_price_decimal_sep' ) ) ),
-			'currency_format_thousand_sep'   => esc_attr( stripslashes( get_option( 'woocommerce_price_thousand_sep' ) ) ),
-			'currency_format_trim_zeros'     => false === apply_filters( 'woocommerce_price_trim_zeros', false ) ? 'no' : 'yes',
-			'price_display_suffix'           => esc_attr( get_option( 'woocommerce_price_display_suffix' ) ),
-			'prices_include_tax'             => esc_attr( get_option( 'woocommerce_prices_include_tax' ) ),
-			'tax_display_shop'               => esc_attr( get_option( 'woocommerce_tax_display_shop' ) ),
-			'calc_taxes'                     => esc_attr( get_option( 'woocommerce_calc_taxes' ) ),
-			'photoswipe_enabled'             => current_theme_supports( 'wc-product-gallery-lightbox' ) ? 'yes' : 'no',
-			'responsive_breakpoint'          => 380,
-			'zoom_enabled'                   => 'no',
-			'force_min_max_qty_input'        => 'yes'
-		) );
+		$params = apply_filters(
+			'woocommerce_combo_front_end_params',
+			array(
+				'i18n_free'                      => __( 'Free!', 'woocommerce' ),
+				'i18n_total'                     => __( 'Total: ', 'lafka-plugin' ),
+				'i18n_subtotal'                  => __( 'Subtotal: ', 'lafka-plugin' ),
+				'i18n_price_format'              => sprintf( _x( '%1$s%2$s%3$s', '"Total/Subtotal" string followed by price followed by price suffix', 'lafka-plugin' ), '%t', '%p', '%s' ),
+				'i18n_strikeout_price_string'    => sprintf( _x( '<del>%1$s</del> <ins>%2$s</ins>', 'Sale/strikeout price', 'lafka-plugin' ), '%f', '%t' ),
+				'i18n_insufficient_stock_list'   => sprintf( _x( '<p class="stock out-of-stock insufficient-stock">%1$s &rarr; %2$s</p>', 'insufficiently stocked items template', 'lafka-plugin' ), __( 'Insufficient stock', 'lafka-plugin' ), '%s' ),
+				'i18n_on_backorder_list'         => sprintf( _x( '<p class="stock available-on-backorder">%1$s &rarr; %2$s</p>', 'backordered items template', 'lafka-plugin' ), __( 'Available on backorder', 'woocommerce' ), '%s' ),
+				'i18n_insufficient_stock_status' => sprintf( _x( '<p class="stock out-of-stock insufficient-stock">%s</p>', 'insufficiently stocked item exists template', 'lafka-plugin' ), __( 'Insufficient stock', 'lafka-plugin' ) ),
+				'i18n_on_backorder_status'       => sprintf( _x( '<p class="stock available-on-backorder">%s</p>', 'backordered item exists template', 'lafka-plugin' ), __( 'Available on backorder', 'woocommerce' ) ),
+				'i18n_select_options'            => __( 'Please choose product options.', 'lafka-plugin' ),
+				'i18n_select_options_for'        => __( 'Please choose %s options.', 'lafka-plugin' ),
+				'i18n_enter_valid_price'         => __( 'Please enter valid amounts.', 'lafka-plugin' ),
+				'i18n_enter_valid_price_for'     => __( 'Please enter a valid %s amount.', 'lafka-plugin' ),
+				'i18n_string_list_item'          => _x( '&quot;%s&quot;', 'string list item', 'lafka-plugin' ),
+				'i18n_string_list_sep'           => sprintf( _x( '%1$s, %2$s', 'string list item separator', 'lafka-plugin' ), '%s', '%v' ),
+				'i18n_string_list_last_sep'      => sprintf( _x( '%1$s and %2$s', 'string list item last separator', 'lafka-plugin' ), '%s', '%v' ),
+				'i18n_qty_string'                => _x( ' &times; %s', 'qty string', 'lafka-plugin' ),
+				'i18n_optional_string'           => _x( ' &mdash; %s', 'suffix', 'lafka-plugin' ),
+				'i18n_optional'                  => __( 'optional', 'lafka-plugin' ),
+				'i18n_contents'                  => __( 'Includes', 'lafka-plugin' ),
+				'i18n_title_meta_string'         => sprintf( _x( '%1$s &ndash; %2$s', 'title followed by meta', 'lafka-plugin' ), '%t', '%m' ),
+				'i18n_title_string'              => sprintf( _x( '%1$s%2$s%3$s%4$s', 'title, quantity, price, suffix', 'lafka-plugin' ), '<span class="item_title">%t</span>', '<span class="item_qty">%q</span>', '', '<span class="item_suffix">%o</span>' ),
+				'i18n_unavailable_text'          => __( 'This product is currently unavailable.', 'lafka-plugin' ),
+				'i18n_validation_alert'          => __( 'Please resolve all pending issues before adding this product to your cart.', 'lafka-plugin' ),
+				'i18n_zero_qty_error'            => __( 'Please choose at least 1 item.', 'lafka-plugin' ),
+				'i18n_recurring_price_join'      => sprintf( _x( '%1$s,</br>%2$s', 'subscription price html', 'lafka-plugin' ), '%r', '%c' ),
+				'i18n_recurring_price_join_last' => sprintf( _x( '%1$s, and</br>%2$s', 'subscription price html', 'lafka-plugin' ), '%r', '%c' ),
+				'discounted_price_decimals'      => WC_LafkaCombos_Product_Prices::get_discounted_price_precision(),
+				'currency_symbol'                => get_woocommerce_currency_symbol(),
+				'currency_position'              => esc_attr( stripslashes( get_option( 'woocommerce_currency_pos' ) ) ),
+				'currency_format_num_decimals'   => wc_pc_price_num_decimals(),
+				'currency_format_decimal_sep'    => esc_attr( stripslashes( get_option( 'woocommerce_price_decimal_sep' ) ) ),
+				'currency_format_thousand_sep'   => esc_attr( stripslashes( get_option( 'woocommerce_price_thousand_sep' ) ) ),
+				'currency_format_trim_zeros'     => false === apply_filters( 'woocommerce_price_trim_zeros', false ) ? 'no' : 'yes',
+				'price_display_suffix'           => esc_attr( get_option( 'woocommerce_price_display_suffix' ) ),
+				'prices_include_tax'             => esc_attr( get_option( 'woocommerce_prices_include_tax' ) ),
+				'tax_display_shop'               => esc_attr( get_option( 'woocommerce_tax_display_shop' ) ),
+				'calc_taxes'                     => esc_attr( get_option( 'woocommerce_calc_taxes' ) ),
+				'photoswipe_enabled'             => current_theme_supports( 'wc-product-gallery-lightbox' ) ? 'yes' : 'no',
+				'responsive_breakpoint'          => 380,
+				'zoom_enabled'                   => 'no',
+				'force_min_max_qty_input'        => 'yes',
+			)
+		);
 
 		wp_localize_script( 'wc-add-to-cart-combo', 'wc_combo_params', $params );
 	}
@@ -264,7 +267,8 @@ class WC_LafkaCombos_Display {
 
 		if ( ! $is_enqueued ) {
 
-			wc_enqueue_js( "
+			wc_enqueue_js(
+				"
 				var wc_pb_wrap_combined_table_item = function() {
 					jQuery( '.combined_table_item td.product-name' ).each( function() {
 						var el = jQuery( this );
@@ -279,7 +283,8 @@ class WC_LafkaCombos_Display {
 				} );
 
 				wc_pb_wrap_combined_table_item();
-			" );
+			"
+			);
 
 			$this->enqueued_combined_table_item_js = true;
 		}
@@ -346,7 +351,7 @@ class WC_LafkaCombos_Display {
 		if ( $this->grid_layout_pos === $this->get_grid_layout_columns( $combined_item->get_combo() ) ) {
 			$this->grid_layout_pos = 1;
 		} else {
-			$this->grid_layout_pos++;
+			++$this->grid_layout_pos;
 		}
 	}
 
@@ -368,10 +373,10 @@ class WC_LafkaCombos_Display {
 
 		global $product;
 
-		if ( $product->is_type( 'combo' ) && isset( $_GET[ 'update-combo' ] ) ) {
-			$updating_cart_key = wc_clean( $_GET[ 'update-combo' ] );
+		if ( $product->is_type( 'combo' ) && isset( $_GET['update-combo'] ) ) {
+			$updating_cart_key = wc_clean( $_GET['update-combo'] );
 			if ( isset( WC()->cart->cart_contents[ $updating_cart_key ] ) ) {
-				$notice = sprintf ( __( 'You are currently editing &quot;%1$s&quot;. When finished, click the <strong>Update Cart</strong> button.', 'lafka-plugin' ), $product->get_title() );
+				$notice = sprintf( __( 'You are currently editing &quot;%1$s&quot;. When finished, click the <strong>Update Cart</strong> button.', 'lafka-plugin' ), $product->get_title() );
 				wc_add_notice( $notice, 'notice' );
 			}
 		}
@@ -390,12 +395,12 @@ class WC_LafkaCombos_Display {
 
 			$combo_price = $product->get_combo_price();
 
-			if ( isset( $data[ 'price' ] ) ) {
-				$data[ 'price' ] = $combo_price;
+			if ( isset( $data['price'] ) ) {
+				$data['price'] = $combo_price;
 			}
 
-			if ( isset( $data[ 'priceSpecification' ][ 'price' ] ) ) {
-				$data[ 'priceSpecification' ][ 'price' ] = $combo_price;
+			if ( isset( $data['priceSpecification']['price'] ) ) {
+				$data['priceSpecification']['price'] = $combo_price;
 			}
 		}
 
@@ -469,12 +474,9 @@ class WC_LafkaCombos_Display {
 				if ( wc_prices_include_tax() && $tax_subtotal > 0 ) {
 					$formatted_subtotal .= ' <small class="tax_label">' . WC()->countries->ex_tax_or_vat() . '</small>';
 				}
+			} elseif ( ! wc_prices_include_tax() && $tax_subtotal > 0 ) {
 
-			} else {
-
-				if ( ! wc_prices_include_tax() && $tax_subtotal > 0 ) {
 					$formatted_subtotal .= ' <small class="tax_label">' . WC()->countries->inc_tax_or_vat() . '</small>';
-				}
 			}
 		}
 
@@ -518,11 +520,11 @@ class WC_LafkaCombos_Display {
 
 		if ( $combo_container_item ) {
 
-			$combined_item_id = $cart_item[ 'combined_item_id' ];
+			$combined_item_id = $cart_item['combined_item_id'];
 
-			if ( $combined_item = $combo_container_item[ 'data' ]->get_combined_item( $combined_item_id ) ) {
+			if ( $combined_item = $combo_container_item['data']->get_combined_item( $combined_item_id ) ) {
 
-				if ( empty( $cart_item[ 'line_subtotal' ] ) && false === $combined_item->is_priced_individually() ) {
+				if ( empty( $cart_item['line_subtotal'] ) && false === $combined_item->is_priced_individually() ) {
 
 					$price = '';
 
@@ -530,14 +532,13 @@ class WC_LafkaCombos_Display {
 
 					$price = '';
 
-				} elseif ( WC_Product_Combo::group_mode_has( $combo_container_item[ 'data' ]->get_group_mode(), 'aggregated_prices' ) ) {
+				} elseif ( WC_Product_Combo::group_mode_has( $combo_container_item['data']->get_group_mode(), 'aggregated_prices' ) ) {
 
 					if ( WC_LafkaCombos()->compatibility->is_composited_cart_item( $combo_container_item ) ) {
 						$price = '';
 					} elseif ( $price ) {
 						$price = '<span class="combined_' . ( $this->is_cart_widget() ? 'mini_cart' : 'table' ) . '_item_price">' . $price . '</span>';
 					}
-
 				} elseif ( $price && function_exists( 'wc_cp_get_composited_cart_item_container' ) && ( $composite_container_item_key = wc_cp_get_composited_cart_item_container( $combo_container_item, WC()->cart->cart_contents, true ) ) ) {
 
 					$composite_container_item = WC()->cart->cart_contents[ $composite_container_item_key ];
@@ -546,13 +547,13 @@ class WC_LafkaCombos_Display {
 
 						$show_price = true;
 
-						if ( empty( $cart_item[ 'line_subtotal' ] ) && false === $combined_item->is_priced_individually() ) {
+						if ( empty( $cart_item['line_subtotal'] ) && false === $combined_item->is_priced_individually() ) {
 
-							$component_id             = $combo_container_item[ 'composite_item' ];
+							$component_id             = $combo_container_item['composite_item'];
 							$composite_container_item = wc_cp_get_composited_cart_item_container( $combo_container_item );
 
 							if ( $composite_container_item ) {
-								$component  = $composite_container_item[ 'data' ]->get_component( $component_id );
+								$component  = $composite_container_item['data']->get_component( $component_id );
 								$show_price = $component && $component->is_priced_individually();
 							}
 						}
@@ -582,39 +583,52 @@ class WC_LafkaCombos_Display {
 
 		if ( wc_pc_is_combo_container_cart_item( $cart_item ) ) {
 
-			$aggregate_prices = WC_Product_Combo::group_mode_has( $cart_item[ 'data' ]->get_group_mode(), 'aggregated_prices' );
+			$aggregate_prices = WC_Product_Combo::group_mode_has( $cart_item['data']->get_group_mode(), 'aggregated_prices' );
 
 			if ( $aggregate_prices ) {
 
-				$calc_type           = ! $this->display_cart_prices_including_tax() ? 'excl_tax' : 'incl_tax';
-				$combo_price        = WC_LafkaCombos_Product_Prices::get_product_price( $cart_item[ 'data' ], array( 'price' => $cart_item[ 'data' ]->get_price(), 'calc' => $calc_type ) );
+				$calc_type            = ! $this->display_cart_prices_including_tax() ? 'excl_tax' : 'incl_tax';
+				$combo_price          = WC_LafkaCombos_Product_Prices::get_product_price(
+					$cart_item['data'],
+					array(
+						'price' => $cart_item['data']->get_price(),
+						'calc'  => $calc_type,
+					)
+				);
 				$combined_cart_items  = wc_pc_get_combined_cart_items( $cart_item, WC()->cart->cart_contents );
 				$combined_items_price = 0.0;
 
 				foreach ( $combined_cart_items as $combined_cart_item ) {
 
-					$combined_item_id        = $combined_cart_item[ 'combined_item_id' ];
-					$combined_item_raw_price = $combined_cart_item[ 'data' ]->get_price();
+					$combined_item_id        = $combined_cart_item['combined_item_id'];
+					$combined_item_raw_price = $combined_cart_item['data']->get_price();
 
-					if ( WC_LafkaCombos()->compatibility->is_subscription( $combined_cart_item[ 'data' ] ) ) {
+					if ( WC_LafkaCombos()->compatibility->is_subscription( $combined_cart_item['data'] ) ) {
 
-						$combined_item = $cart_item[ 'data' ]->get_combined_item( $combined_item_id );
+						$combined_item = $cart_item['data']->get_combined_item( $combined_item_id );
 
 						if ( $combined_item ) {
-							$combined_item_raw_recurring_fee = $combined_cart_item[ 'data' ]->get_price();
-							$combined_item_raw_sign_up_fee   = (double) WC_Subscriptions_Product::get_sign_up_fee( $combined_cart_item[ 'data' ] );
-							$combined_item_raw_price         = $combined_item->get_up_front_subscription_price( $combined_item_raw_recurring_fee, $combined_item_raw_sign_up_fee, $combined_cart_item[ 'data' ] );
+							$combined_item_raw_recurring_fee = $combined_cart_item['data']->get_price();
+							$combined_item_raw_sign_up_fee   = (float) WC_Subscriptions_Product::get_sign_up_fee( $combined_cart_item['data'] );
+							$combined_item_raw_price         = $combined_item->get_up_front_subscription_price( $combined_item_raw_recurring_fee, $combined_item_raw_sign_up_fee, $combined_cart_item['data'] );
 						}
 					}
 
-					$combined_item_qty     = $combined_cart_item[ 'data' ]->is_sold_individually() ? 1 : $combined_cart_item[ 'quantity' ] / $cart_item[ 'quantity' ];
-					$combined_item_price   = WC_LafkaCombos_Product_Prices::get_product_price( $combined_cart_item[ 'data' ], array( 'price' => $combined_item_raw_price, 'calc' => $calc_type, 'qty' => $combined_item_qty ) );
-					$combined_items_price += wc_format_decimal( (double) $combined_item_price, wc_pc_price_num_decimals() );
+					$combined_item_qty     = $combined_cart_item['data']->is_sold_individually() ? 1 : $combined_cart_item['quantity'] / $cart_item['quantity'];
+					$combined_item_price   = WC_LafkaCombos_Product_Prices::get_product_price(
+						$combined_cart_item['data'],
+						array(
+							'price' => $combined_item_raw_price,
+							'calc'  => $calc_type,
+							'qty'   => $combined_item_qty,
+						)
+					);
+					$combined_items_price += wc_format_decimal( (float) $combined_item_price, wc_pc_price_num_decimals() );
 				}
 
-				$price = wc_price( (double) $combo_price + $combined_items_price );
+				$price = wc_price( (float) $combo_price + $combined_items_price );
 
-			} elseif ( empty( $cart_item[ 'line_subtotal' ] ) ) {
+			} elseif ( empty( $cart_item['line_subtotal'] ) ) {
 
 				$combined_items          = wc_pc_get_combined_cart_items( $cart_item, WC()->cart->cart_contents );
 				$combined_item_subtotals = wp_list_pluck( $combined_items, 'line_subtotal' );
@@ -646,11 +660,11 @@ class WC_LafkaCombos_Display {
 
 		if ( $combo_container_item ) {
 
-			$combined_item_id = $cart_item[ 'combined_item_id' ];
+			$combined_item_id = $cart_item['combined_item_id'];
 
-			if ( $combined_item = $combo_container_item[ 'data' ]->get_combined_item( $combined_item_id ) ) {
+			if ( $combined_item = $combo_container_item['data']->get_combined_item( $combined_item_id ) ) {
 
-				if ( empty( $cart_item[ 'line_subtotal' ] ) && false === $combined_item->is_priced_individually() ) {
+				if ( empty( $cart_item['line_subtotal'] ) && false === $combined_item->is_priced_individually() ) {
 
 					$subtotal = '';
 
@@ -658,14 +672,13 @@ class WC_LafkaCombos_Display {
 
 					$subtotal = '';
 
-				} elseif ( WC_Product_Combo::group_mode_has( $combo_container_item[ 'data' ]->get_group_mode(), 'aggregated_subtotals' ) ) {
+				} elseif ( WC_Product_Combo::group_mode_has( $combo_container_item['data']->get_group_mode(), 'aggregated_subtotals' ) ) {
 
 					if ( WC_LafkaCombos()->compatibility->is_composited_cart_item( $combo_container_item ) ) {
 						$subtotal = '';
 					} elseif ( $subtotal ) {
 						$subtotal = '<span class="combined_' . ( $this->is_cart_widget() ? 'mini_cart' : 'table' ) . '_item_subtotal">' . sprintf( _x( '%1$s: %2$s', 'combined product subtotal', 'lafka-plugin' ), __( 'Subtotal', 'lafka-plugin' ), $subtotal ) . '</span>';
 					}
-
 				} elseif ( $subtotal && function_exists( 'wc_cp_get_composited_cart_item_container' ) && ( $composite_container_item_key = wc_cp_get_composited_cart_item_container( $combo_container_item, WC()->cart->cart_contents, true ) ) ) {
 
 					$composite_container_item = WC()->cart->cart_contents[ $composite_container_item_key ];
@@ -674,13 +687,13 @@ class WC_LafkaCombos_Display {
 
 						$show_subtotal = true;
 
-						if ( empty( $cart_item[ 'line_subtotal' ] ) && false === $combined_item->is_priced_individually() ) {
+						if ( empty( $cart_item['line_subtotal'] ) && false === $combined_item->is_priced_individually() ) {
 
-							$component_id             = $combo_container_item[ 'composite_item' ];
+							$component_id             = $combo_container_item['composite_item'];
 							$composite_container_item = wc_cp_get_composited_cart_item_container( $combo_container_item );
 
 							if ( $composite_container_item ) {
-								$component     = $composite_container_item[ 'data' ]->get_component( $component_id );
+								$component     = $composite_container_item['data']->get_component( $component_id );
 								$show_subtotal = $component && $component->is_priced_individually();
 							}
 						}
@@ -710,38 +723,52 @@ class WC_LafkaCombos_Display {
 
 		if ( wc_pc_is_combo_container_cart_item( $cart_item ) ) {
 
-			$aggregate_subtotals = WC_Product_Combo::group_mode_has( $cart_item[ 'data' ]->get_group_mode(), 'aggregated_subtotals' );
+			$aggregate_subtotals = WC_Product_Combo::group_mode_has( $cart_item['data']->get_group_mode(), 'aggregated_subtotals' );
 
 			if ( $aggregate_subtotals ) {
 
-				$calc_type           = ! $this->display_cart_prices_including_tax() ? 'excl_tax' : 'incl_tax';
-				$combo_price        = WC_LafkaCombos_Product_Prices::get_product_price( $cart_item[ 'data' ], array( 'price' => $cart_item[ 'data' ]->get_price(), 'calc' => $calc_type, 'qty' => $cart_item[ 'quantity' ] ) );
+				$calc_type            = ! $this->display_cart_prices_including_tax() ? 'excl_tax' : 'incl_tax';
+				$combo_price          = WC_LafkaCombos_Product_Prices::get_product_price(
+					$cart_item['data'],
+					array(
+						'price' => $cart_item['data']->get_price(),
+						'calc'  => $calc_type,
+						'qty'   => $cart_item['quantity'],
+					)
+				);
 				$combined_cart_items  = wc_pc_get_combined_cart_items( $cart_item, WC()->cart->cart_contents );
 				$combined_items_price = 0.0;
 
 				foreach ( $combined_cart_items as $combined_cart_item ) {
 
-					$combined_item_id        = $combined_cart_item[ 'combined_item_id' ];
-					$combined_item_raw_price = $combined_cart_item[ 'data' ]->get_price();
+					$combined_item_id        = $combined_cart_item['combined_item_id'];
+					$combined_item_raw_price = $combined_cart_item['data']->get_price();
 
-					if ( WC_LafkaCombos()->compatibility->is_subscription( $combined_cart_item[ 'data' ] ) ) {
+					if ( WC_LafkaCombos()->compatibility->is_subscription( $combined_cart_item['data'] ) ) {
 
-						$combined_item = $cart_item[ 'data' ]->get_combined_item( $combined_item_id );
+						$combined_item = $cart_item['data']->get_combined_item( $combined_item_id );
 
 						if ( $combined_item ) {
-							$combined_item_raw_recurring_fee = $combined_cart_item[ 'data' ]->get_price();
-							$combined_item_raw_sign_up_fee   = (double) WC_Subscriptions_Product::get_sign_up_fee( $combined_cart_item[ 'data' ] );
-							$combined_item_raw_price         = $combined_item->get_up_front_subscription_price( $combined_item_raw_recurring_fee, $combined_item_raw_sign_up_fee, $combined_cart_item[ 'data' ] );
+							$combined_item_raw_recurring_fee = $combined_cart_item['data']->get_price();
+							$combined_item_raw_sign_up_fee   = (float) WC_Subscriptions_Product::get_sign_up_fee( $combined_cart_item['data'] );
+							$combined_item_raw_price         = $combined_item->get_up_front_subscription_price( $combined_item_raw_recurring_fee, $combined_item_raw_sign_up_fee, $combined_cart_item['data'] );
 						}
 					}
 
-					$combined_item_price    = WC_LafkaCombos_Product_Prices::get_product_price( $combined_cart_item[ 'data' ], array( 'price' => $combined_item_raw_price, 'calc' => $calc_type, 'qty' => $combined_cart_item[ 'quantity' ] ) );
-					$combined_items_price  += wc_format_decimal( (double) $combined_item_price, wc_pc_price_num_decimals() );
+					$combined_item_price   = WC_LafkaCombos_Product_Prices::get_product_price(
+						$combined_cart_item['data'],
+						array(
+							'price' => $combined_item_raw_price,
+							'calc'  => $calc_type,
+							'qty'   => $combined_cart_item['quantity'],
+						)
+					);
+					$combined_items_price += wc_format_decimal( (float) $combined_item_price, wc_pc_price_num_decimals() );
 				}
 
-				$subtotal = $this->format_subtotal( $cart_item[ 'data' ], (double) $combo_price + $combined_items_price );
+				$subtotal = $this->format_subtotal( $cart_item['data'], (float) $combo_price + $combined_items_price );
 
-			} elseif ( empty( $cart_item[ 'line_subtotal' ] ) ) {
+			} elseif ( empty( $cart_item['line_subtotal'] ) ) {
 
 				$combined_items          = wc_pc_get_combined_cart_items( $cart_item, WC()->cart->cart_contents );
 				$combined_item_subtotals = wp_list_pluck( $combined_items, 'line_subtotal' );
@@ -787,35 +814,39 @@ class WC_LafkaCombos_Display {
 
 		if ( $container_item = wc_pc_get_combined_cart_item_container( $cart_item ) ) {
 
-			$combined_item_id = $cart_item[ 'combined_item_id' ];
-			$combined_item    = $container_item[ 'data' ]->get_combined_item( $combined_item_id );
+			$combined_item_id = $cart_item['combined_item_id'];
+			$combined_item    = $container_item['data']->get_combined_item( $combined_item_id );
 
 			$min_quantity = $combined_item->get_quantity( 'min' );
 			$max_quantity = $combined_item->get_quantity( 'max' );
 
 			if ( $min_quantity === $max_quantity ) {
 
-				$quantity = $cart_item[ 'quantity' ];
+				$quantity = $cart_item['quantity'];
 
 			} else {
 
-				$parent_quantity = $container_item[ 'quantity' ];
+				$parent_quantity = $container_item['quantity'];
 
 				$min_qty = $parent_quantity * $min_quantity;
 				$max_qty = '' !== $max_quantity ? $parent_quantity * $max_quantity : '';
 
-				if ( ( $max_qty > $min_qty || '' === $max_qty ) && ! $cart_item[ 'data' ]->is_sold_individually() ) {
+				if ( ( $max_qty > $min_qty || '' === $max_qty ) && ! $cart_item['data']->is_sold_individually() ) {
 
-					$quantity = woocommerce_quantity_input( array(
-						'input_name'  => "cart[{$cart_item_key}][qty]",
-						'input_value' => $cart_item[ 'quantity' ],
-						'min_value'   => $min_qty,
-						'max_value'   => $max_qty,
-						'step'        => $parent_quantity
-					), $cart_item[ 'data' ], false );
+					$quantity = woocommerce_quantity_input(
+						array(
+							'input_name'  => "cart[{$cart_item_key}][qty]",
+							'input_value' => $cart_item['quantity'],
+							'min_value'   => $min_qty,
+							'max_value'   => $max_qty,
+							'step'        => $parent_quantity,
+						),
+						$cart_item['data'],
+						false
+					);
 
 				} else {
-					$quantity = $cart_item[ 'quantity' ];
+					$quantity = $cart_item['quantity'];
 				}
 			}
 		}
@@ -838,7 +869,7 @@ class WC_LafkaCombos_Display {
 
 			$combo_container_item = WC()->cart->cart_contents[ $combo_container_item_key ];
 
-			$combo = $combo_container_item[ 'data' ];
+			$combo = $combo_container_item['data'];
 
 			if ( false === WC_Product_Combo::group_mode_has( $combo->get_group_mode(), 'parent_item' ) ) {
 
@@ -859,7 +890,6 @@ class WC_LafkaCombos_Display {
 						esc_attr( $combo->get_sku() )
 					);
 				}
-
 			} else {
 				return '';
 			}
@@ -880,18 +910,17 @@ class WC_LafkaCombos_Display {
 
 		if ( $combo_container_item = wc_pc_get_combined_cart_item_container( $cart_item ) ) {
 
-			$combo          = $combo_container_item[ 'data' ];
-			$combined_item_id = $cart_item[ 'combined_item_id' ];
+			$combo            = $combo_container_item['data'];
+			$combined_item_id = $cart_item['combined_item_id'];
 
 			if ( $combined_item = $combo->get_combined_item( $combined_item_id ) ) {
 				if ( false === $combined_item->is_visible( 'cart' ) ) {
 					$visible = false;
 				}
 			}
-
 		} elseif ( wc_pc_is_combo_container_cart_item( $cart_item ) ) {
 
-			$combo = $cart_item[ 'data' ];
+			$combo = $cart_item['data'];
 
 			if ( false === WC_Product_Combo::group_mode_has( $combo->get_group_mode(), 'parent_item' ) ) {
 				$visible = false;
@@ -914,7 +943,7 @@ class WC_LafkaCombos_Display {
 		if ( $combo_container_item_key = wc_pc_get_combined_cart_item_container( $cart_item, false, true ) ) {
 
 			$combo_container_item = WC()->cart->cart_contents[ $combo_container_item_key ];
-			$combo                = $combo_container_item[ 'data' ];
+			$combo                = $combo_container_item['data'];
 
 			if ( WC_Product_Combo::group_mode_has( $combo->get_group_mode(), 'child_item_indent' ) ) {
 				$this->enqueue_combined_table_item_js();
@@ -937,10 +966,9 @@ class WC_LafkaCombos_Display {
 					}
 				}
 			}
-
 		} elseif ( wc_pc_is_combo_container_cart_item( $cart_item ) ) {
 
-			$combo = $cart_item[ 'data' ];
+			$combo = $cart_item['data'];
 
 			if ( function_exists( 'is_cart' ) && is_cart() && ! $this->is_cart_widget() ) {
 
@@ -951,7 +979,7 @@ class WC_LafkaCombos_Display {
 					$content           = sprintf( _x( '%1$s<br/><a class="edit_combo_in_cart_text edit_in_cart_text" href="%2$s"><small>%3$s</small></a>', 'edit in cart text', 'lafka-plugin' ), $content, $edit_in_cart_link, $edit_in_cart_text );
 				}
 
-				if ( WC_Product_Combo::group_mode_has( $cart_item[ 'data' ]->get_group_mode(), 'parent_cart_item_meta' ) ) {
+				if ( WC_Product_Combo::group_mode_has( $cart_item['data']->get_group_mode(), 'parent_cart_item_meta' ) ) {
 					$content .= $this->get_combo_container_cart_item_data( $cart_item, true );
 				}
 			}
@@ -972,7 +1000,7 @@ class WC_LafkaCombos_Display {
 
 		if ( $combo_container_item = wc_pc_get_combined_cart_item_container( $cart_item ) ) {
 
-			$combo = $combo_container_item[ 'data' ];
+			$combo = $combo_container_item['data'];
 
 			if ( WC_Product_Combo::group_mode_has( $combo->get_group_mode(), 'child_item_indent' ) ) {
 
@@ -984,12 +1012,10 @@ class WC_LafkaCombos_Display {
 					if ( empty( $combined_cart_item_keys ) || current( $combined_cart_item_keys ) !== $cart_item_key ) {
 						$classname .= ' combined_table_item';
 					}
-
 				} else {
 					$classname .= ' combined_table_item';
 				}
 			}
-
 		} elseif ( wc_pc_is_combo_container_cart_item( $cart_item ) ) {
 			$classname .= ' combo_table_item';
 		}
@@ -1014,7 +1040,7 @@ class WC_LafkaCombos_Display {
 				$parent_item_visible = $this->cart_item_visible( true, $cart_item, $cart_item_key );
 
 				if ( ! $parent_item_visible ) {
-					$subtract += $cart_item[ 'quantity' ];
+					$subtract += $cart_item['quantity'];
 				}
 
 				$combined_cart_items = wc_pc_get_combined_cart_items( $cart_item );
@@ -1024,7 +1050,7 @@ class WC_LafkaCombos_Display {
 					$subtract_combined_item_qty = $parent_item_visible || false === $this->cart_item_visible( true, $combined_cart_item, $combined_item_key );
 
 					if ( $subtract_combined_item_qty ) {
-						$subtract += $combined_cart_item[ 'quantity' ];
+						$subtract += $combined_cart_item['quantity'];
 					}
 				}
 			}
@@ -1044,12 +1070,12 @@ class WC_LafkaCombos_Display {
 
 		if ( $container = wc_pc_get_combined_cart_item_container( $cart_item ) ) {
 
-			$combo = $container[ 'data' ];
+			$combo = $container['data'];
 
 			if ( WC_Product_Combo::group_mode_has( $combo->get_group_mode(), 'child_item_meta' ) ) {
 				$data[] = array(
 					'key'   => __( 'Part of', 'lafka-plugin' ),
-					'value' => $combo->get_title()
+					'value' => $combo->get_title(),
 				);
 			}
 		}
@@ -1070,15 +1096,15 @@ class WC_LafkaCombos_Display {
 
 		if ( $combo_container_item = wc_pc_get_combined_cart_item_container( $cart_item ) ) {
 
-			$combined_item_id = $cart_item[ 'combined_item_id' ];
+			$combined_item_id = $cart_item['combined_item_id'];
 
-			if ( $combined_item = $combo_container_item[ 'data' ]->get_combined_item( $combined_item_id) ) {
+			if ( $combined_item = $combo_container_item['data']->get_combined_item( $combined_item_id ) ) {
 
 				if ( false === $combined_item->is_thumbnail_visible() ) {
 
 					$is_faked_parent_item = false;
 
-					if ( WC_Product_Combo::group_mode_has( $combo_container_item[ 'data' ]->get_group_mode(), 'faked_parent_item' ) ) {
+					if ( WC_Product_Combo::group_mode_has( $combo_container_item['data']->get_group_mode(), 'faked_parent_item' ) ) {
 
 						$combined_cart_item_keys = wc_pc_get_combined_cart_items( $combo_container_item, false, true );
 
@@ -1166,7 +1192,7 @@ class WC_LafkaCombos_Display {
 
 		if ( $container = wc_pc_get_combined_cart_item_container( $cart_item ) ) {
 
-			$combo = $container[ 'data' ];
+			$combo = $container['data'];
 
 			if ( WC_Product_Combo::group_mode_has( $combo->get_group_mode(), 'parent_item' ) && WC_Product_Combo::group_mode_has( $combo->get_group_mode(), 'parent_cart_widget_item_meta' ) ) {
 				$show = false;
@@ -1190,13 +1216,12 @@ class WC_LafkaCombos_Display {
 
 		if ( wc_pc_is_combo_container_cart_item( $cart_item ) ) {
 
-			if ( WC_Product_Combo::group_mode_has( $cart_item[ 'data' ]->get_group_mode(), 'aggregated_subtotals' ) ) {
+			if ( WC_Product_Combo::group_mode_has( $cart_item['data']->get_group_mode(), 'aggregated_subtotals' ) ) {
 
 				if ( WC_LafkaCombos()->cart->container_cart_item_contains( $cart_item, 'sold_individually' ) ) {
-					$qty = apply_filters( 'woocommerce_cart_item_subtotal', WC()->cart->get_product_subtotal( $cart_item[ 'data' ], $cart_item[ 'quantity' ] ), $cart_item, $cart_item_key );
+					$qty = apply_filters( 'woocommerce_cart_item_subtotal', WC()->cart->get_product_subtotal( $cart_item['data'], $cart_item['quantity'] ), $cart_item, $cart_item_key );
 				}
-
-			} elseif ( empty( $cart_item[ 'line_subtotal' ] ) && $cart_item[ 'data' ]->contains( 'priced_individually' ) ) {
+			} elseif ( empty( $cart_item['line_subtotal'] ) && $cart_item['data']->contains( 'priced_individually' ) ) {
 
 				$combined_item_keys = wc_pc_get_combined_cart_items( $cart_item, WC()->cart->cart_contents, true );
 
@@ -1204,21 +1229,20 @@ class WC_LafkaCombos_Display {
 					$qty = '';
 				}
 			}
-
 		} elseif ( $combo_container_item = wc_pc_get_combined_cart_item_container( $cart_item ) ) {
 
-			if ( ! empty( $cart_item[ 'line_subtotal' ] ) ) {
+			if ( ! empty( $cart_item['line_subtotal'] ) ) {
 				return $qty;
 			}
 
-			$combined_item_id = $cart_item[ 'combined_item_id' ];
-			$combined_item    = $combo_container_item[ 'data' ]->get_combined_item( $cart_item[ 'combined_item_id' ] );
+			$combined_item_id = $cart_item['combined_item_id'];
+			$combined_item    = $combo_container_item['data']->get_combined_item( $cart_item['combined_item_id'] );
 
 			if ( ! $combined_item ) {
 				return $qty;
 			}
 
-			if ( ! $combined_item->is_priced_individually() && ! WC_Product_Combo::group_mode_has( $combo_container_item[ 'data' ]->get_group_mode(), 'parent_cart_widget_item_meta' ) ) {
+			if ( ! $combined_item->is_priced_individually() && ! WC_Product_Combo::group_mode_has( $combo_container_item['data']->get_group_mode(), 'parent_cart_widget_item_meta' ) ) {
 				$qty = '';
 			}
 		}
@@ -1238,36 +1262,34 @@ class WC_LafkaCombos_Display {
 
 		if ( wc_pc_is_combo_container_cart_item( $cart_item ) ) {
 
-			if ( WC_Product_Combo::group_mode_has( $cart_item[ 'data' ]->get_group_mode(), 'aggregated_subtotals' ) ) {
+			if ( WC_Product_Combo::group_mode_has( $cart_item['data']->get_group_mode(), 'aggregated_subtotals' ) ) {
 
 				if ( WC_LafkaCombos()->cart->container_cart_item_contains( $cart_item, 'sold_individually' ) && ! WC_LafkaCombos()->compatibility->is_composited_cart_item( $cart_item ) ) {
-					$name = WC_LafkaCombos_Helpers::format_product_shop_title( $name, $cart_item[ 'quantity' ] );
+					$name = WC_LafkaCombos_Helpers::format_product_shop_title( $name, $cart_item['quantity'] );
 				}
-
-			} elseif ( empty( $cart_item[ 'line_subtotal' ] ) && $cart_item[ 'data' ]->contains( 'priced_individually' ) ) {
+			} elseif ( empty( $cart_item['line_subtotal'] ) && $cart_item['data']->contains( 'priced_individually' ) ) {
 
 				$combined_item_keys = wc_pc_get_combined_cart_items( $cart_item, WC()->cart->cart_contents, true );
 
 				if ( ! empty( $combined_item_keys ) ) {
-					$name = WC_LafkaCombos_Helpers::format_product_shop_title( $name, $cart_item[ 'quantity' ] );
+					$name = WC_LafkaCombos_Helpers::format_product_shop_title( $name, $cart_item['quantity'] );
 				}
 			}
-
 		} elseif ( $combo_container_item = wc_pc_get_combined_cart_item_container( $cart_item ) ) {
 
-			if ( ! empty( $cart_item[ 'line_subtotal' ] ) ) {
+			if ( ! empty( $cart_item['line_subtotal'] ) ) {
 				return $name;
 			}
 
-			$combined_item_id = $cart_item[ 'combined_item_id' ];
-			$combined_item    = $combo_container_item[ 'data' ]->get_combined_item( $cart_item[ 'combined_item_id' ] );
+			$combined_item_id = $cart_item['combined_item_id'];
+			$combined_item    = $combo_container_item['data']->get_combined_item( $cart_item['combined_item_id'] );
 
 			if ( ! $combined_item ) {
 				return $name;
 			}
 
-			if ( ! $combined_item->is_priced_individually() && ! WC_Product_Combo::group_mode_has( $combo_container_item[ 'data' ]->get_group_mode(), 'parent_cart_widget_item_meta' ) ) {
-				$name = WC_LafkaCombos_Helpers::format_product_shop_title( $name, $cart_item[ 'quantity' ] );
+			if ( ! $combined_item->is_priced_individually() && ! WC_Product_Combo::group_mode_has( $combo_container_item['data']->get_group_mode(), 'parent_cart_widget_item_meta' ) ) {
+				$name = WC_LafkaCombos_Helpers::format_product_shop_title( $name, $cart_item['quantity'] );
 			}
 		}
 
@@ -1294,13 +1316,13 @@ class WC_LafkaCombos_Display {
 
 			foreach ( $combined_cart_items as $combined_cart_item_key => $combined_cart_item ) {
 
-				$combined_item_id          = $combined_cart_item[ 'combined_item_id' ];
+				$combined_item_id          = $combined_cart_item['combined_item_id'];
 				$combined_item_description = '';
 
-				if ( $combined_item = $cart_item[ 'data' ]->get_combined_item( $combined_item_id ) ) {
+				if ( $combined_item = $cart_item['data']->get_combined_item( $combined_item_id ) ) {
 
 					if ( $combined_item->is_visible( 'cart' ) ) {
-						$combined_item_description = WC_LafkaCombos_Helpers::format_product_shop_title( $combined_cart_item[ 'data' ]->get_name(), $combined_cart_item[ 'quantity' ] );
+						$combined_item_description = WC_LafkaCombos_Helpers::format_product_shop_title( $combined_cart_item['data']->get_name(), $combined_cart_item['quantity'] );
 					}
 
 					/**
@@ -1324,7 +1346,7 @@ class WC_LafkaCombos_Display {
 
 				$data[] = array(
 					'key'   => __( 'Includes', 'lafka-plugin' ),
-					'value' => implode( '<br/>', $combined_item_descriptions )
+					'value' => implode( '<br/>', $combined_item_descriptions ),
 				);
 			}
 		}
@@ -1337,9 +1359,14 @@ class WC_LafkaCombos_Display {
 
 				ob_start();
 
-				wc_get_template( 'cart/combo-container-item-data.php', array(
-					'data' => $data
-				), false, WC_LafkaCombos()->plugin_path() . '/templates/' );
+				wc_get_template(
+					'cart/combo-container-item-data.php',
+					array(
+						'data' => $data,
+					),
+					false,
+					WC_LafkaCombos()->plugin_path() . '/templates/'
+				);
 
 				$formatted_data = ob_get_clean();
 			}
@@ -1360,7 +1387,7 @@ class WC_LafkaCombos_Display {
 	public function cart_widget_container_item_data( $data, $cart_item ) {
 
 		if ( wc_pc_is_combo_container_cart_item( $cart_item ) ) {
-			if ( WC_Product_Combo::group_mode_has( $cart_item[ 'data' ]->get_group_mode(), 'parent_cart_widget_item_meta' ) ) {
+			if ( WC_Product_Combo::group_mode_has( $cart_item['data']->get_group_mode(), 'parent_cart_widget_item_meta' ) ) {
 				$data = array_merge( $data, $this->get_combo_container_cart_item_data( $cart_item ) );
 			}
 		}
@@ -1392,7 +1419,7 @@ class WC_LafkaCombos_Display {
 
 			// Back-compat.
 			if ( ! in_array( $combined_item_priced_individually, array( 'yes', 'no' ) ) ) {
-				$combined_item_priced_individually = isset( $combo_container_item[ 'per_product_pricing' ] ) ? $combo_container_item[ 'per_product_pricing' ] : get_post_meta( $combo_container_item[ 'product_id' ], '_wc_pb_v4_per_product_pricing', true );
+				$combined_item_priced_individually = isset( $combo_container_item['per_product_pricing'] ) ? $combo_container_item['per_product_pricing'] : get_post_meta( $combo_container_item['product_id'], '_wc_pb_v4_per_product_pricing', true );
 			}
 
 			$is_pip = WC_LafkaCombos()->compatibility->is_pip( 'invoice' );
@@ -1417,7 +1444,6 @@ class WC_LafkaCombos_Display {
 					} elseif ( $subtotal ) {
 						$subtotal = '<span class="combined_table_item_subtotal">' . sprintf( _x( '%1$s: %2$s', 'combined product subtotal', 'lafka-plugin' ), __( 'Subtotal', 'lafka-plugin' ), $subtotal ) . '</span>';
 					}
-
 				} elseif ( $subtotal && function_exists( 'wc_cp_get_composited_order_item_container' ) && ( $composite_container_item = wc_cp_get_composited_order_item_container( $combo_container_item, $order ) ) ) {
 
 					if ( apply_filters( 'woocommerce_add_composited_order_item_subtotals', true, $composite_container_item, $order ) ) {
@@ -1439,7 +1465,7 @@ class WC_LafkaCombos_Display {
 				}
 			}
 
-		// If it's a combo (parent item)...
+			// If it's a combo (parent item)...
 		} elseif ( wc_pc_is_combo_container_order_item( $item ) ) {
 
 			if ( ! isset( $item->child_subtotals_added ) ) {
@@ -1467,7 +1493,6 @@ class WC_LafkaCombos_Display {
 
 						$subtotal = $order->get_formatted_line_subtotal( $cloned_item );
 					}
-
 				} elseif ( sizeof( $children ) && $item->get_subtotal( 'edit' ) == 0 ) {
 					$subtotal = '';
 				}
@@ -1493,7 +1518,6 @@ class WC_LafkaCombos_Display {
 			if ( ! empty( $combined_item_hidden ) ) {
 				$visible = false;
 			}
-
 		} elseif ( wc_pc_is_combo_container_order_item( $order_item ) ) {
 
 			$group_mode = $order_item->get_meta( '_combo_group_mode', true );
@@ -1557,7 +1581,6 @@ class WC_LafkaCombos_Display {
 					if ( empty( $combined_order_item_ids ) || current( $combined_order_item_ids ) !== $order_item->get_id() ) {
 						$classname .= ' combined_table_item';
 					}
-
 				} else {
 					$classname .= ' combined_table_item';
 				}
@@ -1594,7 +1617,6 @@ class WC_LafkaCombos_Display {
 					if ( ! $parent_item_visible ) {
 						$subtract += $item->get_quantity();
 					}
-
 
 					$combined_order_items = wc_pc_get_combined_order_items( $item, $order );
 
@@ -1668,12 +1690,12 @@ class WC_LafkaCombos_Display {
 	 */
 	public function price_filter_query_params( $meta_query, $wc_query ) {
 
-		if ( isset( $meta_query[ 'price_filter' ] ) && isset( $meta_query[ 'price_filter' ][ 'price_filter' ] ) && ! isset( $meta_query[ 'price_filter' ][ 'sw_price_filter' ] ) ) {
+		if ( isset( $meta_query['price_filter'] ) && isset( $meta_query['price_filter']['price_filter'] ) && ! isset( $meta_query['price_filter']['sw_price_filter'] ) ) {
 
-			$min = isset( $_GET[ 'min_price' ] ) ? floatval( $_GET[ 'min_price' ] ) : 0;
-			$max = isset( $_GET[ 'max_price' ] ) ? floatval( $_GET[ 'max_price' ] ) : 9999999999;
+			$min = isset( $_GET['min_price'] ) ? floatval( $_GET['min_price'] ) : 0;
+			$max = isset( $_GET['max_price'] ) ? floatval( $_GET['max_price'] ) : 9999999999;
 
-			$price_meta_query = $meta_query[ 'price_filter' ];
+			$price_meta_query = $meta_query['price_filter'];
 			$price_meta_query = array(
 				'sw_price_filter' => true,
 				'price_filter'    => true,
@@ -1685,18 +1707,18 @@ class WC_LafkaCombos_Display {
 						'key'     => '_price',
 						'compare' => '<=',
 						'type'    => 'DECIMAL',
-						'value'   => $max
+						'value'   => $max,
 					),
 					array(
 						'key'     => '_wc_sw_max_price',
 						'compare' => '>=',
 						'type'    => 'DECIMAL',
-						'value'   => $min
-					)
-				)
+						'value'   => $min,
+					),
+				),
 			);
 
-			$meta_query[ 'price_filter' ] = $price_meta_query;
+			$meta_query['price_filter'] = $price_meta_query;
 		}
 
 		return $meta_query;

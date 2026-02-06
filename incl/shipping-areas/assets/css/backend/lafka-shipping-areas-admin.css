@@ -4,9 +4,9 @@
     font-weight: 700;
     margin-top: 20px;
     margin-bottom: 50px;
-    background-color: #ffffff !important;
+    background-color: #fff !important;
     border-radius: 8px;
-    box-shadow: 0 0px 30px 0 rgba(0, 0, 0, 0.2);
+    box-shadow: 0 0 30px 0 rgba(0, 0, 0, 0.2);
 }
 
 .lafka-shipping-areas-admin-wrap > form#lafka-plugin-open-hours-form {
@@ -21,7 +21,6 @@
     -moz-appearance: none;
     appearance: none;
     outline: none;
-    outline-color: currentcolor;
     outline-style: none;
     outline-color: transparent;
     outline-style: none;
@@ -29,7 +28,7 @@
     z-index: 1;
     border-radius: 3px;
     background: url(../../images/select_arrow.jpg) no-repeat center right !important;
-    background-color: #ffffff !important;
+    background-color: #fff !important;
 }
 
 .lafka-shipping-areas-admin-wrap .lafka-admin-maps-api-key {
@@ -114,7 +113,6 @@ input.lafka-geocode-branch-button.lafka-geocode-branch-address-clear:hover {
     border-radius: 2px;
     box-shadow: 0 1px 4px -1px rgba(0, 0, 0, 0.3);
     margin: 10px;
-    padding: 0 0.5em;
     overflow: hidden;
     padding: 1rem;
     font-size: medium;
@@ -130,16 +128,16 @@ td.column-lafka_selected_branch span, td.column-lafka_order_type span {
     padding: 4px 10px;
     border-radius: 4px;
     background-color: #bf9292;
-    color: #ffffff;
+    color: #fff;
     display: inline-block;
 }
 
 td.column-lafka_order_type span {
     background-color: #e6e6e6;
-    color: #333333;
+    color: #333;
 }
 
-td.column-lafka_order_type span:before {
+td.column-lafka_order_type span::before {
     font-family: 'Font Awesome 5 Free';
     font-weight: 900;
     content: "\f48b";
@@ -148,7 +146,7 @@ td.column-lafka_order_type span:before {
     color: #ff7d0a;
 }
 
-td.column-lafka_order_type span.lafka-order-type-pickup:before {
+td.column-lafka_order_type span.lafka-order-type-pickup::before {
     content: "\f466";
     color: #0a8cff;
 }
@@ -157,12 +155,12 @@ span.lafka-delivery-date, span.lafka-delivery-timeslot {
     display: block;
     padding: 4px 6px;
     border-radius: 4px;
-    background-color: #ffffff;
+    background-color: #fff;
     margin-bottom: 3px;
     border: 1px solid #f1f1f1;
 }
 
-span.lafka-delivery-date:before, span.lafka-delivery-timeslot:before {
+span.lafka-delivery-date::before, span.lafka-delivery-timeslot::before {
     font-family: 'Font Awesome 5 Free';
     font-weight: 900;
     content: "\f783";
@@ -170,41 +168,50 @@ span.lafka-delivery-date:before, span.lafka-delivery-timeslot:before {
     margin-right: 4px;
 }
 
-span.lafka-delivery-timeslot:before {
+span.lafka-delivery-timeslot::before {
     content: "\f017";
 }
+
 select#show_branches_info_in {
     width: 320px;
     max-width: 100%;
 }
+
 body.taxonomy-lafka_branch_location .term-description-wrap {
     display: none;
 }
+
 #lafka_branch_order_hours_container, .lafka-order-hours-admin-wrap > h1 {
-    background-color: #ffffff !important;
+    background-color: #fff !important;
     border-radius: 8px;
-    box-shadow: 0 0px 30px 0 rgba(0, 0, 0, 0.2);
+    box-shadow: 0 0 30px 0 rgba(0, 0, 0, 0.2);
     margin-top: 20px;
 }
+
 .lafka-order-hours-current-time {
     padding: 8px;
     border-radius: 6px;
-    color: #ffffff;
-    background-color: #333333;
+    color: #fff;
+    background-color: #333;
     display: inline-block;
 }
+
 .lafka-order-hours-current-time.open {
     background-color: green;
 }
+
 .lafka-order-hours-current-time.closed {
     background-color: red;
 }
+
 .taxonomy-lafka_branch_location #col-left {
     width: 45%;
 }
+
 .taxonomy-lafka_branch_location #col-right {
     width: 55%;
 }
+
 .taxonomy-lafka_branch_location #edittag {
     max-width: 1200px;
 }

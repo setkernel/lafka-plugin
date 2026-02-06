@@ -42,12 +42,12 @@ class WC_LafkaCombos_Admin_Notices {
 	public static function init() {
 
 		if ( ! class_exists( 'WC_LafkaCombos_Notices' ) ) {
-			require_once  WC_LafkaCombos_ABSPATH . 'includes/class-lafka-combos-notices.php' ;
+			require_once WC_LafkaCombos_ABSPATH . 'includes/class-lafka-combos-notices.php';
 		}
 
 		// Avoid duplicates for some notice types that are meant to be unique.
-		if ( ! isset( $GLOBALS[ 'sw_store' ][ 'notices_unique' ] ) ) {
-			$GLOBALS[ 'sw_store' ][ 'notices_unique' ] = array();
+		if ( ! isset( $GLOBALS['sw_store']['notices_unique'] ) ) {
+			$GLOBALS['sw_store']['notices_unique'] = array();
 		}
 
 		self::$maintenance_notices = get_option( 'wc_pb_maintenance_notices', array() );
@@ -70,10 +70,10 @@ class WC_LafkaCombos_Admin_Notices {
 	public static function add_notice( $text, $args, $save_notice = false ) {
 
 		if ( is_array( $args ) ) {
-			$type           = $args[ 'type' ];
-			$dismiss_class  = isset( $args[ 'dismiss_class' ] ) ? $args[ 'dismiss_class' ] : false;
-			$unique_context = isset( $args[ 'unique_context' ] ) ? $args[ 'unique_context' ] : false;
-			$save_notice    = isset( $args[ 'save_notice' ] ) ? $args[ 'save_notice' ] : $save_notice;
+			$type           = $args['type'];
+			$dismiss_class  = isset( $args['dismiss_class'] ) ? $args['dismiss_class'] : false;
+			$unique_context = isset( $args['unique_context'] ) ? $args['unique_context'] : false;
+			$save_notice    = isset( $args['save_notice'] ) ? $args['save_notice'] : $save_notice;
 		} else {
 			$type           = $args;
 			$dismiss_class  = false;
@@ -84,14 +84,14 @@ class WC_LafkaCombos_Admin_Notices {
 			if ( self::unique_notice_exists( $unique_context ) ) {
 				return;
 			} else {
-				$GLOBALS[ 'sw_store' ][ 'notices_unique' ][] = $unique_context;
+				$GLOBALS['sw_store']['notices_unique'][] = $unique_context;
 			}
 		}
 
 		$notice = array(
 			'type'          => $type,
 			'content'       => $text,
-			'dismiss_class' => $dismiss_class
+			'dismiss_class' => $dismiss_class,
 		);
 
 		if ( $save_notice ) {
@@ -110,7 +110,7 @@ class WC_LafkaCombos_Admin_Notices {
 	 * @return bool
 	 */
 	private static function unique_notice_exists( $context ) {
-		return $context && in_array( $context, $GLOBALS[ 'sw_store' ][ 'notices_unique' ] );
+		return $context && in_array( $context, $GLOBALS['sw_store']['notices_unique'] );
 	}
 
 	/**
@@ -185,21 +185,22 @@ class WC_LafkaCombos_Admin_Notices {
 
 			foreach ( $notices as $notice ) {
 
-				$notice_classes = array( 'wc_pb_notice', 'notice', 'notice-' . $notice[ 'type' ] );
-				$dismiss_attr   = $notice[ 'dismiss_class' ] ? 'data-dismiss_class="' . $notice[ 'dismiss_class' ] . '"' : '';
+				$notice_classes = array( 'wc_pb_notice', 'notice', 'notice-' . $notice['type'] );
+				$dismiss_attr   = $notice['dismiss_class'] ? 'data-dismiss_class="' . $notice['dismiss_class'] . '"' : '';
 
-				if ( $notice[ 'dismiss_class' ] ) {
-					$notice_classes[] = $notice[ 'dismiss_class' ];
+				if ( $notice['dismiss_class'] ) {
+					$notice_classes[] = $notice['dismiss_class'];
 					$notice_classes[] = 'is-dismissible';
 				}
 
 				echo '<div class="' . implode( ' ', $notice_classes ) . '"' . $dismiss_attr . '>';
-				echo wpautop( wp_kses_post( $notice[ 'content' ] ) );
+				echo wpautop( wp_kses_post( $notice['content'] ) );
 				echo '</div>';
 			}
 
 			if ( function_exists( 'wc_enqueue_js' ) ) {
-				wc_enqueue_js( "
+				wc_enqueue_js(
+					"
 					jQuery( function( $ ) {
 						jQuery( '.wc_pb_notice .notice-dismiss' ).on( 'click', function() {
 
@@ -212,7 +213,8 @@ class WC_LafkaCombos_Admin_Notices {
 							jQuery.post( '" . WC()->ajax_url() . "', data );
 						} );
 					} );
-				" );
+				"
+				);
 			}
 
 			// Clear.
@@ -229,7 +231,7 @@ class WC_LafkaCombos_Admin_Notices {
 	 * @param  mixed   $args
 	 */
 	public static function add_dismissible_notice( $text, $args ) {
-		if ( ! isset( $args[ 'dismiss_class' ] ) || ! self::is_dismissible_notice_dismissed( $args[ 'dismiss_class' ] ) ) {
+		if ( ! isset( $args['dismiss_class'] ) || ! self::is_dismissible_notice_dismissed( $args['dismiss_class'] ) ) {
 			self::add_notice( $text, $args );
 		}
 	}
@@ -362,7 +364,7 @@ class WC_LafkaCombos_Admin_Notices {
 	public static function add_note( $args ) {
 
 		if ( ! class_exists( 'WC_LafkaCombos_Core_Compatibility' ) ) {
-			require_once  WC_LafkaCombos_ABSPATH . 'includes/compatibility/core/class-lafka-combos-core-compatibility.php' ;
+			require_once WC_LafkaCombos_ABSPATH . 'includes/compatibility/core/class-lafka-combos-core-compatibility.php';
 		}
 
 		if ( ! WC_LafkaCombos_Core_Compatibility::is_wc_admin_active() ) {
@@ -395,18 +397,18 @@ class WC_LafkaCombos_Admin_Notices {
 			'source'       => '',
 			'icon'         => '',
 			'check_plugin' => '',
-			'actions'      => array()
+			'actions'      => array(),
 		);
 
 		$args = wp_parse_args( $args, $default_args );
 
-		if ( empty( $args[ 'name' ] ) || empty( $args[ 'title' ] ) || empty( $args[ 'content' ] ) || empty( $args[ 'type' ] ) || empty( $args[ 'icon' ] ) ) {
+		if ( empty( $args['name'] ) || empty( $args['title'] ) || empty( $args['content'] ) || empty( $args['type'] ) || empty( $args['icon'] ) ) {
 			return false;
 		}
 
 		// First, see if we've already created this note so we don't do it again.
 		$data_store = WC_Data_Store::load( 'admin-note' );
-		$note_ids   = $data_store->get_notes_with_name( $args[ 'name' ] );
+		$note_ids   = $data_store->get_notes_with_name( $args['name'] );
 		if ( ! empty( $note_ids ) ) {
 			return;
 		}
@@ -414,31 +416,31 @@ class WC_LafkaCombos_Admin_Notices {
 		// Otherwise, add the note.
 		$note = new $note_class();
 
-		$note->set_name( $args[ 'name' ] );
-		$note->set_title( $args[ 'title' ] );
-		$note->set_content( $args[ 'content' ] );
-		$note->set_type( $args[ 'type' ] );
+		$note->set_name( $args['name'] );
+		$note->set_title( $args['title'] );
+		$note->set_content( $args['content'] );
+		$note->set_type( $args['type'] );
 
 		if ( ! method_exists( $note, 'set_image' ) ) {
-			$note->set_icon( $args[ 'icon' ] );
+			$note->set_icon( $args['icon'] );
 		}
 
-		if ( $args[ 'source' ] ) {
-			$note->set_source( $args[ 'source' ] );
+		if ( $args['source'] ) {
+			$note->set_source( $args['source'] );
 		}
 
-		if ( is_array( $args[ 'actions' ] ) ) {
-			foreach ( $args[ 'actions' ] as $action ) {
-				if ( empty( $action[ 'name' ] ) || empty( $action[ 'label' ] ) ) {
+		if ( is_array( $args['actions'] ) ) {
+			foreach ( $args['actions'] as $action ) {
+				if ( empty( $action['name'] ) || empty( $action['label'] ) ) {
 					continue;
 				}
-				$note->add_action( $action[ 'name' ], $action[ 'label' ], empty( $action[ 'url' ] ) ? false : $action[ 'url' ], empty( $action[ 'status' ] ) ? $note_class::E_WC_ADMIN_NOTE_UNACTIONED : $action[ 'status' ], empty( $action[ 'primary' ] ) ? false : $action[ 'primary' ] );
+				$note->add_action( $action['name'], $action['label'], empty( $action['url'] ) ? false : $action['url'], empty( $action['status'] ) ? $note_class::E_WC_ADMIN_NOTE_UNACTIONED : $action['status'], empty( $action['primary'] ) ? false : $action['primary'] );
 			}
 		}
 
 		// Check if plugin installed or activated.
-		if ( ! empty( $args[ 'check_plugin' ] ) ) {
-			if ( WC_LafkaCombos_Notices::is_feature_plugin_installed( $args[ 'name' ] ) ) {
+		if ( ! empty( $args['check_plugin'] ) ) {
+			if ( WC_LafkaCombos_Notices::is_feature_plugin_installed( $args['name'] ) ) {
 				$note->set_status( $note_class::E_WC_ADMIN_NOTE_ACTIONED );
 			}
 		}
@@ -479,8 +481,8 @@ class WC_LafkaCombos_Admin_Notices {
 	 * @deprecated  3.14.0
 	 */
 	public static function dismiss_notice_handler() {
-		if ( isset( $_GET[ 'dismiss_wc_pb_notice' ] ) && isset( $_GET[ '_wc_pb_admin_nonce' ] ) ) {
-			if ( ! wp_verify_nonce( wc_clean( $_GET[ '_wc_pb_admin_nonce' ] ), 'wc_pb_dismiss_notice_nonce' ) ) {
+		if ( isset( $_GET['dismiss_wc_pb_notice'] ) && isset( $_GET['_wc_pb_admin_nonce'] ) ) {
+			if ( ! wp_verify_nonce( wc_clean( $_GET['_wc_pb_admin_nonce'] ), 'wc_pb_dismiss_notice_nonce' ) ) {
 				wp_die( __( 'Action failed. Please refresh the page and retry.', 'woocommerce' ) );
 			}
 
@@ -488,7 +490,7 @@ class WC_LafkaCombos_Admin_Notices {
 				wp_die( __( 'Cheatin&#8217; huh?', 'woocommerce' ) );
 			}
 
-			$notice = sanitize_text_field( $_GET[ 'dismiss_wc_pb_notice' ] );
+			$notice = sanitize_text_field( $_GET['dismiss_wc_pb_notice'] );
 
 			self::dismiss_notice( $notice );
 		}

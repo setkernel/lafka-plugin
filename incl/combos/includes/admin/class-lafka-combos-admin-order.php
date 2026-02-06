@@ -53,7 +53,7 @@ class WC_LafkaCombos_Admin_Order {
 	public static function is_combo_configurable( $combo ) {
 
 		$is_configurable = false;
-		$combined_items   = $combo->get_combined_items();
+		$combined_items  = $combo->get_combined_items();
 
 		foreach ( $combined_items as $combined_item ) {
 
@@ -107,20 +107,25 @@ class WC_LafkaCombos_Admin_Order {
 				 */
 				if ( apply_filters( 'woocommerce_auto_add_combined_items', false === self::is_combo_configurable( $product ), $product, $item, $order ) ) {
 
-					$added_to_order = WC_LafkaCombos()->order->add_combo_to_order( $product, $order, $item->get_quantity(), array(
+					$added_to_order = WC_LafkaCombos()->order->add_combo_to_order(
+						$product,
+						$order,
+						$item->get_quantity(),
+						array(
 
-						/**
-						 * 'woocommerce_auto_added_combo_configuration' filter.
-						 *
-						 * See 'woocommerce_auto_add_combined_items' filter above. Use this filter to define the default configuration you want to use.
-						 *
-						 * @param  $config   array
-						 * @param  $product  WC_Product_Combo
-						 * @param  $item     WC_Order_Item
-						 * @param  $order    WC_Order
-						 */
-						'configuration' => apply_filters( 'woocommerce_auto_added_combo_configuration', WC_LafkaCombos()->cart->get_posted_combo_configuration( $product ), $product, $item, $order )
-					) );
+							/**
+							 * 'woocommerce_auto_added_combo_configuration' filter.
+							 *
+							 * See 'woocommerce_auto_add_combined_items' filter above. Use this filter to define the default configuration you want to use.
+							 *
+							 * @param  $config   array
+							 * @param  $product  WC_Product_Combo
+							 * @param  $item     WC_Order_Item
+							 * @param  $order    WC_Order
+							 */
+							'configuration' => apply_filters( 'woocommerce_auto_added_combo_configuration', WC_LafkaCombos()->cart->get_posted_combo_configuration( $product ), $product, $item, $order ),
+						)
+					);
 
 					if ( $added_to_order ) {
 
@@ -134,13 +139,13 @@ class WC_LafkaCombos_Admin_Order {
 							}
 
 							$combined_order_items = wc_pc_get_combined_order_items( $new_container_item, $order );
-							$product_ids = array();
-							$order_notes         = array();
+							$product_ids          = array();
+							$order_notes          = array();
 
 							foreach ( $combined_order_items as $order_item_id => $order_item ) {
 
 								$combined_item_id = $order_item->get_meta( '_combined_item_id', true );
-								$product_id      = $order_item->get_product_id();
+								$product_id       = $order_item->get_product_id();
 
 								if ( $variation_id = $order_item->get_variation_id() ) {
 									$product_id = $variation_id;
@@ -149,7 +154,7 @@ class WC_LafkaCombos_Admin_Order {
 								$product_ids[ $combined_item_id ] = $product_id;
 							}
 
-							$duplicate_product_ids              = array_diff_assoc( $product_ids, array_unique( $product_ids ) );
+							$duplicate_product_ids               = array_diff_assoc( $product_ids, array_unique( $product_ids ) );
 							$duplicate_product_combined_item_ids = array_keys( array_intersect( $product_ids, $duplicate_product_ids ) );
 
 							foreach ( $combined_order_items as $order_item_id => $order_item ) {
@@ -243,15 +248,17 @@ class WC_LafkaCombos_Admin_Order {
 
 					?>
 					<div class="configure_order_item">
-						<button class="<?php echo $is_configured ? 'edit_combo' : 'configure_combo' ?> button"><?php
+						<button class="<?php echo $is_configured ? 'edit_combo' : 'configure_combo'; ?> button">
+						<?php
 
-							if ( $is_configured ) {
-								esc_html_e( 'Edit', 'lafka-plugin' );
-							} else {
-								esc_html_e( 'Configure', 'lafka-plugin' );
-							}
+						if ( $is_configured ) {
+							esc_html_e( 'Edit', 'lafka-plugin' );
+						} else {
+							esc_html_e( 'Configure', 'lafka-plugin' );
+						}
 
-						 ?></button>
+						?>
+						</button>
 					</div>
 					<?php
 				}

@@ -6,7 +6,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 <div class="wrap woocommerce">
 	<div class="icon32 icon32-posts-product" id="icon-woocommerce"><br/></div>
 
-    <h2><?php esc_html_e( 'Add/Edit Lafka Global Add-on', 'lafka-plugin' ) ?></h2><br/>
+	<h2><?php esc_html_e( 'Add/Edit Lafka Global Add-on', 'lafka-plugin' ); ?></h2><br/>
 
 	<form method="POST" action="">
 		<?php wp_nonce_field( 'lafka_save_global_addons' ); ?>
@@ -34,15 +34,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<label for="addon-objects"><?php esc_html_e( 'Applied to...', 'lafka-plugin' ); ?></label>
 				</th>
 				<td>
-					<select id="addon-objects" name="addon-objects[]" multiple="multiple" style="width:50%;" data-placeholder="<?php esc_html_e('Choose some options&hellip;', 'lafka-plugin'); ?>" class="chosen_select wc-enhanced-select">
+					<select id="addon-objects" name="addon-objects[]" multiple="multiple" style="width:50%;" data-placeholder="<?php esc_html_e( 'Choose some options&hellip;', 'lafka-plugin' ); ?>" class="chosen_select wc-enhanced-select">
 						<option value="0" <?php selected( in_array( '0', $objects ), true ); ?>><?php esc_html_e( 'All Products', 'lafka-plugin' ); ?></option>
 						<optgroup label="<?php esc_html_e( 'Product category notifications', 'lafka-plugin' ); ?>">
 							<?php
 								$terms = get_terms( 'product_cat', array( 'hide_empty' => 0 ) );
 
-								foreach ( $terms as $term ) {
-									echo '<option value="' . $term->term_id . '" ' . selected( in_array( $term->term_id, $objects ), true, false ) . '>' . esc_html__( 'Category:', 'lafka-plugin' ) . ' ' . $term->name . '</option>';
-								}
+							foreach ( $terms as $term ) {
+								echo '<option value="' . $term->term_id . '" ' . selected( in_array( $term->term_id, $objects ), true, false ) . '>' . esc_html__( 'Category:', 'lafka-plugin' ) . ' ' . $term->name . '</option>';
+							}
 							?>
 						</optgroup>
 						<?php do_action( 'lafka_product_addons_global_edit_objects', $objects ); ?>
@@ -56,15 +56,20 @@ if ( ! defined( 'ABSPATH' ) ) {
 				</th>
 				<td id="poststuff" class="postbox">
 					<?php
-						$exists = false;
-					    $attribute_taxonomies = wc_get_attribute_taxonomies();
-						include( dirname( __FILE__ ) . '/html-addon-panel.php' );
+						$exists               = false;
+						$attribute_taxonomies = wc_get_attribute_taxonomies();
+						require __DIR__ . '/html-addon-panel.php';
 					?>
 				</td>
 			</tr>
 		</table>
 		<p class="submit">
-			<input type="hidden" name="edit_id" value="<?php if ( ! empty( $edit_id ) ) echo $edit_id; ?>" />
+			<input type="hidden" name="edit_id" value="
+			<?php
+			if ( ! empty( $edit_id ) ) {
+				echo $edit_id;}
+			?>
+			" />
 			<input type="submit" name="submit" id="submit" class="button button-primary" value="<?php esc_html_e( 'Save Global Add-on', 'lafka-plugin' ); ?>">
 		</p>
 	</form>

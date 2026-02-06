@@ -90,14 +90,13 @@ class WC_LafkaCombos_Addons_Compatibility {
 
 				foreach ( $addons as $addon ) {
 
-					$type = ! empty( $addon[ 'type' ] ) ? $addon[ 'type' ] : '';
+					$type = ! empty( $addon['type'] ) ? $addon['type'] : '';
 
-					if ( 'heading' !== $type && isset( $addon[ 'required' ] ) && '1' == $addon[ 'required' ] ) {
+					if ( 'heading' !== $type && isset( $addon['required'] ) && '1' == $addon['required'] ) {
 						$has_addons = true;
 						break;
 					}
 				}
-
 			} else {
 				$has_addons = true;
 			}
@@ -117,15 +116,16 @@ class WC_LafkaCombos_Addons_Compatibility {
 	 */
 	public static function display_addons_disable_option( $loop, $product_id, $item_data, $post_id ) {
 
-		$disable_addons = isset( $item_data[ 'disable_addons' ] ) && 'yes' === $item_data[ 'disable_addons' ];
+		$disable_addons = isset( $item_data['disable_addons'] ) && 'yes' === $item_data['disable_addons'];
 
 		?><div class="disable_addons">
 			<div class="form-field">
-				<label for="disable_addons"><?php echo __( 'Disable Add-Ons', 'lafka-plugin' ) ?></label>
+				<label for="disable_addons"><?php echo __( 'Disable Add-Ons', 'lafka-plugin' ); ?></label>
 				<input type="checkbox" class="checkbox"<?php echo ( $disable_addons ? ' checked="checked"' : '' ); ?> name="combo_data[<?php echo $loop; ?>][disable_addons]" <?php echo ( $disable_addons ? 'value="1"' : '' ); ?>/>
 				<?php echo wc_help_tip( __( 'Check this option to disable any Product Add-Ons associated with this combined product.', 'lafka-plugin' ) ); ?>
 			</div>
-		</div><?php
+		</div>
+		<?php
 	}
 
 	/**
@@ -138,10 +138,10 @@ class WC_LafkaCombos_Addons_Compatibility {
 	 */
 	public static function process_addons_disable_option( $item_data, $data, $item_id, $post_id ) {
 
-		if ( isset( $data[ 'disable_addons' ] ) ) {
-			$item_data[ 'disable_addons' ] = 'yes';
+		if ( isset( $data['disable_addons'] ) ) {
+			$item_data['disable_addons'] = 'yes';
 		} else {
-			$item_data[ 'disable_addons' ] = 'no';
+			$item_data['disable_addons'] = 'no';
 		}
 
 		return $item_data;
@@ -175,7 +175,7 @@ class WC_LafkaCombos_Addons_Compatibility {
 			$product_bak = isset( $product ) ? $product : false;
 			$product     = $item->get_product();
 
-			WC_LafkaCombos_Compatibility::$addons_prefix          = $item->get_id();
+			WC_LafkaCombos_Compatibility::$addons_prefix           = $item->get_id();
 			WC_LafkaCombos_Compatibility::$compat_combined_product = $item->get_product();
 
 			$Product_Addon_Display->display( $product_id, false );
@@ -227,15 +227,15 @@ class WC_LafkaCombos_Addons_Compatibility {
 			// Set addons prefix.
 			WC_LafkaCombos_Compatibility::$addons_prefix = $combined_item_id;
 
-			$combined_product_id = $combined_item_stamp[ 'product_id' ];
+			$combined_product_id = $combined_item_stamp['product_id'];
 
 			$addon_data = $Product_Addon_Cart->add_cart_item_data( $addon_data, $combined_product_id );
 
 			// Reset addons prefix.
 			WC_LafkaCombos_Compatibility::$addons_prefix = '';
 
-			if ( ! empty( $addon_data[ 'addons' ] ) ) {
-				$combined_item_stamp[ 'addons' ] = $addon_data[ 'addons' ];
+			if ( ! empty( $addon_data['addons'] ) ) {
+				$combined_item_stamp['addons'] = $addon_data['addons'];
 			}
 		}
 
@@ -253,14 +253,14 @@ class WC_LafkaCombos_Addons_Compatibility {
 	public static function validate_combined_item_addons( $add, $combo, $combined_item, $quantity, $variation_id ) {
 
 		// Ordering again? When ordering again, do not revalidate addons.
-		$order_again = isset( $_GET[ 'order_again' ] ) && isset( $_GET[ '_wpnonce' ] ) && wp_verify_nonce( wc_clean( $_GET[ '_wpnonce' ] ), 'woocommerce-order_again' );
+		$order_again = isset( $_GET['order_again'] ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( wc_clean( $_GET['_wpnonce'] ), 'woocommerce-order_again' );
 
-		if ( $order_again  ) {
+		if ( $order_again ) {
 			return $add;
 		}
 
 		$combined_item_id = $combined_item->get_id();
-		$product_id      = $combined_item->get_product_id();
+		$product_id       = $combined_item->get_product_id();
 
 		// Validate add-ons.
 		global $Product_Addon_Cart;
@@ -296,7 +296,7 @@ class WC_LafkaCombos_Addons_Compatibility {
 		// Reset addons prefix.
 		WC_LafkaCombos_Compatibility::$addons_prefix = '';
 
-		if ( ! empty ( $Product_Addon_Cart ) ) {
+		if ( ! empty( $Product_Addon_Cart ) ) {
 			add_filter( 'woocommerce_add_cart_item_data', array( $Product_Addon_Cart, 'add_cart_item_data' ), 10, 2 );
 		}
 	}
@@ -316,12 +316,12 @@ class WC_LafkaCombos_Addons_Compatibility {
 		global $Product_Addon_Cart;
 
 		// Set addons prefix.
-		WC_LafkaCombos_Compatibility::$addons_prefix = $combined_item_cart_data[ 'combined_item_id' ];
+		WC_LafkaCombos_Compatibility::$addons_prefix = $combined_item_cart_data['combined_item_id'];
 
 		// Add-ons cart item data is already stored in the composite_data array, so we can grab it from there instead of allowing Addons to re-add it.
 		// Not doing so results in issues with file upload validation.
 
-		if ( ! empty ( $Product_Addon_Cart ) ) {
+		if ( ! empty( $Product_Addon_Cart ) ) {
 			remove_filter( 'woocommerce_add_cart_item_data', array( $Product_Addon_Cart, 'add_cart_item_data' ), 10, 2 );
 		}
 	}
@@ -336,8 +336,8 @@ class WC_LafkaCombos_Addons_Compatibility {
 	public static function get_combined_cart_item_data_from_parent( $combined_item_cart_data, $cart_item_data ) {
 
 		// Add-ons cart item data is already stored in the composite_data array, so we can grab it from there instead of allowing Addons to re-add it.
-		if ( isset( $combined_item_cart_data[ 'combined_item_id' ] ) && isset( $cart_item_data[ 'stamp' ][ $combined_item_cart_data[ 'combined_item_id' ] ][ 'addons' ] ) ) {
-			$combined_item_cart_data[ 'addons' ] = $cart_item_data[ 'stamp' ][ $combined_item_cart_data[ 'combined_item_id' ] ][ 'addons' ];
+		if ( isset( $combined_item_cart_data['combined_item_id'] ) && isset( $cart_item_data['stamp'][ $combined_item_cart_data['combined_item_id'] ]['addons'] ) ) {
+			$combined_item_cart_data['addons'] = $cart_item_data['stamp'][ $combined_item_cart_data['combined_item_id'] ]['addons'];
 		}
 
 		return $combined_item_cart_data;
@@ -354,12 +354,12 @@ class WC_LafkaCombos_Addons_Compatibility {
 	 */
 	public static function preprocess_combined_cart_item_addon_data( $cart_item, $combo ) {
 
-		if ( empty( $cart_item[ 'addons' ] ) ) {
+		if ( empty( $cart_item['addons'] ) ) {
 			return $cart_item;
 		}
 
-		$combined_item    = WC_LafkaCombos_Helpers::get_runtime_prop( $cart_item[ 'data' ], 'combined_cart_item' );
-		$combined_item_id = $cart_item[ 'combined_item_id' ];
+		$combined_item    = WC_LafkaCombos_Helpers::get_runtime_prop( $cart_item['data'], 'combined_cart_item' );
+		$combined_item_id = $cart_item['combined_item_id'];
 
 		if ( is_null( $combined_item ) ) {
 			$combined_item = $combo->get_combined_item( $combined_item_id );
@@ -376,33 +376,32 @@ class WC_LafkaCombos_Addons_Compatibility {
 				return $cart_item;
 			}
 
-			$cart_item[ 'data' ]->combined_price_offset_pct = array();
-			$cart_item[ 'data' ]->combined_price_offset     = 0.0;
+			$cart_item['data']->combined_price_offset_pct = array();
+			$cart_item['data']->combined_price_offset     = 0.0;
 
 			if ( $combo_container_item = wc_pc_get_combined_cart_item_container( $cart_item ) ) {
 
 				// Read original % values from parent item.
-				$addons_data = ! empty( $combo_container_item[ 'stamp' ][ $combined_item_id ][ 'addons' ] ) ? $combo_container_item[ 'stamp' ][ $combined_item_id ][ 'addons' ] : array();
+				$addons_data = ! empty( $combo_container_item['stamp'][ $combined_item_id ]['addons'] ) ? $combo_container_item['stamp'][ $combined_item_id ]['addons'] : array();
 
 				foreach ( $addons_data as $addon_key => $addon ) {
 
 					// See 'WC_Combined_Item::filter_get_price'.
-					if (!empty($addon[ 'price_type' ]) && 'percentage_based' === $addon[ 'price_type' ] ) {
-						$cart_item[ 'data' ]->combined_price_offset_pct[] = $addon[ 'price' ];
-						$cart_item[ 'addons' ][ $addon_key ][ 'price' ]  = 0.0;
-					} elseif (!empty($addon[ 'price_type' ]) && 'flat_fee' === $addon[ 'price_type' ] ) {
-						$cart_item[ 'data' ]->combined_price_offset += (float) $addon[ 'price' ] / $cart_item[ 'quantity' ];
+					if ( ! empty( $addon['price_type'] ) && 'percentage_based' === $addon['price_type'] ) {
+						$cart_item['data']->combined_price_offset_pct[] = $addon['price'];
+						$cart_item['addons'][ $addon_key ]['price']     = 0.0;
+					} elseif ( ! empty( $addon['price_type'] ) && 'flat_fee' === $addon['price_type'] ) {
+						$cart_item['data']->combined_price_offset += (float) $addon['price'] / $cart_item['quantity'];
 					} else {
-						$cart_item[ 'data' ]->combined_price_offset += (float) $addon[ 'price' ];
+						$cart_item['data']->combined_price_offset += (float) $addon['price'];
 					}
 				}
 			}
-
 		} else {
 
 			// Priced Individually disabled? Give add-ons for free.
-			foreach ( $cart_item[ 'addons' ] as $addon_key => $addon_data ) {
-				$cart_item[ 'addons' ][ $addon_key ][ 'price' ] = 0.0;
+			foreach ( $cart_item['addons'] as $addon_key => $addon_data ) {
+				$cart_item['addons'][ $addon_key ]['price'] = 0.0;
 			}
 		}
 
@@ -422,12 +421,12 @@ class WC_LafkaCombos_Addons_Compatibility {
 
 		if ( $combo_container_item = wc_pc_get_combined_cart_item_container( $cart_item ) ) {
 
-			$adjust       = false;
-			$combined_item = WC_LafkaCombos_Helpers::get_runtime_prop( $cart_item[ 'data' ], 'combined_cart_item' );
+			$adjust        = false;
+			$combined_item = WC_LafkaCombos_Helpers::get_runtime_prop( $cart_item['data'], 'combined_cart_item' );
 
 			if ( is_null( $combined_item ) ) {
-				$combo          = $combo_container_item[ 'data' ];
-				$combined_item_id = $cart_item[ 'combined_item_id' ];
+				$combo            = $combo_container_item['data'];
+				$combined_item_id = $cart_item['combined_item_id'];
 				$combined_item    = $combo->get_combined_item( $combined_item_id );
 			}
 

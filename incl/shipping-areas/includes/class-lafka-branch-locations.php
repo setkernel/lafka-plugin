@@ -28,7 +28,7 @@ class Lafka_Branch_Locations {
 		if ( ! empty( $options_branches['products_by_branches'] ) ) {
 			add_filter( 'woocommerce_product_query_tax_query', array( __CLASS__, 'modify_products_tax_query_to_get_branch_products' ), 10, 2 );
 			add_filter( 'woocommerce_product_related_posts_query', array( __CLASS__, 'modify_related_products_query_to_get_branch_products' ) );
-			add_filter( 'woocommerce_products_widget_query_args', array( __CLASS__, 'modify_products_tax_query_to_get_branch_products_for_widgets' ));
+			add_filter( 'woocommerce_products_widget_query_args', array( __CLASS__, 'modify_products_tax_query_to_get_branch_products_for_widgets' ) );
 			add_filter( 'woocommerce_subcategory_count_html', '__return_false' );
 		}
 		// Where to show branch info box (for 'shop' look in the theme)
@@ -65,40 +65,49 @@ class Lafka_Branch_Locations {
 			$closable_because_of_option = true;
 		}
 
-
-		wp_enqueue_script( 'lafka-branch-locations-front', plugins_url( '../assets/js/frontend/lafka-branch-locations-front.min.js', __FILE__ ), array(
-			'lafka-google-maps',
-			'jquery-blockui',
-			'wc-country-select'
-		), '1.0', true );
-		wp_localize_script( 'lafka-branch-locations-front', 'lafka_branch_locations_front', array(
-			'ajax_url'                            => admin_url( 'admin-ajax.php' ),
-			'closable_because_of_closed_branches' => $closable_because_of_closed_branches,
-			'closable_because_of_option'          => $closable_because_of_option,
-			'allow_partial_address'               => ! empty( $options_branches['allow_partial_address'] ),
-			'autocomplete_area'                   => $options_branches['autocomplete_area'] ?? '',
-			'autocomplete_countries'              => $options_branches['autocomplete_countries'] ?? array(),
-			'order_type'                          => empty( $options_branches['order_type'] ) ? 'delivery_pickup' : $options_branches['order_type'],
-			'has_session_value'                   => ( isset( WC()->session ) && ! empty( WC()->session->get( 'lafka_branch_location' ) ) ),
-			'branch_locations_json_data'          => $branch_locations_json_data,
-			'please_wait_message'                 => esc_html__( 'Please wait', 'lafka-plugin' ),
-			'info_message_select_branch_delivery' => esc_html__( 'Select from branches serving your area', 'lafka-plugin' ),
-			'info_message_select_branch_pickup'   => esc_html__( 'Select a branch', 'lafka-plugin' ),
-			'error_message_no_address'            => esc_html__( 'Please type your address and select suggestion or click on "Use current location...".', 'lafka-plugin' ),
-			'error_message_json_parse'            => esc_html__( 'Something is wrong. Please try again.', 'lafka-plugin' ),
-			'error_message_no_suitable_branches'  => esc_html__( 'Sorry, your address cannot be served by any of our branches.', 'lafka-plugin' ),
-			'error_message_not_found'             => esc_html__( 'No results found.', 'lafka-plugin' ),
-			'error_message_geocoder_failed'       => esc_html__( 'Geocoder failed due to', 'lafka-plugin' ),
-			'error_message_precise_address'       => esc_html__( 'Please enter precise address.', 'lafka-plugin' ),
-			'error_message_select_branch'         => esc_html__( 'Please select branch to continue.', 'lafka-plugin' ),
-		) );
+		wp_enqueue_script(
+			'lafka-branch-locations-front',
+			plugins_url( '../assets/js/frontend/lafka-branch-locations-front.min.js', __FILE__ ),
+			array(
+				'lafka-google-maps',
+				'jquery-blockui',
+				'wc-country-select',
+			),
+			'1.0',
+			true
+		);
+		wp_localize_script(
+			'lafka-branch-locations-front',
+			'lafka_branch_locations_front',
+			array(
+				'ajax_url'                            => admin_url( 'admin-ajax.php' ),
+				'closable_because_of_closed_branches' => $closable_because_of_closed_branches,
+				'closable_because_of_option'          => $closable_because_of_option,
+				'allow_partial_address'               => ! empty( $options_branches['allow_partial_address'] ),
+				'autocomplete_area'                   => $options_branches['autocomplete_area'] ?? '',
+				'autocomplete_countries'              => $options_branches['autocomplete_countries'] ?? array(),
+				'order_type'                          => empty( $options_branches['order_type'] ) ? 'delivery_pickup' : $options_branches['order_type'],
+				'has_session_value'                   => ( isset( WC()->session ) && ! empty( WC()->session->get( 'lafka_branch_location' ) ) ),
+				'branch_locations_json_data'          => $branch_locations_json_data,
+				'please_wait_message'                 => esc_html__( 'Please wait', 'lafka-plugin' ),
+				'info_message_select_branch_delivery' => esc_html__( 'Select from branches serving your area', 'lafka-plugin' ),
+				'info_message_select_branch_pickup'   => esc_html__( 'Select a branch', 'lafka-plugin' ),
+				'error_message_no_address'            => esc_html__( 'Please type your address and select suggestion or click on "Use current location...".', 'lafka-plugin' ),
+				'error_message_json_parse'            => esc_html__( 'Something is wrong. Please try again.', 'lafka-plugin' ),
+				'error_message_no_suitable_branches'  => esc_html__( 'Sorry, your address cannot be served by any of our branches.', 'lafka-plugin' ),
+				'error_message_not_found'             => esc_html__( 'No results found.', 'lafka-plugin' ),
+				'error_message_geocoder_failed'       => esc_html__( 'Geocoder failed due to', 'lafka-plugin' ),
+				'error_message_precise_address'       => esc_html__( 'Please enter precise address.', 'lafka-plugin' ),
+				'error_message_select_branch'         => esc_html__( 'Please select branch to continue.', 'lafka-plugin' ),
+			)
+		);
 		wp_enqueue_style( 'wp-jquery-ui-dialog' );
 	}
 
 	public static function output_in_footer() {
 		$options_branches = get_option( 'lafka_shipping_areas_branches' );
 		?>
-        <div id="lafka_select_branch_modal" class="mfp-hide">
+		<div id="lafka_select_branch_modal" class="mfp-hide">
 			<?php
 			$show_all_closed_message    = false;
 			$all_legit_branch_locations = array();
@@ -127,16 +136,16 @@ class Lafka_Branch_Locations {
 				}
 			}
 			?>
-			<?php if ( $show_all_closed_message ): ?>
-                <div class="lafka-all-stores-closed">
-                    <p><?php echo esc_html( $lafka_order_hours_options['lafka_order_hours_closed_stores_message'] ?? '' ); ?></p>
+			<?php if ( $show_all_closed_message ) : ?>
+				<div class="lafka-all-stores-closed">
+					<p><?php echo esc_html( $lafka_order_hours_options['lafka_order_hours_closed_stores_message'] ?? '' ); ?></p>
 					<?php
 					$lafka_order_hours_options = get_option( 'lafka_order_hours_options' );
 					if ( $lafka_order_hours_options['lafka_order_hours_message_countdown'] ?? false ) {
 						$first_opening_branch_datetime = Lafka_Order_Hours::get_first_opening_branch_datetime( $all_legit_branch_locations );
 						if ( ! is_null( $first_opening_branch_datetime ) ) {
 							?>
-                            <div class="lafka-all-stores-closed-countdown">
+							<div class="lafka-all-stores-closed-countdown">
 								<?php
 								$countdown_output_format = '{hn}:{mnn}:{snn}';
 								$difference              = $first_opening_branch_datetime->diff( Lafka_Order_Hours::get_order_hours_time() );
@@ -144,99 +153,99 @@ class Lafka_Branch_Locations {
 									$countdown_output_format = '{dn} {dl} {hn}:{mnn}:{snn}';
 								}
 								?>
-                                <div class="count_holder_small">
-                                    <div class="lafka_order_hours_countdown"
-                                         data-diff-days="<?php echo esc_attr( $difference->d ); ?>"
-                                         data-diff-hours="<?php echo esc_attr( $difference->h ); ?>"
-                                         data-diff-minutes="<?php echo esc_attr( $difference->i ); ?>"
-                                         data-diff-seconds="<?php echo esc_attr( $difference->s ); ?>"
-                                         data-output-format="<?php echo esc_attr( $countdown_output_format ); ?>"
-                                    ></div>
-                                    <div class="clear"></div>
-                                </div>
-                            </div>
+								<div class="count_holder_small">
+									<div class="lafka_order_hours_countdown"
+										data-diff-days="<?php echo esc_attr( $difference->d ); ?>"
+										data-diff-hours="<?php echo esc_attr( $difference->h ); ?>"
+										data-diff-minutes="<?php echo esc_attr( $difference->i ); ?>"
+										data-diff-seconds="<?php echo esc_attr( $difference->s ); ?>"
+										data-output-format="<?php echo esc_attr( $countdown_output_format ); ?>"
+									></div>
+									<div class="clear"></div>
+								</div>
+							</div>
 							<?php
 						}
 					}
 					?>
-                </div>
-			<?php else: ?>
-                <form id="lafka_select_branch_form">
-                    <div class="lafka-branch-order-type">
-						<?php if ( in_array( 'delivery', self::get_order_type() ) ): ?>
-                            <a href="javascript:" class="lafka-branch-delivery"><?php esc_html_e( 'Delivery', 'lafka-plugin' ); ?></a>
+				</div>
+			<?php else : ?>
+				<form id="lafka_select_branch_form">
+					<div class="lafka-branch-order-type">
+						<?php if ( in_array( 'delivery', self::get_order_type() ) ) : ?>
+							<a href="javascript:" class="lafka-branch-delivery"><?php esc_html_e( 'Delivery', 'lafka-plugin' ); ?></a>
 						<?php endif; ?>
-						<?php if ( in_array( 'pickup', self::get_order_type() ) ): ?>
-                            <a href="javascript:" class="lafka-branch-pickup"><?php esc_html_e( 'Local pickup', 'lafka-plugin' ); ?></a>
+						<?php if ( in_array( 'pickup', self::get_order_type() ) ) : ?>
+							<a href="javascript:" class="lafka-branch-pickup"><?php esc_html_e( 'Local pickup', 'lafka-plugin' ); ?></a>
 						<?php endif; ?>
-                    </div>
-                    <div class="lafka-branch-user-address">
-                        <label for="lafka_branch_select_user_address"><?php esc_html_e( 'Address', 'lafka-plugin' ); ?>
-                            <input type="text" id="lafka_branch_select_user_address" name="lafka_branch_select_user_address"
-                                   placeholder="<?php esc_html_e( 'Enter a delivery address', 'lafka-plugin' ); ?>"/>
-							<?php if ( empty( $options_branches['disable_current_location'] ) ): ?>
-                                <a href="javascript:" class="lafka-branch-auto-locate" title="<?php esc_html_e( 'Use current location', 'lafka-plugin' ); ?>">
-                                    <i class="fa fa-location-arrow"></i>
+					</div>
+					<div class="lafka-branch-user-address">
+						<label for="lafka_branch_select_user_address"><?php esc_html_e( 'Address', 'lafka-plugin' ); ?>
+							<input type="text" id="lafka_branch_select_user_address" name="lafka_branch_select_user_address"
+									placeholder="<?php esc_html_e( 'Enter a delivery address', 'lafka-plugin' ); ?>"/>
+							<?php if ( empty( $options_branches['disable_current_location'] ) ) : ?>
+								<a href="javascript:" class="lafka-branch-auto-locate" title="<?php esc_html_e( 'Use current location', 'lafka-plugin' ); ?>">
+									<i class="fa fa-location-arrow"></i>
 									<?php esc_html_e( 'or detect my current location', 'lafka-plugin' ); ?>
-                                </a>
+								</a>
 							<?php endif; ?>
-                        </label>
-                    </div>
+						</label>
+					</div>
 					<?php
 					$branches              = Lafka_Shipping_Areas::get_all_legit_branch_locations();
 					$branch_selection_type = empty( $options_branches['branch_selection_type'] ) ? 'images' : $options_branches['branch_selection_type']
 					?>
-                    <div class="lafka-branch-selection">
-						<?php if ( $branch_selection_type === 'images' ): ?>
-                            <div class="lafka-branch-select-images">
-								<?php if ( empty( $branches ) ): ?>
-                                    <span class="lafka-branch-select-tip"><?php esc_html_e( 'Sorry, no location available to order for this address.', 'lafka-plugin' ); ?></span>
-								<?php else: ?>
-                                    <span class="lafka-branch-select-tip"></span>
-									<?php foreach ( $branches as $id => $name ): ?>
-                                        <span class="lafka-branch-select-image  lafka-branch-<?php echo esc_attr( $id ); ?>">
-                                    <a href="javascript:" data-branch-id="<?php echo (int) $id; ?>">
-                                        <?php
-                                        $branch_image_id = get_term_meta( $id, 'lafka_branch_location_img_id', true );
-                                        if ( $branch_image_id ) {
-	                                        $branch_image_src = wp_get_attachment_thumb_url( $branch_image_id );
-                                        } else {
-	                                        $branch_image_src = wc_placeholder_img_src();
-                                        }
-                                        ?>
-                                        <img src="<?php echo esc_url( $branch_image_src ); ?>" alt="<?php echo esc_attr( $name ); ?>"/>
-                                        <span class="lafka-branch-select-name"><?php echo esc_html( $name ); ?></span>
-                                    </a>
-                                </span>
+					<div class="lafka-branch-selection">
+						<?php if ( $branch_selection_type === 'images' ) : ?>
+							<div class="lafka-branch-select-images">
+								<?php if ( empty( $branches ) ) : ?>
+									<span class="lafka-branch-select-tip"><?php esc_html_e( 'Sorry, no location available to order for this address.', 'lafka-plugin' ); ?></span>
+								<?php else : ?>
+									<span class="lafka-branch-select-tip"></span>
+									<?php foreach ( $branches as $id => $name ) : ?>
+										<span class="lafka-branch-select-image  lafka-branch-<?php echo esc_attr( $id ); ?>">
+									<a href="javascript:" data-branch-id="<?php echo (int) $id; ?>">
+										<?php
+										$branch_image_id = get_term_meta( $id, 'lafka_branch_location_img_id', true );
+										if ( $branch_image_id ) {
+											$branch_image_src = wp_get_attachment_thumb_url( $branch_image_id );
+										} else {
+											$branch_image_src = wc_placeholder_img_src();
+										}
+										?>
+										<img src="<?php echo esc_url( $branch_image_src ); ?>" alt="<?php echo esc_attr( $name ); ?>"/>
+										<span class="lafka-branch-select-name"><?php echo esc_html( $name ); ?></span>
+									</a>
+								</span>
 									<?php endforeach; ?>
 								<?php endif; ?>
-                                <input type="hidden" name="lafka_selected_branch_id" id="lafka_selected_branch_id"/>
-                            </div>
-						<?php elseif ( $branch_selection_type === 'select' ): ?>
-                            <div class="lafka-branch-select-dropdown">
-                                <label class="lafka_branch_select_label" for="lafka_branch_select"></label>
-                                <select id="lafka_branch_select" name="lafka_branch_select">
-                                    <option value="" disabled selected><?php esc_html_e( 'Select Branch', 'lafka-plugin' ); ?> ...</option>
-									<?php foreach ( $branches as $id => $name ): ?>
-                                        <option value="<?php echo esc_attr( $id ); ?>"><?php echo esc_html( $name ) ?></option>
+								<input type="hidden" name="lafka_selected_branch_id" id="lafka_selected_branch_id"/>
+							</div>
+						<?php elseif ( $branch_selection_type === 'select' ) : ?>
+							<div class="lafka-branch-select-dropdown">
+								<label class="lafka_branch_select_label" for="lafka_branch_select"></label>
+								<select id="lafka_branch_select" name="lafka_branch_select">
+									<option value="" disabled selected><?php esc_html_e( 'Select Branch', 'lafka-plugin' ); ?> ...</option>
+									<?php foreach ( $branches as $id => $name ) : ?>
+										<option value="<?php echo esc_attr( $id ); ?>"><?php echo esc_html( $name ); ?></option>
 									<?php endforeach; ?>
-                                </select>
-                            </div>
+								</select>
+							</div>
 						<?php endif; ?>
-                    </div>
-                    <div class="lafka-branch-select-message"></div>
-                    <input type="hidden" name="lafka_branch_order_type" id="lafka_branch_order_type"/>
-                    <input type="hidden" name="lafka_user_country" id="lafka_user_country"/>
-                    <input type="hidden" name="lafka_user_address_1" id="lafka_user_address_1"/>
-                    <input type="hidden" name="lafka_user_city" id="lafka_user_city"/>
-                    <input type="hidden" name="lafka_user_state" id="lafka_user_state"/>
-                    <input type="hidden" name="lafka_user_postcode" id="lafka_user_postcode"/>
-                    <input type="hidden" name="lafka_user_geocoded_location" id="lafka_user_geocoded_location"/>
+					</div>
+					<div class="lafka-branch-select-message"></div>
+					<input type="hidden" name="lafka_branch_order_type" id="lafka_branch_order_type"/>
+					<input type="hidden" name="lafka_user_country" id="lafka_user_country"/>
+					<input type="hidden" name="lafka_user_address_1" id="lafka_user_address_1"/>
+					<input type="hidden" name="lafka_user_city" id="lafka_user_city"/>
+					<input type="hidden" name="lafka_user_state" id="lafka_user_state"/>
+					<input type="hidden" name="lafka_user_postcode" id="lafka_user_postcode"/>
+					<input type="hidden" name="lafka_user_geocoded_location" id="lafka_user_geocoded_location"/>
 					<?php wp_nonce_field( 'lafka_select_branch' ); ?>
-                    <a class="lafka-branch-select-submit button" href="javascript:"><?php esc_html_e( 'Start Order', 'lafka-plugin' ); ?></a>
-                </form>
+					<a class="lafka-branch-select-submit button" href="javascript:"><?php esc_html_e( 'Start Order', 'lafka-plugin' ); ?></a>
+				</form>
 			<?php endif; ?>
-        </div>
+		</div>
 		<?php
 	}
 
@@ -286,7 +295,7 @@ class Lafka_Branch_Locations {
 			'city'       => $fields['lafka_user_city'],
 			'state'      => self::get_processed_state_code_from_google_state( $fields['lafka_user_state'], $fields['lafka_user_country'] ),
 			'postcode'   => $fields['lafka_user_postcode'],
-		);;
+		);
 
 		$full_address                                  = self::build_full_address_from_components( $lafka_branch_location_session );
 		$lafka_branch_location_session['full_address'] = $full_address;
@@ -335,27 +344,27 @@ class Lafka_Branch_Locations {
 				$class           = 'lafka-pickup-info';
 			}
 			?>
-            <div class="lafka-change-branch <?php echo sanitize_html_class( $class ); ?>">
-				<?php if ( ! empty( $delivery_time ) ): ?>
-                    <span class="lafka-estimated-time"><?php echo esc_html( $delivery_time ); ?></span>
+			<div class="lafka-change-branch <?php echo sanitize_html_class( $class ); ?>">
+				<?php if ( ! empty( $delivery_time ) ) : ?>
+					<span class="lafka-estimated-time"><?php echo esc_html( $delivery_time ); ?></span>
 				<?php endif; ?>
-                <span><strong><?php echo esc_html( $order_type_text ); ?> <?php esc_html_e( 'from', 'lafka-plugin' ); ?>:</strong> <?php echo esc_html( $branch_name ); ?></span>
-                <span>
-                    <?php if ( $branch_location_session['order_type'] === 'delivery' ): ?>
-                        <strong><?php esc_html_e( 'To', 'lafka-plugin' ); ?>:</strong>
-                        <span class="lafka-change-branch-full-address"><?php echo esc_html( $branch_location_session['full_address'] ); ?></span>
-                    <?php endif; ?>
-                    <a href="javascript:" class="lafka-change-branch-button"
-                       data-nonce="<?php echo esc_attr( wp_create_nonce( 'lafka_change_branch' ) ); ?>"><?php esc_html_e( 'Change', 'lafka-plugin' ); ?></a>
-                </span>
-            </div>
+				<span><strong><?php echo esc_html( $order_type_text ); ?> <?php esc_html_e( 'from', 'lafka-plugin' ); ?>:</strong> <?php echo esc_html( $branch_name ); ?></span>
+				<span>
+					<?php if ( $branch_location_session['order_type'] === 'delivery' ) : ?>
+						<strong><?php esc_html_e( 'To', 'lafka-plugin' ); ?>:</strong>
+						<span class="lafka-change-branch-full-address"><?php echo esc_html( $branch_location_session['full_address'] ); ?></span>
+					<?php endif; ?>
+					<a href="javascript:" class="lafka-change-branch-button"
+						data-nonce="<?php echo esc_attr( wp_create_nonce( 'lafka_change_branch' ) ); ?>"><?php esc_html_e( 'Change', 'lafka-plugin' ); ?></a>
+				</span>
+			</div>
 			<?php
-		} else if ( ! empty( Lafka_Shipping_Areas::get_all_legit_branch_locations() ) ) {
+		} elseif ( ! empty( Lafka_Shipping_Areas::get_all_legit_branch_locations() ) ) {
 			?>
-            <div class="lafka-change-branch">
-                <a href="javascript:" class="lafka-change-branch-button-select"
-                   data-nonce="<?php echo esc_attr( wp_create_nonce( 'lafka_change_branch' ) ); ?>"><?php esc_html_e( 'Select Location', 'lafka-plugin' ); ?></a>
-            </div>
+			<div class="lafka-change-branch">
+				<a href="javascript:" class="lafka-change-branch-button-select"
+					data-nonce="<?php echo esc_attr( wp_create_nonce( 'lafka_change_branch' ) ); ?>"><?php esc_html_e( 'Select Location', 'lafka-plugin' ); ?></a>
+			</div>
 			<?php
 		}
 	}
@@ -403,7 +412,7 @@ class Lafka_Branch_Locations {
 				$branch_products_tax_args = array(
 					'taxonomy' => 'lafka_branch_location',
 					'field'    => 'term_taxonomy_id',
-					'terms'    => $branch_location_session['branch_id']
+					'terms'    => $branch_location_session['branch_id'],
 				);
 				$tax_query[]              = $branch_products_tax_args;
 			}
@@ -419,7 +428,7 @@ class Lafka_Branch_Locations {
 				$branch_products_tax_args  = array(
 					'taxonomy' => 'lafka_branch_location',
 					'field'    => 'term_taxonomy_id',
-					'terms'    => $branch_location_session['branch_id']
+					'terms'    => $branch_location_session['branch_id'],
 				);
 				$query_args['tax_query'][] = $branch_products_tax_args;
 			}
@@ -527,7 +536,7 @@ class Lafka_Branch_Locations {
 			case 'delivery':
 				$to_return[] = 'delivery';
 				break;
-			case'pickup':
+			case 'pickup':
 				$to_return[] = 'pickup';
 				break;
 		}
@@ -554,7 +563,8 @@ class Lafka_Branch_Locations {
 		}
 	}
 
-	public static function get_user_branches( $user_id ): array { // TODO: This may cause issues - can't see all orders when order is from branch where user is not manager... not sure
+	public static function get_user_branches( $user_id ): array {
+		// TODO: This may cause issues - can't see all orders when order is from branch where user is not manager... not sure
 		$args = array(
 			'taxonomy'   => 'lafka_branch_location',
 			'hide_empty' => false,
@@ -563,18 +573,18 @@ class Lafka_Branch_Locations {
 				array(
 					'key'     => 'lafka_branch_address',
 					'value'   => '',
-					'compare' => '!='
+					'compare' => '!=',
 				),
 				array(
 					'key'     => 'lafka_branch_address_geocoded',
 					'value'   => '',
-					'compare' => '!='
+					'compare' => '!=',
 				),
 				array(
 					'key'   => 'lafka_branch_user',
 					'value' => $user_id,
-				)
-			)
+				),
+			),
 		);
 
 		$all_legit_branch_locations_for_user = get_terms( $args );
@@ -598,7 +608,7 @@ class Lafka_Branch_Locations {
 					foreach ( json_decode( $location_meta['lafka_branch_shipping_areas'][0] ) as $shipping_area_id ) {
 						$shipping_areas[] = array(
 							'id'                       => $shipping_area_id,
-							'area_polygon_coordinates' => get_post_meta( $shipping_area_id, '_lafka_shipping_area_polygon_coordinates', true )
+							'area_polygon_coordinates' => get_post_meta( $shipping_area_id, '_lafka_shipping_area_polygon_coordinates', true ),
 						);
 					}
 				}

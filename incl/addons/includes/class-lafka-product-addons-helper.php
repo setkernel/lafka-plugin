@@ -8,7 +8,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-if (!class_exists('WC_Product_Addons_Helper')) {
+if ( ! class_exists( 'WC_Product_Addons_Helper' ) ) {
 	class WC_Product_Addons_Helper {
 		/**
 		 * Gets addons assigned to a product by ID.
@@ -49,14 +49,14 @@ if (!class_exists('WC_Product_Addons_Helper')) {
 			if ( '1' !== $exclude && $inc_global ) {
 				static $global_all_products_cache = null;
 				if ( null === $global_all_products_cache ) {
-					$args = array(
-						'posts_per_page'   => - 1,
-						'orderby'          => 'meta_value',
-						'order'            => 'ASC',
-						'meta_key'         => '_priority',
-						'post_type'        => 'lafka_glb_addon',
-						'post_status'      => 'publish',
-						'meta_query'       => array(
+					$args                      = array(
+						'posts_per_page' => - 1,
+						'orderby'        => 'meta_value',
+						'order'          => 'ASC',
+						'meta_key'       => '_priority',
+						'post_type'      => 'lafka_glb_addon',
+						'post_status'    => 'publish',
+						'meta_query'     => array(
 							array(
 								'key'   => '_all_products',
 								'value' => '1',
@@ -78,24 +78,28 @@ if (!class_exists('WC_Product_Addons_Helper')) {
 				// Global level addons (categories) — cached by category set.
 				if ( $product_terms ) {
 					static $category_addons_cache = array();
-					$cat_key = implode( ',', $product_terms );
+					$cat_key                      = implode( ',', $product_terms );
 					if ( ! isset( $category_addons_cache[ $cat_key ] ) ) {
-						$args = apply_filters( 'get_product_addons_global_query_args', array(
-							'posts_per_page'   => - 1,
-							'orderby'          => 'meta_value',
-							'order'            => 'ASC',
-							'meta_key'         => '_priority',
-							'post_type'        => 'lafka_glb_addon',
-							'post_status'      => 'publish',
-							'tax_query'        => array(
-								array(
-									'taxonomy'         => 'product_cat',
-									'field'            => 'id',
-									'terms'            => $product_terms,
-									'include_children' => false,
+						$args                              = apply_filters(
+							'get_product_addons_global_query_args',
+							array(
+								'posts_per_page' => - 1,
+								'orderby'        => 'meta_value',
+								'order'          => 'ASC',
+								'meta_key'       => '_priority',
+								'post_type'      => 'lafka_glb_addon',
+								'post_status'    => 'publish',
+								'tax_query'      => array(
+									array(
+										'taxonomy'         => 'product_cat',
+										'field'            => 'id',
+										'terms'            => $product_terms,
+										'include_children' => false,
+									),
 								),
 							),
-						), $product_terms );
+							$product_terms
+						);
 						$category_addons_cache[ $cat_key ] = get_posts( $args );
 					}
 
@@ -156,7 +160,7 @@ if (!class_exists('WC_Product_Addons_Helper')) {
 				if ( empty( $addons[ $addon_key ]['field-name'] ) ) {
 					$addon_name                         = substr( $addon['name'], 0, $max_addon_name_length );
 					$addons[ $addon_key ]['field-name'] = sanitize_title( $prefix . $addon_name . '-' . $addon_field_counter );
-					$addon_field_counter ++;
+					++$addon_field_counter;
 				}
 			}
 
@@ -183,20 +187,30 @@ if (!class_exists('WC_Product_Addons_Helper')) {
 			$neg = false;
 
 			if ( $price < 0 ) {
-				$neg   = true;
+				$neg    = true;
 				$price *= - 1;
 			}
 
-			if ( ( is_cart() || is_checkout()  || wp_doing_ajax()) && null !== $cart_item ) {
+			if ( ( is_cart() || is_checkout() || wp_doing_ajax() ) && null !== $cart_item ) {
 				$product = wc_get_product( $cart_item->get_id() );
 			}
 
 			if ( is_object( $product ) ) {
 				// Support new wc_get_price_excluding_tax() and wc_get_price_excluding_tax() functions.
 				if ( function_exists( 'wc_get_price_excluding_tax' ) ) {
-					$display_price = self::get_product_addon_tax_display_mode() === 'incl' ? wc_get_price_including_tax( $product, array( 'qty'   => 1,
-					                                                                                                                      'price' => $price
-					) ) : wc_get_price_excluding_tax( $product, array( 'qty' => 1, 'price' => $price ) );
+					$display_price = self::get_product_addon_tax_display_mode() === 'incl' ? wc_get_price_including_tax(
+						$product,
+						array(
+							'qty'   => 1,
+							'price' => $price,
+						)
+					) : wc_get_price_excluding_tax(
+						$product,
+						array(
+							'qty'   => 1,
+							'price' => $price,
+						)
+					);
 
 					/**
 					 * When a user is tax exempt and product prices are exclusive of taxes, WooCommerce displays prices as follows:
@@ -204,7 +218,13 @@ if (!class_exists('WC_Product_Addons_Helper')) {
 					 * - Cart and Checkout pages: excluding taxes
 					 */
 					if ( ( is_cart() || is_checkout() ) && ! empty( WC()->customer ) && WC()->customer->get_is_vat_exempt() && ! wc_prices_include_tax() ) {
-						$display_price = wc_get_price_excluding_tax( $product, array( 'qty' => 1, 'price' => $price ) );
+						$display_price = wc_get_price_excluding_tax(
+							$product,
+							array(
+								'qty'   => 1,
+								'price' => $price,
+							)
+						);
 					}
 				} else {
 					$display_price = self::get_product_addon_tax_display_mode() === 'incl' ? $product->get_price_including_tax( 1, $price ) : $product->get_price_excluding_tax( 1, $price );

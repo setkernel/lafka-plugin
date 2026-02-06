@@ -17,10 +17,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 ?><label class="combined_product_optional_checkbox">
-	<input class="combined_product_checkbox" type="checkbox" name="<?php echo $combo_fields_prefix; ?>combo_selected_optional_<?php echo $combined_item->get_id(); ?>" value="" <?php checked( $combined_item->is_optional_checked() && $combined_item->is_in_stock(), true ); echo $combined_item->is_in_stock() ? '' : 'disabled="disabled"' ; ?> /> <?php
-	echo sprintf( __( 'Add%1$s%2$s%3$s', 'lafka-plugin' ), $label_title, $label_price, '' );
-?></label><?php
+	<input class="combined_product_checkbox" type="checkbox" name="<?php echo $combo_fields_prefix; ?>combo_selected_optional_<?php echo $combined_item->get_id(); ?>" value="" 
+	<?php
+	checked( $combined_item->is_optional_checked() && $combined_item->is_in_stock(), true );
+	echo $combined_item->is_in_stock() ? '' : 'disabled="disabled"';
+	?>
+	/> 
+<?php
+	printf( __( 'Add%1$s%2$s%3$s', 'lafka-plugin' ), $label_title, $label_price, '' );
+?>
+	</label>
+	<?php
 
-if ( $availability_html ) {
-	echo $availability_html;
-}
+	if ( $availability_html ) {
+		echo $availability_html;
+	}

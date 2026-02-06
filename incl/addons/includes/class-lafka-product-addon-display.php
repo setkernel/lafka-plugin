@@ -57,16 +57,16 @@ class Lafka_Product_Addon_Display {
 			$currency_pos = get_option( 'woocommerce_currency_pos' );
 
 			switch ( $currency_pos ) {
-				case 'left' :
+				case 'left':
 					$format = '%1$s%2$s';
 					break;
-				case 'right' :
+				case 'right':
 					$format = '%2$s%1$s';
 					break;
-				case 'left_space' :
+				case 'left_space':
 					$format = '%1$s&nbsp;%2$s';
 					break;
-				case 'right_space' :
+				case 'right_space':
 					$format = '%2$s&nbsp;%1$s';
 					break;
 			}
@@ -83,7 +83,7 @@ class Lafka_Product_Addon_Display {
 	 * Get the plugin path.
 	 */
 	public function plugin_path() {
-		return $this->plugin_path = untrailingslashit( plugin_dir_path( dirname( __FILE__ ) ) );
+		return $this->plugin_path = untrailingslashit( plugin_dir_path( __DIR__ ) );
 	}
 
 	/**
@@ -121,20 +121,30 @@ class Lafka_Product_Addon_Display {
 					}
 				}
 
-				wc_get_template( 'addon-start.php', array(
-					'addon'       => $addon,
-					'required'    => $addon['required'],
-					'name'        => $addon['name'],
-					'description' => $addon['description'],
-					'type'        => $addon['type'],
-					'has_options_with_images' => $has_options_with_images,
-				), 'lafka-plugin', $this->plugin_path() . '/templates/' );
+				wc_get_template(
+					'addon-start.php',
+					array(
+						'addon'                   => $addon,
+						'required'                => $addon['required'],
+						'name'                    => $addon['name'],
+						'description'             => $addon['description'],
+						'type'                    => $addon['type'],
+						'has_options_with_images' => $has_options_with_images,
+					),
+					'lafka-plugin',
+					$this->plugin_path() . '/templates/'
+				);
 
 				echo $this->get_addon_html( $addon );
 
-				wc_get_template( 'addon-end.php', array(
-					'addon' => $addon,
-				), 'lafka-plugin', $this->plugin_path() . '/templates/' );
+				wc_get_template(
+					'addon-end.php',
+					array(
+						'addon' => $addon,
+					),
+					'lafka-plugin',
+					$this->plugin_path() . '/templates/'
+				);
 			}
 
 			do_action( 'lafka-product-addons_end', $post_id );
@@ -200,9 +210,14 @@ class Lafka_Product_Addon_Display {
 	 * @param array $addon Add-on field data.
 	 */
 	public function get_checkbox_html( $addon ) {
-		wc_get_template( 'checkbox.php', array(
-			'addon' => $addon,
-		), 'lafka-plugin', $this->plugin_path() . '/templates/' );
+		wc_get_template(
+			'checkbox.php',
+			array(
+				'addon' => $addon,
+			),
+			'lafka-plugin',
+			$this->plugin_path() . '/templates/'
+		);
 	}
 
 	/**
@@ -211,9 +226,14 @@ class Lafka_Product_Addon_Display {
 	 * @param array $addon Add-on field data.
 	 */
 	public function get_radiobutton_html( $addon ) {
-		wc_get_template( 'radiobutton.php', array(
-			'addon' => $addon,
-		), 'lafka-plugin', $this->plugin_path() . '/templates/' );
+		wc_get_template(
+			'radiobutton.php',
+			array(
+				'addon' => $addon,
+			),
+			'lafka-plugin',
+			$this->plugin_path() . '/templates/'
+		);
 	}
 
 	/**
@@ -222,9 +242,14 @@ class Lafka_Product_Addon_Display {
 	 * @param array $addon Add-on field data.
 	 */
 	public function get_textarea_html( $addon ) {
-		wc_get_template( 'textarea.php', array(
-			'addon' => $addon,
-		), 'lafka-plugin', $this->plugin_path() . '/templates/' );
+		wc_get_template(
+			'textarea.php',
+			array(
+				'addon' => $addon,
+			),
+			'lafka-plugin',
+			$this->plugin_path() . '/templates/'
+		);
 	}
 
 	/**
@@ -377,9 +402,9 @@ class Lafka_Product_Addon_Display {
 	 *
 	 * @return string
 	 */
-	public function get_addon_option_custom_image_id( $option ) : string {
+	public function get_addon_option_custom_image_id( $option ): string {
 		$custom_image_id = '';
-		if ( !empty( $option['image'] ) ) {
+		if ( ! empty( $option['image'] ) ) {
 			$custom_image_id = $option['image'];
 		}
 

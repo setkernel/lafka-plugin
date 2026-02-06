@@ -9,9 +9,10 @@ Thumbs.db
 *.swo
 *~
 
-# Node (if build tooling is added later)
+# Dependencies
 node_modules/
 package-lock.json
+vendor/
 
 # Misc
 *.log

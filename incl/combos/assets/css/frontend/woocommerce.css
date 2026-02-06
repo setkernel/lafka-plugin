@@ -32,8 +32,8 @@
     border-bottom: none !important
 }
 
-.combined_table_item_price:before,
-.combined_table_item_subtotal:before {
+.combined_table_item_price::before,
+.combined_table_item_subtotal::before {
     font-family: 'Font Awesome 5 Free';
     font-size: 12px;
     display: inline-block;
@@ -45,8 +45,8 @@
     font-weight: 900;
 }
 
-.checkout .combined_table_item_price:before,
-.checkout .combined_table_item_subtotal:before {
+.checkout .combined_table_item_price::before,
+.checkout .combined_table_item_subtotal::before {
     display: none;
 }
 
@@ -57,7 +57,7 @@ dt.combined_title_meta,
 
 a.edit_combo_in_cart_text {
     color: #888;
-    font-weight: normal;
+    font-weight: 400;
     text-decoration: none
 }
 

@@ -41,8 +41,8 @@ class Lafka_WC_Variation_Swatches_Frontend {
 	 * Enqueue scripts and stylesheets
 	 */
 	public function enqueue_scripts() {
-		wp_enqueue_style( 'lafka-wcs-frontend', plugins_url( '../../assets/css/lafka-plugin-swatches.css', dirname( __FILE__ ) ), array(), '20160615' );
-		wp_enqueue_script( 'lafka-wcs-frontend', plugins_url( '../../assets/js/lafka-plugin-swatches.js', dirname( __FILE__ ) ), array( 'jquery' ), '20160615', true );
+		wp_enqueue_style( 'lafka-wcs-frontend', plugins_url( '../../assets/css/lafka-plugin-swatches.css', __DIR__ ), array(), '20160615' );
+		wp_enqueue_script( 'lafka-wcs-frontend', plugins_url( '../../assets/js/lafka-plugin-swatches.js', __DIR__ ), array( 'jquery' ), '20160615', true );
 	}
 
 	/**
@@ -74,7 +74,7 @@ class Lafka_WC_Variation_Swatches_Frontend {
 
 		if ( empty( $options ) && ! empty( $product ) && ! empty( $attribute ) ) {
 			$attributes = $product->get_variation_attributes();
-			$options    = $attributes[$attribute];
+			$options    = $attributes[ $attribute ];
 		}
 
 		if ( array_key_exists( $attr->attribute_type, $swatch_types ) ) {
@@ -116,9 +116,9 @@ class Lafka_WC_Variation_Swatches_Frontend {
 
 		switch ( $attr->attribute_type ) {
 			case 'color':
-				$color = get_term_meta( $term->term_id, 'color', true );
-				list( $r, $g, $b ) = sscanf( $color, "#%02x%02x%02x" );
-				$html = sprintf(
+				$color             = get_term_meta( $term->term_id, 'color', true );
+				list( $r, $g, $b ) = sscanf( $color, '#%02x%02x%02x' );
+				$html              = sprintf(
 					'<span class="swatch swatch-color swatch-%s %s" style="background-color:%s;color:%s;" title="%s" data-value="%s">%s</span>',
 					esc_attr( $term->slug ),
 					$selected,

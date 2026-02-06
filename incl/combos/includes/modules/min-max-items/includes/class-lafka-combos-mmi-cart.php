@@ -53,7 +53,7 @@ class WC_LafkaCombos_MMI_Cart {
 
 			foreach ( $items as $item ) {
 				$item_id         = isset( $item->combined_item ) && $item->combined_item ? $item->combined_item->item_id : false;
-				$item_qty        = $item_id && isset( $configuration[ $item_id ] ) && isset( $configuration[ $item_id ][ 'quantity' ] ) ? $configuration[ $item_id ][ 'quantity' ] : $item->quantity;
+				$item_qty        = $item_id && isset( $configuration[ $item_id ] ) && isset( $configuration[ $item_id ]['quantity'] ) ? $configuration[ $item_id ]['quantity'] : $item->quantity;
 				$items_selected += $item_qty;
 			}
 
@@ -61,15 +61,15 @@ class WC_LafkaCombos_MMI_Cart {
 
 			if ( $items_min !== '' && $items_selected < $items_min ) {
 				$items_invalid = true;
-			} else if ( $items_max !== '' && $items_selected > $items_max ) {
+			} elseif ( $items_max !== '' && $items_selected > $items_max ) {
 				$items_invalid = true;
 			}
 
 			if ( $items_invalid ) {
 
 				$combo_title = $combo->get_title();
-				$action       = sprintf( __( '&quot;%s&quot; cannot be added to the cart', 'lafka-plugin' ), $combo_title );
-				$status       = '';
+				$action      = sprintf( __( '&quot;%s&quot; cannot be added to the cart', 'lafka-plugin' ), $combo_title );
+				$status      = '';
 
 				if ( $items_min === $items_max ) {
 					$resolution = sprintf( _n( 'please choose 1 item', 'please choose %s items', $items_min, 'lafka-plugin' ), $items_min );
@@ -105,17 +105,17 @@ class WC_LafkaCombos_MMI_Cart {
 
 			if ( wc_pc_is_combo_container_cart_item( $cart_item ) ) {
 
-				$configuration  = isset( $cart_item[ 'stamp' ] ) ? $cart_item[ 'stamp' ] : false;
+				$configuration  = isset( $cart_item['stamp'] ) ? $cart_item['stamp'] : false;
 				$items_selected = 0;
 
-				$combo = $cart_item[ 'data' ];
+				$combo = $cart_item['data'];
 
 				$items_min = $combo->get_min_combo_size();
 				$items_max = $combo->get_max_combo_size();
 
 				if ( $configuration ) {
 					foreach ( $configuration as $item_id => $item_configuration ) {
-						$item_qty   = isset( $item_configuration[ 'quantity' ] ) ? $item_configuration[ 'quantity' ] : 0;
+						$item_qty        = isset( $item_configuration['quantity'] ) ? $item_configuration['quantity'] : 0;
 						$items_selected += $item_qty;
 					}
 				}
@@ -124,14 +124,14 @@ class WC_LafkaCombos_MMI_Cart {
 
 				if ( $items_min !== '' && $items_selected < $items_min ) {
 					$items_invalid = true;
-				} else if ( $items_max !== '' && $items_selected > $items_max ) {
+				} elseif ( $items_max !== '' && $items_selected > $items_max ) {
 					$items_invalid = true;
 				}
 
 				if ( $items_invalid ) {
 
 					$combo_title = $combo->get_title();
-					$action       = sprintf( __( '&quot;%s&quot; cannot be purchased', 'lafka-plugin' ), $combo_title );
+					$action      = sprintf( __( '&quot;%s&quot; cannot be purchased', 'lafka-plugin' ), $combo_title );
 
 					if ( $items_min === $items_max ) {
 						$resolution = sprintf( _n( 'please choose 1 item', 'please choose %s items', $items_min, 'lafka-plugin' ), $items_min );

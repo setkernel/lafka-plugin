@@ -19,7 +19,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 /** WC Core action. */
 do_action( 'woocommerce_before_add_to_cart_form' ); ?>
 
-<form method="post" enctype="multipart/form-data" class="cart cart_group combo_form <?php echo esc_attr( $classes ); ?>"><?php
+<form method="post" enctype="multipart/form-data" class="cart cart_group combo_form <?php echo esc_attr( $classes ); ?>">
+<?php
 
 	/**
 	 * 'woocommerce_before_combined_items' action.
@@ -28,22 +29,22 @@ do_action( 'woocommerce_before_add_to_cart_form' ); ?>
 	 */
 	do_action( 'woocommerce_before_combined_items', $product );
 
-	foreach ( $combined_items as $combined_item ) {
+foreach ( $combined_items as $combined_item ) {
 
-		/**
-		 * 'woocommerce_combined_item_details' action.
-		 *
-		 * @hooked wc_pc_template_combined_item_details_wrapper_open  -   0
-		 * @hooked wc_pc_template_combined_item_thumbnail             -   5
-		 * @hooked wc_pc_template_combined_item_details_open          -  10
-		 * @hooked wc_pc_template_combined_item_title                 -  15
-		 * @hooked wc_pc_template_combined_item_description           -  20
-		 * @hooked wc_pc_template_combined_item_product_details       -  25
-		 * @hooked wc_pc_template_combined_item_details_close         -  30
-		 * @hooked wc_pc_template_combined_item_details_wrapper_close - 100
-		 */
-		do_action( 'woocommerce_combined_item_details', $combined_item, $product );
-	}
+	/**
+	 * 'woocommerce_combined_item_details' action.
+	 *
+	 * @hooked wc_pc_template_combined_item_details_wrapper_open  -   0
+	 * @hooked wc_pc_template_combined_item_thumbnail             -   5
+	 * @hooked wc_pc_template_combined_item_details_open          -  10
+	 * @hooked wc_pc_template_combined_item_title                 -  15
+	 * @hooked wc_pc_template_combined_item_description           -  20
+	 * @hooked wc_pc_template_combined_item_product_details       -  25
+	 * @hooked wc_pc_template_combined_item_details_close         -  30
+	 * @hooked wc_pc_template_combined_item_details_wrapper_close - 100
+	 */
+	do_action( 'woocommerce_combined_item_details', $combined_item, $product );
+}
 
 	/**
 	 * 'woocommerce_after_combined_items' action.
@@ -61,7 +62,8 @@ do_action( 'woocommerce_before_add_to_cart_form' ); ?>
 	 */
 	do_action( 'woocommerce_combos_add_to_cart_wrap', $product );
 
-?></form><?php
+?>
+</form><?php
 	/** WC Core action. */
 	do_action( 'woocommerce_after_add_to_cart_form' );
 ?>

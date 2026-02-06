@@ -1,63 +1,76 @@
 <?php
-if (!defined('ABSPATH'))
+if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly
+}
 global $WCMp;
 ?>
 <div class="wcmp_vendor_list">
-	<?php if($hide_order_by !== 'yes'): ?>
-        <form name="vendor_sort" method="get">
-            <div class="vendor_sort">
-                <select class="select short" id="vendor_sort_type" name="vendor_sort_type">
-                    <option value="registered" <?php if ($sort_type == 'registered') {
-                        echo 'selected="selected"';
-                    } ?> ><?php echo __('By date', 'lafka-plugin'); ?></option>
-                    <option value="name" <?php if ($sort_type == 'name') {
-                        echo 'selected="selected"';
-                    } ?> ><?php echo __('By Alphabetically', 'lafka-plugin'); ?></option>
-                    <option value="category" <?php if ($sort_type == 'category') {
-                        echo 'selected="selected"';
-                    } ?> ><?php echo __('By Category', 'lafka-plugin'); ?></option>
-                </select>
-                <?php
-                $product_category = get_terms('product_cat');
-                $options_html = '';
-                foreach ($product_category as $category) {
-                    if ($category->term_id == $selected_category) {
-                        $options_html .= '<option value="' . esc_attr($category->term_id) . '" selected="selected">' . esc_html($category->name) . '</option>';
-                    } else {
-                        $options_html .= '<option value="' . esc_attr($category->term_id) . '">' . esc_html($category->name) . '</option>';
-                    }
-                }
-                ?>
-                <select name="vendor_sort_category" id="vendor_sort_category" class="select"><?php echo $options_html; ?></select>
-                <input value="<?php echo __('Sort', 'lafka-plugin'); ?>" type="submit">
-            </div>
-        </form>
+	<?php if ( $hide_order_by !== 'yes' ) : ?>
+		<form name="vendor_sort" method="get">
+			<div class="vendor_sort">
+				<select class="select short" id="vendor_sort_type" name="vendor_sort_type">
+					<option value="registered" 
+					<?php
+					if ( $sort_type == 'registered' ) {
+						echo 'selected="selected"';
+					}
+					?>
+					><?php echo __( 'By date', 'lafka-plugin' ); ?></option>
+					<option value="name" 
+					<?php
+					if ( $sort_type == 'name' ) {
+						echo 'selected="selected"';
+					}
+					?>
+					><?php echo __( 'By Alphabetically', 'lafka-plugin' ); ?></option>
+					<option value="category" 
+					<?php
+					if ( $sort_type == 'category' ) {
+						echo 'selected="selected"';
+					}
+					?>
+					><?php echo __( 'By Category', 'lafka-plugin' ); ?></option>
+				</select>
+				<?php
+				$product_category = get_terms( 'product_cat' );
+				$options_html     = '';
+				foreach ( $product_category as $category ) {
+					if ( $category->term_id == $selected_category ) {
+						$options_html .= '<option value="' . esc_attr( $category->term_id ) . '" selected="selected">' . esc_html( $category->name ) . '</option>';
+					} else {
+						$options_html .= '<option value="' . esc_attr( $category->term_id ) . '">' . esc_html( $category->name ) . '</option>';
+					}
+				}
+				?>
+				<select name="vendor_sort_category" id="vendor_sort_category" class="select"><?php echo $options_html; ?></select>
+				<input value="<?php echo __( 'Sort', 'lafka-plugin' ); ?>" type="submit">
+			</div>
+		</form>
 	<?php endif; ?>
 	<div class="wcmp_vendor_list_wrap">
 		<?php
-		if ($vendor_info && is_array($vendor_info)) {
-			foreach ($vendor_info as $vendor) {
+		if ( $vendor_info && is_array( $vendor_info ) ) {
+			foreach ( $vendor_info as $vendor ) {
 				?>
 				<div class="wcmp_sorted_vendors">
-					<?php do_action('wcmp_vendor_lists_single_before_image', $vendor['term_id'], $vendor['ID']); ?>
+					<?php do_action( 'wcmp_vendor_lists_single_before_image', $vendor['term_id'], $vendor['ID'] ); ?>
 					<a href="<?php echo $vendor['vendor_permalink']; ?>">
 						<img class="vendor_img" src="<?php echo $vendor['vendor_image']; ?>" id="vendor_image_display" width="125">
 					</a>
 
 					<?php
-					$rating_info = wcmp_get_vendor_review_info($vendor['term_id']);
-					$WCMp->template->get_template('review/rating_vendor_lists.php', array('rating_val_array' => $rating_info));
+					$rating_info = wcmp_get_vendor_review_info( $vendor['term_id'] );
+					$WCMp->template->get_template( 'review/rating_vendor_lists.php', array( 'rating_val_array' => $rating_info ) );
 					?>
-					<?php do_action('wcmp_vendor_lists_single_after_image', $vendor['term_id'], $vendor['ID']); ?>
-					<?php $button_text = apply_filters('wcmp_vendor_lists_single_button_text', $vendor['vendor_name']); ?>
+					<?php do_action( 'wcmp_vendor_lists_single_after_image', $vendor['term_id'], $vendor['ID'] ); ?>
+					<?php $button_text = apply_filters( 'wcmp_vendor_lists_single_button_text', $vendor['vendor_name'] ); ?>
 					<a href="<?php echo $vendor['vendor_permalink']; ?>" class="button"><?php echo $button_text; ?></a>
-					<?php do_action('wcmp_vendor_lists_single_after_button', $vendor['term_id'], $vendor['ID']); ?>
+					<?php do_action( 'wcmp_vendor_lists_single_after_button', $vendor['term_id'], $vendor['ID'] ); ?>
 				</div>
 				<?php
 			}
 		} else {
-			_e('No vendor found!', 'lafka-plugin');
+			_e( 'No vendor found!', 'lafka-plugin' );
 		}
 		?>
 	</div>

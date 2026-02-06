@@ -43,17 +43,17 @@ class WC_LafkaCombos_Product_Export {
 	 */
 	public static function add_columns( $columns ) {
 
-		$columns[ 'wc_pb_combined_items' ]             = __( 'Combined Items (JSON-encoded)', 'lafka-plugin' );
-		$columns[ 'wc_pb_min_combo_size' ]           = __( 'Min Combo Size', 'lafka-plugin' );
-		$columns[ 'wc_pb_max_combo_size' ]           = __( 'Max Combo Size', 'lafka-plugin' );
-		$columns[ 'wc_pb_layout' ]                    = __( 'Combo Layout', 'lafka-plugin' );
-		$columns[ 'wc_pb_group_mode' ]                = __( 'Combo Group Mode', 'lafka-plugin' );
-		$columns[ 'wc_pb_editable_in_cart' ]          = __( 'Combo Cart Editing', 'lafka-plugin' );
-		$columns[ 'wc_pb_sold_individually_context' ] = __( 'Combo Sold Individually', 'lafka-plugin' );
-		$columns[ 'wc_pb_add_to_cart_form_location' ] = __( 'Combo Form Location', 'lafka-plugin' );
-		$columns[ 'wc_pb_combo_sells' ]              = __( 'Combo Sells', 'lafka-plugin' );
-		$columns[ 'wc_pb_combo_sells_title' ]        = __( 'Combo Sells Title', 'lafka-plugin' );
-		$columns[ 'wc_pb_combo_sells_discount' ]     = __( 'Combo Sells Discount', 'lafka-plugin' );
+		$columns['wc_pb_combined_items']            = __( 'Combined Items (JSON-encoded)', 'lafka-plugin' );
+		$columns['wc_pb_min_combo_size']            = __( 'Min Combo Size', 'lafka-plugin' );
+		$columns['wc_pb_max_combo_size']            = __( 'Max Combo Size', 'lafka-plugin' );
+		$columns['wc_pb_layout']                    = __( 'Combo Layout', 'lafka-plugin' );
+		$columns['wc_pb_group_mode']                = __( 'Combo Group Mode', 'lafka-plugin' );
+		$columns['wc_pb_editable_in_cart']          = __( 'Combo Cart Editing', 'lafka-plugin' );
+		$columns['wc_pb_sold_individually_context'] = __( 'Combo Sold Individually', 'lafka-plugin' );
+		$columns['wc_pb_add_to_cart_form_location'] = __( 'Combo Form Location', 'lafka-plugin' );
+		$columns['wc_pb_combo_sells']               = __( 'Combo Sells', 'lafka-plugin' );
+		$columns['wc_pb_combo_sells_title']         = __( 'Combo Sells Title', 'lafka-plugin' );
+		$columns['wc_pb_combo_sells_discount']      = __( 'Combo Sells Discount', 'lafka-plugin' );
 
 		return $columns;
 	}
@@ -77,12 +77,12 @@ class WC_LafkaCombos_Product_Export {
 
 				foreach ( $combined_items as $combined_item ) {
 
-					$combined_item_id    = $combined_item->get_id();
-					$combined_item_data  = $combined_item->get_data();
+					$combined_item_id   = $combined_item->get_id();
+					$combined_item_data = $combined_item->get_data();
 
 					// Combined item stock information not needed.
-					unset( $combined_item_data[ 'meta_data' ][ 'stock_status' ] );
-					unset( $combined_item_data[ 'meta_data' ][ 'max_stock' ] );
+					unset( $combined_item_data['meta_data']['stock_status'] );
+					unset( $combined_item_data['meta_data']['max_stock'] );
 
 					$combined_product_id = $combined_item->get_product_id();
 					$combined_product    = wc_get_product( $combined_product_id );
@@ -92,13 +92,13 @@ class WC_LafkaCombos_Product_Export {
 					}
 
 					// Not needed as we will be re-creating all combined items during import.
-					unset( $combined_item_data[ 'combined_item_id' ] );
-					unset( $combined_item_data[ 'combo_id' ] );
+					unset( $combined_item_data['combined_item_id'] );
+					unset( $combined_item_data['combo_id'] );
 
 					$combined_product_sku = $combined_product->get_sku( 'edit' );
 
 					// Refer to exported products by their SKU, if present.
-					$combined_item_data[ 'product_id' ] = $combined_product_sku ? $combined_product_sku : 'id:' . $combined_product_id;
+					$combined_item_data['product_id'] = $combined_product_sku ? $combined_product_sku : 'id:' . $combined_product_id;
 
 					$data[ $combined_item_id ] = $combined_item_data;
 				}

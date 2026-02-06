@@ -24,7 +24,8 @@ class WC_LafkaCombos_TAWS_Variation_Swatches_Compatibility {
 	 */
 	public static function tawc_variation_swatches_form_support() {
 
-		wc_enqueue_js( "
+		wc_enqueue_js(
+			"
 
 			var init_tawcvs_variation_swatches_form = function() {
 
@@ -38,7 +39,8 @@ class WC_LafkaCombos_TAWS_Variation_Swatches_Compatibility {
 				init_tawcvs_variation_swatches_form();
 			}
 
-		" );
+		"
+		);
 	}
 }
 

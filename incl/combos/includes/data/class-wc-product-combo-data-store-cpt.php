@@ -33,7 +33,7 @@ class WC_Product_Combo_Data_Store_CPT extends WC_Product_Data_Store_CPT {
 		'_wc_pb_sold_individually_context',
 		'_wc_pb_add_to_cart_form_location',
 		'_wc_sw_max_price',
-		'_wc_sw_max_regular_price'
+		'_wc_sw_max_regular_price',
 	);
 
 	/**
@@ -41,24 +41,24 @@ class WC_Product_Combo_Data_Store_CPT extends WC_Product_Data_Store_CPT {
 	 * @var array
 	 */
 	protected $props_to_meta_keys = array(
-		'min_combo_size'                 => '_wcpb_min_qty_limit',
-		'max_combo_size'                 => '_wcpb_max_qty_limit',
-		'layout'                          => '_wc_pb_layout_style',
-		'group_mode'                      => '_wc_pb_group_mode',
-		'combo_stock_quantity'           => '_wc_pb_combo_stock_quantity',
+		'min_combo_size'                   => '_wcpb_min_qty_limit',
+		'max_combo_size'                   => '_wcpb_max_qty_limit',
+		'layout'                           => '_wc_pb_layout_style',
+		'group_mode'                       => '_wc_pb_group_mode',
+		'combo_stock_quantity'             => '_wc_pb_combo_stock_quantity',
 		'combined_items_stock_status'      => '_wc_pb_combined_items_stock_status',
 		'combined_items_stock_sync_status' => '_wc_pb_combined_items_stock_sync_status',
-		'price'                           => '_wc_pb_base_price',
-		'regular_price'                   => '_wc_pb_base_regular_price',
-		'sale_price'                      => '_wc_pb_base_sale_price',
-		'editable_in_cart'                => '_wc_pb_edit_in_cart',
-		'aggregate_weight'                => '_wc_pb_aggregate_weight',
-		'sold_individually_context'       => '_wc_pb_sold_individually_context',
-		'add_to_cart_form_location'       => '_wc_pb_add_to_cart_form_location',
-		'min_raw_price'                   => '_price',
-		'min_raw_regular_price'           => '_regular_price',
-		'max_raw_price'                   => '_wc_sw_max_price',
-		'max_raw_regular_price'           => '_wc_sw_max_regular_price'
+		'price'                            => '_wc_pb_base_price',
+		'regular_price'                    => '_wc_pb_base_regular_price',
+		'sale_price'                       => '_wc_pb_base_sale_price',
+		'editable_in_cart'                 => '_wc_pb_edit_in_cart',
+		'aggregate_weight'                 => '_wc_pb_aggregate_weight',
+		'sold_individually_context'        => '_wc_pb_sold_individually_context',
+		'add_to_cart_form_location'        => '_wc_pb_add_to_cart_form_location',
+		'min_raw_price'                    => '_price',
+		'min_raw_regular_price'            => '_regular_price',
+		'max_raw_price'                    => '_wc_sw_max_price',
+		'max_raw_regular_price'            => '_wc_sw_max_regular_price',
 	);
 
 	/**
@@ -94,8 +94,8 @@ class WC_Product_Combo_Data_Store_CPT extends WC_Product_Data_Store_CPT {
 
 		// Base prices are overridden by NYP min price.
 		if ( $product->is_nyp() ) {
-			$props_to_set[ 'price' ]      = $props_to_set[ 'regular_price' ] = get_post_meta( $id, '_min_price', true );
-			$props_to_set[ 'sale_price' ] = '';
+			$props_to_set['price']      = $props_to_set['regular_price'] = get_post_meta( $id, '_min_price', true );
+			$props_to_set['sale_price'] = '';
 		}
 
 		$product->set_props( $props_to_set );
@@ -112,7 +112,18 @@ class WC_Product_Combo_Data_Store_CPT extends WC_Product_Data_Store_CPT {
 		parent::update_post_meta( $product, $force );
 
 		$id                 = $product->get_id();
-		$meta_keys_to_props = array_flip( array_diff_key( $this->props_to_meta_keys, array( 'price' => 1, 'min_raw_price' => 1, 'min_raw_regular_price' => 1, 'max_raw_price' => 1, 'max_raw_regular_price' => 1 ) ) );
+		$meta_keys_to_props = array_flip(
+			array_diff_key(
+				$this->props_to_meta_keys,
+				array(
+					'price'                 => 1,
+					'min_raw_price'         => 1,
+					'min_raw_regular_price' => 1,
+					'max_raw_price'         => 1,
+					'max_raw_regular_price' => 1,
+				)
+			)
+		);
 		$props_to_update    = $force ? $meta_keys_to_props : $this->get_props_to_update( $product, $meta_keys_to_props );
 
 		foreach ( $props_to_update as $meta_key => $property ) {
@@ -275,14 +286,17 @@ class WC_Product_Combo_Data_Store_CPT extends WC_Product_Data_Store_CPT {
 				'stock_status'   => $stock_status,
 				'rating_count'   => array_sum( (array) get_post_meta( $id, '_wc_rating_count', true ) ),
 				'average_rating' => get_post_meta( $id, '_wc_average_rating', true ),
-				'total_sales'    => get_post_meta( $id, 'total_sales', true )
+				'total_sales'    => get_post_meta( $id, 'total_sales', true ),
 			);
 
 			if ( WC_LafkaCombos_Core_Compatibility::is_wc_version_gte( '4.0' ) ) {
-				$data = array_merge( $data, array(
-					'tax_status' => get_post_meta( $id, '_tax_status', true ),
-					'tax_class'  => get_post_meta( $id, '_tax_class', true )
-				) );
+				$data = array_merge(
+					$data,
+					array(
+						'tax_status' => get_post_meta( $id, '_tax_status', true ),
+						'tax_class'  => get_post_meta( $id, '_tax_class', true ),
+					)
+				);
 			}
 
 			return $data;
@@ -370,22 +384,26 @@ class WC_Product_Combo_Data_Store_CPT extends WC_Product_Data_Store_CPT {
 
 		if ( empty( $combo_ids ) ) {
 
-			$wpdb->query( "
+			$wpdb->query(
+				"
 				UPDATE {$wpdb->postmeta}
 				SET meta_value = 'unsynced'
 				WHERE meta_key = '_wc_pb_combined_items_stock_sync_status'
-			" );
+			"
+			);
 
 			WC_LafkaCombos_Core_Compatibility::invalidate_cache_group( 'combined_data_items' );
 
 		} else {
 
-			$wpdb->query( "
+			$wpdb->query(
+				"
 				UPDATE {$wpdb->postmeta}
 				SET meta_value = 'unsynced'
 				WHERE meta_key = '_wc_pb_combined_items_stock_sync_status'
-				AND post_id IN (" . implode( ',', $combo_ids ) . ")
-			" );
+				AND post_id IN (" . implode( ',', $combo_ids ) . ')
+			'
+			);
 
 			foreach ( $combo_ids as $combo_id ) {
 				wp_cache_delete( $combo_id, 'post_meta' );
@@ -411,11 +429,13 @@ class WC_Product_Combo_Data_Store_CPT extends WC_Product_Data_Store_CPT {
 		global $wpdb;
 
 		if ( ! empty( $ids ) ) {
-			$wpdb->query( "
+			$wpdb->query(
+				"
 				DELETE FROM {$wpdb->postmeta}
 				WHERE meta_key = '_wc_pb_combined_items_stock_sync_status'
-				AND post_id IN (" . implode( ',', $ids ) . ")
-			" );
+				AND post_id IN (" . implode( ',', $ids ) . ')
+			'
+			);
 
 			foreach ( $ids as $id ) {
 				wp_cache_delete( $id, 'post_meta' );
@@ -434,11 +454,13 @@ class WC_Product_Combo_Data_Store_CPT extends WC_Product_Data_Store_CPT {
 
 		global $wpdb;
 
-		$results = $wpdb->get_results( "
+		$results = $wpdb->get_results(
+			"
 			SELECT meta.post_id as id FROM {$wpdb->postmeta} AS meta
 			WHERE meta.meta_key = '_wc_pb_combined_items_stock_sync_status' AND meta.meta_value = '$status'
 			GROUP BY meta.post_id;
-		" );
+		"
+		);
 
 		return is_array( $results ) ? wp_list_pluck( $results, 'id' ) : array();
 	}
@@ -454,11 +476,13 @@ class WC_Product_Combo_Data_Store_CPT extends WC_Product_Data_Store_CPT {
 		global $wpdb;
 
 		if ( ! empty( $ids ) ) {
-			$wpdb->query( "
+			$wpdb->query(
+				"
 				DELETE FROM {$wpdb->postmeta}
 				WHERE meta_key = '_wc_pb_combined_items_stock_status'
-				AND post_id IN (" . implode( ',', $ids ) . ")
-			" );
+				AND post_id IN (" . implode( ',', $ids ) . ')
+			'
+			);
 
 			foreach ( $ids as $id ) {
 				wp_cache_delete( $id, 'post_meta' );
@@ -479,11 +503,13 @@ class WC_Product_Combo_Data_Store_CPT extends WC_Product_Data_Store_CPT {
 
 		global $wpdb;
 
-		$results = $wpdb->get_results( "
+		$results = $wpdb->get_results(
+			"
 			SELECT meta.post_id as id FROM {$wpdb->postmeta} AS meta
 			WHERE meta.meta_key = '_wc_pb_combined_items_stock_status' AND meta.meta_value = '$status'
 			GROUP BY meta.post_id;
-		" );
+		"
+		);
 
 		return is_array( $results ) ? wp_list_pluck( $results, 'id' ) : array();
 	}
@@ -508,11 +534,13 @@ class WC_Product_Combo_Data_Store_CPT extends WC_Product_Data_Store_CPT {
 
 		if ( null === $data ) {
 
-			$data = new WP_Query( array(
-				'post_type' => 'product',
-				'nopaging'  => true,
-				'post__in'  => $ids
-			) );
+			$data = new WP_Query(
+				array(
+					'post_type' => 'product',
+					'nopaging'  => true,
+					'post__in'  => $ids,
+				)
+			);
 
 			WC_LafkaCombos_Helpers::cache_set( $cache_key, $data );
 		}

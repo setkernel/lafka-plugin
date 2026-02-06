@@ -50,8 +50,8 @@ final class Lafka_WC_Variation_Swatches {
 	 * Include required core files used in admin and on the frontend.
 	 */
 	public function includes() {
-		require_once( plugin_dir_path( __FILE__ ) . 'classes/class-admin.php' );
-		require_once( plugin_dir_path( __FILE__ ) . 'classes/class-frontend.php' );
+		require_once plugin_dir_path( __FILE__ ) . 'classes/class-admin.php';
+		require_once plugin_dir_path( __FILE__ ) . 'classes/class-frontend.php';
 	}
 
 	/**
@@ -92,7 +92,7 @@ final class Lafka_WC_Variation_Swatches {
 		global $wpdb;
 
 		$attr = substr( $taxonomy, 3 );
-		$attr = $wpdb->get_row( "SELECT * FROM " . $wpdb->prefix . "woocommerce_attribute_taxonomies WHERE attribute_name = '$attr'" );
+		$attr = $wpdb->get_row( 'SELECT * FROM ' . $wpdb->prefix . "woocommerce_attribute_taxonomies WHERE attribute_name = '$attr'" );
 
 		return $attr;
 	}
@@ -137,4 +137,3 @@ function lafka_wc_variation_swatches_constructor() {
 }
 
 add_action( 'plugins_loaded', 'lafka_wc_variation_swatches_constructor' );
-

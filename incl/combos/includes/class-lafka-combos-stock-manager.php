@@ -101,29 +101,28 @@ class WC_LafkaCombos_Stock_Manager {
 
 				if ( isset( $managed_items[ $managed_by_id ] ) ) {
 
-					$managed_items[ $managed_by_id ][ 'quantity' ] += $purchased_item->quantity;
+					$managed_items[ $managed_by_id ]['quantity'] += $purchased_item->quantity;
 
 					if ( $purchased_item->combined_item ) {
-						$managed_items[ $managed_by_id ][ 'is_secret' ] = $managed_items[ $managed_by_id ][ 'is_secret' ] && $purchased_item->combined_item->is_secret();
-						$managed_items[ $managed_by_id ][ 'title' ]     = $managed_items[ $managed_by_id ][ 'title' ] !== $purchased_item->combined_item->get_raw_title() ? $purchased_item->combined_item->product->get_title() : $managed_items[ $managed_by_id ][ 'title' ];
+						$managed_items[ $managed_by_id ]['is_secret'] = $managed_items[ $managed_by_id ]['is_secret'] && $purchased_item->combined_item->is_secret();
+						$managed_items[ $managed_by_id ]['title']     = $managed_items[ $managed_by_id ]['title'] !== $purchased_item->combined_item->get_raw_title() ? $purchased_item->combined_item->product->get_title() : $managed_items[ $managed_by_id ]['title'];
 					}
-
 				} else {
 
-					$managed_items[ $managed_by_id ][ 'quantity' ]  = $purchased_item->quantity;
-					$managed_items[ $managed_by_id ][ 'is_secret' ] = false;
-					$managed_items[ $managed_by_id ][ 'title' ]     = '';
+					$managed_items[ $managed_by_id ]['quantity']  = $purchased_item->quantity;
+					$managed_items[ $managed_by_id ]['is_secret'] = false;
+					$managed_items[ $managed_by_id ]['title']     = '';
 
 					if ( $purchased_item->combined_item ) {
-						$managed_items[ $managed_by_id ][ 'is_secret' ] = $purchased_item->combined_item->is_secret();
-						$managed_items[ $managed_by_id ][ 'title' ]     = $purchased_item->combined_item->get_raw_title();
+						$managed_items[ $managed_by_id ]['is_secret'] = $purchased_item->combined_item->is_secret();
+						$managed_items[ $managed_by_id ]['title']     = $purchased_item->combined_item->get_raw_title();
 					}
 
 					if ( $purchased_item->variation_id && $purchased_item->variation_id == $managed_by_id ) {
-						$managed_items[ $managed_by_id ][ 'is_variation' ] = true;
-						$managed_items[ $managed_by_id ][ 'product_id' ]   = $purchased_item->product_id;
+						$managed_items[ $managed_by_id ]['is_variation'] = true;
+						$managed_items[ $managed_by_id ]['product_id']   = $purchased_item->product_id;
 					} else {
-						$managed_items[ $managed_by_id ][ 'is_variation' ] = false;
+						$managed_items[ $managed_by_id ]['is_variation'] = false;
 					}
 				}
 			}
@@ -144,30 +143,30 @@ class WC_LafkaCombos_Stock_Manager {
 		$quantities_in_cart = WC()->cart->get_cart_item_quantities();
 
 		// If we are updating a combo in-cart, subtract the combined item cart quantites that belong to the combo being updated, since it's going to be removed later on.
-		if ( isset( $_POST[ 'update-combo' ] ) ) {
+		if ( isset( $_POST['update-combo'] ) ) {
 
-			$updating_cart_key = wc_clean( $_POST[ 'update-combo' ] );
+			$updating_cart_key = wc_clean( $_POST['update-combo'] );
 
 			if ( isset( WC()->cart->cart_contents[ $updating_cart_key ] ) ) {
 
-				$combo_cart_item   = WC()->cart->cart_contents[ $updating_cart_key ];
+				$combo_cart_item     = WC()->cart->cart_contents[ $updating_cart_key ];
 				$combined_cart_items = wc_pc_get_combined_cart_items( $combo_cart_item );
 
-				if ( isset( $quantities_in_cart[ $combo_cart_item[ 'product_id' ] ] ) ) {
-					$quantities_in_cart[ $combo_cart_item[ 'product_id' ] ] -= $combo_cart_item[ 'quantity' ];
+				if ( isset( $quantities_in_cart[ $combo_cart_item['product_id'] ] ) ) {
+					$quantities_in_cart[ $combo_cart_item['product_id'] ] -= $combo_cart_item['quantity'];
 					// Unset if 0.
-					if ( 0 === absint( $quantities_in_cart[ $combo_cart_item[ 'product_id' ] ] ) ) {
-						unset( $quantities_in_cart[ $combo_cart_item[ 'product_id' ] ] );
+					if ( 0 === absint( $quantities_in_cart[ $combo_cart_item['product_id'] ] ) ) {
+						unset( $quantities_in_cart[ $combo_cart_item['product_id'] ] );
 					}
 				}
 
 				if ( ! empty( $combined_cart_items ) ) {
 					foreach ( $combined_cart_items as $item_key => $item ) {
 
-						$combined_product_id = $item[ 'data' ]->is_type( 'variation' ) && true === $item[ 'data' ]->managing_stock() ? $item[ 'variation_id' ] : $item[ 'product_id' ];
+						$combined_product_id = $item['data']->is_type( 'variation' ) && true === $item['data']->managing_stock() ? $item['variation_id'] : $item['product_id'];
 
 						if ( isset( $quantities_in_cart[ $combined_product_id ] ) ) {
-							$quantities_in_cart[ $combined_product_id ] -= $item[ 'quantity' ];
+							$quantities_in_cart[ $combined_product_id ] -= $item['quantity'];
 							// Unset if 0.
 							if ( 0 === absint( $quantities_in_cart[ $combined_product_id ] ) ) {
 								unset( $quantities_in_cart[ $combined_product_id ] );
@@ -191,8 +190,8 @@ class WC_LafkaCombos_Stock_Manager {
 	 */
 	public function validate_stock( $args = array() ) {
 
-		$context         = isset( $args[ 'context' ] ) ? $args[ 'context' ] : 'add-to-cart';
-		$throw_exception = isset( $args[ 'throw_exception' ] ) && $args[ 'throw_exception' ];
+		$context         = isset( $args['context'] ) ? $args['context'] : 'add-to-cart';
+		$throw_exception = isset( $args['throw_exception'] ) && $args['throw_exception'];
 
 		$managed_items = $this->get_managed_items();
 
@@ -208,7 +207,7 @@ class WC_LafkaCombos_Stock_Manager {
 
 			try {
 
-				$quantity = $managed_item[ 'quantity' ];
+				$quantity = $managed_item['quantity'];
 
 				// Get the product.
 				$product_data = wc_get_product( $managed_item_id );
@@ -217,7 +216,7 @@ class WC_LafkaCombos_Stock_Manager {
 					continue;
 				}
 
-				$product_title = '' !== $managed_item[ 'title' ] ? $managed_item[ 'title' ] : $product_data->get_title();
+				$product_title = '' !== $managed_item['title'] ? $managed_item['title'] : $product_data->get_title();
 
 				// Sanity check.
 				if ( $product_data->is_sold_individually() && $quantity > 1 ) {
@@ -233,7 +232,7 @@ class WC_LafkaCombos_Stock_Manager {
 					throw new Exception( $notice );
 				}
 
-				if ( false === $managed_item[ 'is_secret' ] && 'variation' === $product_data->get_type() ) {
+				if ( false === $managed_item['is_secret'] && 'variation' === $product_data->get_type() ) {
 					$product_title = WC_LafkaCombos_Helpers::format_product_title( $product_title, '', wc_get_formatted_variation( $product_data, true, false ) );
 				}
 
@@ -289,12 +288,11 @@ class WC_LafkaCombos_Stock_Manager {
 						throw new Exception( $error );
 					}
 				}
-
 			} catch ( Exception $e ) {
 
 				$error = $e->getMessage();
 
-				if ( $managed_item[ 'is_secret' ] ) {
+				if ( $managed_item['is_secret'] ) {
 
 					$reason = __( 'The product is currently unavailable.', 'lafka-plugin' );
 
@@ -338,10 +336,10 @@ class WC_LafkaCombos_Stock_Manager_Item {
 
 	public function __construct( $product, $variation = false, $quantity = 1, $args = array() ) {
 
-		$this->product_id   = is_object( $product ) ? $product->get_id() : $product;
-		$this->variation_id = is_object( $variation ) ? $variation->get_id() : $variation;
-		$this->quantity     = $quantity;
-		$this->combined_item = isset( $args[ 'combined_item' ] ) ? $args[ 'combined_item' ] : false;
+		$this->product_id    = is_object( $product ) ? $product->get_id() : $product;
+		$this->variation_id  = is_object( $variation ) ? $variation->get_id() : $variation;
+		$this->quantity      = $quantity;
+		$this->combined_item = isset( $args['combined_item'] ) ? $args['combined_item'] : false;
 
 		if ( $this->variation_id && ( $variation = is_object( $variation ) ? $variation : wc_get_product( $variation ) ) ) {
 			$this->managed_by_id = $variation->get_stock_managed_by_id();

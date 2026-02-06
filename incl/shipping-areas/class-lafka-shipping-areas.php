@@ -55,18 +55,18 @@ class Lafka_Shipping_Areas {
 	private function includes() {
 		$options = get_option( 'lafka_shipping_areas_branches' );
 
-		require_once dirname( __FILE__ ) . '/includes/class-lafka-shipping-areas-method.php';
-		require_once dirname( __FILE__ ) . '/includes/class-lafka-api.php';
-		require_once dirname( __FILE__ ) . '/shortcodes/shortcode-lafka-shipping-areas.php';
+		require_once __DIR__ . '/includes/class-lafka-shipping-areas-method.php';
+		require_once __DIR__ . '/includes/class-lafka-api.php';
+		require_once __DIR__ . '/shortcodes/shortcode-lafka-shipping-areas.php';
 		if ( ! empty( $options['enable_branch_selection_modal'] ) ) {
-			require_once dirname( __FILE__ ) . '/includes/class-lafka-branch-locations.php';
+			require_once __DIR__ . '/includes/class-lafka-branch-locations.php';
 		}
 
 		if ( is_admin() ) {
-			require_once dirname( __FILE__ ) . '/includes/class-lafka-shipping-areas-admin.php';
-			require_once dirname( __FILE__ ) . '/includes/class-lafka-branch-locations-admin.php';
+			require_once __DIR__ . '/includes/class-lafka-shipping-areas-admin.php';
+			require_once __DIR__ . '/includes/class-lafka-branch-locations-admin.php';
 			if ( function_exists( 'vc_lean_map' ) ) {
-				vc_lean_map( 'lafka_shipping_areas', null, dirname( __FILE__ ) . '/shortcodes/shortcode-lafka-shipping-areas-to-vc.php' );
+				vc_lean_map( 'lafka_shipping_areas', null, __DIR__ . '/shortcodes/shortcode-lafka-shipping-areas-to-vc.php' );
 			}
 		}
 	}
@@ -132,13 +132,13 @@ class Lafka_Shipping_Areas {
 			add_filter( 'manage_shop_order_posts_columns', array( __CLASS__, 'add_datetime_to_orders_list' ), 20 );
 			// HPOS
 			add_filter( 'manage_woocommerce_page_wc-orders_columns', array( __CLASS__, 'add_datetime_to_orders_list' ), 20 );
-            // Legacy orders
-            add_action( 'manage_shop_order_posts_custom_column', array( __CLASS__, 'add_datetime_content_to_orders_list' ), 10, 2 );
+			// Legacy orders
+			add_action( 'manage_shop_order_posts_custom_column', array( __CLASS__, 'add_datetime_content_to_orders_list' ), 10, 2 );
 			// HPOS
 			add_action( 'manage_woocommerce_page_wc-orders_custom_column', array( __CLASS__, 'add_datetime_content_to_orders_list' ), 10, 2 );
 			// Legacy orders
-            add_action( 'manage_edit-shop_order_sortable_columns', array( __CLASS__, 'add_datetime_to_sortable_columns' ) );
-            // HPOS
+			add_action( 'manage_edit-shop_order_sortable_columns', array( __CLASS__, 'add_datetime_to_sortable_columns' ) );
+			// HPOS
 			add_action( 'woocommerce_shop_order_list_table_sortable_columns', array( __CLASS__, 'add_datetime_to_sortable_columns' ) );
 		}
 
@@ -210,7 +210,7 @@ class Lafka_Shipping_Areas {
 			'show_admin_column'  => true,
 			'show_in_menu'       => true,
 			'show_in_nav_menus'  => false,
-			'show_tagcloud'      => false
+			'show_tagcloud'      => false,
 		);
 
 		register_taxonomy( 'lafka_branch_location', 'product', $args );
@@ -257,27 +257,37 @@ class Lafka_Shipping_Areas {
 		wp_enqueue_style( 'lafka-shipping-areas-front', plugins_url( 'assets/css/frontend/lafka-shipping-areas-front.css', __FILE__ ), array(), '1.0' );
 
 		if ( is_cart() || is_checkout() ) {
-			wp_enqueue_script( 'lafka-shipping-areas-handle-shipping', plugins_url( 'assets/js/frontend/lafka-shipping-areas-handle-shipping.min.js', __FILE__ ), array(
-				'jquery',
-				'lafka-google-maps',
-				'jquery-blockui'
-			), '1.0', true );
+			wp_enqueue_script(
+				'lafka-shipping-areas-handle-shipping',
+				plugins_url( 'assets/js/frontend/lafka-shipping-areas-handle-shipping.min.js', __FILE__ ),
+				array(
+					'jquery',
+					'lafka-google-maps',
+					'jquery-blockui',
+				),
+				'1.0',
+				true
+			);
 
 			$options                 = get_option( 'lafka_shipping_areas_general' );
 			$options_advanced        = get_option( 'lafka_shipping_areas_advanced' );
 			$branch_location_session = WC()->session->get( 'lafka_branch_location' );
 
 			// Init a properties variable
-			wp_add_inline_script( 'lafka-shipping-areas-handle-shipping', '
+			wp_add_inline_script(
+				'lafka-shipping-areas-handle-shipping',
+				'
 				const lafka_shipping_properties = {};
 				const lafka_no_shipping_methods_string = "' . esc_html__( 'There are no shipping options available. Please ensure that your address has been entered correctly, or contact us if you need any help.', 'lafka-plugin' ) . '";
 				const lafka_debug_mode = ' . ( empty( $options_advanced['debug_mode'] ) ? 'false' : 'true' ) . ';
 				const lafka_lowest_cost_shipping = ' . ( empty( $options['lowest_cost_shipping'] ) ? 'false' : 'true' ) . ';
-				const lafka_store_address = "' . Lafka_Shipping_Areas::get_store_address() . '";
+				const lafka_store_address = "' . self::get_store_address() . '";
 				const lafka_set_store_location = "' . ( empty( $options_advanced['set_store_location'] ) ? 'geo_woo_store' : $options_advanced['set_store_location'] ) . '";
 				const lafka_store_map_location = "' . ( empty( $options_advanced['store_map_location'] ) ? '' : $options_advanced['store_map_location'] ) . '";
 				const lafka_order_type = "' . ( empty( $branch_location_session['order_type'] ) ? '' : $branch_location_session['order_type'] ) . '";
-				', 'before' );
+				',
+				'before'
+			);
 		}
 
 		$datetime_options = get_option( 'lafka_shipping_areas_datetime' );
@@ -291,16 +301,20 @@ class Lafka_Shipping_Areas {
 			wp_enqueue_style( 'flatpickr' );
 			wp_enqueue_script( 'flatpickr-local' );
 			wp_enqueue_script( 'lafka-shipping-datetime', plugins_url( 'assets/js/frontend/lafka-shipping-datetime.min.js', __FILE__ ), array( 'jquery', 'select2', 'flatpickr' ), '1.0', true );
-			wp_localize_script( 'lafka-shipping-datetime', 'lafka_datetime_options', array(
-				'is_order_hours_enabled' => class_exists( 'Lafka_Order_Hours' ),
-				'days_ahead'             => $this->order_date_time_days_ahead,
-				'enabled_dates'          => $enabled_dates,
-				'ajax_url'               => admin_url( 'admin-ajax.php' ),
-				'nonce'                  => wp_create_nonce( 'time_slots_for_date' ),
-				'select_time_label'      => esc_html__( 'Select time...', 'lafka-plugin' ),
-				'datetime_mandatory'     => ! empty( $this->order_date_time_mandatory ),
-				'flatpickr_locale'       => $flatpickr_locale
-			) );
+			wp_localize_script(
+				'lafka-shipping-datetime',
+				'lafka_datetime_options',
+				array(
+					'is_order_hours_enabled' => class_exists( 'Lafka_Order_Hours' ),
+					'days_ahead'             => $this->order_date_time_days_ahead,
+					'enabled_dates'          => $enabled_dates,
+					'ajax_url'               => admin_url( 'admin-ajax.php' ),
+					'nonce'                  => wp_create_nonce( 'time_slots_for_date' ),
+					'select_time_label'      => esc_html__( 'Select time...', 'lafka-plugin' ),
+					'datetime_mandatory'     => ! empty( $this->order_date_time_mandatory ),
+					'flatpickr_locale'       => $flatpickr_locale,
+				)
+			);
 		}
 	}
 
@@ -325,8 +339,8 @@ class Lafka_Shipping_Areas {
 		if ( ! empty( $_POST['lafka_picked_delivery_geocoded'] ) && ! empty( $_POST['lafka_is_location_clicked'] ) ) {
 			if ( OrderUtil::custom_orders_table_usage_is_enabled() ) {
 				$order = wc_get_order( $order_id );
-                $order->update_meta_data('lafka_picked_delivery_geocoded',  sanitize_text_field( $_POST['lafka_picked_delivery_geocoded'] ));
-                $order->save();
+				$order->update_meta_data( 'lafka_picked_delivery_geocoded', sanitize_text_field( $_POST['lafka_picked_delivery_geocoded'] ) );
+				$order->save();
 			} else {
 				update_post_meta( $order_id, 'lafka_picked_delivery_geocoded', sanitize_text_field( $_POST['lafka_picked_delivery_geocoded'] ) );
 			}
@@ -337,7 +351,7 @@ class Lafka_Shipping_Areas {
 		if ( ! empty( $_POST['lafka_checkout_date'] ) ) {
 			if ( OrderUtil::custom_orders_table_usage_is_enabled() ) {
 				$order = wc_get_order( $order_id );
-				$order->update_meta_data('lafka_checkout_date',  sanitize_text_field( $_POST['lafka_checkout_date'] ));
+				$order->update_meta_data( 'lafka_checkout_date', sanitize_text_field( $_POST['lafka_checkout_date'] ) );
 				$order->save();
 			} else {
 				update_post_meta( $order_id, 'lafka_checkout_date', sanitize_text_field( $_POST['lafka_checkout_date'] ) );
@@ -348,7 +362,7 @@ class Lafka_Shipping_Areas {
 		if ( ! empty( $_POST['lafka_checkout_timeslot'] ) ) {
 			if ( OrderUtil::custom_orders_table_usage_is_enabled() ) {
 				$order = wc_get_order( $order_id );
-				$order->update_meta_data('lafka_checkout_timeslot',  sanitize_text_field( $_POST['lafka_checkout_timeslot'] ));
+				$order->update_meta_data( 'lafka_checkout_timeslot', sanitize_text_field( $_POST['lafka_checkout_timeslot'] ) );
 				$order->save();
 			} else {
 				update_post_meta( $order_id, 'lafka_checkout_timeslot', sanitize_text_field( $_POST['lafka_checkout_timeslot'] ) );
@@ -365,7 +379,7 @@ class Lafka_Shipping_Areas {
 	}
 
 	public static function add_datetime_content_to_orders_list( $column, $order ) {
-        $order = wc_get_order($order);
+		$order = wc_get_order( $order );
 
 		if ( $column === 'lafka_datetime_complete' ) {
 			$date     = self::get_order_meta_backward_compatible( $order->get_id(), 'lafka_checkout_date' );
@@ -424,13 +438,13 @@ class Lafka_Shipping_Areas {
 		if ( ! empty( $lafka_checkout_date ) ) {
 			$total_rows['lafka_checkout_date'] = array(
 				'label' => esc_html( $order_type_label ) . ' ' . esc_html__( 'Date:', 'lafka-plugin' ),
-				'value' => date_i18n( get_option( 'date_format' ), DateTime::createFromFormat( 'Y-m-d', $lafka_checkout_date )->getTimestamp() )
+				'value' => date_i18n( get_option( 'date_format' ), DateTime::createFromFormat( 'Y-m-d', $lafka_checkout_date )->getTimestamp() ),
 			);
 		}
 		if ( ! empty( $lafka_checkout_timeslot ) ) {
 			$total_rows['lafka_checkout_timeslot'] = array(
 				'label' => esc_html( $order_type_label ) . ' ' . esc_html__( 'Time:', 'lafka-plugin' ),
-				'value' => esc_html( $lafka_checkout_timeslot )
+				'value' => esc_html( $lafka_checkout_timeslot ),
 			);
 		}
 		if ( ! empty( $lafka_selected_branch_id ) ) {
@@ -438,7 +452,7 @@ class Lafka_Shipping_Areas {
 			if ( ! empty( $branch_location ) ) {
 				$total_rows['lafka_selected_branch_id'] = array(
 					'label' => esc_html__( 'Branch:', 'lafka-plugin' ),
-					'value' => esc_html( $branch_location->name )
+					'value' => esc_html( $branch_location->name ),
 				);
 			}
 		}
@@ -447,7 +461,7 @@ class Lafka_Shipping_Areas {
 			if ( $location !== null && isset( $location->lat ) ) {
 				$total_rows['lafka_picked_delivery_geocoded'] = array(
 					'label' => esc_html__( 'Picked Delivery Location:', 'lafka-plugin' ),
-					'value' => self::get_delivery_location_link( $location )
+					'value' => self::get_delivery_location_link( $location ),
 				);
 			}
 		}
@@ -473,7 +487,7 @@ class Lafka_Shipping_Areas {
 			$schedule_json  = Lafka_Order_Hours::$lafka_order_hours_schedule;
 			$schedule_array = json_decode( $schedule_json );
 
-			for ( $i = 0; $i <= $days_ahead; $i ++ ) {
+			for ( $i = 0; $i <= $days_ahead; $i++ ) {
 				$day_of_the_week_to_check = $current_time->format( 'N' ) - 1;
 				if ( ! empty( $schedule_array[ $day_of_the_week_to_check ]->periods ) && ! Lafka_Order_Hours::is_day_in_vacation( $current_time ) ) {
 					// If is today
@@ -501,9 +515,12 @@ class Lafka_Shipping_Areas {
 			$day_of_the_week_to_check = $date->format( 'N' ) - 1;
 			if ( ! empty( $schedule_array[ $day_of_the_week_to_check ]->periods ) ) {
 				$day_periods = $schedule_array[ $day_of_the_week_to_check ]->periods;
-				usort( $day_periods, function ( $a, $b ) {
-					return strcmp( $a->start, $b->start );
-				} );
+				usort(
+					$day_periods,
+					function ( $a, $b ) {
+						return strcmp( $a->start, $b->start );
+					}
+				);
 				foreach ( $day_periods as $period ) {
 					if ( $period->end === '00:00' ) {
 						$period->end = '24:00';
@@ -566,7 +583,7 @@ class Lafka_Shipping_Areas {
 				'id'       => $time_period['start'] . ' - ' . $time_period['end'],
 				'text'     => $time_period['start'] . ' - ' . $time_period['end'],
 				'disabled' => $timeslot_disabled,
-				'title'    => ( $option_title ? $time_period['start'] . ' - ' . $time_period['end'] . ' ' . $option_title : '' )
+				'title'    => ( $option_title ? $time_period['start'] . ' - ' . $time_period['end'] . ' ' . $option_title : '' ),
 			);
 		}
 
@@ -593,9 +610,12 @@ class Lafka_Shipping_Areas {
 			$day_of_the_week_to_check = $date->format( 'N' ) - 1;
 			if ( ! empty( $schedule_array[ $day_of_the_week_to_check ]->periods ) ) {
 				$day_periods = $schedule_array[ $day_of_the_week_to_check ]->periods;
-				usort( $day_periods, function ( $a, $b ) {
-					return strcmp( $a->start, $b->start );
-				} );
+				usort(
+					$day_periods,
+					function ( $a, $b ) {
+						return strcmp( $a->start, $b->start );
+					}
+				);
 				foreach ( $day_periods as $period ) {
 					if ( $period->end === '00:00' ) {
 						$period->end = '24:00';
@@ -628,36 +648,36 @@ class Lafka_Shipping_Areas {
 				$order_type_label = esc_html__( 'Pickup', 'lafka-plugin' );
 			}
 			?>
-            <p>
-                <strong><?php esc_html_e( 'Order Type', 'lafka-plugin' ); ?>:</strong>
+			<p>
+				<strong><?php esc_html_e( 'Order Type', 'lafka-plugin' ); ?>:</strong>
 				<?php echo esc_html( $order_type_label ); ?>
-            </p>
+			</p>
 			<?php
 		}
 		if ( ! empty( $lafka_checkout_date ) ) {
 			?>
-            <p>
-                <strong><?php echo esc_html( $order_type_label ) . ' ' . esc_html__( 'Date', 'lafka-plugin' ); ?>:</strong>
+			<p>
+				<strong><?php echo esc_html( $order_type_label ) . ' ' . esc_html__( 'Date', 'lafka-plugin' ); ?>:</strong>
 				<?php echo esc_html( date_i18n( get_option( 'date_format' ), DateTime::createFromFormat( 'Y-m-d', $lafka_checkout_date )->getTimestamp() ) ); ?>
-            </p>
+			</p>
 			<?php
 		}
 		if ( ! empty( $lafka_checkout_timeslot ) ) {
 			?>
-            <p>
-                <strong><?php echo esc_html( $order_type_label ) . ' ' . esc_html__( 'Time', 'lafka-plugin' ); ?>:</strong>
+			<p>
+				<strong><?php echo esc_html( $order_type_label ) . ' ' . esc_html__( 'Time', 'lafka-plugin' ); ?>:</strong>
 				<?php echo esc_html( $lafka_checkout_timeslot ); ?>
-            </p>
+			</p>
 			<?php
 		}
 		if ( ! empty( $lafka_selected_branch_id ) ) {
 			$branch_location = get_term( $lafka_selected_branch_id, 'lafka_branch_location' );
 			if ( ! empty( $branch_location ) ) {
 				?>
-                <p>
-                    <strong><?php esc_html_e( 'Branch', 'lafka-plugin' ); ?>:</strong>
+				<p>
+					<strong><?php esc_html_e( 'Branch', 'lafka-plugin' ); ?>:</strong>
 					<?php echo esc_html( $branch_location->name ); ?>
-                </p>
+				</p>
 				<?php
 			}
 		}
@@ -665,10 +685,10 @@ class Lafka_Shipping_Areas {
 			$location = json_decode( $lafka_picked_delivery_geocoded );
 			if ( $location !== null && isset( $location->lat ) ) {
 				?>
-                <p>
-                    <strong><?php esc_html_e( 'Picked Delivery Location', 'lafka-plugin' ); ?>:</strong>
+				<p>
+					<strong><?php esc_html_e( 'Picked Delivery Location', 'lafka-plugin' ); ?>:</strong>
 					<?php echo self::get_delivery_location_link( $location ); ?>
-                </p>
+				</p>
 				<?php
 			}
 		}
@@ -695,27 +715,39 @@ class Lafka_Shipping_Areas {
 		echo '<h3 class="lafka-address-not-found">' . esc_html( $title ) . '</h3>';
 		echo '<h3 class="lafka-address-marked">' . esc_html__( 'Pinpoint your location on the map if it\'s not accurately marked.', 'lafka-plugin' ) . '</h3>';
 
-		woocommerce_form_field( 'lafka_picked_delivery_geocoded', array(
-			'type'  => 'text',
-			'class' => array(
-				'hidden'
-			),
-			'label' => esc_html__( 'Please Precise Your Location', 'lafka-plugin' )
-		) );
-		woocommerce_form_field( 'lafka_is_location_clicked', array(
-			'type'  => 'text',
-			'class' => array(
-				'hidden'
+		woocommerce_form_field(
+			'lafka_picked_delivery_geocoded',
+			array(
+				'type'  => 'text',
+				'class' => array(
+					'hidden',
+				),
+				'label' => esc_html__( 'Please Precise Your Location', 'lafka-plugin' ),
 			)
-		) );
+		);
+		woocommerce_form_field(
+			'lafka_is_location_clicked',
+			array(
+				'type'  => 'text',
+				'class' => array(
+					'hidden',
+				),
+			)
+		);
 
 		echo '<div id="lafka-pick-delivery-address-content">';
 		echo '<div id="lafka-pick-delivery-address-checkout-map">';
 		echo '</div></div></div>';
 
-		wp_add_inline_script( 'lafka-shipping-areas-handle-shipping', 'lafka_checkout_map_properties = ' . json_encode( array(
-				'pick_delivery_address_option' => $options['pick_delivery_address'],
-			) ), 'before' );
+		wp_add_inline_script(
+			'lafka-shipping-areas-handle-shipping',
+			'lafka_checkout_map_properties = ' . json_encode(
+				array(
+					'pick_delivery_address_option' => $options['pick_delivery_address'],
+				)
+			),
+			'before'
+		);
 	}
 
 	public function validate_checkout_field_process() {
@@ -785,31 +817,39 @@ class Lafka_Shipping_Areas {
 			}
 		}
 		?>
-        <div class="lafka-checkout-datetime-container">
-            <div class="lafka-checkout-datetime-trigger">
-                <a href="javascript:" class="lafka-delivery-time-toggle" title="<?php esc_html_e( 'Toggle Time Pickers', 'lafka-plugin' ); ?>">
+		<div class="lafka-checkout-datetime-container">
+			<div class="lafka-checkout-datetime-trigger">
+				<a href="javascript:" class="lafka-delivery-time-toggle" title="<?php esc_html_e( 'Toggle Time Pickers', 'lafka-plugin' ); ?>">
 					<?php echo esc_html__( 'Specify', 'lafka-plugin' ) . ' '; ?><?php echo esc_html( $order_type_label ); ?><?php echo ' ' . esc_html__( 'Time', 'lafka-plugin' ); ?>
-					<?php if ( empty( $this->order_date_time_mandatory ) ): ?>
+					<?php if ( empty( $this->order_date_time_mandatory ) ) : ?>
 						<?php esc_html_e( '(optional)', 'lafka-plugin' ); ?>
-					<?php else: ?>
-                        <abbr class="required" title="<?php echo esc_html__( 'required', 'lafka-plugin' ); ?>">*</abbr>
+					<?php else : ?>
+						<abbr class="required" title="<?php echo esc_html__( 'required', 'lafka-plugin' ); ?>">*</abbr>
 					<?php endif; ?>
-                </a>
-            </div>
-            <div class="lafka-checkout-datetime-fields<?php if ( empty( $this->order_date_time_mandatory ) ): ?> hidden<?php endif; ?>">
-                <input name="lafka_checkout_date" id="lafka_checkout_date" <?php if ( $this->order_date_time_days_ahead < 1 ): ?>class="hidden"<?php endif; ?> type="text"
-                       placeholder="<?php esc_html_e( 'Select Date', 'lafka-plugin' ); ?>..">
-                <select name="lafka_checkout_timeslot" id="lafka_checkout_timeslot">
-					<?php if ( empty( $this->order_date_time_mandatory ) ): ?>
-                        <option></option>
+				</a>
+			</div>
+			<div class="lafka-checkout-datetime-fields
+			<?php
+			if ( empty( $this->order_date_time_mandatory ) ) :
+				?>
+				hidden<?php endif; ?>">
+				<input name="lafka_checkout_date" id="lafka_checkout_date" 
+				<?php
+				if ( $this->order_date_time_days_ahead < 1 ) :
+					?>
+					class="hidden"<?php endif; ?> type="text"
+						placeholder="<?php esc_html_e( 'Select Date', 'lafka-plugin' ); ?>..">
+				<select name="lafka_checkout_timeslot" id="lafka_checkout_timeslot">
+					<?php if ( empty( $this->order_date_time_mandatory ) ) : ?>
+						<option></option>
 					<?php endif; ?>
-                </select>
-				<?php if ( $this->order_date_time_days_ahead > 0 && empty( $this->order_date_time_mandatory ) ): ?>
-                    <a href="javascript:" class="lafka-datetime-clear"
-                       title="<?php esc_html_e( 'Clear', 'lafka-plugin' ); ?> <?php echo esc_html( $order_type_label ); ?> <?php esc_html_e( 'Time Entries', 'lafka-plugin' ); ?>"><?php echo esc_html__( 'Clear', 'lafka-plugin' ); ?></a>
+				</select>
+				<?php if ( $this->order_date_time_days_ahead > 0 && empty( $this->order_date_time_mandatory ) ) : ?>
+					<a href="javascript:" class="lafka-datetime-clear"
+						title="<?php esc_html_e( 'Clear', 'lafka-plugin' ); ?> <?php echo esc_html( $order_type_label ); ?> <?php esc_html_e( 'Time Entries', 'lafka-plugin' ); ?>"><?php echo esc_html__( 'Clear', 'lafka-plugin' ); ?></a>
 				<?php endif; ?>
-            </div>
-        </div>
+			</div>
+		</div>
 		<?php
 	}
 
@@ -826,7 +866,7 @@ class Lafka_Shipping_Areas {
 		$interval     = DateInterval::createFromDateString( '1 day' );
 		$days         = array( $current_time->format( 'Y-m-d' ) );
 
-		for ( $i = 1; $i <= $days_ahead; $i ++ ) {
+		for ( $i = 1; $i <= $days_ahead; $i++ ) {
 			$days[] = $current_time->add( $interval )->format( 'Y-m-d' );
 		}
 
@@ -849,7 +889,7 @@ class Lafka_Shipping_Areas {
 			if ( $is_today && $curr_time <= ( clone $time )->sub( $interval ) || ! $is_today ) {
 				$timeslots[] = array(
 					'start' => $start,
-					'end'   => $end
+					'end'   => $end,
 				);
 			}
 		}
@@ -862,42 +902,43 @@ class Lafka_Shipping_Areas {
 		if ( is_numeric( $branch_id ) ) {
 			$meta_query_args[] = array(
 				'key'   => 'lafka_selected_branch_id',
-				'value' => $branch_id
+				'value' => $branch_id,
 			);
 		} else {
 			$meta_query_args[] = array(
 				'key'   => 'lafka_selected_branch_id',
-				'value' => null
+				'value' => null,
 			);
 		}
 
 		$meta_query_args[] = array(
 			'key'   => 'lafka_checkout_date',
-			'value' => $order_date->format( 'Y-m-d' )
+			'value' => $order_date->format( 'Y-m-d' ),
 		);
 		$meta_query_args[] = array(
 			'key'   => 'lafka_checkout_timeslot',
-			'value' => ( $order_timeslot['start'] ?? '' ) . ' - ' . ( $order_timeslot['end'] ?? '' )
+			'value' => ( $order_timeslot['start'] ?? '' ) . ' - ' . ( $order_timeslot['end'] ?? '' ),
 		);
-        if ( OrderUtil::custom_orders_table_usage_is_enabled() ) {
-			$args   = array(
+		if ( OrderUtil::custom_orders_table_usage_is_enabled() ) {
+			$args        = array(
 				'status'     => 'wc-processing',
 				'limit'      => - 1,
-				'meta_query' => $meta_query_args
+				'meta_query' => $meta_query_args,
 			);
-			$orders = wc_get_orders( $args );
-			$order_count = count($orders);
+			$orders      = wc_get_orders( $args );
+			$order_count = count( $orders );
 		} else {
-			$query_args        = [
+			$query_args  = [
 				'post_type'      => 'shop_order',
 				'post_status'    => 'wc-processing',
 				'posts_per_page' => - 1,
 				'meta_query'     => [
-					$meta_query_args
+					$meta_query_args,
 				],
 			];
-			$query             = new WP_Query( $query_args );
-            $order_count = $query->post_count;;
+			$query       = new WP_Query( $query_args );
+			$order_count = $query->post_count;
+
 		}
 
 		return $order_count;
@@ -916,7 +957,7 @@ class Lafka_Shipping_Areas {
 		$store_city        = get_option( 'woocommerce_store_city', '' );
 		$store_postcode    = get_option( 'woocommerce_store_postcode', '' );
 		$store_raw_country = get_option( 'woocommerce_default_country', '' );
-		$split_country     = explode( ":", $store_raw_country );
+		$split_country     = explode( ':', $store_raw_country );
 		// Country and state
 		$store_country = $split_country[0];
 		// Convert country code to full name if available
@@ -937,14 +978,14 @@ class Lafka_Shipping_Areas {
 				array(
 					'key'     => 'lafka_branch_address',
 					'value'   => '',
-					'compare' => '!='
+					'compare' => '!=',
 				),
 				array(
 					'key'     => 'lafka_branch_address_geocoded',
 					'value'   => '',
-					'compare' => '!='
-				)
-			)
+					'compare' => '!=',
+				),
+			),
 		);
 
 		$all_legit_branch_locations = get_terms( $args );

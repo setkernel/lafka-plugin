@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<ruleset name="Lafka Plugin">
+	<description>WordPress coding standards for Lafka Plugin</description>
+
+	<!-- What to scan -->
+	<file>.</file>
+
+	<!-- Show progress and sniff codes in all reports -->
+	<arg value="ps"/>
+	<arg name="colors"/>
+	<arg name="extensions" value="php"/>
+
+	<!-- Strip the filepaths down to the relevant bit -->
+	<arg name="basepath" value="."/>
+
+	<!-- Rules -->
+	<rule ref="WordPress-Extra">
+		<!-- Allow short array syntax -->
+		<exclude name="Universal.Arrays.DisallowShortArraySyntax"/>
+	</rule>
+
+	<!-- Check for cross-version PHP compatibility -->
+	<config name="testVersion" value="7.4-"/>
+	<rule ref="PHPCompatibilityWP"/>
+
+	<!-- WordPress text domain -->
+	<config name="text_domain" value="lafka-plugin"/>
+
+	<!-- Minimum supported WordPress version -->
+	<config name="minimum_wp_version" value="5.6"/>
+
+	<!-- Exclude third-party / vendor directories -->
+	<exclude-pattern>/vendor/*</exclude-pattern>
+	<exclude-pattern>/node_modules/*</exclude-pattern>
+	<exclude-pattern>/importer/*</exclude-pattern>
+</ruleset>

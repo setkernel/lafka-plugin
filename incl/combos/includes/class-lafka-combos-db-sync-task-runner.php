@@ -5,7 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 if ( ! class_exists( 'WC_Background_Process', false ) ) {
-	include_once( WC_ABSPATH . 'includes/abstracts/class-wc-background-process.php' );
+	include_once WC_ABSPATH . 'includes/abstracts/class-wc-background-process.php';
 }
 
 /**
@@ -275,20 +275,20 @@ class WC_LafkaCombos_DB_Sync_Task_Runner extends WC_Background_Process {
 
 		if ( ! empty( $data ) ) {
 
-			if ( ! empty( $data[ 'delete_ids' ] ) ) {
+			if ( ! empty( $data['delete_ids'] ) ) {
 
-				WC_LafkaCombos_Core_Compatibility::log( sprintf( 'Discarding invalid IDs: [%s]', implode( ', ', $data[ 'delete_ids' ] ) ), 'notice', 'wc_pb_db_sync_tasks' );
+				WC_LafkaCombos_Core_Compatibility::log( sprintf( 'Discarding invalid IDs: [%s]', implode( ', ', $data['delete_ids'] ) ), 'notice', 'wc_pb_db_sync_tasks' );
 
 				$data_store = WC_Data_Store::load( 'product-combo' );
-				$data_store->delete_combined_items_stock_sync_status( array_map( 'absint', $data[ 'delete_ids' ] ) );
+				$data_store->delete_combined_items_stock_sync_status( array_map( 'absint', $data['delete_ids'] ) );
 			}
 
 			$processed_ids = array();
 			$delete_ids    = array();
 
-			if ( ! empty( $data[ 'sync_ids' ] ) ) {
+			if ( ! empty( $data['sync_ids'] ) ) {
 
-				$sync_ids = array_map( 'absint', $data[ 'sync_ids' ] );
+				$sync_ids = array_map( 'absint', $data['sync_ids'] );
 
 				WC_LafkaCombos_Core_Compatibility::log( sprintf( 'Syncing IDs: [%s]', implode( ', ', $sync_ids ) ), 'info', 'wc_pb_db_sync_tasks' );
 
@@ -315,7 +315,7 @@ class WC_LafkaCombos_DB_Sync_Task_Runner extends WC_Background_Process {
 
 							return array(
 								'sync_ids'   => $resync_ids,
-								'delete_ids' => $delete_ids
+								'delete_ids' => $delete_ids,
 							);
 						}
 					}
@@ -333,7 +333,6 @@ class WC_LafkaCombos_DB_Sync_Task_Runner extends WC_Background_Process {
 					WC_LafkaCombos_Core_Compatibility::log( 'Task complete.', 'info', 'wc_pb_db_sync_tasks' );
 					return false;
 				}
-
 			} else {
 
 				WC_LafkaCombos_Core_Compatibility::log( 'Task complete.', 'info', 'wc_pb_db_sync_tasks' );

@@ -15,11 +15,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 		<?php
 			$loop = 0;
 
-			foreach ( $product_addons as $addon ) {
-				include( dirname( __FILE__ ) . '/html-addon.php' );
+		foreach ( $product_addons as $addon ) {
+			include __DIR__ . '/html-addon.php';
 
-				$loop++;
-			}
+			++$loop;
+		}
 		?>
 
 	</div>
@@ -61,72 +61,74 @@ $empty_name_message = esc_html__( 'All addon fields require a name.', 'lafka-plu
 			else
 				jQuery(this).closest('.lafka_product_addon').find('span.group_name').text('');
 		})
-        .on( 'change', 'select.product_addon_type', function() {
+		.on( 'change', 'select.product_addon_type', function() {
 
-            var value = jQuery(this).val();
+			var value = jQuery(this).val();
 
-            if ( value == 'textarea') {
-                jQuery(this).closest('.lafka_product_addon').find('td.minmax_column, th.minmax_column').show();
-            } else {
-                jQuery(this).closest('.lafka_product_addon').find('td.minmax_column, th.minmax_column').hide();
-            }
+			if ( value == 'textarea') {
+				jQuery(this).closest('.lafka_product_addon').find('td.minmax_column, th.minmax_column').show();
+			} else {
+				jQuery(this).closest('.lafka_product_addon').find('td.minmax_column, th.minmax_column').hide();
+			}
 
-            if ( value == 'custom_price' ) {
-                jQuery(this).closest('.lafka_product_addon').find('td.price_column, th.price_column').hide();
-            } else {
-                jQuery(this).closest('.lafka_product_addon').find('td.price_column, th.price_column').show();
-            }
+			if ( value == 'custom_price' ) {
+				jQuery(this).closest('.lafka_product_addon').find('td.price_column, th.price_column').hide();
+			} else {
+				jQuery(this).closest('.lafka_product_addon').find('td.price_column, th.price_column').show();
+			}
 
-            // Switch up the column title, based on the field type selected
-            switch ( value ) {
-                case 'textarea':
-                    column_title = '<?php echo esc_js( __( 'Min / max characters', 'lafka-plugin' ) ); ?>';
-                    break;
+			// Switch up the column title, based on the field type selected
+			switch ( value ) {
+				case 'textarea':
+					column_title = '<?php echo esc_js( __( 'Min / max characters', 'lafka-plugin' ) ); ?>';
+					break;
 
-                default:
-                    column_title = '<?php echo esc_js( __( 'Min / max', 'lafka-plugin' ) ); ?>';
-                    break;
-            }
+				default:
+					column_title = '<?php echo esc_js( __( 'Min / max', 'lafka-plugin' ) ); ?>';
+					break;
+			}
 
-            jQuery(this).closest('.lafka_product_addon').find('th.minmax_column .column-title').replaceWith( '<span class="column-title">' + column_title + '</span>' );
+			jQuery(this).closest('.lafka_product_addon').find('th.minmax_column .column-title').replaceWith( '<span class="column-title">' + column_title + '</span>' );
 
-            // Count the number of options.  If one (or less), disable the remove option buttons
-            var removeAddOnOptionButtons = jQuery(this).closest('.lafka_product_addon').find('button.remove_addon_option');
-            if ( 2 > removeAddOnOptionButtons.length ) {
-                removeAddOnOptionButtons.attr('disabled', 'disabled');
-            } else {
-                removeAddOnOptionButtons.removeAttr('disabled');
-            }
-        })
+			// Count the number of options.  If one (or less), disable the remove option buttons
+			var removeAddOnOptionButtons = jQuery(this).closest('.lafka_product_addon').find('button.remove_addon_option');
+			if ( 2 > removeAddOnOptionButtons.length ) {
+				removeAddOnOptionButtons.attr('disabled', 'disabled');
+			} else {
+				removeAddOnOptionButtons.removeAttr('disabled');
+			}
+		})
 		.on( 'click', 'button.add_addon_option', function() {
 
 			var loop = jQuery(this).closest('.lafka_product_addon').index('.lafka_product_addon');
 
-			var html = '<?php
+			var html = '
+			<?php
 				ob_start();
 
 				$option = Lafka_Product_Addon_Admin::get_new_addon_option();
-				$loop = "{loop}";
+				$loop   = '{loop}';
 
-				include( dirname( __FILE__ ) . '/html-addon-option.php' );
+				require __DIR__ . '/html-addon-option.php';
 
 				$html = ob_get_clean();
 				echo str_replace( array( "\n", "\r" ), '', str_replace( "'", '"', $html ) );
-			?>';
+			?>
+			';
 
 			html = html.replace( /{loop}/g, loop );
 
 			var addon_type = $(this).closest('.lafka_product_addon.wc-metabox').find('select.product_addon_type').val();
 			if(addon_type === 'checkbox') {
-                html = html.replace( 'type="radio"', 'type="checkbox"' );
-            } else if(addon_type === 'radiobutton') {
-                html = html.replace( 'type="checkbox"', 'type="radio"' );
-            }
+				html = html.replace( 'type="radio"', 'type="checkbox"' );
+			} else if(addon_type === 'radiobutton') {
+				html = html.replace( 'type="checkbox"', 'type="radio"' );
+			}
 
 			jQuery(this).closest('.lafka_product_addon .data').find('tbody').append( html );
 
-            jQuery('select.product_addon_type').trigger( 'change' );
-            lafka_handle_admin_variation_addons_prices(jQuery(this).parents('.wc-metabox-content'));
+			jQuery('select.product_addon_type').trigger( 'change' );
+			lafka_handle_admin_variation_addons_prices(jQuery(this).parents('.wc-metabox-content'));
 
 			return false;
 		})
@@ -139,37 +141,39 @@ $empty_name_message = esc_html__( 'All addon fields require a name.', 'lafka-plu
 				jQuery( '.lafka-product-add-ons-toolbar--open-close' ).show();
 			}
 
-			var html = '<?php
+			var html = '
+			<?php
 				ob_start();
 
-				$addon['name']          = '';
-				$addon['limit']          = '';
-				$addon['description']   = '';
-				$addon['required']      = '';
-				$addon['type']          = 'checkbox';
-				$addon['variations']    = '';
-				$addon['options']       = array(
-					Lafka_Product_Addon_Admin::get_new_addon_option()
+				$addon['name']        = '';
+				$addon['limit']       = '';
+				$addon['description'] = '';
+				$addon['required']    = '';
+				$addon['type']        = 'checkbox';
+				$addon['variations']  = '';
+				$addon['options']     = array(
+					Lafka_Product_Addon_Admin::get_new_addon_option(),
 				);
-				$loop = "{loop}";
+				$loop                 = '{loop}';
 
-				include( dirname( __FILE__ ) . '/html-addon.php' );
+				require __DIR__ . '/html-addon.php';
 
 				$html = ob_get_clean();
 				echo str_replace( array( "\n", "\r" ), '', str_replace( "'", '"', $html ) );
-			?>';
+				?>
+			';
 
 			html = html.replace( /{loop}/g, loop );
 			jQuery('.lafka_product_addons').append( html );
-            jQuery('select.product_addon_type').trigger( 'change' );
-            lafka_handle_admin_variation_addons();
-            lafka_handle_admin_variation_addons_prices(jQuery('.wc-metabox-content'));
+			jQuery('select.product_addon_type').trigger( 'change' );
+			lafka_handle_admin_variation_addons();
+			lafka_handle_admin_variation_addons_prices(jQuery('.wc-metabox-content'));
 
 			return false;
 		})
 		.on( 'click', '.remove_addon', function() {
 
-			var answer = confirm('<?php esc_html_e('Are you sure you want то remove this add-on?', 'lafka-plugin'); ?>');
+			var answer = confirm('<?php esc_html_e( 'Are you sure you want то remove this add-on?', 'lafka-plugin' ); ?>');
 
 			if (answer) {
 				var addon = jQuery(this).closest('.lafka_product_addon');
@@ -190,28 +194,28 @@ $empty_name_message = esc_html__( 'All addon fields require a name.', 'lafka-plu
 
 			return false;
 		})
-        .on('click', '.lafka-addon-variation-checkbox', function () {
-            lafka_handle_admin_variation_addons();
-            lafka_handle_admin_variation_addons_prices(jQuery(this).parents('.wc-metabox-content'));
-        })
-        .on('change', '.lafka-addon-attributes-select', function () {
-            lafka_handle_admin_variation_addons_prices($(this).parents('.wc-metabox-content'));
-        });
+		.on('click', '.lafka-addon-variation-checkbox', function () {
+			lafka_handle_admin_variation_addons();
+			lafka_handle_admin_variation_addons_prices(jQuery(this).parents('.wc-metabox-content'));
+		})
+		.on('change', '.lafka-addon-attributes-select', function () {
+			lafka_handle_admin_variation_addons_prices($(this).parents('.wc-metabox-content'));
+		});
 
 		// Initialise all
-        // Initial state of min/max fields
-        var $selectedType = $('select.product_addon_type');
-        $selectedType.each(function() {
-            if ($(this).val() === 'textarea') {
-                $(this).closest('.lafka_product_addon').find('td.minmax_column, th.minmax_column').show();
-            } else {
-                $(this).closest('.lafka_product_addon').find('td.minmax_column, th.minmax_column').hide();
-            }
-        });
+		// Initial state of min/max fields
+		var $selectedType = $('select.product_addon_type');
+		$selectedType.each(function() {
+			if ($(this).val() === 'textarea') {
+				$(this).closest('.lafka_product_addon').find('td.minmax_column, th.minmax_column').show();
+			} else {
+				$(this).closest('.lafka_product_addon').find('td.minmax_column, th.minmax_column').hide();
+			}
+		});
 
-        lafka_handle_admin_variation_addons();
+		lafka_handle_admin_variation_addons();
 
-        // Sortable
+		// Sortable
 		jQuery('.lafka_product_addons').sortable({
 			items:'.lafka_product_addon',
 			cursor:'move',
@@ -255,13 +259,13 @@ $empty_name_message = esc_html__( 'All addon fields require a name.', 'lafka-plu
 		});
 
 		// Remove option
-        $('.lafka_product_addons.wc-metaboxes').on('click', 'button.remove_addon_option', function (e) {
-			var answer = confirm('<?php esc_html_e('Are you sure you want delete this option?', 'lafka-plugin'); ?>');
+		$('.lafka_product_addons.wc-metaboxes').on('click', 'button.remove_addon_option', function (e) {
+			var answer = confirm('<?php esc_html_e( 'Are you sure you want delete this option?', 'lafka-plugin' ); ?>');
 
 			if (answer) {
 				var addOn = jQuery(this).closest('.lafka_product_addon');
 				jQuery(this).closest('tr').remove();
-                addOn.find('select.product_addon_type').trigger( 'change' );
+				addOn.find('select.product_addon_type').trigger( 'change' );
 			}
 
 			return false;
@@ -274,116 +278,116 @@ $empty_name_message = esc_html__( 'All addon fields require a name.', 'lafka-plu
 			jQuery( '.lafka-product-add-ons-toolbar--open-close' ).show();
 		}
 
-        // Manage population of hidden inputs for checkboxes and radios
-        $('.lafka_product_addons.wc-metaboxes').on('change', '.lafka-is-default-switch', function (e) {
-            var $all_radio_option_values = $(this).closest('.lafka_product_addon.wc-metabox').find('input.lafka-is-default-value');
+		// Manage population of hidden inputs for checkboxes and radios
+		$('.lafka_product_addons.wc-metaboxes').on('change', '.lafka-is-default-switch', function (e) {
+			var $all_radio_option_values = $(this).closest('.lafka_product_addon.wc-metabox').find('input.lafka-is-default-value');
 
-            if ($all_radio_option_values.length) {
-                $all_radio_option_values.each(function (index) {
-                    var $switch_input = $(this).siblings('input.lafka-is-default-switch');
-                    if ($switch_input.length) {
-                        $(this).val($switch_input.is(':checked') ? 1 : 0);
-                    }
-                });
-            }
-        });
+			if ($all_radio_option_values.length) {
+				$all_radio_option_values.each(function (index) {
+					var $switch_input = $(this).siblings('input.lafka-is-default-switch');
+					if ($switch_input.length) {
+						$(this).val($switch_input.is(':checked') ? 1 : 0);
+					}
+				});
+			}
+		});
 
 		// Switch input types depending on the selected type
-        $('.lafka_product_addons.wc-metaboxes').on('change', 'select.product_addon_type', function (e) {
-            var $selected_type = $(this).val();
-            $(this).closest('.lafka_product_addon.wc-metabox').find('input.lafka-is-default-switch').each(function (index) {
-                if ($selected_type === 'checkbox') {
-                    $(this).attr('type', 'checkbox');
-                } else if ($selected_type === 'radiobutton') {
-                    $(this).attr('type', 'radio');
-                }
+		$('.lafka_product_addons.wc-metaboxes').on('change', 'select.product_addon_type', function (e) {
+			var $selected_type = $(this).val();
+			$(this).closest('.lafka_product_addon.wc-metabox').find('input.lafka-is-default-switch').each(function (index) {
+				if ($selected_type === 'checkbox') {
+					$(this).attr('type', 'checkbox');
+				} else if ($selected_type === 'radiobutton') {
+					$(this).attr('type', 'radio');
+				}
 
-                $(this).trigger('change');
-            });
-        });
+				$(this).trigger('change');
+			});
+		});
 
-        function lafka_handle_admin_variation_addons() {
-            $variation_checkbox_elements = $(document.body).find('input.lafka-addon-variation-checkbox');
-            $attributes_select_rows = $(document.body).find('tr.lafka-addon-attributes-select-row');
+		function lafka_handle_admin_variation_addons() {
+			$variation_checkbox_elements = $(document.body).find('input.lafka-addon-variation-checkbox');
+			$attributes_select_rows = $(document.body).find('tr.lafka-addon-attributes-select-row');
 
-            $variation_checkbox_elements.each( function(index) {
-                if($(this).prop('checked')) {
-                    $($attributes_select_rows.get(index)).show();
-                } else {
-                    $($attributes_select_rows.get(index)).hide();
-                }
-            });
-        }
+			$variation_checkbox_elements.each( function(index) {
+				if($(this).prop('checked')) {
+					$($attributes_select_rows.get(index)).show();
+				} else {
+					$($attributes_select_rows.get(index)).hide();
+				}
+			});
+		}
 
-        function lafka_handle_admin_variation_addons_prices($current_addon_tables) {
-            $current_addon_tables.each(function(){
-                var $addon_attr_select = $(this).find('select.lafka-addon-attributes-select');
-                var attribute_values = $addon_attr_select.children("option").filter(":selected").data('attribute-values');
-                var loop = $(this).closest('.lafka_product_addon').index('.lafka_product_addon');
+		function lafka_handle_admin_variation_addons_prices($current_addon_tables) {
+			$current_addon_tables.each(function(){
+				var $addon_attr_select = $(this).find('select.lafka-addon-attributes-select');
+				var attribute_values = $addon_attr_select.children("option").filter(":selected").data('attribute-values');
+				var loop = $(this).closest('.lafka_product_addon').index('.lafka_product_addon');
 
-                var $price_column_labels = $(this).find('th.price_column');
-                var $price_input_cells = $(this).find('td.price_column');
-                var is_variation = $(this).find('input.lafka-addon-variation-checkbox').prop('checked');
+				var $price_column_labels = $(this).find('th.price_column');
+				var $price_input_cells = $(this).find('td.price_column');
+				var is_variation = $(this).find('input.lafka-addon-variation-checkbox').prop('checked');
 
-                var current_values_buffer = [];
-                var current_values_buffer_row = [];
-                var i = 0;
-                var j = 0;
-                $price_input_cells.each(function(input_index){
-                    current_values_buffer_row[j] = $(this).find('input').val();
-                    j++;
-                    if((input_index+1) % $price_column_labels.length === 0){
-                        current_values_buffer[i] = current_values_buffer_row;
-                        current_values_buffer_row = [];
-                        i++;
-                        j=0;
-                    }
-                });
+				var current_values_buffer = [];
+				var current_values_buffer_row = [];
+				var i = 0;
+				var j = 0;
+				$price_input_cells.each(function(input_index){
+					current_values_buffer_row[j] = $(this).find('input').val();
+					j++;
+					if((input_index+1) % $price_column_labels.length === 0){
+						current_values_buffer[i] = current_values_buffer_row;
+						current_values_buffer_row = [];
+						i++;
+						j=0;
+					}
+				});
 
-                $price_column_labels.remove();
-                $price_input_cells.remove();
+				$price_column_labels.remove();
+				$price_input_cells.remove();
 
-                var $image_column = $(this).find('th.image_column');
-                var price_labels_html = '';
-                if(is_variation) {
-                    for (const attribute_name in attribute_values) {
-                        for(const key in attribute_values[attribute_name]) {
-                            price_labels_html += '<th class="price_column"><?php esc_html_e( 'Price', 'lafka-plugin' ); ?> ' + attribute_values[attribute_name][key] + '</th>';
-                        }
-                    }
-                } else {
-                    price_labels_html += '<th class="price_column"><?php esc_html_e( 'Price', 'lafka-plugin' ); ?></th>';
-                }
-                $image_column.after(price_labels_html);
+				var $image_column = $(this).find('th.image_column');
+				var price_labels_html = '';
+				if(is_variation) {
+					for (const attribute_name in attribute_values) {
+						for(const key in attribute_values[attribute_name]) {
+							price_labels_html += '<th class="price_column"><?php esc_html_e( 'Price', 'lafka-plugin' ); ?> ' + attribute_values[attribute_name][key] + '</th>';
+						}
+					}
+				} else {
+					price_labels_html += '<th class="price_column"><?php esc_html_e( 'Price', 'lafka-plugin' ); ?></th>';
+				}
+				$image_column.after(price_labels_html);
 
-                var $input_column = $(this).find('td.image_column');
-                i = 0;
-                j = 0;
-                $input_column.each(function () {
-                    var price_inputs_html = '';
-                    if (is_variation) {
-                        for (const attribute_name in attribute_values) {
-                            for(const key in attribute_values[attribute_name]) {
-                                var buffer_value = "";
-                                if (current_values_buffer[i] !== undefined && current_values_buffer[i][j] !== undefined) {
-                                    buffer_value = current_values_buffer[i][j];
-                                }
-                                price_inputs_html += '<td class="price_column"><input type="text" name="product_addon_option_price[' + loop + '][' + attribute_name + '][' + key + '][]" value="' + buffer_value + '" placeholder="0.00" class="wc_input_price"></td>';
-                                j++;
-                            }
-                        }
-                    } else {
-                        var buffer_value = "";
-                        if (current_values_buffer[i] !== undefined && current_values_buffer[i][0] !== undefined) {
-                            buffer_value = current_values_buffer[i][0];
-                        }
-                        price_inputs_html += '<td class="price_column"><input type="text" name="product_addon_option_price[' + loop + '][]" value="' + buffer_value + '" placeholder="0.00" class="wc_input_price"></td>';
-                    }
-                    $(this).after(price_inputs_html);
-                    i++;
-                    j = 0;
-                });
-            });
-        }
-    });
+				var $input_column = $(this).find('td.image_column');
+				i = 0;
+				j = 0;
+				$input_column.each(function () {
+					var price_inputs_html = '';
+					if (is_variation) {
+						for (const attribute_name in attribute_values) {
+							for(const key in attribute_values[attribute_name]) {
+								var buffer_value = "";
+								if (current_values_buffer[i] !== undefined && current_values_buffer[i][j] !== undefined) {
+									buffer_value = current_values_buffer[i][j];
+								}
+								price_inputs_html += '<td class="price_column"><input type="text" name="product_addon_option_price[' + loop + '][' + attribute_name + '][' + key + '][]" value="' + buffer_value + '" placeholder="0.00" class="wc_input_price"></td>';
+								j++;
+							}
+						}
+					} else {
+						var buffer_value = "";
+						if (current_values_buffer[i] !== undefined && current_values_buffer[i][0] !== undefined) {
+							buffer_value = current_values_buffer[i][0];
+						}
+						price_inputs_html += '<td class="price_column"><input type="text" name="product_addon_option_price[' + loop + '][]" value="' + buffer_value + '" placeholder="0.00" class="wc_input_price"></td>';
+					}
+					$(this).after(price_inputs_html);
+					i++;
+					j = 0;
+				});
+			});
+		}
+	});
 </script>

@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 ?>
 <dl class="variation combo_configuration">
 	<?php foreach ( $data as $item_data ) : ?>
-		<dt class="combo_configuration_key"><?php echo wp_kses_post( $item_data[ 'key' ] ); ?>:</dt>
-		<dd class="combo_configuration_value"><?php echo wp_kses_post( wpautop( $item_data[ 'value' ] ) ); ?></dd>
+		<dt class="combo_configuration_key"><?php echo wp_kses_post( $item_data['key'] ); ?>:</dt>
+		<dd class="combo_configuration_value"><?php echo wp_kses_post( wpautop( $item_data['value'] ) ); ?></dd>
 	<?php endforeach; ?>
 </dl>
