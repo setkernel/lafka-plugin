@@ -259,16 +259,16 @@ class WC_Combined_Item {
 	 */
 	public function __get( $key ) {
 		switch ( $key ) {
-			case 'item_id':
+			case 'item_id' :
 				$value = $this->get_id();
 				break;
-			case 'product_id':
+			case 'product_id' :
 				$value = $this->get_product_id();
 				break;
-			case 'combo_id':
+			case 'combo_id' :
 				$value = $this->get_combo_id();
 				break;
-			default:
+			default :
 				$value = null;
 				break;
 		}
@@ -347,13 +347,13 @@ class WC_Combined_Item {
 			'cart_price_visibility'                 => 'visible',
 			'order_price_visibility'                => 'visible',
 			'stock_status'                          => null,
-			'max_stock'                             => null,
+			'max_stock'                             => null
 		);
 
 		// Set meta and properties.
 		$this->item_data = wp_parse_args( $this->data->get_meta_data(), $defaults );
 		// Added for back-compat.
-		$this->item_data['product_id'] = $this->data->get_product_id();
+		$this->item_data[ 'product_id' ] = $this->data->get_product_id();
 
 		foreach ( $defaults as $key => $value ) {
 			$this->$key = $this->item_data[ $key ];
@@ -364,12 +364,12 @@ class WC_Combined_Item {
 		$this->visibility                   = array(
 			'product' => $this->single_product_visibility,
 			'cart'    => $this->cart_visibility,
-			'order'   => $this->order_visibility,
+			'order'   => $this->order_visibility
 		);
 		$this->price_visibility             = array(
 			'product' => $this->single_product_price_visibility,
 			'cart'    => $this->cart_price_visibility,
-			'order'   => $this->order_price_visibility,
+			'order'   => $this->order_price_visibility
 		);
 	}
 
@@ -403,7 +403,7 @@ class WC_Combined_Item {
 	public function sync_stock() {
 
 		$combined_product = $this->product;
-		$quantity         = max( 1, $this->get_quantity() );
+		$quantity        = max( 1, $this->get_quantity() );
 
 		/*------------------------------*/
 		/*  Simple Products             */
@@ -453,9 +453,9 @@ class WC_Combined_Item {
 				$this->max_stock    = $stock_quantity;
 			}
 
-			/*------------------------------*/
-			/*  Variable Products           */
-			/*------------------------------*/
+		/*------------------------------*/
+		/*	Variable Products           */
+		/*------------------------------*/
 
 		} elseif ( in_array( $combined_product->get_type(), array( 'variable', 'variable-subscription' ) ) ) {
 
@@ -525,7 +525,7 @@ class WC_Combined_Item {
 				// First iteration?
 				if ( is_null( $this->max_stock ) ) {
 					$this->max_stock = $variation_stock_qty;
-					// Only calculate max stock if not already found infinite.
+				// Only calculate max stock if not already found infinite.
 				} elseif ( '' !== $this->max_stock ) {
 					$this->max_stock += $variation_stock_qty;
 				}
@@ -590,15 +590,15 @@ class WC_Combined_Item {
 			$trial_length = WC_Subscriptions_Product::get_trial_length( $combined_product );
 
 			// Up-front price.
-			$up_front_fee         = $trial_length > 0 ? $signup_fee : (float) $signup_fee + (float) $recurring_fee;
-			$regular_up_front_fee = $trial_length > 0 ? $signup_fee : (float) $signup_fee + (float) $regular_recurring_fee;
+			$up_front_fee         = $trial_length > 0 ? $signup_fee : (double) $signup_fee + (double) $recurring_fee;
+			$regular_up_front_fee = $trial_length > 0 ? $signup_fee : (double) $signup_fee + (double) $regular_recurring_fee;
 
 			$this->min_regular_price = $this->max_regular_price = $regular_up_front_fee;
 			$this->min_price         = $this->max_price         = $up_front_fee;
 
-			/*----------------------------------*/
-			/*  Simple Products                 */
-			/*----------------------------------*/
+		/*----------------------------------*/
+		/*  Simple Products                 */
+		/*----------------------------------*/
 
 		} elseif ( 'simple' === $combined_product->get_type() ) {
 
@@ -622,9 +622,9 @@ class WC_Combined_Item {
 			$this->min_regular_price = $this->max_regular_price = $this->get_raw_regular_price();
 			$this->min_price         = $this->max_price         = $this->get_raw_price( false, 'sync' );
 
-			/*----------------------------------*/
-			/*  Variable Products               */
-			/*----------------------------------*/
+		/*----------------------------------*/
+		/*	Variable Products               */
+		/*----------------------------------*/
 
 		} elseif ( 'variable' === $combined_product->get_type() || 'variable-subscription' === $combined_product->get_type() ) {
 
@@ -637,9 +637,9 @@ class WC_Combined_Item {
 			$variation_prices_array = $combined_product->get_variation_prices();
 
 			if ( ! empty( $discount ) && false === $this->is_discount_allowed_on_sale_price() ) {
-				$variation_prices = $variation_prices_array['regular_price'];
+				$variation_prices = $variation_prices_array[ 'regular_price' ];
 			} else {
-				$variation_prices = $variation_prices_array['price'];
+				$variation_prices = $variation_prices_array[ 'price' ];
 			}
 
 			// Clean filtered-out variations.
@@ -671,8 +671,8 @@ class WC_Combined_Item {
 					$min_signup_fee   = WC_Subscriptions_Product::get_sign_up_fee( $min_variation );
 					$min_trial_length = WC_Subscriptions_Product::get_trial_length( $min_variation );
 
-					$min_up_front_fee         = $min_trial_length > 0 ? $min_signup_fee : (float) $min_signup_fee + (float) $this->min_recurring_price;
-					$min_regular_up_front_fee = $min_trial_length > 0 ? $min_signup_fee : (float) $min_signup_fee + (float) $this->min_regular_recurring_price;
+					$min_up_front_fee         = $min_trial_length > 0 ? $min_signup_fee : (double) $min_signup_fee + (double) $this->min_recurring_price;
+					$min_regular_up_front_fee = $min_trial_length > 0 ? $min_signup_fee : (double) $min_signup_fee + (double) $this->min_regular_recurring_price;
 
 					$this->min_regular_price = $this->max_regular_price = $min_regular_up_front_fee;
 					$this->min_price         = $this->max_price         = $min_up_front_fee;
@@ -716,7 +716,7 @@ class WC_Combined_Item {
 		 * @param  boolean          $discount_from_regular
 		 * @param  WC_Combined_Item  $this
 		 */
-		$discount_from_regular = $this->product->is_type( 'variable-subscription' ) ? false : (bool) apply_filters( 'woocommerce_combined_item_discount_from_regular', false, $this );
+		$discount_from_regular = $this->product->is_type( 'variable-subscription' ) ? false : (boolean) apply_filters( 'woocommerce_combined_item_discount_from_regular', false, $this );
 
 		return false === $discount_from_regular;
 	}
@@ -737,8 +737,8 @@ class WC_Combined_Item {
 
 			$product = $this->product;
 
-			$what   = isset( $args['what'] ) && in_array( $args['what'], array( 'min', 'max' ) ) ? $args['what'] : '';
-			$having = isset( $args['having'] ) && in_array( $args['having'], array( 'price', 'regular_price' ) ) ? $args['having'] : '';
+			$what   = isset( $args[ 'what' ] ) && in_array( $args[ 'what' ], array( 'min', 'max' ) ) ? $args[ 'what' ] : '';
+			$having = isset( $args[ 'having' ] ) && in_array( $args[ 'having' ], array( 'price', 'regular_price' ) ) ? $args[ 'having' ] : '';
 			$prop   = $having && $what ? $what . '_' . $having . '_product' : false;
 
 			if ( $prop && property_exists( $this, $prop ) ) {
@@ -749,6 +749,7 @@ class WC_Combined_Item {
 					$product = $this->$prop;
 				}
 			}
+
 		}
 
 		return $product;
@@ -782,8 +783,8 @@ class WC_Combined_Item {
 			$regular_price = $price;
 		}
 
-		$discount            = $this->get_discount( $context );
-		$combined_item_price = empty( $discount ) ? $price : ( empty( $regular_price ) ? $regular_price : round( (float) $regular_price * ( 100 - $discount ) / 100, WC_LafkaCombos_Product_Prices::get_discounted_price_precision() ) );
+		$discount           = $this->get_discount( $context );
+		$combined_item_price = empty( $discount ) ? $price : ( empty( $regular_price ) ? $regular_price : round( ( double ) $regular_price * ( 100 - $discount ) / 100, WC_LafkaCombos_Product_Prices::get_discounted_price_precision() ) );
 
 		/**
 		 * 'woocommerce_combined_item_raw_price' raw price filter.
@@ -832,14 +833,12 @@ class WC_Combined_Item {
 	 * @return mixed
 	 */
 	public function get_price( $min_or_max = 'min', $display = false, $qty = 1 ) {
-		return $this->calculate_price(
-			array(
-				'min_or_max' => $min_or_max,
-				'qty'        => $qty,
-				'calc'       => $display ? 'display' : '',
-				'prop'       => 'price',
-			)
-		);
+		return $this->calculate_price( array(
+			'min_or_max' => $min_or_max,
+			'qty'        => $qty,
+			'calc'       => $display ? 'display' : '',
+			'prop'       => 'price'
+		) );
 	}
 
 	/**
@@ -852,14 +851,12 @@ class WC_Combined_Item {
 	 * @return mixed
 	 */
 	public function get_recurring_price( $min_or_max = 'min', $display = false ) {
-		return $this->calculate_price(
-			array(
-				'min_or_max' => $min_or_max,
-				'calc'       => $display ? 'display' : '',
-				'prop'       => 'price',
-				'recurring'  => true,
-			)
-		);
+		return $this->calculate_price( array(
+			'min_or_max' => $min_or_max,
+			'calc'       => $display ? 'display' : '',
+			'prop'       => 'price',
+			'recurring'  => true
+		) );
 	}
 
 	/**
@@ -873,15 +870,13 @@ class WC_Combined_Item {
 	 * @return mixed
 	 */
 	public function get_regular_price( $min_or_max = 'min', $display = false, $strict = false, $qty = 1 ) {
-		return $this->calculate_price(
-			array(
-				'min_or_max' => $min_or_max,
-				'qty'        => $qty,
-				'calc'       => $display ? 'display' : '',
-				'prop'       => 'regular_price',
-				'strict'     => $strict,
-			)
-		);
+		return $this->calculate_price( array(
+			'min_or_max' => $min_or_max,
+			'qty'        => $qty,
+			'calc'       => $display ? 'display' : '',
+			'prop'       => 'regular_price',
+			'strict'     => $strict
+		) );
 	}
 
 	/**
@@ -894,14 +889,12 @@ class WC_Combined_Item {
 	 * @return mixed
 	 */
 	public function get_regular_recurring_price( $min_or_max = 'min', $display = false ) {
-		return $this->calculate_price(
-			array(
-				'min_or_max' => $min_or_max,
-				'calc'       => $display ? 'display' : '',
-				'prop'       => 'regular_price',
-				'recurring'  => true,
-			)
-		);
+		return $this->calculate_price( array(
+			'min_or_max' => $min_or_max,
+			'calc'       => $display ? 'display' : '',
+			'prop'       => 'regular_price',
+			'recurring'  => true
+		) );
 	}
 
 	/**
@@ -914,14 +907,12 @@ class WC_Combined_Item {
 	 * @return mixed
 	 */
 	public function get_price_including_tax( $min_or_max = 'min', $qty = 1 ) {
-		return $this->calculate_price(
-			array(
-				'min_or_max' => $min_or_max,
-				'qty'        => $qty,
-				'calc'       => 'incl_tax',
-				'prop'       => 'price',
-			)
-		);
+		return $this->calculate_price( array(
+			'min_or_max' => $min_or_max,
+			'qty'        => $qty,
+			'calc'       => 'incl_tax',
+			'prop'       => 'price'
+		) );
 	}
 
 	/**
@@ -934,14 +925,12 @@ class WC_Combined_Item {
 	 * @return mixed
 	 */
 	public function get_price_excluding_tax( $min_or_max = 'min', $qty = 1 ) {
-		return $this->calculate_price(
-			array(
-				'min_or_max' => $min_or_max,
-				'qty'        => $qty,
-				'calc'       => 'excl_tax',
-				'prop'       => 'price',
-			)
-		);
+		return $this->calculate_price( array(
+			'min_or_max' => $min_or_max,
+			'qty'        => $qty,
+			'calc'       => 'excl_tax',
+			'prop'       => 'price'
+		) );
 	}
 
 	/**
@@ -955,15 +944,13 @@ class WC_Combined_Item {
 	 * @return mixed
 	 */
 	public function get_regular_price_including_tax( $min_or_max = 'min', $qty = 1, $strict = false ) {
-		return $this->calculate_price(
-			array(
-				'min_or_max' => $min_or_max,
-				'qty'        => $qty,
-				'strict'     => $strict,
-				'calc'       => 'incl_tax',
-				'prop'       => 'regular_price',
-			)
-		);
+		return $this->calculate_price( array(
+			'min_or_max' => $min_or_max,
+			'qty'        => $qty,
+			'strict'     => $strict,
+			'calc'       => 'incl_tax',
+			'prop'       => 'regular_price'
+		) );
 	}
 
 	/**
@@ -977,15 +964,13 @@ class WC_Combined_Item {
 	 * @return mixed
 	 */
 	public function get_regular_price_excluding_tax( $min_or_max = 'min', $qty = 1, $strict = false ) {
-		return $this->calculate_price(
-			array(
-				'min_or_max' => $min_or_max,
-				'qty'        => $qty,
-				'strict'     => $strict,
-				'calc'       => 'excl_tax',
-				'prop'       => 'regular_price',
-			)
-		);
+		return $this->calculate_price( array(
+			'min_or_max' => $min_or_max,
+			'qty'        => $qty,
+			'strict'     => $strict,
+			'calc'       => 'excl_tax',
+			'prop'       => 'regular_price'
+		) );
 	}
 
 	/**
@@ -1006,12 +991,12 @@ class WC_Combined_Item {
 			return '';
 		}
 
-		$min_or_max = isset( $args['min_or_max'] ) && in_array( $args['min_or_max'], array( 'min', 'max' ) ) ? $args['min_or_max'] : 'min';
-		$qty        = isset( $args['qty'] ) ? absint( $args['qty'] ) : 1;
-		$price_prop = isset( $args['prop'] ) && in_array( $args['prop'], array( 'price', 'regular_price' ) ) ? $args['prop'] : 'price';
-		$price_calc = isset( $args['calc'] ) && in_array( $args['calc'], array( 'incl_tax', 'excl_tax', 'display', '' ) ) ? $args['calc'] : '';
-		$recurring  = isset( $args['recurring'] ) && $args['recurring'];
-		$strict     = isset( $args['strict'] ) && $args['strict'] && 'regular_price' === $price_prop;
+		$min_or_max = isset( $args[ 'min_or_max' ] ) && in_array( $args[ 'min_or_max' ] , array( 'min', 'max' ) ) ? $args[ 'min_or_max' ] : 'min';
+		$qty        = isset( $args[ 'qty' ] ) ? absint( $args[ 'qty' ] ) : 1;
+		$price_prop = isset( $args[ 'prop' ] ) && in_array( $args[ 'prop' ] , array( 'price', 'regular_price' ) ) ? $args[ 'prop' ] : 'price';
+		$price_calc = isset( $args[ 'calc' ] ) && in_array( $args[ 'calc' ] , array( 'incl_tax', 'excl_tax', 'display', '' ) ) ? $args[ 'calc' ] : '';
+		$recurring  = isset( $args[ 'recurring' ] ) && $args[ 'recurring' ];
+		$strict     = isset( $args[ 'strict' ] ) && $args[ 'strict' ] && 'regular_price' === $price_prop;
 
 		if ( $this->is_nyp() && 'max' === $min_or_max ) {
 			return '';
@@ -1033,14 +1018,11 @@ class WC_Combined_Item {
 
 		$this->remove_price_filters();
 
-		return WC_LafkaCombos_Product_Prices::get_product_price(
-			$product,
-			array(
-				'price' => $price,
-				'qty'   => $qty,
-				'calc'  => $price_calc,
-			)
-		);
+		return WC_LafkaCombos_Product_Prices::get_product_price( $product, array(
+			'price' => $price,
+			'qty'   => $qty,
+			'calc'  => $price_calc,
+		) );
 	}
 
 	/**
@@ -1259,7 +1241,7 @@ class WC_Combined_Item {
 	 */
 	public function disable_addons() {
 
-		$disable_addons = isset( $this->item_data['disable_addons'] ) && 'yes' === $this->item_data['disable_addons'];
+		$disable_addons = isset( $this->item_data[ 'disable_addons' ] ) && 'yes' === $this->item_data[ 'disable_addons' ];
 
 		if ( ! defined( 'WC_PRODUCT_ADDONS_VERSION' ) || version_compare( WC_PRODUCT_ADDONS_VERSION, WC_LafkaCombos()->compatibility->get_required_module_version( 'pao' ) ) < 0 ) {
 			$disable_addons = true;
@@ -1299,6 +1281,7 @@ class WC_Combined_Item {
 	 */
 	public function has_variable_subscription_price() {
 		return 'variable-subscription' === $this->product->get_type() && ( $this->product->get_variation_price( 'min' ) !== $this->product->get_variation_price( 'max' ) || $this->product->get_meta( '_min_variation_period', true ) !== $this->product->get_meta( '_max_variation_period', true ) || $this->product->get_meta( '_min_variation_period_interval', true ) !== $this->product->get_meta( '_max_variation_period_interval', true ) );
+
 	}
 
 	/**
@@ -1357,13 +1340,13 @@ class WC_Combined_Item {
 				$this->product_attributes = array();
 			}
 
-			$this->block_child_filtering     = true;
-			$this->product_attributes['all'] = $this->product->get_variation_attributes();
-			$this->block_child_filtering     = false;
+			$this->block_child_filtering = true;
+			$this->product_attributes[ 'all' ] = $this->product->get_variation_attributes();
+			$this->block_child_filtering = false;
 
 			if ( $return_configurable ) {
 
-				$this->product_attributes['configurable'] = $this->product_attributes['all'];
+				$this->product_attributes[ 'configurable' ] = $this->product_attributes[ 'all' ];
 
 				if ( $this->has_filtered_variations() ) {
 
@@ -1374,7 +1357,7 @@ class WC_Combined_Item {
 					update_postmeta_cache( $variation_ids );
 
 					// Find attributes that have just one value.
-					foreach ( $this->product_attributes['all'] as $attribute_name => $options ) {
+					foreach ( $this->product_attributes[ 'all' ] as $attribute_name => $options ) {
 
 						if ( '' === $this->get_selected_product_variation_attribute( $attribute_name ) ) {
 							continue;
@@ -1405,7 +1388,7 @@ class WC_Combined_Item {
 						}
 
 						if ( false !== $attribute_value && '' !== $attribute_value ) {
-							unset( $this->product_attributes['configurable'][ $attribute_name ] );
+							unset( $this->product_attributes[ 'configurable' ][ $attribute_name ] );
 						}
 					}
 				}
@@ -1461,8 +1444,8 @@ class WC_Combined_Item {
 
 					if ( ! empty( $this->product_variations ) ) {
 						foreach ( $this->product_variations as $variation_data ) {
-							if ( isset( $variation_data['attributes'] ) ) {
-								foreach ( $variation_data['attributes'] as $attribute_key => $attribute_value ) {
+							if ( isset( $variation_data[ 'attributes' ] ) ) {
+								foreach ( $variation_data[ 'attributes' ] as $attribute_key => $attribute_value ) {
 									$variation_attribute_values[ $attribute_key ][] = $attribute_value;
 									if ( in_array( '', $variation_attribute_values[ $attribute_key ] ) ) {
 										break;
@@ -1641,35 +1624,35 @@ class WC_Combined_Item {
 
 		// Add price data.
 
-		$variation_data['price']         = $combined_variation->get_price();
-		$variation_data['regular_price'] = $combined_variation->get_regular_price();
+		$variation_data[ 'price' ]         = $combined_variation->get_price();
+		$variation_data[ 'regular_price' ] = $combined_variation->get_regular_price();
 
-		$variation_data['price_tax'] = WC_LafkaCombos_Product_Prices::get_tax_ratios( $combined_variation );
+		$variation_data[ 'price_tax' ] = WC_LafkaCombos_Product_Prices::get_tax_ratios( $combined_variation );
 
-		$variation_data['regular_recurring_price'] = '';
-		$variation_data['recurring_price']         = '';
+		$variation_data[ 'regular_recurring_price' ] = '';
+		$variation_data[ 'recurring_price' ]         = '';
 
-		$variation_data['recurring_html'] = '';
-		$variation_data['recurring_key']  = '';
+		$variation_data[ 'recurring_html' ] = '';
+		$variation_data[ 'recurring_key' ]  = '';
 
 		if ( 'variable-subscription' === $combined_product->get_type() ) {
 
-			$variation_data['regular_recurring_price'] = $variation_data['regular_price'];
-			$variation_data['recurring_price']         = $variation_data['price'];
+			$variation_data[ 'regular_recurring_price' ] = $variation_data[ 'regular_price' ];
+			$variation_data[ 'recurring_price' ]         = $variation_data[ 'price' ];
 
 			if ( $this->is_priced_individually() ) {
 
 				$signup_fee = WC_Subscriptions_Product::get_sign_up_fee( $combined_variation );
 
-				$variation_data['regular_price'] = $signup_fee;
-				$variation_data['price']         = $signup_fee;
+				$variation_data[ 'regular_price' ] = $signup_fee;
+				$variation_data[ 'price' ]         = $signup_fee;
 
-				$variation_data['recurring_html'] = WC_LafkaCombos_Product_Prices::get_recurring_price_html_component( $combined_variation );
-				$variation_data['recurring_key']  = str_replace( '_synced', '', WC_Subscriptions_Cart::get_recurring_cart_key( array( 'data' => $combined_variation ), ' ' ) );
+				$variation_data[ 'recurring_html' ] = WC_LafkaCombos_Product_Prices::get_recurring_price_html_component( $combined_variation );
+				$variation_data[ 'recurring_key' ]  = str_replace( '_synced', '', WC_Subscriptions_Cart::get_recurring_cart_key( array( 'data' => $combined_variation ), ' ' ) );
 
 			} else {
 
-				$variation_data['price_html'] = '';
+				$variation_data[ 'price_html' ] = '';
 			}
 		}
 
@@ -1680,38 +1663,38 @@ class WC_Combined_Item {
 		$quantity_available = $this->get_stock_quantity( $combined_variation );
 
 		if ( ! $this->is_in_stock() || ! $combined_variation->is_in_stock() || ! $combined_variation->has_enough_stock( $quantity_min ) ) {
-			$variation_data['is_in_stock'] = false;
+			$variation_data[ 'is_in_stock' ] = false;
 		}
 
-		$variation_data['backorders_require_notification'] = $combined_variation->backorders_require_notification() ? 'yes' : 'no';
+		$variation_data[ 'backorders_require_notification' ] = $combined_variation->backorders_require_notification() ? 'yes' : 'no';
 
-		$variation_data['min_qty']   = $quantity_min;
-		$variation_data['max_qty']   = $quantity_max;
-		$variation_data['avail_qty'] = $quantity_available;
+		$variation_data[ 'min_qty' ]   = $quantity_min;
+		$variation_data[ 'max_qty' ]   = $quantity_max;
+		$variation_data[ 'avail_qty' ] = $quantity_available;
 
-		if ( $variation_data['min_qty'] !== $variation_data['max_qty'] ) {
-			$variation_data['is_sold_individually'] = false;
+		if ( $variation_data[ 'min_qty' ] !== $variation_data[ 'max_qty' ] ) {
+			$variation_data[ 'is_sold_individually' ] = false;
 		}
 
-		$variation_data['availability_html'] = $this->get_availability_html( $combined_variation );
+		$variation_data[ 'availability_html' ] = $this->get_availability_html( $combined_variation );
 
 		// Add flag for 3-p code.
-		$variation_data['is_combined'] = true;
+		$variation_data[ 'is_combined' ] = true;
 
 		// Modify variation images as we don't want the single-product sizes here.
 		$variation_thumbnail_size = $this->get_combined_item_thumbnail_size();
 
 		if ( ! in_array( $variation_thumbnail_size, array( 'single', 'shop_single', 'woocommerce_single' ) ) ) {
 
-			if ( $variation_data['image']['src'] ) {
+			if ( $variation_data[ 'image' ][ 'src' ] ) {
 
-				$src = wp_get_attachment_image_src( $variation_data['image_id'], $variation_thumbnail_size );
+				$src = wp_get_attachment_image_src( $variation_data[ 'image_id' ], $variation_thumbnail_size );
 
-				$variation_data['image']['src']    = $src[0];
-				$variation_data['image']['src_w']  = $src[1];
-				$variation_data['image']['src_h']  = $src[2];
-				$variation_data['image']['srcset'] = function_exists( 'wp_get_attachment_image_srcset' ) ? wp_get_attachment_image_srcset( $variation_data['image_id'], $variation_thumbnail_size ) : false;
-				$variation_data['image']['sizes']  = function_exists( 'wp_get_attachment_image_sizes' ) ? wp_get_attachment_image_sizes( $variation_data['image_id'], $variation_thumbnail_size ) : false;
+				$variation_data[ 'image' ][ 'src' ]    = $src[0];
+				$variation_data[ 'image' ][ 'src_w' ]  = $src[1];
+				$variation_data[ 'image' ][ 'src_h' ]  = $src[2];
+				$variation_data[ 'image' ][ 'srcset' ] = function_exists( 'wp_get_attachment_image_srcset' ) ? wp_get_attachment_image_srcset( $variation_data[ 'image_id' ], $variation_thumbnail_size ) : false;
+				$variation_data[ 'image' ][ 'sizes' ]  = function_exists( 'wp_get_attachment_image_sizes' ) ? wp_get_attachment_image_sizes( $variation_data[ 'image_id' ], $variation_thumbnail_size ) : false;
 			}
 		}
 
@@ -1836,7 +1819,7 @@ class WC_Combined_Item {
 	 * @return boolean
 	 */
 	public function is_secret() {
-		return 'hidden' === $this->visibility['product'] && 'hidden' === $this->visibility['cart'] && 'hidden' === $this->visibility['order'];
+		return 'hidden' === $this->visibility[ 'product' ] && 'hidden' === $this->visibility[ 'cart' ] && 'hidden' === $this->visibility[ 'order' ];
 	}
 
 	/**
@@ -1893,20 +1876,20 @@ class WC_Combined_Item {
 			_deprecated_argument( __METHOD__ . '()', '5.5.0', 'Invalid argument: #2.' );
 			$bound_by_stock = $args;
 			$args           = array(
-				'bound_by_stock' => $bound_by_stock,
+				'bound_by_stock' => $bound_by_stock
 			);
 		}
 
 		if ( $deprecated ) {
 			_deprecated_argument( __METHOD__ . '()', '5.5.0', 'Invalid argument: #3.' );
 			if ( $deprecated instanceof WC_Product ) {
-				$args['product'] = $deprecated;
+				$args[ 'product' ] = $deprecated;
 			}
 		}
 
-		$bound_by_stock = isset( $args['bound_by_stock'] ) ? $args['bound_by_stock'] : false;
-		$product        = isset( $args['product'] ) ? $args['product'] : false;
-		$check_optional = isset( $args['check_optional'] ) ? $args['check_optional'] : false;
+		$bound_by_stock = isset( $args[ 'bound_by_stock' ] ) ? $args[ 'bound_by_stock' ] : false;
+		$product        = isset( $args[ 'product' ] ) ? $args[ 'product' ] : false;
+		$check_optional = isset( $args[ 'check_optional' ] ) ? $args[ 'check_optional' ] : false;
 
 		$qty = $this->quantity_min;
 		$qty = $check_optional && $this->is_optional() ? 0 : $qty;
@@ -2139,18 +2122,15 @@ class WC_Combined_Item {
 			$product = $this->product;
 		}
 
-		if ( ! empty( $availability['availability'] ) ) {
+		if ( ! empty( $availability[ 'availability' ] ) ) {
 
 			ob_start();
 
-			wc_get_template(
-				'single-product/stock.php',
-				array(
-					'product'      => $product,
-					'class'        => $availability['class'],
-					'availability' => $availability['availability'],
-				)
-			);
+			wc_get_template( 'single-product/stock.php', array(
+				'product'      => $product,
+				'class'        => $availability[ 'class' ],
+				'availability' => $availability[ 'availability' ],
+			) );
 
 			$availability_html = ob_get_clean();
 
@@ -2201,9 +2181,11 @@ class WC_Combined_Item {
 						$availability_text .= ' ' . sprintf( __( '(only %s left in stock)', 'lafka-plugin' ), $stock_left );
 					}
 				}
+
 			} else {
 				$availability_text = __( 'Out of stock', 'woocommerce' );
 			}
+
 		} elseif ( $product->backorders_require_notification() && ( $this->is_on_backorder() || ( $product->is_type( 'variation' ) && $product->is_on_backorder( $quantity_min ) ) ) ) {
 
 			$availability_class = 'available-on-backorder';
@@ -2216,6 +2198,7 @@ class WC_Combined_Item {
 					$availability_text .= ' ' . sprintf( __( '(only %s left in stock)', 'lafka-plugin' ), $stock_left );
 				}
 			}
+
 		} else {
 
 			$stock_notify_threshold = get_option( 'woocommerce_notify_low_stock_amount' );
@@ -2233,8 +2216,8 @@ class WC_Combined_Item {
 			}
 
 			$availability       = $product->get_availability();
-			$availability_class = isset( $availability['class'] ) ? $availability['class'] : '';
-			$availability_text  = isset( $availability['availability'] ) ? $availability['availability'] : '';
+			$availability_class = isset( $availability[ 'class' ] ) ? $availability[ 'class' ] : '';
+			$availability_text  = isset( $availability[ 'availability' ] ) ? $availability[ 'availability' ] : '';
 
 			if ( $filter_stock_display ) {
 
@@ -2275,15 +2258,10 @@ class WC_Combined_Item {
 		 * @param  WC_Combined_Item  $this
 		 * @param  WC_Product       $product
 		 */
-		return apply_filters(
-			'woocommerce_get_combined_item_availability',
-			array(
-				'availability' => $availability_text,
-				'class'        => $availability_class,
-			),
-			$this,
-			$product
-		);
+		return apply_filters( 'woocommerce_get_combined_item_availability', array(
+			'availability' => $availability_text,
+			'class'        => $availability_class,
+		), $this, $product );
 	}
 
 	/**
@@ -2338,31 +2316,32 @@ class WC_Combined_Item {
 
 					if ( WC_Subscriptions_Synchroniser::is_today( $next_payment_date ) ) {
 
-						$price = (float) $price + (float) $recurring_price;
+						$price = (double) $price + (double) $recurring_price;
 
 					} elseif ( WC_Subscriptions_Synchroniser::is_product_prorated( $product ) ) {
 
 						switch ( WC_Subscriptions_Product::get_period( $product ) ) {
 
-							case 'week':
+							case 'week' :
 								$days_in_cycle = 7 * WC_Subscriptions_Product::get_interval( $product );
 								break;
-							case 'month':
+							case 'month' :
 								$days_in_cycle = date( 't' ) * WC_Subscriptions_Product::get_interval( $product ); // @phpcs:ignore WordPress.DateTime.RestrictedFunctions.date_date
 								break;
-							case 'year':
+							case 'year' :
 								$days_in_cycle = ( 365 + date( 'L' ) ) * WC_Subscriptions_Product::get_interval( $product ); // @phpcs:ignore WordPress.DateTime.RestrictedFunctions.date_date
 								break;
 						}
 
 						$days_until_next_payment = ceil( ( $next_payment_date - gmdate( 'U' ) ) / ( 60 * 60 * 24 ) );
-						$price                   = (float) $sign_up_fee + $days_until_next_payment * ( (float) $recurring_price / $days_in_cycle );
+						$price                   = (double) $sign_up_fee + $days_until_next_payment * ( (double) $recurring_price / $days_in_cycle );
 
 					} elseif ( method_exists( 'WC_Subscriptions_Synchroniser', 'is_payment_upfront' ) && WC_Subscriptions_Synchroniser::is_payment_upfront( $product ) ) {
-						$price = (float) $price + (float) $recurring_price;
+						$price = (double) $price + (double) $recurring_price;
 					}
+
 				} else {
-					$price = (float) $price + (float) $recurring_price;
+					$price = (double) $price + (double) $recurring_price;
 				}
 			}
 		}
@@ -2399,14 +2378,14 @@ class WC_Combined_Item {
 		$display_dimensions = apply_filters( 'wc_product_enable_dimensions_display', $product->has_weight() || $product->has_dimensions() );
 
 		if ( $display_dimensions && $product->has_weight() ) {
-			$product_attributes['weight'] = array(
+			$product_attributes[ 'weight' ] = array(
 				'label' => __( 'Weight', 'woocommerce' ),
 				'value' => wc_format_weight( $product->get_weight() ),
 			);
 		}
 
 		if ( $display_dimensions && $product->has_dimensions() ) {
-			$product_attributes['dimensions'] = array(
+			$product_attributes[ 'dimensions' ] = array(
 				'label' => __( 'Dimensions', 'woocommerce' ),
 				'value' => wc_format_dimensions( $product->get_dimensions( false ) ),
 			);
@@ -2414,7 +2393,7 @@ class WC_Combined_Item {
 
 		$attributes                      = array_filter( $product->get_attributes(), 'wc_attributes_array_filter_visible' );
 		$use_ajax_for_product_variations = $this->use_ajax_for_product_variations();
-		$combined_item_variation_data    = $use_ajax_for_product_variations ? false : $this->get_product_variations();
+		$combined_item_variation_data     = $use_ajax_for_product_variations ? false : $this->get_product_variations();
 
 		foreach ( $attributes as $attribute ) {
 
@@ -2427,9 +2406,9 @@ class WC_Combined_Item {
 				$attribute_key = wc_variation_attribute_name( $attribute->get_name() );
 
 				foreach ( $combined_item_variation_data as $variation_data ) {
-					if ( isset( $variation_data['attributes'][ $attribute_key ] ) ) {
+					if ( isset( $variation_data[ 'attributes' ][ $attribute_key ] ) ) {
 
-						$variation_attribute_values[] = $variation_data['attributes'][ $attribute_key ];
+						$variation_attribute_values[] = $variation_data[ 'attributes' ][ $attribute_key ];
 						$variation_attribute_values   = array_unique( $variation_attribute_values );
 					}
 				}
@@ -2458,6 +2437,7 @@ class WC_Combined_Item {
 						$values[] = $value_name;
 					}
 				}
+
 			} else {
 
 				$options = $attribute->get_options();
@@ -2493,7 +2473,7 @@ class WC_Combined_Item {
 			'product'            => $product,
 			'attributes'         => $attributes,
 			'product_attributes' => $product_attributes,
-			'display_dimensions' => $display_dimensions,
+			'display_dimensions' => $display_dimensions
 		);
 	}
 
@@ -2512,7 +2492,7 @@ class WC_Combined_Item {
 			$key = 'attribute_' . sanitize_title_with_dashes( $attribute->get_name() );
 
 			if ( ! empty( $this->product_attributes[ $key ] ) ) {
-				return $this->product_attributes[ $key ]['value'];
+				return $this->product_attributes[ $key ][ 'value' ];
 			}
 		}
 

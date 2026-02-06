@@ -58,7 +58,7 @@ class Lafka_Product_Addon_Cart {
 				$price = (float) $cart_item['credit_amount'];
 			}
 
-			$cart_item['addons'] = $this->apply_attribute_specific_price( $cart_item['addons'], $cart_item );
+			$cart_item['addons'] = $this->apply_attribute_specific_price($cart_item['addons'], $cart_item);
 			foreach ( $cart_item['addons'] as $addon ) {
 				if ( $addon['price'] !== 0 ) {
 					$price += (float) $addon['price'];
@@ -81,7 +81,7 @@ class Lafka_Product_Addon_Cart {
 	public function get_cart_item_from_session( $cart_item, $values ) {
 		if ( ! empty( $values['addons'] ) ) {
 			$cart_item['addons'] = $values['addons'];
-			$cart_item           = $this->add_cart_item( $cart_item );
+			$cart_item = $this->add_cart_item( $cart_item );
 		}
 
 		return $cart_item;
@@ -105,7 +105,7 @@ class Lafka_Product_Addon_Cart {
 				}
 
 				$name = '';
-				if ( $addon['name'] !== $last_used_name ) {
+				if($addon['name'] !== $last_used_name) {
 					$name = $addon['name'];
 				}
 				$last_used_name = $addon['name'];
@@ -164,7 +164,7 @@ class Lafka_Product_Addon_Cart {
 		}
 
 		if ( is_array( $product_addons ) && ! empty( $product_addons ) ) {
-			include_once __DIR__ . '/fields/abstract-class-product-addon-field.php';
+			include_once( dirname( __FILE__ ) . '/fields/abstract-class-product-addon-field.php' );
 
 			foreach ( $product_addons as $addon ) {
 
@@ -177,13 +177,13 @@ class Lafka_Product_Addon_Cart {
 				}
 
 				switch ( $addon['type'] ) {
-					case 'checkbox':
-					case 'radiobutton':
-						include_once __DIR__ . '/fields/class-product-addon-field-list.php';
+					case 'checkbox' :
+					case 'radiobutton' :
+						include_once( dirname( __FILE__ ) . '/fields/class-product-addon-field-list.php' );
 						$field = new Lafka_Product_Addon_Field_List( $addon, $value );
 						break;
 					case 'textarea':
-						include_once __DIR__ . '/fields/class-lafka-addon-field-textarea.php';
+						include_once( dirname( __FILE__ ) . '/fields/class-lafka-addon-field-textarea.php' );
 						$field = new Lafka_Addon_Field_Textarea( $addon, $value );
 						break;
 				}
@@ -218,7 +218,7 @@ class Lafka_Product_Addon_Cart {
 		$product_addons = WC_Product_Addons_Helper::get_product_addons( $product_id );
 
 		if ( is_array( $product_addons ) && ! empty( $product_addons ) ) {
-			include_once __DIR__ . '/fields/abstract-class-product-addon-field.php';
+			include_once( dirname( __FILE__ ) . '/fields/abstract-class-product-addon-field.php' );
 
 			foreach ( $product_addons as $addon ) {
 
@@ -231,13 +231,13 @@ class Lafka_Product_Addon_Cart {
 				}
 
 				switch ( $addon['type'] ) {
-					case 'checkbox':
-					case 'radiobutton':
-						include_once __DIR__ . '/fields/class-product-addon-field-list.php';
+					case 'checkbox' :
+					case 'radiobutton' :
+						include_once( dirname( __FILE__ ) . '/fields/class-product-addon-field-list.php' );
 						$field = new Lafka_Product_Addon_Field_List( $addon, $value );
 						break;
 					case 'textarea':
-						include_once __DIR__ . '/fields/class-lafka-addon-field-textarea.php';
+						include_once( dirname( __FILE__ ) . '/fields/class-lafka-addon-field-textarea.php' );
 						$field = new Lafka_Addon_Field_Textarea( $addon, $value );
 						break;
 				}
@@ -298,16 +298,16 @@ class Lafka_Product_Addon_Cart {
 		}
 
 		if ( is_array( $product_addons ) && ! empty( $product_addons ) ) {
-			include_once __DIR__ . '/fields/abstract-class-product-addon-field.php';
+			include_once( dirname( __FILE__ ) . '/fields/abstract-class-product-addon-field.php' );
 
 			foreach ( $product_addons as $addon ) {
 				$value = '';
 				$field = '';
 
 				switch ( $addon['type'] ) {
-					case 'checkbox':
-					case 'radiobutton':
-						include_once __DIR__ . '/fields/class-product-addon-field-list.php';
+					case 'checkbox' :
+					case 'radiobutton' :
+						include_once( dirname( __FILE__ ) . '/fields/class-product-addon-field-list.php' );
 
 						$value = array();
 
@@ -328,7 +328,7 @@ class Lafka_Product_Addon_Cart {
 						$field = new Lafka_Product_Addon_Field_List( $addon, $value );
 						break;
 					case 'textarea':
-						include_once __DIR__ . '/fields/class-lafka-addon-field-textarea.php';
+						include_once( dirname( __FILE__ ) . '/fields/class-lafka-addon-field-textarea.php' );
 						$value = array();
 
 						foreach ( $product->get_meta_data() as $meta ) {

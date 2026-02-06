@@ -26,10 +26,10 @@ class Lafka_Product_Addons {
 	 */
 	public function init_classes() {
 		// Core (models)
-		include_once __DIR__ . '/includes/groups/class-lafka-product-addon-group-validator.php';
-		include_once __DIR__ . '/includes/groups/class-lafka-product-addon-global-group.php';
-		include_once __DIR__ . '/includes/groups/class-lafka-product-addon-product-group.php';
-		include_once __DIR__ . '/includes/groups/class-lafka-product-addon-groups.php';
+		include_once( dirname( __FILE__ ) . '/includes/groups/class-lafka-product-addon-group-validator.php' );
+		include_once( dirname( __FILE__ ) . '/includes/groups/class-lafka-product-addon-global-group.php' );
+		include_once( dirname( __FILE__ ) . '/includes/groups/class-lafka-product-addon-product-group.php' );
+		include_once( dirname( __FILE__ ) . '/includes/groups/class-lafka-product-addon-groups.php' );
 
 		// Admin
 		if ( is_admin() ) {
@@ -37,10 +37,10 @@ class Lafka_Product_Addons {
 		}
 
 		// Front-side
-		include_once __DIR__ . '/includes/class-lafka-product-addon-display.php';
-		include_once __DIR__ . '/includes/class-lafka-product-addon-cart.php';
+		include_once( dirname( __FILE__ ) . '/includes/class-lafka-product-addon-display.php' );
+		include_once( dirname( __FILE__ ) . '/includes/class-lafka-product-addon-cart.php' );
 		// Helper class used by other plugins for compatibility
-		include_once __DIR__ . '/includes/class-lafka-product-addons-helper.php';
+		include_once( dirname( __FILE__ ) . '/includes/class-lafka-product-addons-helper.php' );
 
 		$GLOBALS['Product_Addon_Display'] = new Lafka_Product_Addon_Display();
 		$GLOBALS['Product_Addon_Cart']    = new Lafka_Product_Addon_Cart();
@@ -50,7 +50,7 @@ class Lafka_Product_Addons {
 	 * Initializes plugin admin.
 	 */
 	protected function init_admin() {
-		include_once __DIR__ . '/admin/class-lafka-product-addon-admin.php';
+		include_once( dirname( __FILE__ ) . '/admin/class-lafka-product-addon-admin.php' );
 		$GLOBALS['Lafka_Product_Addon_Admin'] = new Lafka_Product_Addon_Admin();
 	}
 
@@ -58,8 +58,7 @@ class Lafka_Product_Addons {
 	 * Init post types used for addons.
 	 */
 	public function init_post_types() {
-		register_post_type(
-			'lafka_glb_addon',
+		register_post_type( 'lafka_glb_addon',
 			array(
 				'public'              => false,
 				'show_ui'             => false,

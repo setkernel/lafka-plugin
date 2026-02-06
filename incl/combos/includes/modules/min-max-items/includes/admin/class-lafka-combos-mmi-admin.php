@@ -37,29 +37,25 @@ class WC_LafkaCombos_MMI_Admin {
 
 		global $product_combo_object;
 
-		woocommerce_wp_text_input(
-			array(
-				'id'            => '_wcpb_min_qty_limit',
-				'value'         => $product_combo_object->get_min_combo_size( 'edit' ),
-				'wrapper_class' => 'combined_product_data_field',
-				'type'          => 'number',
-				'label'         => __( 'Min Combo Items', 'lafka-plugin' ),
-				'desc_tip'      => true,
-				'description'   => __( 'Minimum total number of items in the combo.', 'lafka-plugin' ),
-			)
-		);
+		woocommerce_wp_text_input( array(
+			'id'            => '_wcpb_min_qty_limit',
+			'value'         => $product_combo_object->get_min_combo_size( 'edit' ),
+			'wrapper_class' => 'combined_product_data_field',
+			'type'          => 'number',
+			'label'         => __( 'Min Combo Items', 'lafka-plugin' ),
+			'desc_tip'      => true,
+			'description'   => __( 'Minimum total number of items in the combo.', 'lafka-plugin' )
+		) );
 
-		woocommerce_wp_text_input(
-			array(
-				'id'            => '_wcpb_max_qty_limit',
-				'value'         => $product_combo_object->get_max_combo_size( 'edit' ),
-				'wrapper_class' => 'combined_product_data_field',
-				'type'          => 'number',
-				'label'         => __( 'Max Combo Items', 'lafka-plugin' ),
-				'desc_tip'      => true,
-				'description'   => __( 'Maximum total number of items in the combo.', 'lafka-plugin' ),
-			)
-		);
+		woocommerce_wp_text_input( array(
+			'id'            => '_wcpb_max_qty_limit',
+			'value'         => $product_combo_object->get_max_combo_size( 'edit' ),
+			'wrapper_class' => 'combined_product_data_field',
+			'type'          => 'number',
+			'label'         => __( 'Max Combo Items', 'lafka-plugin' ),
+			'desc_tip'      => true,
+			'description'   => __( 'Maximum total number of items in the combo.', 'lafka-plugin' )
+		) );
 	}
 
 	/**
@@ -74,27 +70,28 @@ class WC_LafkaCombos_MMI_Admin {
 
 			$props = array(
 				'min_combo_size' => '',
-				'max_combo_size' => '',
+				'max_combo_size' => ''
 			);
 
-			if ( ! empty( $_POST['_wcpb_min_qty_limit'] ) && is_numeric( $_POST['_wcpb_min_qty_limit'] ) ) {
-				$props['min_combo_size'] = stripslashes( wc_clean( $_POST['_wcpb_min_qty_limit'] ) );
+			if ( ! empty( $_POST[ '_wcpb_min_qty_limit' ] ) && is_numeric( $_POST[ '_wcpb_min_qty_limit' ] ) ) {
+				$props[ 'min_combo_size' ] = stripslashes( wc_clean( $_POST[ '_wcpb_min_qty_limit' ] ) );
 			}
 
-			if ( ! empty( $_POST['_wcpb_max_qty_limit'] ) && is_numeric( $_POST['_wcpb_max_qty_limit'] ) ) {
-				$props['max_combo_size'] = stripslashes( wc_clean( $_POST['_wcpb_max_qty_limit'] ) );
+			if ( ! empty( $_POST[ '_wcpb_max_qty_limit' ] ) && is_numeric( $_POST[ '_wcpb_max_qty_limit' ] ) ) {
+				$props[ 'max_combo_size' ] = stripslashes( wc_clean( $_POST[ '_wcpb_max_qty_limit' ] ) );
 			}
 
-			if ( ! $props['min_combo_size'] && ! $props['max_combo_size'] ) {
+			if ( ! $props[ 'min_combo_size' ] && ! $props[ 'max_combo_size' ] ) {
 				$props = array(
 					'min_combo_size' => '',
-					'max_combo_size' => '',
+					'max_combo_size' => ''
 				);
 			}
 
 			$product->set( $props );
 		}
 	}
+
 }
 
 WC_LafkaCombos_MMI_Admin::init();

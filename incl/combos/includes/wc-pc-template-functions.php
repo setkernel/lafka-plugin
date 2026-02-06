@@ -26,12 +26,9 @@ function wc_pc_template_add_to_cart_after_summary() {
 	if ( wc_pc_is_product_combo() ) {
 		if ( 'after_summary' === $product->get_add_to_cart_form_location() ) {
 			$classes = implode( ' ', apply_filters( 'woocommerce_combo_form_wrapper_classes', array( 'summary-add-to-cart-form', 'summary-add-to-cart-form-combo' ), $product ) );
-			?><div class="<?php echo esc_attr( $classes ); ?>">
-			<?php
+			?><div class="<?php echo esc_attr( $classes );?>"><?php
 				do_action( 'woocommerce_combo_add_to_cart' );
-			?>
-			</div>
-			<?php
+			?></div><?php
 		}
 	}
 }
@@ -55,7 +52,7 @@ function wc_pc_template_add_to_cart() {
 	wp_enqueue_style( 'wc-combo-css' );
 
 	$combined_items = $product->get_combined_items();
-	$form_classes   = array( 'layout_' . $product->get_layout(), 'group_mode_' . $product->get_group_mode() );
+	$form_classes  = array( 'layout_' . $product->get_layout(), 'group_mode_' . $product->get_group_mode() );
 
 	if ( ! $product->is_in_stock() ) {
 		$form_classes[] = 'combo_out_of_stock';
@@ -67,20 +64,15 @@ function wc_pc_template_add_to_cart() {
 
 	if ( ! empty( $combined_items ) ) {
 
-		wc_get_template(
-			'single-product/add-to-cart/combo.php',
-			array(
-				'combined_items'    => $combined_items,
-				'product'           => $product,
-				'classes'           => implode( ' ', apply_filters( 'woocommerce_combo_form_classes', $form_classes, $product ) ),
-				// Back-compat.
-				'product_id'        => $product->get_id(),
-				'availability_html' => wc_get_stock_html( $product ),
-				'combo_price_data'  => $product->get_combo_form_data(),
-			),
-			false,
-			WC_LafkaCombos()->plugin_path() . '/templates/'
-		);
+		wc_get_template( 'single-product/add-to-cart/combo.php', array(
+			'combined_items'     => $combined_items,
+			'product'           => $product,
+			'classes'           => implode( ' ', apply_filters( 'woocommerce_combo_form_classes', $form_classes, $product ) ),
+			// Back-compat.
+			'product_id'        => $product->get_id(),
+			'availability_html' => wc_get_stock_html( $product ),
+			'combo_price_data' => $product->get_combo_form_data()
+		), false, WC_LafkaCombos()->plugin_path() . '/templates/' );
 	}
 }
 
@@ -116,21 +108,16 @@ function wc_pc_template_add_to_cart_wrap( $product ) {
 
 	$form_data = $product->get_combo_form_data();
 
-	wc_get_template(
-		'single-product/add-to-cart/combo-add-to-cart-wrap.php',
-		array(
-			'is_purchasable'     => $is_purchasable,
-			'purchasable_notice' => $purchasable_notice,
-			'availability_html'  => wc_get_stock_html( $product ),
-			'combo_form_data'    => $form_data,
-			'product'            => $product,
-			'product_id'         => $product->get_id(),
-			// Back-compat:
-			'combo_price_data'   => $form_data,
-		),
-		false,
-		WC_LafkaCombos()->plugin_path() . '/templates/'
-	);
+	wc_get_template( 'single-product/add-to-cart/combo-add-to-cart-wrap.php', array(
+		'is_purchasable'     => $is_purchasable,
+		'purchasable_notice' => $purchasable_notice,
+		'availability_html'  => wc_get_stock_html( $product ),
+		'combo_form_data'   => $form_data,
+		'product'            => $product,
+		'product_id'         => $product->get_id(),
+		// Back-compat:
+		'combo_price_data'  => $form_data,
+	), false, WC_LafkaCombos()->plugin_path() . '/templates/' );
 }
 
 /**
@@ -138,8 +125,8 @@ function wc_pc_template_add_to_cart_wrap( $product ) {
  */
 function wc_pc_template_add_to_cart_button( $combo = false ) {
 
-	if ( isset( $_GET['update-combo'] ) ) {
-		$updating_cart_key = wc_clean( $_GET['update-combo'] );
+	if ( isset( $_GET[ 'update-combo' ] ) ) {
+		$updating_cart_key = wc_clean( $_GET[ 'update-combo' ] );
 		if ( isset( WC()->cart->cart_contents[ $updating_cart_key ] ) ) {
 			echo '<input type="hidden" name="update-combo" value="' . $updating_cart_key . '" />';
 		}
@@ -164,22 +151,17 @@ function wc_pc_template_combined_item_title( $combined_item, $combo ) {
 	$min_qty = $combined_item->get_quantity( 'min' );
 	$max_qty = $combined_item->get_quantity( 'max' );
 
-	$qty = 'tabular' !== $combo->get_layout() && $min_qty > 1 && $min_qty === $max_qty ? $min_qty : '';
+	$qty     = 'tabular' !== $combo->get_layout() && $min_qty > 1 && $min_qty === $max_qty ? $min_qty : '';
 
-	wc_get_template(
-		'single-product/combined-item-title.php',
-		array(
-			'quantity'      => $qty,
-			'title'         => $combined_item->get_title(),
-			'permalink'     => $combined_item->get_permalink(),
-			'optional'      => $combined_item->is_optional(),
-			'title_suffix'  => $combined_item->get_optional_suffix(),
-			'combined_item' => $combined_item,
-			'combo'         => $combo,
-		),
-		false,
-		WC_LafkaCombos()->plugin_path() . '/templates/'
-	);
+	wc_get_template( 'single-product/combined-item-title.php', array(
+		'quantity'     => $qty,
+		'title'        => $combined_item->get_title(),
+		'permalink'    => $combined_item->get_permalink(),
+		'optional'     => $combined_item->is_optional(),
+		'title_suffix' => $combined_item->get_optional_suffix(),
+		'combined_item' => $combined_item,
+		'combo'       => $combo
+	), false, WC_LafkaCombos()->plugin_path() . '/templates/' );
 }
 
 /**
@@ -214,18 +196,14 @@ function wc_pc_template_combined_item_thumbnail( $combined_item, $combo ) {
 			 * @param  array            $params
 			 * @param  WC_Combined_Item  $combined_item
 			 */
-			$combined_item_image_tmpl_params = apply_filters(
-				'woocommerce_combined_item_image_tmpl_params',
-				array(
-					'post_id'         => $product_id,
-					'product_id'      => $product_id,
-					'combined_item'   => $combined_item,
-					'gallery_classes' => $gallery_classes,
-					'image_size'      => $combined_item->get_combined_item_thumbnail_size(),
-					'image_rel'       => current_theme_supports( 'wc-product-gallery-lightbox' ) ? 'photoSwipe' : 'prettyPhoto',
-				),
-				$combined_item
-			);
+			$combined_item_image_tmpl_params = apply_filters( 'woocommerce_combined_item_image_tmpl_params', array(
+				'post_id'         => $product_id,
+				'product_id'      => $product_id,
+				'combined_item'    => $combined_item,
+				'gallery_classes' => $gallery_classes,
+				'image_size'      => $combined_item->get_combined_item_thumbnail_size(),
+				'image_rel'       => current_theme_supports( 'wc-product-gallery-lightbox' ) ? 'photoSwipe' : 'prettyPhoto',
+			), $combined_item );
 
 			wc_get_template( 'single-product/combined-item-image.php', $combined_item_image_tmpl_params, false, WC_LafkaCombos()->plugin_path() . '/templates/' );
 		}
@@ -248,14 +226,9 @@ function wc_pc_template_combined_item_description( $combined_item, $combo ) {
 		return;
 	}
 
-	wc_get_template(
-		'single-product/combined-item-description.php',
-		array(
-			'description' => $combined_item->get_description(),
-		),
-		false,
-		WC_LafkaCombos()->plugin_path() . '/templates/'
-	);
+	wc_get_template( 'single-product/combined-item-description.php', array(
+		'description' => $combined_item->get_description()
+	), false, WC_LafkaCombos()->plugin_path() . '/templates/' );
 }
 
 /**
@@ -290,7 +263,7 @@ function wc_pc_template_combined_item_details_wrapper_open( $combined_item, $com
 		WC_LafkaCombos()->display->incr_grid_layout_pos( $combined_item );
 	}
 
-	echo '<' . $el . ' class="' . implode( ' ', $classes ) . '"' . $style . ' >';
+	echo '<' . $el . ' class="' . implode( ' ' , $classes ) . '"' . $style . ' >';
 }
 
 /**
@@ -316,21 +289,16 @@ function wc_pc_template_tabular_combined_item_qty( $combined_item, $combo ) {
 
 		echo '<td class="combined_item_col combined_item_qty_col">';
 
-		wc_get_template(
-			'single-product/combined-item-quantity.php',
-			array(
-				'combined_item'       => $combined_item,
-				'quantity_min'        => $quantity_min,
-				'quantity_max'        => $quantity_max,
-				'quantity_default'    => $quantity_default,
-				'input_name'          => $input_name,
-				'layout'              => $layout,
-				'hide_input'          => $hide_input,
-				'combo_fields_prefix' => $combo_fields_prefix,
-			),
-			false,
-			WC_LafkaCombos()->plugin_path() . '/templates/'
-		);
+		wc_get_template( 'single-product/combined-item-quantity.php', array(
+			'combined_item'         => $combined_item,
+			'quantity_min'         => $quantity_min,
+			'quantity_max'         => $quantity_max,
+			'quantity_default'     => $quantity_default,
+			'input_name'           => $input_name,
+			'layout'               => $layout,
+			'hide_input'           => $hide_input,
+			'combo_fields_prefix' => $combo_fields_prefix
+		), false, WC_LafkaCombos()->plugin_path() . '/templates/' );
 
 		echo '</td>';
 	}
@@ -343,7 +311,7 @@ function wc_pc_template_tabular_combined_item_qty( $combined_item, $combo ) {
  */
 function wc_pc_template_default_combined_item_qty( $combined_item ) {
 
-	$combo  = $combined_item->get_combo();
+	$combo = $combined_item->get_combo();
 	$layout = $combo->get_layout();
 
 	if ( in_array( $layout, array( 'default', 'grid' ) ) ) {
@@ -356,21 +324,16 @@ function wc_pc_template_default_combined_item_qty( $combined_item ) {
 		$quantity_default = $combined_item->get_quantity( 'default' );
 		$input_name       = $combo_fields_prefix . 'combo_quantity_' . $combined_item->get_id();
 		$hide_input       = $quantity_min === $quantity_max;
-		wc_get_template(
-			'single-product/combined-item-quantity.php',
-			array(
-				'combined_item'       => $combined_item,
-				'quantity_min'        => $quantity_min,
-				'quantity_max'        => $quantity_max,
-				'quantity_default'    => $quantity_default,
-				'input_name'          => $input_name,
-				'layout'              => $layout,
-				'hide_input'          => $hide_input,
-				'combo_fields_prefix' => $combo_fields_prefix,
-			),
-			false,
-			WC_LafkaCombos()->plugin_path() . '/templates/'
-		);
+		wc_get_template( 'single-product/combined-item-quantity.php', array(
+			'combined_item'         => $combined_item,
+			'quantity_min'         => $quantity_min,
+			'quantity_max'         => $quantity_max,
+			'quantity_default'     => $quantity_default,
+			'input_name'           => $input_name,
+			'layout'               => $layout,
+			'hide_input'           => $hide_input,
+			'combo_fields_prefix' => $combo_fields_prefix
+		), false, WC_LafkaCombos()->plugin_path() . '/templates/' );
 	}
 }
 
@@ -444,10 +407,10 @@ function wc_pc_template_combined_item_product_details( $combined_item, $combo ) 
 
 	if ( $combined_item->is_purchasable() ) {
 
-		$combo_id            = $combo->get_id();
+		$combo_id          = $combo->get_id();
 		$combined_product    = $combined_item->product;
 		$combined_product_id = $combined_product->get_id();
-		$availability        = $combined_item->get_availability();
+		$availability       = $combined_item->get_availability();
 
 		/** Documented in 'WC_LafkaCombos_Cart::get_posted_combo_configuration'. */
 		$combo_fields_prefix = apply_filters( 'woocommerce_product_combo_field_prefix', '', $combo_id );
@@ -460,12 +423,12 @@ function wc_pc_template_combined_item_product_details( $combined_item, $combo ) 
 
 			if ( ( $price_html = $combined_item->product->get_price_html() ) && $combined_item->is_priced_individually() ) {
 
-				$label_price_format    = __( ' for %s', 'lafka-plugin' );
+				$label_price_format = __( ' for %s', 'lafka-plugin' );
 				$html_from_text_native = wc_get_price_html_from_text();
 
 				if ( false !== strpos( $price_html, $html_from_text_native ) ) {
 					$label_price_format = __( ' from %s', 'lafka-plugin' );
-					$price_html         = str_replace( $html_from_text_native, '', $price_html );
+					$price_html  = str_replace( $html_from_text_native, '', $price_html );
 				}
 
 				$label_price = sprintf( $label_price_format, '<span class="price">' . $price_html . '</span>' );
@@ -482,40 +445,30 @@ function wc_pc_template_combined_item_product_details( $combined_item, $combo ) 
 			}
 
 			// Optional checkbox template.
-			wc_get_template(
-				'single-product/combined-item-optional.php',
-				array(
-					'label_title'         => $label_title,
-					'label_price'         => $label_price,
-					'combined_item'       => $combined_item,
-					'combo_fields_prefix' => $combo_fields_prefix,
-					'availability_html'   => false === $combined_item->is_in_stock() ? $combined_item->get_availability_html() : '',
-					// Back-compat.
-					'quantity'            => $combined_item->get_quantity( 'min' ),
-				),
-				false,
-				WC_LafkaCombos()->plugin_path() . '/templates/'
-			);
+			wc_get_template( 'single-product/combined-item-optional.php', array(
+				'label_title'          => $label_title,
+				'label_price'          => $label_price,
+				'combined_item'         => $combined_item,
+				'combo_fields_prefix' => $combo_fields_prefix,
+				'availability_html'    => false === $combined_item->is_in_stock() ? $combined_item->get_availability_html() : '',
+				// Back-compat.
+				'quantity'             => $combined_item->get_quantity( 'min' )
+			), false, WC_LafkaCombos()->plugin_path() . '/templates/' );
 		}
 
 		if ( $combined_product->get_type() === 'simple' || $combined_product->get_type() === 'subscription' ) {
 
 			// Simple Product template.
-			wc_get_template(
-				'single-product/combined-product-simple.php',
-				array(
-					'combined_product_id' => $combined_product_id,
-					'combined_product'    => $combined_product,
-					'combined_item'       => $combined_item,
-					'combo_id'            => $combo_id,
-					'combo'               => $combo,
-					'combo_fields_prefix' => $combo_fields_prefix,
-					'availability'        => $availability,
-					'custom_product_data' => apply_filters( 'woocommerce_combined_product_custom_data', array(), $combined_item ),
-				),
-				false,
-				WC_LafkaCombos()->plugin_path() . '/templates/'
-			);
+			wc_get_template( 'single-product/combined-product-simple.php', array(
+				'combined_product_id'   => $combined_product_id,
+				'combined_product'      => $combined_product,
+				'combined_item'         => $combined_item,
+				'combo_id'            => $combo_id,
+				'combo'               => $combo,
+				'combo_fields_prefix' => $combo_fields_prefix,
+				'availability'         => $availability,
+				'custom_product_data'  => apply_filters( 'woocommerce_combined_product_custom_data', array(), $combined_item )
+			), false, WC_LafkaCombos()->plugin_path() . '/templates/' );
 
 		} elseif ( $combined_product->get_type() === 'variable' || $combined_product->get_type() === 'variable-subscription' ) {
 
@@ -529,53 +482,35 @@ function wc_pc_template_combined_item_product_details( $combined_item, $combo ) 
 				$is_out_of_stock = false === $combined_item->is_in_stock();
 
 				// Unavailable Product template.
-				wc_get_template(
-					'single-product/combined-product-unavailable.php',
-					array(
-						'combined_item'       => $combined_item,
-						'combo'               => $combo,
-						'custom_product_data' => apply_filters(
-							'woocommerce_combined_product_custom_data',
-							array(
-								'is_unavailable'  => 'yes',
-								'is_out_of_stock' => $is_out_of_stock ? 'yes' : 'no',
-								'is_required'     => $combined_item->get_quantity( 'min', array( 'check_optional' => true ) ) > 0 ? 'yes' : 'no',
-							),
-							$combined_item
-						),
-					),
-					false,
-					WC_LafkaCombos()->plugin_path() . '/templates/'
-				);
+				wc_get_template( 'single-product/combined-product-unavailable.php', array(
+					'combined_item'        => $combined_item,
+					'combo'              => $combo,
+					'custom_product_data' => apply_filters( 'woocommerce_combined_product_custom_data', array(
+						'is_unavailable'  => 'yes',
+						'is_out_of_stock' => $is_out_of_stock ? 'yes' : 'no',
+						'is_required'     => $combined_item->get_quantity( 'min', array( 'check_optional' => true ) ) > 0 ? 'yes' : 'no'
+					), $combined_item )
+				), false, WC_LafkaCombos()->plugin_path() . '/templates/' );
 
 			} else {
 
 				// Variable Product template.
-				wc_get_template(
-					'single-product/combined-product-variable.php',
-					array(
-						'combined_product_id'         => $combined_product_id,
-						'combined_product'            => $combined_product,
-						'combined_item'               => $combined_item,
-						'combo_id'                    => $combo_id,
-						'combo'                       => $combo,
-						'combo_fields_prefix'         => $combo_fields_prefix,
-						'availability'                => $availability,
-						'combined_product_attributes' => $variation_attributes,
-						'combined_product_variations' => $variations,
-						'combined_product_selected_attributes' => $selected_variation_attributes,
-						'custom_product_data'         => apply_filters(
-							'woocommerce_combined_product_custom_data',
-							array(
-								'combo_id'         => $combo_id,
-								'combined_item_id' => $combined_item->get_id(),
-							),
-							$combined_item
-						),
-					),
-					false,
-					WC_LafkaCombos()->plugin_path() . '/templates/'
-				);
+				wc_get_template( 'single-product/combined-product-variable.php', array(
+					'combined_product_id'                  => $combined_product_id,
+					'combined_product'                     => $combined_product,
+					'combined_item'                        => $combined_item,
+					'combo_id'                           => $combo_id,
+					'combo'                              => $combo,
+					'combo_fields_prefix'                => $combo_fields_prefix,
+					'availability'                        => $availability,
+					'combined_product_attributes'          => $variation_attributes,
+					'combined_product_variations'          => $variations,
+					'combined_product_selected_attributes' => $selected_variation_attributes,
+					'custom_product_data'                 => apply_filters( 'woocommerce_combined_product_custom_data', array(
+						'combo_id'       => $combo_id,
+						'combined_item_id' => $combined_item->get_id()
+					), $combined_item )
+				), false, WC_LafkaCombos()->plugin_path() . '/templates/' );
 			}
 		}
 
@@ -583,23 +518,14 @@ function wc_pc_template_combined_item_product_details( $combined_item, $combo ) 
 
 	} else {
 		// Unavailable Product template.
-		wc_get_template(
-			'single-product/combined-product-unavailable.php',
-			array(
-				'combined_item'       => $combined_item,
-				'combo'               => $combo,
-				'custom_product_data' => apply_filters(
-					'woocommerce_combined_product_custom_data',
-					array(
-						'is_unavailable' => 'yes',
-						'is_required'    => $combined_item->get_quantity( 'min', array( 'check_optional' => true ) ) > 0 ? 'yes' : 'no',
-					),
-					$combined_item
-				),
-			),
-			false,
-			WC_LafkaCombos()->plugin_path() . '/templates/'
-		);
+		wc_get_template( 'single-product/combined-product-unavailable.php', array(
+			'combined_item'        => $combined_item,
+			'combo'              => $combo,
+			'custom_product_data' => apply_filters( 'woocommerce_combined_product_custom_data', array(
+				'is_unavailable'  => 'yes',
+				'is_required'     => $combined_item->get_quantity( 'min', array( 'check_optional' => true ) ) > 0 ? 'yes' : 'no'
+			), $combined_item )
+		), false, WC_LafkaCombos()->plugin_path() . '/templates/' );
 	}
 }
 
@@ -610,9 +536,7 @@ function wc_pc_template_combined_item_product_details( $combined_item, $combo ) 
  * @param  WC_Combined_Item  $combined_item
  */
 function wc_pc_template_single_variation( $product_id, $combined_item ) {
-	?>
-	<div class="woocommerce-variation single_variation combined_item_cart_details"></div>
-	<?php
+	?><div class="woocommerce-variation single_variation combined_item_cart_details"></div><?php
 }
 
 /**
@@ -625,15 +549,10 @@ function wc_pc_template_single_variation( $product_id, $combined_item ) {
  */
 function wc_pc_template_single_variation_template( $product_id, $combined_item ) {
 
-	wc_get_template(
-		'single-product/combined-variation.php',
-		array(
-			'combined_item'       => $combined_item,
-			'combo_fields_prefix' => apply_filters( 'woocommerce_product_combo_field_prefix', '', $combined_item->get_combo_id() ), // Filter documented in 'WC_LafkaCombos_Cart::get_posted_combo_configuration'.
-		),
-		false,
-		WC_LafkaCombos()->plugin_path() . '/templates/'
-	);
+	wc_get_template( 'single-product/combined-variation.php', array(
+		'combined_item'         => $combined_item,
+		'combo_fields_prefix' => apply_filters( 'woocommerce_product_combo_field_prefix', '', $combined_item->get_combo_id() ) // Filter documented in 'WC_LafkaCombos_Cart::get_posted_combo_configuration'.
+	), false, WC_LafkaCombos()->plugin_path() . '/templates/' );
 }
 
 /**
@@ -663,15 +582,13 @@ function wc_pc_template_before_combined_items( $combo ) {
 		 */
 		$table_classes = apply_filters( 'woocommerce_combos_tabular_classes', $table_classes, $combo );
 
-		?>
-		<table cellspacing="0" class="<?php echo esc_attr( implode( ' ', $table_classes ) ); ?>">
+		?><table cellspacing="0" class="<?php echo esc_attr( implode( ' ', $table_classes ) ); ?>">
 			<thead>
 				<th class="combined_item_col combined_item_images_head"></th>
 				<th class="combined_item_col combined_item_details_head"><?php _e( 'Product', 'lafka-plugin' ); ?></th>
 				<th class="combined_item_col combined_item_qty_head"><?php _e( 'Quantity', 'lafka-plugin' ); ?></th>
 			</thead>
-			<tbody>
-			<?php
+			<tbody><?php
 
 	} elseif ( 'grid' === $layout ) {
 
@@ -722,7 +639,7 @@ function wc_pc_template_combined_item_attributes( $product ) {
 
 				$args = $combined_item->get_combined_item_display_attribute_args();
 
-				if ( empty( $args['product_attributes'] ) ) {
+				if ( empty( $args[ 'product_attributes' ] ) ) {
 					continue;
 				}
 
@@ -753,9 +670,9 @@ function wc_pc_template_combined_item_attributes( $product ) {
  */
 function wc_pc_template_combined_variation_attribute_options( $args ) {
 
-	$combined_item               = $args['combined_item'];
-	$variation_attribute_name    = $args['attribute'];
-	$variation_attribute_options = $args['options'];
+	$combined_item                = $args[ 'combined_item' ];
+	$variation_attribute_name    = $args[ 'attribute' ];
+	$variation_attribute_options = $args[ 'options' ];
 
 	/** Documented in 'WC_LafkaCombos_Cart::get_posted_combo_configuration'. */
 	$combo_fields_prefix = apply_filters( 'woocommerce_product_combo_field_prefix', '', $combined_item->get_combo_id() );
@@ -768,10 +685,10 @@ function wc_pc_template_combined_variation_attribute_options( $args ) {
 	$html                              = '';
 
 	// Fill required args.
-	$args['selected'] = $selected_option;
-	$args['name']     = $combo_fields_prefix . 'combo_attribute_' . sanitize_title( $variation_attribute_name ) . '_' . $combined_item->get_id();
-	$args['product']  = $combined_item->product;
-	$args['id']       = sanitize_title( $variation_attribute_name ) . '_' . $combined_item->get_id();
+	$args[ 'selected' ] = $selected_option;
+	$args[ 'name' ]     = $combo_fields_prefix . 'combo_attribute_' . sanitize_title( $variation_attribute_name ) . '_' . $combined_item->get_id();
+	$args[ 'product' ]  = $combined_item->product;
+	$args[ 'id' ]       = sanitize_title( $variation_attribute_name ) . '_' . $combined_item->get_id();
 
 	// Render everything.
 	if ( ! $combined_item->display_product_variation_attribute_dropdown( $variation_attribute_name ) ) {
@@ -790,6 +707,7 @@ function wc_pc_template_combined_variation_attribute_options( $args ) {
 					break;
 				}
 			}
+
 		} else {
 
 			foreach ( $variation_attribute_options as $option ) {
@@ -810,7 +728,7 @@ function wc_pc_template_combined_variation_attribute_options( $args ) {
 		$html .= '<span class="combined_variation_attribute_value">' . $variation_attribute_value . '</span>';
 
 		// See https://github.com/woothemes/woocommerce/pull/11944 .
-		$args['show_option_none'] = false;
+		$args[ 'show_option_none' ] = false;
 
 		// Get the dropdowns markup.
 		ob_start();

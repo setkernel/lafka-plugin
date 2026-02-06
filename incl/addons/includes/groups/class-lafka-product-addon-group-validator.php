@@ -14,22 +14,22 @@ class Product_Addon_Group_Validator {
 	 */
 	public static function is_valid_global_addons_group_update( $update ) {
 		$schema = array(
-			'name'                   => array(
-				'required'  => false,
-				'validator' => 'is_non_empty_string',
+			'name' => array(
+				'required' => false,
+				'validator' => 'is_non_empty_string'
 			),
-			'priority'               => array(
-				'required'  => false,
-				'validator' => 'is_positive_integer',
+			'priority' => array(
+				'required' => false,
+				'validator' => 'is_positive_integer'
 			),
 			'restrict_to_categories' => array(
-				'required'  => false,
-				'validator' => 'is_array_of_product_category_ids',
+				'required' => false,
+				'validator' => 'is_array_of_product_category_ids'
 			),
-			'fields'                 => array(
-				'required'  => false,
-				'validator' => 'is_array_of_fields',
-			),
+			'fields' => array(
+				'required' => false,
+				'validator' => 'is_array_of_fields'
+			)
 		);
 
 		return self::validate( $update, $schema );
@@ -47,13 +47,13 @@ class Product_Addon_Group_Validator {
 	public static function is_valid_product_addons_update( $update ) {
 		$schema = array(
 			'exclude_global_add_ons' => array(
-				'required'  => false,
-				'validator' => 'is_zero_or_one',
+				'required' => false,
+				'validator' => 'is_zero_or_one'
 			),
-			'fields'                 => array(
-				'required'  => false,
-				'validator' => 'is_array_of_fields',
-			),
+			'fields' => array(
+				'required' => false,
+				'validator' => 'is_array_of_fields'
+			)
 		);
 
 		return self::validate( $update, $schema );
@@ -96,8 +96,9 @@ class Product_Addon_Group_Validator {
 		// Lastly, for each key present, run its validator
 		foreach ( $data_keys as $data_key ) {
 			try {
-				call_user_func( array( __CLASS__, $schema[ $data_key ]['validator'] ), $data[ $data_key ] );
-			} catch ( Exception $e ) {
+				call_user_func( array( __CLASS__, $schema[ $data_key ][ 'validator' ] ), $data[ $data_key ] );
+			}
+			catch ( Exception $e ) {
 				throw new Exception( "Invalid value given for '{$data_key}': " . $e->getMessage() );
 			}
 		}
@@ -256,7 +257,7 @@ class Product_Addon_Group_Validator {
 			throw new Exception( 'Array expected.' );
 		}
 
-		$terms    = get_terms( 'product_cat', array( 'hide_empty' => 0 ) );
+		$terms = get_terms( 'product_cat', array( 'hide_empty' => 0 ) );
 		$term_ids = array();
 		foreach ( $terms as $term ) {
 			$term_ids[] = $term->term_id;
@@ -295,30 +296,30 @@ class Product_Addon_Group_Validator {
 		// (since we are going to replace the fields and options completely)
 
 		$schema = array(
-			'name'        => array(
-				'required'  => true,
-				'validator' => 'is_non_empty_string',
+			'name' => array(
+				'required' => true,
+				'validator' => 'is_non_empty_string'
 			),
 			'description' => array(
-				'required'  => true,
-				'validator' => 'is_string',
+				'required' => true,
+				'validator' => 'is_string'
 			),
-			'type'        => array(
-				'required'  => true,
-				'validator' => 'is_field_type',
+			'type' => array(
+				'required' => true,
+				'validator' => 'is_field_type'
 			),
-			'position'    => array(
-				'required'  => true,
-				'validator' => 'is_positive_integer',
+			'position' => array(
+				'required' => true,
+				'validator' => 'is_positive_integer'
 			),
-			'options'     => array(
-				'required'  => true,
-				'validator' => 'is_array_of_basic_options',
+			'options' => array(
+				'required' => true,
+				'validator' => 'is_array_of_basic_options'
 			),
-			'required'    => array(
-				'required'  => true,
-				'validator' => 'is_zero_or_one',
-			),
+			'required' => array(
+				'required' => true,
+				'validator' => 'is_zero_or_one'
+			)
 		);
 
 		foreach ( $arg as $field ) {
@@ -326,17 +327,17 @@ class Product_Addon_Group_Validator {
 			// (If not, this is going to blow up anyways and we'll catch that.)
 			$options_validator = 'is_array_of_basic_options';
 			if ( array_key_exists( 'type', $field ) ) {
-				switch ( $field['type'] ) {
+				switch( $field['type'] ) {
 					case 'custom':
 					case 'textarea':
 					case 'custom_letters_only':
 					case 'custom_digits_only':
 					case 'custom_letters_or_digits':
-						$options_validator = 'is_array_of_options_with_optional_integer_limits';
+					$options_validator = 'is_array_of_options_with_optional_integer_limits';
 						break;
 					case 'custom_price':
 					case 'input_multiplier':
-						$options_validator = 'is_array_of_options_with_optional_float_limits';
+					$options_validator = 'is_array_of_options_with_optional_float_limits';
 						break;
 				}
 			}
@@ -361,18 +362,9 @@ class Product_Addon_Group_Validator {
 	 */
 	protected static function is_field_type( $arg ) {
 		$supported_types = array(
-			'checkbox',
-			'radiobutton',
-			'custom',
-			'textarea',
-			'custom_price',
-			'custom_letters_only',
-			'custom_digits_only',
-			'custom_letters_or_digits',
-			'custom_email',
-			'input_multiplier',
-			'select',
-			'file_upload',
+			'checkbox', 'radiobutton', 'custom', 'textarea', 'custom_price', 'custom_letters_only',
+			'custom_digits_only', 'custom_letters_or_digits', 'custom_email', 'input_multiplier', 'select',
+			'file_upload'
 		);
 
 		if ( ! in_array( $arg, $supported_types ) ) {
@@ -399,13 +391,13 @@ class Product_Addon_Group_Validator {
 
 		$schema = array(
 			'label' => array(
-				'required'  => true,
-				'validator' => 'is_non_empty_string',
+				'required' => true,
+				'validator' => 'is_non_empty_string'
 			),
 			'price' => array(
-				'required'  => false,
-				'validator' => 'is_empty_or_numeric',
-			),
+				'required' => false,
+				'validator' => 'is_empty_or_numeric'
+			)
 		);
 
 		foreach ( $arg as $option ) {
@@ -432,21 +424,21 @@ class Product_Addon_Group_Validator {
 
 		$schema = array(
 			'label' => array(
-				'required'  => true,
-				'validator' => 'is_non_empty_string',
+				'required' => true,
+				'validator' => 'is_non_empty_string'
 			),
 			'price' => array(
-				'required'  => false,
-				'validator' => 'is_empty_or_numeric',
+				'required' => false,
+				'validator' => 'is_empty_or_numeric'
 			),
-			'min'   => array(
-				'required'  => false,
-				'validator' => 'is_empty_or_integer',
+			'min' => array(
+				'required' => false,
+				'validator' => 'is_empty_or_integer'
 			),
-			'max'   => array(
-				'required'  => false,
-				'validator' => 'is_empty_or_integer',
-			),
+			'max' => array(
+				'required' => false,
+				'validator' => 'is_empty_or_integer'
+			)
 		);
 
 		foreach ( $arg as $option ) {
@@ -473,21 +465,21 @@ class Product_Addon_Group_Validator {
 
 		$schema = array(
 			'label' => array(
-				'required'  => true,
-				'validator' => 'is_non_empty_string',
+				'required' => true,
+				'validator' => 'is_non_empty_string'
 			),
 			'price' => array(
-				'required'  => false,
-				'validator' => 'is_empty_or_numeric',
+				'required' => false,
+				'validator' => 'is_empty_or_numeric'
 			),
-			'min'   => array(
-				'required'  => false,
-				'validator' => 'is_empty_or_numeric',
+			'min' => array(
+				'required' => false,
+				'validator' => 'is_empty_or_numeric'
 			),
-			'max'   => array(
-				'required'  => false,
-				'validator' => 'is_empty_or_numeric',
-			),
+			'max' => array(
+				'required' => false,
+				'validator' => 'is_empty_or_numeric'
+			)
 		);
 
 		foreach ( $arg as $option ) {

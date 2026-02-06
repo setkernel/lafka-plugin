@@ -43,6 +43,7 @@ class WC_LafkaCombos_ET_Compatibility {
 		if ( 'on' === $et_pb_use_builder ) {
 			remove_action( 'woocommerce_after_single_product_summary', 'wc_pc_template_add_to_cart_after_summary', -1000 );
 		}
+
 	}
 
 	/**
@@ -56,13 +57,11 @@ class WC_LafkaCombos_ET_Compatibility {
 		$et_pb_use_builder = $product_combo_object->get_meta( '_et_pb_use_builder' );
 		if ( 'on' === $et_pb_use_builder ) {
 			if ( function_exists( 'wc_enqueue_js' ) ) {
-				wc_enqueue_js(
-					"
+				wc_enqueue_js( "
 					jQuery( function ( $ ) {
 						$( '#_wc_pb_add_to_cart_form_location' ).prop( 'disabled', true );
 					} )
-				"
-				);
+				" );
 			}
 		}
 	}
@@ -89,7 +88,7 @@ class WC_LafkaCombos_ET_Compatibility {
 		if ( 'on' === $et_pb_use_builder ) {
 			$msg_after_summary = __( 'Unavailable when using the Divi builder.', 'lafka-plugin' );
 
-			$options['after_summary']['description'] .= ' ' . $msg_after_summary;
+			$options[ 'after_summary' ][ 'description' ] .= ' ' . $msg_after_summary;
 		}
 
 		return $options;

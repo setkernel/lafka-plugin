@@ -27,12 +27,12 @@ class WC_LafkaCombos_Ajax {
 	 */
 	public static function ajax_get_combined_variation() {
 
-		if ( ! empty( $_POST['custom_data'] ) ) {
-			$combo_id         = isset( $_POST['custom_data']['combo_id'] ) ? absint( $_POST['custom_data']['combo_id'] ) : false;
-			$combined_item_id = isset( $_POST['custom_data']['combined_item_id'] ) ? absint( $_POST['custom_data']['combined_item_id'] ) : false;
+		if ( ! empty( $_POST[ 'custom_data' ] ) ) {
+			$combo_id       = isset( $_POST[ 'custom_data' ][ 'combo_id' ] ) ? absint( $_POST[ 'custom_data' ][ 'combo_id' ] ) : false;
+			$combined_item_id = isset( $_POST[ 'custom_data' ][ 'combined_item_id' ] ) ? absint( $_POST[ 'custom_data' ][ 'combined_item_id' ] ) : false;
 
 			// Unset custom data to prevent issues in 'WC_Product_Variable::get_matching_variation'.
-			unset( $_POST['custom_data'] );
+			unset( $_POST[ 'custom_data' ] );
 
 			if ( $combo_id && $combined_item_id && false !== ( $combined_item = wc_pc_get_combined_item( $combined_item_id, $combo_id ) ) ) {
 				add_filter( 'woocommerce_available_variation', array( $combined_item, 'filter_variation' ), 10, 3 );

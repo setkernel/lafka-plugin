@@ -111,29 +111,17 @@ class WC_LafkaCombos_Product_Prices {
 	 */
 	public static function get_tax_ratios( $product ) {
 
-		self::extend_price_display_precision();
+		WC_LafkaCombos_Product_Prices::extend_price_display_precision();
 
 		$ref_price      = 1000.0;
-		$ref_price_incl = wc_get_price_including_tax(
-			$product,
-			array(
-				'qty'   => 1,
-				'price' => $ref_price,
-			)
-		);
-		$ref_price_excl = wc_get_price_excluding_tax(
-			$product,
-			array(
-				'qty'   => 1,
-				'price' => $ref_price,
-			)
-		);
+		$ref_price_incl = wc_get_price_including_tax( $product, array( 'qty' => 1, 'price' => $ref_price ) );
+		$ref_price_excl = wc_get_price_excluding_tax( $product, array( 'qty' => 1, 'price' => $ref_price ) );
 
-		self::reset_price_display_precision();
+		WC_LafkaCombos_Product_Prices::reset_price_display_precision();
 
 		return array(
 			'incl' => $ref_price_incl / $ref_price,
-			'excl' => $ref_price_excl / $ref_price,
+			'excl' => $ref_price_excl / $ref_price
 		);
 	}
 
@@ -165,13 +153,13 @@ class WC_LafkaCombos_Product_Prices {
 		$defaults = array(
 			'price' => '',
 			'qty'   => 1,
-			'calc'  => '',
+			'calc'  => ''
 		);
 
 		$args  = wp_parse_args( $args, $defaults );
-		$price = $args['price'];
-		$qty   = $args['qty'];
-		$calc  = $args['calc'];
+		$price = $args[ 'price' ];
+		$qty   = $args[ 'qty' ];
+		$calc  = $args[ 'calc' ];
 
 		if ( $price ) {
 
@@ -180,21 +168,9 @@ class WC_LafkaCombos_Product_Prices {
 			}
 
 			if ( 'incl_tax' === $calc ) {
-				$price = wc_get_price_including_tax(
-					$product,
-					array(
-						'qty'   => $qty,
-						'price' => $price,
-					)
-				);
+				$price = wc_get_price_including_tax( $product, array( 'qty' => $qty, 'price' => $price ) );
 			} elseif ( 'excl_tax' === $calc ) {
-				$price = wc_get_price_excluding_tax(
-					$product,
-					array(
-						'qty'   => $qty,
-						'price' => $price,
-					)
-				);
+				$price = wc_get_price_excluding_tax( $product, array( 'qty' => $qty, 'price' => $price ) );
 			} else {
 				$price = $price * $qty;
 			}
@@ -219,7 +195,7 @@ class WC_LafkaCombos_Product_Prices {
 		}
 
 		self::$filtering_price_decimals = true;
-		$decimals                       = wc_pc_price_num_decimals( 'extended' );
+		$decimals = wc_pc_price_num_decimals( 'extended' );
 		self::$filtering_price_decimals = false;
 
 		return $decimals;
@@ -248,7 +224,7 @@ class WC_LafkaCombos_Product_Prices {
 		$discounted_price = $price;
 
 		if ( ! empty( $price ) && ! empty( $discount ) ) {
-			$discounted_price = round( (float) $price * ( 100 - $discount ) / 100, self::get_discounted_price_precision() );
+			$discounted_price = round( ( double ) $price * ( 100 - $discount ) / 100, self::get_discounted_price_precision() );
 		}
 
 		return $discounted_price;
@@ -266,13 +242,7 @@ class WC_LafkaCombos_Product_Prices {
 
 		$product->update_meta_data( '_subscription_payment_sync_date', 0 );
 
-		$sub_price_html = WC_Subscriptions_Product::get_price_string(
-			$product,
-			array(
-				'price'       => '%s',
-				'sign_up_fee' => false,
-			)
-		);
+		$sub_price_html = WC_Subscriptions_Product::get_price_string( $product, array( 'price' => '%s', 'sign_up_fee' => false ) );
 
 		$product->update_meta_data( '_subscription_payment_sync_date', $sync_date );
 
@@ -290,7 +260,7 @@ class WC_LafkaCombos_Product_Prices {
 
 		if ( empty( self::$combined_item_pre ) ) {
 			self::$combined_item_pre = array();
-			$add_filters             = true;
+			$add_filters            = true;
 		}
 
 		self::$combined_item_pre[] = $combined_item;
@@ -439,23 +409,23 @@ class WC_LafkaCombos_Product_Prices {
 			$priced_per_product = $combined_item->is_priced_individually();
 
 			// Filter regular prices.
-			foreach ( $prices_array['regular_price'] as $variation_id => $regular_price ) {
+			foreach ( $prices_array[ 'regular_price' ] as $variation_id => $regular_price ) {
 				if ( $priced_per_product ) {
-					$regular_prices[ $variation_id ] = $regular_price === '' ? $prices_array['price'][ $variation_id ] : $regular_price;
+					$regular_prices[ $variation_id ] = $regular_price === '' ? $prices_array[ 'price' ][ $variation_id ] : $regular_price;
 				} else {
 					$regular_prices[ $variation_id ] = 0;
 				}
 			}
 
 			// Filter prices.
-			foreach ( $prices_array['price'] as $variation_id => $price ) {
+			foreach ( $prices_array[ 'price' ] as $variation_id => $price ) {
 				if ( $priced_per_product ) {
 					if ( false === $combined_item->is_discount_allowed_on_sale_price() ) {
 						$regular_price = $regular_prices[ $variation_id ];
 					} else {
 						$regular_price = $price;
 					}
-					$price                   = empty( $discount ) ? $price : round( (float) $regular_price * ( 100 - $discount ) / 100, self::get_discounted_price_precision() );
+					$price                   = empty( $discount ) ? $price : round( ( double ) $regular_price * ( 100 - $discount ) / 100, self::get_discounted_price_precision() );
 					$prices[ $variation_id ] = apply_filters( 'woocommerce_combined_variation_price', $price, $variation_id, $discount, $combined_item );
 				} else {
 					$prices[ $variation_id ] = 0;
@@ -463,7 +433,7 @@ class WC_LafkaCombos_Product_Prices {
 			}
 
 			// Filter sale prices.
-			foreach ( $prices_array['sale_price'] as $variation_id => $sale_price ) {
+			foreach ( $prices_array[ 'sale_price' ] as $variation_id => $sale_price ) {
 				if ( $priced_per_product ) {
 					$sale_prices[ $variation_id ] = empty( $discount ) ? $sale_price : $prices[ $variation_id ];
 				} else {
@@ -480,7 +450,7 @@ class WC_LafkaCombos_Product_Prices {
 			$prices_array = array(
 				'price'         => $prices,
 				'regular_price' => $regular_prices,
-				'sale_price'    => $sale_prices,
+				'sale_price'    => $sale_prices
 			);
 		}
 
@@ -722,7 +692,7 @@ class WC_LafkaCombos_Product_Prices {
 	public static function filter_variable_price_html( $price_html, $product ) {
 
 		self::$filtering_variable_price_html = true;
-		$price_html                          = self::filter_get_price_html( $price_html, $product );
+		$price_html = self::filter_get_price_html( $price_html, $product );
 		self::$filtering_variable_price_html = false;
 
 		return $price_html;
@@ -780,14 +750,11 @@ class WC_LafkaCombos_Product_Prices {
 	 */
 	public static function get_product_display_price( $product, $price, $qty = 1 ) {
 		_deprecated_function( __METHOD__ . '()', '5.5.0', 'WC_LafkaCombos_Product_Prices::get_product_price()' );
-		return self::get_product_price(
-			$product,
-			array(
-				'price' => $price,
-				'qty'   => $qty,
-				'calc'  => 'display',
-			)
-		);
+		return self::get_product_price( $product, array(
+			'price' => $price,
+			'qty'   => $qty,
+			'calc'  => 'display'
+		) );
 	}
 }
 

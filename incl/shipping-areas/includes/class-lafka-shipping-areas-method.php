@@ -66,7 +66,7 @@ function lafka_shipping_areas_method_init() {
 				$this->supports           = array(
 					'shipping-zones',
 					'instance-settings',
-					'instance-settings-modal',
+					'instance-settings-modal'
 				);
 
 				$this->init();
@@ -128,7 +128,7 @@ function lafka_shipping_areas_method_init() {
 						'default'     => 'lafka_all_branches',
 						'description' => __( 'Select branch (if defined), where the shipping method will apply. Or set "All Branches" to ignore this check.', 'lafka-plugin' ),
 						'options'     => ( array( 'lafka_all_branches' => esc_html__( 'All Branches', 'lafka-plugin' ) ) + Lafka_Shipping_Areas::get_all_legit_branch_locations() ),
-						'desc_tip'    => true,
+						'desc_tip'    => true
 					),
 					'distance_unit'   => array(
 						'title'       => __( 'Distance Unit', 'lafka-plugin' ),
@@ -162,7 +162,7 @@ function lafka_shipping_areas_method_init() {
 						'default'           => '0',
 						'sanitize_callback' => array(
 							$this,
-							'sanitize_cost',
+							'sanitize_cost'
 						),
 					),
 					'rate_fixed'      => array(
@@ -170,21 +170,21 @@ function lafka_shipping_areas_method_init() {
 						'type'        => 'text',
 						'description' => __( 'Enter a fixed shipping rate.', 'lafka-plugin' ),
 						'desc_tip'    => true,
-						'default'     => '0',
+						'default'     => '0'
 					),
 					'rate_distance'   => array(
 						'title'       => __( 'Distance Unit Rate', 'lafka-plugin' ),
 						'type'        => 'text',
 						'description' => __( 'Enter the rate per shipping distance unit.', 'lafka-plugin' ),
 						'desc_tip'    => true,
-						'default'     => '0',
+						'default'     => '0'
 					),
 					'round_distance'  => array(
 						'title'       => __( 'Round Up Distance', 'lafka-plugin' ),
 						'type'        => 'checkbox',
 						'description' => __( 'Round up the calculated shipping distance with decimal to the nearest absolute number.', 'lafka-plugin' ),
 						'desc_tip'    => true,
-						'default'     => 'no',
+						'default'     => 'no'
 					),
 					'tax_status'      => array(
 						'title'   => __( 'Tax status', 'lafka-plugin' ),
@@ -234,7 +234,7 @@ function lafka_shipping_areas_method_init() {
 						'type'        => 'text',
 						'description' => __( 'Maximum radius in (km/miles) from the store/branch address. If set to "All Branches", the WooCommerce store address will be used.', 'lafka-plugin' ),
 						'desc_tip'    => true,
-						'default'     => '0',
+						'default'     => '0'
 					),
 				);
 			}
@@ -266,12 +266,9 @@ function lafka_shipping_areas_method_init() {
 						'<a class="lafka-continue-shopping" href="' . esc_url( get_permalink( wc_get_page_id( 'shop' ) ) ) . '">' . esc_html__( 'Continue Shopping', 'lafka-plugin' ) . '</a>'
 					);
 					if ( ! wc_has_notice( $notice_message ) ) {
-						wc_add_notice(
-							$notice_message,
-							'success',
-							array(
+						wc_add_notice( $notice_message, 'success', array(
 								'lafka-notice'    => 'minimum-amount',
-								'lafka-method-id' => $this->get_instance_id(),
+								'lafka-method-id' => $this->get_instance_id()
 							)
 						);
 					}
@@ -292,20 +289,14 @@ function lafka_shipping_areas_method_init() {
 					if ( ! empty( $branch_location_address_geocoded ) ) {
 						$branch_location_decoded = json_decode( urldecode( $branch_location_address_geocoded ) );
 						if ( ! empty( $branch_location_decoded->lat ) ) {
-							$origin = array(
-								'lat' => $branch_location_decoded->lat,
-								'lng' => $branch_location_decoded->lng,
-							);
+							$origin = array( 'lat' => $branch_location_decoded->lat, 'lng' => $branch_location_decoded->lng );
 						}
-					} elseif ( $store_location_type === 'geo_woo_store' ) {
+					} else if ( $store_location_type === 'geo_woo_store' ) {
 						$origin = Lafka_Shipping_Areas::get_store_address();
 					} else {
 						$store_map_location_decoded = json_decode( urldecode( $store_map_location ) );
 						if ( ! empty( $store_map_location_decoded->lat ) ) {
-							$origin = array(
-								'lat' => $store_map_location_decoded->lat,
-								'lng' => $store_map_location_decoded->lng,
-							);
+							$origin = array( 'lat' => $store_map_location_decoded->lat, 'lng' => $store_map_location_decoded->lng );
 						}
 					}
 
@@ -321,10 +312,7 @@ function lafka_shipping_areas_method_init() {
 						} else {
 							$picked_location_decoded = json_decode( urldecode( $parsed_data['lafka_picked_delivery_geocoded'] ) );
 							if ( ! empty( $picked_location_decoded->lat ) ) {
-								$destination = array(
-									'lat' => $picked_location_decoded->lat,
-									'lng' => $picked_location_decoded->lng,
-								);
+								$destination = array( 'lat' => $picked_location_decoded->lat, 'lng' => $picked_location_decoded->lng );
 							}
 						}
 
@@ -363,13 +351,10 @@ function lafka_shipping_areas_method_init() {
 
 				if ( '' !== $cost ) {
 					$has_costs    = true;
-					$rate['cost'] = $this->evaluate_cost(
-						$cost,
-						array(
-							'qty'  => $this->get_package_item_qty( $package ),
-							'cost' => $package['contents_cost'],
-						)
-					);
+					$rate['cost'] = $this->evaluate_cost( $cost, array(
+						'qty'  => $this->get_package_item_qty( $package ),
+						'cost' => $package['contents_cost'],
+					) );
 				}
 
 				if ( $has_costs ) {
@@ -382,33 +367,21 @@ function lafka_shipping_areas_method_init() {
 				wp_add_inline_script( 'lafka-shipping-areas-handle-shipping', 'lafka_shipping_destination_address_property = ' . json_encode( $package['destination'] ), 'before' );
 				if ( $this->restrict_by === 'shipping_area' && is_numeric( $this->delivery_area ) ) {
 					$shipping_area_coordinates = get_post_meta( $this->delivery_area, '_lafka_shipping_area_polygon_coordinates', true );
-					wp_add_inline_script(
-						'lafka-shipping-areas-handle-shipping',
-						'
-						lafka_shipping_properties.shipping_area_instance_' . $this->instance_id . ' = ' . json_encode(
-							array(
-								'shipping_area_coordinates' => $shipping_area_coordinates,
-								'min_amount'    => $this->minamount,
-								'cart_subtotal' => $package['cart_subtotal'] ?? '',
-							)
-						),
-						'before'
-					);
+					wp_add_inline_script( 'lafka-shipping-areas-handle-shipping', '
+						lafka_shipping_properties.shipping_area_instance_' . $this->instance_id . ' = ' . json_encode( array(
+							'shipping_area_coordinates' => $shipping_area_coordinates,
+							'min_amount'                => $this->minamount,
+							'cart_subtotal'             => $package['cart_subtotal'] ?? '',
+						) ), 'before' );
 				} elseif ( $this->restrict_by === 'radius' && is_numeric( $this->max_radius ) ) {
-					wp_add_inline_script(
-						'lafka-shipping-areas-handle-shipping',
-						'
-						lafka_shipping_properties.radius_area_instance_' . $this->instance_id . ' = ' . json_encode(
-							array(
-								'max_radius'    => $this->max_radius,
-								'shipping_method_distance_unit' => $this->distance_unit,
-								'branch_location_address_geocoded' => $branch_location_address_geocoded,
-								'min_amount'    => $this->minamount,
-								'cart_subtotal' => $package['cart_subtotal'] ?? '',
-							)
-						),
-						'before'
-					);
+					wp_add_inline_script( 'lafka-shipping-areas-handle-shipping', '
+						lafka_shipping_properties.radius_area_instance_' . $this->instance_id . ' = ' . json_encode( array(
+							'max_radius'                       => $this->max_radius,
+							'shipping_method_distance_unit'    => $this->distance_unit,
+							'branch_location_address_geocoded' => $branch_location_address_geocoded,
+							'min_amount'                       => $this->minamount,
+							'cart_subtotal'                    => $package['cart_subtotal'] ?? '',
+						) ), 'before' );
 				}
 			}
 
@@ -429,19 +402,13 @@ function lafka_shipping_areas_method_init() {
 				// Expand shortcodes.
 				add_shortcode( 'fee', array( $this, 'fee' ) );
 
-				$sum = do_shortcode(
-					str_replace(
-						array(
-							'[qty]',
-							'[cost]',
-						),
-						array(
-							$args['qty'],
-							$args['cost'],
-						),
-						$sum
-					)
-				);
+				$sum = do_shortcode( str_replace( array(
+					'[qty]',
+					'[cost]',
+				), array(
+					$args['qty'],
+					$args['cost'],
+				), $sum ) );
 
 				remove_shortcode( 'fee', array( $this, 'fee' ) );
 
@@ -466,15 +433,11 @@ function lafka_shipping_areas_method_init() {
 			 * @return string
 			 */
 			public function fee( $atts ) {
-				$atts = shortcode_atts(
-					array(
-						'percent' => '',
-						'min_fee' => '',
-						'max_fee' => '',
-					),
-					$atts,
-					'fee'
-				);
+				$atts = shortcode_atts( array(
+					'percent' => '',
+					'min_fee' => '',
+					'max_fee' => '',
+				), $atts, 'fee' );
 
 				$calculated_fee = 0;
 
@@ -561,7 +524,7 @@ function lafka_shipping_areas_method_init() {
 					if ( ! empty( get_option( 'lafka_shipping_areas_advanced' )['debug_mode'] ) ) {
 						return array(
 							'distance'      => 0,
-							'distance_text' => 'Google Maps Distance API Error: ' . $calculate_distance_result->get_error_message(),
+							'distance_text' => 'Google Maps Distance API Error: ' . $calculate_distance_result->get_error_message()
 						);
 					} else {
 						return array();

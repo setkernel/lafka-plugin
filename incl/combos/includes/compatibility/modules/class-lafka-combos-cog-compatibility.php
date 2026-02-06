@@ -48,15 +48,15 @@ class WC_LafkaCombos_COG_Compatibility {
 
 		if ( $parent_item = wc_pc_get_combined_order_item_container( $item, $order ) ) {
 
-			$combined_item_priced_individually = isset( $item['combined_item_priced_individually'] ) ? 'yes' === $item['combined_item_priced_individually'] : null;
+			$combined_item_priced_individually = isset( $item[ 'combined_item_priced_individually' ] ) ? 'yes' === $item[ 'combined_item_priced_individually' ] : null;
 
 			// Back-compat.
 			if ( null === $combined_item_priced_individually ) {
-				if ( isset( $parent_item['per_product_pricing'] ) ) {
-					$combined_item_priced_individually = 'yes' === $parent_item['per_product_pricing'];
-				} elseif ( isset( $item['combined_item_id'] ) ) {
-					if ( $combo = wc_get_product( $parent_item['product_id'] ) ) {
-						$combined_item_id                  = $item['combined_item_id'];
+				if ( isset( $parent_item[ 'per_product_pricing' ] ) ) {
+					$combined_item_priced_individually = 'yes' === $parent_item[ 'per_product_pricing' ];
+				} elseif ( isset( $item[ 'combined_item_id' ] ) ) {
+					if ( $combo = wc_get_product( $parent_item[ 'product_id' ] ) ) {
+						$combined_item_id                  = $item[ 'combined_item_id' ];
 						$combined_item                     = $combo->get_combined_item( $combined_item_id );
 						$combined_item_priced_individually = ( $combined_item instanceof WC_Combined_Item ) ? $combined_item->is_priced_individually() : false;
 					}

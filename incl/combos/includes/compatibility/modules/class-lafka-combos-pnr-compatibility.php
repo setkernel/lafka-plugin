@@ -52,14 +52,14 @@ class WC_LafkaCombos_PnR_Compatibility {
 
 		if ( $parent = wc_pc_get_combined_cart_item_container( $cart_item_values ) ) {
 
-			$combo            = $parent['data'];
-			$combined_item_id = $cart_item_values['combined_item_id'];
+			$combo          = $parent[ 'data' ];
+			$combined_item_id = $cart_item_values[ 'combined_item_id' ];
 			$combined_item    = $combo->get_combined_item( $combined_item_id );
 
 			if ( self::has_fixed_points( $combo ) || false === $combined_item->is_priced_individually() ) {
 				$points = 0;
 			} else {
-				$points = WC_Points_Rewards_Manager::calculate_points( $cart_item_values['data']->get_price() );
+				$points = WC_Points_Rewards_Manager::calculate_points( $cart_item_values[ 'data' ]->get_price() );
 			}
 		}
 
@@ -79,16 +79,16 @@ class WC_LafkaCombos_PnR_Compatibility {
 
 		if ( $parent_item = wc_pc_get_combined_order_item_container( $item, $order ) ) {
 
-			$combined_item_priced_individually = isset( $item['combined_item_priced_individually'] ) ? 'yes' === $item['combined_item_priced_individually'] : null;
+			$combined_item_priced_individually = isset( $item[ 'combined_item_priced_individually' ] ) ? 'yes' === $item[ 'combined_item_priced_individually' ] : null;
 
-			if ( $combo = wc_get_product( $parent_item['product_id'] ) ) {
+			if ( $combo = wc_get_product( $parent_item[ 'product_id' ] ) ) {
 
 				// Back-compat.
 				if ( null === $combined_item_priced_individually ) {
-					if ( isset( $parent_item['per_product_pricing'] ) ) {
-						$combined_item_priced_individually = 'yes' === $parent_item['per_product_pricing'];
-					} elseif ( isset( $item['combined_item_id'] ) ) {
-						$combined_item_id                  = $item['combined_item_id'];
+					if ( isset( $parent_item[ 'per_product_pricing' ] ) ) {
+						$combined_item_priced_individually = 'yes' === $parent_item[ 'per_product_pricing' ];
+					} elseif ( isset( $item[ 'combined_item_id' ] ) ) {
+						$combined_item_id                  = $item[ 'combined_item_id' ];
 						$combined_item                     = $combo->get_combined_item( $combined_item_id );
 						$combined_item_priced_individually = ( $combined_item instanceof WC_Combined_Item ) ? $combined_item->is_priced_individually() : false;
 					}
@@ -138,11 +138,12 @@ class WC_LafkaCombos_PnR_Compatibility {
 
 					if ( $max_combo_price === $min_combo_price ) {
 						self::$single_product_message_filter_active = false;
-						$message                                    = $points_n_rewards->render_product_message();
+						$message = $points_n_rewards->render_product_message();
 						self::$single_product_message_filter_active = true;
 					} else {
 						$message = $points_n_rewards->create_variation_message_to_product_summary( $combo_points );
 					}
+
 				} else {
 					$message = $points_n_rewards->create_at_least_message_to_product_summary( $combo_points );
 				}

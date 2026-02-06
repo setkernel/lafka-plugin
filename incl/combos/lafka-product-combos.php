@@ -146,7 +146,7 @@ class Lafka_Combos {
 
 		if ( $base ) {
 			$version_parts = explode( '-', $version );
-			$version       = sizeof( $version_parts ) > 1 ? $version_parts[0] : $version;
+			$version       = sizeof( $version_parts ) > 1 ? $version_parts[ 0 ] : $version;
 		}
 
 		return $version;
@@ -227,8 +227,8 @@ class Lafka_Combos {
 	 * @return void
 	 */
 	private function maybe_create_store() {
-		if ( ! isset( $GLOBALS['sw_store'] ) ) {
-			$GLOBALS['sw_store'] = array();
+		if ( ! isset( $GLOBALS[ 'sw_store' ] ) ) {
+			$GLOBALS[ 'sw_store' ] = array();
 		}
 	}
 
@@ -238,58 +238,58 @@ class Lafka_Combos {
 	public function includes() {
 
 		// Extensions compatibility functions and hooks.
-		require_once WC_LafkaCombos_ABSPATH . 'includes/compatibility/class-lafka-combos-compatibility.php';
+		require_once( WC_LafkaCombos_ABSPATH . 'includes/compatibility/class-lafka-combos-compatibility.php' );
 
 		// Modules.
-		require_once WC_LafkaCombos_ABSPATH . 'includes/modules/class-lafka-combos-modules.php';
+		require_once( WC_LafkaCombos_ABSPATH . 'includes/modules/class-lafka-combos-modules.php' );
 
 		// Data classes.
-		require_once WC_LafkaCombos_ABSPATH . 'includes/data/class-lafka-combos-data.php';
+		require_once( WC_LafkaCombos_ABSPATH . 'includes/data/class-lafka-combos-data.php' );
 
 		// Install.
-		require_once WC_LafkaCombos_ABSPATH . 'includes/class-lafka-combos-install.php';
+		require_once( WC_LafkaCombos_ABSPATH . 'includes/class-lafka-combos-install.php' );
 
 		// Functions (incl deprecated).
-		require_once WC_LafkaCombos_ABSPATH . 'includes/wc-pc-functions.php';
+		require_once( WC_LafkaCombos_ABSPATH . 'includes/wc-pc-functions.php' );
 
 		// Helper functions and hooks.
-		require_once WC_LafkaCombos_ABSPATH . 'includes/class-lafka-combos-helpers.php';
+		require_once( WC_LafkaCombos_ABSPATH . 'includes/class-lafka-combos-helpers.php' );
 
 		// Data syncing between products and combined items.
-		require_once WC_LafkaCombos_ABSPATH . 'includes/class-lafka-combos-db-sync.php';
+		require_once( WC_LafkaCombos_ABSPATH . 'includes/class-lafka-combos-db-sync.php' );
 
 		// Product price filters and price-related functions.
-		require_once WC_LafkaCombos_ABSPATH . 'includes/class-lafka-combos-product-prices.php';
+		require_once( WC_LafkaCombos_ABSPATH . 'includes/class-lafka-combos-product-prices.php' );
 
 		// Combined Item class.
-		require_once WC_LafkaCombos_ABSPATH . 'includes/class-wc-combined-item.php';
+		require_once( WC_LafkaCombos_ABSPATH . 'includes/class-wc-combined-item.php' );
 
 		// Product Combo class.
-		require_once WC_LafkaCombos_ABSPATH . 'includes/class-wc-product-combo.php';
+		require_once( WC_LafkaCombos_ABSPATH . 'includes/class-wc-product-combo.php' );
 
 		// Stock mgr class.
-		require_once WC_LafkaCombos_ABSPATH . 'includes/class-lafka-combos-stock-manager.php';
+		require_once( WC_LafkaCombos_ABSPATH . 'includes/class-lafka-combos-stock-manager.php' );
 
 		// Cart-related functions and hooks.
-		require_once WC_LafkaCombos_ABSPATH . 'includes/class-lafka-combos-cart.php';
+		require_once( WC_LafkaCombos_ABSPATH . 'includes/class-lafka-combos-cart.php' );
 
 		// Order-related functions and hooks.
-		require_once WC_LafkaCombos_ABSPATH . 'includes/class-lafka-combos-order.php';
+		require_once( WC_LafkaCombos_ABSPATH . 'includes/class-lafka-combos-order.php' );
 
 		// Order-again functions and hooks.
-		require_once WC_LafkaCombos_ABSPATH . 'includes/class-lafka-combos-order-again.php';
+		require_once( WC_LafkaCombos_ABSPATH . 'includes/class-lafka-combos-order-again.php' );
 
 		// Coupon-related functions and hooks.
-		require_once WC_LafkaCombos_ABSPATH . 'includes/class-lafka-combos-coupon.php';
+		require_once( WC_LafkaCombos_ABSPATH . 'includes/class-lafka-combos-coupon.php' );
 
 		// Front-end filters and templates.
-		require_once WC_LafkaCombos_ABSPATH . 'includes/class-lafka-combos-display.php';
+		require_once( WC_LafkaCombos_ABSPATH . 'includes/class-lafka-combos-display.php' );
 
 		// Front-end AJAX handlers.
-		require_once WC_LafkaCombos_ABSPATH . 'includes/class-lafka-combos-ajax.php';
+		require_once( WC_LafkaCombos_ABSPATH . 'includes/class-lafka-combos-ajax.php' );
 
 		// Notices handling.
-		require_once WC_LafkaCombos_ABSPATH . 'includes/class-lafka-combos-notices.php';
+		require_once( WC_LafkaCombos_ABSPATH . 'includes/class-lafka-combos-notices.php' );
 
 		// Admin includes.
 		if ( is_admin() ) {
@@ -303,10 +303,10 @@ class Lafka_Combos {
 	public function admin_includes() {
 
 		// Admin notices handling.
-		require_once WC_LafkaCombos_ABSPATH . 'includes/admin/class-lafka-combos-admin-notices.php';
+		require_once( WC_LafkaCombos_ABSPATH . 'includes/admin/class-lafka-combos-admin-notices.php' );
 
 		// Admin functions and hooks.
-		require_once WC_LafkaCombos_ABSPATH . 'includes/admin/class-lafka-combos-admin.php';
+		require_once( WC_LafkaCombos_ABSPATH . 'includes/admin/class-lafka-combos-admin.php' );
 	}
 }
 
@@ -320,4 +320,4 @@ function WC_LafkaCombos() {
 	return Lafka_Combos::instance();
 }
 
-$GLOBALS['woocommerce_combos'] = WC_LafkaCombos();
+$GLOBALS[ 'woocommerce_combos' ] = WC_LafkaCombos();

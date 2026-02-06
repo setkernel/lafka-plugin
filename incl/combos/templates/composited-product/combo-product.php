@@ -16,8 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-?><div class="details component_data <?php echo esc_attr( $classes ); ?>">
-<?php
+?><div class="details component_data <?php echo esc_attr( $classes ); ?>"><?php
 
 	/**
 	 * 'woocommerce_composited_product_details' hook.
@@ -48,23 +47,23 @@ if ( ! defined( 'ABSPATH' ) ) {
 	 */
 	do_action( 'woocommerce_before_combined_items', $product );
 
-foreach ( $combined_items as $combined_item ) {
+	foreach ( $combined_items as $combined_item ) {
 
-	/**
-	 * 'woocommerce_combined_item_details' hook.
-	 *
-	 * @param WC_Combined_Item   $combined_item
-	 * @param WC_Product_Combo $combo
-	 *
-	 * @hooked wc_pc_template_combined_item_thumbnail       -   5
-	 * @hooked wc_pc_template_combined_item_details_open    -  10
-	 * @hooked wc_pc_template_combined_item_title           -  15
-	 * @hooked wc_pc_template_combined_item_description     -  20
-	 * @hooked wc_pc_template_combined_item_product_details -  25
-	 * @hooked wc_pc_template_combined_item_details_close   - 100
-	 */
-	do_action( 'woocommerce_combined_item_details', $combined_item, $product );
-}
+		/**
+		 * 'woocommerce_combined_item_details' hook.
+		 *
+		 * @param WC_Combined_Item   $combined_item
+		 * @param WC_Product_Combo $combo
+		 *
+		 * @hooked wc_pc_template_combined_item_thumbnail       -   5
+		 * @hooked wc_pc_template_combined_item_details_open    -  10
+		 * @hooked wc_pc_template_combined_item_title           -  15
+		 * @hooked wc_pc_template_combined_item_description     -  20
+		 * @hooked wc_pc_template_combined_item_product_details -  25
+		 * @hooked wc_pc_template_combined_item_details_close   - 100
+		 */
+		do_action( 'woocommerce_combined_item_details', $combined_item, $product );
+	}
 
 	/**
 	 * 'woocommerce_before_combined_items' action.
@@ -82,41 +81,29 @@ foreach ( $combined_items as $combined_item ) {
 	 */
 	do_action( 'woocommerce_after_composited_combined_items', $product, $component_id, $composite_product );
 
-?>
-	<div class="cart combo_data combo_data_<?php echo $product->get_id(); ?>" data-combo_form_data="<?php echo esc_attr( json_encode( $combo_form_data ) ); ?>" data-combo_id="<?php echo $product->get_id(); ?>">
-	<?php
+	?><div class="cart combo_data combo_data_<?php echo $product->get_id(); ?>" data-combo_form_data="<?php echo esc_attr( json_encode( $combo_form_data ) ); ?>" data-combo_id="<?php echo $product->get_id(); ?>"><?php
 
 		do_action( 'woocommerce_composited_product_add_to_cart', $product, $component_id, $composite_product );
 
-	?>
-	<div class="combo_wrap component_wrap">
+		?><div class="combo_wrap component_wrap">
 			<div class="combo_price"></div>
-			<div class="combo_availability">
-			<?php
+			<div class="combo_availability"><?php
 
 				// Availability html.
 				echo $composited_product->get_availability_html();
 
-			?>
-			</div>
-			<div class="combo_button">
-			<?php
+			?></div>
+			<div class="combo_button"><?php
 
-				wc_get_template(
-					'composited-product/quantity.php',
-					array(
-						'quantity_min'      => $quantity_min,
-						'quantity_max'      => $quantity_max,
-						'component_id'      => $component_id,
-						'product'           => $product,
-						'composite_product' => $composite_product,
-					),
-					'',
-					WC_CP()->plugin_path() . '/templates/'
-				);
+				wc_get_template( 'composited-product/quantity.php', array(
+					'quantity_min'      => $quantity_min,
+					'quantity_max'      => $quantity_max,
+					'component_id'      => $component_id,
+					'product'           => $product,
+					'composite_product' => $composite_product
+				), '', WC_CP()->plugin_path() . '/templates/' );
 
-				?>
-				</div>
+			?></div>
 		</div>
 	</div>
 </div>

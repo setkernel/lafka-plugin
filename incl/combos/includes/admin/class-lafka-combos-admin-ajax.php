@@ -28,7 +28,7 @@ class WC_LafkaCombos_Admin_Ajax {
 		 */
 
 		// Dismiss notices.
-		add_action( 'wp_ajax_woocommerce_dismiss_combo_notice', array( __CLASS__, 'dismiss_notice' ) );
+		add_action( 'wp_ajax_woocommerce_dismiss_combo_notice', array( __CLASS__ , 'dismiss_notice' ) );
 
 		/*
 		 * Edit-Product screens.
@@ -67,14 +67,14 @@ class WC_LafkaCombos_Admin_Ajax {
 	public static function dismiss_notice() {
 
 		$failure = array(
-			'result' => 'failure',
+			'result' => 'failure'
 		);
 
 		if ( ! check_ajax_referer( 'wc_pb_dismiss_notice_nonce', 'security', false ) ) {
 			wp_send_json( $failure );
 		}
 
-		if ( empty( $_POST['notice'] ) ) {
+		if ( empty( $_POST[ 'notice' ] ) ) {
 			wp_send_json( $failure );
 		}
 
@@ -82,14 +82,14 @@ class WC_LafkaCombos_Admin_Ajax {
 			wp_send_json( $failure );
 		}
 
-		$dismissed = WC_LafkaCombos_Admin_Notices::dismiss_notice( wc_clean( $_POST['notice'] ) );
+		$dismissed = WC_LafkaCombos_Admin_Notices::dismiss_notice( wc_clean( $_POST[ 'notice' ] ) );
 
 		if ( ! $dismissed ) {
 			wp_send_json( $failure );
 		}
 
 		$response = array(
-			'result' => 'success',
+			'result' => 'success'
 		);
 
 		wp_send_json( $response );
@@ -106,13 +106,13 @@ class WC_LafkaCombos_Admin_Ajax {
 	 */
 	public static function ajax_search_combined_variations() {
 
-		if ( ! empty( $_GET['include'] ) ) {
-			if ( $product = wc_get_product( absint( $_GET['include'] ) ) ) {
+		if ( ! empty( $_GET[ 'include' ] ) ) {
+			if ( $product = wc_get_product( absint( $_GET[ 'include' ] ) ) ) {
 				self::$searching_variations_of = $product->get_id();
-				$_GET['include']               = $product->get_children();
+				$_GET[ 'include' ] = $product->get_children();
 			} else {
 				self::$searching_variations_of = 0;
-				$_GET['include']               = array();
+				$_GET[ 'include' ] = array();
 			}
 		}
 
@@ -156,20 +156,20 @@ class WC_LafkaCombos_Admin_Ajax {
 
 		check_ajax_referer( 'wc_combos_add_combined_product', 'security' );
 
-		$loop         = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : 0;
-		$post_id      = isset( $_POST['post_id'] ) ? intval( $_POST['post_id'] ) : 0;
-		$product_id   = isset( $_POST['product_id'] ) ? intval( $_POST['product_id'] ) : 0;
-		$item_id      = false;
-		$toggle       = 'open';
-		$tabs         = WC_LafkaCombos_Meta_Box_Product_Data::get_combined_product_tabs();
-		$product      = wc_get_product( $product_id );
-		$title        = $product->get_title();
-		$sku          = $product->get_sku();
-		$stock_status = 'in_stock';
-		$item_data    = array();
-		$response     = array(
+		$loop               = isset( $_POST[ 'id' ] ) ? intval( $_POST[ 'id' ] ) : 0;
+		$post_id            = isset( $_POST[ 'post_id' ] ) ? intval( $_POST[ 'post_id' ] ) : 0;
+		$product_id         = isset( $_POST[ 'product_id' ] ) ? intval( $_POST[ 'product_id' ] ) : 0;
+		$item_id            = false;
+		$toggle             = 'open';
+		$tabs               = WC_LafkaCombos_Meta_Box_Product_Data::get_combined_product_tabs();
+		$product            = wc_get_product( $product_id );
+		$title              = $product->get_title();
+		$sku                = $product->get_sku();
+		$stock_status       = 'in_stock';
+		$item_data          = array();
+		$response           = array(
 			'markup'  => '',
-			'message' => '',
+			'message' => ''
 		);
 
 		if ( $product ) {
@@ -177,20 +177,21 @@ class WC_LafkaCombos_Admin_Ajax {
 			if ( in_array( $product->get_type(), array( 'simple', 'variable', 'subscription', 'variable-subscription' ) ) ) {
 
 				if ( ! $product->is_in_stock() ) {
-					$stock_status = 'out_of_stock';
+					$stock_status       = 'out_of_stock';
 				} elseif ( $product->is_on_backorder( 1 ) ) {
-					$stock_status = 'on_backorder';
+					$stock_status       = 'on_backorder';
 				}
 
 				ob_start();
-				include WC_LafkaCombos_ABSPATH . 'includes/admin/meta-boxes/views/html-combined-product.php';
-				$response['markup'] = ob_get_clean();
+				include( WC_LafkaCombos_ABSPATH . 'includes/admin/meta-boxes/views/html-combined-product.php' );
+				$response[ 'markup' ] = ob_get_clean();
 
 			} else {
-				$response['message'] = __( 'The selected product cannot be combined. Please select a simple product, a variable product, or a simple/variable subscription.', 'lafka-plugin' );
+				$response[ 'message' ] = __( 'The selected product cannot be combined. Please select a simple product, a variable product, or a simple/variable subscription.', 'lafka-plugin' );
 			}
+
 		} else {
-			$response['message'] = __( 'The selected product is invalid.', 'lafka-plugin' );
+			$response[ 'message' ] = __( 'The selected product is invalid.', 'lafka-plugin' );
 		}
 
 		wp_send_json( $response );
@@ -225,19 +226,19 @@ class WC_LafkaCombos_Admin_Ajax {
 		global $product;
 
 		$failure = array(
-			'result' => 'failure',
+			'result' => 'failure'
 		);
 
 		if ( ! check_ajax_referer( 'wc_combos_edit_combo', 'security', false ) ) {
 			wp_send_json( $failure );
 		}
 
-		if ( empty( $_POST['order_id'] ) || empty( $_POST['item_id'] ) ) {
+		if ( empty( $_POST[ 'order_id' ] ) || empty( $_POST[ 'item_id' ] ) ) {
 			wp_send_json( $failure );
 		}
 
-		$order   = wc_get_order( wc_clean( $_POST['order_id'] ) );
-		$item_id = absint( wc_clean( $_POST['item_id'] ) );
+		$order   = wc_get_order( wc_clean( $_POST[ 'order_id' ] ) );
+		$item_id = absint( wc_clean( $_POST[ 'item_id' ] ) );
 
 		if ( ! ( $order instanceof WC_Order ) ) {
 			wp_send_json( $failure );
@@ -249,7 +250,7 @@ class WC_LafkaCombos_Admin_Ajax {
 			wp_send_json( $failure );
 		}
 
-		$product        = $item->get_product();
+		$product       = $item->get_product();
 		$combined_items = $product ? $product->get_combined_items() : false;
 
 		if ( empty( $combined_items ) ) {
@@ -272,12 +273,12 @@ class WC_LafkaCombos_Admin_Ajax {
 		add_filter( 'woocommerce_combined_item_description', '__return_false' );
 
 		ob_start();
-		include WC_LafkaCombos_ABSPATH . 'includes/admin/meta-boxes/views/html-combo-edit-form.php';
+		include( WC_LafkaCombos_ABSPATH . 'includes/admin/meta-boxes/views/html-combo-edit-form.php' );
 		$html = ob_get_clean();
 
 		$response = array(
 			'result' => 'success',
-			'html'   => $html,
+			'html'   => $html
 		);
 
 		wp_send_json( $response );
@@ -293,7 +294,7 @@ class WC_LafkaCombos_Admin_Ajax {
 	public static function ajax_edit_combo_in_order() {
 
 		$failure = array(
-			'result' => 'failure',
+			'result' => 'failure'
 		);
 
 		if ( ! current_user_can( 'edit_shop_orders' ) ) {
@@ -304,12 +305,12 @@ class WC_LafkaCombos_Admin_Ajax {
 			wp_send_json( $failure );
 		}
 
-		if ( empty( $_POST['order_id'] ) || empty( $_POST['item_id'] ) ) {
+		if ( empty( $_POST[ 'order_id' ] ) || empty( $_POST[ 'item_id' ] ) ) {
 			wp_send_json( $failure );
 		}
 
-		$order   = wc_get_order( wc_clean( $_POST['order_id'] ) );
-		$item_id = absint( wc_clean( $_POST['item_id'] ) );
+		$order   = wc_get_order( wc_clean( $_POST[ 'order_id' ] ) );
+		$item_id = absint( wc_clean( $_POST[ 'item_id' ] ) );
 
 		if ( ! ( $order instanceof WC_Order ) ) {
 			wp_send_json( $failure );
@@ -327,8 +328,8 @@ class WC_LafkaCombos_Admin_Ajax {
 			wp_send_json( $failure );
 		}
 
-		if ( ! empty( $_POST['fields'] ) ) {
-			parse_str( $_POST['fields'], $posted_form_fields ); // @phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		if ( ! empty( $_POST[ 'fields' ] ) ) {
+			parse_str( $_POST[ 'fields' ], $posted_form_fields ); // @phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			$_POST = array_merge( $_POST, $posted_form_fields );
 		}
 
@@ -338,46 +339,41 @@ class WC_LafkaCombos_Admin_Ajax {
 		// Compare posted against current configuration.
 		if ( $posted_configuration !== $current_configuration ) {
 
-			$added_to_order = WC_LafkaCombos()->order->add_combo_to_order(
-				$product,
-				$order,
-				$item->get_quantity(),
-				array(
+			$added_to_order = WC_LafkaCombos()->order->add_combo_to_order( $product, $order, $item->get_quantity(), array(
 
-					/**
-					 * 'woocommerce_editing_combo_in_order_configuration' filter.
-					 *
-					 * Use this filter to modify the posted configuration.
-					 *
-					 * @param  $config   array
-					 * @param  $product  WC_Product_Combo
-					 * @param  $item     WC_Order_Item
-					 * @param  $order    WC_Order
-					 */
-					'configuration' => apply_filters( 'woocommerce_editing_combo_in_order_configuration', $posted_configuration, $product, $item, $order ),
-				)
-			);
+				/**
+				 * 'woocommerce_editing_combo_in_order_configuration' filter.
+				 *
+				 * Use this filter to modify the posted configuration.
+				 *
+				 * @param  $config   array
+				 * @param  $product  WC_Product_Combo
+				 * @param  $item     WC_Order_Item
+				 * @param  $order    WC_Order
+				 */
+				'configuration' => apply_filters( 'woocommerce_editing_combo_in_order_configuration', $posted_configuration, $product, $item, $order )
+			) );
 
 			// Invalid configuration?
 			if ( is_wp_error( $added_to_order ) ) {
 
 				$message = __( 'The submitted configuration is invalid.', 'lafka-plugin' );
 				$data    = $added_to_order->get_error_data();
-				$notice  = isset( $data['notices'] ) ? current( $data['notices'] ) : '';
+				$notice  = isset( $data[ 'notices' ] ) ? current( $data[ 'notices' ] ) : '';
 
 				if ( $notice ) {
-					$notice_text = WC_LafkaCombos_Core_Compatibility::is_wc_version_gte( '3.9' ) ? $notice['notice'] : $notice;
+					$notice_text = WC_LafkaCombos_Core_Compatibility::is_wc_version_gte( '3.9' ) ? $notice[ 'notice' ] : $notice;
 					$message     = sprintf( _x( '%1$s %2$s', 'edit combo in order: formatted validation message', 'lafka-plugin' ), $message, html_entity_decode( $notice_text ) );
 				}
 
 				$response = array(
 					'result' => 'failure',
-					'error'  => $message,
+					'error'  => $message
 				);
 
 				wp_send_json( $response );
 
-				// Adjust stock and remove old items.
+			// Adjust stock and remove old items.
 			} else {
 
 				$new_container_item = $order->get_item( $added_to_order );
@@ -393,7 +389,7 @@ class WC_LafkaCombos_Admin_Ajax {
 				do_action( 'woocommerce_editing_combo_in_order', $new_container_item, $item, $order );
 
 				$combined_items_to_remove = wc_pc_get_combined_order_items( $item, $order );
-				$items_to_remove          = array( $item ) + $combined_items_to_remove;
+				$items_to_remove         = array( $item ) + $combined_items_to_remove;
 
 				/*
 				 * Adjust stock.
@@ -412,7 +408,7 @@ class WC_LafkaCombos_Admin_Ajax {
 					foreach ( $combined_items_to_remove as $combined_item_to_remove ) {
 
 						$combined_item_id = $combined_item_to_remove->get_meta( '_combined_item_id', true );
-						$product_id       = $combined_item_to_remove->get_product_id();
+						$product_id      = $combined_item_to_remove->get_product_id();
 
 						if ( $variation_id = $combined_item_to_remove->get_variation_id() ) {
 							$product_id = $variation_id;
@@ -426,9 +422,9 @@ class WC_LafkaCombos_Admin_Ajax {
 							'actions' => array(
 								'remove' => array(
 									'title' => $combined_item_to_remove->get_name(),
-									'sku'   => '#' . $product_id,
-								),
-							),
+									'sku'   => '#' . $product_id
+								)
+							)
 						);
 
 						$changed_stock = wc_maybe_adjust_line_item_product_stock( $combined_item_to_remove, 0 );
@@ -444,15 +440,15 @@ class WC_LafkaCombos_Admin_Ajax {
 							}
 
 							// Associate change with stock.
-							$changes_map[ $combined_item_id ]['actions']['remove']['stock_managed_by_id'] = $stock_managed_by_id;
-							$changes_map[ $combined_item_id ]['actions']['remove']['sku']                 = $product_sku;
+							$changes_map[ $combined_item_id ][ 'actions' ][ 'remove' ][ 'stock_managed_by_id' ] = $stock_managed_by_id;
+							$changes_map[ $combined_item_id ][ 'actions' ][ 'remove' ][ 'sku' ]                 = $product_sku;
 
 							if ( isset( $stock_map[ $stock_managed_by_id ] ) ) {
-								$stock_map[ $stock_managed_by_id ]['to'] = $changed_stock['to'];
+								$stock_map[ $stock_managed_by_id ][ 'to' ] = $changed_stock[ 'to' ];
 							} else {
 								$stock_map[ $stock_managed_by_id ] = array(
-									'from' => $changed_stock['from'],
-									'to'   => $changed_stock['to'],
+									'from' => $changed_stock[ 'from' ],
+									'to'   => $changed_stock[ 'to' ]
 								);
 							}
 						}
@@ -463,9 +459,9 @@ class WC_LafkaCombos_Admin_Ajax {
 					foreach ( $combined_order_items as $order_item_id => $order_item ) {
 
 						$combined_item_id = $order_item->get_meta( '_combined_item_id', true );
-						$product          = $order_item->get_product();
-						$product_id       = $product->get_id();
-						$action           = 'add';
+						$product         = $order_item->get_product();
+						$product_id      = $product->get_id();
+						$action          = 'add';
 
 						$product_ids[ $combined_item_id ] = $product_id;
 
@@ -473,27 +469,27 @@ class WC_LafkaCombos_Admin_Ajax {
 						if ( isset( $changes_map[ $combined_item_id ] ) ) {
 
 							// If the selection didn't change, log it as an adjustment.
-							if ( $product_id === $changes_map[ $combined_item_id ]['id'] ) {
+							if ( $product_id === $changes_map[ $combined_item_id ][ 'id' ] ) {
 
 								$action = 'adjust';
 
-								$changes_map[ $combined_item_id ]['actions'] = array(
+								$changes_map[ $combined_item_id ][ 'actions' ] = array(
 									'adjust' => array(
 										'title' => $order_item->get_name(),
-										'sku'   => '#' . $product_id,
-									),
+										'sku'   => '#' . $product_id
+									)
 								);
 
-								// Otherwise, log another 'add' action.
+							// Otherwise, log another 'add' action.
 							} else {
 
-								$changes_map[ $combined_item_id ]['actions']['add'] = array(
+								$changes_map[ $combined_item_id ][ 'actions' ][ 'add' ] = array(
 									'title' => $order_item->get_name(),
-									'sku'   => '#' . $product_id,
+									'sku'   => '#' . $product_id
 								);
 							}
 
-							// If we're seeing this combined item for the first, time, log an 'add' action.
+						// If we're seeing this combined item for the first, time, log an 'add' action.
 						} else {
 
 							$changes_map[ $combined_item_id ] = array(
@@ -501,9 +497,9 @@ class WC_LafkaCombos_Admin_Ajax {
 								'actions' => array(
 									'add' => array(
 										'title' => $order_item->get_name(),
-										'sku'   => '#' . $product_id,
-									),
-								),
+										'sku'   => '#' . $product_id
+									)
+								)
 							);
 						}
 
@@ -518,18 +514,18 @@ class WC_LafkaCombos_Admin_Ajax {
 							}
 
 							// Associate change with stock.
-							$changes_map[ $combined_item_id ]['actions'][ $action ]['stock_managed_by_id'] = $stock_managed_by_id;
-							$changes_map[ $combined_item_id ]['actions'][ $action ]['sku']                 = $product_sku;
+							$changes_map[ $combined_item_id ][ 'actions' ][ $action ][ 'stock_managed_by_id' ] = $stock_managed_by_id;
+							$changes_map[ $combined_item_id ][ 'actions' ][ $action ][ 'sku' ]                 = $product_sku;
 
 							$old_stock = $product->get_stock_quantity();
 							$new_stock = wc_update_product_stock( $product, $qty, 'decrease' );
 
 							if ( isset( $stock_map[ $stock_managed_by_id ] ) ) {
-								$stock_map[ $stock_managed_by_id ]['to'] = $new_stock;
+								$stock_map[ $stock_managed_by_id ][ 'to' ] = $new_stock;
 							} else {
 								$stock_map[ $stock_managed_by_id ] = array(
-									'from' => $old_stock,
-									'to'   => $new_stock,
+									'from'    => $old_stock,
+									'to'      => $new_stock
 								);
 							}
 
@@ -538,13 +534,13 @@ class WC_LafkaCombos_Admin_Ajax {
 						}
 					}
 
-					$duplicate_product_ids               = array_diff_assoc( $product_ids, array_unique( $product_ids ) );
+					$duplicate_product_ids              = array_diff_assoc( $product_ids, array_unique( $product_ids ) );
 					$duplicate_product_combined_item_ids = array_keys( array_intersect( $product_ids, $duplicate_product_ids ) );
 
 					$stock_strings = array(
 						'add'    => array(),
 						'remove' => array(),
-						'adjust' => array(),
+						'adjust' => array()
 					);
 
 					foreach ( $changes_map as $item_id => $item_changes ) {
@@ -553,36 +549,36 @@ class WC_LafkaCombos_Admin_Ajax {
 
 						foreach ( $actions as $action ) {
 
-							if ( isset( $item_changes['actions'][ $action ] ) ) {
+							if ( isset( $item_changes[ 'actions' ][ $action ] ) ) {
 
-								$stock_changes        = isset( $item_changes['actions'][ $action ]['stock_managed_by_id'] ) && isset( $stock_map[ $item_changes['actions'][ $action ]['stock_managed_by_id'] ] ) ? $stock_map[ $item_changes['actions'][ $action ]['stock_managed_by_id'] ] : false;
-								$stock_from_to_string = $stock_changes && $stock_changes['from'] && $stock_changes['from'] !== $stock_changes['to'] ? ( $stock_changes['from'] . '&rarr;' . $stock_changes['to'] ) : '';
+								$stock_changes        = isset( $item_changes[ 'actions' ][ $action ][ 'stock_managed_by_id' ] ) && isset( $stock_map[ $item_changes[ 'actions' ][ $action ][ 'stock_managed_by_id' ] ] ) ? $stock_map[ $item_changes[ 'actions' ][ $action ][ 'stock_managed_by_id' ] ] : false;
+								$stock_from_to_string = $stock_changes && $stock_changes[ 'from' ] && $stock_changes[ 'from' ] !== $stock_changes[ 'to' ] ? ( $stock_changes[ 'from' ] . '&rarr;' . $stock_changes[ 'to' ] ) : '';
 
 								if ( in_array( $item_id, $duplicate_product_combined_item_ids ) ) {
-									$stock_id = sprintf( _x( '%1$s:%2$s', 'combined items stock change note sku with id format', 'lafka-plugin' ), $item_changes['actions'][ $action ]['sku'], $item_id );
+									$stock_id = sprintf( _x( '%1$s:%2$s', 'combined items stock change note sku with id format', 'lafka-plugin' ), $item_changes[ 'actions' ][ $action ][ 'sku' ], $item_id );
 								} else {
-									$stock_id = $item_changes['actions'][ $action ]['sku'];
+									$stock_id = $item_changes[ 'actions' ][ $action ][ 'sku' ];
 								}
 
 								if ( $stock_from_to_string ) {
-									$stock_strings[ $action ][] = sprintf( _x( '%1$s (%2$s) &ndash; %3$s', 'combined items stock change note format', 'lafka-plugin' ), $item_changes['actions'][ $action ]['title'], $stock_id, $stock_from_to_string );
+									$stock_strings[ $action ][] = sprintf( _x( '%1$s (%2$s) &ndash; %3$s', 'combined items stock change note format', 'lafka-plugin' ), $item_changes[ 'actions' ][ $action ][ 'title' ], $stock_id, $stock_from_to_string );
 								} else {
-									$stock_strings[ $action ][] = sprintf( _x( '%1$s (%2$s)', 'combined items change note format', 'lafka-plugin' ), $item_changes['actions'][ $action ]['title'], $stock_id );
+									$stock_strings[ $action ][] = sprintf( _x( '%1$s (%2$s)', 'combined items change note format', 'lafka-plugin' ), $item_changes[ 'actions' ][ $action ][ 'title' ], $stock_id );
 								}
 							}
 						}
 					}
 
-					if ( ! empty( $stock_strings['remove'] ) ) {
-						$order->add_order_note( sprintf( __( 'Deleted combined line items: %s', 'lafka-plugin' ), implode( ', ', $stock_strings['remove'] ) ), false, true );
+					if ( ! empty( $stock_strings[ 'remove' ] ) ) {
+						$order->add_order_note( sprintf( __( 'Deleted combined line items: %s', 'lafka-plugin' ), implode( ', ', $stock_strings[ 'remove' ] ) ), false, true );
 					}
 
-					if ( ! empty( $stock_strings['add'] ) ) {
-						$order->add_order_note( sprintf( __( 'Added combined line items: %s', 'lafka-plugin' ), implode( ', ', $stock_strings['add'] ) ), false, true );
+					if ( ! empty( $stock_strings[ 'add' ] ) ) {
+						$order->add_order_note( sprintf( __( 'Added combined line items: %s', 'lafka-plugin' ), implode( ', ', $stock_strings[ 'add' ] ) ), false, true );
 					}
 
-					if ( ! empty( $stock_strings['adjust'] ) ) {
-						$order->add_order_note( sprintf( __( 'Adjusted combined line items: %s', 'lafka-plugin' ), implode( ', ', $stock_strings['adjust'] ) ), false, true );
+					if ( ! empty( $stock_strings[ 'adjust' ] ) ) {
+						$order->add_order_note( sprintf( __( 'Adjusted combined line items: %s', 'lafka-plugin' ), implode( ', ', $stock_strings[ 'adjust' ] ) ), false, true );
 					}
 				}
 
@@ -597,13 +593,13 @@ class WC_LafkaCombos_Admin_Ajax {
 				/*
 				 * Recalculate totals.
 				 */
-				if ( isset( $_POST['country'], $_POST['state'], $_POST['postcode'], $_POST['city'] ) ) {
+				if ( isset( $_POST[ 'country' ], $_POST[ 'state' ], $_POST[ 'postcode' ], $_POST[ 'city' ] ) ) {
 
 					$calculate_tax_args = array(
-						'country'  => strtoupper( wc_clean( $_POST['country'] ) ),
-						'state'    => strtoupper( wc_clean( $_POST['state'] ) ),
-						'postcode' => strtoupper( wc_clean( $_POST['postcode'] ) ),
-						'city'     => strtoupper( wc_clean( $_POST['city'] ) ),
+						'country'  => strtoupper( wc_clean( $_POST[ 'country' ] ) ),
+						'state'    => strtoupper( wc_clean( $_POST[ 'state' ] ) ),
+						'postcode' => strtoupper( wc_clean( $_POST[ 'postcode' ] ) ),
+						'city'     => strtoupper( wc_clean( $_POST[ 'city' ] ) ),
 					);
 
 					$order->calculate_taxes( $calculate_tax_args );
@@ -616,25 +612,25 @@ class WC_LafkaCombos_Admin_Ajax {
 		}
 
 		ob_start();
-		include WC_ABSPATH . 'includes/admin/meta-boxes/views/html-order-items.php';
+		include ( WC_ABSPATH . 'includes/admin/meta-boxes/views/html-order-items.php' );
 		$html = ob_get_clean();
 
 		if ( WC_LafkaCombos_Core_Compatibility::is_wc_version_gte( '3.6' ) ) {
 
 			ob_start();
 			$notes = wc_get_order_notes( array( 'order_id' => $order->get_id() ) );
-			include WC_ABSPATH . 'includes/admin/meta-boxes/views/html-order-notes.php';
+			include ( WC_ABSPATH . 'includes/admin/meta-boxes/views/html-order-notes.php' );
 			$notes_html = ob_get_clean();
-			$response   = array(
+			$response = array(
 				'result'     => 'success',
 				'html'       => $html,
-				'notes_html' => $notes_html,
+				'notes_html' => $notes_html
 			);
 
 		} else {
 			$response = array(
-				'result' => 'success',
-				'html'   => $html,
+				'result'     => 'success',
+				'html'       => $html,
 			);
 		}
 

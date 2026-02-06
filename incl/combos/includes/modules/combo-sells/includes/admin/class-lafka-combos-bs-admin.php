@@ -49,19 +49,18 @@ class WC_LafkaCombos_BS_Admin {
 
 						$product_ids = WC_LafkaCombos_BS_Product::get_combo_sell_ids( $product_object, 'edit' );
 
-					if ( ! empty( $product_ids ) ) {
-						foreach ( $product_ids as $product_id ) {
+						if ( ! empty( $product_ids ) ) {
+							foreach ( $product_ids as $product_id ) {
 
-							$product = wc_get_product( $product_id );
+								$product = wc_get_product( $product_id );
 
-							if ( is_object( $product ) ) {
-								echo '<option value="' . esc_attr( $product_id ) . '"' . selected( true, true, false ) . '>' . wp_kses_post( $product->get_formatted_name() ) . '</option>';
+								if ( is_object( $product ) ) {
+									echo '<option value="' . esc_attr( $product_id ) . '"' . selected( true, true, false ) . '>' . wp_kses_post( $product->get_formatted_name() ) . '</option>';
+								}
 							}
 						}
-					}
 					?>
-				</select> 
-				<?php
+				</select> <?php 
 
 					$supported_product_types_disclaimer = class_exists( 'WC_Subscriptions' ) ? __( 'Supported product types: Simple, Simple subscription.', 'lafka-plugin' ) : __( 'Supports Simple products only.', 'lafka-plugin' );
 					echo wc_help_tip( sprintf( __( 'Combo-sells are optional products that can be selected and added to the cart along with this product. %s', 'lafka-plugin' ), $supported_product_types_disclaimer ) );
@@ -70,28 +69,24 @@ class WC_LafkaCombos_BS_Admin {
 			</p>
 			<?php
 
-				woocommerce_wp_textarea_input(
-					array(
-						'id'          => 'wc_pb_combo_sells_title',
-						'value'       => WC_LafkaCombos_BS_Product::get_combo_sells_title( $product_object, 'edit' ),
-						'label'       => __( 'Combo-sells title', 'lafka-plugin' ),
-						'description' => __( 'Text to display above the combo-sells section.', 'lafka-plugin' ),
-						'placeholder' => __( 'e.g. "Frequently Bought Together"', 'lafka-plugin' ),
-						'desc_tip'    => true,
-					)
-				);
+				woocommerce_wp_textarea_input( array(
+					'id'            => 'wc_pb_combo_sells_title',
+					'value'         => WC_LafkaCombos_BS_Product::get_combo_sells_title( $product_object, 'edit' ),
+					'label'         => __( 'Combo-sells title', 'lafka-plugin' ),
+					'description'   => __( 'Text to display above the combo-sells section.', 'lafka-plugin' ),
+					'placeholder'   => __( 'e.g. "Frequently Bought Together"', 'lafka-plugin' ),
+					'desc_tip'      => true
+				) );
 
-				woocommerce_wp_text_input(
-					array(
-						'id'          => 'wc_pb_combo_sells_discount',
-						'value'       => WC_LafkaCombos_BS_Product::get_combo_sells_discount( $product_object, 'edit' ),
-						'type'        => 'text',
-						'class'       => 'input-text wc_input_decimal',
-						'label'       => __( 'Combo-sells discount', 'lafka-plugin' ),
-						'description' => __( 'Discount to apply to combo-sells (%). Accepts values from 0 to 100.', 'lafka-plugin' ),
-						'desc_tip'    => true,
-					)
-				);
+				woocommerce_wp_text_input( array(
+					'id'            => 'wc_pb_combo_sells_discount',
+					'value'         => WC_LafkaCombos_BS_Product::get_combo_sells_discount( $product_object, 'edit' ),
+					'type'          => 'text',
+					'class'         => 'input-text wc_input_decimal',
+					'label'         => __( 'Combo-sells discount', 'lafka-plugin' ),
+					'description'   => __( 'Discount to apply to combo-sells (%). Accepts values from 0 to 100.', 'lafka-plugin' ),
+					'desc_tip'      => true
+				) );
 
 			?>
 		</div>
@@ -107,7 +102,7 @@ class WC_LafkaCombos_BS_Admin {
 		 * Process combo-sell IDs.
 		 */
 
-		$combo_sell_ids = ! empty( $_POST['combo_sell_ids'] ) && is_array( $_POST['combo_sell_ids'] ) ? array_map( 'intval', (array) $_POST['combo_sell_ids'] ) : array();
+		$combo_sell_ids = ! empty( $_POST[ 'combo_sell_ids' ] ) && is_array( $_POST[ 'combo_sell_ids' ] ) ? array_map( 'intval', (array) $_POST[ 'combo_sell_ids' ] ) : array();
 
 		if ( ! empty( $combo_sell_ids ) ) {
 			$product->update_meta_data( '_wc_pb_combo_sell_ids', $combo_sell_ids );
@@ -119,10 +114,10 @@ class WC_LafkaCombos_BS_Admin {
 		 * Process combo-sells title.
 		 */
 
-		$title = ! empty( $_POST['wc_pb_combo_sells_title'] ) ? wp_kses( wp_unslash( $_POST['wc_pb_combo_sells_title'] ), WC_LafkaCombos_Helpers::get_allowed_html( 'inline' ) ) : false; // @phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$title = ! empty( $_POST[ 'wc_pb_combo_sells_title' ] ) ? wp_kses( wp_unslash( $_POST[ 'wc_pb_combo_sells_title' ] ), WC_LafkaCombos_Helpers::get_allowed_html( 'inline' ) ) : false; // @phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
 		if ( $title ) {
-			$product->update_meta_data( '_wc_pb_combo_sells_title', $title );
+			$product->update_meta_data( '_wc_pb_combo_sells_title',  $title );
 		} else {
 			$product->delete_meta_data( '_wc_pb_combo_sells_title' );
 		}
@@ -131,7 +126,7 @@ class WC_LafkaCombos_BS_Admin {
 		 * Process combo-sells discount.
 		 */
 
-		$discount = ! empty( $_POST['wc_pb_combo_sells_discount'] ) ? sanitize_text_field( $_POST['wc_pb_combo_sells_discount'] ) : false;
+		$discount = ! empty( $_POST[ 'wc_pb_combo_sells_discount' ] ) ? sanitize_text_field( $_POST[ 'wc_pb_combo_sells_discount' ] ) : false;
 
 		if ( ! empty( $discount ) ) {
 

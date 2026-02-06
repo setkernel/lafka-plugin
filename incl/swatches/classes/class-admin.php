@@ -79,8 +79,8 @@ class Lafka_WC_Variation_Swatches_Admin {
 
 		wp_enqueue_media();
 
-		wp_enqueue_style( 'lafka-wcs-admin', plugins_url( '../../assets/css/lafka-plugin-admin-swatches.css', __DIR__ ), array( 'wp-color-picker' ), '20160615' );
-		wp_enqueue_script( 'lafka-wcs-admin', plugins_url( '../../assets/js/lafka-plugin-admin-swatches.js', __DIR__ ), array( 'jquery', 'wp-color-picker', 'wp-util' ), '20170113', true );
+		wp_enqueue_style( 'lafka-wcs-admin', plugins_url( '../../assets/css/lafka-plugin-admin-swatches.css', dirname( __FILE__ ) ), array( 'wp-color-picker' ), '20160615' );
+		wp_enqueue_script( 'lafka-wcs-admin', plugins_url( '../../assets/js/lafka-plugin-admin-swatches.js', dirname( __FILE__ ) ), array( 'jquery', 'wp-color-picker', 'wp-util' ), '20170113', true );
 
 		wp_localize_script(
 			'lafka-wcs-admin',
@@ -90,7 +90,7 @@ class Lafka_WC_Variation_Swatches_Admin {
 					'mediaTitle'  => esc_html__( 'Choose an image', 'lafka-plugin' ),
 					'mediaButton' => esc_html__( 'Use image', 'lafka-plugin' ),
 				),
-				'placeholder' => WC()->plugin_url() . '/assets/images/placeholder.png',
+				'placeholder' => WC()->plugin_url() . '/assets/images/placeholder.png'
 			)
 		);
 	}
@@ -138,7 +138,7 @@ class Lafka_WC_Variation_Swatches_Admin {
 			'edit' == $form ? 'tr' : 'div',
 			'edit' == $form ? '<th>' : '',
 			esc_attr( $type ),
-			Lafka_WCVS()->types[ $type ],
+			Lafka_WCVS()->types[$type],
 			'edit' == $form ? '</th><td>' : ''
 		);
 
@@ -148,24 +148,19 @@ class Lafka_WC_Variation_Swatches_Admin {
 				$image = $image ? $image[0] : WC()->plugin_url() . '/assets/images/placeholder.png';
 				?>
 				<div class="lafka-wcs-term-image-thumbnail" style="float:left;margin-right:10px;">
-					<img src="<?php echo esc_url( $image ); ?>" width="60px" height="60px" />
+					<img src="<?php echo esc_url( $image ) ?>" width="60px" height="60px" />
 				</div>
 				<div style="line-height:60px;">
-					<input type="hidden" class="lafka-wcs-term-image" name="image" value="<?php echo esc_attr( $value ); ?>" />
+					<input type="hidden" class="lafka-wcs-term-image" name="image" value="<?php echo esc_attr( $value ) ?>" />
 					<button type="button" class="lafka-wcs-upload-image-button button"><?php esc_html_e( 'Upload/Add image', 'lafka-plugin' ); ?></button>
-					<button type="button" class="lafka-wcs-remove-image-button button 
-					<?php
-					if ( ! $value ) {
-						echo 'hidden';}
-					?>
-					"><?php esc_html_e( 'Remove image', 'lafka-plugin' ); ?></button>
+					<button type="button" class="lafka-wcs-remove-image-button button <?php if(!$value) echo 'hidden'; ?>"><?php esc_html_e( 'Remove image', 'lafka-plugin' ); ?></button>
 				</div>
 				<?php
 				break;
 
 			default:
 				?>
-				<input type="text" id="term-<?php echo esc_attr( $type ); ?>" name="<?php echo esc_attr( $type ); ?>" value="<?php echo esc_attr( $value ); ?>" />
+				<input type="text" id="term-<?php echo esc_attr( $type ) ?>" name="<?php echo esc_attr( $type ) ?>" value="<?php echo esc_attr( $value ) ?>" />
 				<?php
 				break;
 		}
@@ -182,8 +177,8 @@ class Lafka_WC_Variation_Swatches_Admin {
 	 */
 	public function save_term_meta( $term_id, $tt_id ) {
 		foreach ( Lafka_WCVS()->types as $type => $label ) {
-			if ( isset( $_POST[ $type ] ) ) {
-				update_term_meta( $term_id, $type, $_POST[ $type ] );
+			if ( isset( $_POST[$type] ) ) {
+				update_term_meta( $term_id, $type, $_POST[$type] );
 			}
 		}
 	}
@@ -204,24 +199,15 @@ class Lafka_WC_Variation_Swatches_Admin {
 		$taxonomy_name = wc_attribute_taxonomy_name( $taxonomy->attribute_name );
 
 		$product_id = $thepostid;
-		if ( is_null( $thepostid ) && isset( $_POST['post_id'] ) ) {
-			$product_id = absint( $_POST['post_id'] );
+		if ( is_null( $thepostid ) && isset( $_POST[ 'post_id' ] ) ) {
+			$product_id = absint( $_POST[ 'post_id' ] );
 		}
 		?>
 
-		<select multiple="multiple" data-placeholder="<?php esc_attr_e( 'Select terms', 'lafka-plugin' ); ?>" class="multiselect attribute_values wc-enhanced-select" name="attribute_values[<?php echo esc_attr( $index ); ?>][]">
+		<select multiple="multiple" data-placeholder="<?php esc_attr_e( 'Select terms', 'lafka-plugin' ); ?>" class="multiselect attribute_values wc-enhanced-select" name="attribute_values[<?php echo esc_attr($index); ?>][]">
 			<?php
 
-			$all_terms = get_terms(
-				$taxonomy_name,
-				apply_filters(
-					'woocommerce_product_attribute_terms',
-					array(
-						'orderby'    => 'name',
-						'hide_empty' => false,
-					)
-				)
-			);
+			$all_terms = get_terms( $taxonomy_name, apply_filters( 'woocommerce_product_attribute_terms', array( 'orderby' => 'name', 'hide_empty' => false ) ) );
 			if ( $all_terms ) {
 				foreach ( $all_terms as $term ) {
 					echo '<option value="' . esc_attr( $term->term_id ) . '" ' . selected( has_term( absint( $term->term_id ), $taxonomy_name, $product_id ), true, false ) . '>' . esc_attr( apply_filters( 'woocommerce_product_attribute_term_name', $term->name, $term ) ) . '</option>';
@@ -231,7 +217,7 @@ class Lafka_WC_Variation_Swatches_Admin {
 		</select>
 		<button class="button plus select_all_attributes"><?php esc_html_e( 'Select all', 'lafka-plugin' ); ?></button>
 		<button class="button minus select_no_attributes"><?php esc_html_e( 'Select none', 'lafka-plugin' ); ?></button>
-		<button class="button fr plus lafka-wcs_add_new_attribute" data-type="<?php echo esc_attr( $taxonomy->attribute_type ); ?>"><?php esc_html_e( 'Add new', 'lafka-plugin' ); ?></button>
+		<button class="button fr plus lafka-wcs_add_new_attribute" data-type="<?php echo esc_attr($taxonomy->attribute_type) ?>"><?php esc_html_e( 'Add new', 'lafka-plugin' ); ?></button>
 
 		<?php
 	}
@@ -286,79 +272,79 @@ class Lafka_WC_Variation_Swatches_Admin {
 	public function add_attribute_term_template() {
 		global $pagenow, $post;
 		?>
-		<?php if ( in_array( $pagenow, array( 'post.php', 'post-new.php' ) ) && isset( $post ) && get_post_type( $post->ID ) === 'product' ) : ?>
-			<div id="lafka-wcs-modal-container" class="lafka-wcs-modal-container">
-				<div class="lafka-wcs-modal">
-					<button type="button" class="button-link media-modal-close lafka-wcs-modal-close">
-						<span class="media-modal-icon"></span></button>
-					<div class="lafka-wcs-modal-header"><h2><?php esc_html_e( 'Add new term', 'lafka-plugin' ); ?></h2></div>
-					<div class="lafka-wcs-modal-content">
-						<p class="lafka-wcs-term-name">
-							<label>
-								<?php esc_html_e( 'Name', 'lafka-plugin' ); ?>
-								<input type="text" class="widefat lafka-wcs-input" name="name">
-							</label>
-						</p>
-						<p class="lafka-wcs-term-slug">
-							<label>
-								<?php esc_html_e( 'Slug', 'lafka-plugin' ); ?>
-								<input type="text" class="widefat lafka-wcs-input" name="slug">
-							</label>
-						</p>
-						<div class="lafka-wcs-term-swatch">
+		<?php if ( in_array($pagenow, array('post.php','post-new.php')) && isset( $post ) && get_post_type( $post->ID ) === 'product' ): ?>
+            <div id="lafka-wcs-modal-container" class="lafka-wcs-modal-container">
+                <div class="lafka-wcs-modal">
+                    <button type="button" class="button-link media-modal-close lafka-wcs-modal-close">
+                        <span class="media-modal-icon"></span></button>
+                    <div class="lafka-wcs-modal-header"><h2><?php esc_html_e( 'Add new term', 'lafka-plugin' ) ?></h2></div>
+                    <div class="lafka-wcs-modal-content">
+                        <p class="lafka-wcs-term-name">
+                            <label>
+                                <?php esc_html_e( 'Name', 'lafka-plugin' ) ?>
+                                <input type="text" class="widefat lafka-wcs-input" name="name">
+                            </label>
+                        </p>
+                        <p class="lafka-wcs-term-slug">
+                            <label>
+                                <?php esc_html_e( 'Slug', 'lafka-plugin' ) ?>
+                                <input type="text" class="widefat lafka-wcs-input" name="slug">
+                            </label>
+                        </p>
+                        <div class="lafka-wcs-term-swatch">
 
-						</div>
-						<div class="hidden lafka-wcs-term-tax"></div>
+                        </div>
+                        <div class="hidden lafka-wcs-term-tax"></div>
 
-						<input type="hidden" class="lafka-wcs-input" name="nonce" value="<?php echo wp_create_nonce( '_lafka-wcs_create_attribute' ); ?>">
-					</div>
-					<div class="lafka-wcs-modal-footer">
-						<button class="button button-secondary lafka-wcs-modal-close"><?php esc_html_e( 'Cancel', 'lafka-plugin' ); ?></button>
-						<button class="button button-primary lafka-wcs-new-attribute-submit"><?php esc_html_e( 'Add New', 'lafka-plugin' ); ?></button>
-						<span class="message"></span>
-						<span class="spinner"></span>
-					</div>
-				</div>
-				<div class="lafka-wcs-modal-backdrop media-modal-backdrop"></div>
-			</div>
+                        <input type="hidden" class="lafka-wcs-input" name="nonce" value="<?php echo wp_create_nonce( '_lafka-wcs_create_attribute' ) ?>">
+                    </div>
+                    <div class="lafka-wcs-modal-footer">
+                        <button class="button button-secondary lafka-wcs-modal-close"><?php esc_html_e( 'Cancel', 'lafka-plugin' ) ?></button>
+                        <button class="button button-primary lafka-wcs-new-attribute-submit"><?php esc_html_e( 'Add New', 'lafka-plugin' ) ?></button>
+                        <span class="message"></span>
+                        <span class="spinner"></span>
+                    </div>
+                </div>
+                <div class="lafka-wcs-modal-backdrop media-modal-backdrop"></div>
+            </div>
 
-			<script type="text/template" id="tmpl-lafka-wcs-input-color">
+            <script type="text/template" id="tmpl-lafka-wcs-input-color">
 
-				<label><?php esc_html_e( 'Color', 'lafka-plugin' ); ?></label><br>
-				<input type="text" class="lafka-wcs-input lafka-wcs-input-color" name="swatch">
+                <label><?php esc_html_e( 'Color', 'lafka-plugin' ) ?></label><br>
+                <input type="text" class="lafka-wcs-input lafka-wcs-input-color" name="swatch">
 
-			</script>
+            </script>
 
-			<script type="text/template" id="tmpl-lafka-wcs-input-image">
+            <script type="text/template" id="tmpl-lafka-wcs-input-image">
 
-				<label><?php esc_html_e( 'Image', 'lafka-plugin' ); ?></label><br>
-				<div class="lafka-wcs-term-image-thumbnail" style="float:left;margin-right:10px;">
-					<img src="<?php echo esc_url( WC()->plugin_url() . '/assets/images/placeholder.png' ); ?>" width="60px" height="60px" />
-				</div>
-				<div style="line-height:60px;">
-					<input type="hidden" class="lafka-wcs-input lafka-wcs-input-image lafka-wcs-term-image" name="swatch" value="" />
-					<button type="button" class="lafka-wcs-upload-image-button button"><?php esc_html_e( 'Upload/Add image', 'lafka-plugin' ); ?></button>
-					<button type="button" class="lafka-wcs-remove-image-button button hidden"><?php esc_html_e( 'Remove image', 'lafka-plugin' ); ?></button>
-				</div>
+                <label><?php esc_html_e( 'Image', 'lafka-plugin' ) ?></label><br>
+                <div class="lafka-wcs-term-image-thumbnail" style="float:left;margin-right:10px;">
+                    <img src="<?php echo esc_url( WC()->plugin_url() . '/assets/images/placeholder.png' ) ?>" width="60px" height="60px" />
+                </div>
+                <div style="line-height:60px;">
+                    <input type="hidden" class="lafka-wcs-input lafka-wcs-input-image lafka-wcs-term-image" name="swatch" value="" />
+                    <button type="button" class="lafka-wcs-upload-image-button button"><?php esc_html_e( 'Upload/Add image', 'lafka-plugin' ); ?></button>
+                    <button type="button" class="lafka-wcs-remove-image-button button hidden"><?php esc_html_e( 'Remove image', 'lafka-plugin' ); ?></button>
+                </div>
 
-			</script>
+            </script>
 
-			<script type="text/template" id="tmpl-lafka-wcs-input-label">
+            <script type="text/template" id="tmpl-lafka-wcs-input-label">
 
-				<label>
-					<?php esc_html_e( 'Label', 'lafka-plugin' ); ?>
-					<input type="text" class="widefat lafka-wcs-input lafka-wcs-input-label" name="swatch">
-				</label>
+                <label>
+                    <?php esc_html_e( 'Label', 'lafka-plugin' ) ?>
+                    <input type="text" class="widefat lafka-wcs-input lafka-wcs-input-label" name="swatch">
+                </label>
 
-			</script>
+            </script>
 
-			<script type="text/template" id="tmpl-lafka-wcs-input-tax">
+            <script type="text/template" id="tmpl-lafka-wcs-input-tax">
 
-				<input type="hidden" class="lafka-wcs-input" name="taxonomy" value="{{data.tax}}">
-				<input type="hidden" class="lafka-wcs-input" name="type" value="{{data.type}}">
+                <input type="hidden" class="lafka-wcs-input" name="taxonomy" value="{{data.tax}}">
+                <input type="hidden" class="lafka-wcs-input" name="type" value="{{data.type}}">
 
-			</script>
-		<?php endif; ?>
+            </script>
+        <?php endif; ?>
 		<?php
 	}
 

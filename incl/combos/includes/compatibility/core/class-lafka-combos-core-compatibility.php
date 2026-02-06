@@ -514,7 +514,7 @@ class WC_LafkaCombos_Core_Compatibility {
 	 * @param  string  $context
 	 */
 	public static function log( $message, $level, $context ) {
-
+		
 		// Limit some types of logging to staging/dev environments only.
 		if ( in_array( $context, apply_filters( 'woocommerce_combos_debug_log_contexts', array( 'wc_pb_db_sync_tasks' ) ) ) ) {
 			if ( ! defined( 'WP_DEBUG' ) || ! WP_DEBUG ) {

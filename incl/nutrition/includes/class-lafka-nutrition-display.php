@@ -24,7 +24,7 @@ class Lafka_Nutrition_Display {
 	 * Get the plugin path.
 	 */
 	public function plugin_path() {
-		return $this->plugin_path = untrailingslashit( plugin_dir_path( __DIR__ ) );
+		return $this->plugin_path = untrailingslashit( plugin_dir_path( dirname( __FILE__ ) ) );
 	}
 
 	/**
@@ -37,15 +37,11 @@ class Lafka_Nutrition_Display {
 		$nutrition_list = $this->get_nutrition_list();
 		$allergens      = $product->get_meta( '_lafka_product_allergens' );
 
-		wc_get_template(
-			'nutrition-info.php',
-			array(
-				'lafka_nutrition_list'    => $nutrition_list,
-				'lafka_product_allergens' => $allergens,
-			),
-			'lafka-plugin',
-			$this->plugin_path() . '/templates/'
-		);
+		wc_get_template( 'nutrition-info.php', array(
+			'lafka_nutrition_list'    => $nutrition_list,
+			'lafka_product_allergens' => $allergens
+		), 'lafka-plugin', $this->plugin_path() . '/templates/' );
+
 	}
 
 	/**
@@ -54,21 +50,21 @@ class Lafka_Nutrition_Display {
 	public function display_weight() {
 		global /** @var WC_Product $product */
 		$product;
-		$is_quickview = isset( $_REQUEST['action'] ) && $_REQUEST['action'] === 'lafka_quickview';
+		$is_quickview = isset($_REQUEST['action']) && $_REQUEST['action'] === 'lafka_quickview';
 
 		if ( is_object( $product ) && ( is_product() || $is_quickview ) ) {
 			$available_variation_ids = false;
-			$weights                 = array();
-			$weight_unit             = get_option( 'woocommerce_weight_unit' );
+			$weights                   = array();
+			$weight_unit               = get_option( 'woocommerce_weight_unit' );
 
 			if ( function_exists( 'lafka_get_available_variation_ids' ) ) {
 				$available_variation_ids = lafka_get_available_variation_ids( $product );
 			}
 
 			if ( $product->get_type() === 'simple' && $product->get_weight() ) {
-				$weights[] = array(
+				$weights[]   = array(
 					'title'  => '',
-					'weight' => $product->get_weight(),
+					'weight' => $product->get_weight()
 				);
 			} elseif ( $available_variation_ids ) {
 				foreach ( $available_variation_ids as $variation_id ) {
@@ -79,30 +75,25 @@ class Lafka_Nutrition_Display {
 					if ( isset( $variation_data['attributes'] ) ) {
 						foreach ( $variation_data['attributes'] as $attribute_name => $attribute_slug ) {
 							/** @var WP_Term $attribute_term_object */
-							$attribute_term_object = get_term_by( 'slug', $attribute_slug, str_replace( 'attribute_', '', $attribute_name ) );
-							if ( is_a( $attribute_term_object, 'WP_Term' ) ) {
+							$attribute_term_object   = get_term_by( 'slug', $attribute_slug, str_replace( 'attribute_', '', $attribute_name ) );
+							if(is_a($attribute_term_object, 'WP_Term')) {
 								$variation_label_array[] = $attribute_term_object->name;
 							}
 						}
 						if ( $variation->get_weight() ) {
 							$weights[] = array(
 								'title'  => implode( ' ', $variation_label_array ),
-								'weight' => $variation->get_weight(),
+								'weight' => $variation->get_weight()
 							);
 						}
 					}
 				}
 			}
 
-			wc_get_template(
-				'weight-info.php',
-				array(
-					'lafka_product_weights'     => $weights,
-					'lafka_product_weight_unit' => $weight_unit,
-				),
-				'lafka-plugin',
-				$this->plugin_path() . '/templates/'
-			);
+			wc_get_template( 'weight-info.php', array(
+				'lafka_product_weights'     => $weights,
+				'lafka_product_weight_unit' => $weight_unit
+			), 'lafka-plugin', $this->plugin_path() . '/templates/' );
 		}
 
 		return '';
@@ -122,4 +113,5 @@ class Lafka_Nutrition_Display {
 
 		return $nutrition_list;
 	}
+
 }

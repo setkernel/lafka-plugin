@@ -53,9 +53,9 @@ function wc_pb_get_combo_sell_cart_item_container( $cart_item, $cart_contents = 
 
 	$container = false;
 
-	if ( isset( $cart_item['combo_sell_of'] ) ) {
+	if ( isset( $cart_item[ 'combo_sell_of' ] ) ) {
 
-		$combined_sell_of = $cart_item['combo_sell_of'];
+		$combined_sell_of = $cart_item[ 'combo_sell_of' ];
 
 		if ( isset( $cart_contents[ $combined_sell_of ] ) ) {
 			$container = $return_id ? $combined_sell_of : $cart_contents[ $combined_sell_of ];
@@ -83,9 +83,9 @@ function wc_pb_get_combo_sell_cart_items( $cart_item, $cart_contents = false, $r
 
 	$combo_sell_cart_items = array();
 
-	if ( isset( $cart_item['combo_sells'] ) ) {
+	if ( isset( $cart_item[ 'combo_sells' ] ) ) {
 
-		$maybe_combo_sell_cart_items = $cart_item['combo_sells'];
+		$maybe_combo_sell_cart_items = $cart_item[ 'combo_sells' ];
 
 		if ( ! empty( $maybe_combo_sell_cart_items ) && is_array( $maybe_combo_sell_cart_items ) ) {
 			foreach ( $maybe_combo_sell_cart_items as $maybe_combo_sell_cart_item_key ) {

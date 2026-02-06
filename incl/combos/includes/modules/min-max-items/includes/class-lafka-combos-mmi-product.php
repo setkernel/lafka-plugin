@@ -59,7 +59,7 @@ class WC_LafkaCombos_MMI_Product {
 
 			if ( $min_qty === $max_qty ) {
 
-				$combo_size  = $min_qty;
+				$combo_size = $min_qty;
 				$total_items = 0;
 
 				foreach ( $combo->get_combined_items() as $combined_item ) {
@@ -80,6 +80,7 @@ class WC_LafkaCombos_MMI_Product {
 				if ( absint( $total_items ) !== absint( $combo_size ) ) {
 					$has_limited_combo_size = true;
 				}
+
 			} else {
 				$has_limited_combo_size = true;
 			}
@@ -102,28 +103,28 @@ class WC_LafkaCombos_MMI_Product {
 
 			$quantities = array(
 				'min' => array(),
-				'max' => array(),
+				'max' => array()
 			);
 
-			$pricing_data   = array();
+			$pricing_data  = array();
 			$combined_items = $combo->get_combined_items();
 
 			if ( ! empty( $combined_items ) ) {
 				foreach ( $combined_items as $combined_item ) {
-					$pricing_data[ $combined_item->get_id() ]['price'] = $combined_item->get_price();
-					$quantities['min'][ $combined_item->get_id() ]     = $combined_item->get_quantity( 'min', array( 'check_optional' => true ) );
-					$quantities['max'][ $combined_item->get_id() ]     = $combined_item->get_quantity( 'max' );
+					$pricing_data[ $combined_item->get_id() ][ 'price' ] = $combined_item->get_price();
+					$quantities[ 'min' ][ $combined_item->get_id() ] = $combined_item->get_quantity( 'min', array( 'check_optional' => true ) );
+					$quantities[ 'max' ][ $combined_item->get_id() ] = $combined_item->get_quantity( 'max' );
 				}
 			}
 
 			if ( ! empty( $pricing_data ) ) {
 
-				$min_qty = $combo->get_min_combo_size();
+				$min_qty = $combo->get_min_combo_size();;
 
 				// Slots filled due to item min quantities.
 				$filled_slots = 0;
 
-				foreach ( $quantities['min'] as $item_min_qty ) {
+				foreach ( $quantities[ 'min' ] as $item_min_qty ) {
 					$filled_slots += $item_min_qty;
 				}
 
@@ -148,19 +149,19 @@ class WC_LafkaCombos_MMI_Product {
 							continue;
 						}
 
-						$max_items_to_use = $quantities['max'][ $combined_item_id ];
-						$min_items_to_use = $quantities['min'][ $combined_item_id ];
+						$max_items_to_use = $quantities[ 'max' ][ $combined_item_id ];
+						$min_items_to_use = $quantities[ 'min' ][ $combined_item_id ];
 
 						$items_to_use = '' !== $max_items_to_use ? min( $max_items_to_use - $min_items_to_use, $slots_to_fill ) : $slots_to_fill;
 
 						$filled_slots += $items_to_use;
 
-						$quantities['min'][ $combined_item_id ] += $items_to_use;
+						$quantities[ 'min' ][ $combined_item_id ] += $items_to_use;
 					}
 				}
 			}
 
-			$result = $quantities['min'];
+			$result = $quantities[ 'min' ];
 			WC_LafkaCombos_Helpers::cache_set( 'min_price_quantities_' . $combo->get_id(), $result );
 		}
 
@@ -184,17 +185,17 @@ class WC_LafkaCombos_MMI_Product {
 
 			$quantities = array(
 				'min' => array(),
-				'max' => array(),
+				'max' => array()
 			);
 
-			$pricing_data   = array();
+			$pricing_data  = array();
 			$combined_items = $combo->get_combined_items();
 
 			if ( ! empty( $combined_items ) ) {
 				foreach ( $combined_items as $combined_item ) {
-					$pricing_data[ $combined_item->get_id() ]['price'] = $combined_item->get_price();
-					$quantities['min'][ $combined_item->get_id() ]     = $combined_item->get_quantity( 'min', array( 'check_optional' => true ) );
-					$quantities['max'][ $combined_item->get_id() ]     = $combined_item->get_quantity( 'max' );
+					$pricing_data[ $combined_item->get_id() ][ 'price' ] = $combined_item->get_price();
+					$quantities[ 'min' ][ $combined_item->get_id() ]     = $combined_item->get_quantity( 'min', array( 'check_optional' => true ) );
+					$quantities[ 'max' ][ $combined_item->get_id() ]     = $combined_item->get_quantity( 'max' );
 				}
 			}
 
@@ -209,7 +210,7 @@ class WC_LafkaCombos_MMI_Product {
 				// Slots filled due to item min quantities.
 				$filled_slots = 0;
 
-				foreach ( $quantities['min'] as $item_min_qty ) {
+				foreach ( $quantities[ 'min' ] as $item_min_qty ) {
 					$filled_slots += $item_min_qty;
 				}
 			}
@@ -222,8 +223,9 @@ class WC_LafkaCombos_MMI_Product {
 
 					$slots_to_fill = $max_qty - $filled_slots;
 
+
 					if ( $filled_slots >= $max_qty ) {
-						$quantities['max'][ $combined_item_id ] = $quantities['min'][ $combined_item_id ];
+						$quantities[ 'max' ][ $combined_item_id ] = $quantities[ 'min' ][ $combined_item_id ];
 						continue;
 					}
 
@@ -233,18 +235,18 @@ class WC_LafkaCombos_MMI_Product {
 						continue;
 					}
 
-					$max_items_to_use = $quantities['max'][ $combined_item_id ];
-					$min_items_to_use = $quantities['min'][ $combined_item_id ];
+					$max_items_to_use = $quantities[ 'max' ][ $combined_item_id ];
+					$min_items_to_use = $quantities[ 'min' ][ $combined_item_id ];
 
 					$items_to_use = '' !== $max_items_to_use ? min( $max_items_to_use - $min_items_to_use, $slots_to_fill ) : $slots_to_fill;
 
 					$filled_slots += $items_to_use;
 
-					$quantities['max'][ $combined_item_id ] = $quantities['min'][ $combined_item_id ] + $items_to_use;
+					$quantities[ 'max' ][ $combined_item_id ] = $quantities[ 'min' ][ $combined_item_id ] + $items_to_use;
 				}
 			}
 
-			$result = $quantities['max'];
+			$result = $quantities[ 'max' ];
 			WC_LafkaCombos_Helpers::cache_set( 'max_price_quantities_' . $combo->get_id(), $result );
 		}
 
@@ -260,11 +262,11 @@ class WC_LafkaCombos_MMI_Product {
 	 */
 	public static function sort_by_price( $a, $b ) {
 
-		if ( $a['price'] == $b['price'] ) {
+		if ( $a[ 'price' ] == $b[ 'price' ] ) {
 			return 0;
 		}
 
-		return ( $a['price'] < $b['price'] ) ? -1 : 1;
+		return ( $a[ 'price' ] < $b[ 'price' ] ) ? -1 : 1;
 	}
 
 	/*
@@ -283,9 +285,9 @@ class WC_LafkaCombos_MMI_Product {
 	 */
 	public static function combined_item_quantity( $qty, $combined_item, $args = array() ) {
 
-		if ( isset( $args['context'] ) && in_array( $args['context'], array( 'price' ) ) ) {
+		if ( isset( $args[ 'context' ] ) && in_array( $args[ 'context' ], array( 'price' ) ) ) {
 
-			$combo   = $combined_item->get_combo();
+			$combo  = $combined_item->get_combo();
 			$min_qty = $combo ? WC_LafkaCombos_Helpers::cache_get( 'min_qty_' . $combo->get_id() ) : '';
 
 			if ( is_null( $min_qty ) ) {
@@ -316,9 +318,9 @@ class WC_LafkaCombos_MMI_Product {
 	 */
 	public static function combined_item_quantity_max( $qty, $combined_item, $args = array() ) {
 
-		if ( isset( $args['context'] ) && in_array( $args['context'], array( 'price' ) ) ) {
+		if ( isset( $args[ 'context' ] ) && in_array( $args[ 'context' ], array( 'price' ) ) ) {
 
-			$combo   = $combined_item->get_combo();
+			$combo  = $combined_item->get_combo();
 			$min_qty = $combo ? WC_LafkaCombos_Helpers::cache_get( 'min_qty_' . $combo->get_id() ) : '';
 
 			if ( is_null( $min_qty ) ) {
@@ -328,7 +330,7 @@ class WC_LafkaCombos_MMI_Product {
 
 			if ( $min_qty ) {
 
-				if ( 'price' === $args['context'] ) {
+				if ( 'price' === $args[ 'context' ] ) {
 					$quantities = self::get_max_price_quantities( $combo );
 				}
 
@@ -460,7 +462,7 @@ class WC_LafkaCombos_MMI_Product {
 		$min_combo_size = $combo->get_min_combo_size();
 
 		if ( $min_combo_size ) {
-			$data['mandatory'] = true;
+			$data[ 'mandatory' ] = true;
 		}
 
 		return $data;

@@ -40,9 +40,8 @@ class WC_LafkaCombos_FS_Compatibility {
 
 		wp_enqueue_style( 'wc-combo-css' );
 		wp_enqueue_script( 'wc-add-to-cart-combo' );
-		wp_add_inline_script(
-			'wc-add-to-cart-combo',
-			'
+		wp_add_inline_script( 'wc-add-to-cart-combo',
+		'
 			jQuery( document ).on( "mfpOpen", function( e ) {
 
 				jQuery( ".combo_form .combo_data" ).each( function() {
@@ -57,8 +56,7 @@ class WC_LafkaCombos_FS_Compatibility {
 				} );
 
 			} );
-		'
-		);
+		' );
 	}
 
 	/**
@@ -68,7 +66,7 @@ class WC_LafkaCombos_FS_Compatibility {
 	 * @return array
 	 */
 	public static function adjust_responsive_breakpoint( $params ) {
-		$params['responsive_breakpoint'] = 320;
+		$params[ 'responsive_breakpoint' ] = 320;
 		return $params;
 	}
 

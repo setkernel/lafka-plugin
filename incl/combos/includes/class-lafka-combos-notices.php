@@ -33,9 +33,9 @@ class WC_LafkaCombos_Notices {
 
 		self::$plugin_data = array(
 			'wc-pb-bulk-discounts' => array(
-				'install_path'  => 'product-combos-bulk-discounts-for-woocommerce/product-combos-bulk-discounts-for-woocommerce.php',
-				'install_check' => 'WC_LafkaCombos_Bulk_Discounts',
-			),
+				'install_path'   => 'product-combos-bulk-discounts-for-woocommerce/product-combos-bulk-discounts-for-woocommerce.php',
+				'install_check'  => 'WC_LafkaCombos_Bulk_Discounts'
+			)
 		);
 
 		// Save notice data.
@@ -98,12 +98,12 @@ class WC_LafkaCombos_Notices {
 			return null;
 		}
 
-		if ( class_exists( self::$plugin_data[ $name ]['install_check'] ) ) {
+		if ( class_exists( self::$plugin_data[ $name ][ 'install_check' ] ) ) {
 			return true;
 		}
 
-		include_once ABSPATH . '/wp-admin/includes/plugin.php';
-		return 0 === validate_plugin( self::$plugin_data[ $name ]['install_path'] );
+		include_once( ABSPATH . '/wp-admin/includes/plugin.php' );
+		return 0 === validate_plugin( self::$plugin_data[ $name ][ 'install_path' ] );
 	}
 }
 

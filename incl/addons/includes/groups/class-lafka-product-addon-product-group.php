@@ -11,7 +11,7 @@ class Product_Addon_Product_Group {
 	 * @param WP_Post $post
 	 * @return array
 	 */
-	public static function get_group( $post ) {
+	static public function get_group( $post ) {
 		if ( ! is_a( $post, 'WP_Post' ) ) {
 			throw new Exception( 'Product_Addon_Product_Group::Invalid argument supplied to get_group' );
 		}
@@ -31,9 +31,9 @@ class Product_Addon_Product_Group {
 		$exclude_global_add_ons = self::get_exclude_global_add_ons( $post );
 
 		return array(
-			'id'                     => $post->ID,
-			'exclude_global_add_ons' => $exclude_global_add_ons,
-			'fields'                 => $fields,
+			'id'                       => $post->ID,
+			'exclude_global_add_ons'   => $exclude_global_add_ons,
+			'fields'                   => $fields
 		);
 	}
 
@@ -47,7 +47,7 @@ class Product_Addon_Product_Group {
 	 * @param array $args
 	 * @return array
 	 */
-	public static function update_group( $post, $args ) {
+	static public function update_group( $post, $args ) {
 		// Make sure this is a global add-ons $post
 		if ( 'product' !== $post->post_type ) {
 			return new WP_Error( 'internal_error', "Attempted to update a post ({$post->ID}) which is not a 'product' custom post type ({$post->post_type})" );
@@ -87,7 +87,7 @@ class Product_Addon_Product_Group {
 	protected static function set_exclude_global_add_ons( $post, $value ) {
 		// Coerce in a controlled fashion
 		$new_value = empty( $value ) ? '0' : '1';
-		$product   = wc_get_product( $post->ID );
+		$product = wc_get_product( $post->ID );
 		if ( ! $product ) {
 			return;
 		}

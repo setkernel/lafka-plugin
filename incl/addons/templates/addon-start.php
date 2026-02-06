@@ -23,21 +23,12 @@ if ( $has_options_with_images ) {
 	$classes[] = 'lafka-addon-with-images';
 }
 ?>
-<div class="<?php echo implode( ' ', $classes ); ?>"
-	<?php
-	if ( ! empty( $addon['limit'] ) ) {
-		echo 'data-addon-group-limit="' . esc_attr( $addon['limit'] ) . '"';}
-	?>
-	>
+<div class="<?php echo implode( ' ', $classes ) ?>"
+	<?php if ( ! empty( $addon['limit'] ) )	echo 'data-addon-group-limit="' . esc_attr( $addon['limit'] ) . '"' ?> >
 	<?php do_action( 'wc_product_addon_start', $addon ); ?>
 
 	<?php if ( $name ) : ?>
-		<h3 class="addon-name"><?php echo wptexturize( $name ); ?>
-		<?php
-		if ( 1 == $required ) {
-			echo '<abbr class="required" title="' . esc_html__( 'Required field', 'lafka-plugin' ) . '">*</abbr>';}
-		?>
-		</h3>
+		<h3 class="addon-name"><?php echo wptexturize( $name ); ?> <?php if ( 1 == $required ) echo '<abbr class="required" title="' . esc_html__( 'Required field', 'lafka-plugin' ) . '">*</abbr>'; ?></h3>
 	<?php endif; ?>
 
 	<?php if ( $description ) : ?>

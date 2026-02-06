@@ -19,11 +19,11 @@ class WC_LafkaCombos_WP_IE_Compatibility {
 		// Export combo data.
 		add_filter( 'wxr_export_skip_postmeta', array( __CLASS__, 'wp_export_data' ), 10, 3 );
 
-		// Import combo data exported using PB v5.
-		add_filter( 'wp_import_post_meta', array( __CLASS__, 'wp_import_data' ), 10, 3 );
+        // Import combo data exported using PB v5.
+        add_filter( 'wp_import_post_meta', array( __CLASS__, 'wp_import_data' ), 10, 3 );
 
-		// Reassociate combined items with products on import end.
-		add_action( 'import_end', array( __CLASS__, 'wp_import_end' ) );
+        // Reassociate combined items with products on import end.
+        add_action( 'import_end', array( __CLASS__, 'wp_import_end' ) );
 	}
 
 	/**
@@ -41,12 +41,10 @@ class WC_LafkaCombos_WP_IE_Compatibility {
 		// Export serialized data before the '_wc_pb_layout_style' meta.
 		if ( $meta_key === '_wc_pb_layout_style' ) {
 
-			$combined_items = WC_LafkaCombos_DB::query_combined_items(
-				array(
-					'return'   => 'objects',
-					'combo_id' => $post->ID,
-				)
-			);
+			$combined_items = WC_LafkaCombos_DB::query_combined_items( array(
+				'return'    => 'objects',
+				'combo_id' => $post->ID
+			) );
 
 			if ( ! empty( $combined_items ) ) {
 				$data = array();
@@ -81,8 +79,8 @@ class WC_LafkaCombos_WP_IE_Compatibility {
 
 		$combo_data = false;
 		foreach ( $post_meta as $meta_key => $meta_data ) {
-			if ( '_combined_items_db_data' === $meta_data['key'] ) {
-				$combo_data = json_decode( $meta_data['value'], true );
+			if ( '_combined_items_db_data' === $meta_data[ 'key' ] ) {
+				$combo_data = json_decode( $meta_data[ 'value' ], true );
 				unset( $post_meta[ $meta_key ] );
 			}
 		}
@@ -91,15 +89,13 @@ class WC_LafkaCombos_WP_IE_Compatibility {
 			foreach ( $combo_data as $combined_item_id => $combined_item_data ) {
 
 				// Create combined item.
-				WC_LafkaCombos_DB::add_combined_item(
-					array(
-						'combo_id'   => $imported_post_id,                  // Use the new combo id.
-						'product_id' => $combined_item_data['product_id'], // May get modified during import - @see 'wp_import_end().
-						'menu_order' => $combined_item_data['menu_order'],
-						'meta_data'  => $combined_item_data['meta_data'],
-						'force_add'  => true,                                // Combined product may not exist in the DB yet, but get created later during import.
-					)
-				);
+				WC_LafkaCombos_DB::add_combined_item( array(
+					'combo_id'  => $imported_post_id,                  // Use the new combo id.
+					'product_id' => $combined_item_data[ 'product_id' ], // May get modified during import - @see 'wp_import_end().
+					'menu_order' => $combined_item_data[ 'menu_order' ],
+					'meta_data'  => $combined_item_data[ 'meta_data' ],
+					'force_add'  => true                                // Combined product may not exist in the DB yet, but get created later during import.
+				) );
 
 			}
 
@@ -132,14 +128,12 @@ class WC_LafkaCombos_WP_IE_Compatibility {
 
 			if ( ! empty( $update_products ) ) {
 				// Reassociate ids.
-				$wpdb->query(
-					"
+				$wpdb->query( "
 					UPDATE {$wpdb->prefix}woocommerce_lafka_combined_items
-					SET product_id = CASE product_id " . implode( ' ', $update_products ) . ' ELSE product_id END
-					WHERE product_id IN (' . implode( ',', array_keys( $update_products ) ) . ')
-					AND combo_id IN (' . implode( ',', array_keys( $update_products ) ) . ')
-				'
-				);
+					SET product_id = CASE product_id " . implode( ' ', $update_products ) .  " ELSE product_id END
+					WHERE product_id IN (" . implode( ',', array_keys( $update_products ) ) . ")
+					AND combo_id IN (" . implode( ',', array_keys( $update_products ) ) . ")
+				" );
 			}
 
 			WC_LafkaCombos_DB::bulk_delete_combined_item_stock_meta();

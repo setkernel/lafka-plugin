@@ -25,7 +25,7 @@ class WC_LafkaCombos_DB {
 	public static function wpdb_combined_items_table_fix() {
 		global $wpdb;
 		$wpdb->combined_itemmeta = $wpdb->prefix . 'woocommerce_lafka_combined_itemmeta';
-		$wpdb->tables[]          = 'woocommerce_lafka_combined_itemmeta';
+		$wpdb->tables[]         = 'woocommerce_lafka_combined_itemmeta';
 	}
 
 	/*
@@ -60,31 +60,28 @@ class WC_LafkaCombos_DB {
 
 		global $wpdb;
 
-		$args = wp_parse_args(
-			$args,
-			array(
-				'return'           => 'all', // 'ids' | 'id=>combo_id' | 'id=>product_id' | 'objects' | 'count'
-				'combined_item_id' => 0,
-				'product_id'       => 0,
-				'combo_id'         => 0,
-				'order_by'         => array( 'combined_item_id' => 'ASC' ),
-				'meta_query'       => array(),
-			)
-		);
+		$args = wp_parse_args( $args, array(
+			'return'          => 'all', // 'ids' | 'id=>combo_id' | 'id=>product_id' | 'objects' | 'count'
+			'combined_item_id' => 0,
+			'product_id'      => 0,
+			'combo_id'       => 0,
+			'order_by'        => array( 'combined_item_id' => 'ASC' ),
+			'meta_query'      => array()
+		) );
 
 		$table = $wpdb->prefix . 'woocommerce_lafka_combined_items';
 
-		if ( in_array( $args['return'], array( 'ids', 'objects' ) ) ) {
+		if ( in_array( $args[ 'return' ], array( 'ids', 'objects' ) ) ) {
 			$select = $table . '.combined_item_id';
-		} elseif ( 'count' === $args['return'] ) {
+		} elseif ( 'count' === $args[ 'return' ] ) {
 			$select = 'COUNT(' . $table . '.combined_item_id' . ')';
-		} elseif ( 'id=>combo_id' === $args['return'] ) {
+		} elseif ( 'id=>combo_id' === $args[ 'return' ] ) {
 			$select = $table . '.combined_item_id, ' . $table . '.combo_id';
 		} else {
 			$select = '*';
 		}
 
-		$sql      = 'SELECT ' . $select . " FROM {$table}";
+		$sql      = "SELECT " . $select . " FROM {$table}";
 		$join     = '';
 		$where    = '';
 		$order_by = '';
@@ -94,26 +91,26 @@ class WC_LafkaCombos_DB {
 
 		// WHERE clauses.
 
-		if ( $args['combined_item_id'] ) {
-			$combined_item_ids = array_map( 'absint', is_array( $args['combined_item_id'] ) ? $args['combined_item_id'] : array( $args['combined_item_id'] ) );
-			$where_clauses[]   = "{$table}.combined_item_id IN (" . implode( ',', array_map( 'esc_sql', $combined_item_ids ) ) . ')';
+		if ( $args[ 'combined_item_id' ] ) {
+			$combined_item_ids = array_map( 'absint', is_array( $args[ 'combined_item_id' ] ) ? $args[ 'combined_item_id' ] : array( $args[ 'combined_item_id' ] ) );
+			$where_clauses[]  = "{$table}.combined_item_id IN (" . implode( ",", array_map( 'esc_sql', $combined_item_ids ) ) . ")";
 		}
 
-		if ( $args['product_id'] ) {
-			$product_ids     = array_map( 'absint', is_array( $args['product_id'] ) ? $args['product_id'] : array( $args['product_id'] ) );
-			$where_clauses[] = "{$table}.product_id IN (" . implode( ',', array_map( 'esc_sql', $product_ids ) ) . ')';
+		if ( $args[ 'product_id' ] ) {
+			$product_ids     = array_map( 'absint', is_array( $args[ 'product_id' ] ) ? $args[ 'product_id' ] : array( $args[ 'product_id' ] ) );
+			$where_clauses[] = "{$table}.product_id IN (" . implode( ',', array_map( 'esc_sql', $product_ids ) ) . ")";
 		}
 
-		if ( $args['combo_id'] ) {
-			$combo_ids       = array_map( 'absint', is_array( $args['combo_id'] ) ? $args['combo_id'] : array( $args['combo_id'] ) );
-			$where_clauses[] = "{$table}.combo_id IN (" . implode( ',', array_map( 'esc_sql', $combo_ids ) ) . ')';
+		if ( $args[ 'combo_id' ] ) {
+			$combo_ids      = array_map( 'absint', is_array( $args[ 'combo_id' ] ) ? $args[ 'combo_id' ] : array( $args[ 'combo_id' ] ) );
+			$where_clauses[] = "{$table}.combo_id IN (" . implode( ",", array_map( 'esc_sql', $combo_ids ) ) . ")";
 		}
 
 		// ORDER BY clauses.
 
-		if ( $args['order_by'] && is_array( $args['order_by'] ) ) {
-			foreach ( $args['order_by'] as $what => $how ) {
-				$order_by_clauses[] = $table . '.' . esc_sql( strval( $what ) ) . ' ' . esc_sql( strval( $how ) );
+		if ( $args[ 'order_by' ] && is_array( $args[ 'order_by' ] ) ) {
+			foreach ( $args[ 'order_by' ] as $what => $how ) {
+				$order_by_clauses[] = $table . '.' . esc_sql( strval( $what ) ) . " " . esc_sql( strval( $how ) );
 			}
 		}
 
@@ -126,7 +123,7 @@ class WC_LafkaCombos_DB {
 
 		// Append meta query SQL components.
 
-		if ( $args['meta_query'] && is_array( $args['meta_query'] ) ) {
+		if ( $args[ 'meta_query' ] && is_array( $args[ 'meta_query' ] ) ) {
 
 			$meta_query = new WP_Meta_Query();
 
@@ -136,12 +133,12 @@ class WC_LafkaCombos_DB {
 
 			if ( ! empty( $meta_sql ) ) {
 				// Meta query JOIN clauses.
-				if ( ! empty( $meta_sql['join'] ) ) {
-					$join = $meta_sql['join'];
+				if ( ! empty( $meta_sql[ 'join' ] ) ) {
+					$join = $meta_sql[ 'join' ];
 				}
 				// Meta query WHERE clauses.
-				if ( ! empty( $meta_sql['where'] ) ) {
-					$where .= $meta_sql['where'];
+				if ( ! empty( $meta_sql[ 'where' ] ) ) {
+					$where .= $meta_sql[ 'where' ];
 				}
 			}
 		}
@@ -150,7 +147,7 @@ class WC_LafkaCombos_DB {
 
 		$sql .= $join . $where . $order_by;
 
-		if ( 'count' === $args['return'] ) {
+		if ( 'count' === $args[ 'return' ] ) {
 
 			$result = $wpdb->get_var( $sql );
 
@@ -165,19 +162,19 @@ class WC_LafkaCombos_DB {
 
 		$a = array();
 
-		if ( 'objects' === $args['return'] ) {
+		if ( 'objects' === $args[ 'return' ] ) {
 			foreach ( $results as $result ) {
 				$a[] = self::get_combined_item( $result->combined_item_id );
 			}
-		} elseif ( 'ids' === $args['return'] ) {
+		} elseif ( 'ids' === $args[ 'return' ] ) {
 			foreach ( $results as $result ) {
 				$a[] = $result->combined_item_id;
 			}
-		} elseif ( 'id=>combo_id' === $args['return'] ) {
+		} elseif ( 'id=>combo_id' === $args[ 'return' ] ) {
 			foreach ( $results as $result ) {
 				$a[ $result->combined_item_id ] = $result->combo_id;
 			}
-		} elseif ( 'id=>product_id' === $args['return'] ) {
+		} elseif ( 'id=>product_id' === $args[ 'return' ] ) {
 			foreach ( $results as $result ) {
 				$a[ $result->combined_item_id ] = $result->product_id;
 			}
@@ -198,32 +195,27 @@ class WC_LafkaCombos_DB {
 	 */
 	public static function add_combined_item( $args ) {
 
-		$args = wp_parse_args(
-			$args,
-			array(
-				'combo_id'   => 0,
-				'product_id' => 0,
-				'menu_order' => 0,
-				'meta_data'  => array(),
-			)
-		);
+		$args = wp_parse_args( $args, array(
+			'combo_id'  => 0,
+			'product_id' => 0,
+			'menu_order' => 0,
+			'meta_data'  => array()
+		) );
 
-		if ( ! $args['combo_id'] || 'product' !== get_post_type( $args['combo_id'] ) ) {
+		if ( ! $args[ 'combo_id' ] || 'product' !== get_post_type( $args[ 'combo_id' ] ) ) {
 			return false;
 		}
 
-		if ( ! $args['product_id'] || 'product' !== get_post_type( $args['product_id'] ) ) {
+		if ( ! $args[ 'product_id' ] || 'product' !== get_post_type( $args[ 'product_id' ] ) ) {
 			return false;
 		}
 
-		$item = new WC_Combined_Item_Data(
-			array(
-				'combo_id'   => $args['combo_id'],
-				'product_id' => $args['product_id'],
-				'menu_order' => $args['menu_order'],
-				'meta_data'  => $args['meta_data'],
-			)
-		);
+		$item = new WC_Combined_Item_Data( array(
+			'combo_id'  => $args[ 'combo_id' ],
+			'product_id' => $args[ 'product_id' ],
+			'menu_order' => $args[ 'menu_order' ],
+			'meta_data'  => $args[ 'meta_data' ]
+		) );
 
 		return $item->save();
 	}
@@ -392,35 +384,29 @@ class WC_LafkaCombos_DB {
 
 		if ( ! empty( $combined_item_ids ) ) {
 
-			$rows_updated = $wpdb->query(
-				"
+			$rows_updated = $wpdb->query( "
 				UPDATE {$wpdb->prefix}woocommerce_lafka_combined_itemmeta
 				SET meta_value = '" . wc_clean( $meta_value ) . "'
 				WHERE meta_key = '" . $meta_key . "'
-				AND combined_item_id IN ( " . implode( ',', $combined_item_ids ) . ' )
-			'
-			);
+				AND combined_item_id IN ( " . implode( ',', $combined_item_ids ) . " )
+			" );
 
 			if ( $rows_updated !== count( $combined_item_ids ) ) {
 
-				$rows_affected = $wpdb->get_var(
-					"
+				$rows_affected = $wpdb->get_var( "
 					SELECT COUNT(meta_id) FROM {$wpdb->prefix}woocommerce_lafka_combined_itemmeta
 					WHERE meta_key = '" . $meta_key . "'
-					AND combined_item_id IN ( " . implode( ',', $combined_item_ids ) . ' )
-				'
-				);
+					AND combined_item_id IN ( " . implode( ',', $combined_item_ids ) . " )
+				" );
 
 				if ( $rows_affected !== count( $combined_item_ids ) ) {
 
-					$wpdb->query(
-						"
+					$wpdb->query( "
 						INSERT INTO {$wpdb->prefix}woocommerce_lafka_combined_itemmeta (combined_item_id, meta_key, meta_value)
 						SELECT combined_items.combined_item_id, '" . $meta_key . "', '" . $meta_value . "' FROM {$wpdb->prefix}woocommerce_lafka_combined_items AS combined_items
 						LEFT OUTER JOIN {$wpdb->prefix}woocommerce_lafka_combined_itemmeta AS item_meta ON item_meta.combined_item_id = combined_items.combined_item_id AND item_meta.meta_key = '" . $meta_key . "'
-						WHERE item_meta.meta_key IS NULL AND combined_items.combined_item_id IN ( " . implode( ',', $combined_item_ids ) . ' )
-					'
-					);
+						WHERE item_meta.meta_key IS NULL AND combined_items.combined_item_id IN ( " . implode( ',', $combined_item_ids ) . " )
+					" );
 				}
 			}
 
@@ -446,26 +432,23 @@ class WC_LafkaCombos_DB {
 
 		if ( ! empty( $combined_item_ids ) ) {
 
-			$wpdb->query(
-				"
+			$wpdb->query( "
 				DELETE FROM {$wpdb->prefix}woocommerce_lafka_combined_itemmeta
 				WHERE meta_key IN ( 'stock_status', 'max_stock' )
-				AND combined_item_id IN (" . implode( ',', $combined_item_ids ) . ')
-			'
-			);
+				AND combined_item_id IN (" . implode( ',', $combined_item_ids ) . ")
+			" );
 
 			foreach ( $combined_item_ids as $combined_item_id ) {
 				$cache_key = WC_Cache_Helper::get_cache_prefix( 'combined_item_meta' ) . $combined_item_id;
 				wp_cache_delete( $cache_key, 'combined_item_meta' );
 			}
+
 		} else {
 
-			$wpdb->query(
-				"
+			$wpdb->query( "
 				DELETE FROM {$wpdb->prefix}woocommerce_lafka_combined_itemmeta
 				WHERE meta_key IN ( 'stock_status', 'max_stock' )
-			"
-			);
+			" );
 
 			WC_LafkaCombos_Core_Compatibility::invalidate_cache_group( 'combined_item_meta' );
 		}
@@ -492,8 +475,8 @@ class WC_LafkaCombos_DB {
 
 		} elseif ( is_array( $map ) ) {
 
-			$combined_item_ids = array_map( 'absint', array_keys( $map ) );
-			$combo_ids         = array_map( 'absint', $map );
+			$combined_item_ids = array_map( 'absint' , array_keys( $map ) );
+			$combo_ids       = array_map( 'absint' , $map );
 
 			self::bulk_delete_combined_item_stock_meta( $combined_item_ids );
 

@@ -31,21 +31,21 @@ class WC_Product_Combo extends WC_Product {
 	 * @var array
 	 */
 	private $extended_data = array(
-		'min_combo_size'                   => '',
-		'max_combo_size'                   => '',
-		'layout'                           => 'default',
-		'group_mode'                       => 'parent',
-		'combo_stock_quantity'             => '',
+		'min_combo_size'                 => '',
+		'max_combo_size'                 => '',
+		'layout'                          => 'default',
+		'group_mode'                      => 'parent',
+		'combo_stock_quantity'           => '',
 		'combined_items_stock_status'      => '',
 		'combined_items_stock_sync_status' => '',
-		'editable_in_cart'                 => false,
-		'aggregate_weight'                 => false,
-		'sold_individually_context'        => 'product',
-		'add_to_cart_form_location'        => 'default',
-		'min_raw_price'                    => '',
-		'min_raw_regular_price'            => '',
-		'max_raw_price'                    => '',
-		'max_raw_regular_price'            => '',
+		'editable_in_cart'                => false,
+		'aggregate_weight'                => false,
+		'sold_individually_context'       => 'product',
+		'add_to_cart_form_location'       => 'default',
+		'min_raw_price'                   => '',
+		'min_raw_regular_price'           => '',
+		'max_raw_price'                   => '',
+		'max_raw_regular_price'           => ''
 	);
 
 	/**
@@ -180,10 +180,10 @@ class WC_Product_Combo extends WC_Product {
 			'discounted_mandatory'              => false,
 			'configurable_quantities'           => false,
 			'hidden'                            => false,
-			'visible'                           => false,
+			'visible'                           => false
 		);
 
-		$this->is_synced         = false;
+		$this->is_synced          = false;
 		$this->combo_form_data   = array();
 		$this->combo_price_cache = array();
 
@@ -223,83 +223,77 @@ class WC_Product_Combo extends WC_Product {
 		$this->is_syncing = true;
 
 		$combined_items = $this->get_combined_items();
-		$group_mode     = $this->get_group_mode();
-		$is_front_end   = WC_LafkaCombos_Helpers::is_front_end();
+		$group_mode    = $this->get_group_mode();
+		$is_front_end  = WC_LafkaCombos_Helpers::is_front_end();
 
 		if ( ! empty( $combined_items ) ) {
 
 			// Scan combined items and sync combo properties.
 			foreach ( $combined_items as $combined_item ) {
 
-				$min_quantity = $combined_item->get_quantity(
-					'min',
-					array(
-						'context'        => 'sync',
-						'check_optional' => true,
-					)
-				);
+				$min_quantity = $combined_item->get_quantity( 'min', array( 'context' => 'sync', 'check_optional' => true ) );
 				$max_quantity = $combined_item->get_quantity( 'max', array( 'context' => 'sync' ) );
 
 				if ( $min_quantity !== $max_quantity ) {
-					$this->contains['configurable_quantities'] = true;
+					$this->contains[ 'configurable_quantities' ] = true;
 				}
 
 				if ( $combined_item->is_sold_individually() ) {
-					$this->contains['sold_individually'] = true;
+					$this->contains[ 'sold_individually' ] = true;
 				} else {
-					$this->contains['sold_in_multiples'] = true;
+					$this->contains[ 'sold_in_multiples' ] = true;
 				}
 
 				if ( $combined_item->is_optional() ) {
-					$this->contains['optional']                = true;
-					$this->contains['configurable_quantities'] = true;
+					$this->contains[ 'optional' ]                = true;
+					$this->contains[ 'configurable_quantities' ] = true;
 				} elseif ( $min_quantity > 0 ) {
-					$this->contains['mandatory'] = true;
+					$this->contains[ 'mandatory' ] = true;
 				}
 
-				if ( ! $this->contains['out_of_stock_strict'] && false === $combined_item->has_enough_stock( $min_quantity ) ) {
-					$this->contains['out_of_stock_strict'] = true;
+				if ( ! $this->contains[ 'out_of_stock_strict' ] && false === $combined_item->has_enough_stock( $min_quantity ) ) {
+					$this->contains[ 'out_of_stock_strict' ] = true;
 					if ( false === $combined_item->is_optional() && $min_quantity !== 0 ) {
-						$this->contains['out_of_stock'] = true;
+						$this->contains[ 'out_of_stock' ] = true;
 					}
 				}
 
-				if ( ! $this->contains['on_backorder'] && $combined_item->is_on_backorder() && $combined_item->product->backorders_require_notification() && false === $combined_item->is_optional() && $min_quantity !== 0 ) {
-					$this->contains['on_backorder'] = true;
+				if ( ! $this->contains[ 'on_backorder' ] && $combined_item->is_on_backorder() && $combined_item->product->backorders_require_notification() && false === $combined_item->is_optional() && $min_quantity !== 0 ) {
+					$this->contains[ 'on_backorder' ] = true;
 				}
 
 				if ( false === $combined_item->is_purchasable() && false === $combined_item->is_optional() && $min_quantity !== 0 ) {
-					$this->contains['non_purchasable'] = true;
+					$this->contains[ 'non_purchasable' ] = true;
 				}
 
-				if ( ( ! $this->contains['discounted'] || ! $this->contains['discounted_mandatory'] ) && $combined_item->get_discount( 'sync' ) > 0 ) {
-					$this->contains['discounted'] = true;
+				if ( ( ! $this->contains[ 'discounted' ] || ! $this->contains[ 'discounted_mandatory' ] ) && $combined_item->get_discount( 'sync' ) > 0 ) {
+					$this->contains[ 'discounted' ] = true;
 					if ( false === $combined_item->is_optional() && $min_quantity !== 0 ) {
-						$this->contains['discounted_mandatory'] = true;
+						$this->contains[ 'discounted_mandatory' ] = true;
 					}
 				}
 
-				if ( ! $this->contains['nyp'] && $combined_item->is_nyp() ) {
-					$this->contains['nyp'] = true;
+				if ( ! $this->contains[ 'nyp' ] && $combined_item->is_nyp() ) {
+					$this->contains[ 'nyp' ] = true;
 				}
 
 				if ( $combined_item->is_subscription() ) {
 
-					if ( $this->contains['subscriptions'] ) {
-						$this->contains['multiple_subscriptions'] = true;
+					if ( $this->contains[ 'subscriptions' ] ) {
+						$this->contains[ 'multiple_subscriptions' ] = true;
 					}
 
-					$this->contains['subscriptions'] = true;
+					$this->contains[ 'subscriptions' ] = true;
 
 					if ( $combined_item->is_priced_individually() ) {
-						$this->contains['subscriptions_priced_individually'] = true;
+						$this->contains[ 'subscriptions_priced_individually' ] = true;
 					}
 
 					// If it's a variable sub with a variable price, show 'From:' string before Combo price.
 					if ( $combined_item->is_variable_subscription() ) {
 						$combined_item->add_price_filters();
 						if ( $combined_item->product->get_variation_price( 'min' ) !== $combined_item->product->get_variation_price( 'max' ) || $combined_item->product->get_meta( '_min_variation_period', true ) !== $combined_item->product->get_meta( '_max_variation_period', true ) || $combined_item->product->get_meta( '_min_variation_period_interval', true ) !== $combined_item->product->get_meta( '_max_variation_period_interval', true ) ) {
-							$this->contains['subscriptions_priced_variably'] = true;
+							$this->contains[ 'subscriptions_priced_variably' ] = true;
 						}
 						$combined_item->remove_price_filters();
 					}
@@ -308,16 +302,16 @@ class WC_Product_Combo extends WC_Product {
 				// Significant cost due to get_product_addons - skip this in the admin area since it is only used to modify add to cart button behaviour.
 				if ( $is_front_end ) {
 					if ( false === $combined_item->is_optional() ) {
-						if ( ! $this->contains['options'] && $combined_item->requires_input() ) {
-							$this->contains['options'] = true;
+						if ( ! $this->contains[ 'options' ] && $combined_item->requires_input() ) {
+							$this->contains[ 'options' ] = true;
 						}
 					}
 				}
 
 				if ( $combined_item->is_visible() ) {
-					$this->contains['visible'] = true;
+					$this->contains[ 'visible' ] = true;
 				} else {
-					$this->contains['hidden'] = true;
+					$this->contains[ 'hidden' ] = true;
 				}
 			}
 		}
@@ -335,16 +329,16 @@ class WC_Product_Combo extends WC_Product {
 		// Allow adding to cart via ajax if no user input is required.
 		if ( $is_front_end ) {
 			// Is a child selection required by the chosen group mode?
-			if ( false === $this->contains['mandatory'] && false === self::group_mode_has( $group_mode, 'parent_item' ) ) {
-				$this->contains['options'] = true;
+			if ( false === $this->contains[ 'mandatory' ] && false === self::group_mode_has( $group_mode, 'parent_item' ) ) {
+				$this->contains[ 'options' ] = true;
 			}
 			// Any addons at combo level?
-			if ( ! $this->contains['options'] && WC_LafkaCombos()->compatibility->has_addons( $this, true ) ) {
-				$this->contains['options'] = true;
+			if ( ! $this->contains[ 'options' ] && WC_LafkaCombos()->compatibility->has_addons( $this, true ) ) {
+				$this->contains[ 'options' ] = true;
 			}
 		}
 
-		if ( ! $this->contains['options'] ) {
+		if ( ! $this->contains[ 'options' ] ) {
 			$this->supports[] = 'ajax_add_to_cart';
 		}
 
@@ -397,24 +391,18 @@ class WC_Product_Combo extends WC_Product {
 
 				if ( $combined_item->is_priced_individually() ) {
 
-					$min_quantity = $combined_item->get_quantity(
-						'min',
-						array(
-							'context'        => 'price',
-							'check_optional' => true,
-						)
-					);
+					$min_quantity = $combined_item->get_quantity( 'min', array( 'context' => 'price', 'check_optional' => true ) );
 					$max_quantity = $combined_item->get_quantity( 'max', array( 'context' => 'price' ) );
 
-					$min_raw_price         += $min_quantity * (float) $combined_item->min_price;
-					$min_raw_regular_price += $min_quantity * (float) $combined_item->min_regular_price;
+					$min_raw_price         += $min_quantity * (double) $combined_item->min_price;
+					$min_raw_regular_price += $min_quantity * (double) $combined_item->min_regular_price;
 
 					if ( ! $max_quantity ) {
 						$max_raw_price = $max_raw_regular_price = INF;
 					}
 
-					$item_max_raw_price         = INF !== $combined_item->max_price ? (float) $combined_item->max_price : INF;
-					$item_max_raw_regular_price = INF !== $combined_item->max_regular_price ? (float) $combined_item->max_regular_price : INF;
+					$item_max_raw_price         = INF !== $combined_item->max_price ? (double) $combined_item->max_price : INF;
+					$item_max_raw_regular_price = INF !== $combined_item->max_regular_price ? (double) $combined_item->max_regular_price : INF;
 
 					if ( INF !== $max_raw_price ) {
 						if ( INF !== $item_max_raw_price ) {
@@ -428,14 +416,14 @@ class WC_Product_Combo extends WC_Product {
 			}
 
 			// Calculate the min combined item price and use it when the active group mode requires a child selection.
-			if ( false === self::group_mode_has( $this->get_group_mode( 'edit' ), 'parent_item' ) && false === $this->contains['mandatory'] ) {
+			if ( false === self::group_mode_has( $this->get_group_mode( 'edit' ), 'parent_item' ) && false === $this->contains[ 'mandatory' ] ) {
 
 				$min_item_price = null;
 
 				foreach ( $combined_items as $combined_item ) {
 					$min_quantity = max( $combined_item->get_quantity( 'min' ), 1 );
-					if ( is_null( $min_item_price ) || $min_quantity * (float) $combined_item->min_price < $min_item_price ) {
-						$min_item_price = $min_quantity * (float) $combined_item->min_price;
+					if ( is_null( $min_item_price ) || $min_quantity * (double) $combined_item->min_price < $min_item_price ) {
+						$min_item_price = $min_quantity * (double) $combined_item->min_price;
 					}
 				}
 
@@ -490,7 +478,7 @@ class WC_Product_Combo extends WC_Product {
 	 */
 	public function sync_stock() {
 
-		$props_to_save           = array();
+		$props_to_save          = array();
 		$combined_items_in_stock = true;
 
 		/*
@@ -637,54 +625,54 @@ class WC_Product_Combo extends WC_Product {
 
 			$group_mode = $this->get_group_mode();
 
-			$data['layout'] = $this->get_layout();
+			$data[ 'layout' ] = $this->get_layout();
 
-			$data['hide_total_on_validation_fail'] = 'no';
+			$data[ 'hide_total_on_validation_fail' ] = 'no';
 
-			$data['zero_items_allowed'] = self::group_mode_has( $group_mode, 'parent_item' ) ? 'yes' : 'no';
+			$data[ 'zero_items_allowed' ] = self::group_mode_has( $group_mode, 'parent_item' ) ? 'yes' : 'no';
 
-			$data['raw_combo_price_min'] = (float) $raw_combo_price_min;
-			$data['raw_combo_price_max'] = '' === $raw_combo_price_max ? '' : (float) $raw_combo_price_max;
+			$data[ 'raw_combo_price_min' ] = (double) $raw_combo_price_min;
+			$data[ 'raw_combo_price_max' ] = '' === $raw_combo_price_max ? '' : (double) $raw_combo_price_max;
 
-			$data['is_purchasable']    = $this->is_purchasable() ? 'yes' : 'no';
-			$data['show_free_string']  = 'no';
-			$data['show_total_string'] = 'no';
+			$data[ 'is_purchasable' ]    = $this->is_purchasable() ? 'yes' : 'no';
+			$data[ 'show_free_string' ]  = 'no';
+			$data[ 'show_total_string' ] = 'no';
 
-			$data['prices']         = array();
-			$data['regular_prices'] = array();
+			$data[ 'prices' ]         = array();
+			$data[ 'regular_prices' ] = array();
 
-			$data['prices_tax'] = array();
+			$data[ 'prices_tax' ] = array();
 
-			$data['addons_prices']         = array();
-			$data['regular_addons_prices'] = array();
+			$data[ 'addons_prices' ]         = array();
+			$data[ 'regular_addons_prices' ] = array();
 
-			$data['quantities'] = array();
+			$data[ 'quantities' ] = array();
 
-			$data['product_ids'] = array();
+			$data[ 'product_ids' ] = array();
 
-			$data['is_sold_individually'] = array();
+			$data[ 'is_sold_individually' ] = array();
 
-			$data['recurring_prices']         = array();
-			$data['regular_recurring_prices'] = array();
+			$data[ 'recurring_prices' ]         = array();
+			$data[ 'regular_recurring_prices' ] = array();
 
-			$data['recurring_html'] = array();
-			$data['recurring_keys'] = array();
+			$data[ 'recurring_html' ] = array();
+			$data[ 'recurring_keys' ] = array();
 
-			$data['base_price']         = $this->get_price();
-			$data['base_regular_price'] = $this->get_regular_price();
-			$data['base_price_tax']     = WC_LafkaCombos_Product_Prices::get_tax_ratios( $this );
+			$data[ 'base_price' ]         = $this->get_price();
+			$data[ 'base_regular_price' ] = $this->get_regular_price();
+			$data[ 'base_price_tax' ]     = WC_LafkaCombos_Product_Prices::get_tax_ratios( $this );
 
-			$totals = new stdClass();
+			$totals = new stdClass;
 
 			$totals->price          = 0.0;
 			$totals->regular_price  = 0.0;
 			$totals->price_incl_tax = 0.0;
 			$totals->price_excl_tax = 0.0;
 
-			$data['base_price_totals'] = $totals;
-			$data['subtotals']         = $totals;
-			$data['totals']            = $totals;
-			$data['recurring_totals']  = $totals;
+			$data[ 'base_price_totals' ] = $totals;
+			$data[ 'subtotals' ]         = $totals;
+			$data[ 'totals' ]            = $totals;
+			$data[ 'recurring_totals' ]  = $totals;
 
 			$combined_items = $this->get_combined_items();
 
@@ -698,77 +686,70 @@ class WC_Product_Combo extends WC_Product {
 					continue;
 				}
 
-				$min_quantity = $combined_item->get_quantity(
-					'min',
-					array(
-						'context'        => 'sync',
-						'check_optional' => true,
-					)
-				);
+				$min_quantity = $combined_item->get_quantity( 'min', array( 'context' => 'sync', 'check_optional' => true ) );
 				$max_quantity = $combined_item->get_quantity( 'max', array( 'context' => 'sync' ) );
 
-				$data['has_variable_quantity'][ $combined_item->get_id() ] = $min_quantity !== $max_quantity ? 'yes' : 'no';
+				$data[ 'has_variable_quantity' ][ $combined_item->get_id() ] = $min_quantity !== $max_quantity ? 'yes' : 'no';
 
-				$data['quantities_available'][ $combined_item->get_id() ]            = '';
-				$data['is_in_stock'][ $combined_item->get_id() ]                     = '';
-				$data['backorders_allowed'][ $combined_item->get_id() ]              = '';
-				$data['backorders_require_notification'][ $combined_item->get_id() ] = '';
+				$data[ 'quantities_available' ][ $combined_item->get_id() ]            = '';
+				$data[ 'is_in_stock' ][ $combined_item->get_id() ]                     = '';
+				$data[ 'backorders_allowed' ][ $combined_item->get_id() ]              = '';
+				$data[ 'backorders_require_notification' ][ $combined_item->get_id() ] = '';
 
 				if ( $combined_item->get_product()->is_type( 'simple' ) ) {
 
-					$data['quantities_available'][ $combined_item->get_id() ]            = $combined_item->get_stock_quantity();
-					$data['is_in_stock'][ $combined_item->get_id() ]                     = $combined_item->is_in_stock() ? 'yes' : 'no';
-					$data['backorders_allowed'][ $combined_item->get_id() ]              = $combined_item->is_on_backorder() || $combined_item->get_product()->backorders_allowed() ? 'yes' : 'no';
-					$data['backorders_require_notification'][ $combined_item->get_id() ] = $combined_item->is_on_backorder() || $combined_item->get_product()->backorders_require_notification() ? 'yes' : 'no';
+					$data[ 'quantities_available' ][ $combined_item->get_id() ]            = $combined_item->get_stock_quantity();
+					$data[ 'is_in_stock' ][ $combined_item->get_id() ]                     = $combined_item->is_in_stock() ? 'yes' : 'no';
+					$data[ 'backorders_allowed' ][ $combined_item->get_id() ]              = $combined_item->is_on_backorder() || $combined_item->get_product()->backorders_allowed() ? 'yes' : 'no';
+					$data[ 'backorders_require_notification' ][ $combined_item->get_id() ] = $combined_item->is_on_backorder() || $combined_item->get_product()->backorders_require_notification() ? 'yes' : 'no';
 				}
 
-				$data['is_nyp'][ $combined_item->get_id() ] = $combined_item->is_nyp() ? 'yes' : 'no';
+				$data[ 'is_nyp' ][ $combined_item->get_id() ] = $combined_item->is_nyp() ? 'yes' : 'no';
 
-				$data['product_ids'][ $combined_item->get_id() ] = $combined_item->get_product_id();
+				$data[ 'product_ids' ][ $combined_item->get_id() ] = $combined_item->get_product_id();
 
-				$data['is_sold_individually'][ $combined_item->get_id() ]   = $combined_item->is_sold_individually() ? 'yes' : 'no';
-				$data['is_priced_individually'][ $combined_item->get_id() ] = $combined_item->is_priced_individually() ? 'yes' : 'no';
+				$data[ 'is_sold_individually' ][ $combined_item->get_id() ]   = $combined_item->is_sold_individually() ? 'yes' : 'no';
+				$data[ 'is_priced_individually' ][ $combined_item->get_id() ] = $combined_item->is_priced_individually() ? 'yes' : 'no';
 
-				$data['prices'][ $combined_item->get_id() ]         = $combined_item->get_price( 'min' );
-				$data['regular_prices'][ $combined_item->get_id() ] = $combined_item->get_regular_price( 'min' );
+				$data[ 'prices' ][ $combined_item->get_id() ]         = $combined_item->get_price( 'min' );
+				$data[ 'regular_prices' ][ $combined_item->get_id() ] = $combined_item->get_regular_price( 'min' );
 
-				$data['prices_tax'][ $combined_item->get_id() ] = WC_LafkaCombos_Product_Prices::get_tax_ratios( $combined_item->product );
+				$data[ 'prices_tax' ][ $combined_item->get_id() ] = WC_LafkaCombos_Product_Prices::get_tax_ratios( $combined_item->product );
 
-				$data['addons_prices'][ $combined_item->get_id() ]         = '';
-				$data['regular_addons_prices'][ $combined_item->get_id() ] = '';
+				$data[ 'addons_prices' ][ $combined_item->get_id() ]         = '';
+				$data[ 'regular_addons_prices' ][ $combined_item->get_id() ] = '';
 
 				$data[ 'combined_item_' . $combined_item->get_id() . '_totals' ]           = $totals;
 				$data[ 'combined_item_' . $combined_item->get_id() . '_recurring_totals' ] = $totals;
 
-				$data['quantities'][ $combined_item->get_id() ] = '';
+				$data[ 'quantities' ][ $combined_item->get_id() ] = '';
 
-				$data['recurring_prices'][ $combined_item->get_id() ]         = '';
-				$data['regular_recurring_prices'][ $combined_item->get_id() ] = '';
+				$data[ 'recurring_prices' ][ $combined_item->get_id() ]         = '';
+				$data[ 'regular_recurring_prices' ][ $combined_item->get_id() ] = '';
 
 				// Store sub recurring key for summation (variable sub keys are stored in variations data).
-				$data['recurring_html'][ $combined_item->get_id() ] = '';
-				$data['recurring_keys'][ $combined_item->get_id() ] = '';
+				$data[ 'recurring_html' ][ $combined_item->get_id() ] = '';
+				$data[ 'recurring_keys' ][ $combined_item->get_id() ] = '';
 
 				if ( $combined_item->is_priced_individually() && $combined_item->is_subscription() && ! $combined_item->is_variable_subscription() ) {
 
-					$data['recurring_prices'][ $combined_item->get_id() ]         = $combined_item->get_recurring_price( 'min' );
-					$data['regular_recurring_prices'][ $combined_item->get_id() ] = $combined_item->get_regular_recurring_price( 'min' );
+					$data[ 'recurring_prices' ][ $combined_item->get_id() ]         = $combined_item->get_recurring_price( 'min' );
+					$data[ 'regular_recurring_prices' ][ $combined_item->get_id() ] = $combined_item->get_regular_recurring_price( 'min' );
 
-					$data['recurring_keys'][ $combined_item->get_id() ] = str_replace( '_synced', '', WC_Subscriptions_Cart::get_recurring_cart_key( array( 'data' => $combined_item->product ), ' ' ) );
-					$data['recurring_html'][ $combined_item->get_id() ] = WC_LafkaCombos_Product_Prices::get_recurring_price_html_component( $combined_item->product );
+					$data[ 'recurring_keys' ][ $combined_item->get_id() ] = str_replace( '_synced', '', WC_Subscriptions_Cart::get_recurring_cart_key( array( 'data' => $combined_item->product ), ' ' ) );
+					$data[ 'recurring_html' ][ $combined_item->get_id() ] = WC_LafkaCombos_Product_Prices::get_recurring_price_html_component( $combined_item->product );
 				}
 			}
 
 			if ( $this->contains( 'subscriptions_priced_individually' ) ) {
-				$data['price_string_recurring']          = '<span class="combined_subscriptions_price_html">%r</span>';
-				$data['price_string_recurring_up_front'] = sprintf( _x( '%1$s<span class="combined_subscriptions_price_html"> one time%2$s</span>', 'subscription price html', 'lafka-plugin' ), '%s', '%r' );
-
+				$data[ 'price_string_recurring' ]          = '<span class="combined_subscriptions_price_html">%r</span>';
+				$data[ 'price_string_recurring_up_front' ] = sprintf( _x( '%1$s<span class="combined_subscriptions_price_html"> one time%2$s</span>', 'subscription price html', 'lafka-plugin' ), '%s', '%r' );;
 			}
 
 			$group_mode              = $this->get_group_mode();
 			$group_mode_options_data = self::get_group_mode_options_data();
 
-			$data['group_mode_features'] = ! empty( $group_mode_options_data[ $group_mode ]['features'] ) && is_array( $group_mode_options_data[ $group_mode ]['features'] ) ? $group_mode_options_data[ $group_mode ]['features'] : array();
+			$data[ 'group_mode_features' ] = ! empty( $group_mode_options_data[ $group_mode ][ 'features' ] ) && is_array( $group_mode_options_data[ $group_mode ][ 'features' ] ) ? $group_mode_options_data[ $group_mode ][ 'features' ] : array();
 
 			/**
 			 * 'woocommerce_combo_price_data' filter.
@@ -792,13 +773,11 @@ class WC_Product_Combo extends WC_Product {
 	 * @return mixed
 	 */
 	public function get_combo_price( $min_or_max = 'min', $display = false ) {
-		return $this->calculate_price(
-			array(
-				'min_or_max' => $min_or_max,
-				'calc'       => $display ? 'display' : '',
-				'prop'       => 'price',
-			)
-		);
+		return $this->calculate_price( array(
+			'min_or_max' => $min_or_max,
+			'calc'       => $display ? 'display' : '',
+			'prop'       => 'price'
+		) );
 	}
 
 	/**
@@ -809,14 +788,12 @@ class WC_Product_Combo extends WC_Product {
 	 * @return mixed
 	 */
 	public function get_combo_regular_price( $min_or_max = 'min', $display = false ) {
-		return $this->calculate_price(
-			array(
-				'min_or_max' => $min_or_max,
-				'calc'       => $display ? 'display' : '',
-				'prop'       => 'regular_price',
-				'strict'     => true,
-			)
-		);
+		return $this->calculate_price( array(
+			'min_or_max' => $min_or_max,
+			'calc'       => $display ? 'display' : '',
+			'prop'       => 'regular_price',
+			'strict'     => true
+		) );
 	}
 
 	/**
@@ -827,14 +804,12 @@ class WC_Product_Combo extends WC_Product {
 	 * @return mixed
 	 */
 	public function get_combo_price_including_tax( $min_or_max = 'min', $qty = 1 ) {
-		return $this->calculate_price(
-			array(
-				'min_or_max' => $min_or_max,
-				'qty'        => $qty,
-				'calc'       => 'incl_tax',
-				'prop'       => 'price',
-			)
-		);
+		return $this->calculate_price( array(
+			'min_or_max' => $min_or_max,
+			'qty'        => $qty,
+			'calc'       => 'incl_tax',
+			'prop'       => 'price'
+		) );
 	}
 
 	/**
@@ -845,14 +820,12 @@ class WC_Product_Combo extends WC_Product {
 	 * @return mixed
 	 */
 	public function get_combo_price_excluding_tax( $min_or_max = 'min', $qty = 1 ) {
-		return $this->calculate_price(
-			array(
-				'min_or_max' => $min_or_max,
-				'qty'        => $qty,
-				'calc'       => 'excl_tax',
-				'prop'       => 'price',
-			)
-		);
+		return $this->calculate_price( array(
+			'min_or_max' => $min_or_max,
+			'qty'        => $qty,
+			'calc'       => 'excl_tax',
+			'prop'       => 'price'
+		) );
 	}
 
 	/**
@@ -865,15 +838,13 @@ class WC_Product_Combo extends WC_Product {
 	 * @return mixed
 	 */
 	public function get_combo_regular_price_including_tax( $min_or_max = 'min', $qty = 1 ) {
-		return $this->calculate_price(
-			array(
-				'min_or_max' => $min_or_max,
-				'qty'        => $qty,
-				'calc'       => 'incl_tax',
-				'prop'       => 'regular_price',
-				'strict'     => true,
-			)
-		);
+		return $this->calculate_price( array(
+			'min_or_max' => $min_or_max,
+			'qty'        => $qty,
+			'calc'       => 'incl_tax',
+			'prop'       => 'regular_price',
+			'strict'     => true
+		) );
 	}
 
 	/**
@@ -886,15 +857,13 @@ class WC_Product_Combo extends WC_Product {
 	 * @return mixed
 	 */
 	public function get_combo_regular_price_excluding_tax( $min_or_max = 'min', $qty = 1 ) {
-		return $this->calculate_price(
-			array(
-				'min_or_max' => $min_or_max,
-				'qty'        => $qty,
-				'calc'       => 'excl_tax',
-				'prop'       => 'regular_price',
-				'strict'     => true,
-			)
-		);
+		return $this->calculate_price( array(
+			'min_or_max' => $min_or_max,
+			'qty'        => $qty,
+			'calc'       => 'excl_tax',
+			'prop'       => 'regular_price',
+			'strict'     => true
+		) );
 	}
 
 	/**
@@ -907,29 +876,22 @@ class WC_Product_Combo extends WC_Product {
 	 */
 	public function calculate_price( $args ) {
 
-		$min_or_max = isset( $args['min_or_max'] ) && in_array( $args['min_or_max'], array( 'min', 'max' ) ) ? $args['min_or_max'] : 'min';
-		$qty        = isset( $args['qty'] ) ? absint( $args['qty'] ) : 1;
-		$price_prop = isset( $args['prop'] ) && in_array( $args['prop'], array( 'price', 'regular_price' ) ) ? $args['prop'] : 'price';
-		$price_calc = isset( $args['calc'] ) && in_array( $args['calc'], array( 'incl_tax', 'excl_tax', 'display', '' ) ) ? $args['calc'] : '';
-		$strict     = isset( $args['strict'] ) && $args['strict'] && 'regular_price' === $price_prop;
+		$min_or_max = isset( $args[ 'min_or_max' ] ) && in_array( $args[ 'min_or_max' ] , array( 'min', 'max' ) ) ? $args[ 'min_or_max' ] : 'min';
+		$qty        = isset( $args[ 'qty' ] ) ? absint( $args[ 'qty' ] ) : 1;
+		$price_prop = isset( $args[ 'prop' ] ) && in_array( $args[ 'prop' ] , array( 'price', 'regular_price' ) ) ? $args[ 'prop' ] : 'price';
+		$price_calc = isset( $args[ 'calc' ] ) && in_array( $args[ 'calc' ] , array( 'incl_tax', 'excl_tax', 'display', '' ) ) ? $args[ 'calc' ] : '';
+		$strict     = isset( $args[ 'strict' ] ) && $args[ 'strict' ] && 'regular_price' === $price_prop;
 
 		if ( $this->contains( 'priced_individually' ) ) {
 
-			$cache_key = md5(
-				json_encode(
-					apply_filters(
-						'woocommerce_combo_prices_hash',
-						array(
-							'prop'       => $price_prop,
-							'min_or_max' => $min_or_max,
-							'calc'       => $price_calc,
-							'qty'        => $qty,
-							'strict'     => $strict,
-						),
-						$this
-					)
-				)
-			);
+			$cache_key = md5( json_encode( apply_filters( 'woocommerce_combo_prices_hash', array(
+				'prop'       => $price_prop,
+				'min_or_max' => $min_or_max,
+				'calc'       => $price_calc,
+				'qty'        => $qty,
+				'strict'     => $strict,
+			), $this ) ) );
+
 
 			if ( isset( $this->combo_price_cache[ $cache_key ] ) ) {
 				$price = $this->combo_price_cache[ $cache_key ];
@@ -942,17 +904,11 @@ class WC_Product_Combo extends WC_Product {
 				} else {
 
 					$price_fn = 'get_' . $price_prop;
-					$price    = wc_format_decimal(
-						WC_LafkaCombos_Product_Prices::get_product_price(
-							$this,
-							array(
-								'price' => $this->$price_fn(),
-								'qty'   => $qty,
-								'calc'  => $price_calc,
-							)
-						),
-						wc_pc_price_num_decimals()
-					);
+					$price    = wc_format_decimal( WC_LafkaCombos_Product_Prices::get_product_price( $this, array(
+						'price' => $this->$price_fn(),
+						'qty'   => $qty,
+						'calc'  => $price_calc,
+					) ), wc_pc_price_num_decimals() );
 
 					$combined_items = $this->get_combined_items();
 
@@ -967,28 +923,17 @@ class WC_Product_Combo extends WC_Product {
 								continue;
 							}
 
-							$combined_item_qty = $qty * $combined_item->get_quantity(
-								$min_or_max,
-								array(
-									'context'        => 'price',
-									'check_optional' => $min_or_max === 'min',
-								)
-							);
+							$combined_item_qty = $qty * $combined_item->get_quantity( $min_or_max, array( 'context' => 'price', 'check_optional' => $min_or_max === 'min' ) );
 
 							if ( $combined_item_qty ) {
 
-								$price += wc_format_decimal(
-									$combined_item->calculate_price(
-										array(
-											'min_or_max' => $min_or_max,
-											'qty'        => $combined_item_qty,
-											'strict'     => $strict,
-											'calc'       => $price_calc,
-											'prop'       => $price_prop,
-										)
-									),
-									wc_pc_price_num_decimals()
-								);
+								$price += wc_format_decimal( $combined_item->calculate_price( array(
+									'min_or_max' => $min_or_max,
+									'qty'        => $combined_item_qty,
+									'strict'     => $strict,
+									'calc'       => $price_calc,
+									'prop'       => $price_prop
+								) ), wc_pc_price_num_decimals() );
 							}
 						}
 
@@ -1011,15 +956,13 @@ class WC_Product_Combo extends WC_Product {
 
 								$quantity = max( $combined_item->get_quantity( 'min' ), 1 );
 
-								$combined_item_price = $combined_item->calculate_price(
-									array(
-										'min_or_max' => $min_or_max,
-										'qty'        => $quantity,
-										'strict'     => $strict,
-										'calc'       => $price_calc,
-										'prop'       => $price_prop,
-									)
-								);
+								$combined_item_price = $combined_item->calculate_price( array(
+									'min_or_max' => $min_or_max,
+									'qty'        => $quantity,
+									'strict'     => $strict,
+									'calc'       => $price_calc,
+									'prop'       => $price_prop
+								) );
 
 								if ( is_null( $min_price ) || $combined_item_price < $min_price ) {
 									$min_price = $combined_item_price;
@@ -1035,17 +978,15 @@ class WC_Product_Combo extends WC_Product {
 
 				$this->combo_price_cache[ $cache_key ] = $price;
 			}
+
 		} else {
 
 			$price_fn = 'get_' . $price_prop;
-			$price    = WC_LafkaCombos_Product_Prices::get_product_price(
-				$this,
-				array(
-					'price' => $this->$price_fn(),
-					'qty'   => $qty,
-					'calc'  => $price_calc,
-				)
-			);
+			$price    = WC_LafkaCombos_Product_Prices::get_product_price( $this, array(
+				'price' => $this->$price_fn(),
+				'qty'   => $qty,
+				'calc'  => $price_calc,
+			) );
 		}
 
 		return $price;
@@ -1076,7 +1017,7 @@ class WC_Product_Combo extends WC_Product {
 
 				$replacements = array(
 					'{price_including_tax}' => wc_price( $this->get_combo_price_including_tax( 'min', $qty ) ),
-					'{price_excluding_tax}' => wc_price( $this->get_combo_price_excluding_tax( 'min', $qty ) ),
+					'{price_excluding_tax}' => wc_price( $this->get_combo_price_excluding_tax( 'min', $qty ) )
 				);
 
 				$suffix_html = str_replace( array_keys( $replacements ), array_values( $replacements ), ' <small class="woocommerce-price-suffix">' . wp_kses_post( $suffix ) . '</small>' );
@@ -1127,58 +1068,34 @@ class WC_Product_Combo extends WC_Product {
 
 					$sub_string = str_replace( '_synced', '', WC_Subscriptions_Cart::get_recurring_cart_key( array( 'data' => $product ), ' ' ) );
 
-					if ( ! isset( $subs_details[ $sub_string ]['combined_items'] ) ) {
-						$subs_details[ $sub_string ]['combined_items'] = array();
+					if ( ! isset( $subs_details[ $sub_string ][ 'combined_items' ] ) ) {
+						$subs_details[ $sub_string ][ 'combined_items' ] = array();
 					}
 
-					if ( ! isset( $subs_details[ $sub_string ]['price'] ) ) {
-						$subs_details[ $sub_string ]['price']         = 0;
-						$subs_details[ $sub_string ]['regular_price'] = 0;
-						$subs_details[ $sub_string ]['is_range']      = false;
+					if ( ! isset( $subs_details[ $sub_string ][ 'price' ] ) ) {
+						$subs_details[ $sub_string ][ 'price' ]         = 0;
+						$subs_details[ $sub_string ][ 'regular_price' ] = 0;
+						$subs_details[ $sub_string ][ 'is_range' ]      = false;
 					}
 
-					$subs_details[ $sub_string ]['combined_items'][] = $combined_item_id;
+					$subs_details[ $sub_string ][ 'combined_items' ][] = $combined_item_id;
 
-					$subs_details[ $sub_string ]['price']         += $combined_item->get_quantity(
-						'min',
-						array(
-							'context'        => 'price',
-							'check_optional' => true,
-						)
-					) * WC_LafkaCombos_Product_Prices::get_product_price(
-						$product,
-						array(
-							'price' => $combined_item->min_recurring_price,
-							'calc'  => 'display',
-						)
-					);
-					$subs_details[ $sub_string ]['regular_price'] += $combined_item->get_quantity(
-						'min',
-						array(
-							'context'        => 'price',
-							'check_optional' => true,
-						)
-					) * WC_LafkaCombos_Product_Prices::get_product_price(
-						$product,
-						array(
-							'price' => $combined_item->min_regular_recurring_price,
-							'calc'  => 'display',
-						)
-					);
+					$subs_details[ $sub_string ][ 'price' ]         += $combined_item->get_quantity( 'min', array( 'context' => 'price', 'check_optional' => true ) ) * WC_LafkaCombos_Product_Prices::get_product_price( $product, array( 'price' => $combined_item->min_recurring_price, 'calc' => 'display' ) );
+					$subs_details[ $sub_string ][ 'regular_price' ] += $combined_item->get_quantity( 'min', array( 'context' => 'price', 'check_optional' => true ) ) * WC_LafkaCombos_Product_Prices::get_product_price( $product, array( 'price' => $combined_item->min_regular_recurring_price, 'calc' => 'display' ) );
 
 					if ( $combined_item->is_variable_subscription() ) {
 
 						$combined_item->add_price_filters();
 
 						if ( $combined_item->has_variable_subscription_price() ) {
-							$subs_details[ $sub_string ]['is_range'] = true;
+							$subs_details[ $sub_string ][ 'is_range' ] = true;
 						}
 
 						$combined_item->remove_price_filters();
 					}
 
-					if ( ! isset( $subs_details[ $sub_string ]['price_html'] ) ) {
-						$subs_details[ $sub_string ]['price_html'] = WC_LafkaCombos_Product_Prices::get_recurring_price_html_component( $product );
+					if ( ! isset( $subs_details[ $sub_string ][ 'price_html' ] ) ) {
+						$subs_details[ $sub_string ][ 'price_html' ] = WC_LafkaCombos_Product_Prices::get_recurring_price_html_component( $product );
 					}
 				}
 			}
@@ -1187,21 +1104,21 @@ class WC_Product_Combo extends WC_Product {
 
 				foreach ( $subs_details as $sub_details ) {
 
-					if ( $sub_details['is_range'] ) {
+					if ( $sub_details[ 'is_range' ] ) {
 						$is_range = true;
 					}
 
-					if ( $sub_details['regular_price'] > 0 ) {
+					if ( $sub_details[ 'regular_price' ] > 0 ) {
 
-						$sub_price_html = wc_price( $sub_details['price'] );
+						$sub_price_html = wc_price( $sub_details[ 'price' ] );
 
-						if ( $sub_details['price'] !== $sub_details['regular_price'] ) {
+						if ( $sub_details[ 'price' ] !== $sub_details[ 'regular_price' ] ) {
 
-							$sub_regular_price_html = wc_price( $sub_details['regular_price'] );
+							$sub_regular_price_html = wc_price( $sub_details[ 'regular_price' ] );
 							$sub_price_html         = wc_format_sale_price( $sub_regular_price_html, $sub_price_html );
 						}
 
-						$sub_price_details_html = sprintf( $sub_details['price_html'], $sub_price_html );
+						$sub_price_details_html = sprintf( $sub_details[ 'price_html' ], $sub_price_html );
 						$subs_details_html[]    = '<span class="combined_sub_price_html">' . $sub_price_details_html . '</span>';
 					}
 				}
@@ -1324,6 +1241,7 @@ class WC_Product_Combo extends WC_Product {
 						 */
 						$price = apply_filters( 'woocommerce_combo_price_html', $price, $this );
 					}
+
 				} else {
 
 					$is_range = false;
@@ -1342,7 +1260,7 @@ class WC_Product_Combo extends WC_Product {
 
 						if ( $regular_price_min !== $regular_price_max ) {
 							$regular_price = wc_format_price_range( min( $regular_price_min, $regular_price_max ), max( $regular_price_min, $regular_price_max ) );
-							$is_range      = true;
+							$is_range = true;
 						} else {
 							$regular_price = wc_price( $regular_price_min );
 						}
@@ -1395,16 +1313,16 @@ class WC_Product_Combo extends WC_Product {
 		// If a child does not have enough stock, let people know.
 		if ( parent::is_in_stock() && 'outofstock' === $this->get_combined_items_stock_status() ) {
 
-			$availability['availability'] = __( 'Insufficient stock', 'lafka-plugin' );
-			$availability['class']        = 'out-of-stock';
+			$availability[ 'availability' ] = __( 'Insufficient stock', 'lafka-plugin' );
+			$availability[ 'class' ]        = 'out-of-stock';
 
-			// If a child is on backorder, the parent should appear to be on backorder, too.
+		// If a child is on backorder, the parent should appear to be on backorder, too.
 		} elseif ( parent::is_in_stock() && $this->contains( 'on_backorder' ) ) {
 
-			$availability['availability'] = __( 'Available on backorder', 'woocommerce' );
-			$availability['class']        = 'available-on-backorder';
+			$availability[ 'availability' ] = __( 'Available on backorder', 'woocommerce' );
+			$availability[ 'class' ]        = 'available-on-backorder';
 
-			// Add remaining quantity data if the quantities of the children are static, and at least one child exists that manages stock and displays quantity in the availability string.
+		// Add remaining quantity data if the quantities of the children are static, and at least one child exists that manages stock and displays quantity in the availability string.
 		} elseif ( ! $this->contains( 'configurable_quantities' ) && 'no_amount' !== ( $stock_format = get_option( 'woocommerce_stock_format' ) ) && apply_filters( 'woocommerce_combo_display_combined_items_stock_quantity', $this->managing_stock(), $this ) ) {
 
 			$combo_stock_quantity = $this->get_combo_stock_quantity();
@@ -1412,7 +1330,7 @@ class WC_Product_Combo extends WC_Product {
 			// Only override if not managing stock, or if the container level quantity is higher.
 			if ( '' !== $combo_stock_quantity && ( ! $this->managing_stock() || $this->get_stock_quantity() > $combo_stock_quantity ) ) {
 				add_filter( 'woocommerce_product_get_stock_quantity', array( $this, 'filter_stock_quantity' ), 1000 );
-				$availability['availability'] = wc_format_stock_for_display( $this );
+				$availability[ 'availability' ] = wc_format_stock_for_display( $this );
 				remove_filter( 'woocommerce_product_get_stock_quantity', array( $this, 'filter_stock_quantity' ), 1000 );
 			}
 		}
@@ -1423,7 +1341,7 @@ class WC_Product_Combo extends WC_Product {
 	/**
 	 * Get the add to url used mainly in loops.
 	 *
-	 * @return  string
+	 * @return 	string
 	 */
 	public function add_to_cart_url() {
 
@@ -1436,7 +1354,7 @@ class WC_Product_Combo extends WC_Product {
 	/**
 	 * Get the add to cart button text.
 	 *
-	 * @return  string
+	 * @return 	string
 	 */
 	public function add_to_cart_text() {
 
@@ -1445,9 +1363,9 @@ class WC_Product_Combo extends WC_Product {
 		if ( $this->is_purchasable() && $this->is_in_stock() ) {
 
 			if ( $this->has_options() ) {
-				$text = __( 'Select options', 'woocommerce' );
+				$text =  __( 'Select options', 'woocommerce' );
 			} else {
-				$text = __( 'Add to cart', 'woocommerce' );
+				$text =  __( 'Add to cart', 'woocommerce' );
 			}
 		}
 
@@ -1464,9 +1382,9 @@ class WC_Product_Combo extends WC_Product {
 
 		$text = __( 'Add to cart', 'woocommerce' );
 
-		if ( isset( $_GET['update-combo'] ) ) {
+		if ( isset( $_GET[ 'update-combo' ] ) ) {
 
-			$updating_cart_key = wc_clean( $_GET['update-combo'] );
+			$updating_cart_key = wc_clean( $_GET[ 'update-combo' ] );
 
 			if ( isset( WC()->cart->cart_contents[ $updating_cart_key ] ) ) {
 				$text = __( 'Update Cart', 'lafka-plugin' );
@@ -1491,9 +1409,9 @@ class WC_Product_Combo extends WC_Product {
 
 			$cart_item = func_get_arg( 0 );
 
-			if ( is_array( $cart_item ) && isset( $cart_item['stamp'] ) && is_array( $cart_item['stamp'] ) ) {
+			if ( is_array( $cart_item ) && isset( $cart_item[ 'stamp' ] ) && is_array( $cart_item[ 'stamp' ] ) ) {
 
-				$config_data = isset( $cart_item['stamp'] ) ? $cart_item['stamp'] : array();
+				$config_data = isset( $cart_item[ 'stamp' ] ) ? $cart_item[ 'stamp' ] : array();
 				$args        = apply_filters( 'woocommerce_combo_cart_permalink_args', WC_LafkaCombos()->cart->rebuild_posted_combo_form_data( $config_data ), $cart_item, $this );
 
 				// Filter and encode keys and values so this is not broken by add_query_arg.
@@ -1629,7 +1547,7 @@ class WC_Product_Combo extends WC_Product {
 	 */
 	public function get_price( $context = 'view' ) {
 		$value = $this->get_prop( 'price', $context );
-		return in_array( $context, array( 'view', 'sync' ) ) && $this->contains( 'priced_individually' ) ? (float) $value : $value;
+		return in_array( $context, array( 'view', 'sync' ) ) && $this->contains( 'priced_individually' ) ? (double) $value : $value;
 	}
 
 	/**
@@ -1642,7 +1560,7 @@ class WC_Product_Combo extends WC_Product {
 	 */
 	public function get_regular_price( $context = 'view' ) {
 		$value = $this->get_prop( 'regular_price', $context );
-		return in_array( $context, array( 'view', 'sync' ) ) && $this->contains( 'priced_individually' ) ? (float) $value : $value;
+		return in_array( $context, array( 'view', 'sync' ) ) && $this->contains( 'priced_individually' ) ? (double) $value : $value;
 	}
 
 	/**
@@ -1655,7 +1573,7 @@ class WC_Product_Combo extends WC_Product {
 	 */
 	public function get_sale_price( $context = 'view' ) {
 		$value = $this->get_prop( 'sale_price', $context );
-		return in_array( $context, array( 'view', 'sync' ) ) && $this->contains( 'priced_individually' ) && '' !== $value ? (float) $value : $value;
+		return in_array( $context, array( 'view', 'sync' ) ) && $this->contains( 'priced_individually' ) && '' !== $value ? (double) $value : $value;
 	}
 
 	/**
@@ -1732,7 +1650,7 @@ class WC_Product_Combo extends WC_Product {
 			$this->sync();
 		}
 		$value = $this->get_prop( 'min_raw_price', $context );
-		return in_array( $context, array( 'view', 'sync' ) ) && $this->contains( 'priced_individually' ) && '' !== $value ? (float) $value : $value;
+		return in_array( $context, array( 'view', 'sync' ) ) && $this->contains( 'priced_individually' ) && '' !== $value ? (double) $value : $value;
 	}
 
 	/**
@@ -1748,7 +1666,7 @@ class WC_Product_Combo extends WC_Product {
 			$this->sync();
 		}
 		$value = $this->get_prop( 'min_raw_regular_price', $context );
-		return in_array( $context, array( 'view', 'sync' ) ) && $this->contains( 'priced_individually' ) && '' !== $value ? (float) $value : $value;
+		return in_array( $context, array( 'view', 'sync' ) ) && $this->contains( 'priced_individually' ) && '' !== $value ? (double) $value : $value;
 	}
 
 	/**
@@ -1765,7 +1683,7 @@ class WC_Product_Combo extends WC_Product {
 			$this->sync();
 		}
 		$value = $this->get_prop( 'max_raw_price', $context );
-		$value = 'edit' !== $context && $this->contains( 'priced_individually' ) && '' !== $value && INF !== $value ? (float) $value : $value;
+		$value = 'edit' !== $context && $this->contains( 'priced_individually' ) && '' !== $value && INF !== $value ? (double) $value : $value;
 		$value = 'edit' === $context && INF === $value ? 9999999999.0 : $value;
 		return $value;
 	}
@@ -1784,7 +1702,7 @@ class WC_Product_Combo extends WC_Product {
 			$this->sync();
 		}
 		$value = $this->get_prop( 'max_raw_regular_price', $context );
-		$value = 'edit' !== $context && $this->contains( 'priced_individually' ) && '' !== $value && INF !== $value ? (float) $value : $value;
+		$value = 'edit' !== $context && $this->contains( 'priced_individually' ) && '' !== $value && INF !== $value ? (double) $value : $value;
 		$value = 'edit' === $context && INF === $value ? 9999999999.0 : $value;
 		return $value;
 	}
@@ -1817,8 +1735,8 @@ class WC_Product_Combo extends WC_Product {
 
 					$args = array(
 						'combo_id' => $id,
-						'return'   => 'objects',
-						'order_by' => array( 'menu_order' => 'ASC' ),
+						'return'    => 'objects',
+						'order_by'  => array( 'menu_order' => 'ASC' )
 					);
 
 					$this->combined_data_items = WC_LafkaCombos_DB::query_combined_items( $args );
@@ -1952,8 +1870,8 @@ class WC_Product_Combo extends WC_Product {
 
 		if ( $this->has_combined_item( $combined_item_id, $context ) ) {
 
-			$cache_group = 'wc_combined_item_' . $combined_item_id . '_' . $this->get_id();
-			$cache_key   = md5( json_encode( apply_filters( 'woocommerce_combined_item_hash', $hash, $this ) ) );
+			$cache_group  = 'wc_combined_item_' . $combined_item_id . '_' . $this->get_id();
+			$cache_key    = md5( json_encode( apply_filters( 'woocommerce_combined_item_hash', $hash, $this ) ) );
 
 			$combined_item = WC_LafkaCombos_Helpers::cache_get( $cache_key, $cache_group );
 
@@ -2043,7 +1961,7 @@ class WC_Product_Combo extends WC_Product {
 	 *
 	 * @param  string  $value
 	 */
-	public function set_add_to_cart_form_location( $value ) {
+	public function	set_add_to_cart_form_location( $value ) {
 		$value = in_array( $value, array_keys( self::get_add_to_cart_form_location_options() ) ) ? $value : 'default';
 		return $this->set_prop( 'add_to_cart_form_location', $value );
 	}
@@ -2143,7 +2061,7 @@ class WC_Product_Combo extends WC_Product {
 	 */
 	public function set_max_raw_price( $value ) {
 		$value = INF !== $value ? wc_format_decimal( $value ) : INF;
-		$value = 9999999999.0 === (float) $value ? INF : $value;
+		$value = 9999999999.0 === (double) $value ? INF : $value;
 		$this->set_prop( 'max_raw_price', $value );
 	}
 
@@ -2157,7 +2075,7 @@ class WC_Product_Combo extends WC_Product {
 	 */
 	public function set_max_raw_regular_price( $value ) {
 		$value = INF !== $value ? wc_format_decimal( $value ) : INF;
-		$value = 9999999999.0 === (float) $value ? INF : $value;
+		$value = 9999999999.0 === (double) $value ? INF : $value;
 		$this->set_prop( 'max_raw_regular_price', $value );
 	}
 
@@ -2197,14 +2115,14 @@ class WC_Product_Combo extends WC_Product {
 			if ( ! empty( $data ) ) {
 				foreach ( $data as $item_key => $item_data ) {
 					// Ignore items without a valid combined product ID.
-					if ( empty( $item_data['product_id'] ) ) {
+					if ( empty( $item_data[ 'product_id' ] ) ) {
 						unset( $data[ $item_key ] );
-						// If an item with the same ID exists, modify it.
-					} elseif ( isset( $item_data['combined_item_id'] ) && $item_data['combined_item_id'] > 0 && in_array( $item_data['combined_item_id'], $existing_item_ids ) ) {
-						$update_item_ids[] = $item_data['combined_item_id'];
-						// Otherwise, add a new one that will be created after saving.
+					// If an item with the same ID exists, modify it.
+					} elseif ( isset( $item_data[ 'combined_item_id' ] ) && $item_data[ 'combined_item_id' ] > 0 && in_array( $item_data[ 'combined_item_id' ], $existing_item_ids ) ) {
+						$update_item_ids[] = $item_data[ 'combined_item_id' ];
+					// Otherwise, add a new one that will be created after saving.
 					} else {
-						$data[ $item_key ]['combined_item_id'] = 0;
+						$data[ $item_key ][ 'combined_item_id' ] = 0;
 					}
 				}
 			}
@@ -2235,21 +2153,21 @@ class WC_Product_Combo extends WC_Product {
 			if ( ! empty( $data ) ) {
 				foreach ( $data as $item_data ) {
 
-					$item_data['combo_id'] = $this->get_id();
+					$item_data[ 'combo_id' ] = $this->get_id();
 
 					// Modify existing item.
-					if ( in_array( $item_data['combined_item_id'], $update_item_ids ) ) {
+					if ( in_array( $item_data[ 'combined_item_id' ], $update_item_ids ) ) {
 
 						foreach ( $this->combined_data_items as $combined_data_item_key => $combined_data_item ) {
 
 							$real_item_id = $this->has_combined_data_item_changes() ? $combined_data_item->get_meta( 'real_id' ) : $combined_data_item->get_id();
 
-							if ( $item_data['combined_item_id'] === $real_item_id ) {
+							if ( $item_data[ 'combined_item_id' ] === $real_item_id ) {
 								$combined_data_item->set_all( $item_data );
 							}
 						}
 
-						// Add new item.
+					// Add new item.
 					} else {
 						$new_item = new WC_Combined_Item_Data( $item_data );
 						$new_item->update_meta( 'real_id', 0 );
@@ -2262,7 +2180,7 @@ class WC_Product_Combo extends WC_Product {
 			$temp_id = 0;
 			if ( ! empty( $this->combined_data_items ) ) {
 				foreach ( $this->combined_data_items as $combined_data_item_key => $combined_data_item ) {
-					++$temp_id;
+					$temp_id++;
 					$combined_data_item->set_id( $temp_id );
 				}
 			}
@@ -2346,8 +2264,9 @@ class WC_Product_Combo extends WC_Product {
 				 * @param  boolean            $priced_items_exist
 				 * @param  WC_Product_Combo  $this
 				 */
-				$this->contains['priced_individually'] = apply_filters( 'woocommerce_combo_contains_priced_items', $priced_items_exist, $this );
+				$this->contains[ 'priced_individually' ] = apply_filters( 'woocommerce_combo_contains_priced_items', $priced_items_exist, $this );
 			}
+
 		} elseif ( 'shipped_individually' === $key ) {
 
 			if ( is_null( $this->contains[ $key ] ) ) {
@@ -2372,8 +2291,9 @@ class WC_Product_Combo extends WC_Product {
 				 * @param  boolean            $shipped_items_exist
 				 * @param  WC_Product_Combo  $this
 				 */
-				$this->contains['shipped_individually'] = apply_filters( 'woocommerce_combo_contains_shipped_items', $shipped_items_exist, $this );
+				$this->contains[ 'shipped_individually' ] = apply_filters( 'woocommerce_combo_contains_shipped_items', $shipped_items_exist, $this );
 			}
+
 		} elseif ( 'assembled' === $key ) {
 
 			if ( is_null( $this->contains[ $key ] ) ) {
@@ -2401,15 +2321,16 @@ class WC_Product_Combo extends WC_Product {
 				 * @param  boolean            $assembled_items_exist
 				 * @param  WC_Product_Combo  $this
 				 */
-				$this->contains['assembled'] = apply_filters( 'woocommerce_combo_contains_assembled_items', $assembled_items_exist, $this );
+				$this->contains[ 'assembled' ] = apply_filters( 'woocommerce_combo_contains_assembled_items', $assembled_items_exist, $this );
 			}
+
 		} else {
 			$this->sync();
 		}
 
 		// Back-compat.
 		if ( 'priced_indefinitely' === $key ) {
-			return $this->contains['configurable_quantities'] || $this->contains['subscriptions_priced_variably'];
+			return $this->contains[ 'configurable_quantities' ] || $this->contains[ 'subscriptions_priced_variably' ];
 		}
 
 		return isset( $this->contains[ $key ] ) ? $this->contains[ $key ] : null;
@@ -2447,22 +2368,22 @@ class WC_Product_Combo extends WC_Product {
 		// Not purchasable while updating DB.
 		if ( defined( 'WC_LafkaCombos_UPDATING' ) ) {
 			$purchasable = false;
-			// Products must exist of course.
+		// Products must exist of course.
 		} if ( ! $this->exists() ) {
 			$purchasable = false;
-			// When priced statically a price needs to be set.
+		// When priced statically a price needs to be set.
 		} elseif ( false === $this->contains( 'priced_individually' ) && '' === $this->get_price() ) {
 			$purchasable = false;
-			// Check the product is published.
+		// Check the product is published.
 		} elseif ( 'publish' !== $this->get_status() && ! current_user_can( 'edit_post', $this->get_id() ) ) {
 			$purchasable = false;
-			// Check if the product contains anything.
+		// Check if the product contains anything.
 		} elseif ( 0 === sizeof( $this->get_combined_data_items() ) ) {
 			$purchasable = false;
-			// Check if all non-optional contents are purchasable.
+		// Check if all non-optional contents are purchasable.
 		} elseif ( $this->contains( 'non_purchasable' ) ) {
 			$purchasable = false;
-			// Only purchasable if "Mixed Checkout" is enabled for WCS.
+		// Only purchasable if "Mixed Checkout" is enabled for WCS.
 		} elseif ( $this->contains( 'subscriptions' ) && class_exists( 'WC_Subscriptions_Admin' ) && 'yes' !== get_option( WC_Subscriptions_Admin::$option_prefix . '_multiple_purchase', 'no' ) ) {
 			$purchasable = false;
 		}
@@ -2625,7 +2546,7 @@ class WC_Product_Combo extends WC_Product {
 
 			$has_attributes = true;
 
-			// Check all combined products for attributes.
+		// Check all combined products for attributes.
 		} else {
 
 			$combined_items = $this->get_combined_items();
@@ -2784,7 +2705,7 @@ class WC_Product_Combo extends WC_Product {
 					// Update.
 					if ( $real_id = $item->get_meta( 'real_id' ) ) {
 						$item->set_id( $real_id );
-						// Create.
+					// Create.
 					} else {
 						$item->set_id( 0 );
 					}
@@ -2799,6 +2720,7 @@ class WC_Product_Combo extends WC_Product {
 					// Delete runtime cache.
 					WC_LafkaCombos_Helpers::cache_invalidate( 'wc_combined_item_' . $item->get_id() . '_' . $this->get_id() );
 				}
+
 			} else {
 				$this->set_status( 'draft' );
 				parent::save();
@@ -2835,14 +2757,14 @@ class WC_Product_Combo extends WC_Product {
 	public static function get_add_to_cart_form_location_options() {
 
 		$options = array(
-			'default'       => array(
+			'default'      => array(
 				'title'       => __( 'Default', 'lafka-plugin' ),
-				'description' => __( 'The add-to-cart form is displayed inside the single-product summary.', 'lafka-plugin' ),
+				'description' => __( 'The add-to-cart form is displayed inside the single-product summary.', 'lafka-plugin' )
 			),
 			'after_summary' => array(
 				'title'       => __( 'Before Tabs', 'lafka-plugin' ),
-				'description' => __( 'The add-to-cart form is displayed before the single-product tabs. Usually allocates the entire page width for displaying form content. Note that some themes may not support this option.', 'lafka-plugin' ),
-			),
+				'description' => __( 'The add-to-cart form is displayed before the single-product tabs. Usually allocates the entire page width for displaying form content. Note that some themes may not support this option.', 'lafka-plugin' )
+			)
 		);
 
 		return apply_filters( 'woocommerce_combo_add_to_cart_form_location_options', $options );
@@ -2855,14 +2777,11 @@ class WC_Product_Combo extends WC_Product {
 	 */
 	public static function get_layout_options() {
 		if ( is_null( self::$layout_options_data ) ) {
-			self::$layout_options_data = apply_filters(
-				'woocommerce_combos_supported_layouts',
-				array(
-					'default' => __( 'Standard', 'lafka-plugin' ),
-					'tabular' => __( 'Tabular', 'lafka-plugin' ),
-					'grid'    => __( 'Grid', 'lafka-plugin' ),
-				)
-			);
+			self::$layout_options_data = apply_filters( 'woocommerce_combos_supported_layouts', array(
+				'default' => __( 'Standard', 'lafka-plugin' ),
+				'tabular' => __( 'Tabular', 'lafka-plugin' ),
+				'grid'    => __( 'Grid', 'lafka-plugin' )
+			) );
 		}
 		return self::$layout_options_data;
 	}
@@ -2886,7 +2805,7 @@ class WC_Product_Combo extends WC_Product {
 	 * @return boolean
 	 */
 	private static function filter_invisible_group_modes( $group_mode_data ) {
-		return ! isset( $group_mode_data['is_visible'] ) || $group_mode_data['is_visible'];
+		return ! isset( $group_mode_data[ 'is_visible' ] ) || $group_mode_data[ 'is_visible' ];
 	}
 
 	/**
@@ -2900,7 +2819,7 @@ class WC_Product_Combo extends WC_Product {
 	public static function group_mode_has( $group_mode, $feature ) {
 
 		$group_mode_options_data = self::get_group_mode_options_data();
-		$group_mode_features     = isset( $group_mode_options_data[ $group_mode ]['features'] ) ? $group_mode_options_data[ $group_mode ]['features'] : false;
+		$group_mode_features     = isset( $group_mode_options_data[ $group_mode ][ 'features' ] ) ? $group_mode_options_data[ $group_mode ][ 'features' ] : false;
 
 		return is_array( $group_mode_features ) && in_array( $feature, $group_mode_features );
 	}
@@ -2921,9 +2840,9 @@ class WC_Product_Combo extends WC_Product {
 	 * Using the first child as a "fake" container:
 	 *
 	 * 'child'    => array(
-	 *      'title'    => __( 'First child', 'lafka-plugin' ),
-	 *      'features' => array( 'faked_parent_item', 'child_item_indent' )
-	 *  )
+	 *		'title'    => __( 'First child', 'lafka-plugin' ),
+	 *		'features' => array( 'faked_parent_item', 'child_item_indent' )
+	 *	)
 	 *
 	 * @return array
 	 */
@@ -2931,26 +2850,23 @@ class WC_Product_Combo extends WC_Product {
 
 		if ( is_null( self::$group_mode_options_data ) ) {
 
-			self::$group_mode_options_data = apply_filters(
-				'woocommerce_combos_group_mode_options_data',
-				array(
-					'parent'   => array(
-						'title'      => __( 'Grouped', 'lafka-plugin' ),
-						'features'   => array( 'parent_item', 'child_item_indent', 'aggregated_prices', 'aggregated_subtotals', 'parent_cart_widget_item_meta' ),
-						'is_visible' => true,
-					),
-					'noindent' => array(
-						'title'      => __( 'Flat', 'lafka-plugin' ),
-						'features'   => array( 'parent_item', 'child_item_meta' ),
-						'is_visible' => true,
-					),
-					'none'     => array(
-						'title'      => __( 'None', 'lafka-plugin' ),
-						'features'   => array( 'child_item_meta' ),
-						'is_visible' => true,
-					),
+			self::$group_mode_options_data = apply_filters( 'woocommerce_combos_group_mode_options_data', array(
+				'parent'   => array(
+					'title'      => __( 'Grouped', 'lafka-plugin' ),
+					'features'   => array( 'parent_item', 'child_item_indent', 'aggregated_prices', 'aggregated_subtotals', 'parent_cart_widget_item_meta' ),
+					'is_visible' => true
+				),
+				'noindent' => array(
+					'title'      => __( 'Flat', 'lafka-plugin' ),
+					'features'   => array( 'parent_item', 'child_item_meta' ),
+					'is_visible' => true
+				),
+				'none'     => array(
+					'title'      => __( 'None', 'lafka-plugin' ),
+					'features'   => array( 'child_item_meta' ),
+					'is_visible' => true
 				)
-			);
+			) );
 		}
 
 		return self::$group_mode_options_data;
@@ -2988,20 +2904,20 @@ class WC_Product_Combo extends WC_Product {
 		$combined_item_quantities = array(
 			'reference' => array(
 				'min' => array(),
-				'max' => array(),
+				'max' => array()
 			),
 			'optimal'   => array(
 				'min' => array(),
-				'max' => array(),
+				'max' => array()
 			),
 			'worst'     => array(
 				'min' => array(),
-				'max' => array(),
+				'max' => array()
 			),
 			'required'  => array(
 				'min' => array(),
-				'max' => array(),
-			),
+				'max' => array()
+			)
 		);
 
 		foreach ( $this->get_combined_items() as $combined_item ) {
@@ -3009,13 +2925,13 @@ class WC_Product_Combo extends WC_Product {
 			$min_qty = $combined_item->is_optional() ? 0 : $combined_item->get_quantity( 'min' );
 			$max_qty = $combined_item->get_quantity( 'max' );
 
-			$combined_item_quantities['reference']['min'][ $combined_item->get_id() ] = $min_qty;
-			$combined_item_quantities['reference']['max'][ $combined_item->get_id() ] = $max_qty;
+			$combined_item_quantities[ 'reference' ][ 'min' ][ $combined_item->get_id() ] = $min_qty;
+			$combined_item_quantities[ 'reference' ][ 'max' ][ $combined_item->get_id() ] = $max_qty;
 		}
 
-		$combined_item_quantities['optimal']  = apply_filters( 'woocommerce_combined_item_optimal_price_quantities', $combined_item_quantities['reference'], $this );
-		$combined_item_quantities['worst']    = apply_filters( 'woocommerce_combined_item_worst_price_quantities', $combined_item_quantities['reference'], $this );
-		$combined_item_quantities['required'] = apply_filters( 'woocommerce_combined_item_required_quantities', $combined_item_quantities['reference'], $this );
+		$combined_item_quantities[ 'optimal' ]  = apply_filters( 'woocommerce_combined_item_optimal_price_quantities', $combined_item_quantities[ 'reference' ], $this );
+		$combined_item_quantities[ 'worst' ]    = apply_filters( 'woocommerce_combined_item_worst_price_quantities', $combined_item_quantities[ 'reference' ], $this );
+		$combined_item_quantities[ 'required' ] = apply_filters( 'woocommerce_combined_item_required_quantities', $combined_item_quantities[ 'reference' ], $this );
 
 		return '' === $min_or_max ? $combined_item_quantities[ $context ] : $combined_item_quantities[ $context ][ $min_or_max ];
 	}

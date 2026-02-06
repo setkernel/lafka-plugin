@@ -37,7 +37,7 @@ class WC_LafkaCombos_SF_Compatibility {
 		global $product;
 
 		if ( wc_pc_is_product_combo() && 'after_summary' === $product->get_add_to_cart_form_location() ) {
-			$params['trigger_class'] = 'summary-add-to-cart-form-combo';
+			$params[ 'trigger_class' ] = 'summary-add-to-cart-form-combo';
 		}
 
 		return $params;

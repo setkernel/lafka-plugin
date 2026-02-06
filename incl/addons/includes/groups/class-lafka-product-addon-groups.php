@@ -9,7 +9,7 @@ class Lafka_Product_Addon_Groups {
 	 *
 	 * @return array
 	 */
-	public static function get_all_global_groups() {
+	static public function get_all_global_groups() {
 		static $cached_groups = null;
 		if ( null !== $cached_groups ) {
 			return $cached_groups;
@@ -18,11 +18,11 @@ class Lafka_Product_Addon_Groups {
 		$global_groups = array();
 
 		$args = array(
-			'posts_per_page' => -1,
-			'orderby'        => 'title',
-			'order'          => 'ASC',
-			'post_type'      => 'lafka_glb_addon',
-			'post_status'    => 'any',
+			'posts_per_page'  => -1,
+			'orderby'         => 'title',
+			'order'           => 'ASC',
+			'post_type'       => 'lafka_glb_addon',
+			'post_status'     => 'any',
 		);
 
 		$global_group_posts = get_posts( $args );
@@ -43,7 +43,7 @@ class Lafka_Product_Addon_Groups {
 	 * @param integer $id
 	 * @return array
 	 */
-	public static function get_group( $id ) {
+	static public function get_group( $id ) {
 		$post = WP_Post::get_instance( $id );
 
 		if ( self::is_a_global_group_id( $id ) ) {
@@ -66,7 +66,7 @@ class Lafka_Product_Addon_Groups {
 	 * @param array $args
 	 * @return array
 	 */
-	public static function update_group( $id, $args ) {
+	static public function update_group( $id, $args ) {
 		$post = WP_Post::get_instance( $id );
 
 		if ( self::is_a_global_group_id( $id ) ) {
@@ -84,12 +84,12 @@ class Lafka_Product_Addon_Groups {
 	 * @param integer $id
 	 * @return array
 	 */
-	public static function delete_group( $id ) {
+	static public function delete_group( $id ) {
 		if ( ! self::is_a_global_group_id( $id ) ) {
 			return new WP_Error( 'invalid_id', esc_html__( 'Unable to delete group. Invalid global add ons group ID.', 'lafka-plugin' ) );
 		}
 
-		$post         = WP_Post::get_instance( $id );
+		$post = WP_Post::get_instance( $id );
 		$trashed_post = Product_Addon_Global_Group::get_group( $post );
 		wp_delete_post( $id, true );
 
@@ -104,10 +104,10 @@ class Lafka_Product_Addon_Groups {
 	 * @param integer $id
 	 * @return array
 	 */
-	public static function is_a_global_group_id( $id ) {
+	static public function is_a_global_group_id( $id ) {
 		$post = WP_Post::get_instance( $id );
 
-		if ( ! is_a( $post, 'WP_Post' ) ) {
+		if ( ! is_a( $post, 'WP_Post') ) {
 			return false;
 		}
 
@@ -123,12 +123,12 @@ class Lafka_Product_Addon_Groups {
 	 * @param array $fields
 	 * @return array
 	 */
-	public static function coerce_options_to_contain_all_keys_before_saving_to_meta( $fields ) {
+	static public function coerce_options_to_contain_all_keys_before_saving_to_meta( $fields ) {
 		$option_defaults = array(
 			'label' => '(empty)',
 			'price' => '',
-			'min'   => '',
-			'max'   => '',
+			'min' => '',
+			'max' => '',
 		);
 
 		foreach ( $fields as $key => $field ) {
@@ -155,7 +155,7 @@ class Lafka_Product_Addon_Groups {
 	 * @param array $fields
 	 * @return array
 	 */
-	public static function coerce_options_to_remove_field_type_inappropriate_keys( $fields ) {
+	static public function coerce_options_to_remove_field_type_inappropriate_keys( $fields ) {
 		foreach ( $fields as $field_key => $field ) {
 			if ( array_key_exists( 'options', $field ) ) {
 				foreach ( $field['options'] as $option_key => $option ) {
@@ -180,4 +180,5 @@ class Lafka_Product_Addon_Groups {
 
 		return $fields;
 	}
+
 }

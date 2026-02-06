@@ -24,9 +24,9 @@ class Lafka_Nutrition_Admin {
 	 */
 	public function tab() {
 		?>
-		<li class="lafka-nutrition-tab product-nutrition">
-			<a href="#lafka_product_nutrition_data"><span><?php esc_html_e( 'Lafka Nutrition Facts', 'lafka-plugin' ); ?></span></a>
-		</li>
+        <li class="lafka-nutrition-tab product-nutrition">
+            <a href="#lafka_product_nutrition_data"><span><?php esc_html_e( 'Lafka Nutrition Facts', 'lafka-plugin' ); ?></span></a>
+        </li>
 		<?php
 	}
 
@@ -42,7 +42,7 @@ class Lafka_Nutrition_Admin {
 		}
 		$lafka_product_allergens = $product->get_meta( '_lafka_product_allergens' );
 
-		include __DIR__ . '/views/html-nutrition-panel.php';
+		include( dirname( __FILE__ ) . '/views/html-nutrition-panel.php' );
 	}
 
 	/**

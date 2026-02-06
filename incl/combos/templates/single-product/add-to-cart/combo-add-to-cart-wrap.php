@@ -17,81 +17,71 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 ?>
-<div class="cart combo_data combo_data_<?php echo $product_id; ?>" data-combo_form_data="<?php echo esc_attr( json_encode( $combo_form_data ) ); ?>" data-combo_id="<?php echo $product_id; ?>">
-<?php
+<div class="cart combo_data combo_data_<?php echo $product_id; ?>" data-combo_form_data="<?php echo esc_attr( json_encode( $combo_form_data ) ); ?>" data-combo_id="<?php echo $product_id; ?>"><?php
 
-if ( $is_purchasable ) {
+	if ( $is_purchasable ) {
 
-	/** WC Core action. */
-	do_action( 'woocommerce_before_add_to_cart_button' );
+		/** WC Core action. */
+		do_action( 'woocommerce_before_add_to_cart_button' );
 
-	?>
-	<div class="combo_wrap">
+		?><div class="combo_wrap">
 			<div class="combo_price"></div>
-		<?php
-			/**
-			 * 'woocommerce_combos_after_combo_price' action.
-			 *
-			 * @since 6.7.6
-			 */
-			do_action( 'woocommerce_after_combo_price' );
-		?>
+			<?php
+				/**
+				 * 'woocommerce_combos_after_combo_price' action.
+				 *
+				 * @since 6.7.6
+				 */
+				do_action( 'woocommerce_after_combo_price' );
+			?>
 			<div class="combo_error" style="display:none">
 				<div class="woocommerce-info">
 					<ul class="msg"></ul>
 				</div>
 			</div>
-		<?php
-			/**
-			 * 'woocommerce_combos_after_combo_price' action.
-			 *
-			 * @since 6.7.6
-			 */
-			do_action( 'woocommerce_before_combo_availability' );
-		?>
-			<div class="combo_availability">
-		<?php
-			// Availability html.
-			echo $availability_html;
-		?>
-			</div>
-		<?php
-			/**
-			 * 'woocommerce_combos_after_combo_price' action.
-			 *
-			 * @since 6.7.6
-			 */
-			do_action( 'woocommerce_before_combo_add_to_cart_button' );
-		?>
-			<div class="combo_button">
 			<?php
-
-			/**
-			 * woocommerce_combos_add_to_cart_button hook.
-			 *
-			 * @hooked wc_pc_template_add_to_cart_button - 10
-			 */
-			do_action( 'woocommerce_combos_add_to_cart_button', $product );
-
+				/**
+				 * 'woocommerce_combos_after_combo_price' action.
+				 *
+				 * @since 6.7.6
+				 */
+				do_action( 'woocommerce_before_combo_availability' );
+			?>
+			<div class="combo_availability">
+			<?php
+				// Availability html.
+				echo $availability_html;
 			?>
 			</div>
+			<?php
+				/**
+				 * 'woocommerce_combos_after_combo_price' action.
+				 *
+				 * @since 6.7.6
+				 */
+				do_action( 'woocommerce_before_combo_add_to_cart_button' );
+			?>
+			<div class="combo_button"><?php
+
+				/**
+				 * woocommerce_combos_add_to_cart_button hook.
+				 *
+				 * @hooked wc_pc_template_add_to_cart_button - 10
+				 */
+				do_action( 'woocommerce_combos_add_to_cart_button', $product );
+
+			?></div>
 			<input type="hidden" name="add-to-cart" value="<?php echo $product_id; ?>" />
-		</div>
-		<?php
+		</div><?php
 
 		/** WC Core action. */
 		do_action( 'woocommerce_after_add_to_cart_button' );
 
-} else {
+	} else {
 
-	?>
-		<div class="combo_unavailable woocommerce-info">
-		<?php
-		echo $purchasable_notice;
-		?>
-		</div>
-		<?php
-}
+		?><div class="combo_unavailable woocommerce-info"><?php
+			echo $purchasable_notice;
+		?></div><?php
+	}
 
-?>
-</div>
+?></div>

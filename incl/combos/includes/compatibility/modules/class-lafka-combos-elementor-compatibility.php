@@ -13,7 +13,7 @@ class WC_LafkaCombos_Elementor_Compatibility {
 
 	public static function init() {
 		add_filter( 'woocommerce_combo_form_classes', array( __CLASS__, 'additional_form_classes' ), 10, 2 );
-		add_action( 'elementor/widget/render_content', array( __CLASS__, 'render_add_to_cart_widget' ), 10, 2 );
+		add_action( 'elementor/widget/render_content', array( __CLASS__, 'render_add_to_cart_widget' ) , 10, 2);
 	}
 
 	/**

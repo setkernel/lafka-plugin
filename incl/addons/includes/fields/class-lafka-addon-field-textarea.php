@@ -16,7 +16,7 @@ class Lafka_Addon_Field_Textarea extends Lafka_Product_Addon_Field {
 
 			// Required addon checks
 			if ( ! empty( $this->addon['required'] ) ) {
-				if ( $posted === '' || ( is_array( $posted ) && sizeof( $posted ) == 0 ) ) {
+				if ( $posted === "" || ( is_array($posted) && sizeof( $posted ) == 0 ) ) {
 					return new WP_Error( 'error', sprintf( __( '"%s" is a required field.', 'lafka-plugin' ), $this->addon['name'] ) );
 				}
 			}
@@ -24,65 +24,66 @@ class Lafka_Addon_Field_Textarea extends Lafka_Product_Addon_Field {
 			// Min, max checks
 
 			switch ( $this->addon['type'] ) {
-				case 'custom':
-				case 'textarea':
-				case 'custom_letters_only':
-				case 'custom_digits_only':
-				case 'custom_letters_or_digits':
+				case "custom" :
+				case "textarea" :
+				case "custom_letters_only" :
+				case "custom_digits_only" :
+				case "custom_letters_or_digits" :
 					if ( ! empty( $option['min'] ) && ! empty( $posted ) && mb_strlen( $posted, 'UTF-8' ) < $option['min'] ) {
-						return new WP_Error( 'error', sprintf( __( 'The minimum allowed length for "%1$s - %2$s" is %3$s.', 'lafka-plugin' ), $this->addon['name'], $option['label'], $option['min'] ) );
+						return new WP_Error( 'error', sprintf( __( 'The minimum allowed length for "%s - %s" is %s.', 'lafka-plugin' ), $this->addon['name'], $option['label'], $option['min'] ) );
 					}
 
 					if ( ! empty( $option['max'] ) && ! empty( $posted ) && mb_strlen( $posted, 'UTF-8' ) > $option['max'] ) {
-						return new WP_Error( 'error', sprintf( __( 'The maximum allowed length for "%1$s - %2$s" is %3$s.', 'lafka-plugin' ), $this->addon['name'], $option['label'], $option['max'] ) );
+						return new WP_Error( 'error', sprintf( __( 'The maximum allowed length for "%s - %s" is %s.', 'lafka-plugin' ), $this->addon['name'], $option['label'], $option['max'] ) );
 					}
-					break;
-				case 'custom_price':
-				case 'input_multiplier':
+				break;
+				case "custom_price" :
+				case "input_multiplier" :
 					if ( ! empty( $option['min'] ) && ! empty( $posted ) && $posted < $option['min'] || ( isset( $option['min'] ) && $posted < $option['min'] ) ) {
 						if ( ! empty( $this->addon['required'] ) ) {
-							return new WP_Error( 'error', sprintf( __( 'The minimum allowed amount for "%1$s - %2$s" is %3$s.', 'lafka-plugin' ), $this->addon['name'], $option['label'], $option['min'] ) );
+							return new WP_Error( 'error', sprintf( __( 'The minimum allowed amount for "%s - %s" is %s.', 'lafka-plugin' ), $this->addon['name'], $option['label'], $option['min'] ) );
 						}
 					}
 
 					if ( ! empty( $option['max'] ) && ! empty( $posted ) && $posted > $option['max'] ) {
 						if ( ! empty( $this->addon['required'] ) ) {
-							return new WP_Error( 'error', sprintf( __( 'The maximum allowed amount for "%1$s - %2$s" is %3$s.', 'lafka-plugin' ), $this->addon['name'], $option['label'], $option['max'] ) );
+							return new WP_Error( 'error', sprintf( __( 'The maximum allowed amount for "%s - %s" is %s.', 'lafka-plugin' ), $this->addon['name'], $option['label'], $option['max'] ) );
 						}
 					}
-					break;
+				break;
 			}
 
 			// Other option specific checks
 
 			switch ( $this->addon['type'] ) {
-				case 'input_multiplier':
+				case "input_multiplier" :
 					$posted = absint( $posted );
 					if ( $posted < 0 ) {
-						return new WP_Error( 'error', sprintf( __( 'Please enter a value greater than 0 for "%1$s - %2$s".', 'lafka-plugin' ), $this->addon['name'], $option['label'] ) );
+						return new WP_Error( 'error', sprintf( __( 'Please enter a value greater than 0 for "%s - %s".', 'lafka-plugin' ), $this->addon['name'], $option['label'] ) );
 					}
-					break;
-				case 'custom_letters_only':
+				break;
+				case "custom_letters_only" :
 					if ( 1 !== preg_match( '/^[A-Z ]*$/i', $posted ) ) {
-						return new WP_Error( 'error', sprintf( __( 'Only letters are allowed for "%1$s - %2$s".', 'lafka-plugin' ), $this->addon['name'], $option['label'] ) );
+						return new WP_Error( 'error', sprintf( __( 'Only letters are allowed for "%s - %s".', 'lafka-plugin' ), $this->addon['name'], $option['label'] ) );
 					}
-					break;
-				case 'custom_digits_only':
+				break;
+				case "custom_digits_only" :
 					if ( 1 !== preg_match( '/^[0-9]*$/', $posted ) ) {
-						return new WP_Error( 'error', sprintf( __( 'Only digits are allowed for "%1$s - %2$s".', 'lafka-plugin' ), $this->addon['name'], $option['label'] ) );
+						return new WP_Error( 'error', sprintf( __( 'Only digits are allowed for "%s - %s".', 'lafka-plugin' ), $this->addon['name'], $option['label'] ) );
 					}
-					break;
-				case 'custom_letters_or_digits':
+				break;
+				case "custom_letters_or_digits" :
 					if ( 1 !== preg_match( '/^[A-Z0-9 ]*$/i', $posted ) ) {
-						return new WP_Error( 'error', sprintf( __( 'Only letters and digits are allowed for "%1$s - %2$s".', 'lafka-plugin' ), $this->addon['name'], $option['label'] ) );
+						return new WP_Error( 'error', sprintf( __( 'Only letters and digits are allowed for "%s - %s".', 'lafka-plugin' ), $this->addon['name'], $option['label'] ) );
 					}
-					break;
-				case 'custom_email':
+				break;
+				case "custom_email" :
 					if ( ! empty( $posted ) && ! is_email( $posted ) ) {
-						return new WP_Error( 'error', sprintf( __( 'A valid email address is required for "%1$s - %2$s".', 'lafka-plugin' ), $this->addon['name'], $option['label'] ) );
+						return new WP_Error( 'error', sprintf( __( 'A valid email address is required for "%s - %s".', 'lafka-plugin' ), $this->addon['name'], $option['label'] ) );
 					}
-					break;
+				break;
 			}
+
 		}
 		return true;
 	}
@@ -92,7 +93,7 @@ class Lafka_Addon_Field_Textarea extends Lafka_Product_Addon_Field {
 	 * @return array on success, WP_ERROR on failure
 	 */
 	public function get_cart_item_data() {
-		$cart_item_data = array();
+		$cart_item_data           = array();
 
 		foreach ( $this->addon['options'] as $key => $option ) {
 			$option_key = empty( $option['label'] ) ? $key : sanitize_title( $option['label'] );
@@ -106,39 +107,40 @@ class Lafka_Addon_Field_Textarea extends Lafka_Product_Addon_Field {
 			$price = $this->get_option_price( $option );
 
 			switch ( $this->addon['type'] ) {
-				case 'custom_price':
+				case 'custom_price' :
 					$price = floatval( sanitize_text_field( $posted ) );
 
 					if ( $price >= 0 ) {
 						$cart_item_data[] = array(
-							'name'    => $label,
-							'value'   => $price,
-							'price'   => $price,
-							'display' => strip_tags( wc_price( $price ) ),
+							'name'     => $label,
+							'value'    => $price,
+							'price'    => $price,
+							'display'  => strip_tags( wc_price( $price ) ),
 						);
 					}
-					break;
-				case 'input_multiplier':
+				break;
+				case 'input_multiplier' :
 					$posted = absint( $posted );
 
 					if ( 0 < $posted ) {
 						$cart_item_data[] = array(
-							'name'  => $label,
-							'value' => $posted,
-							'price' => $posted * $price,
+							'name'   => $label,
+							'value'  => $posted,
+							'price'  => $posted * $price,
 						);
 					}
-					break;
-				default:
+				break;
+				default :
 					$cart_item_data[] = array(
-						'name'  => $label,
-						'value' => wp_kses_post( $posted ),
-						'price' => $price,
+						'name'   => $label,
+						'value'  => wp_kses_post( $posted ),
+						'price'  => $price,
 					);
-					break;
+				break;
 			}
 		}
 
 		return $cart_item_data;
 	}
+
 }

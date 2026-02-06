@@ -12,14 +12,14 @@ class Lafka_Product_Addon_Field_List extends Lafka_Product_Addon_Field {
 	 */
 	public function validate() {
 		if ( ! empty( $this->addon['required'] ) ) {
-			if ( ! $this->value || ( is_array( $this->value ) && sizeof( $this->value ) ) == 0 ) {
+			if ( ! $this->value || ( is_array($this->value) && sizeof( $this->value ) ) == 0 ) {
 				return new WP_Error( 'error', sprintf( esc_html__( '"%s" is a required field.', 'lafka-plugin' ), $this->addon['name'] ) );
 			}
 		}
 
 		if ( ! empty( $this->addon['limit'] ) ) {
 			if ( is_array( $this->value ) && sizeof( $this->value ) > intval( $this->addon['limit'] ) ) {
-				return new WP_Error( 'error', sprintf( esc_html__( 'Select up to %1$d "%2$s".', 'lafka-plugin' ), $this->addon['limit'], $this->addon['name'] ) );
+				return new WP_Error( 'error', sprintf( esc_html__( 'Select up to %d "%s".', 'lafka-plugin' ), $this->addon['limit'], $this->addon['name'] ) );
 			}
 		}
 
@@ -53,7 +53,7 @@ class Lafka_Product_Addon_Field_List extends Lafka_Product_Addon_Field {
 					'name'  => $this->addon['name'],
 					'image' => $option['image'] ?? '',
 					'value' => $option['label'],
-					'price' => $this->get_option_price( $option ),
+					'price' => $this->get_option_price( $option )
 				);
 			}
 		}

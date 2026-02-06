@@ -112,15 +112,10 @@ class WC_LafkaCombos_BS_Display {
 
 				$combo_sells_title_proc = do_shortcode( wp_kses( $combo_sells_title, WC_LafkaCombos_Helpers::get_allowed_html( 'inline' ) ) );
 
-				wc_get_template(
-					'single-product/combo-sells-section-title.php',
-					array(
-						'wrap'  => $combo_sells_title_proc === $combo_sells_title,
-						'title' => $combo_sells_title_proc === $combo_sells_title ? $combo_sells_title_proc : wpautop( $combo_sells_title_proc ),
-					),
-					false,
-					WC_LafkaCombos()->plugin_path() . '/includes/modules/combo-sells/templates/'
-				);
+				wc_get_template( 'single-product/combo-sells-section-title.php', array(
+					'wrap'  => $combo_sells_title_proc === $combo_sells_title,
+					'title' => $combo_sells_title_proc === $combo_sells_title ? $combo_sells_title_proc : wpautop( $combo_sells_title_proc )
+				), false, WC_LafkaCombos()->plugin_path() . '/includes/modules/combo-sells/templates/' );
 			}
 
 			do_action( 'woocommerce_before_combined_items', $combo );
@@ -129,17 +124,16 @@ class WC_LafkaCombos_BS_Display {
 			 * Show Combo-Sells.
 			 */
 			?>
-			<div class="combo_form combo_sells_form">
-			<?php
+			<div class="combo_form combo_sells_form"><?php
 
-			foreach ( $combo->get_combined_items() as $combined_item ) {
-				// Neat, isn't it?
-				self::apply_combined_item_template_overrides();
-				do_action( 'woocommerce_combined_item_details', $combined_item, $combo );
-				self::reset_combined_item_template_overrides();
-			}
+				foreach ( $combo->get_combined_items() as $combined_item ) {
+					// Neat, isn't it?
+					self::apply_combined_item_template_overrides();
+					do_action( 'woocommerce_combined_item_details', $combined_item, $combo );
+					self::reset_combined_item_template_overrides();
+				}
 
-			?>
+				?>
 				<div class="combo_data combo_data_<?php echo $combo->get_id(); ?>" data-combo_form_data="<?php echo esc_attr( json_encode( $combo->get_combo_form_data() ) ); ?>" data-combo_id="<?php echo $combo->get_id(); ?>">
 					<div class="combo_wrap">
 						<div class="combo_error" style="display:none">
@@ -203,11 +197,11 @@ class WC_LafkaCombos_BS_Display {
 
 		if ( $parent_item_key = wc_pb_get_combo_sell_cart_item_container( $cart_item, false, true ) ) {
 
-			if ( ! empty( $cart_item['combo_sell_discount'] ) ) {
+			if ( ! empty( $cart_item[ 'combo_sell_discount' ] ) ) {
 
 				$parent_item           = WC()->cart->cart_contents[ $parent_item_key ];
-				$parent_item_permalink = apply_filters( 'woocommerce_cart_item_permalink', $parent_item['data']->is_visible() ? $parent_item['data']->get_permalink( $parent_item ) : '', $parent_item, $parent_item_key );
-				$parent_item_name      = $parent_item['data']->get_title();
+				$parent_item_permalink = apply_filters( 'woocommerce_cart_item_permalink', $parent_item[ 'data' ]->is_visible() ? $parent_item[ 'data' ]->get_permalink( $parent_item ) : '', $parent_item, $parent_item_key );
+				$parent_item_name      = $parent_item[ 'data' ]->get_title();
 
 				if ( $parent_item_permalink ) {
 					$parent_item_name = wp_kses_post( apply_filters( 'woocommerce_cart_item_name', sprintf( '<a href="%s">%s</a>', esc_url( $parent_item_permalink ), $parent_item_name ), $parent_item, $parent_item_key ) );
@@ -224,13 +218,13 @@ class WC_LafkaCombos_BS_Display {
 				 * @param  array   $parent_item
 				 * @param  string  $parent_item_name
 				 */
-				$combo_sell_discount = apply_filters( 'wc_pb_combo_sell_discount_cart_item_meta_value', sprintf( _x( '%s&#37; (applied by %2$s)', 'combo-sell discount', 'lafka-plugin' ), round( (float) $cart_item['combo_sell_discount'], 1 ), $parent_item_name ), $cart_item, $parent_item, $parent_item_name );
+				$combo_sell_discount = apply_filters( 'wc_pb_combo_sell_discount_cart_item_meta_value', sprintf( _x( '%s&#37; (applied by %2$s)', 'combo-sell discount', 'lafka-plugin' ), round( ( float ) $cart_item[ 'combo_sell_discount' ], 1 ), $parent_item_name ), $cart_item, $parent_item, $parent_item_name );
 
 				if ( $combo_sell_discount ) {
 
 					$data[] = array(
 						'key'   => __( 'Discount', 'lafka-plugin' ),
-						'value' => $combo_sell_discount,
+						'value' => $combo_sell_discount
 					);
 				}
 			}

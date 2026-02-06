@@ -93,7 +93,7 @@ class WC_LafkaCombos_Members_Compatibility {
 		// Flag to prevent 'exclude_combined_product_from_member_discounts' from kicking in.
 		self::$calculating_inherited_discounts = true;
 
-		$combo            = $combined_item->get_combo();
+		$combo          = $combined_item->get_combo();
 		$combined_product = $combined_item->get_product();
 
 		// If the combo is excluded from member discounts, don't apply any discounts.
@@ -167,6 +167,7 @@ class WC_LafkaCombos_Members_Compatibility {
 			foreach ( $rule_discounts as $rule_discount ) {
 				$rules_discount = $rules_discount + $rule_discount - ( $rule_discount * $rules_discount ) / 100;
 			}
+
 		} else {
 
 			$rules_discount = max( $rule_discounts );

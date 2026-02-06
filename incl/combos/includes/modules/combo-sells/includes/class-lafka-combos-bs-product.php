@@ -147,25 +147,20 @@ class WC_LafkaCombos_BS_Product {
 		 * @param  int         $combo_sell_id  Combo-sell ID.
 		 * @param  WC_Product  $product         Product containing the combo-sell.
 		 */
-		return apply_filters(
-			'wc_pb_combo_sell_data_item_args',
-			array(
-				'combo_id'   => $product->get_id(),
-				'product_id' => $combo_sell_id,
-				'meta_data'  => array(
-					'quantity_min'         => 1,
-					'quantity_max'         => 1,
-					'priced_individually'  => 'yes',
-					'shipped_individually' => 'yes',
-					'optional'             => 'yes',
-					'discount'             => $discount ? $discount : null,
-					'stock_status'         => null,
-					'disable_addons'       => 'yes',
-				),
-			),
-			$combo_sell_id,
-			$product
-		);
+		return apply_filters( 'wc_pb_combo_sell_data_item_args', array(
+			'combo_id'  => $product->get_id(),
+			'product_id' => $combo_sell_id,
+			'meta_data'  => array(
+				'quantity_min'         => 1,
+				'quantity_max'         => 1,
+				'priced_individually'  => 'yes',
+				'shipped_individually' => 'yes',
+				'optional'             => 'yes',
+				'discount'             => $discount ? $discount : null,
+				'stock_status'         => null,
+				'disable_addons'       => 'yes'
+			)
+		), $combo_sell_id, $product );
 	}
 
 	/**
@@ -177,8 +172,8 @@ class WC_LafkaCombos_BS_Product {
 	 */
 	public static function get_combo( $combo_sell_ids, $product ) {
 
-		$combo_sell_ids      = array_map( 'intval', $combo_sell_ids );
-		$combo               = new WC_Product_Combo( $product );
+		$combo_sell_ids    = array_map( 'intval', $combo_sell_ids );
+		$combo             = new WC_Product_Combo( $product );
 		$combined_data_items = array();
 
 		foreach ( $combo_sell_ids as $combo_sell_id ) {

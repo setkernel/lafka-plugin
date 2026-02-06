@@ -65,22 +65,22 @@ class WC_LafkaCombos_Admin {
 
 		// Product Import/Export.
 		if ( WC_LafkaCombos_Core_Compatibility::is_wc_version_gte( '3.1' ) ) {
-			require_once WC_LafkaCombos_ABSPATH . 'includes/admin/export/class-lafka-combos-product-export.php';
-			require_once WC_LafkaCombos_ABSPATH . 'includes/admin/import/class-lafka-combos-product-import.php';
+			require_once( WC_LafkaCombos_ABSPATH . 'includes/admin/export/class-lafka-combos-product-export.php' );
+			require_once( WC_LafkaCombos_ABSPATH . 'includes/admin/import/class-lafka-combos-product-import.php' );
 		}
 
 		// Product Metaboxes.
-		require_once WC_LafkaCombos_ABSPATH . 'includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php';
+		require_once( WC_LafkaCombos_ABSPATH . 'includes/admin/meta-boxes/class-lafka-combos-meta-box-product-data.php' );
 
 		// Post type stuff.
-		require_once WC_LafkaCombos_ABSPATH . 'includes/admin/class-lafka-combos-admin-post-types.php';
+		require_once( WC_LafkaCombos_ABSPATH . 'includes/admin/class-lafka-combos-admin-post-types.php' );
 
 		// Admin AJAX.
-		require_once WC_LafkaCombos_ABSPATH . 'includes/admin/class-lafka-combos-admin-ajax.php';
+		require_once( WC_LafkaCombos_ABSPATH . 'includes/admin/class-lafka-combos-admin-ajax.php' );
 
 		// Admin edit-order screen.
 		if ( WC_LafkaCombos_Core_Compatibility::is_wc_version_gte( '3.2' ) ) {
-			require_once WC_LafkaCombos_ABSPATH . 'includes/admin/class-lafka-combos-admin-order.php';
+			require_once( WC_LafkaCombos_ABSPATH . 'includes/admin/class-lafka-combos-admin-order.php' );
 		}
 	}
 
@@ -92,7 +92,7 @@ class WC_LafkaCombos_Admin {
 	public static function maybe_register_selectsw() {
 
 		$is_registered      = wp_script_is( 'sw-admin-select-init', $list = 'registered' );
-		$registered_version = $is_registered ? wp_scripts()->registered['sw-admin-select-init']->ver : '';
+		$registered_version = $is_registered ? wp_scripts()->registered[ 'sw-admin-select-init' ]->ver : '';
 		$register           = ! $is_registered || version_compare( self::$combined_selectsw_version, $registered_version, '>' );
 
 		if ( $register ) {
@@ -140,9 +140,9 @@ class WC_LafkaCombos_Admin {
 			return;
 		}
 
-		$registered_version       = wp_scripts()->registered['sw-admin-select-init']->ver;
+		$registered_version       = wp_scripts()->registered[ 'sw-admin-select-init' ]->ver;
 		$registered_version_major = strstr( $registered_version, '.', true );
-		$combined_version_major   = strstr( self::$combined_selectsw_version, '.', true );
+		$combined_version_major    = strstr( self::$combined_selectsw_version, '.', true );
 
 		if ( version_compare( $combined_version_major, $registered_version_major, '<' ) ) {
 			$notice = __( 'The installed version of <strong>Product Combos</strong> is not compatible with the <code>selectSW</code> library found on your system. Please update Product Combos to the latest version.', 'lafka-plugin' );
@@ -159,7 +159,7 @@ class WC_LafkaCombos_Admin {
 	 */
 	private static function load_selectsw() {
 
-		$load_selectsw_from = wp_scripts()->registered['sw-admin-select-init']->src;
+		$load_selectsw_from = wp_scripts()->registered[ 'sw-admin-select-init' ]->src;
 
 		return strpos( $load_selectsw_from, WC_LafkaCombos()->plugin_url() ) === 0;
 	}
@@ -268,17 +268,16 @@ class WC_LafkaCombos_Admin {
 
 			$params = array(
 				'add_combined_product_nonce' => wp_create_nonce( 'wc_combos_add_combined_product' ),
-				'group_modes_with_parent'    => $group_modes_with_parent,
-				'is_first_combo'             => isset( $_GET['wc_pb_first_combo'] ) ? 'yes' : 'no',
-				'is_wc_version_gte_3_2'      => WC_LafkaCombos_Core_Compatibility::is_wc_version_gte( '3.2' ) ? 'yes' : 'no',
+				'group_modes_with_parent'   => $group_modes_with_parent,
+				'is_first_combo'           => isset( $_GET[ 'wc_pb_first_combo' ] ) ? 'yes' : 'no',
+				'is_wc_version_gte_3_2'     => WC_LafkaCombos_Core_Compatibility::is_wc_version_gte( '3.2' ) ? 'yes' : 'no'
 			);
 
 			wp_localize_script( 'wc-pb-admin-product-panel', 'wc_combos_admin_params', $params );
 
 		} elseif ( 'edit-product' === $screen_id ) {
 
-			wc_enqueue_js(
-				"
+			wc_enqueue_js( "
 				jQuery( function( $ ) {
 					jQuery( '.show_insufficient_stock_items' ).on( 'click', function() {
 						var anchor = jQuery( this ),
@@ -294,21 +293,20 @@ class WC_LafkaCombos_Admin {
 						return false;
 					} );
 				} );
-			"
-			);
+			" );
 
 		} elseif ( in_array( $screen_id, array( 'shop_order', 'shop_subscription' ) ) ) {
 
 			wp_enqueue_script( 'wc-pb-admin-order-panel' );
 
 			$params = array(
-				'edit_combo_nonce'      => wp_create_nonce( 'wc_combos_edit_combo' ),
+				'edit_combo_nonce'     => wp_create_nonce( 'wc_combos_edit_combo' ),
 				'is_wc_version_gte_3_4' => WC_LafkaCombos_Core_Compatibility::is_wc_version_gte( '3.4' ) ? 'yes' : 'no',
 				'is_wc_version_gte_3_6' => WC_LafkaCombos_Core_Compatibility::is_wc_version_gte( '3.6' ) ? 'yes' : 'no',
 				'i18n_configure'        => __( 'Configure', 'lafka-plugin' ),
 				'i18n_edit'             => __( 'Edit', 'lafka-plugin' ),
 				'i18n_form_error'       => __( 'Failed to initialize form. If this issue persists, please reload the page and try again.', 'lafka-plugin' ),
-				'i18n_validation_error' => __( 'Failed to validate configuration. If this issue persists, please reload the page and try again.', 'lafka-plugin' ),
+				'i18n_validation_error' => __( 'Failed to validate configuration. If this issue persists, please reload the page and try again.', 'lafka-plugin' )
 			);
 
 			wp_localize_script( 'wc-pb-admin-order-panel', 'wc_combos_admin_order_params', $params );
@@ -323,7 +321,7 @@ class WC_LafkaCombos_Admin {
 	 */
 	public static function template_scan_path( $paths ) {
 
-		$paths['WooCommerce Product Combos'] = WC_LafkaCombos()->plugin_path() . '/templates/';
+		$paths[ 'WooCommerce Product Combos' ] = WC_LafkaCombos()->plugin_path() . '/templates/';
 
 		return $paths;
 	}
@@ -336,11 +334,11 @@ class WC_LafkaCombos_Admin {
 	 */
 	public static function add_insufficient_stock_report_tab( $reports ) {
 
-		$reports['stock']['reports']['insufficient_stock'] = array(
+		$reports[ 'stock' ][ 'reports' ][ 'insufficient_stock' ] = array(
 			'title'       => __( 'Insufficient stock', 'lafka-plugin' ),
 			'description' => '',
 			'hide_title'  => true,
-			'callback'    => array( __CLASS__, 'get_insufficient_stock_report_content' ),
+			'callback'    => array( __CLASS__, 'get_insufficient_stock_report_content' )
 		);
 
 		return $reports;
@@ -354,9 +352,9 @@ class WC_LafkaCombos_Admin {
 	 */
 	public static function get_insufficient_stock_report_content( $name ) {
 
-		require_once WC_LafkaCombos_ABSPATH . 'includes/admin/reports/class-lafka-combos-report-insufficient-stock.php';
+		require_once( WC_LafkaCombos_ABSPATH . 'includes/admin/reports/class-lafka-combos-report-insufficient-stock.php' );
 
-		$report = new WC_LafkaCombos_Report_Insufficient_Stock();
+		$report = new WC_LafkaCombos_Report_Insufficient_Stock;
 		$report->output_report();
 	}
 
@@ -376,11 +374,11 @@ class WC_LafkaCombos_Admin {
 			return;
 		}
 
-		if ( empty( $_GET['combo_id'] ) ) {
+		if ( empty( $_GET[ 'combo_id' ] ) ) {
 			return;
 		}
 
-		$combo  = wc_get_product( absint( $_GET['combo_id'] ) );
+		$combo = wc_get_product( absint( $_GET[ 'combo_id' ] ) );
 		$notice = sprintf( __( 'You are currently viewing a filtered version of this report for <strong>%1$s</strong>. <a href="%2$s" class="wc_pb_forward">Clear Filter</a>', 'lafka-plugin' ), $combo->get_title(), admin_url( 'admin.php?page=wc-reports&tab=stock&report=insufficient_stock' ) );
 		WC_LafkaCombos_Admin_Notices::add_notice( $notice, 'info' );
 	}

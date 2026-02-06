@@ -23,9 +23,9 @@ class WC_Combined_Item_Data {
 	 */
 	protected $data = array(
 		'combined_item_id' => 0,
-		'product_id'       => 0,
-		'combo_id'         => 0,
-		'menu_order'       => 0,
+		'product_id'      => 0,
+		'combo_id'       => 0,
+		'menu_order'      => 0
 	);
 
 	/**
@@ -58,7 +58,7 @@ class WC_Combined_Item_Data {
 		'cart_price_visibility'                 => 'visible',
 		'order_price_visibility'                => 'visible',
 		'stock_status'                          => null,
-		'max_stock'                             => null,
+		'max_stock'                             => null
 	);
 
 	/**
@@ -90,7 +90,7 @@ class WC_Combined_Item_Data {
 		'cart_price_visibility'                 => 'visible_or_hidden',
 		'order_price_visibility'                => 'visible_or_hidden',
 		'stock_status'                          => 'strval',
-		'max_stock'                             => 'absint_if_not_empty',
+		'max_stock'                             => 'absint_if_not_empty'
 	);
 
 	/**
@@ -147,7 +147,7 @@ class WC_Combined_Item_Data {
 	 * @return int
 	 */
 	public function get_combined_item_id() {
-		return absint( $this->data['combined_item_id'] );
+		return absint( $this->data[ 'combined_item_id' ] );
 	}
 
 	/**
@@ -156,7 +156,7 @@ class WC_Combined_Item_Data {
 	 * @return int
 	 */
 	public function get_product_id() {
-		return absint( $this->data['product_id'] );
+		return absint( $this->data[ 'product_id' ] );
 	}
 
 	/**
@@ -165,7 +165,7 @@ class WC_Combined_Item_Data {
 	 * @return int
 	 */
 	public function get_combo_id() {
-		return absint( $this->data['combo_id'] );
+		return absint( $this->data[ 'combo_id' ] );
 	}
 
 	/**
@@ -174,7 +174,7 @@ class WC_Combined_Item_Data {
 	 * @return int
 	 */
 	public function get_menu_order() {
-		return absint( $this->data['menu_order'] );
+		return absint( $this->data[ 'menu_order' ] );
 	}
 
 	/**
@@ -232,7 +232,7 @@ class WC_Combined_Item_Data {
 	 * @param  int  $value
 	 */
 	public function set_combined_item_id( $value ) {
-		$this->data['combined_item_id'] = absint( $value );
+		$this->data[ 'combined_item_id' ] = absint( $value );
 	}
 
 	/**
@@ -241,7 +241,7 @@ class WC_Combined_Item_Data {
 	 * @param  int  $value
 	 */
 	public function set_product_id( $value ) {
-		$this->data['product_id'] = absint( $value );
+		$this->data[ 'product_id' ] = absint( $value );
 	}
 
 	/**
@@ -250,7 +250,7 @@ class WC_Combined_Item_Data {
 	 * @param  int  $value
 	 */
 	public function set_combo_id( $value ) {
-		$this->data['combo_id'] = absint( $value );
+		$this->data[ 'combo_id' ] = absint( $value );
 	}
 
 	/**
@@ -259,7 +259,7 @@ class WC_Combined_Item_Data {
 	 * @param  int  $value
 	 */
 	public function set_menu_order( $value ) {
-		$this->data['menu_order'] = absint( $value );
+		$this->data[ 'menu_order' ] = absint( $value );
 	}
 
 	/**
@@ -293,14 +293,11 @@ class WC_Combined_Item_Data {
 
 		global $wpdb;
 
-		$wpdb->insert(
-			$wpdb->prefix . 'woocommerce_lafka_combined_items',
-			array(
-				'product_id' => $this->get_product_id(),
-				'combo_id'   => $this->get_combo_id(),
-				'menu_order' => $this->get_menu_order(),
-			)
-		);
+		$wpdb->insert( $wpdb->prefix . 'woocommerce_lafka_combined_items', array(
+			'product_id' => $this->get_product_id(),
+			'combo_id'  => $this->get_combo_id(),
+			'menu_order' => $this->get_menu_order()
+		) );
 
 		$this->set_id( $wpdb->insert_id );
 
@@ -314,15 +311,11 @@ class WC_Combined_Item_Data {
 
 		global $wpdb;
 
-		$wpdb->update(
-			$wpdb->prefix . 'woocommerce_lafka_combined_items',
-			array(
-				'product_id' => $this->get_product_id(),
-				'combo_id'   => $this->get_combo_id(),
-				'menu_order' => $this->get_menu_order(),
-			),
-			array( 'combined_item_id' => $this->get_id() )
-		);
+		$wpdb->update( $wpdb->prefix . 'woocommerce_lafka_combined_items', array(
+			'product_id' => $this->get_product_id(),
+			'combo_id'  => $this->get_combo_id(),
+			'menu_order' => $this->get_menu_order()
+		), array( 'combined_item_id' => $this->get_id() ) );
 
 		do_action( 'woocommerce_update_combined_item', $this );
 	}
@@ -500,16 +493,11 @@ class WC_Combined_Item_Data {
 
 		if ( ! $cache_loaded ) {
 			global $wpdb;
-			$raw_meta_data = $wpdb->get_results(
-				$wpdb->prepare(
-					"
+			$raw_meta_data = $wpdb->get_results( $wpdb->prepare( "
 				SELECT meta_id, meta_key, meta_value
 				FROM {$wpdb->prefix}woocommerce_lafka_combined_itemmeta
 				WHERE combined_item_id = %d ORDER BY meta_id
-			",
-					$this->get_id()
-				)
-			);
+			", $this->get_id() ) );
 
 			foreach ( $raw_meta_data as $meta ) {
 				if ( defined( 'WC_LafkaCombos_DEBUG_STOCK_SYNC' ) && 'stock_status' === $meta->meta_key ) {
@@ -519,8 +507,8 @@ class WC_Combined_Item_Data {
 			}
 
 			// Always make the 'quantity_default' meta mirror the 'quantity_min' meta.
-			if ( ! isset( $this->meta_data['quantity_default'] ) && isset( $this->meta_data['quantity_min'] ) ) {
-				$this->meta_data['quantity_default'] = $this->meta_data['quantity_min'];
+			if ( ! isset( $this->meta_data[ 'quantity_default' ] ) && isset( $this->meta_data[ 'quantity_min' ] ) ) {
+				$this->meta_data[ 'quantity_default' ] = $this->meta_data[ 'quantity_min' ];
 			}
 
 			if ( $use_cache ) {
@@ -536,16 +524,11 @@ class WC_Combined_Item_Data {
 
 		global $wpdb;
 
-		$raw_meta_data = $wpdb->get_results(
-			$wpdb->prepare(
-				"
+		$raw_meta_data = $wpdb->get_results( $wpdb->prepare( "
 			SELECT meta_id, meta_key, meta_value
 			FROM {$wpdb->prefix}woocommerce_lafka_combined_itemmeta
 			WHERE combined_item_id = %d ORDER BY meta_id
-		",
-				$this->get_id()
-			)
-		);
+		", $this->get_id() ) );
 
 		$updated_meta_keys = array();
 
@@ -555,9 +538,9 @@ class WC_Combined_Item_Data {
 			// Min quantity changed? Invalidate stock status.
 			foreach ( $raw_meta_data as $meta ) {
 				if ( 'quantity_min' === $meta->meta_key ) {
-					if ( isset( $this->meta_data['quantity_min'] ) && absint( $meta->meta_value ) !== absint( $this->meta_data['quantity_min'] ) ) {
-						unset( $this->meta_data['stock_status'] );
-						unset( $this->meta_data['max_stock'] );
+					if ( isset( $this->meta_data[ 'quantity_min' ] ) && absint( $meta->meta_value ) !== absint( $this->meta_data[ 'quantity_min' ] ) ) {
+						unset( $this->meta_data[ 'stock_status' ] );
+						unset( $this->meta_data[ 'max_stock' ] );
 					}
 				}
 			}
@@ -615,12 +598,12 @@ class WC_Combined_Item_Data {
 			} elseif ( 'absint_if_not_empty' === $fn ) {
 				$meta_value = '' !== $meta_value ? absint( $meta_value ) : '';
 			} elseif ( 'double_if_not_empty' === $fn ) {
-				$meta_value = '' !== $meta_value ? doubleval( $meta_value ) : '';
+				$meta_value = '' !== $meta_value  ? doubleval( $meta_value ) : '';
 			} elseif ( function_exists( $fn ) ) {
 				$meta_value = $fn( $meta_value );
 			}
 
-			// Otherwise, always attempt to unserialize on the way in.
+		// Otherwise, always attempt to unserialize on the way in.
 		} else {
 			$meta_value = maybe_unserialize( $meta_value );
 		}

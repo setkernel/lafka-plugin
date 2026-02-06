@@ -54,5 +54,5 @@ abstract class Lafka_Product_Addon_Field {
 	 */
 	public function get_option_price( $option ) {
 		return $option['price'];
-	}
+	}	
 }

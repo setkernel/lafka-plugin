@@ -108,12 +108,12 @@ if ( ! function_exists( 'lafka_reorder_terms' ) ) {
 			}
 			// the nextid of our term to order, lets move our term here.
 			if ( null !== $next_id && $term_id === $next_id ) {
-				++$index;
+				$index ++;
 				$index = lafka_set_term_order( $id, $index, $taxonomy, true );
 			}
 
 			// Set order.
-			++$index;
+			$index ++;
 			$index = lafka_set_term_order( $term_id, $index, $taxonomy );
 
 			// If that term has children we walk through them.
@@ -160,7 +160,7 @@ if ( ! function_exists( 'lafka_set_term_order' ) ) {
 		$children = get_terms( $taxonomy, "parent=$term_id&menu_order=ASC&hide_empty=0" );
 
 		foreach ( $children as $term ) {
-			++$index;
+			$index ++;
 			$index = lafka_set_term_order( $term->term_id, $index, $taxonomy, true );
 		}
 
@@ -199,7 +199,7 @@ if ( ! function_exists( 'lafka_terms_clauses' ) ) {
 
 		// Query fields.
 		$clauses['fields'] = $clauses['fields'] . ', tm.meta_value';
-		$clauses['join']  .= " LEFT JOIN {$wpdb->termmeta} AS tm ON (t.term_id = tm.term_id AND tm.meta_key = 'order') ";
+		$clauses['join']   .= " LEFT JOIN {$wpdb->termmeta} AS tm ON (t.term_id = tm.term_id AND tm.meta_key = 'order') ";
 		$order             = 'ORDER BY tm.meta_value+0 ASC';
 
 		if ( $clauses['orderby'] ) {
@@ -234,7 +234,7 @@ if ( ! function_exists( 'lafka_order_foodmenu_by_tax' ) ) {
 		global $wpdb;
 
 		if ( isset( $wp_query->query['post_type'] ) && $wp_query->query['post_type'] == 'lafka-foodmenu' && ! isset( $wp_query->query['orderby'] ) ) {
-			$clauses['join']   .= " LEFT JOIN (
+			$clauses['join']    .= " LEFT JOIN (
 			SELECT object_id, GROUP_CONCAT(meta_value ORDER BY meta_value ASC) AS lafka_foodmenu_category
 			FROM $wpdb->term_relationships
 			INNER JOIN $wpdb->term_taxonomy USING (term_taxonomy_id)

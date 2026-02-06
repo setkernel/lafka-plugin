@@ -41,8 +41,7 @@ class WC_LafkaCombos_PPEC_Compatibility {
 
 				} );
 			} );
-		</script>
-		<?php
+		</script><?php
 	}
 }
 

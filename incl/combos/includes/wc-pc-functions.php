@@ -63,14 +63,14 @@ function wc_pc_get_combined_product_map( $product, $allow_cache = true ) {
 
 	$use_cache = $allow_cache && ! defined( 'WC_LafkaCombos_DEBUG_TRANSIENTS' ) && ! defined( 'WC_LafkaCombos_UPDATING' );
 
-	$transient_name              = 'wc_combined_product_data';
-	$transient_version           = WC_Cache_Helper::get_transient_version( 'product' );
+	$transient_name             = 'wc_combined_product_data';
+	$transient_version          = WC_Cache_Helper::get_transient_version( 'product' );
 	$combined_product_data_array = get_transient( $transient_name );
 	$combined_product_data       = false;
 
-	if ( $use_cache && is_array( $combined_product_data_array ) && isset( $combined_product_data_array[ $product_id ] ) && is_array( $combined_product_data_array[ $product_id ] ) && isset( $combined_product_data_array[ $product_id ]['combo_ids'] ) && is_array( $combined_product_data_array[ $product_id ]['combo_ids'] ) ) {
-		if ( isset( $combined_product_data_array[ $product_id ]['version'] ) && $transient_version === $combined_product_data_array[ $product_id ]['version'] ) {
-			$combined_product_data = $combined_product_data_array[ $product_id ]['combo_ids'];
+	if ( $use_cache && is_array( $combined_product_data_array ) && isset( $combined_product_data_array[ $product_id ] ) && is_array( $combined_product_data_array[ $product_id ] ) && isset( $combined_product_data_array[ $product_id ][ 'combo_ids' ] ) && is_array( $combined_product_data_array[ $product_id ][ 'combo_ids' ] ) ) {
+		if ( isset( $combined_product_data_array[ $product_id ][ 'version' ] ) && $transient_version === $combined_product_data_array[ $product_id ][ 'version' ] ) {
+			$combined_product_data = $combined_product_data_array[ $product_id ][ 'combo_ids' ];
 		}
 	}
 
@@ -78,7 +78,7 @@ function wc_pc_get_combined_product_map( $product, $allow_cache = true ) {
 
 		$args = array(
 			'product_id' => $product_id,
-			'return'     => 'id=>combo_id',
+			'return'     => 'id=>combo_id'
 		);
 
 		$combined_product_data = WC_LafkaCombos_DB::query_combined_items( $args );
@@ -87,7 +87,7 @@ function wc_pc_get_combined_product_map( $product, $allow_cache = true ) {
 
 			$combined_product_data_array[ $product_id ] = array(
 				'combo_ids' => $combined_product_data,
-				'version'   => $transient_version,
+				'version'    => $transient_version
 			);
 
 		} else {
@@ -95,8 +95,8 @@ function wc_pc_get_combined_product_map( $product, $allow_cache = true ) {
 			$combined_product_data_array = array(
 				$product_id => array(
 					'combo_ids' => $combined_product_data,
-					'version'   => $transient_version,
-				),
+					'version'    => $transient_version
+				)
 			);
 		}
 
@@ -105,7 +105,7 @@ function wc_pc_get_combined_product_map( $product, $allow_cache = true ) {
 			// Delete expired entries.
 			if ( ! empty( $combined_product_data_array ) ) {
 				foreach ( $combined_product_data_array as $product_id_key => $data ) {
-					if ( ! isset( $data['version'] ) || $transient_version !== $data['version'] ) {
+					if ( ! isset( $data[ 'version' ] ) || $transient_version !== $data[ 'version' ] ) {
 						unset( $combined_product_data_array[ $product_id_key ] );
 					}
 				}
@@ -145,7 +145,7 @@ function wc_pc_get_combined_cart_item_container( $combined_cart_item, $cart_cont
 
 	if ( wc_pc_maybe_is_combined_cart_item( $combined_cart_item ) ) {
 
-		$combined_by = $combined_cart_item['combined_by'];
+		$combined_by = $combined_cart_item[ 'combined_by' ];
 
 		if ( isset( $cart_contents[ $combined_by ] ) ) {
 			$container = $return_id ? $combined_by : $cart_contents[ $combined_by ];
@@ -175,7 +175,7 @@ function wc_pc_get_combined_cart_items( $container_cart_item, $cart_contents = f
 
 	if ( wc_pc_is_combo_container_cart_item( $container_cart_item ) ) {
 
-		$combined_items = $container_cart_item['combined_items'];
+		$combined_items = $container_cart_item[ 'combined_items' ];
 
 		if ( ! empty( $combined_items ) && is_array( $combined_items ) ) {
 			foreach ( $combined_items as $combined_cart_item_key ) {
@@ -223,7 +223,7 @@ function wc_pc_maybe_is_combined_cart_item( $cart_item ) {
 
 	$is_combined = false;
 
-	if ( ! empty( $cart_item['combined_by'] ) && ! empty( $cart_item['combined_item_id'] ) && ! empty( $cart_item['stamp'] ) ) {
+	if ( ! empty( $cart_item[ 'combined_by' ] ) && ! empty( $cart_item[ 'combined_item_id' ] ) && ! empty( $cart_item[ 'stamp' ] ) ) {
 		$is_combined = true;
 	}
 
@@ -242,7 +242,7 @@ function wc_pc_is_combo_container_cart_item( $cart_item ) {
 
 	$is_combo = false;
 
-	if ( isset( $cart_item['combined_items'] ) && ! empty( $cart_item['stamp'] ) ) {
+	if ( isset( $cart_item[ 'combined_items' ] ) && ! empty( $cart_item[ 'stamp' ] ) ) {
 		$is_combo = true;
 	}
 
@@ -285,6 +285,7 @@ function wc_pc_get_combined_order_item_container( $combined_order_item, $order =
 						$order = $combined_order_item->get_order();
 						WC_LafkaCombos_Helpers::cache_set( 'order_' . $order_id, $order );
 					}
+
 				} else {
 					$msg = 'get_order() is not callable on the supplied $order_item. No $order object given.';
 					_doing_it_wrong( __FUNCTION__ . '()', $msg, '5.3.0' );
@@ -298,10 +299,10 @@ function wc_pc_get_combined_order_item_container( $combined_order_item, $order =
 
 					$is_container = false;
 
-					if ( isset( $order_item['combo_cart_key'] ) ) {
-						$is_container = $combined_order_item['combined_by'] === $order_item['combo_cart_key'];
+					if ( isset( $order_item[ 'combo_cart_key' ] ) ) {
+						$is_container = $combined_order_item[ 'combined_by' ] === $order_item[ 'combo_cart_key' ];
 					} else {
-						$is_container = isset( $order_item['stamp'] ) && $order_item['stamp'] === $combined_order_item['stamp'] && ! isset( $order_item['combined_by'] );
+						$is_container = isset( $order_item[ 'stamp' ] ) && $order_item[ 'stamp' ] === $combined_order_item[ 'stamp' ] && ! isset( $order_item[ 'combined_by' ] );
 					}
 
 					if ( $is_container ) {
@@ -337,7 +338,7 @@ function wc_pc_get_combined_order_items( $container_order_item, $order = false, 
 
 	if ( wc_pc_is_combo_container_order_item( $container_order_item ) ) {
 
-		$combined_cart_keys = maybe_unserialize( $container_order_item['combined_items'] );
+		$combined_cart_keys = maybe_unserialize( $container_order_item[ 'combined_items' ] );
 
 		if ( ! empty( $combined_cart_keys ) && is_array( $combined_cart_keys ) ) {
 
@@ -351,6 +352,7 @@ function wc_pc_get_combined_order_items( $container_order_item, $order = false, 
 						$order = $container_order_item->get_order();
 						WC_LafkaCombos_Helpers::cache_set( 'order_' . $order_id, $order );
 					}
+
 				} else {
 					$msg = 'get_order() is not callable on the supplied $order_item. No $order object given.';
 					_doing_it_wrong( __FUNCTION__ . '()', $msg, '5.3.0' );
@@ -364,10 +366,10 @@ function wc_pc_get_combined_order_items( $container_order_item, $order = false, 
 
 					$is_child = false;
 
-					if ( isset( $order_item['combo_cart_key'] ) ) {
-						$is_child = in_array( $order_item['combo_cart_key'], $combined_cart_keys ) ? true : false;
+					if ( isset( $order_item[ 'combo_cart_key' ] ) ) {
+						$is_child = in_array( $order_item[ 'combo_cart_key' ], $combined_cart_keys ) ? true : false;
 					} else {
-						$is_child = isset( $order_item['stamp'] ) && $order_item['stamp'] == $container_order_item['stamp'] && isset( $order_item['combined_by'] ) ? true : false;
+						$is_child = isset( $order_item[ 'stamp' ] ) && $order_item[ 'stamp' ] == $container_order_item[ 'stamp' ] && isset( $order_item[ 'combined_by' ] ) ? true : false;
 					}
 
 					if ( $is_child ) {
@@ -415,7 +417,7 @@ function wc_pc_maybe_is_combined_order_item( $order_item ) {
 
 	$is_combined = false;
 
-	if ( ! empty( $order_item['combined_by'] ) ) {
+	if ( ! empty( $order_item[ 'combined_by' ] ) ) {
 		$is_combined = true;
 	}
 
@@ -434,7 +436,7 @@ function wc_pc_is_combo_container_order_item( $order_item ) {
 
 	$is_combo = false;
 
-	if ( isset( $order_item['combined_items'] ) ) {
+	if ( isset( $order_item[ 'combined_items' ] ) ) {
 		$is_combo = true;
 	}
 

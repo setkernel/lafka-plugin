@@ -5,7 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 if ( ! class_exists( 'WC_Report_Stock' ) ) {
-	require_once WC_ABSPATH . 'includes/admin/reports/class-wc-report-stock.php';
+	require_once( WC_ABSPATH . 'includes/admin/reports/class-wc-report-stock.php' );
 }
 
 /**
@@ -53,25 +53,21 @@ class WC_LafkaCombos_Report_Insufficient_Stock extends WC_Report_Stock {
 
 		} elseif ( ! defined( 'WC_LafkaCombos_DEBUG_STOCK_SYNC' ) ) {
 
-			$sync_ids = WC_LafkaCombos_DB::query_combined_items(
-				array(
-					'return'     => 'id=>combo_id',
-					'meta_query' => array(
-						array(
-							'key'     => 'stock_status',
-							'compare' => 'NOT EXISTS',
-						),
+			$sync_ids = WC_LafkaCombos_DB::query_combined_items( array(
+				'return'          => 'id=>combo_id',
+				'meta_query'      => array(
+					array(
+						'key'     => 'stock_status',
+						'compare' => 'NOT EXISTS'
 					),
 				)
-			);
+			) );
 
 		} else {
 
-			$sync_ids = WC_LafkaCombos_DB::query_combined_items(
-				array(
-					'return' => 'id=>combo_id',
-				)
-			);
+			$sync_ids = WC_LafkaCombos_DB::query_combined_items( array(
+				'return' => 'id=>combo_id'
+			) );
 		}
 
 		if ( ! empty( $sync_ids ) ) {
@@ -85,23 +81,18 @@ class WC_LafkaCombos_Report_Insufficient_Stock extends WC_Report_Stock {
 		/*
 		 * Then, get all combined items with insufficient stock.
 		 */
-		$insufficient_stock_results = WC_LafkaCombos_DB::query_combined_items(
-			array(
-				'return'     => 'all',
-				'combo_id'   => ! empty( $_GET['combo_id'] ) ? absint( $_GET['combo_id'] ) : 0,
-				'order_by'   => array(
-					'combo_id'   => 'ASC',
-					'menu_order' => 'ASC',
-				),
-				'meta_query' => array(
-					array(
-						'key'     => 'stock_status',
-						'value'   => 'out_of_stock',
-						'compare' => '=',
-					),
+		$insufficient_stock_results = WC_LafkaCombos_DB::query_combined_items( array(
+			'return'          => 'all',
+			'combo_id'       => ! empty( $_GET[ 'combo_id' ] ) ? absint( $_GET[ 'combo_id' ] ) : 0,
+			'order_by'        => array( 'combo_id' => 'ASC', 'menu_order' => 'ASC' ),
+			'meta_query'      => array(
+				array(
+					'key'     => 'stock_status',
+					'value'   => 'out_of_stock',
+					'compare' => '='
 				),
 			)
-		);
+		) );
 
 		if ( ! empty( $insufficient_stock_results ) ) {
 
@@ -109,17 +100,15 @@ class WC_LafkaCombos_Report_Insufficient_Stock extends WC_Report_Stock {
 
 			$insufficient_stock_combo_ids = array_unique( wp_list_pluck( $insufficient_stock_results, 'combo_id' ) );
 
-			$this->ordered_combo_ids = get_posts(
-				array(
-					'post_type'   => 'product',
-					'post_status' => 'any',
-					'orderby'     => 'title',
-					'order'       => 'ASC',
-					'post__in'    => $insufficient_stock_combo_ids,
-					'fields'      => 'ids',
-					'numberposts' => -1,
-				)
-			);
+			$this->ordered_combo_ids = get_posts( array(
+				'post_type'   => 'product',
+				'post_status' => 'any',
+				'orderby'     => 'title',
+				'order'       => 'ASC',
+				'post__in'    => $insufficient_stock_combo_ids,
+				'fields'      => 'ids',
+				'numberposts' => -1
+			) );
 
 			$insufficient_stock_results = array_filter( $insufficient_stock_results, array( $this, 'clean_missing_combos' ) );
 
@@ -131,7 +120,7 @@ class WC_LafkaCombos_Report_Insufficient_Stock extends WC_Report_Stock {
 
 			foreach ( $insufficient_stock_results_in_page as $insufficient_stock_result_in_page ) {
 
-				$combined_item = wc_pc_get_combined_item( $insufficient_stock_result_in_page['combined_item_id'] );
+				$combined_item = wc_pc_get_combined_item( $insufficient_stock_result_in_page[ 'combined_item_id' ] );
 
 				if ( ! $combined_item ) {
 					continue;
@@ -139,10 +128,10 @@ class WC_LafkaCombos_Report_Insufficient_Stock extends WC_Report_Stock {
 
 				$item = new stdClass();
 
-				$item->id            = $insufficient_stock_result_in_page['product_id'];
-				$item->parent        = $insufficient_stock_result_in_page['combo_id'];
+				$item->id           = $insufficient_stock_result_in_page[ 'product_id' ];
+				$item->parent       = $insufficient_stock_result_in_page[ 'combo_id' ];
 				$item->combined_item = $combined_item;
-				$this->items[]       = $item;
+				$this->items[]      = $item;
 			}
 
 			$this->max_items = sizeof( $insufficient_stock_results );
@@ -158,7 +147,7 @@ class WC_LafkaCombos_Report_Insufficient_Stock extends WC_Report_Stock {
 	 * @return boolean
 	 */
 	private function clean_missing_combos( $result ) {
-		return in_array( $result['combo_id'], $this->ordered_combo_ids );
+		return in_array( $result[ 'combo_id' ], $this->ordered_combo_ids );
 	}
 
 	/**
@@ -170,8 +159,8 @@ class WC_LafkaCombos_Report_Insufficient_Stock extends WC_Report_Stock {
 	 */
 	private function order_by_combo_title( $a, $b ) {
 
-		$combo_id_a = $a['combo_id'];
-		$combo_id_b = $b['combo_id'];
+		$combo_id_a = $a[ 'combo_id' ];
+		$combo_id_b = $b[ 'combo_id' ];
 
 		$combo_id_a_index = array_search( $combo_id_a, $this->ordered_combo_ids );
 		$combo_id_b_index = array_search( $combo_id_b, $this->ordered_combo_ids );
@@ -192,7 +181,7 @@ class WC_LafkaCombos_Report_Insufficient_Stock extends WC_Report_Stock {
 
 		$columns = array(
 			'title'                => __( 'Combined product', 'lafka-plugin' ),
-			'combo_title'          => __( 'Combo', 'lafka-plugin' ),
+			'combo_title'         => __( 'Combo', 'lafka-plugin' ),
 			'required_stock_level' => __( 'Units required', 'lafka-plugin' ),
 			'stock_status'         => __( 'Stock status', 'woocommerce' ),
 			'wc_actions'           => __( 'Actions', 'woocommerce' ),
@@ -213,7 +202,7 @@ class WC_LafkaCombos_Report_Insufficient_Stock extends WC_Report_Stock {
 		if ( 'title' === $column_name ) {
 
 			$combined_item = $item->combined_item;
-			$title         = $combined_item->product->get_title();
+			$title        = $combined_item->product->get_title();
 
 			if ( $combined_item->has_title_override() ) {
 				$combined_item_title = $combined_item->get_title();
@@ -227,8 +216,8 @@ class WC_LafkaCombos_Report_Insufficient_Stock extends WC_Report_Stock {
 		} elseif ( 'combo_title' === $column_name ) {
 
 			$combined_item = $item->combined_item;
-			$edit_link     = get_edit_post_link( $combined_item->get_combo_id() );
-			$title         = $combined_item->get_combo()->get_title();
+			$edit_link    = get_edit_post_link( $combined_item->get_combo_id() );
+			$title        = $combined_item->get_combo()->get_title();
 
 			echo '<a class="item" href="' . esc_url( $edit_link ) . '">' . esc_html( $title ) . '</a>';
 

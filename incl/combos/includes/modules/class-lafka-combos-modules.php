@@ -58,21 +58,18 @@ class WC_LafkaCombos_Modules {
 	public function __construct() {
 
 		// Abstract modules container class.
-		require_once 'abstract/class-lafka-combos-abstract-module.php';
+		require_once( 'abstract/class-lafka-combos-abstract-module.php' );
 
 		// Combo-Sells module.
-		require_once 'combo-sells/class-lafka-combos-bs-module.php';
+		require_once( 'combo-sells/class-lafka-combos-bs-module.php' );
 
 		// Min/Max Items module.
-		require_once 'min-max-items/class-lafka-combos-mmi-module.php';
+		require_once( 'min-max-items/class-lafka-combos-mmi-module.php' );
 
-		$module_names = apply_filters(
-			'woocommerce_combos_modules',
-			array(
-				'WC_LafkaCombos_BS_Module',
-				'WC_LafkaCombos_MMI_Module',
-			)
-		);
+		$module_names = apply_filters( 'woocommerce_combos_modules', array(
+			'WC_LafkaCombos_BS_Module',
+			'WC_LafkaCombos_MMI_Module'
+		) );
 
 		foreach ( $module_names as $module_name ) {
 			$this->modules[] = new $module_name();

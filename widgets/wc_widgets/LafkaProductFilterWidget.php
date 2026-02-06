@@ -166,16 +166,16 @@ class LafkaProductFilterWidget extends WC_Widget {
 				wp_enqueue_style( 'select2' );
 				$found = $this->layered_nav_dropdown( $terms, $taxonomy, $query_type );
 				break;
-			case 'select':
-			case 'text':
+			case 'select' :
+			case 'text' :
 				$found = $this->layered_nav_list( $terms, $taxonomy, $query_type );
 				break;
-			case 'color':
-			case 'image':
-			case 'label':
+			case 'color' :
+			case 'image' :
+			case 'label' :
 				$found = $this->layered_nav_custom( $display_type, $terms, $taxonomy, $query_type );
 				break;
-			default:
+			default :
 				$found = false;
 				break;
 
@@ -526,8 +526,8 @@ class LafkaProductFilterWidget extends WC_Widget {
 			$name     = esc_html( apply_filters( 'woocommerce_variation_option_name', $term->name ) );
 
 			switch ( $att_type ) {
-				case 'color':
-					$color     = get_term_meta( $term->term_id, 'color', true );
+				case 'color' :
+					$color = get_term_meta( $term->term_id, 'color', true );
 					$term_html = sprintf(
 						'<span class="swatch swatch-color swatch-%s %s" style="background-color:%s" title="%s"></span><span class="count">%d</span>',
 						esc_attr( $term->slug ),
@@ -538,10 +538,10 @@ class LafkaProductFilterWidget extends WC_Widget {
 					);
 					break;
 				case 'image':
-					$image     = get_term_meta( $term->term_id, 'image', true );
-					$image     = $image ? wp_get_attachment_image_src( $image, 'lafka-widgets-thumb' ) : '';
-					$image     = $image ? $image[0] : WC()->plugin_url() . '/assets/images/placeholder.png';
-					$term_html = sprintf(
+					$image = get_term_meta( $term->term_id, 'image', true );
+					$image = $image ? wp_get_attachment_image_src( $image, 'lafka-widgets-thumb' ) : '';
+					$image = $image ? $image[0] : WC()->plugin_url() . '/assets/images/placeholder.png';
+					$term_html  = sprintf(
 						'<span class="swatch swatch-image swatch-%s %s" title="%s" data-value="%s"><img src="%s" alt="%s">%s</span><span class="count">%d</span>',
 						esc_attr( $term->slug ),
 						$selected,
@@ -555,9 +555,9 @@ class LafkaProductFilterWidget extends WC_Widget {
 					break;
 
 				case 'label':
-					$label     = get_term_meta( $term->term_id, 'label', true );
-					$label     = $label ? $label : $name;
-					$term_html = sprintf(
+					$label = get_term_meta( $term->term_id, 'label', true );
+					$label = $label ? $label : $name;
+					$term_html  = sprintf(
 						'<span class="swatch swatch-label swatch-%s %s" title="%s" data-value="%s">%s</span><span class="count">%d</span>',
 						esc_attr( $term->slug ),
 						$selected,
@@ -571,14 +571,14 @@ class LafkaProductFilterWidget extends WC_Widget {
 					$term_html = '';
 			}
 
-			if ( $term_html && $count > 0 || $option_is_set ) {
-				$link           = esc_url( apply_filters( 'woocommerce_layered_nav_link', $link, $term, $taxonomy ) );
+			if ($term_html && $count > 0 || $option_is_set ) {
+				$link      = esc_url( apply_filters( 'woocommerce_layered_nav_link', $link, $term, $taxonomy ) );
 				$term_html_link = '<a href="' . $link . '">' . $term_html . '</a>';
 			} else {
 				$term_html_link = '';
 			}
 
-			echo wp_kses_post( $term_html_link );
+			echo wp_kses_post($term_html_link);
 		}
 
 		echo '</div>';
@@ -587,11 +587,11 @@ class LafkaProductFilterWidget extends WC_Widget {
 	}
 }
 
-add_action( 'widgets_init', 'lafka_register_lafka_product_filter_widget' );
-if ( ! function_exists( 'lafka_register_lafka_product_filter_widget' ) ) {
+add_action('widgets_init', 'lafka_register_lafka_product_filter_widget');
+if (!function_exists('lafka_register_lafka_product_filter_widget')) {
 
 	function lafka_register_lafka_product_filter_widget() {
-		register_widget( 'LafkaProductFilterWidget' );
+		register_widget('LafkaProductFilterWidget');
 	}
 
 }

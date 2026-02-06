@@ -34,8 +34,8 @@ class WC_LafkaCombos_Give_Products_Compatibility {
 	 */
 	public static function add_combo_product_to_order( $order_id ) {
 
-		$order                = wc_get_order( $order_id );
-		$items_to_remove      = array();
+		$order                 = wc_get_order( $order_id );
+		$items_to_remove       = array();
 		$order_contains_combo = false;
 
 		foreach ( $order->get_items( 'line_item' ) as $order_item_id => $order_item ) {

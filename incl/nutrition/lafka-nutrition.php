@@ -18,7 +18,7 @@ class Lafka_Nutrition {
 		}
 
 		// Front-side
-		include_once __DIR__ . '/includes/class-lafka-nutrition-display.php';
+		include_once( dirname( __FILE__ ) . '/includes/class-lafka-nutrition-display.php' );
 
 		$GLOBALS['Lafka_Nutrition_Display'] = new Lafka_Nutrition_Display();
 	}
@@ -27,7 +27,7 @@ class Lafka_Nutrition {
 	 * Initializes plugin admin.
 	 */
 	protected function init_admin() {
-		include_once __DIR__ . '/admin/class-lafka-nutrition-admin.php';
+		include_once( dirname( __FILE__ ) . '/admin/class-lafka-nutrition-admin.php' );
 		$GLOBALS['Lafka_Nutrition_Admin'] = new Lafka_Nutrition_Admin();
 	}
 }

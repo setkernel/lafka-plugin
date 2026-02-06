@@ -51,7 +51,7 @@ class WC_LafkaCombos_MMI_Display {
 			'i18n_min_max_qty_error_plural'        => sprintf( __( 'Please choose %1$s items.%2$s', 'lafka-plugin' ), '%q', '' ),
 			'i18n_qty_error_plural'                => __( '%s items selected', 'lafka-plugin' ),
 			'i18n_qty_error_singular'              => __( '1 item selected', 'lafka-plugin' ),
-			'i18n_qty_error_status_format'         => _x( '<span class="combined_items_selection_status">%s</span>', 'validation error status format', 'lafka-plugin' ),
+			'i18n_qty_error_status_format'         => _x( '<span class="combined_items_selection_status">%s</span>', 'validation error status format', 'lafka-plugin' )
 		);
 
 		wp_localize_script( 'wc-pb-min-max-items-add-to-cart', 'wc_pb_min_max_items_params', $params );
@@ -70,8 +70,8 @@ class WC_LafkaCombos_MMI_Display {
 		$max = $product->get_max_combo_size();
 
 		if ( '' !== $min || '' !== $max ) {
-			$data['size_min'] = $min;
-			$data['size_max'] = $max;
+			$data[ 'size_min' ] = $min;
+			$data[ 'size_max' ] = $max;
 		}
 
 		return $data;

@@ -113,8 +113,8 @@ class WC_LafkaCombos_Order {
 			return false;
 		}
 
-		$combo                = wc_get_product( $order_item->get_product_id() );
-		$configuration        = $order_item->get_meta( '_stamp', true );
+		$combo              = wc_get_product( $order_item->get_product_id() );
+		$configuration       = $order_item->get_meta( '_stamp', true );
 		$combined_order_items = wc_pc_get_combined_order_items( $order_item, $order );
 
 		/*
@@ -138,7 +138,7 @@ class WC_LafkaCombos_Order {
 			}
 
 			// Normalize with the quantity of the parent.
-			$configuration[ $combined_item_id ]['quantity'] = $combined_order_item_qty / $order_item->get_quantity();
+			$configuration[ $combined_item_id ][ 'quantity' ] = $combined_order_item_qty / $order_item->get_quantity();
 		}
 
 		// Finally, parse the configuration to add data for any new combined items.
@@ -183,17 +183,14 @@ class WC_LafkaCombos_Order {
 
 		$added_to_order = false;
 
-		$args = wp_parse_args(
-			$args,
-			array(
-				'configuration' => array(),
-				'silent'        => true,
-			)
-		);
+		$args = wp_parse_args( $args, array(
+			'configuration' => array(),
+			'silent'        => true
+		) );
 
 		if ( $combo && $combo->is_type( 'combo' ) ) {
 
-			$configuration = $args['configuration'];
+			$configuration = $args[ 'configuration' ];
 
 			if ( WC_LafkaCombos()->cart->validate_combo_configuration( $combo, $quantity, $configuration, 'add-to-order' ) ) {
 
@@ -216,15 +213,15 @@ class WC_LafkaCombos_Order {
 					foreach ( $combined_items as $combined_item_id => $combined_item ) {
 
 						$combined_item_configuration  = isset( $configuration[ $combined_item_id ] ) ? $configuration[ $combined_item_id ] : array();
-						$combined_item_quantity       = isset( $combined_item_configuration['quantity'] ) ? absint( $combined_item_configuration['quantity'] ) : $combined_item->get_quantity( 'default' );
-						$combined_product             = isset( $combined_item_configuration['variation_id'] ) && in_array( $combined_item->product->get_type(), array( 'variable', 'variable-subscription' ) ) ? wc_get_product( $combined_item_configuration['variation_id'] ) : $combined_item->product;
-						$combined_item_variation_data = isset( $combined_item_configuration['attributes'] ) && in_array( $combined_item->product->get_type(), array( 'variable', 'variable-subscription' ) ) ? $combined_item_configuration['attributes'] : array();
-						$combined_item_discount       = isset( $combined_item_configuration['discount'] ) ? wc_format_decimal( $combined_item_configuration['discount'] ) : $combined_item->get_discount();
-						$combined_item_args           = isset( $combined_item_configuration['args'] ) ? $combined_item_configuration['args'] : array();
+						$combined_item_quantity       = isset( $combined_item_configuration[ 'quantity' ] ) ? absint( $combined_item_configuration[ 'quantity' ] ) : $combined_item->get_quantity( 'default' );
+						$combined_product             = isset( $combined_item_configuration[ 'variation_id' ] ) && in_array( $combined_item->product->get_type(), array( 'variable', 'variable-subscription' ) ) ? wc_get_product( $combined_item_configuration[ 'variation_id' ] ) : $combined_item->product;
+						$combined_item_variation_data = isset( $combined_item_configuration[ 'attributes' ] ) && in_array( $combined_item->product->get_type(), array( 'variable', 'variable-subscription' ) ) ? $combined_item_configuration[ 'attributes' ] : array();
+						$combined_item_discount       = isset( $combined_item_configuration[ 'discount' ] ) ? wc_format_decimal( $combined_item_configuration[ 'discount' ] ) : $combined_item->get_discount();
+						$combined_item_args           = isset( $combined_item_configuration[ 'args' ] ) ? $combined_item_configuration[ 'args' ] : array();
 
 						if ( $combined_item->is_optional() ) {
 
-							$optional_selected = isset( $combined_item_configuration['optional_selected'] ) && 'yes' === $combined_item_configuration['optional_selected'] ? 'yes' : 'no';
+							$optional_selected = isset( $combined_item_configuration[ 'optional_selected' ] ) && 'yes' === $combined_item_configuration[ 'optional_selected' ] ? 'yes' : 'no';
 
 							if ( 'no' === $optional_selected ) {
 								$combined_item_quantity = 0;
@@ -237,32 +234,20 @@ class WC_LafkaCombos_Order {
 
 						if ( $combined_item->is_priced_individually() ) {
 							if ( $combined_item_discount ) {
-								$combined_item_args['subtotal']     = isset( $combined_item_args['subtotal'] ) ? $combined_item_args['subtotal'] : wc_get_price_excluding_tax(
-									$combined_product,
-									array(
-										'qty'   => $combined_item_quantity * $quantity,
-										'price' => $combined_item->is_discount_allowed_on_sale_price() ? $combined_product->get_price() : $combined_product->get_regular_price(),
-									)
-								) * ( 1 - (float) $combined_item_discount / 100 );
-								$combined_item_args['total']        = isset( $combined_item_args['total'] ) ? $combined_item_args['total'] : wc_get_price_excluding_tax(
-									$combined_product,
-									array(
-										'qty'   => $combined_item_quantity * $quantity,
-										'price' => $combined_item->is_discount_allowed_on_sale_price() ? $combined_product->get_price() : $combined_product->get_regular_price(),
-									)
-								) * ( 1 - (float) $combined_item_discount / 100 );
-								$combined_item_args['subtotal_tax'] = isset( $combined_item_args['subtotal_tax'] ) ? $combined_item_args['subtotal_tax'] : 0;
-								$combined_item_args['total_tax']    = isset( $combined_item_args['total_tax'] ) ? $combined_item_args['total_tax'] : 0;
+								$combined_item_args[ 'subtotal' ]     = isset( $combined_item_args[ 'subtotal' ] ) ? $combined_item_args[ 'subtotal' ] : wc_get_price_excluding_tax( $combined_product, array( 'qty' => $combined_item_quantity * $quantity, 'price' => $combined_item->is_discount_allowed_on_sale_price() ? $combined_product->get_price() : $combined_product->get_regular_price() ) ) * ( 1 - (float) $combined_item_discount / 100 );
+								$combined_item_args[ 'total' ]        = isset( $combined_item_args[ 'total' ] ) ? $combined_item_args[ 'total' ] : wc_get_price_excluding_tax( $combined_product, array( 'qty' => $combined_item_quantity * $quantity, 'price' => $combined_item->is_discount_allowed_on_sale_price() ? $combined_product->get_price() : $combined_product->get_regular_price() ) ) * ( 1 - (float) $combined_item_discount / 100 );
+								$combined_item_args[ 'subtotal_tax' ] = isset( $combined_item_args[ 'subtotal_tax' ] ) ? $combined_item_args[ 'subtotal_tax' ] : 0;
+								$combined_item_args[ 'total_tax' ]    = isset( $combined_item_args[ 'total_tax' ] ) ? $combined_item_args[ 'total_tax' ] : 0;
 							}
 						} else {
-							$combined_item_args['subtotal']     = isset( $combined_item_args['subtotal'] ) ? $combined_item_args['subtotal'] : 0;
-							$combined_item_args['total']        = isset( $combined_item_args['total'] ) ? $combined_item_args['total'] : 0;
-							$combined_item_args['subtotal_tax'] = isset( $combined_item_args['subtotal_tax'] ) ? $combined_item_args['subtotal_tax'] : 0;
-							$combined_item_args['total_tax']    = isset( $combined_item_args['total_tax'] ) ? $combined_item_args['total_tax'] : 0;
+							$combined_item_args[ 'subtotal' ]     = isset( $combined_item_args[ 'subtotal' ] ) ? $combined_item_args[ 'subtotal' ] : 0;
+							$combined_item_args[ 'total' ]        = isset( $combined_item_args[ 'total' ] ) ? $combined_item_args[ 'total' ] : 0;
+							$combined_item_args[ 'subtotal_tax' ] = isset( $combined_item_args[ 'subtotal_tax' ] ) ? $combined_item_args[ 'subtotal_tax' ] : 0;
+							$combined_item_args[ 'total_tax' ]    = isset( $combined_item_args[ 'total_tax' ] ) ? $combined_item_args[ 'total_tax' ] : 0;
 						}
 
 						// Args to pass into 'add_product()'.
-						$combined_item_args['variation'] = $combined_item_variation_data;
+						$combined_item_args[ 'variation' ] = $combined_item_variation_data;
 
 						// Add combined item.
 						$combined_order_item_id = $order->add_product( $combined_product, $combined_item_quantity * $quantity, $combined_item_args );
@@ -272,7 +257,7 @@ class WC_LafkaCombos_Order {
 						}
 
 						// Locate the item.
-						$order_items         = $order->get_items( 'line_item' );
+						$order_items        = $order->get_items( 'line_item' );
 						$combined_order_item = $order_items[ $combined_order_item_id ];
 
 						/*
@@ -292,7 +277,7 @@ class WC_LafkaCombos_Order {
 						}
 
 						if ( $combined_item->has_title_override() ) {
-							$combined_order_item->add_meta_data( '_combined_item_title', isset( $combined_item_configuration['title'] ) ? $combined_item_configuration['title'] : $combined_item->get_raw_title(), true );
+							$combined_order_item->add_meta_data( '_combined_item_title', isset( $combined_item_configuration[ 'title' ] ) ? $combined_item_configuration[ 'title' ] : $combined_item->get_raw_title(), true );
 						}
 
 						// Pricing setup.
@@ -310,7 +295,7 @@ class WC_LafkaCombos_Order {
 						if ( $combined_product->needs_shipping() && $combined_item->is_shipped_individually( $combined_product ) ) {
 							$shipped_individually = true;
 						} elseif ( $combined_product->needs_shipping() && $combined_item->is_weight_aggregated( $combined_product ) ) {
-							$combined_weight += (float) $combined_product->get_weight( 'edit' ) * $combined_item_quantity;
+							$combined_weight += (double) $combined_product->get_weight( 'edit' ) * $combined_item_quantity;
 						}
 
 						$combined_order_item->add_meta_data( '_combined_item_needs_shipping', $shipped_individually ? 'yes' : 'no', true );
@@ -349,29 +334,29 @@ class WC_LafkaCombos_Order {
 				$container_order_item->add_meta_data( '_combo_group_mode', $combo->get_group_mode(), true );
 
 				if ( $combo->needs_shipping() ) {
-					$container_order_item->add_meta_data( '_combo_weight', (float) $combo->get_weight( 'edit' ) + $combined_weight, true );
+					$container_order_item->add_meta_data( '_combo_weight', (double) $combo->get_weight( 'edit' ) + $combined_weight, true );
 				}
 
 				/*
 				 * Add initial item meta.
 				 */
 
-				if ( ! empty( $args['meta_data'] ) ) {
-					foreach ( $args['meta_data'] as $meta ) {
+				if ( ! empty( $args[ 'meta_data' ] ) ) {
+					foreach ( $args[ 'meta_data' ] as $meta ) {
 
 						if ( $meta instanceof WC_Meta_Data ) {
 							$meta = $meta->get_data();
 						}
 
-						if ( ! isset( $meta['key'] ) || ! isset( $meta['value'] ) ) {
+						if ( ! isset( $meta[ 'key' ] ) || ! isset( $meta[ 'value' ] ) ) {
 							continue;
 						}
 
-						if ( in_array( $meta['key'], array( '_combo_configuration', '_stamp', '_combined_items', '_combo_cart_key', '_combo_group_mode', '_combo_weight' ) ) ) {
+						if ( in_array( $meta[ 'key' ], array( '_combo_configuration', '_stamp', '_combined_items', '_combo_cart_key', '_combo_group_mode', '_combo_weight' ) ) ) {
 							continue;
 						}
 
-						$container_order_item->add_meta_data( $meta['key'], $meta['value'] );
+						$container_order_item->add_meta_data( $meta[ 'key' ], $meta[ 'value' ] );
 					}
 				}
 
@@ -395,12 +380,13 @@ class WC_LafkaCombos_Order {
 				$error_data = array( 'notices' => wc_get_notices( 'error' ) );
 				$message    = __( 'The submitted combo configuration could not be added to this order.', 'lafka-plugin' );
 
-				if ( $args['silent'] ) {
+				if ( $args[ 'silent' ] ) {
 					wc_clear_notices();
 				}
 
 				$added_to_order = new WP_Error( 'woocommerce_combo_configuration_invalid', $message, $error_data );
 			}
+
 		} else {
 			$message        = __( 'A combo with this ID does not exist.', 'lafka-plugin' );
 			$added_to_order = new WP_Error( 'woocommerce_combo_invalid', $message );
@@ -473,7 +459,7 @@ class WC_LafkaCombos_Order {
 						'total'        => $item->get_total(),
 						'subtotal_tax' => $item->get_subtotal_tax(),
 						'total_tax'    => $item->get_total_tax(),
-						'taxes'        => $item->get_taxes(),
+						'taxes'        => $item->get_taxes()
 					);
 
 					foreach ( $assembled_items as $child_item_id => $child_item ) {
@@ -504,25 +490,25 @@ class WC_LafkaCombos_Order {
 							foreach ( $meta_data as $meta_id => $meta ) {
 								$meta_desc_array[] = array(
 									'key'   => wp_kses_post( $meta->display_key ),
-									'value' => wp_kses_post( trim( strip_tags( $meta->display_value ) ) ),
+									'value' => wp_kses_post( trim( strip_tags( $meta->display_value ) ) )
 								);
 							}
 						}
 
 						$meta_desc_array[] = array(
 							'key'   => _x( 'Qty', 'combined order item qty meta key', 'lafka-plugin' ),
-							'value' => $child_item->get_quantity(),
+							'value' => $child_item->get_quantity()
 						);
 
 						if ( $sku = $child->get_sku() ) {
 							$meta_desc_array[] = array(
 								'key'   => _x( 'SKU', 'combined order item SKU meta key', 'lafka-plugin' ),
-								'value' => $sku,
+								'value' => $sku
 							);
 						}
 
 						foreach ( $meta_desc_array as $meta_desc_array_key => $meta_desc_array_value ) {
-							$meta_desc_array[ $meta_desc_array_key ]['description'] = $meta_desc_array_value['key'] . ' - ' . $meta_desc_array_value['value'];
+							$meta_desc_array[ $meta_desc_array_key ][ 'description' ] = $meta_desc_array_value[ 'key' ] . ' - ' . $meta_desc_array_value[ 'value' ];
 						}
 
 						$child_hidden  = 'yes' === $child_item->get_meta( '_combined_item_hidden', true );
@@ -538,7 +524,7 @@ class WC_LafkaCombos_Order {
 
 							$contents[] = array(
 								'title'       => apply_filters( 'woocommerce_combined_order_item_meta_title', $child_title, $meta_desc_array, $child_item, $item, $order ),
-								'description' => apply_filters( 'woocommerce_combined_order_item_meta_description', implode( ', ', wp_list_pluck( $meta_desc_array, 'description' ) ), $meta_desc_array, $child_item, $item, $order ),
+								'description' => apply_filters( 'woocommerce_combined_order_item_meta_description', implode( ', ', wp_list_pluck( $meta_desc_array, 'description' ) ), $meta_desc_array, $child_item, $item, $order )
 							);
 						}
 
@@ -546,15 +532,15 @@ class WC_LafkaCombos_Order {
 						 * Add item totals to the container totals.
 						 */
 
-						$combo_totals['subtotal']     += $child_item->get_subtotal();
-						$combo_totals['total']        += $child_item->get_total();
-						$combo_totals['subtotal_tax'] += $child_item->get_subtotal_tax();
-						$combo_totals['total_tax']    += $child_item->get_total_tax();
+						$combo_totals[ 'subtotal' ]     += $child_item->get_subtotal();
+						$combo_totals[ 'total' ]        += $child_item->get_total();
+						$combo_totals[ 'subtotal_tax' ] += $child_item->get_subtotal_tax();
+						$combo_totals[ 'total_tax' ]    += $child_item->get_total_tax();
 
 						$child_item_tax_data = $child_item->get_taxes();
 
-						$combo_totals['taxes']['total']    = array_merge( $combo_totals['taxes']['total'], $child_item_tax_data['total'] );
-						$combo_totals['taxes']['subtotal'] = array_merge( $combo_totals['taxes']['subtotal'], $child_item_tax_data['subtotal'] );
+						$combo_totals[ 'taxes' ][ 'total' ]    = array_merge( $combo_totals[ 'taxes' ][ 'total' ], $child_item_tax_data[ 'total' ] );
+						$combo_totals[ 'taxes' ][ 'subtotal' ] = array_merge( $combo_totals[ 'taxes' ][ 'subtotal' ], $child_item_tax_data[ 'subtotal' ] );
 					}
 
 					// Build list of meta to set, with 'id' props intact.
@@ -565,7 +551,7 @@ class WC_LafkaCombos_Order {
 							$item_meta_data_to_set[] = array(
 								'key'   => $item_meta->key,
 								'value' => $item_meta->value,
-								'id'    => $item_meta->id,
+								'id'    => $item_meta->id
 							);
 						}
 					}
@@ -603,18 +589,19 @@ class WC_LafkaCombos_Order {
 						$added_keys = array();
 						// Create a meta field for each combined item.
 						foreach ( $contents as $contained ) {
-							$item->add_meta_data( $contained['title'], $contained['description'] );
-							$added_keys[] = $contained['title'];
+							$item->add_meta_data( $contained[ 'title' ], $contained[ 'description' ] );
+							$added_keys[] = $contained[ 'title' ];
 						}
 						// Ensure meta objects have an 'id' prop so they can be picked up by 'get_formatted_meta_data'.
 						foreach ( $item->get_meta_data() as $item_meta ) {
 							if ( in_array( $item_meta->key, $added_keys ) && ! isset( $item_meta->id ) ) {
 								$item_meta->id = $max_id + 1;
-								++$max_id;
+								$max_id++;
 							}
 						}
 					}
 				}
+
 			} elseif ( wc_pc_is_combined_order_item( $item, $items ) ) {
 
 				$item_id      = $item->get_id();
@@ -635,10 +622,7 @@ class WC_LafkaCombos_Order {
 						'total'        => 0,
 						'subtotal_tax' => 0,
 						'total_tax'    => 0,
-						'taxes'        => array(
-							'total'    => array(),
-							'subtotal' => array(),
-						),
+						'taxes'        => array( 'total' => array(), 'subtotal' => array() )
 					);
 
 					// Build list of meta to set, with 'id' props intact.
@@ -649,7 +633,7 @@ class WC_LafkaCombos_Order {
 							$item_meta_data_to_set[] = array(
 								'key'   => $item_meta->key,
 								'value' => $item_meta->value,
-								'id'    => $item_meta->id,
+								'id'    => $item_meta->id
 							);
 						}
 					}
@@ -745,11 +729,12 @@ class WC_LafkaCombos_Order {
 				if ( $sku !== $new_sku ) {
 					$product->set_sku( $new_sku );
 				}
+
 			} else {
 				$product->set_weight( 0 );
 			}
 
-			// If it's a child item...
+		// If it's a child item...
 		} elseif ( wc_pc_is_combined_order_item( $item, $order ) ) {
 
 			if ( $product->needs_shipping() ) {
@@ -759,6 +744,7 @@ class WC_LafkaCombos_Order {
 					$product->set_virtual( 'yes' );
 					$product->set_weight( '' );
 				}
+
 			} else {
 				$product->set_weight( 0 );
 			}
@@ -852,6 +838,7 @@ class WC_LafkaCombos_Order {
 				if ( $combo_weight = $item->get_meta( '_combo_weight', true ) ) {
 					$product->set_weight( $combo_weight, $combo_weight );
 				}
+
 			} else {
 
 				// Process container.
@@ -886,7 +873,7 @@ class WC_LafkaCombos_Order {
 				}
 			}
 
-			// If it's a child item...
+		// If it's a child item...
 		} elseif ( wc_pc_is_combined_order_item( $item, $order ) ) {
 
 			if ( $product->needs_shipping() ) {
@@ -938,11 +925,13 @@ class WC_LafkaCombos_Order {
 			if ( end( $combined_item_ids ) === $item->get_id() ) {
 				$class .= ' last';
 			}
-		} elseif ( wc_pc_is_combo_container_order_item( $item ) ) {
+
+		} else if ( wc_pc_is_combo_container_order_item( $item ) ) {
 			$class .= ' combo_item';
 		}
 
 		return $class;
+
 	}
 
 	/**
@@ -988,14 +977,14 @@ class WC_LafkaCombos_Order {
 
 		if ( wc_pc_is_combo_container_cart_item( $cart_item ) ) {
 
-			if ( isset( $cart_item['combined_items'] ) ) {
-				$order_item->add_meta_data( '_combined_items', $cart_item['combined_items'], true );
+			if ( isset( $cart_item[ 'combined_items' ] ) ) {
+				$order_item->add_meta_data( '_combined_items', $cart_item[ 'combined_items' ], true );
 			}
 
-			$order_item->add_meta_data( '_combo_group_mode', $cart_item['data']->get_group_mode(), true );
+			$order_item->add_meta_data( '_combo_group_mode', $cart_item[ 'data' ]->get_group_mode(), true );
 
-			if ( isset( $cart_item['stamp'] ) ) {
-				$order_item->add_meta_data( '_stamp', $cart_item['stamp'], true );
+			if ( isset( $cart_item[ 'stamp' ] ) ) {
+				$order_item->add_meta_data( '_stamp', $cart_item[ 'stamp' ], true );
 			}
 
 			$order_item->add_meta_data( '_combo_cart_key', $cart_item_key, true );
@@ -1004,7 +993,7 @@ class WC_LafkaCombos_Order {
 			 * Store shipping data.
 			 */
 
-			$needs_shipping = $cart_item['data']->needs_shipping() ? 'yes' : 'no';
+			$needs_shipping = $cart_item[ 'data' ]->needs_shipping() ? 'yes' : 'no';
 
 			// If it's a physical container item, grab its aggregate weight from the package data.
 			if ( 'yes' === $needs_shipping ) {
@@ -1012,33 +1001,34 @@ class WC_LafkaCombos_Order {
 				$packaged_item_values = false;
 
 				foreach ( WC()->cart->get_shipping_packages() as $package ) {
-					if ( isset( $package['contents'][ $cart_item_key ] ) ) {
-						$packaged_item_values = $package['contents'][ $cart_item_key ];
+					if ( isset( $package[ 'contents' ][ $cart_item_key ] ) ) {
+						$packaged_item_values = $package[ 'contents' ][ $cart_item_key ];
 						break;
 					}
 				}
 
 				if ( ! empty( $packaged_item_values ) ) {
-					$combined_weight = $packaged_item_values['data']->get_weight( 'edit' );
+					$combined_weight = $packaged_item_values[ 'data' ]->get_weight( 'edit' );
 					$order_item->add_meta_data( '_combo_weight', $combined_weight, true );
 				}
 
-				// If it's a virtual container item, look at its children to see if any of them needs processing.
+			// If it's a virtual container item, look at its children to see if any of them needs processing.
 			} elseif ( false === $this->combined_items_need_processing( $cart_item ) ) {
 				$order_item->add_meta_data( '_combined_items_need_processing', 'no', true );
 			}
+
 		} elseif ( wc_pc_is_combined_cart_item( $cart_item ) ) {
 
-			$order_item->add_meta_data( '_combined_by', $cart_item['combined_by'], true );
-			$order_item->add_meta_data( '_combined_item_id', $cart_item['combined_item_id'], true );
+			$order_item->add_meta_data( '_combined_by', $cart_item[ 'combined_by' ], true );
+			$order_item->add_meta_data( '_combined_item_id', $cart_item[ 'combined_item_id' ], true );
 
-			$combined_item_id = $cart_item['combined_item_id'];
-			$visible          = true;
+			$combined_item_id = $cart_item[ 'combined_item_id' ];
+			$visible         = true;
 
 			if ( $combo_container_item = wc_pc_get_combined_cart_item_container( $cart_item ) ) {
 
-				$combo            = $combo_container_item['data'];
-				$combined_item_id = $cart_item['combined_item_id'];
+				$combo          = $combo_container_item[ 'data' ];
+				$combined_item_id = $cart_item[ 'combined_item_id' ];
 
 				if ( $combined_item = $combo->get_combined_item( $combined_item_id ) ) {
 
@@ -1058,14 +1048,14 @@ class WC_LafkaCombos_Order {
 				}
 			}
 
-			if ( isset( $cart_item['stamp'] ) ) {
+			if ( isset( $cart_item[ 'stamp' ] ) ) {
 
-				if ( isset( $cart_item['stamp'][ $combined_item_id ]['title'] ) ) {
-					$title = $cart_item['stamp'][ $combined_item_id ]['title'];
+				if ( isset( $cart_item[ 'stamp' ][ $combined_item_id ][ 'title' ] ) ) {
+					$title = $cart_item[ 'stamp' ][ $combined_item_id ][ 'title' ];
 					$order_item->add_meta_data( '_combined_item_title', $title, true );
 				}
 
-				$order_item->add_meta_data( '_stamp', $cart_item['stamp'], true );
+				$order_item->add_meta_data( '_stamp', $cart_item[ 'stamp' ], true );
 			}
 
 			$order_item->add_meta_data( '_combo_cart_key', $cart_item_key, true );
@@ -1075,7 +1065,7 @@ class WC_LafkaCombos_Order {
 			 */
 
 			// If it's a physical child item, add a meta field to indicate whether it is shipped individually.
-			$order_item->add_meta_data( '_combined_item_needs_shipping', $cart_item['data']->needs_shipping() ? 'yes' : 'no', true );
+			$order_item->add_meta_data( '_combined_item_needs_shipping', $cart_item[ 'data' ]->needs_shipping() ? 'yes' : 'no', true );
 		}
 	}
 
@@ -1094,7 +1084,7 @@ class WC_LafkaCombos_Order {
 
 		if ( ! empty( $child_keys ) && is_array( $child_keys ) ) {
 			foreach ( $child_keys as $child_key ) {
-				$child_product = WC()->cart->cart_contents[ $child_key ]['data'];
+				$child_product = WC()->cart->cart_contents[ $child_key ][ 'data' ];
 				if ( false === $child_product->is_downloadable() || false === $child_product->is_virtual() ) {
 					$processing_needed = true;
 					break;

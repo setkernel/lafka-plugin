@@ -33,11 +33,11 @@ add_action( 'woocommerce_variation_options', 'lafka_show_variable_in_catalog_opt
 if ( ! function_exists( 'lafka_show_variable_in_catalog_option' ) ) {
 	function lafka_show_variable_in_catalog_option( $loop, $variation_data, $variation ) {
 		?>
-		<label class="tips" data-tip="<?php esc_html_e( 'Enable this option to show the variation in catalog views. <br> NOTE: This will have following effects on the default WooCommerce representation of products, in order to have more fast food look:<br>- Product price will be hidden in catalogs<br>- "From - To" price in product view will be hidden if there is default variation<br>- Variation weight entries won\'t be shown in the "Additional Information" tab on Product view', 'lafka-plugin' ); ?>">
+        <label class="tips" data-tip="<?php esc_html_e( 'Enable this option to show the variation in catalog views. <br> NOTE: This will have following effects on the default WooCommerce representation of products, in order to have more fast food look:<br>- Product price will be hidden in catalogs<br>- "From - To" price in product view will be hidden if there is default variation<br>- Variation weight entries won\'t be shown in the "Additional Information" tab on Product view' , 'lafka-plugin' ); ?>">
 			<?php esc_html_e( 'Show in Catalog?', 'lafka-plugin' ); ?>
-			<input type="checkbox" class="checkbox lafka_variable_in_catalog"
-					name="_lafka_variable_in_catalog[<?php echo esc_attr( $loop ); ?>]" <?php checked( $variation->_lafka_variable_in_catalog, true ); ?> />
-		</label>
+            <input type="checkbox" class="checkbox lafka_variable_in_catalog"
+                   name="_lafka_variable_in_catalog[<?php echo esc_attr( $loop ); ?>]" <?php checked( $variation->_lafka_variable_in_catalog, true ); ?> />
+        </label>
 		<?php
 	}
 }
@@ -53,10 +53,10 @@ add_action( 'woocommerce_variable_product_bulk_edit_actions', 'lafka_list_bulk_u
 if ( ! function_exists( 'lafka_list_bulk_update_variable_in_catalog_option' ) ) {
 	function lafka_list_bulk_update_variable_in_catalog_option() {
 		?>
-		<optgroup label="<?php esc_attr_e( 'Lafka variations in catalog', 'lafka-plugin' ); ?>">
-			<option value="lafka_variable_in_catalog_show"><?php esc_html_e( 'Show all', 'lafka-plugin' ); ?></option>
-			<option value="lafka_variable_in_catalog_hide"><?php esc_html_e( 'Hide all', 'lafka-plugin' ); ?></option>
-		</optgroup>
+        <optgroup label="<?php esc_attr_e( 'Lafka variations in catalog', 'lafka-plugin' ); ?>">
+            <option value="lafka_variable_in_catalog_show"><?php esc_html_e( 'Show all', 'lafka-plugin' ); ?></option>
+            <option value="lafka_variable_in_catalog_hide"><?php esc_html_e( 'Hide all', 'lafka-plugin' ); ?></option>
+        </optgroup>
 		<?php
 	}
 }

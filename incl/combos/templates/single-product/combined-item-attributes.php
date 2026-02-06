@@ -20,12 +20,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 <h4 class="combined_product_attributes_title"><?php echo $title; ?></h4>
 <?php
 
-wc_get_template(
-	'single-product/product-attributes.php',
-	array(
-		'product'            => $product,
-		'attributes'         => $attributes,
-		'display_dimensions' => $display_dimensions,
-		'product_attributes' => $product_attributes,
-	)
-);
+wc_get_template( 'single-product/product-attributes.php', array(
+	'product'            => $product,
+	'attributes'         => $attributes,
+	'display_dimensions' => $display_dimensions,
+	'product_attributes' => $product_attributes
+) );

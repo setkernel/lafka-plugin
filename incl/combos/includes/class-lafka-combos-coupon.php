@@ -35,7 +35,7 @@ class WC_LafkaCombos_Coupon {
 	 * @param  array       $item
 	 * @return boolean
 	 */
-	public static function coupon_is_valid_for_product( $valid, $product, $coupon, $item ) {
+	public static function coupon_is_valid_for_product(  $valid, $product, $coupon, $item  ) {
 
 		if ( ! $coupon->is_type( wc_get_product_coupon_types() ) ) {
 			return $valid;
@@ -46,14 +46,15 @@ class WC_LafkaCombos_Coupon {
 			if ( $container_item = wc_pc_get_combined_order_item_container( $item ) ) {
 
 				$combo    = $container_item->get_product();
-				$combo_id = $container_item['product_id'];
+				$combo_id = $container_item[ 'product_id' ];
 			}
+
 		} elseif ( ! empty( WC()->cart ) ) {
 
 			if ( $container_item = wc_pc_get_combined_cart_item_container( $item ) ) {
 
-				$combo    = $container_item['data'];
-				$combo_id = $container_item['product_id'];
+				$combo    = $container_item[ 'data' ];
+				$combo_id = $container_item[ 'product_id' ];
 			}
 		}
 
@@ -96,9 +97,9 @@ class WC_LafkaCombos_Coupon {
 					$valid = false;
 				}
 
-				/*
-				* Otherwise, check if the combined item is specifically excluded, and if not, consider it as eligible if its container item is eligible.
-				*/
+			/*
+			 * Otherwise, check if the combined item is specifically excluded, and if not, consider it as eligible if its container item is eligible.
+			 */
 			} else {
 
 				$product_ids      = array( $product->get_id(), $product->get_parent_id() );

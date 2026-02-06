@@ -66,7 +66,7 @@ class WC_LafkaCombos_DB_Sync {
 
 			if ( ! defined( 'WC_LafkaCombos_DEBUG_STOCK_PARENT_SYNC' ) ) {
 
-				include_once WC_LafkaCombos_ABSPATH . 'includes/class-lafka-combos-db-sync-task-runner.php';
+				include_once( WC_LafkaCombos_ABSPATH . 'includes/class-lafka-combos-db-sync-task-runner.php' );
 
 				// Spawn task runner.
 				add_action( 'init', array( __CLASS__, 'initialize_sync_task_runner' ), 5 );
@@ -95,7 +95,7 @@ class WC_LafkaCombos_DB_Sync {
 
 					$combined_item_data = $combined_item->get_data();
 
-					$combined_item_data['combined_item_id'] = 0;
+					$combined_item_data[ 'combined_item_id' ] = 0;
 
 					$combined_items_data[] = $combined_item_data;
 				}
@@ -134,12 +134,10 @@ class WC_LafkaCombos_DB_Sync {
 	public static function delete_product( $id ) {
 
 		// Delete combined item DB entries and meta when deleting a combo.
-		$combined_items = WC_LafkaCombos_DB::query_combined_items(
-			array(
-				'combo_id' => $id,
-				'return'   => 'objects',
-			)
-		);
+		$combined_items = WC_LafkaCombos_DB::query_combined_items( array(
+			'combo_id' => $id,
+			'return'    => 'objects'
+		) );
 
 		if ( ! empty( $combined_items ) ) {
 			foreach ( $combined_items as $combined_item ) {
@@ -251,17 +249,15 @@ class WC_LafkaCombos_DB_Sync {
 
 		$product_id = $product->is_type( 'variation' ) ? $product->get_parent_id() : $product->get_id();
 
-		$combined_item_query_results = WC_LafkaCombos_DB::query_combined_items(
-			array(
-				'product_id' => $product_id,
-				'meta_query' => array(
-					array(
-						'key'  => 'quantity_min',
-						'type' => 'NUMERIC',
-					),
-				),
+		$combined_item_query_results = WC_LafkaCombos_DB::query_combined_items( array(
+			'product_id' => $product_id,
+			'meta_query' => array(
+				array(
+					'key'  => 'quantity_min',
+					'type' => 'NUMERIC'
+				)
 			)
-		);
+		) );
 
 		// Not a combined product?
 		if ( empty( $combined_item_query_results ) ) {
@@ -271,7 +267,7 @@ class WC_LafkaCombos_DB_Sync {
 		$combined_item_ids_to_reset = array();
 		$combined_item_min_qty      = array_map( 'absint', wp_list_pluck( $combined_item_query_results, 'meta_value' ) );
 		$combined_item_ids          = array_map( 'absint', wp_list_pluck( $combined_item_query_results, 'combined_item_id' ) );
-		$combo_ids                  = array_map( 'absint', wp_list_pluck( $combined_item_query_results, 'combo_id' ) );
+		$combo_ids                = array_map( 'absint', wp_list_pluck( $combined_item_query_results, 'combo_id' ) );
 
 		$pre_sync_item = false;
 
@@ -290,7 +286,7 @@ class WC_LafkaCombos_DB_Sync {
 			$max_stock      = '';
 
 			$combined_item_ids_count = count( $combined_item_ids );
-			$backorders_allowed      = $product->backorders_allowed();
+			$backorders_allowed     = $product->backorders_allowed();
 
 			// All combined items out of stock.
 			if ( false === $product->is_in_stock() ) {
@@ -300,12 +296,12 @@ class WC_LafkaCombos_DB_Sync {
 
 				$data = array(
 					'stock_status' => $stock_status,
-					'max_stock'    => $max_stock,
+					'max_stock'    => $max_stock
 				);
 
 				$stock_meta_map = array_combine( $combined_item_ids, array_fill( 0, $combined_item_ids_count, $data ) );
 
-				// All combined items on backorder.
+			// All combined items on backorder.
 			} elseif ( $product->is_on_backorder( 1 ) ) {
 
 				$stock_status = 'on_backorder';
@@ -313,12 +309,12 @@ class WC_LafkaCombos_DB_Sync {
 
 				$data = array(
 					'stock_status' => $stock_status,
-					'max_stock'    => $max_stock,
+					'max_stock'    => $max_stock
 				);
 
 				$stock_meta_map = array_combine( $combined_item_ids, array_fill( 0, $combined_item_ids_count, $data ) );
 
-				// All combined items have infinite stock.
+			// All combined items have infinite stock.
 			} elseif ( false === $product->managing_stock() ) {
 
 				$stock_status = 'in_stock';
@@ -326,12 +322,12 @@ class WC_LafkaCombos_DB_Sync {
 
 				$data = array(
 					'stock_status' => $stock_status,
-					'max_stock'    => $max_stock,
+					'max_stock'    => $max_stock
 				);
 
 				$stock_meta_map = array_combine( $combined_item_ids, array_fill( 0, $combined_item_ids_count, $data ) );
 
-				// Must work with each item individually.
+			// Must work with each item individually.
 			} else {
 
 				$stock_quantity = $product->get_stock_quantity();
@@ -340,7 +336,7 @@ class WC_LafkaCombos_DB_Sync {
 				// The product is in stock and stock is being managed: Compare with the min item quantity.
 				foreach ( $combined_item_ids as $combined_item_index => $combined_item_id ) {
 
-					$item_qty       = max( 1, absint( $combined_item_min_qty[ $combined_item_index ] ) );
+					$item_qty = max( 1, absint( $combined_item_min_qty[ $combined_item_index ] ) );
 					$item_stock_qty = $stock_quantity;
 
 					if ( '' !== $item_stock_qty ) {
@@ -365,7 +361,7 @@ class WC_LafkaCombos_DB_Sync {
 
 					$data = array(
 						'stock_status' => $stock_status,
-						'max_stock'    => $max_stock,
+						'max_stock'    => $max_stock
 					);
 
 					$stock_meta_map[ $combined_item_id ] = $data;
@@ -404,11 +400,11 @@ class WC_LafkaCombos_DB_Sync {
 
 		foreach ( $stock_meta_map as $item_id => $data ) {
 
-			if ( ! isset( $stock_status_formatted[ $data['stock_status'] ] ) ) {
-				$stock_status_formatted[ $data['stock_status'] ] = array();
+			if ( ! isset( $stock_status_formatted[ $data[ 'stock_status' ] ] ) ) {
+				$stock_status_formatted[ $data[ 'stock_status' ] ] = array();
 			}
 
-			$stock_status_formatted[ $data['stock_status'] ][] = $item_id;
+			$stock_status_formatted[ $data[ 'stock_status' ] ][] = $item_id;
 		}
 
 		foreach ( $stock_status_formatted as $meta_value => $combined_item_ids ) {
@@ -430,13 +426,13 @@ class WC_LafkaCombos_DB_Sync {
 
 		foreach ( $stock_meta_map as $item_id => $data ) {
 
-			$meta_value = '' === $data['max_stock'] ? 'inf' : $data['max_stock'];
+			$meta_value = '' === $data[ 'max_stock' ] ? 'inf' : $data[ 'max_stock' ];
 
 			if ( ! isset( $stock_status_formatted[ $meta_value ] ) ) {
 				$stock_status_formatted[ $meta_value ] = array();
 			}
 
-			$stock_status_formatted[ $data['max_stock'] ][] = $item_id;
+			$stock_status_formatted[ $data[ 'max_stock' ] ][] = $item_id;
 		}
 
 		foreach ( $stock_status_formatted as $meta_value => $combined_item_ids ) {
@@ -517,12 +513,10 @@ class WC_LafkaCombos_DB_Sync {
 			return;
 		}
 
-		self::$sync_task_runner->push_to_queue(
-			array(
-				'sync_ids'   => $ids,
-				'delete_ids' => array(),
-			)
-		);
+		self::$sync_task_runner->push_to_queue( array(
+			'sync_ids'   => $ids,
+			'delete_ids' => array()
+		) );
 
 		self::$sync_task_runner->save();
 
