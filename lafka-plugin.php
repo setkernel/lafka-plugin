@@ -92,6 +92,14 @@ function is_lafka_order_hours($lafka_options) {
 	return false;
 }
 
+// Check kitchen_display is enabled in Theme Options
+function is_lafka_kitchen_display($lafka_options) {
+	if ( isset( $lafka_options['kitchen_display'] ) && $lafka_options['kitchen_display'] === 'enabled' ) {
+		return true;
+	}
+	return false;
+}
+
 add_action( 'before_woocommerce_init', function() {
 	if ( class_exists( \Automattic\WooCommerce\Utilities\FeaturesUtil::class ) ) {
 		\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', __FILE__, true );
@@ -120,6 +128,11 @@ if ( LAFKA_PLUGIN_IS_WOOCOMMERCE ) {
 	if( is_lafka_order_hours( get_option( 'lafka' )) ) {
 		/* Load order_hours */
 		require_once( plugin_dir_path( __FILE__ ) . '/incl/order-hours/Lafka_Order_Hours.php' );
+	}
+
+	if( is_lafka_kitchen_display( get_option( 'lafka' )) ) {
+		/* Load kitchen display */
+		require_once( plugin_dir_path( __FILE__ ) . '/incl/kitchen-display/class-lafka-kitchen-display.php' );
 	}
 }
 

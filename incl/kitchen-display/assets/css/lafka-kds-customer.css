@@ -1,0 +1,127 @@
+/* Customer Order Progress Bar */
+.lafka-kds-progress {
+	margin-bottom: 30px;
+	padding: 24px 20px;
+	background: #f8f9fa;
+	border-radius: 8px;
+	border: 1px solid #e9ecef;
+}
+
+/* Steps container */
+.lafka-kds-steps {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	position: relative;
+	padding: 0 10px;
+}
+
+/* Connecting line */
+.lafka-kds-steps::before {
+	content: '';
+	position: absolute;
+	top: 12px;
+	left: 34px;
+	right: 34px;
+	height: 3px;
+	background: #dee2e6;
+	z-index: 0;
+}
+
+/* Step */
+.lafka-kds-step {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	position: relative;
+	z-index: 1;
+	flex: 1;
+}
+
+/* Dot */
+.lafka-kds-dot {
+	width: 24px;
+	height: 24px;
+	border-radius: 50%;
+	background: #dee2e6;
+	border: 3px solid #fff;
+	box-shadow: 0 0 0 2px #dee2e6;
+	margin-bottom: 8px;
+	transition: all 0.3s ease;
+}
+
+.lafka-kds-step-done .lafka-kds-dot {
+	background: #4ecca3;
+	box-shadow: 0 0 0 2px #4ecca3;
+}
+
+.lafka-kds-step-active .lafka-kds-dot {
+	background: #e94560;
+	box-shadow: 0 0 0 2px #e94560, 0 0 0 6px rgba(233, 69, 96, 0.2);
+	animation: lafka-kds-dot-pulse 2s ease-in-out infinite;
+}
+
+@keyframes lafka-kds-dot-pulse {
+	0%, 100% { box-shadow: 0 0 0 2px #e94560, 0 0 0 6px rgba(233, 69, 96, 0.2); }
+	50% { box-shadow: 0 0 0 2px #e94560, 0 0 0 10px rgba(233, 69, 96, 0.1); }
+}
+
+/* Label */
+.lafka-kds-label {
+	font-size: 12px;
+	color: #868e96;
+	text-align: center;
+	font-weight: 500;
+}
+
+.lafka-kds-step-done .lafka-kds-label {
+	color: #4ecca3;
+	font-weight: 600;
+}
+
+.lafka-kds-step-active .lafka-kds-label {
+	color: #e94560;
+	font-weight: 700;
+}
+
+/* ETA */
+.lafka-kds-eta {
+	text-align: center;
+	margin-top: 16px;
+	padding-top: 16px;
+	border-top: 1px solid #e9ecef;
+}
+
+.lafka-kds-eta-label {
+	font-size: 13px;
+	color: #868e96;
+	margin-right: 6px;
+}
+
+.lafka-kds-eta-value {
+	font-size: 16px;
+	font-weight: 700;
+	color: #333;
+	font-variant-numeric: tabular-nums;
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+	.lafka-kds-progress {
+		padding: 16px 12px;
+	}
+
+	.lafka-kds-steps::before {
+		left: 24px;
+		right: 24px;
+	}
+
+	.lafka-kds-label {
+		font-size: 10px;
+	}
+
+	.lafka-kds-dot {
+		width: 20px;
+		height: 20px;
+	}
+}
