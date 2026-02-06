@@ -638,18 +638,27 @@ class Lafka_Shipping_Areas_Admin {
 	public static function override_theme_options_api_key( $old_value, $value, $option ) {
 		if ( function_exists( 'lafka_get_option' ) && ! empty( $value['google_maps_api_key'] ) ) {
 			$lafka_options = get_option( 'lafka' );
-			if ( $lafka_options['google_maps_api_key'] !== $value['google_maps_api_key'] ) {
+			if ( isset( $lafka_options['google_maps_api_key'] ) && $lafka_options['google_maps_api_key'] !== $value['google_maps_api_key'] ) {
 				$lafka_options['google_maps_api_key'] = $value['google_maps_api_key'];
+				// Unhook to prevent recursion (this hook fires update_option_lafka which calls back here).
+				remove_action( 'update_option_lafka', array( __CLASS__, 'override_shipping_areas_options_api_key' ), 10 );
 				update_option( 'lafka', $lafka_options );
+				add_action( 'update_option_lafka', array( __CLASS__, 'override_shipping_areas_options_api_key' ), 10, 3 );
 			}
 		}
 	}
 
 	public static function override_shipping_areas_options_api_key( $old_value, $value, $option ) {
+		if ( ! is_array( $value ) || empty( $value['google_maps_api_key'] ) ) {
+			return;
+		}
 		$options = get_option( 'lafka_shipping_areas_general' );
-		if ( ! empty( $options['google_maps_api_key'] ) && $options['google_maps_api_key'] !== $value['google_maps_api_key'] ) {
+		if ( is_array( $options ) && ! empty( $options['google_maps_api_key'] ) && $options['google_maps_api_key'] !== $value['google_maps_api_key'] ) {
 			$options['google_maps_api_key'] = $value['google_maps_api_key'];
+			// Unhook to prevent recursion (this hook fires update_option_lafka_shipping_areas_general which calls back here).
+			remove_action( 'update_option_lafka_shipping_areas_general', array( __CLASS__, 'override_theme_options_api_key' ), 10 );
 			update_option( 'lafka_shipping_areas_general', $options );
+			add_action( 'update_option_lafka_shipping_areas_general', array( __CLASS__, 'override_theme_options_api_key' ), 10, 3 );
 		}
 	}
 
