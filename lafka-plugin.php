@@ -3,7 +3,7 @@
   Plugin Name: Lafka Plugin
   Plugin URI: https://github.com/setkernel/lafka-plugin
   Description: Companion plugin for the Lafka WooCommerce theme. Originally by theAlThemist, now community-maintained.
-  Version: 8.2.6
+  Version: 8.2.7
   Author: theAlThemist, Contributors
   Author URI: https://github.com/setkernel/lafka-plugin
   WC requires at least: 8
@@ -113,9 +113,14 @@ if ( LAFKA_PLUGIN_IS_WOOCOMMERCE ) {
 		require_once( plugin_dir_path( __FILE__ ) . '/incl/combos/lafka-product-combos.php' );
 	}
 
-	if( is_lafka_shipping_areas( get_option( 'lafka' )) ) {
-		/* Load order_hours */
+	$_lafka_opts = get_option( 'lafka' );
+	$_sa_val = isset( $_lafka_opts['shipping_areas'] ) ? $_lafka_opts['shipping_areas'] : '(not set)';
+	error_log( '[Lafka Shipping] Module gate check: shipping_areas option = ' . $_sa_val );
+	if( is_lafka_shipping_areas( $_lafka_opts ) ) {
+		error_log( '[Lafka Shipping] Module ENABLED — loading class-lafka-shipping-areas.php' );
 		require_once( plugin_dir_path( __FILE__ ) . '/incl/shipping-areas/class-lafka-shipping-areas.php' );
+	} else {
+		error_log( '[Lafka Shipping] Module DISABLED — shipping_areas option is not "enabled"' );
 	}
 
 	if( is_lafka_order_hours( get_option( 'lafka' )) ) {

@@ -236,6 +236,7 @@ class Lafka_Shipping_Areas {
 
 	public function add_lafka_shipping_areas_method( $methods ) {
 		$methods['lafka_shipping_areas_method'] = 'Lafka_Shipping_Areas_Method';
+		error_log( '[Lafka Shipping] Method registered in woocommerce_shipping_methods filter' );
 
 		return $methods;
 	}
