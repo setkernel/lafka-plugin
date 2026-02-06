@@ -1,0 +1,38 @@
+name: Build Release Zip
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get version from tag
+        id: version
+        run: echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+
+      - name: Build zip
+        run: |
+          mkdir lafka-plugin
+          rsync -a --exclude='.git' \
+                   --exclude='.github' \
+                   --exclude='.gitignore' \
+                   --exclude='README.md' \
+                   --exclude='LICENSE' \
+                   ./ lafka-plugin/
+          zip -r lafka-plugin.zip lafka-plugin/
+
+      - name: Create or update release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          files: lafka-plugin.zip
+          fail_on_unmatched_files: true
