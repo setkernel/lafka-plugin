@@ -90,6 +90,7 @@ class Lafka_KDS_Frontend {
 				'startPrep'    => __( 'Start Preparing', 'lafka-plugin' ),
 				'markReady'    => __( 'Mark Ready', 'lafka-plugin' ),
 				'complete'     => __( 'Complete', 'lafka-plugin' ),
+				'completed'    => __( 'Completed', 'lafka-plugin' ),
 				'setEta'       => __( 'Set ETA', 'lafka-plugin' ),
 				'pickup'       => __( 'Pickup', 'lafka-plugin' ),
 				'delivery'     => __( 'Delivery', 'lafka-plugin' ),
@@ -159,6 +160,18 @@ class Lafka_KDS_Frontend {
 			</div>
 			<div class="kds-column-body" id="col-ready"></div>
 		</div>
+		<div class="kds-column" data-status="completed">
+			<div class="kds-column-header kds-status-completed">
+				<span class="kds-column-title"><?php esc_html_e( 'Completed', 'lafka-plugin' ); ?></span>
+				<span class="kds-column-count" id="count-completed">0</span>
+			</div>
+			<div class="kds-column-body" id="col-completed"></div>
+		</div>
+	</div>
+
+	<!-- Connection indicator -->
+	<div class="kds-connection-lost kds-hidden" id="kds-connection-lost">
+		<?php esc_html_e( 'Connection lost — retrying...', 'lafka-plugin' ); ?>
 	</div>
 
 	<!-- Sound overlay -->

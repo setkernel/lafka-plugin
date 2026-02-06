@@ -79,7 +79,7 @@ html, body {
 /* Board */
 .kds-board {
 	display: grid;
-	grid-template-columns: repeat(4, 1fr);
+	grid-template-columns: repeat(5, 1fr);
 	gap: 0;
 	height: calc(100vh - var(--kds-header-h));
 	overflow: hidden;
@@ -110,6 +110,7 @@ html, body {
 .kds-status-accepted { background: var(--kds-info); color: #fff; }
 .kds-status-preparing { background: var(--kds-warning); color: #1a1a2e; }
 .kds-status-ready { background: var(--kds-success); color: #1a1a2e; }
+.kds-status-completed { background: #555; color: #ccc; }
 
 .kds-column-count {
 	background: rgba(0, 0, 0, 0.25);
@@ -473,11 +474,41 @@ html, body {
 	color: var(--kds-text);
 }
 
+/* Completed column cards — dimmed, no actions */
+[data-status="completed"] .kds-card {
+	opacity: 0.55;
+}
+
+/* Connection lost indicator */
+.kds-connection-lost {
+	position: fixed;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	padding: 10px;
+	background: var(--kds-accent);
+	color: #fff;
+	text-align: center;
+	font-weight: 600;
+	font-size: 14px;
+	z-index: 800;
+	animation: kds-pulse 2s ease-in-out infinite;
+}
+
+.kds-connection-lost.kds-hidden {
+	display: none;
+}
+
 /* Responsive */
+@media (max-width: 1280px) {
+	.kds-board {
+		grid-template-columns: repeat(3, 1fr);
+	}
+}
+
 @media (max-width: 1024px) {
 	.kds-board {
 		grid-template-columns: repeat(2, 1fr);
-		grid-template-rows: 1fr 1fr;
 	}
 
 	.kds-column {

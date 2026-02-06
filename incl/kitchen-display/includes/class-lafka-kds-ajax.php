@@ -41,6 +41,7 @@ class Lafka_KDS_Ajax {
 	public function get_orders() {
 		$this->verify_kds_auth();
 
+		// Active orders (all statuses in the workflow)
 		$orders = wc_get_orders( array(
 			'status'  => array( 'processing', 'accepted', 'preparing', 'ready' ),
 			'limit'   => 100,
@@ -48,9 +49,21 @@ class Lafka_KDS_Ajax {
 			'order'   => 'ASC',
 		) );
 
+		// Recently completed orders (last 4 hours) so staff can still see them
+		$completed = wc_get_orders( array(
+			'status'     => 'completed',
+			'limit'      => 50,
+			'orderby'    => 'date',
+			'order'      => 'DESC',
+			'date_after' => gmdate( 'Y-m-d H:i:s', time() - 4 * HOUR_IN_SECONDS ),
+		) );
+
 		$data = array();
 
 		foreach ( $orders as $order ) {
+			$data[] = $this->format_order( $order );
+		}
+		foreach ( $completed as $order ) {
 			$data[] = $this->format_order( $order );
 		}
 

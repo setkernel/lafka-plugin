@@ -11,6 +11,8 @@
 	var pollTimer = null;
 	var etaOrderId = null;
 	var etaSelectedMinutes = null;
+	var failCount = 0;
+	var AUTO_RELOAD_MS = 60 * 60 * 1000; // 1 hour
 
 	// --- Helpers ---
 
@@ -112,7 +114,8 @@
 			processing: [],
 			accepted: [],
 			preparing: [],
-			ready: []
+			ready: [],
+			completed: []
 		};
 
 		var newOrderDetected = false;
@@ -237,16 +240,18 @@
 			html += '</div>';
 		}
 
-		// Actions
-		html += '<div class="kds-card-actions">';
-		var actionBtn = getActionButton(order);
-		if (actionBtn) {
-			html += '<button class="kds-btn kds-btn-action" data-action="status" data-order-id="' + order.id + '" data-new-status="' + actionBtn.status + '">' + esc(actionBtn.label) + '</button>';
+		// Actions (not for completed orders)
+		if (order.status !== 'completed') {
+			html += '<div class="kds-card-actions">';
+			var actionBtn = getActionButton(order);
+			if (actionBtn) {
+				html += '<button class="kds-btn kds-btn-action" data-action="status" data-order-id="' + order.id + '" data-new-status="' + actionBtn.status + '">' + esc(actionBtn.label) + '</button>';
+			}
+			if (order.status !== 'ready') {
+				html += '<button class="kds-btn kds-btn-eta" data-action="eta" data-order-id="' + order.id + '" data-order-type="' + esc(order.order_type) + '" data-order-num="' + esc(String(order.number)) + '">' + esc(config.i18n.setEta) + '</button>';
+			}
+			html += '</div>';
 		}
-		if (order.status !== 'ready') {
-			html += '<button class="kds-btn kds-btn-eta" data-action="eta" data-order-id="' + order.id + '" data-order-type="' + esc(order.order_type) + '" data-order-num="' + esc(String(order.number)) + '">' + esc(config.i18n.setEta) + '</button>';
-		}
-		html += '</div>';
 
 		html += '</div>';
 		return html;
@@ -282,7 +287,6 @@
 		})
 		.then(function (res) {
 			if (res.status === 403) {
-				// Nonce expired - reload page
 				window.location.reload();
 				return;
 			}
@@ -290,12 +294,27 @@
 		})
 		.then(function (data) {
 			if (data && data.success) {
+				failCount = 0;
+				setConnectionStatus(true);
 				renderOrders(data.data.orders, data.data.server_time);
 			}
 		})
-		.catch(function (err) {
-			console.error('KDS fetch error:', err);
+		.catch(function () {
+			failCount++;
+			if (failCount >= 3) {
+				setConnectionStatus(false);
+			}
 		});
+	}
+
+	function setConnectionStatus(connected) {
+		var el = document.getElementById('kds-connection-lost');
+		if (!el) return;
+		if (connected) {
+			el.classList.add('kds-hidden');
+		} else {
+			el.classList.remove('kds-hidden');
+		}
 	}
 
 	function updateOrderStatus(orderId, newStatus) {
@@ -428,6 +447,9 @@
 
 		// Polling
 		pollTimer = setInterval(fetchOrders, config.pollInterval);
+
+		// Safety net: full page reload every hour
+		setTimeout(function () { window.location.reload(); }, AUTO_RELOAD_MS);
 	}
 
 	if (document.readyState === 'loading') {
