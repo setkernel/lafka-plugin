@@ -156,6 +156,9 @@ class WC_LafkaCombos_Admin_Order {
 
 								$combined_item_id     = $order_item->get_meta( '_combined_item_id', true );
 								$combined_product     = $order_item->get_product();
+								if ( ! $combined_product ) {
+									continue;
+								}
 								$combined_product_sku = $combined_product->get_sku();
 
 								if ( ! $combined_product_sku ) {
@@ -282,7 +285,7 @@ class WC_LafkaCombos_Admin_Order {
 							</article>
 							<footer>
 								<div class="inner">
-									<button id="btn-ok" class="button button-primary button-large"><?php _e( 'Done', 'lafka-plugin' ); ?></button>
+									<button id="btn-ok" class="button button-primary button-large"><?php esc_html_e( 'Done', 'lafka-plugin' ); ?></button>
 								</div>
 							</footer>
 						</section>

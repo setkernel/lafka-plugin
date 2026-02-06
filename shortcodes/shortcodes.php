@@ -487,7 +487,8 @@ if (!function_exists('lafka_foodmenu_shortcode')) {
 					<?php $projects->the_post(); ?>
 					<?php
                     global $post;
-					$current_terms = get_the_terms(get_the_ID(), 'lafka_foodmenu_category');
+					$post_id = get_the_ID();
+					$current_terms = get_the_terms($post_id, 'lafka_foodmenu_category');
 					$current_terms_as_simple_array = array();
 					$current_terms_as_classes = array();
 
@@ -530,15 +531,21 @@ if (!function_exists('lafka_foodmenu_shortcode')) {
                                    class="foodmenu-link">
                                     <h4>
                                         <?php the_title(); ?>
-	                                    <?php if($post->lafka_item_weight && $post->lafka_item_weight_unit): ?>
-                                            <span class="lafka-item-weight-list"><?php echo esc_html($post->lafka_item_weight . ' ' . $post->lafka_item_weight_unit)?></span>
+	                                    <?php
+                                        $item_weight      = get_post_meta( $post_id, 'lafka_item_weight', true );
+                                        $item_weight_unit = get_post_meta( $post_id, 'lafka_item_weight_unit', true );
+                                        $item_price       = get_post_meta( $post_id, 'lafka_item_single_price', true );
+                                        $item_ingredients = get_post_meta( $post_id, 'lafka_ingredients', true );
+                                        ?>
+	                                    <?php if( $item_weight && $item_weight_unit ): ?>
+                                            <span class="lafka-item-weight-list"><?php echo esc_html( $item_weight . ' ' . $item_weight_unit ) ?></span>
 	                                    <?php endif; ?>
-	                                    <?php if($post->lafka_item_single_price && function_exists('lafka_get_formatted_price')): ?>
-                                            <span><?php echo lafka_get_formatted_price($post->lafka_item_single_price) ?></span>
+	                                    <?php if( $item_price && function_exists('lafka_get_formatted_price') ): ?>
+                                            <span><?php echo wp_kses_post( lafka_get_formatted_price( $item_price ) ) ?></span>
 	                                    <?php endif; ?>
                                     </h4>
-	                                <?php if ($post->lafka_ingredients): ?>
-                                        <h6><?php echo esc_html($post->lafka_ingredients); ?></h6>
+	                                <?php if ( $item_ingredients ): ?>
+                                        <h6><?php echo esc_html( $item_ingredients ); ?></h6>
 	                                <?php endif; ?>
 	                                <?php if (  function_exists('lafka_has_foodmenu_options') && lafka_has_foodmenu_options( $post ) ): ?>
 		                                <?php $lafka_foodmenu_options_array = lafka_get_foodmenu_options( $post ); ?>
@@ -945,7 +952,7 @@ if (!function_exists('lafka_icon_teaser_shortcode')) {
             <?php if ($subtitle): ?>
                 <h6><?php echo esc_html($subtitle) ?></h6>
             <?php endif; ?>
-            <p><?php echo do_shortcode($content) ?></p>
+            <p><?php echo wp_kses_post( do_shortcode($content) ) ?></p>
         </div>
         <!-- End The popup -->
         <script>
@@ -1034,7 +1041,7 @@ if (!function_exists('lafka_icon_box_shortcode')) {
                         <small<?php echo( $titles_color ? ' style="color:' . esc_attr($titles_color) . ';"' : '' ); ?>><?php echo esc_html($subtitle) ?></small>
                     <?php endif; ?>
                     <div class="iconbox_text_content">
-                        <?php echo do_shortcode($content) ?>
+                        <?php echo wp_kses_post( do_shortcode($content) ) ?>
                     </div>
                 </div>
             </div>
@@ -1131,12 +1138,21 @@ if (!function_exists('lafka_map_shortcode')) {
                 <div class="directions_holder">
                     <h4><i class="fa fa-map-marker"></i> <?php esc_html_e('Get Directions', 'lafka-plugin') ?></h4>
                     <p><?php esc_html_e('Fill in your address or zipcode to calculate the route', 'lafka-plugin') ?></p>
-                    <form action="" align="right" onSubmit="calcRoute('<?php echo esc_js($routeStart_unique_id) ?>', '<?php echo esc_js($map_latitude) ?>', '<?php echo esc_js($map_longitude) ?>', '<?php echo esc_js($map_canvas_unique_id) ?>');
-                                        return false;">
+                    <form action="" align="right" class="lafka-directions-form" data-route-start="<?php echo esc_attr($routeStart_unique_id) ?>" data-lat="<?php echo esc_attr($map_latitude) ?>" data-lng="<?php echo esc_attr($map_longitude) ?>" data-canvas="<?php echo esc_attr($map_canvas_unique_id) ?>">
                         <input type="text" id="<?php echo esc_attr($routeStart_unique_id) ?>" value="" placeholder="<?php esc_html_e('Address or postcode', 'lafka-plugin') ?>" style="margin-top:3px"><br /><br />
-                        <input type="submit" value="<?php esc_html_e('Calculate route', 'lafka-plugin') ?>" class="button" onclick="calcRoute('<?php echo esc_js($routeStart_unique_id) ?>', '<?php echo esc_js($map_latitude) ?>', '<?php echo esc_js($map_longitude) ?>', '<?php echo esc_js($map_canvas_unique_id) ?>');
-                                            return false;" />
+                        <input type="submit" value="<?php esc_html_e('Calculate route', 'lafka-plugin') ?>" class="button" />
                     </form>
+                    <script>
+                    (function(){
+                        var form = document.querySelector('[data-canvas="<?php echo esc_js($map_canvas_unique_id) ?>"]');
+                        if (form) {
+                            form.addEventListener('submit', function(e) {
+                                e.preventDefault();
+                                calcRoute(form.getAttribute('data-route-start'), form.getAttribute('data-lat'), form.getAttribute('data-lng'), form.getAttribute('data-canvas'));
+                            });
+                        }
+                    })();
+                    </script>
                 </div>
             </div>
 
@@ -1197,7 +1213,7 @@ if (!function_exists('lafka_pricing_table_shortcode')) {
                 <?php endif; ?>
             </div>
             <?php if ($content): ?>
-                <div class="lafka-pricing-table-content"><?php echo do_shortcode($content) ?></div>
+                <div class="lafka-pricing-table-content"><?php echo wp_kses_post( do_shortcode($content) ) ?></div>
             <?php endif; ?>
             <?php if ($link): ?>
                 <div class="lafka-pricing-table-button">
@@ -2052,13 +2068,13 @@ if (!function_exists('lafka_woo_products_slider_shortcode')) {
                         <a href="<?php the_permalink(); ?>" title="<?php the_title_attribute(); ?>" ><h4><?php the_title(); ?></h4></a>
                         <span class="lafka-product-slide-description">
                             <?php if ($post->post_excerpt): ?>
-                                <?php echo wp_trim_words(apply_filters('woocommerce_short_description', $post->post_excerpt), 23, '...'); ?>
+                                <?php echo wp_kses_post( wp_trim_words(apply_filters('woocommerce_short_description', $post->post_excerpt), 23, '...') ); ?>
                             <?php else: ?>
                                 <?php echo wp_trim_words(get_the_content(), 23, '...'); ?>
                             <?php endif; ?>
                         </span>
                         <div class="lafka-product-slide-countdown"><?php lafka_product_sale_countdown(); ?></div>
-                        <span class="lafka-product-slide-price"><?php echo ($product->get_price_html()); ?></span>
+                        <span class="lafka-product-slide-price"><?php echo wp_kses_post($product->get_price_html()); ?></span>
                         <span class="lafka-product-slide-cart">
                             <?php echo apply_filters('woocommerce_loop_add_to_cart_link', sprintf('<a href="%s" rel="nofollow" data-product_id="%s" data-product_sku="%s" data-quantity="%s" class="button %s product_type_%s %s">%s</a>', esc_url($product->add_to_cart_url()), esc_attr($product->get_id()), esc_attr($product->get_sku()), esc_attr(isset($quantity) ? $quantity : 1 ), $product->is_purchasable() && $product->is_in_stock() ? 'add_to_cart_button' : '', esc_attr($product->get_type()), (('yes' === get_option( 'woocommerce_enable_ajax_add_to_cart') && $product->get_type() === 'simple') ? 'ajax_add_to_cart' : ''), esc_html($product->add_to_cart_text())), $product); ?>
                         </span>

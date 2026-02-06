@@ -130,7 +130,7 @@ class Lafka_Product_Addon_Cart {
 	public function is_grouped_product( $product_id ) {
 		$product = wc_get_product( $product_id );
 
-		return $product->is_type( 'grouped' );
+		return $product && $product->is_type( 'grouped' );
 	}
 
 	/**
@@ -171,9 +171,9 @@ class Lafka_Product_Addon_Cart {
 				$value = isset( $post_data[ 'addon-' . $addon['field-name'] ] ) ? $post_data[ 'addon-' . $addon['field-name'] ] : '';
 
 				if ( is_array( $value ) ) {
-					$value = array_map( 'stripslashes', $value );
+					$value = array_map( 'wp_unslash', $value );
 				} else {
-					$value = stripslashes( $value );
+					$value = wp_unslash( $value );
 				}
 
 				switch ( $addon['type'] ) {
@@ -225,9 +225,9 @@ class Lafka_Product_Addon_Cart {
 				$value = isset( $post_data[ 'addon-' . $addon['field-name'] ] ) ? $post_data[ 'addon-' . $addon['field-name'] ] : '';
 
 				if ( is_array( $value ) ) {
-					$value = array_map( 'stripslashes', $value );
+					$value = array_map( 'wp_unslash', $value );
 				} else {
-					$value = stripslashes( $value );
+					$value = wp_unslash( $value );
 				}
 
 				switch ( $addon['type'] ) {

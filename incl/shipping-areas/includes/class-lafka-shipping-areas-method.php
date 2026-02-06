@@ -102,6 +102,34 @@ function lafka_shipping_areas_method_init() {
 			}
 
 			/**
+			 * Check if this shipping method is available.
+			 *
+			 * @param array $package Package of items from cart.
+			 * @return bool
+			 */
+			public function is_available( $package ) {
+				// Branch restriction: hide method when session branch doesn't match
+				if ( ! empty( $this->branch_location ) && $this->branch_location !== 'lafka_all_branches' ) {
+					$branch_location_session = WC()->session->get( 'lafka_branch_location' );
+					if ( empty( $branch_location_session['branch_id'] ) || $this->branch_location !== (string) $branch_location_session['branch_id'] ) {
+						return false;
+					}
+				}
+
+				// Distance mode requires an API key to function
+				if ( in_array( $this->rate_mode, array( 'distance', 'fixed_and_distance' ), true ) ) {
+					$options           = get_option( 'lafka_shipping_areas_advanced' );
+					$has_secondary_key = ! empty( $options['secondary_google_maps_api_key'] );
+					$has_primary_key   = (bool) lafka_get_option( 'google_maps_api_key' );
+					if ( ! $has_secondary_key && ! $has_primary_key ) {
+						return false;
+					}
+				}
+
+				return parent::is_available( $package );
+			}
+
+			/**
 			 * Init form fields.
 			 */
 			public function init_form_fields() {
@@ -288,21 +316,26 @@ function lafka_shipping_areas_method_init() {
 					$origin = '';
 					if ( ! empty( $branch_location_address_geocoded ) ) {
 						$branch_location_decoded = json_decode( urldecode( $branch_location_address_geocoded ) );
-						if ( ! empty( $branch_location_decoded->lat ) ) {
-							$origin = array( 'lat' => $branch_location_decoded->lat, 'lng' => $branch_location_decoded->lng );
+						$branch_lat = isset( $branch_location_decoded->lat ) ? floatval( $branch_location_decoded->lat ) : 0;
+						$branch_lng = isset( $branch_location_decoded->lng ) ? floatval( $branch_location_decoded->lng ) : 0;
+						if ( $branch_lat >= -90 && $branch_lat <= 90 && $branch_lng >= -180 && $branch_lng <= 180 && ( $branch_lat !== 0.0 || $branch_lng !== 0.0 ) ) {
+							$origin = array( 'lat' => $branch_lat, 'lng' => $branch_lng );
 						}
 					} else if ( $store_location_type === 'geo_woo_store' ) {
 						$origin = Lafka_Shipping_Areas::get_store_address();
 					} else {
 						$store_map_location_decoded = json_decode( urldecode( $store_map_location ) );
-						if ( ! empty( $store_map_location_decoded->lat ) ) {
-							$origin = array( 'lat' => $store_map_location_decoded->lat, 'lng' => $store_map_location_decoded->lng );
+						$store_lat = isset( $store_map_location_decoded->lat ) ? floatval( $store_map_location_decoded->lat ) : 0;
+						$store_lng = isset( $store_map_location_decoded->lng ) ? floatval( $store_map_location_decoded->lng ) : 0;
+						if ( $store_lat >= -90 && $store_lat <= 90 && $store_lng >= -180 && $store_lng <= 180 && ( $store_lat !== 0.0 || $store_lng !== 0.0 ) ) {
+							$origin = array( 'lat' => $store_lat, 'lng' => $store_lng );
 						}
 					}
 
 					if ( ! empty( $origin ) ) {
+						$parsed_data = array();
 						if ( isset( $_POST['post_data'] ) ) {
-							$post_data = $_POST['post_data'];
+							$post_data = sanitize_text_field( wp_unslash( $_POST['post_data'] ) );
 							parse_str( $post_data, $parsed_data );
 						}
 
@@ -311,19 +344,25 @@ function lafka_shipping_areas_method_init() {
 							$destination = $this->convert_address_to_geocode_format( $package['destination'] );
 						} else {
 							$picked_location_decoded = json_decode( urldecode( $parsed_data['lafka_picked_delivery_geocoded'] ) );
-							if ( ! empty( $picked_location_decoded->lat ) ) {
-								$destination = array( 'lat' => $picked_location_decoded->lat, 'lng' => $picked_location_decoded->lng );
+							$picked_lat = isset( $picked_location_decoded->lat ) ? floatval( $picked_location_decoded->lat ) : 0;
+							$picked_lng = isset( $picked_location_decoded->lng ) ? floatval( $picked_location_decoded->lng ) : 0;
+							if ( $picked_lat >= -90 && $picked_lat <= 90 && $picked_lng >= -180 && $picked_lng <= 180 && ( $picked_lat !== 0.0 || $picked_lng !== 0.0 ) ) {
+								$destination = array( 'lat' => $picked_lat, 'lng' => $picked_lng );
 							}
 						}
 
 						$distance_api_result = $this->request_distance_api( $origin, $destination );
 						if ( empty( $distance_api_result ) ) {
+							$notice_msg = esc_html__( 'Shipping could not be calculated. Please check your address or contact us for assistance.', 'lafka-plugin' );
+							if ( ! wc_has_notice( $notice_msg, 'notice' ) ) {
+								wc_add_notice( $notice_msg, 'notice' );
+							}
 							return;
 						}
 					}
 
 					// If we are here, then we have distance result
-					if ( ! empty( $this->rate_distance ) ) {
+					if ( ! empty( $distance_api_result ) && ! empty( $this->rate_distance ) ) {
 						$calculated_rate = $distance_api_result['distance'] * $this->rate_distance;
 					}
 
@@ -364,18 +403,18 @@ function lafka_shipping_areas_method_init() {
 
 			private function handle_js_area_check( $package, $branch_location_address_geocoded ) {
 				// Add the destination address to be used when in cart
-				wp_add_inline_script( 'lafka-shipping-areas-handle-shipping', 'lafka_shipping_destination_address_property = ' . json_encode( $package['destination'] ), 'before' );
+				wp_add_inline_script( 'lafka-shipping-areas-handle-shipping', 'lafka_shipping_destination_address_property = ' . wp_json_encode( $package['destination'] ), 'before' );
 				if ( $this->restrict_by === 'shipping_area' && is_numeric( $this->delivery_area ) ) {
 					$shipping_area_coordinates = get_post_meta( $this->delivery_area, '_lafka_shipping_area_polygon_coordinates', true );
 					wp_add_inline_script( 'lafka-shipping-areas-handle-shipping', '
-						lafka_shipping_properties.shipping_area_instance_' . $this->instance_id . ' = ' . json_encode( array(
+						lafka_shipping_properties.shipping_area_instance_' . intval( $this->instance_id ) . ' = ' . wp_json_encode( array(
 							'shipping_area_coordinates' => $shipping_area_coordinates,
 							'min_amount'                => $this->minamount,
 							'cart_subtotal'             => $package['cart_subtotal'] ?? '',
 						) ), 'before' );
 				} elseif ( $this->restrict_by === 'radius' && is_numeric( $this->max_radius ) ) {
 					wp_add_inline_script( 'lafka-shipping-areas-handle-shipping', '
-						lafka_shipping_properties.radius_area_instance_' . $this->instance_id . ' = ' . json_encode( array(
+						lafka_shipping_properties.radius_area_instance_' . intval( $this->instance_id ) . ' = ' . wp_json_encode( array(
 							'max_radius'                       => $this->max_radius,
 							'shipping_method_distance_unit'    => $this->distance_unit,
 							'branch_location_address_geocoded' => $branch_location_address_geocoded,
@@ -486,15 +525,28 @@ function lafka_shipping_areas_method_init() {
 			}
 
 			private function convert_address_to_geocode_format( $destination_address ): string {
-				return $destination_address['address_1'] . ', ' . $destination_address['address_2'] . ', ' . $destination_address['postcode'] . ', ' . $destination_address['city'] . ', ' . $destination_address['state'] . ', ' . $destination_address['country'];
+				$parts = array(
+					$destination_address['address_1'] ?? '',
+					$destination_address['address_2'] ?? '',
+					$destination_address['postcode'] ?? '',
+					$destination_address['city'] ?? '',
+					$destination_address['state'] ?? '',
+					$destination_address['country'] ?? '',
+				);
+
+				return implode( ', ', array_filter( $parts, 'strlen' ) );
 			}
 
 			private function request_distance_api( $origin, $destination, $cache = true ): array {
+				$api_key = lafka_get_option( 'google_maps_api_key' );
 				$options = get_option( 'lafka_shipping_areas_general' );
 				if ( ! empty( $options['secondary_google_maps_api_key'] ) ) {
 					$api_key = $options['secondary_google_maps_api_key'];
-				} else {
-					$api_key = lafka_get_option( 'google_maps_api_key' );
+				}
+
+				if ( empty( $api_key ) ) {
+					error_log( '[Lafka Shipping] Distance API request failed: no Google Maps API key configured.' );
+					return array();
 				}
 
 				$api_request_data = array(
@@ -532,7 +584,7 @@ function lafka_shipping_areas_method_init() {
 				}
 
 				$result = array();
-				if ( ! empty( $calculate_distance_result[0]['distance'] ) ) {
+				if ( isset( $calculate_distance_result[0] ) && ! empty( $calculate_distance_result[0]['distance'] ) ) {
 					$converted_distance = $this->convert_distance( $calculate_distance_result[0]['distance'] );
 					$distance           = $this->round_distance === 'yes' ? ceil( $converted_distance ) : round( $converted_distance, 1 );
 

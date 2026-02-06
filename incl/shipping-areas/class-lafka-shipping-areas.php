@@ -85,8 +85,6 @@ class Lafka_Shipping_Areas {
 		// Clear shipping rates cache in order to use dynamic shipping calculations
 		add_action( 'woocommerce_shipping_init', array( __CLASS__, 'clear_wc_shipping_rates_cache' ) );
 		add_filter( 'woocommerce_shipping_methods', array( $this, 'add_lafka_shipping_areas_method' ) );
-		// Apply shipping areas restrictions
-		add_action( 'woocommerce_after_get_rates_for_package', array( $this, 'apply_shipping_area_restrictions' ) );
 		// Inject delivery address into ajax update_order_review response
 		add_action( 'woocommerce_update_order_review_fragments', array( $this, 'update_order_review_fragments' ) );
 		// Show picked location in order
@@ -270,13 +268,13 @@ class Lafka_Shipping_Areas {
 			// Init a properties variable
 			wp_add_inline_script( 'lafka-shipping-areas-handle-shipping', '
 				const lafka_shipping_properties = {};
-				const lafka_no_shipping_methods_string = "' . esc_html__( 'There are no shipping options available. Please ensure that your address has been entered correctly, or contact us if you need any help.', 'lafka-plugin' ) . '";
+				const lafka_no_shipping_methods_string = ' . wp_json_encode( __( 'There are no shipping options available. Please ensure that your address has been entered correctly, or contact us if you need any help.', 'lafka-plugin' ) ) . ';
 				const lafka_debug_mode = ' . ( empty( $options_advanced['debug_mode'] ) ? 'false' : 'true' ) . ';
 				const lafka_lowest_cost_shipping = ' . ( empty( $options['lowest_cost_shipping'] ) ? 'false' : 'true' ) . ';
-				const lafka_store_address = "' . Lafka_Shipping_Areas::get_store_address() . '";
-				const lafka_set_store_location = "' . ( empty( $options_advanced['set_store_location'] ) ? 'geo_woo_store' : $options_advanced['set_store_location'] ) . '";
-				const lafka_store_map_location = "' . ( empty( $options_advanced['store_map_location'] ) ? '' : $options_advanced['store_map_location'] ) . '";
-				const lafka_order_type = "' . ( empty( $branch_location_session['order_type'] ) ? '' : $branch_location_session['order_type'] ) . '";
+				const lafka_store_address = ' . wp_json_encode( Lafka_Shipping_Areas::get_store_address() ) . ';
+				const lafka_set_store_location = ' . wp_json_encode( empty( $options_advanced['set_store_location'] ) ? 'geo_woo_store' : $options_advanced['set_store_location'] ) . ';
+				const lafka_store_map_location = ' . wp_json_encode( empty( $options_advanced['store_map_location'] ) ? '' : $options_advanced['store_map_location'] ) . ';
+				const lafka_order_type = ' . wp_json_encode( empty( $branch_location_session['order_type'] ) ? '' : $branch_location_session['order_type'] ) . ';
 				', 'before' );
 		}
 
@@ -304,10 +302,6 @@ class Lafka_Shipping_Areas {
 		}
 	}
 
-	public function apply_shipping_area_restrictions( $package ) {
-		unset( $package['rates'] );
-	}
-
 	public function update_order_review_fragments( $fragments ) {
 		if ( WC()->customer->has_shipping_address() ) {
 			$delivery_address = WC()->customer->get_shipping();
@@ -323,12 +317,23 @@ class Lafka_Shipping_Areas {
 
 	public function checkout_update_order_meta( $order_id ) {
 		if ( ! empty( $_POST['lafka_picked_delivery_geocoded'] ) && ! empty( $_POST['lafka_is_location_clicked'] ) ) {
-			if ( OrderUtil::custom_orders_table_usage_is_enabled() ) {
-				$order = wc_get_order( $order_id );
-                $order->update_meta_data('lafka_picked_delivery_geocoded',  sanitize_text_field( $_POST['lafka_picked_delivery_geocoded'] ));
-                $order->save();
-			} else {
-				update_post_meta( $order_id, 'lafka_picked_delivery_geocoded', sanitize_text_field( $_POST['lafka_picked_delivery_geocoded'] ) );
+			$raw_geocoded = wp_unslash( $_POST['lafka_picked_delivery_geocoded'] );
+			$decoded      = json_decode( $raw_geocoded );
+
+			// Validate JSON structure contains valid lat/lng
+			if ( $decoded !== null && isset( $decoded->lat, $decoded->lng ) ) {
+				$lat = floatval( $decoded->lat );
+				$lng = floatval( $decoded->lng );
+				if ( $lat >= -90 && $lat <= 90 && $lng >= -180 && $lng <= 180 ) {
+					$safe_value = wp_json_encode( array( 'lat' => $lat, 'lng' => $lng ) );
+					if ( OrderUtil::custom_orders_table_usage_is_enabled() ) {
+						$order = wc_get_order( $order_id );
+						$order->update_meta_data( 'lafka_picked_delivery_geocoded', $safe_value );
+						$order->save();
+					} else {
+						update_post_meta( $order_id, 'lafka_picked_delivery_geocoded', $safe_value );
+					}
+				}
 			}
 		}
 	}
@@ -897,7 +902,7 @@ class Lafka_Shipping_Areas {
 				],
 			];
 			$query             = new WP_Query( $query_args );
-            $order_count = $query->post_count;;
+            $order_count = $query->post_count;
 		}
 
 		return $order_count;
@@ -958,7 +963,8 @@ class Lafka_Shipping_Areas {
 
 	public static function get_order_meta_backward_compatible( $order_id, $meta_field_key ) {
 		if ( OrderUtil::custom_orders_table_usage_is_enabled() ) {
-			$return_value = wc_get_order( $order_id )->get_meta( $meta_field_key );
+			$order = wc_get_order( $order_id );
+			$return_value = $order ? $order->get_meta( $meta_field_key ) : '';
 		} else {
 			$return_value = get_post_meta( $order_id, $meta_field_key, true );
 		}

@@ -28,12 +28,11 @@ class LafkaLatestMenuEntriesWidget extends WP_Widget {
 		}
 
 		if (isset($cache[$args['widget_id']])) {
-			echo esc_attr($cache[$args['widget_id']]);
+			echo wp_kses_post($cache[$args['widget_id']]);
 			return;
 		}
 
 		ob_start();
-		extract($args);
 
 		$title = apply_filters('widget_title', empty($instance['title']) ? esc_html__('Latest Menu Entries', 'lafka-plugin') : $instance['title'], $instance, $this->id_base);
 		if (empty($instance['number']) || !$number = absint($instance['number'])) {
@@ -44,9 +43,9 @@ class LafkaLatestMenuEntriesWidget extends WP_Widget {
 
 		if ($r->have_posts()) :
 			?>
-			<?php echo wp_kses_post($before_widget); ?>
+			<?php echo wp_kses_post($args['before_widget']); ?>
 			<?php if ($title): ?>
-				<?php echo wp_kses_post($before_title . $title . $after_title); ?>
+				<?php echo wp_kses_post($args['before_title'] . $title . $args['after_title']); ?>
 			<?php endif; ?>
 			<ul class="post-list fixed">
 				<?php while ($r->have_posts()) : $r->the_post(); ?>
@@ -59,7 +58,7 @@ class LafkaLatestMenuEntriesWidget extends WP_Widget {
 					<?php endif; ?>
 				<?php endwhile; ?>
 			</ul>
-			<?php echo wp_kses_post($after_widget); ?>
+			<?php echo wp_kses_post($args['after_widget']); ?>
 			<?php
 			// Reset the global $the_post as this query will have stomped on it
 			wp_reset_postdata();

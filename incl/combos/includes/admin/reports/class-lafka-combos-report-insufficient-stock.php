@@ -27,7 +27,7 @@ class WC_LafkaCombos_Report_Insufficient_Stock extends WC_Report_Stock {
 	 * No items found text.
 	 */
 	public function no_items() {
-		_e( 'No products found with insufficient stock.', 'lafka-plugin' );
+		esc_html_e( 'No products found with insufficient stock.', 'lafka-plugin' );
 	}
 
 	/**

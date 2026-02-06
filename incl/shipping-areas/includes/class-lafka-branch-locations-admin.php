@@ -568,8 +568,12 @@ class Lafka_Branch_Locations_Admin {
 			update_term_meta( $term_id, 'lafka_branch_address', sanitize_text_field( $_POST['lafka_branch_address'] ) );
 		}
 		if ( isset( $_POST['lafka_branch_address_geocoded'] ) ) {
-			// Using esc_attr(), because sanitize_text_field() breaks the json string
-			update_term_meta( $term_id, 'lafka_branch_address_geocoded', esc_attr( $_POST['lafka_branch_address_geocoded'] ) );
+			$raw_geocoded = wp_unslash( $_POST['lafka_branch_address_geocoded'] );
+			$decoded = json_decode( $raw_geocoded );
+			if ( $decoded !== null && isset( $decoded->lat, $decoded->lng ) ) {
+				$safe_value = wp_json_encode( array( 'lat' => floatval( $decoded->lat ), 'lng' => floatval( $decoded->lng ) ) );
+				update_term_meta( $term_id, 'lafka_branch_address_geocoded', $safe_value );
+			}
 		}
 		if ( isset( $_POST['lafka_branch_shipping_areas'] ) ) {
 			update_term_meta( $term_id, 'lafka_branch_shipping_areas', sanitize_text_field( json_encode( $_POST['lafka_branch_shipping_areas'] ) ) );
@@ -618,7 +622,11 @@ class Lafka_Branch_Locations_Admin {
 			update_term_meta( $term_id, 'lafka_branch_order_hours_force_override_status', sanitize_text_field( $_POST['lafka_branch_order_hours_force_override_status'] ) );
 		}
 		if ( isset( $_POST['lafka_branch_order_hours_schedule'] ) ) {
-			update_term_meta( $term_id, 'lafka_branch_order_hours_schedule', esc_attr( $_POST['lafka_branch_order_hours_schedule'] ) );
+			$raw_schedule = wp_unslash( $_POST['lafka_branch_order_hours_schedule'] );
+			$decoded_schedule = json_decode( $raw_schedule );
+			if ( $decoded_schedule !== null ) {
+				update_term_meta( $term_id, 'lafka_branch_order_hours_schedule', wp_json_encode( $decoded_schedule ) );
+			}
 		}
 		if ( isset( $_POST['lafka_branch_order_hours_holidays_calendar'] ) ) {
 			update_term_meta( $term_id, 'lafka_branch_order_hours_holidays_calendar', sanitize_text_field( $_POST['lafka_branch_order_hours_holidays_calendar'] ) );

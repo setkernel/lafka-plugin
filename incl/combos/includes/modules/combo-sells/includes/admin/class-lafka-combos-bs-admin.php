@@ -43,7 +43,7 @@ class WC_LafkaCombos_BS_Admin {
 		?>
 		<div class="options_group hide_if_grouped hide_if_external hide_if_combo">
 			<p class="form-field ">
-				<label for="combo_sell_ids"><?php _e( 'Combo-sells', 'lafka-plugin' ); ?></label>
+				<label for="combo_sell_ids"><?php esc_html_e( 'Combo-sells', 'lafka-plugin' ); ?></label>
 				<select class="wc-product-search" multiple="multiple" style="width: 50%;" id="combo_sell_ids" name="combo_sell_ids[]" data-placeholder="<?php esc_attr_e( 'Search for a product&hellip;', 'woocommerce' ); ?>" data-action="woocommerce_json_search_combo_sells" data-exclude="<?php echo intval( $product_object->get_id() ); ?>" data-limit="100" data-sortable="true">
 					<?php
 

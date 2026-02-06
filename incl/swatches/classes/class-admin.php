@@ -178,7 +178,7 @@ class Lafka_WC_Variation_Swatches_Admin {
 	public function save_term_meta( $term_id, $tt_id ) {
 		foreach ( Lafka_WCVS()->types as $type => $label ) {
 			if ( isset( $_POST[$type] ) ) {
-				update_term_meta( $term_id, $type, $_POST[$type] );
+				update_term_meta( $term_id, $type, sanitize_text_field( wp_unslash( $_POST[$type] ) ) );
 			}
 		}
 	}
@@ -246,7 +246,7 @@ class Lafka_WC_Variation_Swatches_Admin {
 	 * @param $term_id
 	 */
 	public function add_attribute_column_content( $columns, $column, $term_id ) {
-		$attr  = Lafka_WCVS()->get_tax_attribute( $_REQUEST['taxonomy'] );
+		$attr  = Lafka_WCVS()->get_tax_attribute( sanitize_text_field( wp_unslash( $_REQUEST['taxonomy'] ) ) );
 		$value = get_term_meta( $term_id, $attr->attribute_type, true );
 
 		switch ( $attr->attribute_type ) {
@@ -352,15 +352,19 @@ class Lafka_WC_Variation_Swatches_Admin {
 	 * Ajax function to handle add new attribute term
 	 */
 	public function add_new_attribute_ajax() {
-		$nonce  = isset( $_POST['nonce'] ) ? $_POST['nonce'] : '';
-		$tax    = isset( $_POST['taxonomy'] ) ? $_POST['taxonomy'] : '';
-		$type   = isset( $_POST['type'] ) ? $_POST['type'] : '';
-		$name   = isset( $_POST['name'] ) ? $_POST['name'] : '';
-		$slug   = isset( $_POST['slug'] ) ? $_POST['slug'] : '';
-		$swatch = isset( $_POST['swatch'] ) ? $_POST['swatch'] : '';
+		$nonce  = isset( $_POST['nonce'] ) ? sanitize_text_field( $_POST['nonce'] ) : '';
+		$tax    = isset( $_POST['taxonomy'] ) ? sanitize_text_field( $_POST['taxonomy'] ) : '';
+		$type   = isset( $_POST['type'] ) ? sanitize_text_field( $_POST['type'] ) : '';
+		$name   = isset( $_POST['name'] ) ? sanitize_text_field( $_POST['name'] ) : '';
+		$slug   = isset( $_POST['slug'] ) ? sanitize_text_field( $_POST['slug'] ) : '';
+		$swatch = isset( $_POST['swatch'] ) ? sanitize_text_field( $_POST['swatch'] ) : '';
 
 		if ( ! wp_verify_nonce( $nonce, '_lafka-wcs_create_attribute' ) ) {
 			wp_send_json_error( esc_html__( 'Wrong request', 'lafka-plugin' ) );
+		}
+
+		if ( ! current_user_can( 'manage_product_terms' ) ) {
+			wp_send_json_error( esc_html__( 'Permission denied', 'lafka-plugin' ) );
 		}
 
 		if ( empty( $name ) || empty( $swatch ) || empty( $tax ) || empty( $type ) ) {
@@ -371,7 +375,7 @@ class Lafka_WC_Variation_Swatches_Admin {
 			wp_send_json_error( esc_html__( 'Taxonomy is not exists', 'lafka-plugin' ) );
 		}
 
-		if ( term_exists( $_POST['name'], $_POST['tax'] ) ) {
+		if ( term_exists( $name, $tax ) ) {
 			wp_send_json_error( esc_html__( 'This term is exists', 'lafka-plugin' ) );
 		}
 

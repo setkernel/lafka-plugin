@@ -693,7 +693,7 @@ class Lafka_Shipping_Areas_Admin {
 				return;
 			}
 
-			if ( ! current_user_can( 'edit_pages', $post_id ) ) {
+			if ( ! current_user_can( 'edit_post', $post_id ) ) {
 				return;
 			}
 

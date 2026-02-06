@@ -825,7 +825,7 @@ class WC_LafkaCombos_CP_Compatibility {
 			$composited_combo_value  = isset( $cart_item[ 'data' ]->composited_value ) ? $cart_item[ 'data' ]->composited_value : 0.0;
 			$composited_combo_weight = isset( $cart_item[ 'data' ]->composited_weight ) ? $cart_item[ 'data' ]->composited_weight : 0.0;
 
-			$combo     = unserialize( serialize( $cart_item[ 'data' ] ) );
+			$combo     = clone $cart_item[ 'data' ];
 			$combo_qty = $cart_item[ 'quantity' ];
 
 			// Aggregate weights and prices.

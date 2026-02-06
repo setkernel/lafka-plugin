@@ -12,8 +12,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 <table cellspacing="0" class="combined_products">
 	<thead>
 		<th class="combined_item_col combined_item_images_head"></th>
-		<th class="combined_item_col combined_item_details_head"><?php _e( 'Product', 'lafka-plugin' ); ?></th>
-		<th class="combined_item_col combined_item_qty_head"><?php _e( 'Quantity', 'lafka-plugin' ); ?></th>
+		<th class="combined_item_col combined_item_details_head"><?php esc_html_e( 'Product', 'lafka-plugin' ); ?></th>
+		<th class="combined_item_col combined_item_qty_head"><?php esc_html_e( 'Quantity', 'lafka-plugin' ); ?></th>
 	</thead><?php
 
 	foreach ( $combined_items as $combined_item ) {

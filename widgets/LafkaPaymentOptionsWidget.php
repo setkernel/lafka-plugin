@@ -12,12 +12,11 @@ class LafkaPaymentOptionsWidget extends WP_Widget{
     }
 
     public function widget( $args, $instance ) {
-        extract( $args );
         $title = apply_filters( 'widget_title', $instance['title'] );
 
-        echo wp_kses_post($before_widget);
+        echo wp_kses_post($args['before_widget']);
         if ( ! empty( $title ) )
-                echo wp_kses_post($before_title . $title . $after_title);
+                echo wp_kses_post($args['before_title'] . $title . $args['after_title']);
 
         foreach($instance as $field_name => $value) {
             if (!in_array($field_name, array('title', 'seal')) && $value): ?>
@@ -25,10 +24,10 @@ class LafkaPaymentOptionsWidget extends WP_Widget{
             <?php endif;
         }
 
-        if(trim($instance['seal'] != '')): ?>
+        if(trim($instance['seal']) !== ''): ?>
             <div id="seals"><?php echo wp_kses_post($instance['seal']) ?></div>
         <?php endif;
-        echo wp_kses_post($after_widget);
+        echo wp_kses_post($args['after_widget']);
     }
 
     public function form( $instance ) {
@@ -88,7 +87,7 @@ class LafkaPaymentOptionsWidget extends WP_Widget{
             <?php if(!in_array($field_name, array('title', 'seal'))): ?>
                 <p>
                     <input class="checkbox" type="checkbox" <?php checked($value) ?> id="<?php echo esc_attr($this->get_field_id($field_name)); ?>" name="<?php echo esc_attr($this->get_field_name($field_name)); ?>" value="on" />&nbsp;
-                    <label for="<?php echo esc_attr($this->get_field_id($field_name)); ?>"><?php echo esc_attr($labels[$field_name]); ?></label>
+                    <label for="<?php echo esc_attr($this->get_field_id($field_name)); ?>"><?php echo esc_html($labels[$field_name]); ?></label>
                 </p>
             <?php endif;  ?>
         <?php endforeach;  ?>

@@ -236,7 +236,7 @@ if (!function_exists('lafka_save_layout_postdata')) {
 			return;
 		}
 
-		if (!current_user_can('edit_pages', $post_id)) {
+		if (!current_user_can('edit_post', $post_id)) {
 			return;
 		}
 
@@ -551,7 +551,7 @@ if (!function_exists('lafka_save_page_options_postdata')) {
 			return;
 		}
 
-		if (!current_user_can('edit_pages', $post_id)) {
+		if (!current_user_can('edit_post', $post_id)) {
 			return;
 		}
 
@@ -713,7 +713,7 @@ if (!function_exists('lafka_save_revolution_slider_postdata')) {
 			return;
 		}
 
-		if (!current_user_can('edit_pages', $post_id)) {
+		if (!current_user_can('edit_post', $post_id)) {
 			return;
 		}
 
@@ -854,7 +854,7 @@ if (!function_exists('lafka_save_video_bckgr_postdata')) {
 			return;
 		}
 
-		if (!current_user_can('edit_pages', $post_id)) {
+		if (!current_user_can('edit_post', $post_id)) {
 			return;
 		}
 
@@ -918,16 +918,16 @@ if (!function_exists('lafka_foodmenu_callback')) {
 		}
 
 		echo '<div><label for="lafka_item_single_price" class="lafka-admin-option-label">';
-		_e( 'Item Price', 'lafka-plugin' );
+		esc_html_e( 'Item Price', 'lafka-plugin' );
 		echo '</label> ';
 		echo '<input type="text" id="lafka_item_single_price" name="lafka_item_single_price" value="' . esc_attr( get_post_meta( $post->ID, 'lafka_item_single_price', true ) ) . '" class="small-text" /> ' . esc_html( $currency ) . '</div>';
 
 		echo '<div><label for="lafka_item_weight" class="lafka-admin-option-label">';
-		_e('Item Weight', 'lafka-plugin');
+		esc_html_e('Item Weight', 'lafka-plugin');
 		echo '</label> ';
 		echo '<input type="text" id="lafka_item_weight" name="lafka_item_weight" value="' . esc_attr(get_post_meta($post->ID, 'lafka_item_weight', true)) . '" class="small-text" />';
 		echo ' <label for="lafka_item_weight_unit" >';
-		_e('Units (g)', 'lafka-plugin');
+		esc_html_e('Units (g)', 'lafka-plugin');
 		echo '</label> ';
 		echo '<input type="text" id="lafka_item_weight_unit" name="lafka_item_weight_unit" value="' . esc_attr(get_post_meta($post->ID, 'lafka_item_weight_unit', true)) . '" class="small-text" /></div>';
 
@@ -936,11 +936,11 @@ if (!function_exists('lafka_foodmenu_callback')) {
 		for ( $i = 1; $i <= 3; $i ++ ) {
 			echo '<div>';
 			echo '<label for="lafka_item_size' . $i . '">';
-			_e( 'Option', 'lafka-plugin' );
+			esc_html_e( 'Option', 'lafka-plugin' );
 			echo '</label> ';
 			echo '<input type="text" id="lafka_item_size1" name="lafka_item_size' . $i . '" value="' . esc_attr( get_post_meta( $post->ID, 'lafka_item_size' . $i, true ) ) . '" class="regular-text" />';
 			echo ' <label for="lafka_item_price' . $i . '">';
-			_e( 'Price', 'lafka-plugin' );
+			esc_html_e( 'Price', 'lafka-plugin' );
 			echo '</label> ';
 			echo '<input type="text" id="lafka_item_price' . $i . '" name="lafka_item_price' . $i . '" value="' . esc_attr( get_post_meta( $post->ID, 'lafka_item_price' . $i, true ) ) . '" class="small-text" /> ' . esc_html( $currency );
 			echo '</div>';
@@ -949,12 +949,12 @@ if (!function_exists('lafka_foodmenu_callback')) {
 		echo '<br>';
 
 		echo '<label for="lafka_ingredients">';
-		_e('Ingredients', 'lafka-plugin');
+		esc_html_e('Ingredients', 'lafka-plugin');
 		echo '</label> ';
 		echo '<div><input type="text" id="lafka_ingredients" name="lafka_ingredients" value="' . esc_attr(get_post_meta($post->ID, 'lafka_ingredients', true)) . '" class="regular-text" /></div>';
 
 		echo '<label for="lafka_allergens">';
-		_e('Allergens', 'lafka-plugin');
+		esc_html_e('Allergens', 'lafka-plugin');
 		echo '</label> ';
 		echo '<div><input type="text" id="lafka_allergens" name="lafka_allergens" value="' . esc_attr(get_post_meta($post->ID, 'lafka_allergens', true)) . '" class="regular-text" /></div>';
 
@@ -972,12 +972,12 @@ if (!function_exists('lafka_foodmenu_callback')) {
 
 		echo '<h4>' . esc_html__('Menu Entry External Links:', 'lafka-plugin') . '</h4>';
 		echo '<label for="lafka_ext_link_button_title">';
-		_e('First Button Title', 'lafka-plugin');
+		esc_html_e('First Button Title', 'lafka-plugin');
 		echo '</label> ';
 		echo '<div><input type="text" id="lafka_ext_link_button_title" name="lafka_ext_link_button_title" value="' . esc_attr(get_post_meta($post->ID, 'lafka_ext_link_button_title', true)) . '" class="regular-text" /></div>';
 
 		echo '<label for="lafka_ext_link_url">';
-		_e('First Button Url', 'lafka-plugin');
+		esc_html_e('First Button Url', 'lafka-plugin');
 		echo '</label> ';
 		echo '<div><input type="text" id="lafka_ext_link_url" name="lafka_ext_link_url" value="' . esc_attr(get_post_meta($post->ID, 'lafka_ext_link_url', true)) . '" class="regular-text" /></div>';
 
@@ -1010,7 +1010,7 @@ if (!function_exists('lafka_save_foodmenu_postdata')) {
 		// Check the user's permissions.
 		if (isset($_POST['post_type']) && 'page' === $_POST['post_type']) {
 
-			if (!current_user_can('edit_pages', $post_id)) {
+			if (!current_user_can('edit_post', $post_id)) {
 				return;
 			}
 		} else {
@@ -1137,7 +1137,7 @@ if (!function_exists('lafka_save_additonal_featured_meta_postdata')) {
 			return;
 		}
 
-		if (!current_user_can('edit_pages', $post_id)) {
+		if (!current_user_can('edit_post', $post_id)) {
 			return;
 		}
 
@@ -1228,7 +1228,7 @@ if (!function_exists('lafka_save_foodmenu_cz_postdata')) {
 		// Check the user's permissions.
 		if (isset($_POST['post_type']) && 'page' === $_POST['post_type']) {
 
-			if (!current_user_can('edit_pages', $post_id)) {
+			if (!current_user_can('edit_post', $post_id)) {
 				return;
 			}
 		} else {
@@ -1319,7 +1319,7 @@ if (!function_exists('lafka_save_product_video_postdata')) {
 			return;
 		}
 
-		if (!current_user_can('edit_pages', $post_id)) {
+		if (!current_user_can('edit_post', $post_id)) {
 			return;
 		}
 
@@ -1407,7 +1407,7 @@ if (!function_exists('lafka_save_product_gallery_type_postdata')) {
 			return;
 		}
 
-		if (!current_user_can('edit_pages', $post_id)) {
+		if (!current_user_can('edit_post', $post_id)) {
 			return;
 		}
 

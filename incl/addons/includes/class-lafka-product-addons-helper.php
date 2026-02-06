@@ -176,7 +176,7 @@ if (!class_exists('WC_Product_Addons_Helper')) {
 		public static function get_product_addon_price_for_display( $price, $cart_item = null ) {
 			$product = ! empty( $GLOBALS['product'] ) && is_object( $GLOBALS['product'] ) ? clone $GLOBALS['product'] : null;
 
-			if ( '' === $price || '0' == $price ) {
+			if ( '' === $price || 0 === (float) $price ) {
 				return;
 			}
 
@@ -256,10 +256,10 @@ if (!class_exists('WC_Product_Addons_Helper')) {
 				case 'multiple_choice':
 				case 'checkbox':
 				case 'file_upload':
-					return '1' == $required;
+					return '1' === $required;
 					break;
 				default:
-					return '1' == $required;
+					return '1' === $required;
 					break;
 			}
 		}

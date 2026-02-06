@@ -11,6 +11,8 @@ if( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 global $wpdb;
 
 //change to standard select type custom attributes
-$table = $wpdb->prefix . 'woocommerce_attribute_taxonomies';
-$update = "UPDATE `$table` SET `attribute_type` = 'select' WHERE `attribute_type` != 'text'";
-$wpdb->query( $update );
+$wpdb->query( $wpdb->prepare(
+	"UPDATE {$wpdb->prefix}woocommerce_attribute_taxonomies SET attribute_type = %s WHERE attribute_type != %s",
+	'select',
+	'text'
+) );

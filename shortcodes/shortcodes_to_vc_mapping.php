@@ -2233,11 +2233,12 @@ if (!function_exists('lafka_productCategoryCategoryAutocompleteSuggester')) {
 
 		$cat_id = (int) $query;
 		$query = trim($query);
+		$like_query = '%' . $wpdb->esc_like( $query ) . '%';
 		$post_meta_infos = $wpdb->get_results(
 			$wpdb->prepare("SELECT a.term_id AS id, b.name as name, b.slug AS slug
 						FROM {$wpdb->term_taxonomy} AS a
 						INNER JOIN {$wpdb->terms} AS b ON b.term_id = a.term_id
-						WHERE a.taxonomy = 'product_cat' AND (a.term_id = '%d' OR b.slug LIKE '%%%s%%' OR b.name LIKE '%%%s%%' )", $cat_id > 0 ? $cat_id : - 1, stripslashes($query), stripslashes($query)), ARRAY_A);
+						WHERE a.taxonomy = 'product_cat' AND (a.term_id = %d OR b.slug LIKE %s OR b.name LIKE %s )", $cat_id > 0 ? $cat_id : - 1, $like_query, $like_query), ARRAY_A);
 
 		$result = array();
 		if (is_array($post_meta_infos) && !empty($post_meta_infos)) {
@@ -2246,9 +2247,9 @@ if (!function_exists('lafka_productCategoryCategoryAutocompleteSuggester')) {
 				$data['value'] = $slug ? $value['slug'] : $value['id'];
 				$data['label'] = esc_html__('Id', 'lafka-plugin') . ': ' .
 				                 $value['id'] .
-				                 ( ( strlen($value['name']) > 0 ) ? ' - ' . esc_html__('Name', 'lafka-plugin') . ': ' .
+				                 ( ( ! empty($value['name']) ) ? ' - ' . esc_html__('Name', 'lafka-plugin') . ': ' .
 				                                                    $value['name'] : '' ) .
-				                 ( ( strlen($value['slug']) > 0 ) ? ' - ' . esc_html__('Slug', 'lafka-plugin') . ': ' .
+				                 ( ( ! empty($value['slug']) ) ? ' - ' . esc_html__('Slug', 'lafka-plugin') . ': ' .
 				                                                    $value['slug'] : '' );
 				$result[] = $data;
 			}
@@ -2263,22 +2264,25 @@ if (!function_exists('lafka_productCategoryCategoryAutocompleteSuggester')) {
 if (!function_exists('lafka_productCategoryCategoryRenderByIdExact')) {
 
 	function lafka_productCategoryCategoryRenderByIdExact($query) {
-		global $wpdb;
 		$query = $query['value'];
 		$cat_id = (int) $query;
 		$term = get_term($cat_id, 'product_cat');
+
+		if ( is_wp_error( $term ) || ! $term ) {
+			return false;
+		}
 
 		$term_slug = $term->slug;
 		$term_title = $term->name;
 		$term_id = $term->term_id;
 
 		$term_slug_display = '';
-		if (!empty($term_sku)) {
-			$term_slug_display = ' - ' . esc_html__('Sku', 'lafka-plugin') . ': ' . $term_slug;
+		if (!empty($term_slug)) {
+			$term_slug_display = ' - ' . esc_html__('Slug', 'lafka-plugin') . ': ' . $term_slug;
 		}
 
 		$term_title_display = '';
-		if (!empty($product_title)) {
+		if (!empty($term_title)) {
 			$term_title_display = ' - ' . esc_html__('Title', 'lafka-plugin') . ': ' . $term_title;
 		}
 

@@ -82,6 +82,7 @@ class Lafka_Order_Hours {
 
 			return new DateTime( 'now', $temp_timezone );
 		} catch ( Exception $e ) {
+			error_log( '[Lafka Order Hours] DateTime error: ' . $e->getMessage() );
 			return new DateTime( '@0' );
 		}
 	}

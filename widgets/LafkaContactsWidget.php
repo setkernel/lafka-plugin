@@ -14,40 +14,39 @@ class LafkaContactsWidget extends WP_Widget {
 	}
 
 	public function widget($args, $instance) {
-		extract($args);
 		$title = apply_filters('widget_title', $instance['title']);
 
-		echo wp_kses_post($before_widget);
+		echo wp_kses_post($args['before_widget']);
 		if (!empty($title))
-			echo wp_kses_post($before_title . $title . $after_title);
+			echo wp_kses_post($args['before_title'] . $title . $args['after_title']);
 
 		if (!empty($instance['worktime'])):
 			?>
-			<span class="footer_time"><?php echo esc_attr($instance['worktime']) ?></span>
+			<span class="footer_time"><?php echo esc_html($instance['worktime']) ?></span>
 		<?php endif;
 		if (!empty($instance['address'])):
 			?>
-			<span class="footer_address"><?php echo esc_attr($instance['address']) ?></span>
+			<span class="footer_address"><?php echo esc_html($instance['address']) ?></span>
 		<?php endif;
 		if (!empty($instance['phone'])):
 			?>
-			<span class="footer_phone"><?php echo esc_attr($instance['phone']) ?></span>
+			<span class="footer_phone"><?php echo esc_html($instance['phone']) ?></span>
 		<?php endif;
 		if (!empty($instance['fax'])):
 			?>
-			<span class="footer_fax"><?php echo esc_attr($instance['fax']) ?></span>
+			<span class="footer_fax"><?php echo esc_html($instance['fax']) ?></span>
 		<?php endif;
 		if (!empty($instance['email'])):
 			?>
 			<?php if (is_email($instance['email'])): ?>
-				<span class="footer_mail"><a href="mailto:<?php echo esc_attr($instance['email']) ?>"><?php echo esc_attr($instance['email']) ?></a></span>
+				<span class="footer_mail"><a href="mailto:<?php echo esc_attr($instance['email']) ?>"><?php echo esc_html($instance['email']) ?></a></span>
 			<?php else: ?>
-				<span class="footer_mail"><?php echo esc_attr($instance['email']) ?></span>
+				<span class="footer_mail"><?php echo esc_html($instance['email']) ?></span>
 			<?php endif; ?>
 		<?php
 		endif;
 
-		echo wp_kses_post($after_widget);
+		echo wp_kses_post($args['after_widget']);
 	}
 
 	public function form($instance) {

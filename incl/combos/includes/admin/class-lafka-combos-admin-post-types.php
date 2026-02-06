@@ -38,12 +38,12 @@ class WC_LafkaCombos_Admin_Post_Types {
 
 				ob_start();
 
-				?><mark class="outofstock insufficient_stock"><?php _e( 'Insufficient stock', 'lafka-plugin' ); ?></mark><?php
+				?><mark class="outofstock insufficient_stock"><?php esc_html_e( 'Insufficient stock', 'lafka-plugin' ); ?></mark><?php
 
 				if ( $product->contains( 'out_of_stock_strict' ) ) {
 
 					?><div class="row-actions">
-						<span class="view"><a href="<?php echo admin_url( 'admin.php?page=wc-reports&tab=stock&report=insufficient_stock&combo_id=' . $product->get_id() ) ?>" rel="bookmark" aria-label="<?php _e( 'View Report', 'lafka-plugin' ); ?>"><?php _e( 'View Report', 'lafka-plugin' ); ?></a></span>
+						<span class="view"><a href="<?php echo admin_url( 'admin.php?page=wc-reports&tab=stock&report=insufficient_stock&combo_id=' . $product->get_id() ) ?>" rel="bookmark" aria-label="<?php esc_attr_e( 'View Report', 'lafka-plugin' ); ?>"><?php esc_html_e( 'View Report', 'lafka-plugin' ); ?></a></span>
 					</div><?php
 				}
 

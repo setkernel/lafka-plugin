@@ -19,14 +19,14 @@ $lafka_message_unsent = esc_html__('Message was not sent. Try Again.', 'lafka-pl
 $lafka_message_sent = esc_html__('Thanks! Your message has been sent.', 'lafka-plugin');
 
 //user posted variables
-$lafka_subject = array_key_exists('lafka_subject', $_POST) ? $_POST['lafka_subject'] : '';
-$lafka_email = array_key_exists('lafka_email', $_POST) ? $_POST['lafka_email'] : '';
-$lafka_name = array_key_exists('lafka_name', $_POST) ? $_POST['lafka_name'] : '';
-$lafka_phone = array_key_exists('lafka_phone', $_POST) ? $_POST['lafka_phone'] : '';
-$lafka_address = array_key_exists('lafka_address', $_POST) ? $_POST['lafka_address'] : '';
-$lafka_message = array_key_exists('lafka_enquiry', $_POST) ? $_POST['lafka_enquiry'] : '';
-$lafka_captcha_rand = array_key_exists('lafka_contact_submitted', $_POST) ? $_POST['lafka_contact_submitted'] : '';
-$lafka_captcha_answer = array_key_exists('lafka_captcha_answer', $_POST) ? $_POST['lafka_captcha_answer'] : '';
+$lafka_subject = array_key_exists('lafka_subject', $_POST) ? sanitize_text_field( wp_unslash( $_POST['lafka_subject'] ) ) : '';
+$lafka_email = array_key_exists('lafka_email', $_POST) ? sanitize_email( wp_unslash( $_POST['lafka_email'] ) ) : '';
+$lafka_name = array_key_exists('lafka_name', $_POST) ? sanitize_text_field( wp_unslash( $_POST['lafka_name'] ) ) : '';
+$lafka_phone = array_key_exists('lafka_phone', $_POST) ? sanitize_text_field( wp_unslash( $_POST['lafka_phone'] ) ) : '';
+$lafka_address = array_key_exists('lafka_address', $_POST) ? sanitize_text_field( wp_unslash( $_POST['lafka_address'] ) ) : '';
+$lafka_message = array_key_exists('lafka_enquiry', $_POST) ? sanitize_textarea_field( wp_unslash( $_POST['lafka_enquiry'] ) ) : '';
+$lafka_captcha_rand = array_key_exists('lafka_contact_submitted', $_POST) ? sanitize_text_field( $_POST['lafka_contact_submitted'] ) : '';
+$lafka_captcha_answer = array_key_exists('lafka_captcha_answer', $_POST) ? sanitize_text_field( $_POST['lafka_captcha_answer'] ) : '';
 // shortcode params
 if (!isset($lafka_shortcode_params_for_tpl)) {
 	$lafka_shortcode_params_for_tpl = array_key_exists('shortcode_params_for_tpl', $_POST) ? stripcslashes($_POST['shortcode_params_for_tpl']) : '';
@@ -34,8 +34,13 @@ if (!isset($lafka_shortcode_params_for_tpl)) {
 
 if ($lafka_shortcode_params_for_tpl) {
 	$lafka_shortcode_params_array = json_decode($lafka_shortcode_params_for_tpl, true);
-	if ($lafka_shortcode_params_array) {
-		extract($lafka_shortcode_params_array);
+	if ( is_array( $lafka_shortcode_params_array ) ) {
+		$lafka_allowed_keys = array( 'lafka_contact_mail_to', 'lafka_contact_form_fields', 'lafka_simple_captcha', 'lafka_title' );
+		foreach ( $lafka_allowed_keys as $lafka_key ) {
+			if ( isset( $lafka_shortcode_params_array[ $lafka_key ] ) ) {
+				$$lafka_key = $lafka_shortcode_params_array[ $lafka_key ];
+			}
+		}
 	}
 }
 

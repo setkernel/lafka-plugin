@@ -585,8 +585,8 @@ function wc_pc_template_before_combined_items( $combo ) {
 		?><table cellspacing="0" class="<?php echo esc_attr( implode( ' ', $table_classes ) ); ?>">
 			<thead>
 				<th class="combined_item_col combined_item_images_head"></th>
-				<th class="combined_item_col combined_item_details_head"><?php _e( 'Product', 'lafka-plugin' ); ?></th>
-				<th class="combined_item_col combined_item_qty_head"><?php _e( 'Quantity', 'lafka-plugin' ); ?></th>
+				<th class="combined_item_col combined_item_details_head"><?php esc_html_e( 'Product', 'lafka-plugin' ); ?></th>
+				<th class="combined_item_col combined_item_qty_head"><?php esc_html_e( 'Quantity', 'lafka-plugin' ); ?></th>
 			</thead>
 			<tbody><?php
 

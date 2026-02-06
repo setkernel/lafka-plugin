@@ -66,7 +66,11 @@ jQuery( document ).ready( function ( $ ) {
 				tax : $button.closest( '.woocommerce_attribute' ).data( 'taxonomy' )
 			};
 
-		// Insert input
+		// Insert input — validate type to prevent selector injection
+		var allowedTypes = ['color', 'image', 'label'];
+		if ( allowedTypes.indexOf( data.type ) === -1 ) {
+			return;
+		}
 		$modal.find( '.lafka-wcs-term-swatch' ).html( $( '#tmpl-lafka-wcs-input-' + data.type ).html() );
 		$modal.find( '.lafka-wcs-term-tax' ).html( taxInputTemplate( data ) );
 

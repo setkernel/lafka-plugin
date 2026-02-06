@@ -243,8 +243,17 @@ class Lafka_Branch_Locations {
 	public static function select_branch() {
 		check_ajax_referer( 'lafka_select_branch' );
 
-		$fields_string = urldecode( $_POST['fields'] );
+		$fields_string = sanitize_text_field( wp_unslash( $_POST['fields'] ) );
 		parse_str( $fields_string, $fields );
+
+		// Sanitize all parsed field values
+		$fields['lafka_user_country']              = sanitize_text_field( $fields['lafka_user_country'] ?? '' );
+		$fields['lafka_user_address_1']            = sanitize_text_field( $fields['lafka_user_address_1'] ?? '' );
+		$fields['lafka_user_city']                 = sanitize_text_field( $fields['lafka_user_city'] ?? '' );
+		$fields['lafka_user_state']                = sanitize_text_field( $fields['lafka_user_state'] ?? '' );
+		$fields['lafka_user_postcode']             = sanitize_text_field( $fields['lafka_user_postcode'] ?? '' );
+		$fields['lafka_branch_order_type']         = sanitize_text_field( $fields['lafka_branch_order_type'] ?? '' );
+		$fields['lafka_branch_select_user_address'] = sanitize_text_field( $fields['lafka_branch_select_user_address'] ?? '' );
 
 		$selected_branch_id = null;
 		if ( ! empty( $fields['lafka_branch_select'] ) ) {
@@ -273,7 +282,7 @@ class Lafka_Branch_Locations {
 
 		// Clear cart if products per branch is selected, so we don't have an unavailable product if we switch the branch
 		$options_branches = get_option( 'lafka_shipping_areas_branches' );
-		if ( ! empty( $options_branches['products_by_branches'] ) ) {
+		if ( ! empty( $options_branches['products_by_branches'] ) && isset( WC()->cart ) ) {
 			WC()->cart->empty_cart();
 		}
 
@@ -286,24 +295,28 @@ class Lafka_Branch_Locations {
 			'city'       => $fields['lafka_user_city'],
 			'state'      => self::get_processed_state_code_from_google_state( $fields['lafka_user_state'], $fields['lafka_user_country'] ),
 			'postcode'   => $fields['lafka_user_postcode'],
-		);;
+		);
 
 		$full_address                                  = self::build_full_address_from_components( $lafka_branch_location_session );
 		$lafka_branch_location_session['full_address'] = $full_address;
 
-		WC()->session->set( 'lafka_branch_location', $lafka_branch_location_session );
+		if ( isset( WC()->session ) ) {
+			WC()->session->set( 'lafka_branch_location', $lafka_branch_location_session );
+		}
 
-		WC()->customer->set_billing_country( $lafka_branch_location_session['country'] ?? '' );
-		WC()->customer->set_shipping_country( $lafka_branch_location_session['country'] ?? '' );
-		WC()->customer->set_billing_state( $lafka_branch_location_session['state'] ?? '' );
-		WC()->customer->set_shipping_state( $lafka_branch_location_session['state'] ?? '' );
-		WC()->customer->set_billing_address_1( $lafka_branch_location_session['address_1'] ?? '' );
-		WC()->customer->set_shipping_address_1( $lafka_branch_location_session['address_1'] ?? '' );
-		WC()->customer->set_billing_city( $lafka_branch_location_session['city'] ?? '' );
-		WC()->customer->set_shipping_city( $lafka_branch_location_session['city'] ?? '' );
-		WC()->customer->set_billing_postcode( $lafka_branch_location_session['postcode'] ?? '' );
-		WC()->customer->set_shipping_postcode( $lafka_branch_location_session['postcode'] ?? '' );
-		WC()->customer->save();
+		if ( isset( WC()->customer ) ) {
+			WC()->customer->set_billing_country( $lafka_branch_location_session['country'] ?? '' );
+			WC()->customer->set_shipping_country( $lafka_branch_location_session['country'] ?? '' );
+			WC()->customer->set_billing_state( $lafka_branch_location_session['state'] ?? '' );
+			WC()->customer->set_shipping_state( $lafka_branch_location_session['state'] ?? '' );
+			WC()->customer->set_billing_address_1( $lafka_branch_location_session['address_1'] ?? '' );
+			WC()->customer->set_shipping_address_1( $lafka_branch_location_session['address_1'] ?? '' );
+			WC()->customer->set_billing_city( $lafka_branch_location_session['city'] ?? '' );
+			WC()->customer->set_shipping_city( $lafka_branch_location_session['city'] ?? '' );
+			WC()->customer->set_billing_postcode( $lafka_branch_location_session['postcode'] ?? '' );
+			WC()->customer->set_shipping_postcode( $lafka_branch_location_session['postcode'] ?? '' );
+			WC()->customer->save();
+		}
 		wp_send_json_success();
 	}
 
@@ -318,7 +331,7 @@ class Lafka_Branch_Locations {
 	}
 
 	public static function show_change_branch() {
-		$branch_location_session = WC()->session->get( 'lafka_branch_location' );
+		$branch_location_session = isset( WC()->session ) ? WC()->session->get( 'lafka_branch_location' ) : null;
 
 		if ( ! empty( $branch_location_session ) ) {
 			$branch = get_term( $branch_location_session['branch_id'], 'lafka_branch_location' );
@@ -372,7 +385,7 @@ class Lafka_Branch_Locations {
 	}
 
 	public static function change_default_checkout_state( $value ): string {
-		$session_data = WC()->session->get( 'lafka_branch_location' );
+		$session_data = isset( WC()->session ) ? WC()->session->get( 'lafka_branch_location' ) : null;
 		$state        = $session_data['state'] ?? '';
 		$order_type   = $session_data['order_type'] ?? '';
 		// Return the state only when we have delivery. When pickup keep defaults
@@ -456,6 +469,9 @@ class Lafka_Branch_Locations {
 	}
 
 	public static function update_lafka_session_address( $post_data ) {
+		if ( ! isset( WC()->session ) ) {
+			return;
+		}
 		$lafka_branch_location_session = WC()->session->get( 'lafka_branch_location' );
 
 		if ( ! empty( $lafka_branch_location_session ) ) {

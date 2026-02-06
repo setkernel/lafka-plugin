@@ -92,7 +92,7 @@ final class Lafka_WC_Variation_Swatches {
 		global $wpdb;
 
 		$attr = substr( $taxonomy, 3 );
-		$attr = $wpdb->get_row( "SELECT * FROM " . $wpdb->prefix . "woocommerce_attribute_taxonomies WHERE attribute_name = '$attr'" );
+		$attr = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM " . $wpdb->prefix . "woocommerce_attribute_taxonomies WHERE attribute_name = %s", $attr ) );
 
 		return $attr;
 	}

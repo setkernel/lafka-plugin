@@ -91,7 +91,7 @@ jQuery( function( $ ) {
             ui.item.find( '.check-column' ).append( '<img alt="processing" src="images/wpspin_light.gif" class="waiting" style="margin-left: 6px;" />' );
 
             // Go do the sorting stuff via ajax
-            $.post( ajaxurl, { action: 'lafka_foodmenu_cat_ordering', id: termid, nextid: nexttermid }, function(response){
+            $.post( ajaxurl, { action: 'lafka_foodmenu_cat_ordering', id: termid, nextid: nexttermid, security: lafka_cat_ordering.nonce }, function(response){
                 if ( response === 'children' ) {
                     window.location.reload();
                 } else {

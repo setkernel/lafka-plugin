@@ -252,7 +252,7 @@ class WC_LafkaCombos_Meta_Box_Product_Data {
 		</div>
 		<div class="options_group combo_type show_if_combo">
 			<div class="form-field">
-				<label><?php _e( 'Combo type', 'lafka-plugin' ); ?></label>
+				<label><?php esc_html_e( 'Combo type', 'lafka-plugin' ); ?></label>
 				<ul class="combo_type_options">
 					<?php
 					foreach ( $combo_type_options as $type ) {
@@ -273,7 +273,7 @@ class WC_LafkaCombos_Meta_Box_Product_Data {
 			<div class="wp-clearfix"></div>
 			<div id="message" class="inline notice">
 				<p>
-					<span class="assembled_notice_title"><?php _e( 'What happened to the shipping options?', 'lafka-plugin' ); ?></span>
+					<span class="assembled_notice_title"><?php esc_html_e( 'What happened to the shipping options?', 'lafka-plugin' ); ?></span>
 					<?php echo __( 'The contents of this combo preserve their dimensions, weight and shipping classes. Unassembled combos do not have a physical container &ndash; or any shipping options to configure.', 'lafka-plugin' ); ?>
 				</p>
 			</div>
@@ -926,7 +926,7 @@ class WC_LafkaCombos_Meta_Box_Product_Data {
 
 					if ( sizeof( $variations ) < 50 ) {
 
-						?><select multiple="multiple" name="combo_data[<?php echo $loop; ?>][allowed_variations][]" style="width: 95%;" data-placeholder="<?php _e( 'Choose variations&hellip;', 'lafka-plugin' ); ?>" class="sw-select2"> <?php
+						?><select multiple="multiple" name="combo_data[<?php echo $loop; ?>][allowed_variations][]" style="width: 95%;" data-placeholder="<?php esc_attr_e( 'Choose variations&hellip;', 'lafka-plugin' ); ?>" class="sw-select2"> <?php
 
 							foreach ( $variations as $variation_id ) {
 
@@ -965,7 +965,7 @@ class WC_LafkaCombos_Meta_Box_Product_Data {
 							}
 						}
 
-						?><select class="sw-select2-search--products" multiple="multiple" style="width: 95%;" name="combo_data[<?php echo $loop; ?>][allowed_variations][]" data-placeholder="<?php _e( 'Search for variations&hellip;', 'lafka-plugin' ); ?>" data-action="woocommerce_search_combined_variations" data-limit="500" data-include="<?php echo $product_id; ?>"><?php
+						?><select class="sw-select2-search--products" multiple="multiple" style="width: 95%;" name="combo_data[<?php echo $loop; ?>][allowed_variations][]" data-placeholder="<?php esc_attr_e( 'Search for variations&hellip;', 'lafka-plugin' ); ?>" data-action="woocommerce_search_combined_variations" data-limit="500" data-include="<?php echo esc_attr( $product_id ); ?>"><?php
 							foreach ( $allowed_variations_descriptions as $allowed_variation_id => $allowed_variation_description ) {
 								echo '<option value="' . esc_attr( $allowed_variation_id ) . '"' . selected( true, true, false ) . '>' . wp_kses_post( $allowed_variation_description ) . '</option>';
 							}
@@ -1130,40 +1130,40 @@ class WC_LafkaCombos_Meta_Box_Product_Data {
 
 		?><div class="item_visibility">
 			<div class="form-field">
-				<label for="item_visibility"><?php _e( 'Visibility', 'lafka-plugin' ); ?></label>
+				<label for="item_visibility"><?php esc_html_e( 'Visibility', 'lafka-plugin' ); ?></label>
 				<div>
 					<input type="checkbox" class="checkbox visibility_product"<?php echo ( 'visible' === $visibility[ 'product' ] ? ' checked="checked"' : '' ); ?> name="combo_data[<?php echo $loop; ?>][single_product_visibility]" <?php echo ( 'visible' === $visibility[ 'product' ] ? 'value="1"' : '' ); ?>/>
-					<span class="labelspan"><?php _e( 'Product details', 'lafka-plugin' ); ?></span>
+					<span class="labelspan"><?php esc_html_e( 'Product details', 'lafka-plugin' ); ?></span>
 					<?php echo wc_help_tip( __( 'Controls the visibility of the combined item in the single-product template of this combo.', 'lafka-plugin' ) ); ?>
 				</div>
 				<div>
 					<input type="checkbox" class="checkbox visibility_cart"<?php echo ( 'visible' === $visibility[ 'cart' ] ? ' checked="checked"' : '' ); ?> name="combo_data[<?php echo $loop; ?>][cart_visibility]" <?php echo ( 'visible' === $visibility[ 'cart' ] ? 'value="1"' : '' ); ?>/>
-					<span class="labelspan"><?php _e( 'Cart/checkout', 'lafka-plugin' ); ?></span>
+					<span class="labelspan"><?php esc_html_e( 'Cart/checkout', 'lafka-plugin' ); ?></span>
 					<?php echo wc_help_tip( __( 'Controls the visibility of the combined item in cart/checkout templates.', 'lafka-plugin' ) ); ?>
 				</div>
 				<div>
 					<input type="checkbox" class="checkbox visibility_order"<?php echo ( 'visible' === $visibility[ 'order' ] ? ' checked="checked"' : '' ); ?> name="combo_data[<?php echo $loop; ?>][order_visibility]" <?php echo ( 'visible' === $visibility[ 'order' ] ? 'value="1"' : '' ); ?>/>
-					<span class="labelspan"><?php _e( 'Order details', 'lafka-plugin' ); ?></span>
+					<span class="labelspan"><?php esc_html_e( 'Order details', 'lafka-plugin' ); ?></span>
 					<?php echo wc_help_tip( __( 'Controls the visibility of the combined item in order-details and e-mail templates.', 'lafka-plugin' ) ); ?>
 				</div>
 			</div>
 		</div>
 		<div class="price_visibility" <?php echo $is_priced_individually ? '' : 'style="display:none;"'; ?>>
 			<div class="form-field">
-				<label for="price_visibility"><?php _e( 'Price Visibility', 'lafka-plugin' ); ?></label>
+				<label for="price_visibility"><?php esc_html_e( 'Price Visibility', 'lafka-plugin' ); ?></label>
 				<div class="price_visibility_product_wrapper">
 					<input type="checkbox" class="checkbox price_visibility_product"<?php echo ( 'visible' === $price_visibility[ 'product' ] ? ' checked="checked"' : '' ); ?> name="combo_data[<?php echo $loop; ?>][single_product_price_visibility]" <?php echo ( 'visible' === $price_visibility[ 'product' ] ? 'value="1"' : '' ); ?>/>
-					<span class="labelspan"><?php _e( 'Product details', 'lafka-plugin' ); ?></span>
+					<span class="labelspan"><?php esc_html_e( 'Product details', 'lafka-plugin' ); ?></span>
 					<?php echo wc_help_tip( __( 'Controls the visibility of the combined-item price in the single-product template of this combo.', 'lafka-plugin' ) ); ?>
 				</div>
 				<div class="price_visibility_cart_wrapper">
 					<input type="checkbox" class="checkbox price_visibility_cart"<?php echo ( 'visible' === $price_visibility[ 'cart' ] ? ' checked="checked"' : '' ); ?> name="combo_data[<?php echo $loop; ?>][cart_price_visibility]" <?php echo ( 'visible' === $price_visibility[ 'cart' ] ? 'value="1"' : '' ); ?>/>
-					<span class="labelspan"><?php _e( 'Cart/checkout', 'lafka-plugin' ); ?></span>
+					<span class="labelspan"><?php esc_html_e( 'Cart/checkout', 'lafka-plugin' ); ?></span>
 					<?php echo wc_help_tip( __( 'Controls the visibility of the combined-item price in cart/checkout templates.', 'lafka-plugin' ) ); ?>
 				</div>
 				<div class="price_visibility_order_wrapper">
 					<input type="checkbox" class="checkbox price_visibility_order"<?php echo ( 'visible' === $price_visibility[ 'order' ] ? ' checked="checked"' : '' ); ?> name="combo_data[<?php echo $loop; ?>][order_price_visibility]" <?php echo ( 'visible' === $price_visibility[ 'order' ] ? 'value="1"' : '' ); ?>/>
-					<span class="labelspan"><?php _e( 'Order details', 'lafka-plugin' ); ?></span>
+					<span class="labelspan"><?php esc_html_e( 'Order details', 'lafka-plugin' ); ?></span>
 					<?php echo wc_help_tip( __( 'Controls the visibility of the combined-item price in order-details and e-mail templates.', 'lafka-plugin' ) ); ?>
 				</div>
 			</div>
@@ -1351,8 +1351,8 @@ class WC_LafkaCombos_Meta_Box_Product_Data {
 			<div id="wc-combo-metaboxes-wrapper-inner">
 
 				<p class="toolbar">
-					<a href="#" class="close_all"><?php _e( 'Close all', 'woocommerce' ); ?></a>
-					<a href="#" class="expand_all"><?php _e( 'Expand all', 'woocommerce' ); ?></a>
+					<a href="#" class="close_all"><?php esc_html_e( 'Close all', 'woocommerce' ); ?></a>
+					<a href="#" class="expand_all"><?php esc_html_e( 'Expand all', 'woocommerce' ); ?></a>
 				</p>
 
 				<div class="wc-combined-items wc-metaboxes"><?php
@@ -1402,9 +1402,9 @@ class WC_LafkaCombos_Meta_Box_Product_Data {
 
 						?><div class="wc-combined-items__boarding">
 							<div class="wc-combined-items__boarding__message">
-								<h3><?php _e( 'Combined Products', 'lafka-plugin' ); ?></h3>
-								<p><?php _e( 'You have not added any products to this combo.', 'lafka-plugin' ); ?>
-								<br/><?php _e( 'Add some now?', 'lafka-plugin' ); ?>
+								<h3><?php esc_html_e( 'Combined Products', 'lafka-plugin' ); ?></h3>
+								<p><?php esc_html_e( 'You have not added any products to this combo.', 'lafka-plugin' ); ?>
+								<br/><?php esc_html_e( 'Add some now?', 'lafka-plugin' ); ?>
 								</p>
 							</div>
 						</div><?php
@@ -1422,7 +1422,7 @@ class WC_LafkaCombos_Meta_Box_Product_Data {
 				 */
 				if ( apply_filters( 'woocommerce_combined_item_legacy_add_input', false ) ) { ?>
 
-					<select class="sw-select2-search--products" id="combined_product" style="width: 250px;" name="combined_product" data-placeholder="<?php _e( 'Add a combined product&hellip;', 'lafka-plugin' ); ?>" data-action="woocommerce_json_search_products" multiple="multiple" data-limit="500">
+					<select class="sw-select2-search--products" id="combined_product" style="width: 250px;" name="combined_product" data-placeholder="<?php esc_attr_e( 'Add a combined product&hellip;', 'lafka-plugin' ); ?>" data-action="woocommerce_json_search_products" multiple="multiple" data-limit="500">
 						<option></option>
 					</select>
 
@@ -1430,7 +1430,7 @@ class WC_LafkaCombos_Meta_Box_Product_Data {
 
 					<div class="sw-expanding-button sw-expanding-button--large">
 						<span class="sw-title"><?php echo _x( 'Add Product', 'new combined product button', 'lafka-plugin' ); ?></span>
-						<select class="sw-select2-search--products" id="combined_product" name="combined_product" data-placeholder="<?php _e( 'Search for a product&hellip;', 'lafka-plugin' ); ?>" data-action="woocommerce_json_search_products" multiple="multiple" data-limit="500">
+						<select class="sw-select2-search--products" id="combined_product" name="combined_product" data-placeholder="<?php esc_attr_e( 'Search for a product&hellip;', 'lafka-plugin' ); ?>" data-action="woocommerce_json_search_products" multiple="multiple" data-limit="500">
 							<option></option>
 						</select>
 					</div>

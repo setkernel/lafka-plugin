@@ -106,6 +106,12 @@ class WC_LafkaCombos_Admin_Ajax {
 	 */
 	public static function ajax_search_combined_variations() {
 
+		if ( ! current_user_can( 'edit_products' ) ) {
+			wp_die( -1 );
+		}
+
+		check_ajax_referer( 'search-products', 'security' );
+
 		if ( ! empty( $_GET[ 'include' ] ) ) {
 			if ( $product = wc_get_product( absint( $_GET[ 'include' ] ) ) ) {
 				self::$searching_variations_of = $product->get_id();
@@ -163,8 +169,6 @@ class WC_LafkaCombos_Admin_Ajax {
 		$toggle             = 'open';
 		$tabs               = WC_LafkaCombos_Meta_Box_Product_Data::get_combined_product_tabs();
 		$product            = wc_get_product( $product_id );
-		$title              = $product->get_title();
-		$sku                = $product->get_sku();
 		$stock_status       = 'in_stock';
 		$item_data          = array();
 		$response           = array(
@@ -173,6 +177,8 @@ class WC_LafkaCombos_Admin_Ajax {
 		);
 
 		if ( $product ) {
+			$title              = $product->get_title();
+			$sku                = $product->get_sku();
 
 			if ( in_array( $product->get_type(), array( 'simple', 'variable', 'subscription', 'variable-subscription' ) ) ) {
 

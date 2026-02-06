@@ -92,7 +92,7 @@ class WC_LafkaCombos_Addons_Compatibility {
 
 					$type = ! empty( $addon[ 'type' ] ) ? $addon[ 'type' ] : '';
 
-					if ( 'heading' !== $type && isset( $addon[ 'required' ] ) && '1' == $addon[ 'required' ] ) {
+					if ( 'heading' !== $type && isset( $addon[ 'required' ] ) && '1' === $addon[ 'required' ] ) {
 						$has_addons = true;
 						break;
 					}

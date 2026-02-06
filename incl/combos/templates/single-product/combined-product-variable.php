@@ -31,7 +31,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 							echo wc_attribute_label( $attribute_name );
 
 							if ( $is_attribute_value_configurable ) {
-								?> <abbr class="required" title="<?php _e( 'Required option', 'lafka-plugin' ); ?>">*</abbr><?php
+								?> <abbr class="required" title="<?php esc_attr_e( 'Required option', 'lafka-plugin' ); ?>">*</abbr><?php
 							}
 
 						?></label>

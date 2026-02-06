@@ -18,9 +18,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 			<?php
 				echo $sku ? ( '<small class="item-sku">' . sprintf( _x( 'SKU: %s', 'combined product sku', 'lafka-plugin' ), $sku ) . '</small>' ) : '';
 			?>
-			<div class="handle-item toggle-item" aria-label="<?php _e( 'Click to toggle', 'woocommerce' ); ?>"></div>
+			<div class="handle-item toggle-item" aria-label="<?php esc_attr_e( 'Click to toggle', 'woocommerce' ); ?>"></div>
 			<div class="handle-item sort-item" aria-label="<?php esc_attr_e( 'Drag and drop to set order', 'lafka-plugin' ); ?>"></div>
-			<a href="#" class="remove_row delete"><?php echo __( 'Remove', 'woocommerce' ); ?></a>
+			<a href="#" class="remove_row delete"><?php esc_html_e( 'Remove', 'woocommerce' ); ?></a>
 		</div>
 	</h3>
 	<div class="item-data wc-metabox-content">

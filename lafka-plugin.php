@@ -241,9 +241,12 @@ if (!function_exists('lafka_get_excerpt_by_id')) {
 
 	function lafka_get_excerpt_by_id($post_id, $excerpt_length = 35, $dots_to_link = false) {
 
-		$the_post = get_post($post_id); //Gets post
-		$the_excerpt = strip_tags($the_post->post_excerpt);
-		$the_excerpt = '<p>' . $the_excerpt . '</p>';
+		$the_post = get_post($post_id);
+		if ( ! $the_post ) {
+			return '';
+		}
+		$the_excerpt = wp_strip_all_tags( $the_post->post_excerpt );
+		$the_excerpt = '<p>' . esc_html( $the_excerpt ) . '</p>';
 
 		return $the_excerpt;
 	}
@@ -277,7 +280,7 @@ if (!function_exists('lafka_register_cpt_lafka_foodmenu')) {
 		$args = array(
 				'labels' => $labels,
 				'hierarchical' => false,
-				'description' => 'Lafka Restaurant Menu Post Type',
+				'description' => esc_html__( 'Lafka Restaurant Menu Post Type', 'lafka-plugin' ),
 				'supports' => array('title', 'editor', 'excerpt', 'author', 'thumbnail', 'revisions'),
 				'taxonomies' => array('lafka_foodmenu_category'),
 				'public' => true,
@@ -363,6 +366,10 @@ if(!function_exists('lafka_optionsframework_adminbar')) {
 	function lafka_optionsframework_adminbar() {
 
 		global $wp_admin_bar;
+
+		if ( ! $wp_admin_bar ) {
+			return;
+		}
 
 		$wp_admin_bar->add_menu( array(
 			'parent' => false,
@@ -468,6 +475,9 @@ if (!function_exists('lafka_register_admin_plugin_scripts')) {
 		if ( strstr( $screen_id, 'lafka_foodmenu_category' ) && ! empty( $_GET['taxonomy'] ) && in_array( wp_unslash( $_GET['taxonomy'] ), array( 'lafka_foodmenu_category' ) ) ) {
 			wp_register_script( 'lafka-plugin-term-ordering', plugins_url( 'assets/js/lafka-plugin-foodmenu-cat-ordering.js', __FILE__ ), array( 'jquery-ui-sortable' ) );
 			wp_enqueue_script( 'lafka-plugin-term-ordering' );
+			wp_localize_script( 'lafka-plugin-term-ordering', 'lafka_cat_ordering', array(
+				'nonce' => wp_create_nonce( 'lafka-foodmenu-cat-ordering' ),
+			) );
 			wp_enqueue_style('lafka-plugin-term-ordering-style', plugins_url('assets/css/lafka-plugin-term-ordering.css', __FILE__));
 		}
 		// google maps
@@ -817,9 +827,9 @@ if (!function_exists('lafka_contact_form_generate_response')) {
 		$lafka_contactform_response = '';
 
 		if ($type == "success") {
-			$lafka_contactform_response = "<div class='success-message'>{$message}</div>";
+			$lafka_contactform_response = "<div class='success-message'>" . esc_html($message) . "</div>";
 		} else {
-			$lafka_contactform_response .= "<div class='error-message'>{$message}</div>";
+			$lafka_contactform_response .= "<div class='error-message'>" . esc_html($message) . "</div>";
 		}
 
 		return $lafka_contactform_response;
@@ -936,7 +946,7 @@ if (!function_exists('lafka_has_to_show_share')) {
 add_action( 'woocommerce_single_product_summary', 'lafka_show_custom_product_popup_link', 12 );
 if ( ! function_exists( 'lafka_show_custom_product_popup_link' ) ) {
 	function lafka_show_custom_product_popup_link() {
-		if ( function_exists( 'lafka_get_option' ) && trim( lafka_get_option( 'custom_product_popup_link' ) ) != '' && trim( lafka_get_option( 'custom_product_popup_content' ) ) != '' ) {
+		if ( function_exists( 'lafka_get_option' ) && trim( lafka_get_option( 'custom_product_popup_link' ) ) !== '' && trim( lafka_get_option( 'custom_product_popup_content' ) ) !== '' ) {
 		    global $product;
 
 			$link_text     = lafka_get_option( 'custom_product_popup_link' );

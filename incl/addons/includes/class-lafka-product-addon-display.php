@@ -149,7 +149,7 @@ class Lafka_Product_Addon_Display {
 	public function totals( $post_id ) {
 		global $product;
 
-		if ( ! isset( $product ) || $product->get_id() != $post_id ) {
+		if ( ! isset( $product ) || (int) $product->get_id() !== (int) $post_id ) {
 			$the_product = wc_get_product( $post_id );
 		} else {
 			$the_product = $product;
@@ -161,17 +161,22 @@ class Lafka_Product_Addon_Display {
 		} else {
 			$display_price = '';
 			$raw_price     = 0;
+			$tax_mode      = 'excl';
+			$tax_display_mode = get_option( 'woocommerce_tax_display_shop' );
 		}
 
-		if ( 'no' === get_option( 'woocommerce_prices_include_tax' ) ) {
-			$tax_mode  = 'excl';
-			$raw_price = wc_get_price_excluding_tax( $the_product );
-		} else {
-			$tax_mode  = 'incl';
-			$raw_price = wc_get_price_including_tax( $the_product );
+		if ( is_object( $the_product ) ) {
+			if ( 'no' === get_option( 'woocommerce_prices_include_tax' ) ) {
+				$tax_mode  = 'excl';
+				$raw_price = wc_get_price_excluding_tax( $the_product );
+			} else {
+				$tax_mode  = 'incl';
+				$raw_price = wc_get_price_including_tax( $the_product );
+			}
 		}
 
-		echo '<div id="product-addons-total" data-show-sub-total="' . ( apply_filters( 'lafka_product_addons_show_grand_total', true, $the_product ) ? 1 : 0 ) . '" data-type="' . esc_attr( $the_product->get_type() ) . '" data-tax-mode="' . esc_attr( $tax_mode ) . '" data-tax-display-mode="' . esc_attr( $tax_display_mode ) . '" data-price="' . esc_attr( $display_price ) . '" data-raw-price="' . esc_attr( $raw_price ) . '" data-product-id="' . esc_attr( $post_id ) . '"></div>';
+		$product_type = is_object( $the_product ) ? $the_product->get_type() : '';
+		echo '<div id="product-addons-total" data-show-sub-total="' . ( apply_filters( 'lafka_product_addons_show_grand_total', true, $the_product ) ? 1 : 0 ) . '" data-type="' . esc_attr( $product_type ) . '" data-tax-mode="' . esc_attr( $tax_mode ) . '" data-tax-display-mode="' . esc_attr( $tax_display_mode ) . '" data-price="' . esc_attr( $display_price ) . '" data-raw-price="' . esc_attr( $raw_price ) . '" data-product-id="' . esc_attr( $post_id ) . '"></div>';
 	}
 
 	/**
@@ -245,7 +250,7 @@ class Lafka_Product_Addon_Display {
 		$result = false;
 		if ( $addons && ! empty( $addons ) ) {
 			foreach ( $addons as $addon ) {
-				if ( '1' == $addon['required'] ) {
+				if ( '1' === $addon['required'] ) {
 					$result = true;
 					break;
 				}
@@ -317,7 +322,7 @@ class Lafka_Product_Addon_Display {
 			return $url;
 		}
 
-		if ( ! is_single( $product->get_id() ) && in_array( $product->get_type(), apply_filters( 'lafka_product_addons_add_to_cart_product_types', array( 'subscription', 'simple' ) ) ) && ( ! isset( $_GET['wc-api'] ) || 'WC_Quick_View' !== $_GET['wc-api'] ) ) {
+		if ( ! is_single( $product->get_id() ) && in_array( $product->get_type(), apply_filters( 'lafka_product_addons_add_to_cart_product_types', array( 'subscription', 'simple' ) ) ) && ( ! isset( $_GET['wc-api'] ) || 'WC_Quick_View' !== sanitize_text_field( wp_unslash( $_GET['wc-api'] ) ) ) ) {
 			if ( $this->check_required_addons( $product->get_id() ) ) {
 				$url = apply_filters( 'addons_add_to_cart_url', get_permalink( $product->get_id() ) );
 			}

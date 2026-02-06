@@ -50,6 +50,7 @@ if ( ! function_exists( 'lafka_foodmenu_cat_ordering' ) ) {
 	function lafka_foodmenu_cat_ordering() {
 
 		// check permissions again and make sure we have what we need
+		check_ajax_referer( 'lafka-foodmenu-cat-ordering', 'security' );
 		if ( ! current_user_can( 'manage_categories' ) || empty( $_POST['id'] ) ) {
 			wp_die( - 1 );
 		}

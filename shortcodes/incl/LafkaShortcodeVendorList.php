@@ -89,11 +89,11 @@ if (!class_exists('LafkaShortcodeVendorList')) {
 	        $sort_type = $orderby;
 
             if (isset($_REQUEST['vendor_sort_type'])) {
-                $sort_type = $_REQUEST['vendor_sort_type'];
+                $sort_type = sanitize_text_field( wp_unslash( $_REQUEST['vendor_sort_type'] ) );
                 if ($sort_type == 'category' && isset($_REQUEST['vendor_sort_category'])) {
-	                $selected_category = $_REQUEST['vendor_sort_category'];
+	                $selected_category = sanitize_text_field( wp_unslash( $_REQUEST['vendor_sort_category'] ) );
                 } else {
-                    $orderby = $_REQUEST['vendor_sort_type'];
+                    $orderby = $sort_type;
                 }
             }
 

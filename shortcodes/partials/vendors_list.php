@@ -57,7 +57,7 @@ global $WCMp;
 				<?php
 			}
 		} else {
-			_e('No vendor found!', 'lafka-plugin');
+			esc_html_e('No vendor found!', 'lafka-plugin');
 		}
 		?>
 	</div>
