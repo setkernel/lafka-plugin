@@ -94,7 +94,7 @@ table.wp-list-table span.product-type.combo {
 
 #woocommerce-product-data ul.product_data_tabs li.combined_product_options a:before {
     content: '\f5fd';
-    font-family: 'Font Awesome 5 Free';
+    font-family: 'Font Awesome 6 Free';
     font-weight: 900;
 }
 

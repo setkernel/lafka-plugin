@@ -100,7 +100,7 @@ h4.combined_product_title {
 
 .combined_product_summary .combined_product_title a.combined_product_permalink:before {
     content: '\f0c1';
-    font-family: 'Font Awesome 5 Free';
+    font-family: 'Font Awesome 6 Free';
     position: absolute;
     font-size: 0.7em;
     top: 50%;

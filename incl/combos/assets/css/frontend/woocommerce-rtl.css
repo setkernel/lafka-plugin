@@ -29,7 +29,7 @@
 
 .combined_table_item_price:before,
 .combined_table_item_subtotal:before {
-    font-family: 'Font Awesome 5 Free';
+    font-family: 'Font Awesome 6 Free';
     font-size: 12px;
     display: inline-block;
     -webkit-font-smoothing: antialiased;

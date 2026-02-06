@@ -140,7 +140,7 @@ td.column-lafka_order_type span {
 }
 
 td.column-lafka_order_type span:before {
-    font-family: 'Font Awesome 5 Free';
+    font-family: 'Font Awesome 6 Free';
     font-weight: 900;
     content: "\f48b";
     display: inline-block;
@@ -163,7 +163,7 @@ span.lafka-delivery-date, span.lafka-delivery-timeslot {
 }
 
 span.lafka-delivery-date:before, span.lafka-delivery-timeslot:before {
-    font-family: 'Font Awesome 5 Free';
+    font-family: 'Font Awesome 6 Free';
     font-weight: 900;
     content: "\f783";
     display: inline-block;
