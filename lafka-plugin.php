@@ -395,7 +395,8 @@ if (!function_exists('lafka_register_plugin_scripts')) {
 		wp_enqueue_style('cloud-zoom', get_template_directory_uri() . "/styles/cloud-zoom/cloud-zoom.css", array(), '1.0.2');
 
 		// countdown
-		wp_enqueue_script('countdown', get_template_directory_uri() . "/js/count/jquery.countdown.min.js", array('jquery'), '2.0.0', true);
+		wp_register_script('jquery-plugin', get_template_directory_uri() . "/js/count/jquery.plugin.min.js", array('jquery'), '2.1.0', true);
+		wp_enqueue_script('countdown', get_template_directory_uri() . "/js/count/jquery.countdown.min.js", array('jquery', 'jquery-plugin'), '2.1.0', true);
 
 		// Flatpickr
 		wp_register_script( 'flatpickr', plugins_url( 'assets/js/flatpickr/flatpickr.min.js', __FILE__ ), array( 'jquery' ), '4.6.13', true );
