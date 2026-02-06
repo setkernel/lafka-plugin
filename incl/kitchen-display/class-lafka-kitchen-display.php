@@ -50,8 +50,7 @@ class Lafka_Kitchen_Display {
 		require_once dirname( __FILE__ ) . '/includes/class-lafka-kds-ajax.php';
 		require_once dirname( __FILE__ ) . '/includes/class-lafka-kds-frontend.php';
 		require_once dirname( __FILE__ ) . '/includes/class-lafka-kds-customer-view.php';
-		require_once dirname( __FILE__ ) . '/includes/class-lafka-kds-email-accepted.php';
-		require_once dirname( __FILE__ ) . '/includes/class-lafka-kds-email-ready.php';
+		// Email classes loaded lazily in register_emails() — WC_Email not available yet
 
 		if ( is_admin() ) {
 			require_once dirname( __FILE__ ) . '/includes/class-lafka-kds-admin.php';
@@ -79,6 +78,9 @@ class Lafka_Kitchen_Display {
 	 * Register WC email classes.
 	 */
 	public function register_emails( $email_classes ) {
+		require_once dirname( __FILE__ ) . '/includes/class-lafka-kds-email-accepted.php';
+		require_once dirname( __FILE__ ) . '/includes/class-lafka-kds-email-ready.php';
+
 		$email_classes['Lafka_KDS_Email_Accepted'] = new Lafka_KDS_Email_Accepted();
 		$email_classes['Lafka_KDS_Email_Ready']    = new Lafka_KDS_Email_Ready();
 
