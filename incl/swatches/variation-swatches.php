@@ -36,14 +36,22 @@ final class Lafka_WC_Variation_Swatches {
 	 * Class constructor.
 	 */
 	public function __construct() {
+		add_action( 'init', array( $this, 'init_types' ), 0 );
+
+		$this->includes();
+		$this->init_hooks();
+	}
+
+	/**
+	 * Initialize translatable type labels.
+	 * Deferred to 'init' to avoid _load_textdomain_just_in_time notice.
+	 */
+	public function init_types() {
 		$this->types = array(
 			'color' => esc_html__( 'Color', 'lafka-plugin' ),
 			'image' => esc_html__( 'Image', 'lafka-plugin' ),
 			'label' => esc_html__( 'Label', 'lafka-plugin' ),
 		);
-
-		$this->includes();
-		$this->init_hooks();
 	}
 
 	/**
