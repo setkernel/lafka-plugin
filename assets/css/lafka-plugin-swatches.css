@@ -46,7 +46,7 @@
     border-color: transparent;
 }
 
-.lafka-wcs-swatches .swatch-color.selected::before {
+.lafka-wcs-swatches .swatch-color.selected:before {
     -webkit-transform: rotate(45deg);
     -moz-transform: rotate(45deg);
     transform: rotate(45deg);
@@ -78,7 +78,7 @@
 
 .combined_product_summary .lafka-wcs-swatches .swatch-image.selected,
 .combined_product_summary .lafka-wcs-swatches .swatch-image:hover {
-    border-bottom: 3px solid #333 !important;
+    border-bottom: 3px solid #333333 !important;
 }
 
 .lafka-wcs-swatches .swatch-image.selected::before,

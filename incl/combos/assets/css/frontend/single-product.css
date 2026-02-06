@@ -2,7 +2,7 @@
     clear: both
 }
 
-.summary-add-to-cart-form-combo::before {
+.summary-add-to-cart-form-combo:before {
     display: table;
     content: '';
     clear: both
@@ -33,7 +33,7 @@ div.combined_product_summary,
     display: block;
 }
 
-.combined_item_optional .combined_item_cart_content--populated::before {
+.combined_item_optional .combined_item_cart_content--populated:before {
     display: block;
     content: '';
     height: 1rem
@@ -56,14 +56,14 @@ div.product .combined_product_summary .price span.amount {
 div.product .combined_product_summary div.single_variation,
 div.product .combined_product_summary div.single_variation .woocommerce-variation-availability,
 div.product .combined_product_summary .variations_form {
-    margin-bottom: 0;
+    margin-bottom: 0px;
 }
 
 .combined_item_price_quantity {
     font-size: 15px;
     text-transform: none;
     color: initial;
-    font-weight: 400 !important;
+    font-weight: normal !important;
 }
 
 .combined_product_summary .combined_product_images {
@@ -120,7 +120,7 @@ h4.combined_product_title {
     position: relative
 }
 
-.combined_product_summary .combined_product_title a.combined_product_permalink::before {
+.combined_product_summary .combined_product_title a.combined_product_permalink:before {
     content: '\f0c1';
     font-family: 'Font Awesome 5 Free';
     position: absolute;
@@ -182,12 +182,12 @@ h4.combined_product_title {
     opacity: 0.5
 }
 
-.combined_item_wrap::before,
-.combined_item_wrap::after,
-div.combined_product_summary::after,
-div.combined_product_summary::before,
-.combo_data::after,
-.combined_product_summary .combined_product_optional_checkbox::after {
+.combined_item_wrap:before,
+.combined_item_wrap:after,
+div.combined_product_summary:after,
+div.combined_product_summary:before,
+.combo_data:after,
+.combined_product_summary .combined_product_optional_checkbox:after {
     display: table;
     content: '';
     clear: both
@@ -202,7 +202,7 @@ div.combined_product_summary::before,
 .float_qty_input .combined_item_after_cart_details {
     position: absolute;
     right: 5px;
-    top: 0
+    top: 0px
 }
 
 .combined_product_checkbox {
@@ -255,17 +255,17 @@ div.combined_product_summary::before,
     margin-bottom: 0 !important
 }
 
-.combo_form .combo_price::before,
-.combo_form .combo_error::before,
-.combo_form .combo_availability::before {
+.combo_form .combo_price:before,
+.combo_form .combo_error:before,
+.combo_form .combo_availability:before {
     display: table;
     content: '';
     clear: both
 }
 
-.combo_form .combo_price::after,
-.combo_form .combo_error::after,
-.combo_form .combo_availability::after {
+.combo_form .combo_price:after,
+.combo_form .combo_error:after,
+.combo_form .combo_availability:after {
     display: table;
     content: '';
     clear: both
@@ -564,7 +564,7 @@ div+.combo_sells_title {
 
 .combo_form .variations_button,
 .single-product div.product .combo_form .variations_button {
-    padding: 0;
+    padding: 0px;
     border-top: none
 }
 
@@ -582,7 +582,7 @@ div+.combo_sells_title {
     padding: 0
 }
 
-.combined_product .cart .attribute_value_static td label::after {
+.combined_product .cart .attribute_value_static td label:after {
     content: ':'
 }
 

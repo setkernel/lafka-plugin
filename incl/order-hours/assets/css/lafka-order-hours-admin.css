@@ -1,20 +1,17 @@
 .lafka-order-hours-current-time {
     padding: 8px;
-    color: #fff;
-    font-weight: 700;
+    color: #ffffff;
+    font-weight: bold;
     display: inline-block;
     margin-top: 5px;
     border-radius: 4px;
 }
-
 .lafka-order-hours-current-time.open {
     background-color: green;
 }
-
 .lafka-order-hours-current-time.closed {
     background-color: red;
 }
-
 .lafka-order-hours-admin-wrap select {
     border: 1px solid #e1e1e1;
     max-width: 200px;
@@ -24,6 +21,7 @@
     -moz-appearance: none;
     appearance: none;
     outline: none;
+    outline-color: currentcolor;
     outline-style: none;
     outline-color: transparent;
     outline-style: none;
@@ -31,12 +29,11 @@
     z-index: 1;
     border-radius: 3px;
     background: url(../images/select_arrow.jpg) no-repeat center right !important;
-    background-color: #fff !important;
+    background-color: #ffffff !important;
 }
-
 .lafka-order-hours-admin-wrap select:focus {
     background: url(../images/select_arrow2.jpg) no-repeat center right !important;
-    background-color: #fff !important;
+    background-color: #ffffff !important;
     outline: none !important;
     outline-color: transparent !important;
     outline-style: none !important;
@@ -44,44 +41,37 @@
     border-radius: 3px;
     -moz-border-radius: 3px;
     -webkit-border-radius: 3px;
-    box-shadow: 0 0 30px 0 rgba(0, 0, 0, 0.2);
-    -moz-box-shadow: 0 0 30px 0 rgba(0, 0, 0, 0.2);
-    -webkit-box-shadow: 0 0 30px 0 rgba(0, 0, 0, 0.2);
+    box-shadow: 0 0px 30px 0 rgba(0, 0, 0, 0.2);
+    -moz-box-shadow: 0 0px 30px 0 rgba(0, 0, 0, 0.2);
+    -webkit-box-shadow: 0 0px 30px 0 rgba(0, 0, 0, 0.2);
 }
-
 #lafka_order_hours_schedule_container, .lafka-order-hours-admin-wrap > h1 {
-    background-color: #fff !important;
+    background-color: #ffffff !important;
     border-radius: 8px;
-    box-shadow: 0 0 30px 0 rgba(0, 0, 0, 0.2);
+    box-shadow: 0 0px 30px 0 rgba(0, 0, 0, 0.2);
     margin-top: 20px;
 }
-
 .lafka-order-hours-admin-wrap > h1 {
     padding: 40px 10px 40px 30px;
     font-size: 28px;
     font-weight: 700;
     margin-bottom: 50px;
 }
-
 .lafka-order-hours-admin-wrap > form#lafka-plugin-open-hours-form {
     padding: 0 30px;
 }
-
 #ui-datepicker-div {
     z-index: 10000 !important;
-    background-color: #fff;
+    background-color: #ffffff;
 }
-
 .jqs-period {
     z-index: 9999;
 }
-
 .ui-datepicker .ui-datepicker-prev, .ui-datepicker .ui-datepicker-next {
     background-color: #333;
 }
-
-.ui-datepicker .ui-datepicker-prev span::before, .ui-datepicker .ui-datepicker-next span::before {
-    color: #fff;
+.ui-datepicker .ui-datepicker-prev span:before, .ui-datepicker .ui-datepicker-next span:before {
+    color: #ffffff;
     content: ">";
     display:block;
     text-indent: 0 !important;
@@ -90,7 +80,6 @@
     text-align: center;
     font-size: 18px !important;
 }
-
-.ui-datepicker .ui-datepicker-prev span::before {
+.ui-datepicker .ui-datepicker-prev span:before {
     content: "<";
 }
