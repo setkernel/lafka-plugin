@@ -264,22 +264,26 @@ class WC_LafkaCombos_Display {
 
 		if ( ! $is_enqueued ) {
 
-			wc_enqueue_js( "
-				var wc_pb_wrap_combined_table_item = function() {
-					jQuery( '.combined_table_item td.product-name' ).each( function() {
-						var el = jQuery( this );
-						if ( el.find( '.combined-product-name' ).length === 0 ) {
-							el.wrapInner( '<div class=\"combined-product-name combined_table_item_indent\"></div>' );
-						}
-					} );
-				};
+			$js = "
+				jQuery( function( $ ) {
+					var wc_pb_wrap_combined_table_item = function() {
+						$( '.combined_table_item td.product-name' ).each( function() {
+							var el = $( this );
+							if ( el.find( '.combined-product-name' ).length === 0 ) {
+								el.wrapInner( '<div class=\"combined-product-name combined_table_item_indent\"></div>' );
+							}
+						} );
+					};
 
-				jQuery( 'body' ).on( 'updated_checkout updated_cart_totals', function() {
+					$( 'body' ).on( 'updated_checkout updated_cart_totals', function() {
+						wc_pb_wrap_combined_table_item();
+					} );
+
 					wc_pb_wrap_combined_table_item();
 				} );
+			";
 
-				wc_pb_wrap_combined_table_item();
-			" );
+			wp_add_inline_script( 'woocommerce', $js );
 
 			$this->enqueued_combined_table_item_js = true;
 		}
@@ -602,17 +606,17 @@ class WC_LafkaCombos_Display {
 
 						if ( $combined_item ) {
 							$combined_item_raw_recurring_fee = $combined_cart_item[ 'data' ]->get_price();
-							$combined_item_raw_sign_up_fee   = (double) WC_Subscriptions_Product::get_sign_up_fee( $combined_cart_item[ 'data' ] );
+							$combined_item_raw_sign_up_fee   = (float) WC_Subscriptions_Product::get_sign_up_fee( $combined_cart_item[ 'data' ] );
 							$combined_item_raw_price         = $combined_item->get_up_front_subscription_price( $combined_item_raw_recurring_fee, $combined_item_raw_sign_up_fee, $combined_cart_item[ 'data' ] );
 						}
 					}
 
 					$combined_item_qty     = $combined_cart_item[ 'data' ]->is_sold_individually() ? 1 : $combined_cart_item[ 'quantity' ] / $cart_item[ 'quantity' ];
 					$combined_item_price   = WC_LafkaCombos_Product_Prices::get_product_price( $combined_cart_item[ 'data' ], array( 'price' => $combined_item_raw_price, 'calc' => $calc_type, 'qty' => $combined_item_qty ) );
-					$combined_items_price += wc_format_decimal( (double) $combined_item_price, wc_pc_price_num_decimals() );
+					$combined_items_price += wc_format_decimal( (float) $combined_item_price, wc_pc_price_num_decimals() );
 				}
 
-				$price = wc_price( (double) $combo_price + $combined_items_price );
+				$price = wc_price( (float) $combo_price + $combined_items_price );
 
 			} elseif ( empty( $cart_item[ 'line_subtotal' ] ) ) {
 
@@ -730,16 +734,16 @@ class WC_LafkaCombos_Display {
 
 						if ( $combined_item ) {
 							$combined_item_raw_recurring_fee = $combined_cart_item[ 'data' ]->get_price();
-							$combined_item_raw_sign_up_fee   = (double) WC_Subscriptions_Product::get_sign_up_fee( $combined_cart_item[ 'data' ] );
+							$combined_item_raw_sign_up_fee   = (float) WC_Subscriptions_Product::get_sign_up_fee( $combined_cart_item[ 'data' ] );
 							$combined_item_raw_price         = $combined_item->get_up_front_subscription_price( $combined_item_raw_recurring_fee, $combined_item_raw_sign_up_fee, $combined_cart_item[ 'data' ] );
 						}
 					}
 
 					$combined_item_price    = WC_LafkaCombos_Product_Prices::get_product_price( $combined_cart_item[ 'data' ], array( 'price' => $combined_item_raw_price, 'calc' => $calc_type, 'qty' => $combined_cart_item[ 'quantity' ] ) );
-					$combined_items_price  += wc_format_decimal( (double) $combined_item_price, wc_pc_price_num_decimals() );
+					$combined_items_price  += wc_format_decimal( (float) $combined_item_price, wc_pc_price_num_decimals() );
 				}
 
-				$subtotal = $this->format_subtotal( $cart_item[ 'data' ], (double) $combo_price + $combined_items_price );
+				$subtotal = $this->format_subtotal( $cart_item[ 'data' ], (float) $combo_price + $combined_items_price );
 
 			} elseif ( empty( $cart_item[ 'line_subtotal' ] ) ) {
 

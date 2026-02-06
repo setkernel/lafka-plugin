@@ -29,6 +29,60 @@ class WC_LafkaCombos_Cart {
 	protected static $_instance = null;
 
 	/**
+	 * Runtime product cart data stored via WeakMap to avoid dynamic properties on WC_Product.
+	 * @var WeakMap|null
+	 */
+	private static $product_cart_data = null;
+
+	/**
+	 * Set runtime cart data on a product object without dynamic properties.
+	 *
+	 * @param  WC_Product  $product
+	 * @param  string      $key
+	 * @param  mixed       $value
+	 */
+	public static function set_product_cart_prop( $product, $key, $value ) {
+		if ( null === self::$product_cart_data ) {
+			self::$product_cart_data = new \WeakMap();
+		}
+		if ( ! isset( self::$product_cart_data[ $product ] ) ) {
+			self::$product_cart_data[ $product ] = array();
+		}
+		$data = self::$product_cart_data[ $product ];
+		$data[ $key ] = $value;
+		self::$product_cart_data[ $product ] = $data;
+	}
+
+	/**
+	 * Get runtime cart data from a product object.
+	 *
+	 * @param  WC_Product  $product
+	 * @param  string      $key
+	 * @return mixed|null
+	 */
+	public static function get_product_cart_prop( $product, $key ) {
+		if ( null === self::$product_cart_data || ! isset( self::$product_cart_data[ $product ] ) ) {
+			return null;
+		}
+		$data = self::$product_cart_data[ $product ];
+		return isset( $data[ $key ] ) ? $data[ $key ] : null;
+	}
+
+	/**
+	 * Check if runtime cart data exists on a product object.
+	 *
+	 * @param  WC_Product  $product
+	 * @param  string      $key
+	 * @return boolean
+	 */
+	public static function has_product_cart_prop( $product, $key ) {
+		if ( null === self::$product_cart_data || ! isset( self::$product_cart_data[ $product ] ) ) {
+			return false;
+		}
+		return array_key_exists( $key, self::$product_cart_data[ $product ] );
+	}
+
+	/**
 	 * Main WC_LafkaCombos_Cart instance. Ensures only one instance of WC_LafkaCombos_Cart is loaded or can be loaded.
 	 *
 	 * @static
@@ -81,7 +135,7 @@ class WC_LafkaCombos_Cart {
 		add_filter( 'woocommerce_add_cart_item_data', array( $this, 'add_cart_item_data' ), 10, 2 );
 
 		// Add combined items to the cart.
-		add_action( 'woocommerce_add_to_cart', array( $this, 'combo_add_to_cart' ), 9.9, 6 );
+		add_action( 'woocommerce_add_to_cart', array( $this, 'combo_add_to_cart' ), 9, 6 );
 
 		// Modify cart items for combined shipping strategy.
 		add_filter( 'woocommerce_add_cart_item', array( $this, 'add_cart_item_filter' ), 10, 2 );
@@ -835,7 +889,7 @@ class WC_LafkaCombos_Cart {
 		$discount_method = WC_LafkaCombos_Product_Prices::get_combined_cart_item_discount_method();
 
 		if ( 'filters' === $discount_method ) {
-			$cart_item[ 'data' ]->combined_cart_item = $combined_item;
+			self::set_product_cart_prop( $cart_item[ 'data' ], 'combined_cart_item', $combined_item );
 		}
 
 		if ( false === $combined_item->is_priced_individually() ) {
@@ -853,7 +907,7 @@ class WC_LafkaCombos_Cart {
 					$cart_item[ 'data' ]->update_meta_data( '_subscription_sign_up_fee', 0 );
 				}
 
-				$cart_item[ 'data' ]->block_subscription = 'yes';
+				self::set_product_cart_prop( $cart_item[ 'data' ], 'block_subscription', 'yes' );
 			}
 
 		} else {
@@ -898,10 +952,10 @@ class WC_LafkaCombos_Cart {
 						$cart_item_weight = $parent_data[ 'weight' ];
 					}
 
-					$cart_item[ 'data' ]->combined_weight = $cart_item_weight;
+					self::set_product_cart_prop( $cart_item[ 'data' ], 'combined_weight', $cart_item_weight );
 				}
 
-				$cart_item[ 'data' ]->combined_value = 'props' === $discount_method ? $cart_item[ 'data' ]->get_price( 'edit' ) : $combined_item->get_raw_price( $cart_item[ 'data' ], 'cart' );
+				self::set_product_cart_prop( $cart_item[ 'data' ], 'combined_value', 'props' === $discount_method ? $cart_item[ 'data' ]->get_price( 'edit' ) : $combined_item->get_raw_price( $cart_item[ 'data' ], 'cart' ) );
 
 				$cart_item[ 'data' ]->set_virtual( 'yes' );
 				$cart_item[ 'data' ]->set_weight( '' );
@@ -1715,8 +1769,8 @@ class WC_LafkaCombos_Cart {
 									$child_cart_item_data   = WC()->cart->cart_contents[ $child_item_key ];
 									$combined_product        = $child_cart_item_data[ 'data' ];
 									$combined_product_qty    = $child_cart_item_data[ 'quantity' ];
-									$combined_product_value  = isset( $combined_product->combined_value ) ? $combined_product->combined_value : 0.0;
-									$combined_product_weight = isset( $combined_product->combined_weight ) ? $combined_product->combined_weight : 0.0;
+									$combined_product_value  = self::has_product_cart_prop( $combined_product, 'combined_value' ) ? self::get_product_cart_prop( $combined_product, 'combined_value' ) : 0.0;
+									$combined_product_weight = self::has_product_cart_prop( $combined_product, 'combined_weight' ) ? self::get_product_cart_prop( $combined_product, 'combined_weight' ) : 0.0;
 
 									// Aggregate price of physically packaged child item - already converted to virtual.
 
@@ -1746,14 +1800,14 @@ class WC_LafkaCombos_Cart {
 
 								if ( $combined_value > 0 || isset( $cart_item[ 'data' ]->composited_value ) ) {
 									$combo_price = isset( $cart_item[ 'data' ]->composited_value ) ? $cart_item[ 'data' ]->composited_value : $combo->get_price( 'edit' );
-									$combo->set_price( (double) $combo_price + $combined_value / $combo_qty );
+									$combo->set_price( (float) $combo_price + $combined_value / $combo_qty );
 								}
 
 								$packages[ $package_key ][ 'contents' ][ $cart_item_key ] = array_merge( $cart_item, $combo_totals );
 
 								if ( $combined_weight > 0 ) {
 									$combo_weight = $combo->get_weight( 'edit' );
-									$combo->set_weight( (double) $combo_weight + $combined_weight / $combo_qty );
+									$combo->set_weight( (float) $combo_weight + $combined_weight / $combo_qty );
 								}
 
 								$packages[ $package_key ][ 'contents' ][ $cart_item_key ][ 'data' ] = $combo;
@@ -1796,7 +1850,7 @@ class WC_LafkaCombos_Cart {
 	 * @return bool
 	 */
 	public function is_subscription_filter( $is_sub, $product_id, $product ) {
-		if ( is_object( $product ) && isset( $product->block_subscription ) && 'yes' === $product->block_subscription ) {
+		if ( is_object( $product ) && 'yes' === self::get_product_cart_prop( $product, 'block_subscription' ) ) {
 			$is_sub = false;
 		}
 

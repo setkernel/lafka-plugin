@@ -110,8 +110,9 @@ function lafka_shipping_areas_method_init() {
 			public function is_available( $package ) {
 				// Branch restriction: hide method when session branch doesn't match
 				if ( ! empty( $this->branch_location ) && $this->branch_location !== 'lafka_all_branches' ) {
-					$branch_location_session = WC()->session->get( 'lafka_branch_location' );
+					$branch_location_session = WC()->session ? WC()->session->get( 'lafka_branch_location' ) : null;
 					if ( empty( $branch_location_session['branch_id'] ) || $this->branch_location !== (string) $branch_location_session['branch_id'] ) {
+						error_log( sprintf( '[Lafka Shipping] is_available=false: branch mismatch. Method branch=%s, session branch=%s', $this->branch_location, isset( $branch_location_session['branch_id'] ) ? $branch_location_session['branch_id'] : 'none' ) );
 						return false;
 					}
 				}
@@ -122,11 +123,16 @@ function lafka_shipping_areas_method_init() {
 					$has_secondary_key = ! empty( $options['secondary_google_maps_api_key'] );
 					$has_primary_key   = (bool) lafka_get_option( 'google_maps_api_key' );
 					if ( ! $has_secondary_key && ! $has_primary_key ) {
+						error_log( '[Lafka Shipping] is_available=false: no Google Maps API key configured for distance mode' );
 						return false;
 					}
 				}
 
-				return parent::is_available( $package );
+				$result = parent::is_available( $package );
+				if ( ! $result ) {
+					error_log( '[Lafka Shipping] is_available=false: parent returned false (method may be disabled or zone mismatch)' );
+				}
+				return $result;
 			}
 
 			/**
@@ -273,13 +279,16 @@ function lafka_shipping_areas_method_init() {
 			 * @param array $package Package of items from cart.
 			 */
 			public function calculate_shipping( $package = array() ) {
+				error_log( sprintf( '[Lafka Shipping] calculate_shipping() called for instance %d, rate_mode=%s, branch=%s, restrict_by=%s', $this->instance_id, $this->rate_mode, $this->branch_location, $this->restrict_by ) );
+
 				// Check if is restricted to branch locations
-				$branch_location_session          = WC()->session->get( 'lafka_branch_location' );
+				$branch_location_session          = WC()->session ? WC()->session->get( 'lafka_branch_location' ) : null;
 				$branch_location_address_geocoded = '';
 				if ( ! empty( $this->branch_location ) && $this->branch_location !== 'lafka_all_branches' && ! empty( $branch_location_session['branch_id'] ) ) {
 					if ( $this->branch_location === (string) $branch_location_session['branch_id'] ) {
 						$branch_location_address_geocoded = get_term_meta( $this->branch_location, 'lafka_branch_address_geocoded', true );
 					} else {
+						error_log( sprintf( '[Lafka Shipping] calculate_shipping: branch mismatch, returning. Method=%s, session=%s', $this->branch_location, $branch_location_session['branch_id'] ) );
 						return;
 					}
 				}
@@ -397,7 +406,10 @@ function lafka_shipping_areas_method_init() {
 				}
 
 				if ( $has_costs ) {
+					error_log( sprintf( '[Lafka Shipping] add_rate: cost=%s, label=%s', $rate['cost'], $rate['label'] ) );
 					$this->add_rate( $rate );
+				} else {
+					error_log( sprintf( '[Lafka Shipping] NO rate added for instance %d: calculated_rate=%s, rate_mode=%s', $this->instance_id, var_export( $calculated_rate, true ), $this->rate_mode ) );
 				}
 			}
 

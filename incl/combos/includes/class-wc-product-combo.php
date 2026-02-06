@@ -108,6 +108,24 @@ class WC_Product_Combo extends WC_Product {
 	private $data_store_type = 'combo';
 
 	/**
+	 * Back-compat product type identifier.
+	 * @var string
+	 */
+	public $product_type = 'combo';
+
+	/**
+	 * Name-Your-Price status flag.
+	 * @var boolean
+	 */
+	public $is_nyp = false;
+
+	/**
+	 * Composited cart item reference (CP compatibility).
+	 * @var mixed
+	 */
+	public $composited_cart_item;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param  mixed  $product
@@ -394,15 +412,15 @@ class WC_Product_Combo extends WC_Product {
 					$min_quantity = $combined_item->get_quantity( 'min', array( 'context' => 'price', 'check_optional' => true ) );
 					$max_quantity = $combined_item->get_quantity( 'max', array( 'context' => 'price' ) );
 
-					$min_raw_price         += $min_quantity * (double) $combined_item->min_price;
-					$min_raw_regular_price += $min_quantity * (double) $combined_item->min_regular_price;
+					$min_raw_price         += $min_quantity * (float) $combined_item->min_price;
+					$min_raw_regular_price += $min_quantity * (float) $combined_item->min_regular_price;
 
 					if ( ! $max_quantity ) {
 						$max_raw_price = $max_raw_regular_price = INF;
 					}
 
-					$item_max_raw_price         = INF !== $combined_item->max_price ? (double) $combined_item->max_price : INF;
-					$item_max_raw_regular_price = INF !== $combined_item->max_regular_price ? (double) $combined_item->max_regular_price : INF;
+					$item_max_raw_price         = INF !== $combined_item->max_price ? (float) $combined_item->max_price : INF;
+					$item_max_raw_regular_price = INF !== $combined_item->max_regular_price ? (float) $combined_item->max_regular_price : INF;
 
 					if ( INF !== $max_raw_price ) {
 						if ( INF !== $item_max_raw_price ) {
@@ -422,8 +440,8 @@ class WC_Product_Combo extends WC_Product {
 
 				foreach ( $combined_items as $combined_item ) {
 					$min_quantity = max( $combined_item->get_quantity( 'min' ), 1 );
-					if ( is_null( $min_item_price ) || $min_quantity * (double) $combined_item->min_price < $min_item_price ) {
-						$min_item_price = $min_quantity * (double) $combined_item->min_price;
+					if ( is_null( $min_item_price ) || $min_quantity * (float) $combined_item->min_price < $min_item_price ) {
+						$min_item_price = $min_quantity * (float) $combined_item->min_price;
 					}
 				}
 
@@ -631,8 +649,8 @@ class WC_Product_Combo extends WC_Product {
 
 			$data[ 'zero_items_allowed' ] = self::group_mode_has( $group_mode, 'parent_item' ) ? 'yes' : 'no';
 
-			$data[ 'raw_combo_price_min' ] = (double) $raw_combo_price_min;
-			$data[ 'raw_combo_price_max' ] = '' === $raw_combo_price_max ? '' : (double) $raw_combo_price_max;
+			$data[ 'raw_combo_price_min' ] = (float) $raw_combo_price_min;
+			$data[ 'raw_combo_price_max' ] = '' === $raw_combo_price_max ? '' : (float) $raw_combo_price_max;
 
 			$data[ 'is_purchasable' ]    = $this->is_purchasable() ? 'yes' : 'no';
 			$data[ 'show_free_string' ]  = 'no';
@@ -1547,7 +1565,7 @@ class WC_Product_Combo extends WC_Product {
 	 */
 	public function get_price( $context = 'view' ) {
 		$value = $this->get_prop( 'price', $context );
-		return in_array( $context, array( 'view', 'sync' ) ) && $this->contains( 'priced_individually' ) ? (double) $value : $value;
+		return in_array( $context, array( 'view', 'sync' ) ) && $this->contains( 'priced_individually' ) ? (float) $value : $value;
 	}
 
 	/**
@@ -1560,7 +1578,7 @@ class WC_Product_Combo extends WC_Product {
 	 */
 	public function get_regular_price( $context = 'view' ) {
 		$value = $this->get_prop( 'regular_price', $context );
-		return in_array( $context, array( 'view', 'sync' ) ) && $this->contains( 'priced_individually' ) ? (double) $value : $value;
+		return in_array( $context, array( 'view', 'sync' ) ) && $this->contains( 'priced_individually' ) ? (float) $value : $value;
 	}
 
 	/**
@@ -1573,7 +1591,7 @@ class WC_Product_Combo extends WC_Product {
 	 */
 	public function get_sale_price( $context = 'view' ) {
 		$value = $this->get_prop( 'sale_price', $context );
-		return in_array( $context, array( 'view', 'sync' ) ) && $this->contains( 'priced_individually' ) && '' !== $value ? (double) $value : $value;
+		return in_array( $context, array( 'view', 'sync' ) ) && $this->contains( 'priced_individually' ) && '' !== $value ? (float) $value : $value;
 	}
 
 	/**
@@ -1650,7 +1668,7 @@ class WC_Product_Combo extends WC_Product {
 			$this->sync();
 		}
 		$value = $this->get_prop( 'min_raw_price', $context );
-		return in_array( $context, array( 'view', 'sync' ) ) && $this->contains( 'priced_individually' ) && '' !== $value ? (double) $value : $value;
+		return in_array( $context, array( 'view', 'sync' ) ) && $this->contains( 'priced_individually' ) && '' !== $value ? (float) $value : $value;
 	}
 
 	/**
@@ -1666,7 +1684,7 @@ class WC_Product_Combo extends WC_Product {
 			$this->sync();
 		}
 		$value = $this->get_prop( 'min_raw_regular_price', $context );
-		return in_array( $context, array( 'view', 'sync' ) ) && $this->contains( 'priced_individually' ) && '' !== $value ? (double) $value : $value;
+		return in_array( $context, array( 'view', 'sync' ) ) && $this->contains( 'priced_individually' ) && '' !== $value ? (float) $value : $value;
 	}
 
 	/**
@@ -1683,7 +1701,7 @@ class WC_Product_Combo extends WC_Product {
 			$this->sync();
 		}
 		$value = $this->get_prop( 'max_raw_price', $context );
-		$value = 'edit' !== $context && $this->contains( 'priced_individually' ) && '' !== $value && INF !== $value ? (double) $value : $value;
+		$value = 'edit' !== $context && $this->contains( 'priced_individually' ) && '' !== $value && INF !== $value ? (float) $value : $value;
 		$value = 'edit' === $context && INF === $value ? 9999999999.0 : $value;
 		return $value;
 	}
@@ -1702,7 +1720,7 @@ class WC_Product_Combo extends WC_Product {
 			$this->sync();
 		}
 		$value = $this->get_prop( 'max_raw_regular_price', $context );
-		$value = 'edit' !== $context && $this->contains( 'priced_individually' ) && '' !== $value && INF !== $value ? (double) $value : $value;
+		$value = 'edit' !== $context && $this->contains( 'priced_individually' ) && '' !== $value && INF !== $value ? (float) $value : $value;
 		$value = 'edit' === $context && INF === $value ? 9999999999.0 : $value;
 		return $value;
 	}
@@ -2061,7 +2079,7 @@ class WC_Product_Combo extends WC_Product {
 	 */
 	public function set_max_raw_price( $value ) {
 		$value = INF !== $value ? wc_format_decimal( $value ) : INF;
-		$value = 9999999999.0 === (double) $value ? INF : $value;
+		$value = 9999999999.0 === (float) $value ? INF : $value;
 		$this->set_prop( 'max_raw_price', $value );
 	}
 
@@ -2075,7 +2093,7 @@ class WC_Product_Combo extends WC_Product {
 	 */
 	public function set_max_raw_regular_price( $value ) {
 		$value = INF !== $value ? wc_format_decimal( $value ) : INF;
-		$value = 9999999999.0 === (double) $value ? INF : $value;
+		$value = 9999999999.0 === (float) $value ? INF : $value;
 		$this->set_prop( 'max_raw_regular_price', $value );
 	}
 

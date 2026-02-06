@@ -1033,7 +1033,7 @@ class WC_LafkaCombos_Meta_Box_Product_Data {
 
 		$is_priced_individually  = isset( $item_data[ 'priced_individually' ] ) && 'yes' === $item_data[ 'priced_individually' ] ? 'yes' : '';
 		$is_shipped_individually = isset( $item_data[ 'shipped_individually' ] ) && 'yes' === $item_data[ 'shipped_individually' ] ? 'yes' : '';
-		$item_discount           = isset( $item_data[ 'discount' ] ) && (double) $item_data[ 'discount' ] > 0 ? $item_data[ 'discount' ] : '';
+		$item_discount           = isset( $item_data[ 'discount' ] ) && (float) $item_data[ 'discount' ] > 0 ? $item_data[ 'discount' ] : '';
 		$is_optional             = isset( $item_data[ 'optional' ] ) ? $item_data[ 'optional' ] : '';
 
 		// When adding a subscription-type product for the first time, enable "Priced Individually" by default.

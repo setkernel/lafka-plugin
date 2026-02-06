@@ -233,7 +233,9 @@ class WC_LafkaCombos_CP_Compatibility {
 	 */
 	public static function combined_cart_item_reference( $cart_item ) {
 
-		if ( isset( $cart_item[ 'data' ]->combined_cart_item ) ) {
+		$combined_cart_item_ref = WC_LafkaCombos_Cart::get_product_cart_prop( $cart_item[ 'data' ], 'combined_cart_item' );
+
+		if ( $combined_cart_item_ref ) {
 
 			if ( $combo_container_item = wc_pc_get_combined_cart_item_container( $cart_item ) ) {
 
@@ -245,7 +247,7 @@ class WC_LafkaCombos_CP_Compatibility {
 					$component_option = $composite->get_component_option( $component_id, $combo->get_id() );
 
 					if ( $component_option ) {
-						$cart_item[ 'data' ]->combined_cart_item->composited_cart_item = $component_option;
+						$combined_cart_item_ref->composited_cart_item = $component_option;
 					}
 				}
 			}
@@ -845,8 +847,8 @@ class WC_LafkaCombos_CP_Compatibility {
 				$child_cart_item_data   = WC()->cart->cart_contents[ $child_item_key ];
 				$combined_product        = $child_cart_item_data[ 'data' ];
 				$combined_product_qty    = $child_cart_item_data[ 'quantity' ];
-				$combined_product_value  = isset( $combined_product->combined_value ) ? $combined_product->combined_value : 0.0;
-				$combined_product_weight = isset( $combined_product->combined_weight ) ? $combined_product->combined_weight : 0.0;
+				$combined_product_value  = WC_LafkaCombos_Cart::has_product_cart_prop( $combined_product, 'combined_value' ) ? WC_LafkaCombos_Cart::get_product_cart_prop( $combined_product, 'combined_value' ) : 0.0;
+				$combined_product_weight = WC_LafkaCombos_Cart::has_product_cart_prop( $combined_product, 'combined_weight' ) ? WC_LafkaCombos_Cart::get_product_cart_prop( $combined_product, 'combined_weight' ) : 0.0;
 
 				// Aggregate price.
 				if ( $combined_product_value ) {
@@ -872,8 +874,8 @@ class WC_LafkaCombos_CP_Compatibility {
 
 			$cart_item = array_merge( $cart_item, $combo_totals );
 
-			$combo->composited_value  = (double) $composited_combo_value + $combined_value / $combo_qty;
-			$combo->composited_weight = (double) $composited_combo_weight + $combined_weight / $combo_qty;
+			$combo->composited_value  = (float) $composited_combo_value + $combined_value / $combo_qty;
+			$combo->composited_weight = (float) $composited_combo_weight + $combined_weight / $combo_qty;
 
 			$cart_item[ 'data' ] = $combo;
 		}

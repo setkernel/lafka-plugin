@@ -277,11 +277,11 @@ class WC_LafkaCombos_Admin {
 
 		} elseif ( 'edit-product' === $screen_id ) {
 
-			wc_enqueue_js( "
+			wp_add_inline_script( 'woocommerce', "
 				jQuery( function( $ ) {
-					jQuery( '.show_insufficient_stock_items' ).on( 'click', function() {
-						var anchor = jQuery( this ),
-							panel  = jQuery( this ).parent().find( '.insufficient_stock_items' );
+					$( '.show_insufficient_stock_items' ).on( 'click', function() {
+						var anchor = $( this ),
+							panel  = $( this ).parent().find( '.insufficient_stock_items' );
 
 						if ( anchor.hasClass( 'closed' ) ) {
 							anchor.removeClass( 'closed' );

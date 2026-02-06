@@ -148,6 +148,90 @@ class WC_Combined_Item {
 	private $max_stock = null;
 
 	/**
+	 * Whether title is overridden.
+	 * @var string
+	 */
+	private $override_title;
+
+	/**
+	 * Whether description is overridden.
+	 * @var string
+	 */
+	private $override_description;
+
+	/**
+	 * Whether variations are overridden.
+	 * @var string
+	 */
+	private $override_variations;
+
+	/**
+	 * Whether default variation attributes are overridden.
+	 * @var string
+	 */
+	private $override_default_variation_attributes;
+
+	/**
+	 * Visibility in single product view.
+	 * @var string
+	 */
+	private $single_product_visibility;
+
+	/**
+	 * Visibility in cart.
+	 * @var string
+	 */
+	private $cart_visibility;
+
+	/**
+	 * Visibility in order.
+	 * @var string
+	 */
+	private $order_visibility;
+
+	/**
+	 * Price visibility in single product view.
+	 * @var string
+	 */
+	private $single_product_price_visibility;
+
+	/**
+	 * Price visibility in cart.
+	 * @var string
+	 */
+	private $cart_price_visibility;
+
+	/**
+	 * Price visibility in order.
+	 * @var string
+	 */
+	private $order_price_visibility;
+
+	/**
+	 * Cached purchasable status.
+	 * @var boolean|null
+	 */
+	private $purchasable;
+
+	/**
+	 * Cached sold individually status.
+	 * @var boolean|null
+	 */
+	private $sold_individually;
+
+	/**
+	 * Whether this is a subscription renewal (set at cart time).
+	 * @var boolean
+	 */
+	public $is_subscription_renewal = false;
+
+	/**
+	 * Composited cart item reference (CP compatibility).
+	 * @var mixed
+	 */
+	public $composited_cart_item;
+
+	/**
 	 * Raw meta prices used in the min/max combo price calculation.
 	 * @var string
 	 */
@@ -590,8 +674,8 @@ class WC_Combined_Item {
 			$trial_length = WC_Subscriptions_Product::get_trial_length( $combined_product );
 
 			// Up-front price.
-			$up_front_fee         = $trial_length > 0 ? $signup_fee : (double) $signup_fee + (double) $recurring_fee;
-			$regular_up_front_fee = $trial_length > 0 ? $signup_fee : (double) $signup_fee + (double) $regular_recurring_fee;
+			$up_front_fee         = $trial_length > 0 ? $signup_fee : (float) $signup_fee + (float) $recurring_fee;
+			$regular_up_front_fee = $trial_length > 0 ? $signup_fee : (float) $signup_fee + (float) $regular_recurring_fee;
 
 			$this->min_regular_price = $this->max_regular_price = $regular_up_front_fee;
 			$this->min_price         = $this->max_price         = $up_front_fee;
@@ -671,8 +755,8 @@ class WC_Combined_Item {
 					$min_signup_fee   = WC_Subscriptions_Product::get_sign_up_fee( $min_variation );
 					$min_trial_length = WC_Subscriptions_Product::get_trial_length( $min_variation );
 
-					$min_up_front_fee         = $min_trial_length > 0 ? $min_signup_fee : (double) $min_signup_fee + (double) $this->min_recurring_price;
-					$min_regular_up_front_fee = $min_trial_length > 0 ? $min_signup_fee : (double) $min_signup_fee + (double) $this->min_regular_recurring_price;
+					$min_up_front_fee         = $min_trial_length > 0 ? $min_signup_fee : (float) $min_signup_fee + (float) $this->min_recurring_price;
+					$min_regular_up_front_fee = $min_trial_length > 0 ? $min_signup_fee : (float) $min_signup_fee + (float) $this->min_regular_recurring_price;
 
 					$this->min_regular_price = $this->max_regular_price = $min_regular_up_front_fee;
 					$this->min_price         = $this->max_price         = $min_up_front_fee;
@@ -716,7 +800,7 @@ class WC_Combined_Item {
 		 * @param  boolean          $discount_from_regular
 		 * @param  WC_Combined_Item  $this
 		 */
-		$discount_from_regular = $this->product->is_type( 'variable-subscription' ) ? false : (boolean) apply_filters( 'woocommerce_combined_item_discount_from_regular', false, $this );
+		$discount_from_regular = $this->product->is_type( 'variable-subscription' ) ? false : (bool) apply_filters( 'woocommerce_combined_item_discount_from_regular', false, $this );
 
 		return false === $discount_from_regular;
 	}
@@ -784,7 +868,7 @@ class WC_Combined_Item {
 		}
 
 		$discount           = $this->get_discount( $context );
-		$combined_item_price = empty( $discount ) ? $price : ( empty( $regular_price ) ? $regular_price : round( ( double ) $regular_price * ( 100 - $discount ) / 100, WC_LafkaCombos_Product_Prices::get_discounted_price_precision() ) );
+		$combined_item_price = empty( $discount ) ? $price : ( empty( $regular_price ) ? $regular_price : round( (float) $regular_price * ( 100 - $discount ) / 100, WC_LafkaCombos_Product_Prices::get_discounted_price_precision() ) );
 
 		/**
 		 * 'woocommerce_combined_item_raw_price' raw price filter.
@@ -2316,7 +2400,7 @@ class WC_Combined_Item {
 
 					if ( WC_Subscriptions_Synchroniser::is_today( $next_payment_date ) ) {
 
-						$price = (double) $price + (double) $recurring_price;
+						$price = (float) $price + (float) $recurring_price;
 
 					} elseif ( WC_Subscriptions_Synchroniser::is_product_prorated( $product ) ) {
 
@@ -2334,14 +2418,14 @@ class WC_Combined_Item {
 						}
 
 						$days_until_next_payment = ceil( ( $next_payment_date - gmdate( 'U' ) ) / ( 60 * 60 * 24 ) );
-						$price                   = (double) $sign_up_fee + $days_until_next_payment * ( (double) $recurring_price / $days_in_cycle );
+						$price                   = (float) $sign_up_fee + $days_until_next_payment * ( (float) $recurring_price / $days_in_cycle );
 
 					} elseif ( method_exists( 'WC_Subscriptions_Synchroniser', 'is_payment_upfront' ) && WC_Subscriptions_Synchroniser::is_payment_upfront( $product ) ) {
-						$price = (double) $price + (double) $recurring_price;
+						$price = (float) $price + (float) $recurring_price;
 					}
 
 				} else {
-					$price = (double) $price + (double) $recurring_price;
+					$price = (float) $price + (float) $recurring_price;
 				}
 			}
 		}

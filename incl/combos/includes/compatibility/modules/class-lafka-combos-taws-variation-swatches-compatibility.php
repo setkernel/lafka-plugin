@@ -24,20 +24,19 @@ class WC_LafkaCombos_TAWS_Variation_Swatches_Compatibility {
 	 */
 	public static function tawc_variation_swatches_form_support() {
 
-		wc_enqueue_js( "
+		wp_add_inline_script( 'woocommerce', "
+			jQuery( function( $ ) {
+				var init_tawcvs_variation_swatches_form = function() {
+					if ( typeof $.fn.tawcvs_variation_swatches_form === 'function' ) {
+						$( '.variations_form' ).tawcvs_variation_swatches_form();
+						$( document.body ).trigger( 'tawcvs_initialized' );
+					}
+				};
 
-			var init_tawcvs_variation_swatches_form = function() {
-
-				if ( typeof jQuery.fn.tawcvs_variation_swatches_form === 'function' ) {
-					$( '.variations_form' ).tawcvs_variation_swatches_form();
-					$( document.body ).trigger( 'tawcvs_initialized' );
+				if ( $( '.combo_form .combo_data' ).length > 0 ) {
+					init_tawcvs_variation_swatches_form();
 				}
-			};
-
-			if ( jQuery( '.combo_form .combo_data' ).length > 0 ) {
-				init_tawcvs_variation_swatches_form();
-			}
-
+			} );
 		" );
 	}
 }

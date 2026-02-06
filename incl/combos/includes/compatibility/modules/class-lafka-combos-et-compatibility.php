@@ -56,13 +56,11 @@ class WC_LafkaCombos_ET_Compatibility {
 
 		$et_pb_use_builder = $product_combo_object->get_meta( '_et_pb_use_builder' );
 		if ( 'on' === $et_pb_use_builder ) {
-			if ( function_exists( 'wc_enqueue_js' ) ) {
-				wc_enqueue_js( "
-					jQuery( function ( $ ) {
-						$( '#_wc_pb_add_to_cart_form_location' ).prop( 'disabled', true );
-					} )
-				" );
-			}
+			wp_add_inline_script( 'woocommerce', "
+				jQuery( function( $ ) {
+					$( '#_wc_pb_add_to_cart_form_location' ).prop( 'disabled', true );
+				} );
+			" );
 		}
 	}
 

@@ -78,7 +78,7 @@ class WC_LafkaCombos_Product_Prices {
 		if ( in_array( $context, array( 'any', 'catalog' ) ) ) {
 			return self::$combined_item && in_array( self::$combined_item->get_product_id(), array( $product->get_id(), $product->get_parent_id() ) );
 		} elseif ( in_array( $context, array( 'any', 'cart' ) ) ) {
-			return isset( $product->combined_cart_item );
+			return WC_LafkaCombos_Cart::has_product_cart_prop( $product, 'combined_cart_item' );
 		}
 	}
 
@@ -224,7 +224,7 @@ class WC_LafkaCombos_Product_Prices {
 		$discounted_price = $price;
 
 		if ( ! empty( $price ) && ! empty( $discount ) ) {
-			$discounted_price = round( ( double ) $price * ( 100 - $discount ) / 100, self::get_discounted_price_precision() );
+			$discounted_price = round( (float) $price * ( 100 - $discount ) / 100, self::get_discounted_price_precision() );
 		}
 
 		return $discounted_price;
@@ -425,7 +425,7 @@ class WC_LafkaCombos_Product_Prices {
 					} else {
 						$regular_price = $price;
 					}
-					$price                   = empty( $discount ) ? $price : round( ( double ) $regular_price * ( 100 - $discount ) / 100, self::get_discounted_price_precision() );
+					$price                   = empty( $discount ) ? $price : round( (float) $regular_price * ( 100 - $discount ) / 100, self::get_discounted_price_precision() );
 					$prices[ $variation_id ] = apply_filters( 'woocommerce_combined_variation_price', $price, $variation_id, $discount, $combined_item );
 				} else {
 					$prices[ $variation_id ] = 0;
@@ -500,8 +500,8 @@ class WC_LafkaCombos_Product_Prices {
 
 		if ( self::$combined_item ) {
 			$combined_item = self::$combined_item;
-		} elseif ( isset( $product->combined_cart_item ) ) {
-			$combined_item = $product->combined_cart_item;
+		} elseif ( WC_LafkaCombos_Cart::has_product_cart_prop( $product, 'combined_cart_item' ) ) {
+			$combined_item = WC_LafkaCombos_Cart::get_product_cart_prop( $product, 'combined_cart_item' );
 		}
 
 		if ( $combined_item && ( $combined_item instanceof WC_Combined_Item ) ) {
@@ -567,8 +567,8 @@ class WC_LafkaCombos_Product_Prices {
 
 		if ( self::$combined_item ) {
 			$combined_item = self::$combined_item;
-		} elseif ( isset( $product->combined_cart_item ) ) {
-			$combined_item = $product->combined_cart_item;
+		} elseif ( WC_LafkaCombos_Cart::has_product_cart_prop( $product, 'combined_cart_item' ) ) {
+			$combined_item = WC_LafkaCombos_Cart::get_product_cart_prop( $product, 'combined_cart_item' );
 		}
 
 		if ( $combined_item && ( $combined_item instanceof WC_Combined_Item ) ) {
@@ -595,8 +595,8 @@ class WC_LafkaCombos_Product_Prices {
 
 		if ( self::$combined_item ) {
 			$combined_item = self::$combined_item;
-		} elseif ( isset( $product->combined_cart_item ) ) {
-			$combined_item = $product->combined_cart_item;
+		} elseif ( WC_LafkaCombos_Cart::has_product_cart_prop( $product, 'combined_cart_item' ) ) {
+			$combined_item = WC_LafkaCombos_Cart::get_product_cart_prop( $product, 'combined_cart_item' );
 		}
 
 		if ( $combined_item && ( $combined_item instanceof WC_Combined_Item ) ) {

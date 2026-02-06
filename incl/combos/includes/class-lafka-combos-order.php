@@ -295,7 +295,7 @@ class WC_LafkaCombos_Order {
 						if ( $combined_product->needs_shipping() && $combined_item->is_shipped_individually( $combined_product ) ) {
 							$shipped_individually = true;
 						} elseif ( $combined_product->needs_shipping() && $combined_item->is_weight_aggregated( $combined_product ) ) {
-							$combined_weight += (double) $combined_product->get_weight( 'edit' ) * $combined_item_quantity;
+							$combined_weight += (float) $combined_product->get_weight( 'edit' ) * $combined_item_quantity;
 						}
 
 						$combined_order_item->add_meta_data( '_combined_item_needs_shipping', $shipped_individually ? 'yes' : 'no', true );
@@ -334,7 +334,7 @@ class WC_LafkaCombos_Order {
 				$container_order_item->add_meta_data( '_combo_group_mode', $combo->get_group_mode(), true );
 
 				if ( $combo->needs_shipping() ) {
-					$container_order_item->add_meta_data( '_combo_weight', (double) $combo->get_weight( 'edit' ) + $combined_weight, true );
+					$container_order_item->add_meta_data( '_combo_weight', (float) $combo->get_weight( 'edit' ) + $combined_weight, true );
 				}
 
 				/*

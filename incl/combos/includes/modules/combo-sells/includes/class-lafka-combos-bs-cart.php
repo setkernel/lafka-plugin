@@ -361,7 +361,7 @@ class WC_LafkaCombos_BS_Cart {
 			if ( $combined_item ) {
 
 				if ( 'filters' === WC_LafkaCombos_Product_Prices::get_combined_cart_item_discount_method() ) {
-					$cart_item[ 'data' ]->combined_cart_item = $combined_item;
+					WC_LafkaCombos_Cart::set_product_cart_prop( $cart_item[ 'data' ], 'combined_cart_item', $combined_item );
 				}
 			}
 		}
