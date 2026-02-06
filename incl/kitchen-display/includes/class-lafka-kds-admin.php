@@ -102,8 +102,8 @@ class Lafka_KDS_Admin {
 		$current = Lafka_Kitchen_Display::get_options();
 		$output  = array();
 
-		// Preserve existing token
-		$output['token'] = $current['token'];
+		// Preserve existing token, or generate one if missing
+		$output['token'] = ! empty( $current['token'] ) ? $current['token'] : wp_generate_password( 32, false );
 
 		$output['pickup_times']   = isset( $input['pickup_times'] )
 			? $this->sanitize_time_presets( $input['pickup_times'], $current['pickup_times'] )
@@ -168,17 +168,17 @@ class Lafka_KDS_Admin {
 
 	public function render_url_field() {
 		$options = Lafka_Kitchen_Display::get_options();
-		$url     = home_url( '/kitchen-display/' . $options['token'] . '/' );
-		?>
-		<code style="display:inline-block;padding:6px 10px;background:#f0f0f1;font-size:13px;word-break:break-all;"><?php echo esc_url( $url ); ?></code>
-		<p class="description"><?php esc_html_e( 'Open this URL on your kitchen tablet or counter screen. No login required.', 'lafka-plugin' ); ?></p>
-		<form method="post" style="margin-top:8px;display:inline;">
-			<?php wp_nonce_field( 'lafka_kds_regenerate_token' ); ?>
-			<button type="submit" name="lafka_kds_regenerate_token" value="1" class="button button-secondary" onclick="return confirm('<?php esc_attr_e( 'This will invalidate the current URL. Continue?', 'lafka-plugin' ); ?>');">
-				<?php esc_html_e( 'Regenerate Token', 'lafka-plugin' ); ?>
-			</button>
-		</form>
-		<?php
+		if ( ! empty( $options['token'] ) ) {
+			$url = home_url( '/kitchen-display/' . $options['token'] . '/' );
+			?>
+			<code style="display:inline-block;padding:6px 10px;background:#f0f0f1;font-size:13px;word-break:break-all;"><?php echo esc_url( $url ); ?></code>
+			<p class="description"><?php esc_html_e( 'Open this URL on your kitchen tablet or counter screen. No login required.', 'lafka-plugin' ); ?></p>
+			<?php
+		} else {
+			?>
+			<p><em><?php esc_html_e( 'Click "Save Changes" to generate the KDS access URL.', 'lafka-plugin' ); ?></em></p>
+			<?php
+		}
 	}
 
 	public function render_pickup_times_field() {
@@ -237,6 +237,17 @@ class Lafka_KDS_Admin {
 				do_settings_sections( 'lafka_kds' );
 				submit_button();
 				?>
+			</form>
+			<hr>
+			<h2><?php esc_html_e( 'Access Token', 'lafka-plugin' ); ?></h2>
+			<form method="post">
+				<?php wp_nonce_field( 'lafka_kds_regenerate_token' ); ?>
+				<p>
+					<button type="submit" name="lafka_kds_regenerate_token" value="1" class="button button-secondary" onclick="return confirm('<?php esc_attr_e( 'This will invalidate the current URL. Continue?', 'lafka-plugin' ); ?>');">
+						<?php esc_html_e( 'Regenerate Token', 'lafka-plugin' ); ?>
+					</button>
+					<span class="description"><?php esc_html_e( 'Generates a new secret URL and invalidates the old one.', 'lafka-plugin' ); ?></span>
+				</p>
 			</form>
 		</div>
 		<?php
