@@ -312,7 +312,7 @@ class Lafka_Order_Hours {
 					if ( $lafka_branch_location_id_in_session !== null ) {
 						$timezone_object  = empty( self::$timezone ) ? null : new DateTimeZone( self::$timezone );
 						$opening_datetime = self::get_next_opening_time( $timezone_object );
-					} else {
+					} elseif ( class_exists( 'Lafka_Shipping_Areas' ) ) {
 						$all_legit_branch_locations = Lafka_Shipping_Areas::get_all_legit_branch_locations();
 						$opening_datetime           = Lafka_Order_Hours::get_first_opening_branch_datetime( $all_legit_branch_locations );
 					}
