@@ -306,6 +306,7 @@ class Lafka_Order_Hours {
 				<?php
 				if ( isset( self::$lafka_order_hours_options['lafka_order_hours_message_countdown'] ) && self::$lafka_order_hours_options['lafka_order_hours_message_countdown'] ) {
 					$lafka_branch_location_id_in_session = null;
+					$opening_datetime = null;
 					if ( isset( WC()->session ) ) {
 						$lafka_branch_location_id_in_session = WC()->session->get( 'lafka_branch_location' )['branch_id'] ?? null;
 					}
