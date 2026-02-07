@@ -68,15 +68,14 @@
 
 		var overlay = document.getElementById('kds-sound-overlay');
 		overlay.addEventListener('click', function () {
+			// Create and actually play the full alert once to unlock audio
 			audio = new Audio(config.soundUrl);
 			audio.volume = 1;
-			// Play and immediately pause to unlock
 			audio.play().then(function () {
-				audio.pause();
-				audio.currentTime = 0;
 				soundReady = true;
 			}).catch(function () {
-				soundReady = false;
+				// Fallback: mark ready anyway, next play attempt may work
+				soundReady = true;
 			});
 			hideSoundOverlay();
 		});
@@ -88,10 +87,11 @@
 	}
 
 	function playNewOrderSound() {
-		if (soundReady && audio) {
-			audio.currentTime = 0;
-			audio.play().catch(function () {});
-		}
+		if (!soundReady) return;
+		// Create a fresh Audio each time to avoid stale state
+		var alert = new Audio(config.soundUrl);
+		alert.volume = 1;
+		alert.play().catch(function () {});
 	}
 
 	// --- Fullscreen ---
@@ -178,10 +178,16 @@
 
 	function renderCard(order, serverTime) {
 		var elapsed = serverTime - order.date_created;
-		var typeBadgeClass = order.order_type === 'pickup' ? 'kds-badge-pickup' : 'kds-badge-delivery';
-		var typeLabel = order.order_type === 'pickup' ? config.i18n.pickup : config.i18n.delivery;
+		var isPickup = order.order_type === 'pickup';
+		var typeBadgeClass = isPickup ? 'kds-badge-pickup' : 'kds-badge-delivery';
+		var typeLabel = isPickup ? config.i18n.pickup : config.i18n.delivery;
 		var payBadgeClass = order.is_paid_online ? 'kds-badge-paid' : 'kds-badge-cod';
-		var payLabel = order.is_paid_online ? config.i18n.paidOnline : config.i18n.cod;
+		var payLabel;
+		if (order.is_paid_online) {
+			payLabel = config.i18n.paidOnline;
+		} else {
+			payLabel = isPickup ? config.i18n.cashOnCounter : config.i18n.cashOnDelivery;
+		}
 
 		var html = '<div class="kds-card" data-order-id="' + order.id + '">';
 
