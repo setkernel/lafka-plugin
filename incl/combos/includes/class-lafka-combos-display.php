@@ -1446,7 +1446,7 @@ class WC_LafkaCombos_Display {
 		// If it's a combo (parent item)...
 		} elseif ( wc_pc_is_combo_container_order_item( $item ) ) {
 
-			if ( ! isset( $item->child_subtotals_added ) ) {
+			if ( 'yes' !== $item->get_meta( '_lafka_child_subtotals_added' ) ) {
 
 				$group_mode = $item->get_meta( '_combo_group_mode', true );
 				$group_mode = $group_mode ? $group_mode : 'parent';
@@ -1467,7 +1467,7 @@ class WC_LafkaCombos_Display {
 							$cloned_item->set_subtotal_tax( $cloned_item->get_subtotal_tax( 'edit' ) + round( $child->get_subtotal_tax( 'edit' ), wc_pc_price_num_decimals() ) );
 						}
 
-						$cloned_item->child_subtotals_added = 'yes';
+						$cloned_item->add_meta_data( '_lafka_child_subtotals_added', 'yes' );
 
 						$subtotal = $order->get_formatted_line_subtotal( $cloned_item );
 					}
