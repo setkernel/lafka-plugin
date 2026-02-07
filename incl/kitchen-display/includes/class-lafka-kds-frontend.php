@@ -109,6 +109,12 @@ class Lafka_KDS_Frontend {
 				'note'         => __( 'Note', 'lafka-plugin' ),
 				'etaLabel'     => __( 'ETA', 'lafka-plugin' ),
 				'elapsed'      => __( 'ago', 'lafka-plugin' ),
+				'newOrderAnnouncement' => sprintf(
+					/* translators: %s: site name */
+					__( '%s, New Order Received!', 'lafka-plugin' ),
+					$site_name
+				),
+				'soundReadyMsg' => __( 'Sound alerts ready', 'lafka-plugin' ),
 			),
 		);
 

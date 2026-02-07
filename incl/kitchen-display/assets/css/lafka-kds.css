@@ -106,6 +106,16 @@ html, body {
 	flex-shrink: 0;
 }
 
+/* New order flash animation */
+@keyframes kds-flash-bg {
+	0%, 100% { filter: brightness(1); }
+	50% { filter: brightness(1.8); }
+}
+
+.kds-column-header.kds-flash {
+	animation: kds-flash-bg 0.4s ease-in-out 8;
+}
+
 .kds-status-processing { background: var(--kds-accent); color: #fff; }
 .kds-status-accepted { background: var(--kds-info); color: #fff; }
 .kds-status-preparing { background: var(--kds-warning); color: #1a1a2e; }

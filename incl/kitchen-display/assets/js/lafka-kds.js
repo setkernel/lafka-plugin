@@ -7,6 +7,7 @@
 	var knownIds = new Set();
 	var firstLoad = true;
 	var audio = null;
+	var activeAlerts = []; // hold references to prevent GC
 	var soundReady = false;
 	var pollTimer = null;
 	var etaOrderId = null;
@@ -58,7 +59,7 @@
 		}
 	}
 
-	// --- Sound ---
+	// --- Sound & Speech ---
 
 	function initSound() {
 		if (!config.soundEnabled) {
@@ -66,17 +67,29 @@
 			return;
 		}
 
+		// Preload the bell sound
+		audio = new Audio(config.soundUrl);
+		audio.preload = 'auto';
+
 		var overlay = document.getElementById('kds-sound-overlay');
 		overlay.addEventListener('click', function () {
-			// Create and actually play the full alert once to unlock audio
-			audio = new Audio(config.soundUrl);
+			// Play bell to unlock Audio API
+			audio.currentTime = 0;
 			audio.volume = 1;
 			audio.play().then(function () {
 				soundReady = true;
 			}).catch(function () {
-				// Fallback: mark ready anyway, next play attempt may work
 				soundReady = true;
 			});
+
+			// Unlock Speech API with the announcement (also serves as test)
+			if ('speechSynthesis' in window) {
+				// Small delay so bell and speech don't start simultaneously
+				setTimeout(function () {
+					speakAnnouncement(config.i18n.soundReadyMsg);
+				}, 2500);
+			}
+
 			hideSoundOverlay();
 		});
 	}
@@ -88,10 +101,43 @@
 
 	function playNewOrderSound() {
 		if (!soundReady) return;
-		// Create a fresh Audio each time to avoid stale state
-		var alert = new Audio(config.soundUrl);
-		alert.volume = 1;
-		alert.play().catch(function () {});
+
+		// Clean up finished alerts to prevent memory buildup
+		activeAlerts = activeAlerts.filter(function (a) { return !a.ended; });
+
+		// Play bell — hold reference until it finishes
+		var bell = new Audio(config.soundUrl);
+		bell.volume = 1;
+		activeAlerts.push(bell);
+		bell.play().catch(function () {});
+
+		// Speak announcement after bell starts
+		if ('speechSynthesis' in window) {
+			setTimeout(function () {
+				speakAnnouncement(config.i18n.newOrderAnnouncement);
+			}, 1500);
+		}
+
+		// Visual flash on New Orders column
+		flashColumn('processing');
+	}
+
+	function speakAnnouncement(text) {
+		if (!('speechSynthesis' in window) || !text) return;
+		window.speechSynthesis.cancel();
+		var utterance = new SpeechSynthesisUtterance(text);
+		utterance.volume = 1;
+		utterance.rate = 0.9;
+		utterance.pitch = 1.0;
+		window.speechSynthesis.speak(utterance);
+	}
+
+	function flashColumn(status) {
+		var header = document.querySelector('[data-status="' + status + '"] .kds-column-header');
+		if (!header) return;
+		header.classList.remove('kds-flash');
+		void header.offsetWidth; // force reflow to restart animation
+		header.classList.add('kds-flash');
 	}
 
 	// --- Fullscreen ---
