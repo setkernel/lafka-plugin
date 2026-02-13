@@ -102,13 +102,27 @@
 	function playNewOrderSound() {
 		if (!soundReady) return;
 
-		// Clean up finished alerts to prevent memory buildup
-		activeAlerts = activeAlerts.filter(function (a) { return !a.ended; });
-
 		// Play bell — hold reference until it finishes
 		var bell = new Audio(config.soundUrl);
 		bell.volume = 1;
 		activeAlerts.push(bell);
+
+		// Issue #13: Fix memory leak - properly clean up when audio ends
+		bell.addEventListener('ended', function() {
+			var idx = activeAlerts.indexOf(bell);
+			if (idx > -1) {
+				activeAlerts.splice(idx, 1);
+			}
+		});
+
+		// Also clean up on error
+		bell.addEventListener('error', function() {
+			var idx = activeAlerts.indexOf(bell);
+			if (idx > -1) {
+				activeAlerts.splice(idx, 1);
+			}
+		});
+
 		bell.play().catch(function () {});
 
 		// Speak announcement after bell starts
@@ -150,6 +164,15 @@
 			} else {
 				document.exitFullscreen();
 			}
+		});
+	}
+
+	// --- Print (Issue #35) ---
+
+	function initPrint() {
+		var btn = document.getElementById('kds-print');
+		btn.addEventListener('click', function () {
+			window.print();
 		});
 	}
 
@@ -478,6 +501,7 @@
 
 		initSound();
 		initFullscreen();
+		initPrint();
 
 		// ETA modal
 		document.getElementById('kds-eta-cancel').addEventListener('click', closeEtaModal);

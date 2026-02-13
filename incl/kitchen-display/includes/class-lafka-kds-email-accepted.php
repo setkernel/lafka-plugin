@@ -39,6 +39,13 @@ class Lafka_KDS_Email_Accepted extends WC_Email {
 		}
 
 		if ( is_a( $order, 'WC_Order' ) ) {
+			// Issue #32: Prevent duplicate email sends
+			$sent_flag = '_lafka_kds_accepted_email_sent';
+			if ( $order->get_meta( $sent_flag ) ) {
+				$this->restore_locale();
+				return;
+			}
+
 			$this->object                         = $order;
 			$this->recipient                      = $this->object->get_billing_email();
 			$this->placeholders['{order_date}']   = wc_format_datetime( $this->object->get_date_created() );
@@ -47,6 +54,10 @@ class Lafka_KDS_Email_Accepted extends WC_Email {
 
 		if ( $this->is_enabled() && $this->get_recipient() ) {
 			$this->send( $this->get_recipient(), $this->get_subject(), $this->get_content(), $this->get_headers(), $this->get_attachments() );
+
+			// Mark email as sent
+			$order->update_meta_data( $sent_flag, time() );
+			$order->save();
 		}
 
 		$this->restore_locale();

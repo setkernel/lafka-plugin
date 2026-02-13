@@ -41,6 +41,11 @@ class Lafka_KDS_Ajax {
 	public function get_orders() {
 		$this->verify_kds_auth();
 
+		// Issue #18: Add capability check
+		if ( is_user_logged_in() && ! current_user_can( 'edit_shop_orders' ) ) {
+			wp_send_json_error( array( 'message' => 'Insufficient permissions' ), 403 );
+		}
+
 		// Active orders (all statuses in the workflow)
 		$orders = wc_get_orders( array(
 			'status'  => array( 'processing', 'accepted', 'preparing', 'ready' ),
@@ -116,24 +121,46 @@ class Lafka_KDS_Ajax {
 		$eta_minutes = $order->get_meta( '_lafka_kds_eta_minutes' );
 		$accepted_at = $order->get_meta( '_lafka_kds_accepted_at' );
 
+		// Issue #30: Add missing order metadata
+		$delivery_address = '';
+		if ( 'delivery' === $order_type ) {
+			$address_parts = array(
+				$order->get_shipping_address_1(),
+				$order->get_shipping_address_2(),
+				$order->get_shipping_city(),
+				$order->get_shipping_state(),
+				$order->get_shipping_postcode(),
+			);
+			$delivery_address = trim( implode( ', ', array_filter( $address_parts ) ) );
+		}
+
+		// Get special instructions from order meta
+		$special_instructions = $order->get_meta( '_lafka_special_instructions' );
+
+		// Get allergen information if available
+		$allergen_info = $order->get_meta( '_lafka_allergen_info' );
+
 		return array(
-			'id'              => $order->get_id(),
-			'number'          => $order->get_order_number(),
-			'status'          => $order->get_status(),
-			'date_created'    => $order->get_date_created() ? $order->get_date_created()->getTimestamp() : 0,
-			'order_type'      => $order_type,
-			'is_paid_online'  => $is_paid_online,
-			'payment_label'   => $is_paid_online ? __( 'Paid Online', 'lafka-plugin' ) : __( 'Cash on Delivery', 'lafka-plugin' ),
-			'customer_name'   => $order->get_billing_first_name() . ' ' . $order->get_billing_last_name(),
-			'customer_phone'  => $order->get_billing_phone(),
-			'items'           => $items,
-			'customer_note'   => $order->get_customer_note(),
-			'scheduled'       => $scheduled,
-			'eta'             => $eta ? (int) $eta : null,
-			'eta_minutes'     => $eta_minutes ? (int) $eta_minutes : null,
-			'accepted_at'     => $accepted_at ? (int) $accepted_at : null,
-			'total'           => $order->get_total(),
-			'currency_symbol' => get_woocommerce_currency_symbol( $order->get_currency() ),
+			'id'                   => $order->get_id(),
+			'number'               => $order->get_order_number(),
+			'status'               => $order->get_status(),
+			'date_created'         => $order->get_date_created() ? $order->get_date_created()->getTimestamp() : 0,
+			'order_type'           => $order_type,
+			'is_paid_online'       => $is_paid_online,
+			'payment_label'        => $is_paid_online ? __( 'Paid Online', 'lafka-plugin' ) : __( 'Cash on Delivery', 'lafka-plugin' ),
+			'customer_name'        => $order->get_billing_first_name() . ' ' . $order->get_billing_last_name(),
+			'customer_phone'       => $order->get_billing_phone(),
+			'items'                => $items,
+			'customer_note'        => $order->get_customer_note(),
+			'scheduled'            => $scheduled,
+			'eta'                  => $eta ? (int) $eta : null,
+			'eta_minutes'          => $eta_minutes ? (int) $eta_minutes : null,
+			'accepted_at'          => $accepted_at ? (int) $accepted_at : null,
+			'total'                => $order->get_total(),
+			'currency_symbol'      => get_woocommerce_currency_symbol( $order->get_currency() ),
+			'delivery_address'     => $delivery_address,
+			'special_instructions' => $special_instructions,
+			'allergen_info'        => $allergen_info,
 		);
 	}
 
@@ -142,6 +169,11 @@ class Lafka_KDS_Ajax {
 	 */
 	public function update_status() {
 		$this->verify_kds_auth();
+
+		// Issue #18: Add capability check
+		if ( is_user_logged_in() && ! current_user_can( 'edit_shop_orders' ) ) {
+			wp_send_json_error( array( 'message' => 'Insufficient permissions' ), 403 );
+		}
 
 		$order_id   = isset( $_POST['order_id'] ) ? absint( $_POST['order_id'] ) : 0;
 		$new_status = isset( $_POST['new_status'] ) ? sanitize_text_field( $_POST['new_status'] ) : '';
@@ -155,6 +187,13 @@ class Lafka_KDS_Ajax {
 			wp_send_json_error( array( 'message' => 'Order not found' ) );
 		}
 
+		// Issue #8: Implement race condition lock
+		$lock_key = 'kds_order_lock_' . $order_id;
+		if ( get_transient( $lock_key ) ) {
+			wp_send_json_error( array( 'message' => 'Order is being updated, please try again' ), 409 );
+		}
+		set_transient( $lock_key, 1, 10 ); // 10 second lock
+
 		// Validate transitions
 		$allowed = array(
 			'processing' => 'accepted',
@@ -164,7 +203,15 @@ class Lafka_KDS_Ajax {
 		);
 
 		$current = $order->get_status();
+
+		// Issue #15: Prevent modifications to completed orders
+		if ( 'completed' === $current ) {
+			delete_transient( $lock_key );
+			wp_send_json_error( array( 'message' => 'Cannot modify completed orders' ), 400 );
+		}
+
 		if ( ! isset( $allowed[ $current ] ) || $allowed[ $current ] !== $new_status ) {
+			delete_transient( $lock_key );
 			wp_send_json_error( array( 'message' => 'Invalid status transition' ) );
 		}
 
@@ -175,6 +222,9 @@ class Lafka_KDS_Ajax {
 
 		$order->set_status( $new_status );
 		$order->save();
+
+		// Release lock
+		delete_transient( $lock_key );
 
 		wp_send_json_success( array(
 			'order_id'   => $order_id,
@@ -188,11 +238,17 @@ class Lafka_KDS_Ajax {
 	public function set_eta() {
 		$this->verify_kds_auth();
 
+		// Issue #18: Add capability check
+		if ( is_user_logged_in() && ! current_user_can( 'edit_shop_orders' ) ) {
+			wp_send_json_error( array( 'message' => 'Insufficient permissions' ), 403 );
+		}
+
 		$order_id = isset( $_POST['order_id'] ) ? absint( $_POST['order_id'] ) : 0;
 		$minutes  = isset( $_POST['minutes'] ) ? (int) $_POST['minutes'] : 0;
 
-		if ( ! $order_id || $minutes < 1 || $minutes > 999 ) {
-			wp_send_json_error( array( 'message' => 'Invalid parameters' ) );
+		// Issue #14: Add reasonable upper bound (180 minutes = 3 hours)
+		if ( ! $order_id || $minutes < 1 || $minutes > 180 ) {
+			wp_send_json_error( array( 'message' => 'ETA must be between 1-180 minutes' ), 400 );
 		}
 
 		$order = wc_get_order( $order_id );

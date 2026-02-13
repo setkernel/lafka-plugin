@@ -538,3 +538,78 @@ html, body {
 		min-height: 200px;
 	}
 }
+
+/* Print Styles (Issue #35) */
+@media print {
+	/* Hide UI elements */
+	.kds-header,
+	.kds-sound-overlay,
+	.kds-modal-backdrop,
+	.kds-connection-lost,
+	.kds-card-actions,
+	.kds-btn-eta,
+	.kds-fullscreen-btn,
+	.kds-print-btn {
+		display: none !important;
+	}
+
+	/* Reset colors for print */
+	body {
+		background: white;
+		color: black;
+	}
+
+	.kds-board {
+		display: block;
+		height: auto;
+		overflow: visible;
+	}
+
+	.kds-column {
+		page-break-inside: avoid;
+		break-inside: avoid;
+		max-height: none;
+		overflow: visible;
+		margin-bottom: 20px;
+		border: 2px solid #333;
+	}
+
+	.kds-column-header {
+		background: #333 !important;
+		color: white !important;
+		-webkit-print-color-adjust: exact;
+		print-color-adjust: exact;
+	}
+
+	.kds-column-body {
+		overflow: visible;
+		max-height: none;
+	}
+
+	.kds-card {
+		background: white;
+		border: 1px solid #333;
+		page-break-inside: avoid;
+		break-inside: avoid;
+		margin-bottom: 10px;
+	}
+
+	.kds-card-header,
+	.kds-customer,
+	.kds-items,
+	.kds-note,
+	.kds-total {
+		color: black;
+	}
+
+	.kds-badge {
+		border: 1px solid #333;
+		-webkit-print-color-adjust: exact;
+		print-color-adjust: exact;
+	}
+
+	/* Hide completed orders in print */
+	.kds-column[data-status="completed"] {
+		display: none;
+	}
+}

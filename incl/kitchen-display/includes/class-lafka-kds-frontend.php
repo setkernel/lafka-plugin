@@ -134,6 +134,7 @@ class Lafka_KDS_Frontend {
 		</div>
 		<div class="kds-header-right">
 			<span class="kds-clock" id="kds-clock"></span>
+			<button class="kds-print-btn" id="kds-print" title="<?php esc_attr_e( 'Print Active Orders', 'lafka-plugin' ); ?>">&#x1F5A8;</button>
 			<button class="kds-fullscreen-btn" id="kds-fullscreen" title="<?php esc_attr_e( 'Fullscreen', 'lafka-plugin' ); ?>">&#x26F6;</button>
 		</div>
 	</header>

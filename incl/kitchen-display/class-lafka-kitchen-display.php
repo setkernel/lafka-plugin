@@ -79,10 +79,12 @@ class Lafka_Kitchen_Display {
 	 */
 	public function register_emails( $email_classes ) {
 		require_once dirname( __FILE__ ) . '/includes/class-lafka-kds-email-accepted.php';
+		require_once dirname( __FILE__ ) . '/includes/class-lafka-kds-email-preparing.php';
 		require_once dirname( __FILE__ ) . '/includes/class-lafka-kds-email-ready.php';
 
-		$email_classes['Lafka_KDS_Email_Accepted'] = new Lafka_KDS_Email_Accepted();
-		$email_classes['Lafka_KDS_Email_Ready']    = new Lafka_KDS_Email_Ready();
+		$email_classes['Lafka_KDS_Email_Accepted']  = new Lafka_KDS_Email_Accepted();
+		$email_classes['Lafka_KDS_Email_Preparing'] = new Lafka_KDS_Email_Preparing();
+		$email_classes['Lafka_KDS_Email_Ready']     = new Lafka_KDS_Email_Ready();
 
 		return $email_classes;
 	}
