@@ -62,24 +62,44 @@
 	// --- Sound & Speech ---
 
 	function initSound() {
+		var overlay = document.getElementById('kds-sound-overlay');
+
+		// If sound is disabled, hide overlay immediately
 		if (!config.soundEnabled) {
 			hideSoundOverlay();
 			return;
 		}
 
+		// Check if user has already enabled sounds (persisted in localStorage)
+		var soundsEnabled = localStorage.getItem('lafka_kds_sounds_enabled');
+		if (soundsEnabled === 'true') {
+			soundReady = true;
+			hideSoundOverlay();
+			// Preload the bell sound
+			audio = new Audio(config.soundUrl);
+			audio.preload = 'auto';
+			return;
+		}
+
+		// Show overlay and wait for user interaction
+		overlay.classList.remove('kds-hidden');
+
 		// Preload the bell sound
 		audio = new Audio(config.soundUrl);
 		audio.preload = 'auto';
 
-		var overlay = document.getElementById('kds-sound-overlay');
 		overlay.addEventListener('click', function () {
 			// Play bell to unlock Audio API
 			audio.currentTime = 0;
 			audio.volume = 1;
 			audio.play().then(function () {
 				soundReady = true;
-			}).catch(function () {
+				// Remember user's choice
+				localStorage.setItem('lafka_kds_sounds_enabled', 'true');
+			}).catch(function (err) {
+				console.warn('Audio play failed:', err);
 				soundReady = true;
+				localStorage.setItem('lafka_kds_sounds_enabled', 'true');
 			});
 
 			// Unlock Speech API with the announcement (also serves as test)
@@ -91,16 +111,28 @@
 			}
 
 			hideSoundOverlay();
-		});
+		}, { once: true }); // Only fire once
 	}
 
 	function hideSoundOverlay() {
 		var overlay = document.getElementById('kds-sound-overlay');
-		overlay.classList.add('kds-hidden');
+		if (overlay) {
+			overlay.classList.add('kds-hidden');
+		}
 	}
 
 	function playNewOrderSound() {
-		if (!soundReady) return;
+		if (!config.soundEnabled) {
+			console.log('KDS: Sound disabled in config');
+			return;
+		}
+
+		if (!soundReady) {
+			console.log('KDS: Sound not ready yet - user needs to click overlay');
+			return;
+		}
+
+		console.log('KDS: Playing new order sound');
 
 		// Play bell — hold reference until it finishes
 		var bell = new Audio(config.soundUrl);
@@ -116,14 +148,19 @@
 		});
 
 		// Also clean up on error
-		bell.addEventListener('error', function() {
+		bell.addEventListener('error', function(err) {
+			console.error('KDS: Audio playback error:', err);
 			var idx = activeAlerts.indexOf(bell);
 			if (idx > -1) {
 				activeAlerts.splice(idx, 1);
 			}
 		});
 
-		bell.play().catch(function () {});
+		bell.play().then(function() {
+			console.log('KDS: Sound played successfully');
+		}).catch(function (err) {
+			console.error('KDS: Failed to play sound:', err);
+		});
 
 		// Speak announcement after bell starts
 		if ('speechSynthesis' in window) {

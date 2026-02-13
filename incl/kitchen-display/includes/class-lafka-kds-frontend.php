@@ -182,8 +182,8 @@ class Lafka_KDS_Frontend {
 		<?php esc_html_e( 'Connection lost — retrying...', 'lafka-plugin' ); ?>
 	</div>
 
-	<!-- Sound overlay -->
-	<div class="kds-sound-overlay" id="kds-sound-overlay">
+	<!-- Sound overlay (starts hidden, shown by JS if needed) -->
+	<div class="kds-sound-overlay kds-hidden" id="kds-sound-overlay">
 		<div class="kds-sound-overlay-content">
 			<span>&#128264;</span>
 			<p><?php esc_html_e( 'Click anywhere to enable sounds', 'lafka-plugin' ); ?></p>
