@@ -46,6 +46,15 @@ class Lafka_KDS_Order_Statuses {
 			'show_in_admin_status_list' => true,
 			'label_count'               => _n_noop( 'Ready <span class="count">(%s)</span>', 'Ready <span class="count">(%s)</span>', 'lafka-plugin' ),
 		) );
+
+		register_post_status( 'wc-rejected', array(
+			'label'                     => _x( 'Rejected', 'Order status', 'lafka-plugin' ),
+			'public'                    => true,
+			'exclude_from_search'       => false,
+			'show_in_admin_all_list'    => true,
+			'show_in_admin_status_list' => true,
+			'label_count'               => _n_noop( 'Rejected <span class="count">(%s)</span>', 'Rejected <span class="count">(%s)</span>', 'lafka-plugin' ),
+		) );
 	}
 
 	/**
@@ -59,6 +68,7 @@ class Lafka_KDS_Order_Statuses {
 				$new['wc-accepted']  = _x( 'Accepted', 'Order status', 'lafka-plugin' );
 				$new['wc-preparing'] = _x( 'Preparing', 'Order status', 'lafka-plugin' );
 				$new['wc-ready']     = _x( 'Ready', 'Order status', 'lafka-plugin' );
+				$new['wc-rejected']  = _x( 'Rejected', 'Order status', 'lafka-plugin' );
 			}
 		}
 
@@ -72,6 +82,7 @@ class Lafka_KDS_Order_Statuses {
 		$statuses[] = 'accepted';
 		$statuses[] = 'preparing';
 		$statuses[] = 'ready';
+		$statuses[] = 'rejected';
 
 		return $statuses;
 	}
@@ -83,6 +94,7 @@ class Lafka_KDS_Order_Statuses {
 		$actions['mark_accepted']  = __( 'Change status to accepted', 'lafka-plugin' );
 		$actions['mark_preparing'] = __( 'Change status to preparing', 'lafka-plugin' );
 		$actions['mark_ready']     = __( 'Change status to ready', 'lafka-plugin' );
+		$actions['mark_rejected']  = __( 'Change status to rejected', 'lafka-plugin' );
 
 		return $actions;
 	}
@@ -105,6 +117,7 @@ class Lafka_KDS_Order_Statuses {
 			.order-status.status-accepted { background: #c8d7e1; color: #2e4453; }
 			.order-status.status-preparing { background: #f8dda7; color: #94660c; }
 			.order-status.status-ready { background: #c6e1c6; color: #5b841b; }
+			.order-status.status-rejected { background: #eba3a3; color: #761919; }
 		</style>
 		<?php
 	}
@@ -117,6 +130,7 @@ class Lafka_KDS_Order_Statuses {
 			'mark_accepted'  => 'accepted',
 			'mark_preparing' => 'preparing',
 			'mark_ready'     => 'ready',
+			'mark_rejected'  => 'rejected',
 		);
 
 		if ( ! isset( $status_map[ $action ] ) ) {
@@ -126,13 +140,33 @@ class Lafka_KDS_Order_Statuses {
 		$new_status = $status_map[ $action ];
 		$changed    = 0;
 
+		// Allowed transitions mirror the KDS workflow (forward, undo, and reject)
+		$allowed_transitions = array(
+			'processing' => array( 'accepted', 'rejected' ),
+			'on-hold'    => array( 'accepted' ),
+			'accepted'   => array( 'preparing', 'rejected', 'processing' ),
+			'preparing'  => array( 'ready', 'accepted' ),
+			'ready'      => array( 'completed', 'preparing' ),
+		);
+
 		foreach ( $order_ids as $order_id ) {
 			$order = wc_get_order( $order_id );
-			if ( $order ) {
-				$order->set_status( $new_status );
-				$order->save();
-				$changed++;
+			if ( ! $order ) {
+				continue;
 			}
+
+			// Validate transition: only allow permitted statuses in the workflow
+			$current = $order->get_status();
+			if ( ! isset( $allowed_transitions[ $current ] ) || ! in_array( $new_status, $allowed_transitions[ $current ], true ) ) {
+				continue;
+			}
+
+			if ( 'accepted' === $new_status ) {
+				$order->update_meta_data( '_lafka_kds_accepted_at', time() );
+			}
+			$order->set_status( $new_status );
+			$order->save();
+			$changed++;
 		}
 
 		return add_query_arg( array(

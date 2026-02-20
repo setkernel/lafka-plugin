@@ -72,6 +72,9 @@ class Lafka_Kitchen_Display {
 
 		// Register email classes
 		add_filter( 'woocommerce_email_classes', array( $this, 'register_emails' ) );
+
+		// Add KDS notification email to WC new-order recipient list
+		add_filter( 'woocommerce_email_recipient_new_order', array( $this, 'add_kds_admin_to_new_order' ), 10, 2 );
 	}
 
 	/**
@@ -81,12 +84,36 @@ class Lafka_Kitchen_Display {
 		require_once dirname( __FILE__ ) . '/includes/class-lafka-kds-email-accepted.php';
 		require_once dirname( __FILE__ ) . '/includes/class-lafka-kds-email-preparing.php';
 		require_once dirname( __FILE__ ) . '/includes/class-lafka-kds-email-ready.php';
+		require_once dirname( __FILE__ ) . '/includes/class-lafka-kds-email-rejected.php';
 
 		$email_classes['Lafka_KDS_Email_Accepted']  = new Lafka_KDS_Email_Accepted();
 		$email_classes['Lafka_KDS_Email_Preparing'] = new Lafka_KDS_Email_Preparing();
 		$email_classes['Lafka_KDS_Email_Ready']     = new Lafka_KDS_Email_Ready();
+		$email_classes['Lafka_KDS_Email_Rejected']  = new Lafka_KDS_Email_Rejected();
 
 		return $email_classes;
+	}
+
+	/**
+	 * Add the KDS order notification email to WooCommerce "New Order" email recipients.
+	 *
+	 * This is the only admin-facing email — status-change emails go to the customer only.
+	 */
+	public function add_kds_admin_to_new_order( $recipient, $order ) {
+		$options    = self::get_options();
+		$kds_email  = sanitize_email( $options['order_notification_email'] );
+
+		if ( ! $kds_email || ! is_email( $kds_email ) ) {
+			return $recipient;
+		}
+
+		// Avoid duplicating if the email is already in the recipient list
+		$recipients = array_map( 'trim', explode( ',', $recipient ) );
+		if ( in_array( $kds_email, $recipients, true ) ) {
+			return $recipient;
+		}
+
+		return $recipient . ', ' . $kds_email;
 	}
 
 	/**
@@ -94,12 +121,13 @@ class Lafka_Kitchen_Display {
 	 */
 	public static function get_options() {
 		$defaults = array(
-			'token'                  => '',
-			'pickup_times'           => '30,45,60',
-			'delivery_times'         => '60,75,90',
-			'sound_enabled'          => '1',
-			'poll_interval'          => 12,
-			'customer_poll_interval' => 20,
+			'token'                    => '',
+			'pickup_times'             => '30,45,60',
+			'delivery_times'           => '60,75,90',
+			'sound_enabled'            => '1',
+			'poll_interval'            => 12,
+			'customer_poll_interval'   => 20,
+			'order_notification_email' => '',
 		);
 
 		$options = get_option( 'lafka_kds_options', array() );

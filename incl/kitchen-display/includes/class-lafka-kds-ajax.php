@@ -19,6 +19,10 @@ class Lafka_KDS_Ajax {
 		// Customer endpoint
 		add_action( 'wp_ajax_lafka_kds_customer_status', array( $this, 'customer_status' ) );
 		add_action( 'wp_ajax_nopriv_lafka_kds_customer_status', array( $this, 'customer_status' ) );
+
+		// Nonce refresh endpoint (token-only auth, no nonce required)
+		add_action( 'wp_ajax_lafka_kds_refresh_nonce', array( $this, 'refresh_nonce' ) );
+		add_action( 'wp_ajax_nopriv_lafka_kds_refresh_nonce', array( $this, 'refresh_nonce' ) );
 	}
 
 	/**
@@ -63,13 +67,46 @@ class Lafka_KDS_Ajax {
 			'date_after' => gmdate( 'Y-m-d H:i:s', time() - 4 * HOUR_IN_SECONDS ),
 		) );
 
-		$data = array();
+		$data     = array();
+		$seen_ids = array();
 
+		// Prime meta cache in a single query to avoid N+1 per-order meta lookups
+		$all_order_ids = array();
 		foreach ( $orders as $order ) {
-			$data[] = $this->format_order( $order );
+			$all_order_ids[] = $order->get_id();
 		}
 		foreach ( $completed as $order ) {
-			$data[] = $this->format_order( $order );
+			$all_order_ids[] = $order->get_id();
+		}
+		if ( ! empty( $all_order_ids ) ) {
+			// Batch-load postmeta for all orders + their line items
+			update_meta_cache( 'post', $all_order_ids );
+
+			// Also prime order item meta (line items have separate meta table)
+			$all_item_ids = array();
+			foreach ( array_merge( $orders, $completed ) as $order ) {
+				foreach ( $order->get_items() as $item ) {
+					$all_item_ids[] = $item->get_id();
+				}
+			}
+			if ( ! empty( $all_item_ids ) ) {
+				update_meta_cache( 'order_item', $all_item_ids );
+			}
+		}
+
+		foreach ( $orders as $order ) {
+			$id = $order->get_id();
+			if ( ! isset( $seen_ids[ $id ] ) ) {
+				$seen_ids[ $id ] = true;
+				$data[] = $this->format_order( $order );
+			}
+		}
+		foreach ( $completed as $order ) {
+			$id = $order->get_id();
+			if ( ! isset( $seen_ids[ $id ] ) ) {
+				$seen_ids[ $id ] = true;
+				$data[] = $this->format_order( $order );
+			}
 		}
 
 		wp_send_json_success( array(
@@ -88,7 +125,17 @@ class Lafka_KDS_Ajax {
 				'name'     => $item->get_name(),
 				'quantity' => $item->get_quantity(),
 				'meta'     => array(),
+				'category' => '',
 			);
+
+			// Get product category for item grouping on KDS
+			$product = $item->get_product();
+			if ( $product ) {
+				$categories = wp_get_post_terms( $product->get_id(), 'product_cat', array( 'fields' => 'names' ) );
+				if ( ! is_wp_error( $categories ) && ! empty( $categories ) ) {
+					$item_data['category'] = $categories[0];
+				}
+			}
 
 			// Get formatted meta (variations, addons, etc.)
 			$meta_data = $item->get_formatted_meta_data( '_', true );
@@ -187,31 +234,33 @@ class Lafka_KDS_Ajax {
 			wp_send_json_error( array( 'message' => 'Order not found' ) );
 		}
 
-		// Issue #8: Implement race condition lock
-		$lock_key = 'kds_order_lock_' . $order_id;
-		if ( get_transient( $lock_key ) ) {
+		// Atomic database-level lock (fixes TOCTOU race condition with transients)
+		global $wpdb;
+		$lock_name = 'kds_order_' . $order_id;
+		$acquired  = $wpdb->get_var( $wpdb->prepare( "SELECT GET_LOCK(%s, 0)", $lock_name ) );
+		if ( ! $acquired ) {
 			wp_send_json_error( array( 'message' => 'Order is being updated, please try again' ), 409 );
 		}
-		set_transient( $lock_key, 1, 10 ); // 10 second lock
 
-		// Validate transitions
+		// Validate transitions (forward, undo, and reject)
 		$allowed = array(
-			'processing' => 'accepted',
-			'accepted'   => 'preparing',
-			'preparing'  => 'ready',
-			'ready'      => 'completed',
+			'processing' => array( 'accepted', 'rejected' ),
+			'on-hold'    => array( 'accepted' ),
+			'accepted'   => array( 'preparing', 'rejected', 'processing' ),
+			'preparing'  => array( 'ready', 'accepted' ),
+			'ready'      => array( 'completed', 'preparing' ),
 		);
 
 		$current = $order->get_status();
 
-		// Issue #15: Prevent modifications to completed orders
-		if ( 'completed' === $current ) {
-			delete_transient( $lock_key );
-			wp_send_json_error( array( 'message' => 'Cannot modify completed orders' ), 400 );
+		// Prevent modifications to completed/rejected orders
+		if ( in_array( $current, array( 'completed', 'rejected' ), true ) ) {
+			$wpdb->query( $wpdb->prepare( "SELECT RELEASE_LOCK(%s)", $lock_name ) );
+			wp_send_json_error( array( 'message' => 'Cannot modify ' . $current . ' orders' ), 400 );
 		}
 
-		if ( ! isset( $allowed[ $current ] ) || $allowed[ $current ] !== $new_status ) {
-			delete_transient( $lock_key );
+		if ( ! isset( $allowed[ $current ] ) || ! in_array( $new_status, $allowed[ $current ], true ) ) {
+			$wpdb->query( $wpdb->prepare( "SELECT RELEASE_LOCK(%s)", $lock_name ) );
 			wp_send_json_error( array( 'message' => 'Invalid status transition' ) );
 		}
 
@@ -224,7 +273,7 @@ class Lafka_KDS_Ajax {
 		$order->save();
 
 		// Release lock
-		delete_transient( $lock_key );
+		$wpdb->query( $wpdb->prepare( "SELECT RELEASE_LOCK(%s)", $lock_name ) );
 
 		wp_send_json_success( array(
 			'order_id'   => $order_id,
@@ -295,7 +344,25 @@ class Lafka_KDS_Ajax {
 			'status'       => $status,
 			'status_label' => isset( $statuses[ $wc_status ] ) ? $statuses[ $wc_status ] : $status,
 			'eta'          => $eta ? (int) $eta : null,
+			'order_type'   => Lafka_Kitchen_Display::get_order_type( $order ),
 			'server_time'  => time(),
+		) );
+	}
+
+	/**
+	 * Refresh nonce (token-only auth, no nonce required).
+	 * Called by the KDS JS when the current nonce is about to expire.
+	 */
+	public function refresh_nonce() {
+		$token   = isset( $_POST['kds_token'] ) ? sanitize_text_field( $_POST['kds_token'] ) : '';
+		$options = Lafka_Kitchen_Display::get_options();
+
+		if ( empty( $options['token'] ) || ! hash_equals( $options['token'], $token ) ) {
+			wp_send_json_error( array( 'message' => 'Invalid token' ), 403 );
+		}
+
+		wp_send_json_success( array(
+			'nonce' => wp_create_nonce( 'lafka_kds_nonce' ),
 		) );
 	}
 }
