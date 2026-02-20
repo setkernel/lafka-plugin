@@ -125,3 +125,52 @@
 		height: 20px;
 	}
 }
+
+/* ── Status-change highlight animation ── */
+.lafka-kds-step-just-activated .lafka-kds-dot {
+	animation: lafka-kds-step-pop 0.6s ease-out;
+}
+
+@keyframes lafka-kds-step-pop {
+	0%   { transform: scale(1); }
+	30%  { transform: scale(1.5); }
+	60%  { transform: scale(0.9); }
+	100% { transform: scale(1); }
+}
+
+.lafka-kds-step-just-activated .lafka-kds-label {
+	animation: lafka-kds-label-flash 2s ease-in-out;
+}
+
+@keyframes lafka-kds-label-flash {
+	0%, 100% { color: #e94560; }
+	25%      { color: #ff8c00; }
+	50%      { color: #e94560; }
+	75%      { color: #ff8c00; }
+}
+
+/* ── Overdue ETA ── */
+.lafka-kds-eta-overdue {
+	color: #e94560 !important;
+	animation: lafka-kds-overdue-blink 1.5s ease-in-out infinite;
+}
+
+@keyframes lafka-kds-overdue-blink {
+	0%, 100% { opacity: 1; }
+	50%      { opacity: 0.5; }
+}
+
+/* ── Rejected state ── */
+.lafka-kds-rejected {
+	background: #fff5f5;
+	border-color: #eba3a3;
+}
+
+.lafka-kds-rejected-msg {
+	text-align: center;
+	color: #e94560;
+	font-weight: 700;
+	font-size: 15px;
+	margin: 0;
+	padding: 8px 0;
+}

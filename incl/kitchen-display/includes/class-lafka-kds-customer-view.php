@@ -22,8 +22,11 @@ class Lafka_KDS_Customer_View {
 		$css_url = plugins_url( '../assets/css/lafka-kds-customer.css', __FILE__ );
 		$js_url  = plugins_url( '../assets/js/lafka-kds-customer.js', __FILE__ );
 
-		wp_enqueue_style( 'lafka-kds-customer', $css_url, array(), '1.0.0' );
-		wp_enqueue_script( 'lafka-kds-customer', $js_url, array(), '1.0.0', true );
+		$css_ver = filemtime( dirname( __DIR__ ) . '/assets/css/lafka-kds-customer.css' );
+		$js_ver  = filemtime( dirname( __DIR__ ) . '/assets/js/lafka-kds-customer.js' );
+
+		wp_enqueue_style( 'lafka-kds-customer', $css_url, array(), $css_ver );
+		wp_enqueue_script( 'lafka-kds-customer', $js_url, array(), $js_ver, true );
 	}
 
 	/**
@@ -38,16 +41,31 @@ class Lafka_KDS_Customer_View {
 		$status = $order->get_status();
 
 		// Only show for statuses in the KDS workflow
-		$kds_statuses = array( 'processing', 'accepted', 'preparing', 'ready', 'completed' );
+		$kds_statuses = array( 'processing', 'accepted', 'preparing', 'ready', 'completed', 'rejected' );
 		if ( ! in_array( $status, $kds_statuses, true ) ) {
 			return;
 		}
+
+		// Rejected orders get a special message instead of progress bar
+		if ( 'rejected' === $status ) {
+			?>
+			<div class="lafka-kds-progress lafka-kds-rejected">
+				<p style="text-align:center;color:#e94560;font-weight:bold;margin:0;">
+					<?php esc_html_e( 'This order has been cancelled. Please contact us for more information.', 'lafka-plugin' ); ?>
+				</p>
+			</div>
+			<?php
+			return;
+		}
+
+		$order_type = Lafka_Kitchen_Display::get_order_type( $order );
+		$is_pickup  = ( 'pickup' === $order_type );
 
 		$steps = array(
 			'processing' => __( 'Received', 'lafka-plugin' ),
 			'accepted'   => __( 'Accepted', 'lafka-plugin' ),
 			'preparing'  => __( 'Preparing', 'lafka-plugin' ),
-			'ready'      => __( 'Ready', 'lafka-plugin' ),
+			'ready'      => $is_pickup ? __( 'Ready for Pickup', 'lafka-plugin' ) : __( 'Out for Delivery', 'lafka-plugin' ),
 			'completed'  => __( 'Complete', 'lafka-plugin' ),
 		);
 
@@ -93,14 +111,18 @@ class Lafka_KDS_Customer_View {
 				nonce: <?php echo wp_json_encode( $nonce ); ?>,
 				orderId: <?php echo (int) $order_id; ?>,
 				orderKey: <?php echo wp_json_encode( $order->get_order_key() ); ?>,
+				orderType: <?php echo wp_json_encode( $order_type ); ?>,
 				pollInterval: <?php echo (int) $options['customer_poll_interval'] * 1000; ?>,
 				i18n: {
-					received:  <?php echo wp_json_encode( __( 'Received', 'lafka-plugin' ) ); ?>,
-					accepted:  <?php echo wp_json_encode( __( 'Accepted', 'lafka-plugin' ) ); ?>,
-					preparing: <?php echo wp_json_encode( __( 'Preparing', 'lafka-plugin' ) ); ?>,
-					ready:     <?php echo wp_json_encode( __( 'Ready', 'lafka-plugin' ) ); ?>,
-					complete:  <?php echo wp_json_encode( __( 'Complete', 'lafka-plugin' ) ); ?>,
-					estimated: <?php echo wp_json_encode( __( 'Estimated time:', 'lafka-plugin' ) ); ?>
+					received:      <?php echo wp_json_encode( __( 'Received', 'lafka-plugin' ) ); ?>,
+					accepted:      <?php echo wp_json_encode( __( 'Accepted', 'lafka-plugin' ) ); ?>,
+					preparing:     <?php echo wp_json_encode( __( 'Preparing', 'lafka-plugin' ) ); ?>,
+					readyPickup:   <?php echo wp_json_encode( __( 'Ready for Pickup', 'lafka-plugin' ) ); ?>,
+					readyDelivery: <?php echo wp_json_encode( __( 'Out for Delivery', 'lafka-plugin' ) ); ?>,
+					complete:      <?php echo wp_json_encode( __( 'Complete', 'lafka-plugin' ) ); ?>,
+					estimated:     <?php echo wp_json_encode( __( 'Estimated time:', 'lafka-plugin' ) ); ?>,
+					delayed:       <?php echo wp_json_encode( __( 'Delayed — taking longer than expected', 'lafka-plugin' ) ); ?>,
+					rejected:      <?php echo wp_json_encode( __( 'This order has been cancelled. Please contact us for more information.', 'lafka-plugin' ) ); ?>
 				}
 			};
 			</script>
