@@ -93,6 +93,15 @@ class Lafka_KDS_Admin {
 			'lafka_kds_general',
 			array( 'label_for' => 'lafka_kds_customer_poll_interval' )
 		);
+
+		add_settings_field(
+			'lafka_kds_order_notification_email',
+			esc_html__( 'Order Notification Email', 'lafka-plugin' ),
+			array( $this, 'render_order_notification_email_field' ),
+			'lafka_kds',
+			'lafka_kds_general',
+			array( 'label_for' => 'lafka_kds_order_notification_email' )
+		);
 	}
 
 	/**
@@ -122,6 +131,10 @@ class Lafka_KDS_Admin {
 		$output['customer_poll_interval'] = isset( $input['customer_poll_interval'] )
 			? max( 10, (int) $input['customer_poll_interval'] )
 			: 20;
+
+		$output['order_notification_email'] = isset( $input['order_notification_email'] )
+			? sanitize_email( $input['order_notification_email'] )
+			: '';
 
 		// Flush rewrite rules after saving
 		set_transient( 'lafka_kds_flush_rewrite', '1', 60 );
@@ -220,6 +233,14 @@ class Lafka_KDS_Admin {
 		?>
 		<input type="number" id="lafka_kds_customer_poll_interval" name="lafka_kds_options[customer_poll_interval]" value="<?php echo esc_attr( $options['customer_poll_interval'] ); ?>" min="10" max="120" step="1" style="width:80px;">
 		<p class="description"><?php esc_html_e( 'How often the customer order status page polls for updates (minimum 10 seconds).', 'lafka-plugin' ); ?></p>
+		<?php
+	}
+
+	public function render_order_notification_email_field() {
+		$options = Lafka_Kitchen_Display::get_options();
+		?>
+		<input type="email" id="lafka_kds_order_notification_email" name="lafka_kds_options[order_notification_email]" value="<?php echo esc_attr( $options['order_notification_email'] ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'e.g. manager@yourstore.com', 'lafka-plugin' ); ?>">
+		<p class="description"><?php esc_html_e( 'This email address will receive the WooCommerce "New Order" notification whenever an order is placed. Leave blank to disable. Status-change emails (accepted, preparing, ready, rejected) are sent only to the customer.', 'lafka-plugin' ); ?></p>
 		<?php
 	}
 
