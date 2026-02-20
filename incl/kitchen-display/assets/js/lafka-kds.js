@@ -14,6 +14,8 @@
 	var etaSelectedMinutes = null;
 	var failCount = 0;
 	var AUTO_RELOAD_MS = 60 * 60 * 1000; // 1 hour
+	var lastServerTime = 0;  // track server time for live elapsed/ETA ticks
+	var lastOrders = {};     // id → order data hash for diff-based rendering
 
 	// --- Helpers ---
 
@@ -175,7 +177,7 @@
 
 	function speakAnnouncement(text) {
 		if (!('speechSynthesis' in window) || !text) return;
-		window.speechSynthesis.cancel();
+		// Queue instead of cancel — avoids cutting off previous announcement
 		var utterance = new SpeechSynthesisUtterance(text);
 		utterance.volume = 1;
 		utterance.rate = 0.9;
@@ -213,9 +215,50 @@
 		});
 	}
 
-	// --- Rendering ---
+	// --- Rendering (diff-based) ---
+
+	/**
+	 * Build a simple hash of order data that changes between polls.
+	 * If this hash differs from the previous one, the card needs re-rendering.
+	 */
+	function orderHash(order) {
+		return order.status + '|' + order.id + '|' + (order.eta || 0) + '|' + (order.eta_minutes || 0) + '|' + order.customer_note + '|' + order.items.length + '|' + (order.delivery_address || '') + '|' + (order.special_instructions || '') + '|' + (order.allergen_info || '');
+	}
+
+	/**
+	 * Get urgency CSS class based on elapsed time.
+	 */
+	function getUrgencyClass(elapsed) {
+		var mins = elapsed / 60;
+		if (config.urgency && mins >= config.urgency.criticalMinutes) {
+			return 'kds-urgency-critical';
+		}
+		if (config.urgency && mins >= config.urgency.warningMinutes) {
+			return 'kds-urgency-warning';
+		}
+		return '';
+	}
+
+	/**
+	 * Group items by category for organized display.
+	 */
+	function groupItemsByCategory(items) {
+		var groups = {};
+		var order = [];
+		items.forEach(function (item) {
+			var cat = item.category || config.i18n.uncategorized;
+			if (!groups[cat]) {
+				groups[cat] = [];
+				order.push(cat);
+			}
+			groups[cat].push(item);
+		});
+		return { groups: groups, order: order };
+	}
 
 	function renderOrders(orders, serverTime) {
+		lastServerTime = serverTime;
+
 		var columns = {
 			processing: [],
 			accepted: [],
@@ -226,9 +269,11 @@
 
 		var newOrderDetected = false;
 		var currentIds = new Set();
+		var currentOrders = {};
 
 		orders.forEach(function (order) {
 			currentIds.add(order.id);
+			currentOrders[order.id] = order;
 			if (columns[order.status]) {
 				columns[order.status].push(order);
 			}
@@ -258,13 +303,94 @@
 				return;
 			}
 
-			col.innerHTML = items.map(function (order) {
-				return renderCard(order, serverTime);
-			}).join('');
+			// Build set of expected order IDs in this column
+			var expectedIds = items.map(function (o) { return o.id; });
+
+			// Remove cards that are no longer in this column
+			var existingCards = col.querySelectorAll('.kds-card');
+			var existingMap = {};
+			existingCards.forEach(function (card) {
+				var cardId = parseInt(card.getAttribute('data-order-id'), 10);
+				if (expectedIds.indexOf(cardId) === -1) {
+					card.remove();
+				} else {
+					existingMap[cardId] = card;
+				}
+			});
+
+			// Remove "no orders" placeholder if present
+			var placeholder = col.querySelector('.kds-no-orders');
+			if (placeholder) placeholder.remove();
+
+			// Update or insert cards in order
+			var prevNode = null;
+			items.forEach(function (order) {
+				var existing = existingMap[order.id];
+				var hash = orderHash(order);
+				var prevHash = lastOrders[order.id] ? orderHash(lastOrders[order.id]) : null;
+
+				if (existing && hash === prevHash) {
+					// Card unchanged — just update elapsed time & ETA in-place
+					updateCardDynamic(existing, order, serverTime);
+					prevNode = existing;
+				} else {
+					// Card is new or changed — render and insert/replace
+					var temp = document.createElement('div');
+					temp.innerHTML = renderCard(order, serverTime);
+					var newCard = temp.firstChild;
+					bindCardActions(newCard);
+
+					if (existing) {
+						col.replaceChild(newCard, existing);
+					} else if (prevNode && prevNode.nextSibling) {
+						col.insertBefore(newCard, prevNode.nextSibling);
+					} else if (!prevNode) {
+						col.insertBefore(newCard, col.firstChild);
+					} else {
+						col.appendChild(newCard);
+					}
+					prevNode = newCard;
+				}
+			});
 		});
 
-		// Bind action buttons
-		document.querySelectorAll('[data-action="status"]').forEach(function (btn) {
+		lastOrders = currentOrders;
+	}
+
+	/**
+	 * Update only the dynamic parts of a card (elapsed time, ETA, urgency) without re-rendering.
+	 */
+	function updateCardDynamic(card, order, serverTime) {
+		var elapsed = serverTime - order.date_created;
+		var elapsedEl = card.querySelector('.kds-elapsed');
+		if (elapsedEl) {
+			elapsedEl.textContent = formatElapsed(elapsed) + ' ' + config.i18n.elapsed;
+		}
+
+		// Update urgency class
+		var urgencyClass = getUrgencyClass(elapsed);
+		card.classList.remove('kds-urgency-warning', 'kds-urgency-critical');
+		if (urgencyClass && order.status !== 'completed') {
+			card.classList.add(urgencyClass);
+		}
+
+		var etaEl = card.querySelector('.kds-card-eta');
+		if (etaEl && order.eta) {
+			var remaining = order.eta - serverTime;
+			etaEl.textContent = config.i18n.etaLabel + ': ' + formatCountdown(remaining);
+			if (remaining <= 0) {
+				etaEl.classList.add('kds-overdue');
+			} else {
+				etaEl.classList.remove('kds-overdue');
+			}
+		}
+	}
+
+	/**
+	 * Bind action buttons on a single card element.
+	 */
+	function bindCardActions(card) {
+		card.querySelectorAll('[data-action="status"]').forEach(function (btn) {
 			btn.addEventListener('click', function () {
 				var orderId = parseInt(this.getAttribute('data-order-id'), 10);
 				var newStatus = this.getAttribute('data-new-status');
@@ -272,7 +398,24 @@
 			});
 		});
 
-		document.querySelectorAll('[data-action="eta"]').forEach(function (btn) {
+		card.querySelectorAll('[data-action="reject"]').forEach(function (btn) {
+			btn.addEventListener('click', function () {
+				var orderId = parseInt(this.getAttribute('data-order-id'), 10);
+				if (confirm(config.i18n.rejectConfirm)) {
+					updateOrderStatus(orderId, 'rejected');
+				}
+			});
+		});
+
+		card.querySelectorAll('[data-action="undo"]').forEach(function (btn) {
+			btn.addEventListener('click', function () {
+				var orderId = parseInt(this.getAttribute('data-order-id'), 10);
+				var undoTo = this.getAttribute('data-undo-to');
+				updateOrderStatus(orderId, undoTo);
+			});
+		});
+
+		card.querySelectorAll('[data-action="eta"]').forEach(function (btn) {
 			btn.addEventListener('click', function () {
 				var orderId = parseInt(this.getAttribute('data-order-id'), 10);
 				var orderType = this.getAttribute('data-order-type');
@@ -295,7 +438,10 @@
 			payLabel = isPickup ? config.i18n.cashOnCounter : config.i18n.cashOnDelivery;
 		}
 
-		var html = '<div class="kds-card" data-order-id="' + order.id + '">';
+		// Urgency class based on elapsed time
+		var urgencyClass = (order.status !== 'completed') ? getUrgencyClass(elapsed) : '';
+
+		var html = '<div class="kds-card' + (urgencyClass ? ' ' + urgencyClass : '') + '" data-order-id="' + order.id + '">';
 
 		// Header
 		html += '<div class="kds-card-header">';
@@ -322,18 +468,52 @@
 		}
 		html += '</div>';
 
-		// Items
-		html += '<ul class="kds-items">';
-		order.items.forEach(function (item) {
-			html += '<li class="kds-item">';
-			html += '<span class="kds-item-qty">' + item.quantity + 'x</span> ';
-			html += esc(item.name);
-			item.meta.forEach(function (m) {
-				html += '<span class="kds-item-meta">' + esc(m.key) + ': ' + esc(m.value) + '</span>';
+		// Delivery address (for delivery orders)
+		if (!isPickup && order.delivery_address) {
+			html += '<div class="kds-delivery-address">';
+			html += '<span class="kds-delivery-label">&#128205; ' + esc(config.i18n.deliveryAddr) + ':</span> ';
+			html += esc(order.delivery_address);
+			html += '</div>';
+		}
+
+		// Items grouped by category
+		var grouped = groupItemsByCategory(order.items);
+		var hasMultipleCategories = grouped.order.length > 1;
+
+		html += '<div class="kds-items-container">';
+		grouped.order.forEach(function (cat) {
+			if (hasMultipleCategories) {
+				html += '<div class="kds-item-category">' + esc(cat) + '</div>';
+			}
+			html += '<ul class="kds-items">';
+			grouped.groups[cat].forEach(function (item) {
+				html += '<li class="kds-item">';
+				html += '<span class="kds-item-qty">' + item.quantity + 'x</span> ';
+				html += esc(item.name);
+				item.meta.forEach(function (m) {
+					html += '<span class="kds-item-meta">' + esc(m.key) + ': ' + esc(m.value) + '</span>';
+				});
+				html += '</li>';
 			});
-			html += '</li>';
+			html += '</ul>';
 		});
-		html += '</ul>';
+		html += '</div>';
+
+		// Allergen info (critical for food safety)
+		if (order.allergen_info) {
+			html += '<div class="kds-allergen">';
+			html += '<span class="kds-allergen-label">&#9888;&#65039; ' + esc(config.i18n.allergens) + ':</span> ';
+			html += esc(order.allergen_info);
+			html += '</div>';
+		}
+
+		// Special instructions
+		if (order.special_instructions) {
+			html += '<div class="kds-special-instructions">';
+			html += '<span class="kds-special-label">' + esc(config.i18n.specialInstr) + ':</span> ';
+			html += esc(order.special_instructions);
+			html += '</div>';
+		}
 
 		// Note
 		if (order.customer_note) {
@@ -363,6 +543,20 @@
 				html += '<button class="kds-btn kds-btn-eta" data-action="eta" data-order-id="' + order.id + '" data-order-type="' + esc(order.order_type) + '" data-order-num="' + esc(String(order.number)) + '">' + esc(config.i18n.setEta) + '</button>';
 			}
 			html += '</div>';
+
+			// Secondary actions row: Undo + Reject
+			var undoBtn = getUndoButton(order);
+			var canReject = (order.status === 'processing' || order.status === 'accepted');
+			if (undoBtn || canReject) {
+				html += '<div class="kds-card-actions-secondary">';
+				if (undoBtn) {
+					html += '<button class="kds-btn kds-btn-undo" data-action="undo" data-order-id="' + order.id + '" data-undo-to="' + undoBtn.status + '">&#8617; ' + esc(config.i18n.undo) + '</button>';
+				}
+				if (canReject) {
+					html += '<button class="kds-btn kds-btn-reject" data-action="reject" data-order-id="' + order.id + '">&#10005; ' + esc(config.i18n.reject) + '</button>';
+				}
+				html += '</div>';
+			}
 		}
 
 		html += '</div>';
@@ -384,7 +578,41 @@
 		}
 	}
 
+	function getUndoButton(order) {
+		switch (order.status) {
+			case 'accepted':
+				return { status: 'processing' };
+			case 'preparing':
+				return { status: 'accepted' };
+			case 'ready':
+				return { status: 'preparing' };
+			default:
+				return null;
+		}
+	}
+
 	// --- AJAX ---
+
+	function refreshNonce() {
+		var formData = new FormData();
+		formData.append('action', 'lafka_kds_refresh_nonce');
+		formData.append('kds_token', config.token);
+
+		return fetch(config.ajaxUrl, {
+			method: 'POST',
+			body: formData,
+			credentials: 'same-origin'
+		})
+		.then(function (res) { return res.json(); })
+		.then(function (data) {
+			if (data && data.success && data.data.nonce) {
+				config.nonce = data.data.nonce;
+				return true;
+			}
+			return false;
+		})
+		.catch(function () { return false; });
+	}
 
 	function fetchOrders() {
 		var formData = new FormData();
@@ -399,15 +627,19 @@
 		})
 		.then(function (res) {
 			if (res.status === 403) {
-				window.location.reload();
-				return;
+				refreshNonce().then(function (ok) {
+					if (!ok) window.location.reload();
+				});
+				return null;
 			}
 			return res.json();
 		})
 		.then(function (data) {
-			if (data && data.success) {
-				failCount = 0;
-				setConnectionStatus(true);
+			if (!data) return; // null from 403 handler
+			// Any valid JSON response means connection is alive
+			failCount = 0;
+			setConnectionStatus(true);
+			if (data.success) {
 				renderOrders(data.data.orders, data.data.server_time);
 			}
 		})
@@ -430,6 +662,13 @@
 	}
 
 	function updateOrderStatus(orderId, newStatus) {
+		// Disable the button to prevent double-clicks
+		var btn = document.querySelector('[data-action="status"][data-order-id="' + orderId + '"]');
+		if (btn) {
+			btn.disabled = true;
+			btn.textContent = '...';
+		}
+
 		var formData = new FormData();
 		formData.append('action', 'lafka_kds_update_status');
 		formData.append('nonce', config.nonce);
@@ -444,16 +683,23 @@
 		})
 		.then(function (res) {
 			if (res.status === 403) {
-				window.location.reload();
-				return;
+				refreshNonce().then(function (ok) {
+					if (!ok) window.location.reload();
+				});
+				return null;
 			}
 			return res.json();
 		})
-		.then(function () {
-			fetchOrders();
+		.then(function (data) {
+			if (data !== null) fetchOrders();
 		})
 		.catch(function (err) {
 			console.error('KDS status update error:', err);
+			// Re-enable button on error
+			if (btn) {
+				btn.disabled = false;
+				btn.textContent = newStatus;
+			}
 		});
 	}
 
@@ -472,13 +718,15 @@
 		})
 		.then(function (res) {
 			if (res.status === 403) {
-				window.location.reload();
-				return;
+				refreshNonce().then(function (ok) {
+					if (!ok) window.location.reload();
+				});
+				return null;
 			}
 			return res.json();
 		})
-		.then(function () {
-			fetchOrders();
+		.then(function (data) {
+			if (data !== null) fetchOrders();
 		})
 		.catch(function (err) {
 			console.error('KDS ETA set error:', err);
@@ -560,6 +808,9 @@
 
 		// Polling
 		pollTimer = setInterval(fetchOrders, config.pollInterval);
+
+		// Proactive nonce refresh every 30 minutes to prevent expiry on long-running sessions
+		setInterval(refreshNonce, 30 * 60 * 1000);
 
 		// Safety net: full page reload every hour
 		setTimeout(function () { window.location.reload(); }, AUTO_RELOAD_MS);

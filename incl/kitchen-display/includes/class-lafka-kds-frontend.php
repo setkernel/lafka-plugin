@@ -63,10 +63,19 @@ class Lafka_KDS_Frontend {
 	 * Render the standalone KDS HTML page.
 	 */
 	private function render_page( $options ) {
+		// Security headers — standalone page shows sensitive order data
+		header( 'X-Frame-Options: DENY' );
+		header( 'X-Content-Type-Options: nosniff' );
+		header( 'Referrer-Policy: no-referrer' );
+		header( 'Cache-Control: no-store, no-cache, must-revalidate, private' );
+
 		$nonce           = wp_create_nonce( 'lafka_kds_nonce' );
 		$ajax_url        = admin_url( 'admin-ajax.php' );
-		$css_url         = plugins_url( '../assets/css/lafka-kds.css', __FILE__ );
-		$js_url          = plugins_url( '../assets/js/lafka-kds.js', __FILE__ );
+		$asset_base      = dirname( __DIR__ ) . '/assets';
+		$css_ver         = filemtime( $asset_base . '/css/lafka-kds.css' );
+		$js_ver          = filemtime( $asset_base . '/js/lafka-kds.js' );
+		$css_url         = plugins_url( '../assets/css/lafka-kds.css', __FILE__ ) . '?ver=' . $css_ver;
+		$js_url          = plugins_url( '../assets/js/lafka-kds.js', __FILE__ ) . '?ver=' . $js_ver;
 		$sound_url       = plugins_url( '../assets/sounds/new-order.mp3', __FILE__ );
 		$site_name       = get_bloginfo( 'name' );
 		$pickup_times    = array_map( 'absint', array_filter( explode( ',', $options['pickup_times'] ) ) );
@@ -81,6 +90,10 @@ class Lafka_KDS_Frontend {
 			'soundUrl'      => $sound_url,
 			'pickupTimes'   => $pickup_times,
 			'deliveryTimes' => $delivery_times,
+			'urgency'       => array(
+				'warningMinutes'  => 20,
+				'criticalMinutes' => 40,
+			),
 			'i18n'          => array(
 				'newOrders'    => __( 'New Orders', 'lafka-plugin' ),
 				'accepted'     => __( 'Accepted', 'lafka-plugin' ),
@@ -91,6 +104,9 @@ class Lafka_KDS_Frontend {
 				'markReady'    => __( 'Mark Ready', 'lafka-plugin' ),
 				'complete'     => __( 'Complete', 'lafka-plugin' ),
 				'completed'    => __( 'Completed', 'lafka-plugin' ),
+				'reject'       => __( 'Reject', 'lafka-plugin' ),
+				'undo'         => __( 'Undo', 'lafka-plugin' ),
+				'rejectConfirm' => __( 'Are you sure you want to reject this order?', 'lafka-plugin' ),
 				'setEta'       => __( 'Set ETA', 'lafka-plugin' ),
 				'pickup'       => __( 'Pickup', 'lafka-plugin' ),
 				'delivery'     => __( 'Delivery', 'lafka-plugin' ),
@@ -109,6 +125,10 @@ class Lafka_KDS_Frontend {
 				'note'         => __( 'Note', 'lafka-plugin' ),
 				'etaLabel'     => __( 'ETA', 'lafka-plugin' ),
 				'elapsed'      => __( 'ago', 'lafka-plugin' ),
+				'deliveryAddr' => __( 'Deliver to', 'lafka-plugin' ),
+				'specialInstr' => __( 'Special Instructions', 'lafka-plugin' ),
+				'allergens'    => __( 'Allergens', 'lafka-plugin' ),
+				'uncategorized' => __( 'Other Items', 'lafka-plugin' ),
 				'newOrderAnnouncement' => sprintf(
 					/* translators: %s: site name */
 					__( '%s, New Order Received!', 'lafka-plugin' ),
@@ -200,7 +220,7 @@ class Lafka_KDS_Frontend {
 				<div class="kds-eta-presets" id="kds-eta-presets"></div>
 				<div class="kds-eta-custom">
 					<label><?php esc_html_e( 'Custom (minutes)', 'lafka-plugin' ); ?></label>
-					<input type="number" id="kds-eta-custom-input" min="1" max="999" placeholder="45">
+					<input type="number" id="kds-eta-custom-input" min="1" max="180" placeholder="45">
 				</div>
 			</div>
 			<div class="kds-modal-footer">

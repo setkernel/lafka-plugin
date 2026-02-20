@@ -159,6 +159,19 @@ html, body {
 	border-radius: var(--kds-radius);
 	padding: 12px;
 	border: 1px solid var(--kds-border);
+	transition: border-color 0.3s ease;
+}
+
+/* Urgency indicators — border glow based on order age */
+.kds-card.kds-urgency-warning {
+	border-color: var(--kds-warning);
+	box-shadow: inset 0 0 0 1px var(--kds-warning);
+}
+
+.kds-card.kds-urgency-critical {
+	border-color: var(--kds-accent);
+	box-shadow: inset 0 0 0 1px var(--kds-accent);
+	animation: kds-pulse 2s ease-in-out infinite;
 }
 
 .kds-card-header {
@@ -263,6 +276,72 @@ html, body {
 	font-weight: 600;
 }
 
+/* Delivery Address */
+.kds-delivery-address {
+	background: rgba(108, 155, 207, 0.15);
+	border-left: 3px solid var(--kds-info);
+	padding: 6px 10px;
+	margin-bottom: 8px;
+	font-size: 12px;
+	color: var(--kds-info);
+	border-radius: 0 4px 4px 0;
+}
+
+.kds-delivery-label {
+	font-weight: 600;
+}
+
+/* Allergen Info — high visibility for food safety */
+.kds-allergen {
+	background: rgba(233, 69, 96, 0.2);
+	border-left: 3px solid var(--kds-accent);
+	padding: 6px 10px;
+	margin-bottom: 8px;
+	font-size: 12px;
+	color: var(--kds-accent);
+	border-radius: 0 4px 4px 0;
+	font-weight: 600;
+}
+
+.kds-allergen-label {
+	font-weight: 700;
+}
+
+/* Special Instructions */
+.kds-special-instructions {
+	background: rgba(78, 204, 163, 0.12);
+	border-left: 3px solid var(--kds-success);
+	padding: 6px 10px;
+	margin-bottom: 8px;
+	font-size: 12px;
+	color: var(--kds-success);
+	border-radius: 0 4px 4px 0;
+}
+
+.kds-special-label {
+	font-weight: 600;
+}
+
+/* Item Category Grouping */
+.kds-items-container {
+	margin-bottom: 8px;
+}
+
+.kds-item-category {
+	font-size: 11px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	color: var(--kds-text-muted);
+	padding: 4px 0 2px;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+	margin-top: 6px;
+}
+
+.kds-item-category:first-child {
+	margin-top: 0;
+}
+
 /* ETA display on card */
 .kds-card-eta {
 	text-align: center;
@@ -328,6 +407,43 @@ html, body {
 [data-status="accepted"] .kds-btn-action { background: var(--kds-warning); color: #1a1a2e; }
 [data-status="preparing"] .kds-btn-action { background: var(--kds-success); color: #1a1a2e; }
 [data-status="ready"] .kds-btn-action { background: #7b68ee; }
+
+/* Secondary action row (Undo / Reject) */
+.kds-card-actions-secondary {
+	display: flex;
+	gap: 6px;
+	margin-top: 6px;
+}
+
+.kds-btn-undo {
+	flex: 1;
+	background: var(--kds-surface);
+	color: var(--kds-text-muted);
+	border: 1px solid var(--kds-border);
+	font-size: 12px;
+	padding: 6px 10px;
+	min-height: 36px;
+}
+
+.kds-btn-undo:hover {
+	color: var(--kds-text);
+	border-color: var(--kds-text-muted);
+}
+
+.kds-btn-reject {
+	flex: 1;
+	background: rgba(233, 69, 96, 0.15);
+	color: var(--kds-accent);
+	border: 1px solid var(--kds-accent);
+	font-size: 12px;
+	padding: 6px 10px;
+	min-height: 36px;
+}
+
+.kds-btn-reject:hover {
+	background: var(--kds-accent);
+	color: #fff;
+}
 
 /* No orders placeholder */
 .kds-no-orders {
@@ -513,6 +629,16 @@ html, body {
 @media (max-width: 1280px) {
 	.kds-board {
 		grid-template-columns: repeat(3, 1fr);
+		grid-template-rows: auto;
+		height: auto;
+		min-height: calc(100vh - var(--kds-header-h));
+		overflow-y: auto;
+		overflow-x: hidden;
+	}
+
+	.kds-column {
+		min-height: 200px;
+		max-height: 50vh;
 	}
 }
 
@@ -522,14 +648,13 @@ html, body {
 	}
 
 	.kds-column {
-		max-height: calc(50vh - var(--kds-header-h) / 2);
+		max-height: 45vh;
 	}
 }
 
 @media (max-width: 600px) {
 	.kds-board {
 		grid-template-columns: 1fr;
-		grid-template-rows: auto;
 		overflow-y: auto;
 	}
 
@@ -598,6 +723,9 @@ html, body {
 	.kds-customer,
 	.kds-items,
 	.kds-note,
+	.kds-delivery-address,
+	.kds-allergen,
+	.kds-special-instructions,
 	.kds-total {
 		color: black;
 	}
