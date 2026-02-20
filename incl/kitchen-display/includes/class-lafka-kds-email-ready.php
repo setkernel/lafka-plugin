@@ -71,6 +71,9 @@ class Lafka_KDS_Email_Ready extends WC_Email {
 				'email_heading'      => $this->get_heading(),
 				'additional_content' => $this->get_additional_content(),
 				'order_type'         => Lafka_Kitchen_Display::get_order_type( $this->object ),
+				'order_url'          => $this->object->get_checkout_order_received_url(),
+				'store_address'      => $this->get_store_address(),
+				'store_phone'        => $this->get_store_phone(),
 				'sent_to_admin'      => false,
 				'plain_text'         => false,
 				'email'              => $this,
@@ -88,6 +91,9 @@ class Lafka_KDS_Email_Ready extends WC_Email {
 				'email_heading'      => $this->get_heading(),
 				'additional_content' => $this->get_additional_content(),
 				'order_type'         => Lafka_Kitchen_Display::get_order_type( $this->object ),
+				'order_url'          => $this->object->get_checkout_order_received_url(),
+				'store_address'      => $this->get_store_address(),
+				'store_phone'        => $this->get_store_phone(),
 				'sent_to_admin'      => false,
 				'plain_text'         => true,
 				'email'              => $this,
@@ -99,5 +105,25 @@ class Lafka_KDS_Email_Ready extends WC_Email {
 
 	public function get_default_additional_content() {
 		return __( 'Thank you for your patience!', 'lafka-plugin' );
+	}
+
+
+
+	protected function get_store_address() {
+		$parts = array_filter( array(
+			get_option( 'woocommerce_store_address' ),
+			get_option( 'woocommerce_store_address_2' ),
+			get_option( 'woocommerce_store_city' ),
+			get_option( 'woocommerce_store_postcode' ),
+		) );
+		return implode( ', ', $parts );
+	}
+
+	protected function get_store_phone() {
+		$phone = get_option( 'woocommerce_store_phone', '' );
+		if ( ! $phone ) {
+			$phone = get_option( 'lafka_contact_phone', '' );
+		}
+		return $phone;
 	}
 }
