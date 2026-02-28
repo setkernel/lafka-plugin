@@ -121,7 +121,7 @@ function lafka_shipping_areas_method_init() {
 				if ( in_array( $this->rate_mode, array( 'distance', 'fixed_and_distance' ), true ) ) {
 					$options           = get_option( 'lafka_shipping_areas_advanced' );
 					$has_secondary_key = ! empty( $options['secondary_google_maps_api_key'] );
-					$has_primary_key   = (bool) lafka_get_option( 'google_maps_api_key' );
+					$has_primary_key   = function_exists( 'lafka_get_option' ) ? (bool) lafka_get_option( 'google_maps_api_key' ) : false;
 					if ( ! $has_secondary_key && ! $has_primary_key ) {
 						error_log( '[Lafka Shipping] is_available=false: no Google Maps API key configured for distance mode' );
 						return false;
@@ -550,7 +550,7 @@ function lafka_shipping_areas_method_init() {
 			}
 
 			private function request_distance_api( $origin, $destination, $cache = true ): array {
-				$api_key = lafka_get_option( 'google_maps_api_key' );
+				$api_key = function_exists( 'lafka_get_option' ) ? lafka_get_option( 'google_maps_api_key' ) : '';
 				$options = get_option( 'lafka_shipping_areas_general' );
 				if ( ! empty( $options['secondary_google_maps_api_key'] ) ) {
 					$api_key = $options['secondary_google_maps_api_key'];

@@ -49,7 +49,7 @@ class Lafka_Branch_Locations_Admin {
 			'select2',
 			'lafka-schedule',
 			'flatpickr'
-		), '1.0', true );
+		), lafka_plugin_asset_version( 'incl/shipping-areas/assets/js/backend/lafka-branch-locations-admin.min.js' ), true );
 		$options_branches = get_option( 'lafka_shipping_areas_branches' );
 		wp_localize_script( 'lafka-branch-locations-admin', 'lafka_branch_location_properties', array(
 			'geocode_label'         => esc_html__( 'Geocode', 'lafka-plugin' ),

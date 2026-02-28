@@ -252,14 +252,14 @@ class Lafka_Shipping_Areas {
 	}
 
 	public function enqueue_scripts() {
-		wp_enqueue_style( 'lafka-shipping-areas-front', plugins_url( 'assets/css/frontend/lafka-shipping-areas-front.css', __FILE__ ), array(), '1.0' );
+		wp_enqueue_style( 'lafka-shipping-areas-front', plugins_url( 'assets/css/frontend/lafka-shipping-areas-front.css', __FILE__ ), array(), lafka_plugin_asset_version( 'incl/shipping-areas/assets/css/frontend/lafka-shipping-areas-front.css' ) );
 
 		if ( is_cart() || is_checkout() ) {
 			wp_enqueue_script( 'lafka-shipping-areas-handle-shipping', plugins_url( 'assets/js/frontend/lafka-shipping-areas-handle-shipping.min.js', __FILE__ ), array(
 				'jquery',
 				'lafka-google-maps',
 				'jquery-blockui'
-			), '1.0', true );
+			), lafka_plugin_asset_version( 'incl/shipping-areas/assets/js/frontend/lafka-shipping-areas-handle-shipping.min.js' ), true );
 
 			$options                 = get_option( 'lafka_shipping_areas_general' );
 			$options_advanced        = get_option( 'lafka_shipping_areas_advanced' );
@@ -288,7 +288,7 @@ class Lafka_Shipping_Areas {
 			$flatpickr_locale = apply_filters( 'lafka_flatpickr_locale', strtok( get_locale(), '_' ), get_locale() );
 			wp_enqueue_style( 'flatpickr' );
 			wp_enqueue_script( 'flatpickr-local' );
-			wp_enqueue_script( 'lafka-shipping-datetime', plugins_url( 'assets/js/frontend/lafka-shipping-datetime.min.js', __FILE__ ), array( 'jquery', 'select2', 'flatpickr' ), '1.0', true );
+			wp_enqueue_script( 'lafka-shipping-datetime', plugins_url( 'assets/js/frontend/lafka-shipping-datetime.min.js', __FILE__ ), array( 'jquery', 'select2', 'flatpickr' ), lafka_plugin_asset_version( 'incl/shipping-areas/assets/js/frontend/lafka-shipping-datetime.min.js' ), true );
 			wp_localize_script( 'lafka-shipping-datetime', 'lafka_datetime_options', array(
 				'is_order_hours_enabled' => class_exists( 'Lafka_Order_Hours' ),
 				'days_ahead'             => $this->order_date_time_days_ahead,

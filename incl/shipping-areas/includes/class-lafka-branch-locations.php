@@ -53,6 +53,13 @@ class Lafka_Branch_Locations {
 	}
 
 	public static function enqueue_scripts() {
+		// PERF-C11: Only load Google Maps JS (~200 KB), branch location scripts, and localized
+		// data on WooCommerce pages that actually use branch selection (checkout, cart, shop,
+		// product pages). Blog posts, about pages, etc. don't need these.
+		if ( function_exists( 'is_checkout' ) && ! is_checkout() && ! is_cart() && ! is_shop() && ! is_product() && ! is_product_category() && ! is_product_tag() && ! is_woocommerce() ) {
+			return;
+		}
+
 		$branch_locations_json_data          = self::get_branch_locations_json_data();
 		$lafka_order_hours_options           = get_option( 'lafka_order_hours_options' );
 		$options_branches                    = get_option( 'lafka_shipping_areas_branches' );
@@ -70,7 +77,7 @@ class Lafka_Branch_Locations {
 			'lafka-google-maps',
 			'jquery-blockui',
 			'wc-country-select'
-		), '1.0', true );
+		), lafka_plugin_asset_version( 'incl/shipping-areas/assets/js/frontend/lafka-branch-locations-front.min.js' ), true );
 		wp_localize_script( 'lafka-branch-locations-front', 'lafka_branch_locations_front', array(
 			'ajax_url'                            => admin_url( 'admin-ajax.php' ),
 			'closable_because_of_closed_branches' => $closable_because_of_closed_branches,
@@ -96,6 +103,11 @@ class Lafka_Branch_Locations {
 	}
 
 	public static function output_in_footer() {
+		// PERF-C11: Skip branch modal HTML on non-WooCommerce pages (mirrors enqueue_scripts guard)
+		if ( function_exists( 'is_checkout' ) && ! is_checkout() && ! is_cart() && ! is_shop() && ! is_product() && ! is_product_category() && ! is_product_tag() && ! is_woocommerce() ) {
+			return;
+		}
+
 		$options_branches = get_option( 'lafka_shipping_areas_branches' );
 		?>
         <div id="lafka_select_branch_modal" class="mfp-hide">
@@ -606,15 +618,48 @@ class Lafka_Branch_Locations {
 		$locations_rich_data = array();
 
 		$branch_locations = Lafka_Shipping_Areas::get_all_legit_branch_locations();
+
+		if ( empty( $branch_locations ) ) {
+			return json_encode( $locations_rich_data );
+		}
+
+		// PERF-H26: Prime term meta cache for ALL branches in a single query
+		// instead of N individual get_term_meta() calls (one per branch).
+		$branch_ids = array_keys( $branch_locations );
+		update_term_meta_cache( $branch_ids );
+
+		// First pass: collect all shipping area IDs from all branches
+		$all_shipping_area_ids = array();
+		$branch_shipping_areas_map = array();
 		foreach ( $branch_locations as $location_id => $location_name ) {
-			$location_meta = get_term_meta( $location_id );
+			$location_meta = get_term_meta( $location_id ); // Served from primed cache — zero queries
+			if ( is_array( $location_meta ) && ! empty( $location_meta['lafka_branch_shipping_areas'][0] ) ) {
+				$area_ids = json_decode( $location_meta['lafka_branch_shipping_areas'][0] );
+				if ( is_array( $area_ids ) ) {
+					$branch_shipping_areas_map[ $location_id ] = $area_ids;
+					foreach ( $area_ids as $area_id ) {
+						$all_shipping_area_ids[] = (int) $area_id;
+					}
+				}
+			}
+		}
+
+		// Prime post meta cache for ALL shipping areas in a single query
+		// instead of N individual get_post_meta() calls (one per shipping area).
+		if ( ! empty( $all_shipping_area_ids ) ) {
+			update_postmeta_cache( array_unique( $all_shipping_area_ids ) );
+		}
+
+		// Second pass: build the enriched data using primed caches (zero additional queries)
+		foreach ( $branch_locations as $location_id => $location_name ) {
+			$location_meta = get_term_meta( $location_id ); // From cache
 			if ( is_array( $location_meta ) ) {
 				$shipping_areas = array();
-				if ( ! empty( $location_meta['lafka_branch_shipping_areas'][0] ) ) {
-					foreach ( json_decode( $location_meta['lafka_branch_shipping_areas'][0] ) as $shipping_area_id ) {
+				if ( ! empty( $branch_shipping_areas_map[ $location_id ] ) ) {
+					foreach ( $branch_shipping_areas_map[ $location_id ] as $shipping_area_id ) {
 						$shipping_areas[] = array(
 							'id'                       => $shipping_area_id,
-							'area_polygon_coordinates' => get_post_meta( $shipping_area_id, '_lafka_shipping_area_polygon_coordinates', true )
+							'area_polygon_coordinates' => get_post_meta( $shipping_area_id, '_lafka_shipping_area_polygon_coordinates', true ) // From primed cache
 						);
 					}
 				}
