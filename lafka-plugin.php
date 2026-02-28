@@ -17,6 +17,23 @@ if ( ! defined( 'LAFKA_PLUGIN_FILE' ) ) {
 	define( 'LAFKA_PLUGIN_FILE', __FILE__ );
 }
 
+/**
+ * Return filemtime-based version string for a plugin asset.
+ *
+ * @param string $relative_path Path relative to this plugin's root directory, e.g. 'assets/js/file.js'.
+ * @return string|false
+ * @since 8.6.0
+ */
+if ( ! function_exists( 'lafka_plugin_asset_version' ) ) {
+	function lafka_plugin_asset_version( $relative_path ) {
+		$file = plugin_dir_path( LAFKA_PLUGIN_FILE ) . $relative_path;
+		return file_exists( $file ) ? (string) filemtime( $file ) : '1.0.0';
+	}
+}
+
+// Load shared options helper — available to both plugin and theme.
+require_once plugin_dir_path( __FILE__ ) . 'incl/class-lafka-options.php';
+
 if ( ! function_exists('lafka_write_log')) {
 	function lafka_write_log ( $log )  {
 		if ( is_array( $log ) || is_object( $log ) ) {
@@ -24,6 +41,16 @@ if ( ! function_exists('lafka_write_log')) {
 		} else {
 			error_log( $log );
 		}
+	}
+}
+
+/**
+ * Fallback for lafka_get_option() when the Lafka theme is not active.
+ * Delegates to Lafka_Options helper for consistent caching and defaults.
+ */
+if ( ! function_exists( 'lafka_get_option' ) ) {
+	function lafka_get_option( $name, $default = false ) {
+		return Lafka_Options::get( $name, $default );
 	}
 }
 
@@ -60,44 +87,44 @@ if ( in_array( 'dc-woocommerce-multi-vendor/dc_product_vendor.php', apply_filter
 	define('LAFKA_PLUGIN_IS_WC_MARKETPLACE', FALSE);
 }
 
-// Check product_addons are enabled in Theme Options
-function is_lafka_product_addons($lafka_options) {
-	if ( isset( $lafka_options['product_addons'] ) && $lafka_options['product_addons'] === 'enabled' ) {
-		return true;
-	}
-	return false;
+/*
+ * Shared LAFKA_IS_* constants — canonical detection flags consumed by both
+ * plugin and theme. The plugin loads first (plugins_loaded), so it sets these
+ * early. The theme's config.php skips re-defining them when already set.
+ */
+if ( ! defined( 'LAFKA_IS_WOOCOMMERCE' ) ) {
+	define( 'LAFKA_IS_WOOCOMMERCE', LAFKA_PLUGIN_IS_WOOCOMMERCE );
+}
+if ( ! defined( 'LAFKA_IS_BBPRESS' ) ) {
+	define( 'LAFKA_IS_BBPRESS', LAFKA_PLUGIN_IS_BBPRESS );
+}
+if ( ! defined( 'LAFKA_IS_REVOLUTION' ) ) {
+	define( 'LAFKA_IS_REVOLUTION', LAFKA_PLUGIN_IS_REVOLUTION );
+}
+if ( ! defined( 'LAFKA_IS_WC_MARKETPLACE' ) ) {
+	define( 'LAFKA_IS_WC_MARKETPLACE', LAFKA_PLUGIN_IS_WC_MARKETPLACE );
 }
 
-// Check shipping_areas are enabled in Theme Options
-function is_lafka_shipping_areas($lafka_options) {
-	if ( isset( $lafka_options['shipping_areas'] ) && $lafka_options['shipping_areas'] === 'enabled' ) {
-		return true;
-	}
-	return false;
+// Feature-flag checks — accept legacy $lafka_options array for backward compat,
+// but delegate to Lafka_Options::is_enabled() for consistent access.
+function is_lafka_product_addons( $lafka_options = null ) {
+	return Lafka_Options::is_enabled( 'product_addons' );
 }
 
-// Check product-combos are enabled in Theme Options
-function is_lafka_product_combos($lafka_options) {
-	if ( isset( $lafka_options['product_combos'] ) && $lafka_options['product_combos'] === 'enabled' ) {
-		return true;
-	}
-	return false;
+function is_lafka_shipping_areas( $lafka_options = null ) {
+	return Lafka_Options::is_enabled( 'shipping_areas' );
 }
 
-// Check order_hours are enabled in Theme Options
-function is_lafka_order_hours($lafka_options) {
-	if ( isset( $lafka_options['order_hours'] ) && $lafka_options['order_hours'] === 'enabled' ) {
-		return true;
-	}
-	return false;
+function is_lafka_product_combos( $lafka_options = null ) {
+	return Lafka_Options::is_enabled( 'product_combos' );
 }
 
-// Check kitchen_display is enabled in Theme Options
-function is_lafka_kitchen_display($lafka_options) {
-	if ( isset( $lafka_options['kitchen_display'] ) && $lafka_options['kitchen_display'] === 'enabled' ) {
-		return true;
-	}
-	return false;
+function is_lafka_order_hours( $lafka_options = null ) {
+	return Lafka_Options::is_enabled( 'order_hours' );
+}
+
+function is_lafka_kitchen_display( $lafka_options = null ) {
+	return Lafka_Options::is_enabled( 'kitchen_display' );
 }
 
 add_action( 'before_woocommerce_init', function() {
@@ -156,7 +183,10 @@ function lafka_plugin_after_plugins_loaded() {
 			require_once( plugin_dir_path( __FILE__ ) . 'widgets/wc_widgets/' . $file . '.php' );
 		}
 
-		require_once(plugin_dir_path( __FILE__ ) . '/incl/woocommerce-metaboxes.php');
+		// PERF-H09: woocommerce-metaboxes.php is admin-only (term edit fields + save hooks)
+		if ( is_admin() ) {
+			require_once(plugin_dir_path( __FILE__ ) . '/incl/woocommerce-metaboxes.php');
+		}
 		require_once(plugin_dir_path( __FILE__ ) . '/incl/woocommerce-functions.php');
 
 		// subcategories after 3.3.1 - will need refactoring in future
@@ -191,21 +221,27 @@ function lafka_plugin_after_plugins_loaded() {
 	/* shortcodes */
 	require_once( plugin_dir_path(__FILE__) . 'shortcodes/shortcodes.php' );
 
-	/* Map all Lafka shortcodes to VC */
-	add_action('vc_before_init', 'lafka_integrateWithVC');
-	require_once( plugin_dir_path(__FILE__) . 'shortcodes/shortcodes_to_vc_mapping.php' );
+	/* Map all Lafka shortcodes to VC — PERF-H09: VC mapping is admin-only */
+	if ( is_admin() ) {
+		add_action('vc_before_init', 'lafka_integrateWithVC');
+		require_once( plugin_dir_path(__FILE__) . 'shortcodes/shortcodes_to_vc_mapping.php' );
+	}
 
 	/* Load variation product swatches */
 	require_once( plugin_dir_path(__FILE__) . 'incl/swatches/variation-swatches.php' );
 
-	/* include metaboxes.php */
-	require_once( plugin_dir_path(__FILE__) . '/incl/metaboxes.php');
+	/* include metaboxes.php — PERF-H09: admin-only (add_meta_boxes + save_post with nonce) */
+	if ( is_admin() ) {
+		require_once( plugin_dir_path(__FILE__) . '/incl/metaboxes.php');
+	}
 
 	/* Load foodmenu_category ordering in admin */
 	require_once( plugin_dir_path(__FILE__) . '/incl/foodmenu-category-ordering.php');
 
-	/* include customizer class */
-	require_once( plugin_dir_path(__FILE__) . '/incl/customizer/class-lafka-customizer.php');
+	/* include customizer class — PERF-H09: admin-only (customize_register hook) */
+	if ( is_admin() ) {
+		require_once( plugin_dir_path(__FILE__) . '/incl/customizer/class-lafka-customizer.php');
+	}
 
     // Removed because causes categories to appear twice in shop and category view.
     // Functionality not lost, because "woocommerce_maybe_show_product_subcategories" is called
@@ -233,7 +269,10 @@ if (!function_exists('lafka_bbp_setup_current_user')) {
 
 }
 
-if (!function_exists('get_plugin_data')) {
+// PERF-H10: Only load wp-admin/includes/plugin.php in admin context.
+// get_plugin_data() is only used by admin screens; loading this 500-line file
+// on every frontend request is unnecessary.
+if ( is_admin() && !function_exists('get_plugin_data') ) {
 	include_once( ABSPATH . 'wp-admin/includes/plugin.php' );
 }
 
@@ -399,53 +438,49 @@ if (!function_exists('lafka_register_plugin_scripts')) {
 
 	function lafka_register_plugin_scripts() {
 
-		// flexslider
-		wp_enqueue_script('flexslider', get_template_directory_uri() . "/js/flex/jquery.flexslider-min.js", array('jquery'), '2.2.2', true);
-		wp_enqueue_style('flexslider', get_template_directory_uri() . "/styles/flex/flexslider.css", array(), '2.2.2');
+		// PERF-C02: Theme already registers/enqueues these with proper conditional logic.
+		// Only register as fallback (in case plugin runs without the Lafka theme).
+		// Do NOT wp_enqueue — that would override the theme's conditional enqueue guards
+		// for cloud-zoom (product pages only), countdown (product pages only),
+		// magnific (product/singular only), etc.
+		wp_register_script('flexslider', get_template_directory_uri() . "/js/flex/jquery.flexslider-min.js", array('jquery'), lafka_asset_version( '/js/flex/jquery.flexslider-min.js' ), true);
+		wp_register_style('flexslider', get_template_directory_uri() . "/styles/flex/flexslider.css", array(), lafka_asset_version( '/styles/flex/flexslider.css' ));
 
-		// owl-carousel
-		wp_enqueue_script('owl-carousel', get_template_directory_uri() . "/js/owl-carousel2-dist/owl.carousel.min.js", array('jquery'), '2.3.4', true);
-		wp_enqueue_style('owl-carousel', get_template_directory_uri() . "/styles/owl-carousel2-dist/assets/owl.carousel.min.css", array(), '2.3.4');
-		wp_enqueue_style('owl-carousel-theme-default', get_template_directory_uri() . "/styles/owl-carousel2-dist/assets/owl.theme.default.min.css", array(), '2.3.4');
-		wp_enqueue_style('owl-carousel-animate', get_template_directory_uri() . "/styles/owl-carousel2-dist/assets/animate.css", array(), '2.3.4');
+		wp_register_script('owl-carousel', get_template_directory_uri() . "/js/owl-carousel2-dist/owl.carousel.min.js", array('jquery'), lafka_asset_version( '/js/owl-carousel2-dist/owl.carousel.min.js' ), true);
+		wp_register_style('owl-carousel', get_template_directory_uri() . "/styles/owl-carousel2-dist/assets/owl.carousel.min.css", array(), lafka_asset_version( '/styles/owl-carousel2-dist/assets/owl.carousel.min.css' ));
+		wp_register_style('owl-carousel-theme-default', get_template_directory_uri() . "/styles/owl-carousel2-dist/assets/owl.theme.default.min.css", array(), lafka_asset_version( '/styles/owl-carousel2-dist/assets/owl.theme.default.min.css' ));
+		wp_register_style('owl-carousel-animate', get_template_directory_uri() . "/styles/owl-carousel2-dist/assets/animate.css", array(), lafka_asset_version( '/styles/owl-carousel2-dist/assets/animate.css' ));
 
-		// cloud-zoom
-		wp_enqueue_script('cloud-zoom', get_template_directory_uri() . "/js/cloud-zoom/cloud-zoom.1.0.2.min.js", array('jquery'), '1.0.2', true);
-		wp_enqueue_style('cloud-zoom', get_template_directory_uri() . "/styles/cloud-zoom/cloud-zoom.css", array(), '1.0.2');
+		wp_register_script('cloud-zoom', get_template_directory_uri() . "/js/cloud-zoom/cloud-zoom.1.0.2.min.js", array('jquery'), lafka_asset_version( '/js/cloud-zoom/cloud-zoom.1.0.2.min.js' ), true);
+		wp_register_style('cloud-zoom', get_template_directory_uri() . "/styles/cloud-zoom/cloud-zoom.css", array(), lafka_asset_version( '/styles/cloud-zoom/cloud-zoom.css' ));
 
-		// countdown
-		wp_register_script('jquery-plugin', get_template_directory_uri() . "/js/count/jquery.plugin.min.js", array('jquery'), '2.1.0', true);
-		wp_enqueue_script('countdown', get_template_directory_uri() . "/js/count/jquery.countdown.min.js", array('jquery', 'jquery-plugin'), '2.1.0', true);
+		wp_register_script('jquery-plugin', get_template_directory_uri() . "/js/count/jquery.plugin.min.js", array('jquery'), lafka_asset_version( '/js/count/jquery.plugin.min.js' ), true);
+		wp_register_script('countdown', get_template_directory_uri() . "/js/count/jquery.countdown.min.js", array('jquery', 'jquery-plugin'), lafka_asset_version( '/js/count/jquery.countdown.min.js' ), true);
 
-		// Flatpickr
-		wp_register_script( 'flatpickr', plugins_url( 'assets/js/flatpickr/flatpickr.min.js', __FILE__ ), array( 'jquery' ), '4.6.13', true );
+		// Flatpickr (plugin-only asset — not in theme)
+		wp_register_script( 'flatpickr', plugins_url( 'assets/js/flatpickr/flatpickr.min.js', __FILE__ ), array( 'jquery' ), lafka_plugin_asset_version( 'assets/js/flatpickr/flatpickr.min.js' ), true );
 		$flatpickr_locale = apply_filters( 'lafka_flatpickr_locale', strtok( get_locale(), '_' ), get_locale() );
 		if ( file_exists( untrailingslashit( plugin_dir_path( LAFKA_PLUGIN_FILE ) . "assets/js/flatpickr/l10n/$flatpickr_locale.js" ) ) ) {
-			wp_register_script( 'flatpickr-local', plugins_url( "assets/js/flatpickr/l10n/$flatpickr_locale.js", __FILE__ ), array( 'flatpickr' ), '4.6.13', true );
+			wp_register_script( 'flatpickr-local', plugins_url( "assets/js/flatpickr/l10n/$flatpickr_locale.js", __FILE__ ), array( 'flatpickr' ), lafka_plugin_asset_version( "assets/js/flatpickr/l10n/$flatpickr_locale.js" ), true );
 		} else if ( file_exists( untrailingslashit( get_stylesheet_directory() . "/lafka_plugin_templates/flatpickr_l10n/$flatpickr_locale.js" ) ) ) {
-			wp_register_script( 'flatpickr-local', get_stylesheet_directory_uri() . "/lafka_plugin_templates/flatpickr_l10n/$flatpickr_locale.js", array( 'flatpickr' ), '4.6.13', true );
+			wp_register_script( 'flatpickr-local', get_stylesheet_directory_uri() . "/lafka_plugin_templates/flatpickr_l10n/$flatpickr_locale.js", array( 'flatpickr' ), lafka_plugin_asset_version( "assets/js/flatpickr/flatpickr.min.js" ), true );
 		}
 
-		wp_register_style( 'flatpickr', plugins_url( 'assets/js/flatpickr/flatpickr.min.css', __FILE__ ), array(), '4.6.13' );
+		wp_register_style( 'flatpickr', plugins_url( 'assets/js/flatpickr/flatpickr.min.css', __FILE__ ), array(), lafka_plugin_asset_version( 'assets/js/flatpickr/flatpickr.min.css' ) );
 
-		// magnific
-		wp_enqueue_script('magnific', get_template_directory_uri() . "/js/magnific/jquery.magnific-popup.min.js", array('jquery'), '1.0.0', true);
-		wp_enqueue_style('magnific', get_template_directory_uri() . "/styles/magnific/magnific-popup.css", array(), '1.0.2');
+		wp_register_script('magnific', get_template_directory_uri() . "/js/magnific/jquery.magnific-popup.min.js", array('jquery'), lafka_asset_version( '/js/magnific/jquery.magnific-popup.min.js' ), true);
+		wp_register_style('magnific', get_template_directory_uri() . "/styles/magnific/magnific-popup.css", array(), lafka_asset_version( '/styles/magnific/magnific-popup.css' ));
 
-		// appear
-		wp_enqueue_script('appear', get_template_directory_uri() . "/js/jquery.appear.min.js", array('jquery'), '1.0.0', true);
+		wp_register_script('appear', get_template_directory_uri() . "/js/jquery.appear.min.js", array('jquery'), lafka_asset_version( '/js/jquery.appear.min.js' ), true);
 
-		// appear
-		wp_enqueue_script('typed', get_template_directory_uri() . "/js/typed.min.js", array(), '2.0.16', true);
+		wp_register_script('typed', get_template_directory_uri() . "/js/typed.min.js", array(), lafka_asset_version( '/js/typed.min.js' ), true);
 
-		// nice-select
-		wp_enqueue_script('nice-select', get_template_directory_uri() . "/js/jquery.nice-select.min.js", array('jquery'), '1.0.0', true);
+		wp_register_script('nice-select', get_template_directory_uri() . "/js/jquery.nice-select.min.js", array('jquery'), lafka_asset_version( '/js/jquery.nice-select.min.js' ), true);
 
-		// is-in-viewport
-		wp_enqueue_script('is-in-viewport', get_template_directory_uri() . "/js/isInViewport.min.js", array('jquery'), '1.0.0', true);
+		wp_register_script('is-in-viewport', get_template_directory_uri() . "/js/isInViewport.min.js", array('jquery'), lafka_asset_version( '/js/isInViewport.min.js' ), true);
 
 		// Isotope
-		wp_register_script('isotope', get_template_directory_uri() . "/js/isotope/dist/isotope.pkgd.min.js", array('jquery', 'imagesloaded'), false, true);
+		wp_register_script('isotope', get_template_directory_uri() . "/js/isotope/dist/isotope.pkgd.min.js", array('jquery', 'imagesloaded'), lafka_asset_version( '/js/isotope/dist/isotope.pkgd.min.js' ), true);
 		// google maps
         if(function_exists('lafka_get_option')) {
 	        wp_register_script( 'lafka-google-maps', 'https://maps.googleapis.com/maps/api/js?' . ( lafka_get_option( 'google_maps_api_key' ) ? 'key=' . lafka_get_option( 'google_maps_api_key' ) . '&' : '' ) . 'libraries=geometry,places&v=weekly&language=' . get_locale() . '&callback=Function.prototype', array( 'jquery' ), false, true );
@@ -459,20 +494,21 @@ add_action('admin_enqueue_scripts', 'lafka_register_admin_plugin_scripts');
 if (!function_exists('lafka_register_admin_plugin_scripts')) {
 	function lafka_register_admin_plugin_scripts() {
 		// Flatpickr
-		wp_register_script( 'flatpickr', plugins_url( 'assets/js/flatpickr/flatpickr.min.js', __FILE__ ), array( 'jquery' ), '4.6.13', true );
-		wp_register_style( 'flatpickr', plugins_url( 'assets/js/flatpickr/flatpickr.min.css', __FILE__ ), array(), '4.6.13' );
+		wp_register_script( 'flatpickr', plugins_url( 'assets/js/flatpickr/flatpickr.min.js', __FILE__ ), array( 'jquery' ), lafka_plugin_asset_version( 'assets/js/flatpickr/flatpickr.min.js' ), true );
+		wp_register_style( 'flatpickr', plugins_url( 'assets/js/flatpickr/flatpickr.min.css', __FILE__ ), array(), lafka_plugin_asset_version( 'assets/js/flatpickr/flatpickr.min.css' ) );
 
 		// Schedule
 		wp_register_script( 'lafka-schedule', plugins_url( 'assets/js/schedule/jquery.schedule.min.js', __FILE__ ), array(
 			'jquery-ui-core',
 			'jquery-ui-draggable',
 			'jquery-ui-resizable'
-		), '2.1.0', true );
-		wp_register_style( 'lafka-schedule', plugins_url( 'assets/css/schedule/jquery.schedule.min.css', __FILE__ ), array(), '2.1.0' );
+		), lafka_plugin_asset_version( 'assets/js/schedule/jquery.schedule.min.js' ), true );
+		wp_register_style( 'lafka-schedule', plugins_url( 'assets/css/schedule/jquery.schedule.min.css', __FILE__ ), array(), lafka_plugin_asset_version( 'assets/css/schedule/jquery.schedule.min.css' ) );
 
 		// ajax upload files
 		wp_enqueue_script( 'plupload' );
-		wp_enqueue_script( 'lafka-plugin-admin', plugins_url( 'assets/js/lafka-plugin-admin.js', __FILE__ ), array( 'plupload' ), false, true );
+		$suffix = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
+		wp_enqueue_script( 'lafka-plugin-admin', plugins_url( 'assets/js/lafka-plugin-admin' . $suffix . '.js', __FILE__ ), array( 'plupload' ), lafka_plugin_asset_version( 'assets/js/lafka-plugin-admin' . $suffix . '.js' ), true );
 		wp_localize_script('lafka-plugin-admin', 'localise', array(
 			'confirm_import_1' => esc_html__('Confirm importing settings from', 'lafka-plugin'),
 			'confirm_import_2' => esc_html__('. Current Theme Options will be overwritten. Continue?', 'lafka-plugin'),
@@ -485,12 +521,12 @@ if (!function_exists('lafka_register_admin_plugin_scripts')) {
 		$screen    = get_current_screen();
 		$screen_id = $screen ? $screen->id : '';
 		if ( strstr( $screen_id, 'lafka_foodmenu_category' ) && ! empty( $_GET['taxonomy'] ) && in_array( wp_unslash( $_GET['taxonomy'] ), array( 'lafka_foodmenu_category' ) ) ) {
-			wp_register_script( 'lafka-plugin-term-ordering', plugins_url( 'assets/js/lafka-plugin-foodmenu-cat-ordering.js', __FILE__ ), array( 'jquery-ui-sortable' ) );
+			wp_register_script( 'lafka-plugin-term-ordering', plugins_url( 'assets/js/lafka-plugin-foodmenu-cat-ordering.js', __FILE__ ), array( 'jquery-ui-sortable' ), lafka_plugin_asset_version( 'assets/js/lafka-plugin-foodmenu-cat-ordering.js' ) );
 			wp_enqueue_script( 'lafka-plugin-term-ordering' );
 			wp_localize_script( 'lafka-plugin-term-ordering', 'lafka_cat_ordering', array(
 				'nonce' => wp_create_nonce( 'lafka-foodmenu-cat-ordering' ),
 			) );
-			wp_enqueue_style('lafka-plugin-term-ordering-style', plugins_url('assets/css/lafka-plugin-term-ordering.css', __FILE__));
+			wp_enqueue_style('lafka-plugin-term-ordering-style', plugins_url('assets/css/lafka-plugin-term-ordering.css', __FILE__), array(), lafka_plugin_asset_version( 'assets/css/lafka-plugin-term-ordering.css' ));
 		}
 		// google maps
 		if(function_exists('lafka_get_option')) {
