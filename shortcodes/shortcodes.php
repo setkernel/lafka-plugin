@@ -58,6 +58,36 @@ if (defined('WPB_VC_VERSION')) {
 
 }
 
+/**
+ * PERF-H25: Shared Owl Carousel inline JS initializer.
+ * Replaces 7 near-identical copies of carousel initialization code across shortcodes.
+ *
+ * @param string $selector  CSS selector for the carousel container (e.g., "#id div.woocommerce" or "#id").
+ * @param int    $columns   Number of columns at the widest breakpoint.
+ */
+if ( ! function_exists( 'lafka_add_owl_carousel_inline_js' ) ) {
+	function lafka_add_owl_carousel_inline_js( $selector, $columns ) {
+		$columns  = max( 1, (int) $columns );
+		$is_rtl   = is_rtl() ? 'true' : 'false';
+		$items_768  = $columns < 3 ? $columns : 3;
+		$items_1024 = $columns < 4 ? $columns : 4;
+
+		$js = "(function($){"
+			. '"use strict";'
+			. '$(window).on("load",function(){'
+			. 'jQuery("' . esc_js( $selector ) . '").owlCarousel({'
+			. 'rtl:' . $is_rtl . ','
+			. 'responsiveClass:true,'
+			. 'responsive:{0:{items:1},600:{items:2},768:{items:' . $items_768 . '},1024:{items:' . $items_1024 . '},1280:{items:' . $columns . '}},'
+			. 'dots:false,nav:true,'
+			. "navText:[\"<i class='fas fa-angle-left'></i>\",\"<i class='fas fa-angle-right'></i>\"]"
+			. '});});'
+			. '})(window.jQuery);';
+
+		wp_add_inline_script( 'owl-carousel', $js );
+	}
+}
+
 
 /**
  * Define lafka_counter shortcode
@@ -665,43 +695,8 @@ if (!function_exists('lafka_latest_posts_shortcode')) {
 		}
 
 		if ($lafka_blogposts_param_layout === 'carousel') {
-			ob_start();
-			?>
-				(function ($) {
-					"use strict";
-                    $(window).on("load", function () {
-						jQuery("#<?php echo esc_js($unique_id) ?>").owlCarousel({
-							rtl: <?php echo is_rtl() ? 'true' : 'false'; ?>,
-							responsiveClass: true,
-							responsive: {
-								0: {
-									items: 1,
-								},
-								600: {
-									items: 2,
-								},
-								768: {
-                                    items: <?php echo ($lafka_blogposts_param_columns < 3 ? esc_js($lafka_blogposts_param_columns) : 3) ?>,
-                                },
-                                1024: {
-                                    items: <?php echo ($lafka_blogposts_param_columns < 4 ? esc_js($lafka_blogposts_param_columns) : 4) ?>,
-                                },
-								1280: {
-									items: <?php echo esc_js($lafka_blogposts_param_columns) ?>,
-								}
-							},
-							dots: false,
-							nav: true,
-							navText: [
-								"<i class='fas fa-angle-left'></i>",
-								"<i class='fas fa-angle-right'></i>"
-							],
-						});
-					});
-				})(window.jQuery);
-			<?php
-			$js_config_output = ob_get_clean();
-			wp_add_inline_script('owl-carousel', $js_config_output);
+			// PERF-H25: Use shared carousel initializer
+			lafka_add_owl_carousel_inline_js( '#' . $unique_id, $lafka_blogposts_param_columns );
 		}
 
 		// Classes
@@ -1339,43 +1334,7 @@ if (!function_exists('lafka_woo_top_rated_carousel_shortcode')) {
 
         $unique_id = uniqid('woo_top_rated');
 
-        ob_start();
-        ?>
-            (function ($) {
-                "use strict";
-                    $(window).on("load", function () {
-                    jQuery("#<?php echo esc_js($unique_id) ?> div.woocommerce").owlCarousel({
-                        rtl: <?php echo is_rtl() ? 'true' : 'false'; ?>,
-                        responsiveClass: true,
-                        responsive: {
-                            0: {
-                                items: 1,
-                            },
-                            600: {
-                                items: 2,
-                            },
-                            768: {
-                                items: <?php echo ($atts['columns'] < 3 ? esc_js($atts['columns']) : 3) ?>,
-                            },
-                            1024: {
-                                items: <?php echo ($atts['columns'] < 4 ? esc_js($atts['columns']) : 4) ?>,
-                            },
-                            1280: {
-                                items: <?php echo esc_js($atts['columns']) ?>,
-                            }
-                        },
-                        dots: false,
-                        nav: true,
-                        navText: [
-                            "<i class='fas fa-angle-left'></i>",
-                            "<i class='fas fa-angle-right'></i>"
-                        ],
-                    });
-                });
-            })(window.jQuery);
-        <?php
-        $js_config_output = ob_get_clean();
-	    wp_add_inline_script('owl-carousel', $js_config_output);
+        lafka_add_owl_carousel_inline_js( '#' . $unique_id . ' div.woocommerce', $atts['columns'] );
 
         return '<div id="' . esc_attr($unique_id) . '">' . $shortcode->get_content() . '</div>';
     }
@@ -1409,43 +1368,7 @@ if (!function_exists('lafka_woo_recent_carousel_shortcode')) {
 
         $unique_id = uniqid('woo_recent_carousel');
 
-        ob_start();
-        ?>
-            (function ($) {
-                "use strict";
-                    $(window).on("load", function () {
-                    jQuery("#<?php echo esc_js($unique_id) ?> div.woocommerce").owlCarousel({
-                        rtl: <?php echo is_rtl() ? 'true' : 'false'; ?>,
-                        responsiveClass: true,
-                        responsive: {
-                            0: {
-                                items: 1,
-                            },
-                            600: {
-                                items: 2,
-                            },
-                            768: {
-                                items: <?php echo ($atts['columns'] < 3 ? esc_js($atts['columns']) : 3) ?>,
-                            },
-                            1024: {
-                                items: <?php echo ($atts['columns'] < 4 ? esc_js($atts['columns']) : 4) ?>,
-                            },
-                            1280: {
-                                items: <?php echo esc_js($atts['columns']) ?>,
-                            }
-                        },
-                        dots: false,
-                        nav: true,
-                        navText: [
-                            "<i class='fas fa-angle-left'></i>",
-                            "<i class='fas fa-angle-right'></i>"
-                        ],
-                    });
-                });
-            })(window.jQuery);
-        <?php
-        $js_config_output = ob_get_clean();
-	    wp_add_inline_script('owl-carousel', $js_config_output);
+        lafka_add_owl_carousel_inline_js( '#' . $unique_id . ' div.woocommerce', $atts['columns'] );
 
         return '<div id="' . esc_attr($unique_id) . '">' . $shortcode->get_content() . '</div>';
     }
@@ -1480,43 +1403,7 @@ if (!function_exists('lafka_woo_featured_carousel_shortcode')) {
 
         $unique_id = uniqid('woo_featured_carousel');
 
-        ob_start();
-        ?>
-            (function ($) {
-                "use strict";
-                    $(window).on("load", function () {
-                    jQuery("#<?php echo esc_js($unique_id) ?> div.woocommerce").owlCarousel({
-                        rtl: <?php echo is_rtl() ? 'true' : 'false'; ?>,
-                        responsiveClass: true,
-                        responsive: {
-                            0: {
-                                items: 1,
-                            },
-                            600: {
-                                items: 2,
-                            },
-                            768: {
-                                items: <?php echo ($atts['columns'] < 3 ? esc_js($atts['columns']) : 3) ?>,
-                            },
-                            1024: {
-                                items: <?php echo ($atts['columns'] < 4 ? esc_js($atts['columns']) : 4) ?>,
-                            },
-                            1280: {
-                                items: <?php echo esc_js($atts['columns']) ?>,
-                            }
-                        },
-                        dots: false,
-                        nav: true,
-                        navText: [
-                            "<i class='fas fa-angle-left'></i>",
-                            "<i class='fas fa-angle-right'></i>"
-                        ],
-                    });
-                });
-            })(window.jQuery);
-        <?php
-        $js_config_output = ob_get_clean();
-	    wp_add_inline_script('owl-carousel', $js_config_output);
+        lafka_add_owl_carousel_inline_js( '#' . $unique_id . ' div.woocommerce', $atts['columns'] );
 
         return '<div id="' . esc_attr($unique_id) . '">' . $shortcode->get_content() . '</div>';
     }
@@ -1550,43 +1437,7 @@ if (!function_exists('lafka_woo_sale_carousel_shortcode')) {
 
         $unique_id = uniqid('woo_sale_carousel');
 
-        ob_start();
-        ?>
-            (function ($) {
-                "use strict";
-                    $(window).on("load", function () {
-                    jQuery("#<?php echo esc_js($unique_id) ?> div.woocommerce").owlCarousel({
-                        rtl: <?php echo is_rtl() ? 'true' : 'false'; ?>,
-                        responsiveClass: true,
-                        responsive: {
-                            0: {
-                                items: 1,
-                            },
-                            600: {
-                                items: 2,
-                            },
-                            768: {
-                                items: <?php echo ($atts['columns'] < 3 ? esc_js($atts['columns']) : 3) ?>,
-                            },
-                            1024: {
-                                items: <?php echo ($atts['columns'] < 4 ? esc_js($atts['columns']) : 4) ?>,
-                            },
-                            1280: {
-                                items: <?php echo esc_js($atts['columns']) ?>,
-                            }
-                        },
-                        dots: false,
-                        nav: true,
-                        navText: [
-                            "<i class='fas fa-angle-left'></i>",
-                            "<i class='fas fa-angle-right'></i>"
-                        ],
-                    });
-                });
-            })(window.jQuery);
-        <?php
-        $js_config_output = ob_get_clean();
-	    wp_add_inline_script('owl-carousel', $js_config_output);
+        lafka_add_owl_carousel_inline_js( '#' . $unique_id . ' div.woocommerce', $atts['columns'] );
 
         return '<div id="' . esc_attr($unique_id) . '">' . $shortcode->get_content() . '</div>';
     }
@@ -1616,43 +1467,7 @@ if (!function_exists('lafka_woo_best_selling_carousel_shortcode')) {
 
         $unique_id = uniqid('woo_best_selling');
 
-        ob_start();
-        ?>
-            (function ($) {
-                "use strict";
-                    $(window).on("load", function () {
-                    jQuery("#<?php echo esc_js($unique_id) ?> div.woocommerce").owlCarousel({
-                        rtl: <?php echo is_rtl() ? 'true' : 'false'; ?>,
-                        responsiveClass: true,
-                        responsive: {
-                            0: {
-                                items: 1,
-                            },
-                            600: {
-                                items: 2,
-                            },
-                            768: {
-                                items: <?php echo ($atts['columns'] < 3 ? esc_js($atts['columns']) : 3) ?>,
-                            },
-                            1024: {
-                                items: <?php echo ($atts['columns'] < 4 ? esc_js($atts['columns']) : 4) ?>,
-                            },
-                            1280: {
-                                items: <?php echo esc_js($atts['columns']) ?>,
-                            }
-                        },
-                        dots: false,
-                        nav: true,
-                        navText: [
-                            "<i class='fas fa-angle-left'></i>",
-                            "<i class='fas fa-angle-right'></i>"
-                        ],
-                    });
-                });
-            })(window.jQuery);
-        <?php
-        $js_config_output = ob_get_clean();
-	    wp_add_inline_script('owl-carousel', $js_config_output);
+        lafka_add_owl_carousel_inline_js( '#' . $unique_id . ' div.woocommerce', $atts['columns'] );
 
         return '<div id="' . esc_attr($unique_id) . '">' . $shortcode->get_content() . '</div>';
     }
@@ -1684,43 +1499,7 @@ if (!function_exists('lafka_woo_product_category_carousel_shortcode')) {
 
 		$unique_id = uniqid('woo_product_category_carousel_');
 
-		ob_start();
-		?>
-            (function ($) {
-                "use strict";
-                    $(window).on("load", function () {
-                    jQuery("#<?php echo esc_js($unique_id) ?> div.woocommerce").owlCarousel({
-                        rtl: <?php echo is_rtl() ? 'true' : 'false'; ?>,
-                        responsiveClass: true,
-                        responsive: {
-                            0: {
-                                items: 1,
-                            },
-                            600: {
-                                items: 2,
-                            },
-                            768: {
-                                items: <?php echo ($atts['columns'] < 3 ? esc_js($atts['columns']) : 3) ?>,
-                            },
-                            1024: {
-                                items: <?php echo ($atts['columns'] < 4 ? esc_js($atts['columns']) : 4) ?>,
-                            },
-                            1280: {
-                                items: <?php echo esc_js($atts['columns']) ?>,
-                            }
-                        },
-                        dots: false,
-                        nav: true,
-                        navText: [
-                            "<i class='fas fa-angle-left'></i>",
-                            "<i class='fas fa-angle-right'></i>"
-                        ],
-                    });
-                });
-            })(window.jQuery);
-		<?php
-		$js_config_output = ob_get_clean();
-		wp_add_inline_script('owl-carousel', $js_config_output);
+		lafka_add_owl_carousel_inline_js( '#' . $unique_id . ' div.woocommerce', $atts['columns'] );
 
 		return '<div id="' . esc_attr($unique_id) . '">' . $shortcode->get_content() . '</div>';
 	}
