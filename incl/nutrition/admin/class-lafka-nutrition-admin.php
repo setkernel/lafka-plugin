@@ -16,7 +16,7 @@ class Lafka_Nutrition_Admin {
 	 * Enqueue styles.
 	 */
 	public function styles() {
-		wp_enqueue_style( 'lafka_nutrition_admin_css', plugins_url( '../assets/css/admin.css', __FILE__ ), array( 'woocommerce_admin_styles' ) );
+		wp_enqueue_style( 'lafka_nutrition_admin_css', plugins_url( '../assets/css/admin.css', __FILE__ ), array( 'woocommerce_admin_styles' ), lafka_plugin_asset_version( 'incl/nutrition/assets/css/admin.css' ) );
 	}
 
 	/**
@@ -55,13 +55,13 @@ class Lafka_Nutrition_Admin {
 
 		foreach ( Lafka_Nutrition_Config::$nutrition_meta_fields as $field_name => $data ) {
 			if ( isset( $_POST[ '_' . $field_name ] ) ) {
-				$product->update_meta_data( '_' . $field_name, $_POST[ '_' . $field_name ] );
+				$product->update_meta_data( '_' . $field_name, sanitize_text_field( wp_unslash( $_POST[ '_' . $field_name ] ) ) );
 			} else {
 				$product->update_meta_data( '_' . $field_name, '' );
 			}
 		}
 
-		$product->update_meta_data( '_lafka_product_allergens', sanitize_text_field( $_POST['_lafka_product_allergens'] ) );
+		$product->update_meta_data( '_lafka_product_allergens', sanitize_text_field( wp_unslash( $_POST['_lafka_product_allergens'] ?? '' ) ) );
 
 		$product->save();
 	}

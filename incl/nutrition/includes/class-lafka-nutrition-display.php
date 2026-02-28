@@ -67,17 +67,57 @@ class Lafka_Nutrition_Display {
 					'weight' => $product->get_weight()
 				);
 			} elseif ( $available_variation_ids ) {
+				// PERF-C07: Prime post + meta caches for all variations in one batch query,
+				// instead of calling wc_get_product() per variation (N+1).
+				_prime_post_caches( $available_variation_ids, true, true );
+				update_meta_cache( 'post', $available_variation_ids );
+
+				// PERF-C07: Batch-fetch all attribute terms across all variations at once.
+				$lafka_nutrition_term_lookup = array();
+				$lafka_nutrition_slugs_by_tax = array();
 				foreach ( $available_variation_ids as $variation_id ) {
-					$variation             = wc_get_product( $variation_id );
+					$variation = wc_get_product( $variation_id ); // now served from cache
+					if ( ! $variation ) {
+						continue;
+					}
+					$variation_data = $variation->get_data();
+					if ( isset( $variation_data['attributes'] ) ) {
+						foreach ( $variation_data['attributes'] as $attribute_name => $attribute_slug ) {
+							if ( $attribute_slug ) {
+								$taxonomy = str_replace( 'attribute_', '', $attribute_name );
+								$lafka_nutrition_slugs_by_tax[ $taxonomy ][ $attribute_slug ] = true;
+							}
+						}
+					}
+				}
+				foreach ( $lafka_nutrition_slugs_by_tax as $taxonomy => $slugs ) {
+					$terms = get_terms( array(
+						'taxonomy'   => $taxonomy,
+						'slug'       => array_keys( $slugs ),
+						'hide_empty' => false,
+					) );
+					if ( ! is_wp_error( $terms ) ) {
+						foreach ( $terms as $term ) {
+							$lafka_nutrition_term_lookup[ $taxonomy . '|' . $term->slug ] = $term->name;
+						}
+					}
+				}
+
+				foreach ( $available_variation_ids as $variation_id ) {
+					$variation             = wc_get_product( $variation_id ); // served from cache
+					if ( ! $variation ) {
+						continue;
+					}
 					$variation_data        = $variation->get_data();
 					$variation_label_array = array();
 
 					if ( isset( $variation_data['attributes'] ) ) {
 						foreach ( $variation_data['attributes'] as $attribute_name => $attribute_slug ) {
-							/** @var WP_Term $attribute_term_object */
-							$attribute_term_object   = get_term_by( 'slug', $attribute_slug, str_replace( 'attribute_', '', $attribute_name ) );
-							if(is_a($attribute_term_object, 'WP_Term')) {
-								$variation_label_array[] = $attribute_term_object->name;
+							// PERF-C07: Use pre-fetched term lookup instead of get_term_by()
+							$taxonomy = str_replace( 'attribute_', '', $attribute_name );
+							$lookup_key = $taxonomy . '|' . $attribute_slug;
+							if ( isset( $lafka_nutrition_term_lookup[ $lookup_key ] ) ) {
+								$variation_label_array[] = $lafka_nutrition_term_lookup[ $lookup_key ];
 							}
 						}
 						if ( $variation->get_weight() ) {
