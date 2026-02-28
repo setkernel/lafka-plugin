@@ -25,6 +25,15 @@ jobs:
           rsync -a --exclude='.git' \
                    --exclude='.github' \
                    --exclude='.gitignore' \
+                   --exclude='node_modules' \
+                   --exclude='vendor' \
+                   --exclude='package.json' \
+                   --exclude='package-lock.json' \
+                   --exclude='composer.json' \
+                   --exclude='composer.lock' \
+                   --exclude='.phpcs.xml.dist' \
+                   --exclude='.stylelintrc.json' \
+                   --exclude='eslint.config.mjs' \
                    --exclude='README.md' \
                    --exclude='LICENSE' \
                    ./ lafka-plugin/
