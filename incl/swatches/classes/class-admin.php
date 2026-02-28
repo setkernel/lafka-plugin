@@ -79,8 +79,8 @@ class Lafka_WC_Variation_Swatches_Admin {
 
 		wp_enqueue_media();
 
-		wp_enqueue_style( 'lafka-wcs-admin', plugins_url( '../../assets/css/lafka-plugin-admin-swatches.css', dirname( __FILE__ ) ), array( 'wp-color-picker' ), '20160615' );
-		wp_enqueue_script( 'lafka-wcs-admin', plugins_url( '../../assets/js/lafka-plugin-admin-swatches.js', dirname( __FILE__ ) ), array( 'jquery', 'wp-color-picker', 'wp-util' ), '20170113', true );
+		wp_enqueue_style( 'lafka-wcs-admin', plugins_url( '../../assets/css/lafka-plugin-admin-swatches.css', dirname( __FILE__ ) ), array( 'wp-color-picker' ), lafka_plugin_asset_version( 'incl/swatches/assets/css/lafka-plugin-admin-swatches.css' ) );
+		wp_enqueue_script( 'lafka-wcs-admin', plugins_url( '../../assets/js/lafka-plugin-admin-swatches.js', dirname( __FILE__ ) ), array( 'jquery', 'wp-color-picker', 'wp-util' ), lafka_plugin_asset_version( 'incl/swatches/assets/js/lafka-plugin-admin-swatches.js' ), true );
 
 		wp_localize_script(
 			'lafka-wcs-admin',

@@ -23,8 +23,8 @@ class Lafka_Order_Hours_Admin {
 				'jquery',
 				'flatpickr',
 				'lafka-schedule'
-			), '1.0.0', true );
-			wp_enqueue_style( 'lafka-order-hours-admin', plugins_url( '../assets/css/lafka-order-hours-admin.css', __FILE__ ), array( 'flatpickr' ) );
+			), lafka_plugin_asset_version( 'incl/order-hours/assets/js/lafka-order-hours-admin.js' ), true );
+			wp_enqueue_style( 'lafka-order-hours-admin', plugins_url( '../assets/css/lafka-order-hours-admin.css', __FILE__ ), array( 'flatpickr' ), lafka_plugin_asset_version( 'incl/order-hours/assets/css/lafka-order-hours-admin.css' ) );
 		}
 	}
 

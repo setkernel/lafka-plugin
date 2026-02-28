@@ -41,8 +41,8 @@ class Lafka_WC_Variation_Swatches_Frontend {
 	 * Enqueue scripts and stylesheets
 	 */
 	public function enqueue_scripts() {
-		wp_enqueue_style( 'lafka-wcs-frontend', plugins_url( '../../assets/css/lafka-plugin-swatches.css', dirname( __FILE__ ) ), array(), '20160615' );
-		wp_enqueue_script( 'lafka-wcs-frontend', plugins_url( '../../assets/js/lafka-plugin-swatches.js', dirname( __FILE__ ) ), array( 'jquery' ), '20160615', true );
+		wp_enqueue_style( 'lafka-wcs-frontend', plugins_url( '../../assets/css/lafka-plugin-swatches.css', dirname( __FILE__ ) ), array(), lafka_plugin_asset_version( 'incl/swatches/assets/css/lafka-plugin-swatches.css' ) );
+		wp_enqueue_script( 'lafka-wcs-frontend', plugins_url( '../../assets/js/lafka-plugin-swatches.js', dirname( __FILE__ ) ), array( 'jquery' ), lafka_plugin_asset_version( 'incl/swatches/assets/js/lafka-plugin-swatches.js' ), true );
 	}
 
 	/**
