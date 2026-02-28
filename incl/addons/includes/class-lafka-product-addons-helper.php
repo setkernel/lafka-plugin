@@ -25,6 +25,14 @@ if (!class_exists('WC_Product_Addons_Helper')) {
 				return array();
 			}
 
+			// PERF-C03: Static per-request cache — avoids re-querying addons for the same product
+			// when called multiple times (display, check_required_addons, validate, add_cart_item_data).
+			static $product_addons_cache = array();
+			$cache_key = $post_id . '|' . ( $prefix ?: 'default' ) . '|' . (int) $inc_parent . '|' . (int) $inc_global;
+			if ( isset( $product_addons_cache[ $cache_key ] ) ) {
+				return $product_addons_cache[ $cache_key ];
+			}
+
 			$addons     = array();
 			$raw_addons = array();
 			$parent_id  = wp_get_post_parent_id( $post_id );
@@ -160,7 +168,12 @@ if (!class_exists('WC_Product_Addons_Helper')) {
 				}
 			}
 
-			return apply_filters( 'get_product_addons', $addons );
+			$result = apply_filters( 'get_product_addons', $addons );
+
+			// Store in per-request cache
+			$product_addons_cache[ $cache_key ] = $result;
+
+			return $result;
 		}
 
 		/**
@@ -246,22 +259,9 @@ if (!class_exists('WC_Product_Addons_Helper')) {
 				return false;
 			}
 
-			$type     = ! empty( $addon['type'] ) ? $addon['type'] : '';
 			$required = ! empty( $addon['required'] ) ? $addon['required'] : '';
 
-			switch ( $type ) {
-				case 'heading':
-					return false;
-					break;
-				case 'multiple_choice':
-				case 'checkbox':
-				case 'file_upload':
-					return '1' === $required;
-					break;
-				default:
-					return '1' === $required;
-					break;
-			}
+			return '1' === $required;
 		}
 
 		/**

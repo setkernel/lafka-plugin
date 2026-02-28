@@ -48,7 +48,12 @@ class Lafka_Product_Addon_Field_List extends Lafka_Product_Addon_Field {
 		}
 
 		foreach ( $this->addon['options'] as $option ) {
-			if ( in_array( strtolower( sanitize_title( $option['label'] ) ), array_map( 'strtolower', array_values( $value ) ) ) ) {
+			$option_id    = ! empty( $option['id'] ) ? $option['id'] : sanitize_title( $option['label'] );
+			$value_lower  = array_map( 'strtolower', array_values( $value ) );
+			// Match by stable ID first, then fall back to label slug for legacy data.
+			$matched = in_array( strtolower( $option_id ), $value_lower, true )
+			        || in_array( strtolower( sanitize_title( $option['label'] ) ), $value_lower, true );
+			if ( $matched ) {
 				$cart_item_data[] = array(
 					'name'  => $this->addon['name'],
 					'image' => $option['image'] ?? '',

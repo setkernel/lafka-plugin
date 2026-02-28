@@ -5,6 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 ?>
 <tr>
 	<td class="label_column">
+		<input type="hidden" name="product_addon_option_id[<?php echo $loop; ?>][]" value="<?php echo esc_attr( ! empty( $option['id'] ) ? $option['id'] : '' ); ?>" />
         <input type="text" name="product_addon_option_label[<?php echo $loop; ?>][]" value="<?php echo esc_attr( $option['label'] ); ?>" placeholder="<?php esc_html_e( 'Default Label', 'lafka-plugin' ); ?>" />
     </td>
     <td class="image_column">
@@ -23,7 +24,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 			<?php foreach ($name_value_pair as $slug => $value): ?>
                 <?php $price = (string) isset($prices_array[$attribute_name]) ? $prices_array[$attribute_name] : reset($prices_array)?>
                 <td class="price_column">
-                    <input type="text" name="product_addon_option_price[<?php echo $loop; ?>][<?php echo $attribute_name; ?>][<?php echo $slug; ?>][]"
+                    <input type="text" name="product_addon_option_price[<?php echo $loop; ?>][<?php echo esc_attr( $attribute_name ); ?>][<?php echo esc_attr( $slug ); ?>][]" 
                            value="<?php echo isset($price[ $slug ]) ? esc_attr( wc_format_localized_price( $price[ $slug ] ) ) : ''; ?>" placeholder="0.00" class="wc_input_price"/>
                 </td>
 	        <?php endforeach; ?>

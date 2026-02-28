@@ -26,9 +26,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 					foreach ( $global_addons as $global_addon ) {
 						?>
 						<tr>
-							<td><?php echo $global_addon['name']; ?></td>
-							<td><?php echo sizeof( $global_addon['fields'] ); ?></td>
-							<td><?php echo $global_addon['priority']; ?></td>
+							<td><?php echo esc_html( $global_addon['name'] ); ?></td>
+							<td><?php echo (int) sizeof( $global_addon['fields'] ); ?></td>
+							<td><?php echo esc_html( $global_addon['priority'] ); ?></td>
 							<td><?php
 
 								$restrict_to_categories = $global_addon['restrict_to_categories'];
@@ -38,7 +38,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 									$objects = array_keys( $restrict_to_categories );
 									$term_names = array_values( $restrict_to_categories );
 									$term_names = apply_filters( 'lafka_product_addons_global_display_term_names', $term_names, $objects );
-									echo implode( ', ', $term_names );
+									echo esc_html( implode( ', ', $term_names ) );
 								}
 
 							?></td>

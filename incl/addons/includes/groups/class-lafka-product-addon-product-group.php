@@ -1,7 +1,7 @@
 <?php defined( 'ABSPATH' ) || exit; ?>
 <?php
 
-class Product_Addon_Product_Group {
+class Lafka_Product_Addon_Product_Group {
 	/**
 	 * Gets a product's add-on "group" from the provided post in a structure intended for a REST API response
 	 *
@@ -13,12 +13,12 @@ class Product_Addon_Product_Group {
 	 */
 	static public function get_group( $post ) {
 		if ( ! is_a( $post, 'WP_Post' ) ) {
-			throw new Exception( 'Product_Addon_Product_Group::Invalid argument supplied to get_group' );
+			throw new Exception( 'Lafka_Product_Addon_Product_Group::Invalid argument supplied to get_group' );
 		}
 
 		$term_ids = (array) wp_get_post_terms( $post->ID, apply_filters( 'lafka_product_addons_global_post_terms', array( 'product_cat' ) ), array( 'fields' => 'ids' ) );
 		$fields   = array_filter( (array) get_post_meta( $post->ID, '_product_addons', true ) );
-		$fields   = Product_Addon_Groups::coerce_options_to_remove_field_type_inappropriate_keys( $fields );
+		$fields   = Lafka_Product_Addon_Groups::coerce_options_to_remove_field_type_inappropriate_keys( $fields );
 
 		$categories = array();
 		foreach ( $term_ids as $term_id ) {
@@ -55,7 +55,7 @@ class Product_Addon_Product_Group {
 
 		// Make sure the args only has keys we are expecting
 		try {
-			Product_Addon_Group_Validator::is_valid_product_addons_update( $args );
+			Lafka_Product_Addon_Group_Validator::is_valid_product_addons_update( $args );
 		} catch ( Exception $e ) {
 			return new WP_Error( 'invalid_parameter', $e->getMessage() );
 		}
@@ -123,7 +123,7 @@ class Product_Addon_Product_Group {
 	 * @param array $fields
 	 */
 	protected static function set_fields( $post, $fields ) {
-		$fields = Product_Addon_Groups::coerce_options_to_contain_all_keys_before_saving_to_meta( $fields );
+		$fields = Lafka_Product_Addon_Groups::coerce_options_to_contain_all_keys_before_saving_to_meta( $fields );
 
 		$product = wc_get_product( $post->ID );
 		if ( ! $product ) {

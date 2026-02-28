@@ -165,6 +165,7 @@ class Lafka_Product_Addon_Cart {
 
 		if ( is_array( $product_addons ) && ! empty( $product_addons ) ) {
 			include_once( dirname( __FILE__ ) . '/fields/abstract-class-product-addon-field.php' );
+			include_once( dirname( __FILE__ ) . '/fields/class-lafka-addon-field-factory.php' );
 
 			foreach ( $product_addons as $addon ) {
 
@@ -176,16 +177,10 @@ class Lafka_Product_Addon_Cart {
 					$value = wp_unslash( $value );
 				}
 
-				switch ( $addon['type'] ) {
-					case 'checkbox' :
-					case 'radiobutton' :
-						include_once( dirname( __FILE__ ) . '/fields/class-product-addon-field-list.php' );
-						$field = new Lafka_Product_Addon_Field_List( $addon, $value );
-						break;
-					case 'textarea':
-						include_once( dirname( __FILE__ ) . '/fields/class-lafka-addon-field-textarea.php' );
-						$field = new Lafka_Addon_Field_Textarea( $addon, $value );
-						break;
+				$field = Lafka_Addon_Field_Factory::create( $addon, $value );
+
+				if ( ! $field ) {
+					continue;
 				}
 
 				$data = $field->get_cart_item_data();
@@ -219,6 +214,7 @@ class Lafka_Product_Addon_Cart {
 
 		if ( is_array( $product_addons ) && ! empty( $product_addons ) ) {
 			include_once( dirname( __FILE__ ) . '/fields/abstract-class-product-addon-field.php' );
+			include_once( dirname( __FILE__ ) . '/fields/class-lafka-addon-field-factory.php' );
 
 			foreach ( $product_addons as $addon ) {
 
@@ -230,16 +226,10 @@ class Lafka_Product_Addon_Cart {
 					$value = wp_unslash( $value );
 				}
 
-				switch ( $addon['type'] ) {
-					case 'checkbox' :
-					case 'radiobutton' :
-						include_once( dirname( __FILE__ ) . '/fields/class-product-addon-field-list.php' );
-						$field = new Lafka_Product_Addon_Field_List( $addon, $value );
-						break;
-					case 'textarea':
-						include_once( dirname( __FILE__ ) . '/fields/class-lafka-addon-field-textarea.php' );
-						$field = new Lafka_Addon_Field_Textarea( $addon, $value );
-						break;
+				$field = Lafka_Addon_Field_Factory::create( $addon, $value );
+
+				if ( ! $field ) {
+					continue;
 				}
 
 				$data = $field->validate();
@@ -304,48 +294,35 @@ class Lafka_Product_Addon_Cart {
 				$value = '';
 				$field = '';
 
-				switch ( $addon['type'] ) {
-					case 'checkbox' :
-					case 'radiobutton' :
-						include_once( dirname( __FILE__ ) . '/fields/class-product-addon-field-list.php' );
+				// Reconstruct the submitted value from saved order meta.
+				$value = array();
 
-						$value = array();
-
-						foreach ( $product->get_meta_data() as $meta ) {
-							if ( stripos( $meta->key, $addon['name'] ) === 0 ) {
-								if ( 1 < count( $meta->value ) ) {
-									$value[] = array_map( 'sanitize_title', $meta->value );
-								} else {
-									$value[] = sanitize_title( $meta->value );
-								}
+				if ( in_array( $addon['type'], array( 'checkbox', 'radiobutton' ), true ) ) {
+					foreach ( $product->get_meta_data() as $meta ) {
+						if ( stripos( $meta->key, $addon['name'] ) === 0 ) {
+							if ( 1 < count( $meta->value ) ) {
+								$value[] = array_map( 'sanitize_title', $meta->value );
+							} else {
+								$value[] = sanitize_title( $meta->value );
 							}
 						}
-
-						if ( empty( $value ) ) {
-							continue 2;
-						}
-
-						$field = new Lafka_Product_Addon_Field_List( $addon, $value );
-						break;
-					case 'textarea':
-						include_once( dirname( __FILE__ ) . '/fields/class-lafka-addon-field-textarea.php' );
-						$value = array();
-
-						foreach ( $product->get_meta_data() as $meta ) {
-							foreach ( $addon['options'] as $option ) {
-								if ( stripos( $meta->key, $addon['name'] ) === 0 && stristr( $meta->key, $option['label'] ) ) {
-									$value[ sanitize_title( $option['label'] ) ] = $meta->value;
-								}
+					}
+				} elseif ( 'textarea' === $addon['type'] ) {
+					foreach ( $product->get_meta_data() as $meta ) {
+						foreach ( $addon['options'] as $option ) {
+							if ( stripos( $meta->key, $addon['name'] ) === 0 && stristr( $meta->key, $option['label'] ) ) {
+								$value[ sanitize_title( $option['label'] ) ] = $meta->value;
 							}
 						}
-
-						if ( empty( $value ) ) {
-							continue 2;
-						}
-
-						$field = new Lafka_Addon_Field_Textarea( $addon, $value );
-						break;
+					}
 				}
+
+				if ( empty( $value ) ) {
+					continue;
+				}
+
+				include_once( dirname( __FILE__ ) . '/fields/class-lafka-addon-field-factory.php' );
+				$field = Lafka_Addon_Field_Factory::create( $addon, $value );
 
 				// Make sure a field is set (if not it could be product with no add-ons).
 				if ( $field ) {

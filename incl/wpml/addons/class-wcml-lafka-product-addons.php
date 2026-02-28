@@ -480,9 +480,9 @@ class WCML_Lafka_Product_Addons {
 	private function get_global_addon_prices_status() {
 
 		if ( isset( $_GET['edit'] ) ) {
-			return get_post_meta( $_GET['edit'], '_wcml_custom_prices_status', true );
+			return get_post_meta( absint( $_GET['edit'] ), '_wcml_custom_prices_status', true );
 		} elseif ( isset( $_POST['_wcml_custom_prices'] ) ) {
-			return $_POST['_wcml_custom_prices'];
+			return sanitize_text_field( wp_unslash( $_POST['_wcml_custom_prices'] ) );
 		}
 
 		return false;

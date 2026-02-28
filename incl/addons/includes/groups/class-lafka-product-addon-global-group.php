@@ -1,7 +1,7 @@
 <?php defined( 'ABSPATH' ) || exit; ?>
 <?php
 
-class Product_Addon_Global_Group {
+class Lafka_Product_Addon_Global_Group {
 	/**
 	 * Gets a global add-on group from the provided post in a structure intended for a REST API response
 	 *
@@ -13,7 +13,7 @@ class Product_Addon_Global_Group {
 	 */
 	static public function get_group( $post ) {
 		if ( ! is_a( $post, 'WP_Post' ) ) {
-			throw new Exception( 'Product_Addon_Global_Group::Invalid argument supplied to get_group' );
+			throw new Exception( 'Lafka_Product_Addon_Global_Group::Invalid argument supplied to get_group' );
 		}
 
 		$priority = intval( get_post_meta( $post->ID, '_priority', true ) );
@@ -54,7 +54,7 @@ class Product_Addon_Global_Group {
 	static public function create_group( $args ) {
 		// Make sure the args only has keys we are expecting
 		try {
-			Product_Addon_Group_Validator::is_valid_global_addons_group_update( $args );
+			Lafka_Product_Addon_Group_Validator::is_valid_global_addons_group_update( $args );
 		} catch ( Exception $e ) {
 			return new WP_Error( 'invalid_parameter', $e->getMessage() );
 		}
@@ -90,7 +90,7 @@ class Product_Addon_Global_Group {
 
 		// Make sure the args only has keys we are expecting
 		try {
-			Product_Addon_Group_Validator::is_valid_global_addons_group_update( $args );
+			Lafka_Product_Addon_Group_Validator::is_valid_global_addons_group_update( $args );
 		} catch ( Exception $e ) {
 			return new WP_Error( 'invalid_parameter', $e->getMessage() );
 		}

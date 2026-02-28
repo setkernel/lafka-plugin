@@ -28,11 +28,63 @@ class Lafka_Product_Addon_Admin {
 	}
 
 	/**
-	 * Enqueue styles.
+	 * Enqueue styles and scripts.
 	 */
 	public function styles() {
 		wp_enqueue_script( 'wc-enhanced-select' );
-		wp_enqueue_style( 'lafka_product_addons_css', plugins_url( '../assets/css/admin.css', __FILE__ ), array('woocommerce_admin_styles') );
+		wp_enqueue_style( 'lafka_product_addons_css', plugins_url( '../assets/css/admin.css', __FILE__ ), array('woocommerce_admin_styles'), filemtime( plugin_dir_path( __FILE__ ) . '../assets/css/admin.css' ) );
+
+		// Enqueue the extracted addon admin panel script on screens that use it.
+		$screen    = get_current_screen();
+		$screen_id = $screen ? $screen->id : '';
+		$needs_panel_js = (
+			'product' === $screen_id
+			|| 'product_page_lafka_global_addons' === $screen_id
+			|| 'lafka_product_page_global_addons' === $screen_id
+		);
+
+		if ( $needs_panel_js ) {
+			$js_file = plugin_dir_path( __FILE__ ) . '../assets/js/lafka-addons-admin-panel.js';
+			wp_enqueue_script(
+				'lafka-addons-admin-panel',
+				plugins_url( '../assets/js/lafka-addons-admin-panel.js', __FILE__ ),
+				array( 'jquery', 'jquery-ui-sortable', 'wc-enhanced-select' ),
+				filemtime( $js_file ),
+				true
+			);
+
+			// Render reusable HTML templates for "new option" and "new addon".
+			ob_start();
+			$option = self::get_new_addon_option();
+			$loop   = '{loop}';
+			include plugin_dir_path( __FILE__ ) . 'views/html-addon-option.php';
+			$new_option_html = str_replace( array( "\n", "\r" ), '', str_replace( "'", '"', ob_get_clean() ) );
+
+			ob_start();
+			$addon = array(
+				'name'        => '',
+				'limit'       => '',
+				'description' => '',
+				'required'    => '',
+				'type'        => 'checkbox',
+				'variations'  => '',
+				'options'     => array( self::get_new_addon_option() ),
+			);
+			$loop = '{loop}';
+			include plugin_dir_path( __FILE__ ) . 'views/html-addon.php';
+			$new_addon_html = str_replace( array( "\n", "\r" ), '', str_replace( "'", '"', ob_get_clean() ) );
+
+			wp_localize_script( 'lafka-addons-admin-panel', 'lafka_addons_admin_params', array(
+				'empty_name_message'       => esc_html__( 'All addon fields require a name.', 'lafka-plugin' ),
+				'min_max_characters_label' => esc_js( __( 'Min / max characters', 'lafka-plugin' ) ),
+				'min_max_label'            => esc_js( __( 'Min / max', 'lafka-plugin' ) ),
+				'new_option_html'          => $new_option_html,
+				'new_addon_html'           => $new_addon_html,
+				'remove_addon_confirm'     => esc_html__( 'Are you sure you want to remove this add-on?', 'lafka-plugin' ),
+				'remove_option_confirm'    => esc_html__( 'Are you sure you want delete this option?', 'lafka-plugin' ),
+				'price_label'              => esc_html__( 'Price', 'lafka-plugin' ),
+			) );
+		}
 	}
 
 	/**
@@ -220,12 +272,13 @@ class Lafka_Product_Addon_Admin {
 	 */
 	public static function get_new_addon_option() {
 		$new_addon_option = array(
-			'label' => '',
-			'image' => '',
-			'price' => '',
+			'id'      => wp_generate_uuid4(),
+			'label'   => '',
+			'image'   => '',
+			'price'   => '',
 			'default' => '',
-			'min' => '',
-			'max' => ''
+			'min'     => '',
+			'max'     => ''
 		);
 
 		return apply_filters( 'lafka_product_addons_new_addon_option', $new_addon_option );
@@ -262,6 +315,7 @@ class Lafka_Product_Addon_Admin {
 			$addon_variation_attribute = isset($_POST['product_addon_variation_attribute']) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['product_addon_variation_attribute'] ) ) : array();
 			$addon_required     = isset( $_POST['product_addon_required'] ) ? array_map( 'absint', $_POST['product_addon_required'] ) : array();
 
+			$addon_option_id    = isset( $_POST['product_addon_option_id'] ) ? array_map( function( $ids ) { return array_map( 'sanitize_text_field', wp_unslash( $ids ) ); }, $_POST['product_addon_option_id'] ) : array();
 			$addon_option_label = array_map( function( $labels ) { return array_map( 'sanitize_text_field', wp_unslash( $labels ) ); }, $_POST['product_addon_option_label'] );
 			$addon_option_image = array_map( function( $images ) { return array_map( 'absint', $images ); }, $_POST['product_addon_option_image'] );
 			$addon_option_price = array_map( function( $prices ) { return array_map( 'wc_clean', $prices ); }, $_POST['product_addon_option_price'] );
@@ -278,6 +332,7 @@ class Lafka_Product_Addon_Admin {
 				}
 
 				$addon_options 	= array();
+				$option_id     	= isset( $addon_option_id[ $i ] ) ? $addon_option_id[ $i ] : array();
 				$option_label  	= $addon_option_label[ $i ];
 				$option_image   = $addon_option_image[ $i ];
 				$option_price  	= $addon_option_price[ $i ];
@@ -286,6 +341,7 @@ class Lafka_Product_Addon_Admin {
 				$option_default  	= $addon_option_default[ $i ];
 
 				for ( $ii = 0; $ii < sizeof( $option_label ); $ii++ ) {
+					$id    	= ! empty( $option_id[ $ii ] ) ? sanitize_text_field( $option_id[ $ii ] ) : wp_generate_uuid4();
 					$label 	= sanitize_text_field( $option_label[ $ii ] );
 					$image = sanitize_text_field( $option_image[ $ii ] );
 					if ( isset( $option_price[ $ii ] ) ) {
@@ -304,6 +360,7 @@ class Lafka_Product_Addon_Admin {
 					$default 	= sanitize_text_field( $option_default[ $ii ] );
 
 					$addon_options[] = array(
+						'id'      => $id,
 						'label'   => $label,
 						'image'   => $image,
 						'price'   => $price,

@@ -18,18 +18,20 @@ foreach ( $addon['options'] as $i => $option ) :
 
 	$price = apply_filters( 'lafka_product_addons_option_price', $option_price_for_display, $option, $i, 'checkbox' );
 
+	$option_id = ! empty( $option['id'] ) ? $option['id'] : sanitize_title( $option['label'] );
+
 	$selected = array();
 	if ( isset( $_POST[ 'addon-' . sanitize_title( $addon['field-name'] ) ] ) ) {
 		$selected = $_POST[ 'addon-' . sanitize_title( $addon['field-name'] ) ];
 	} elseif ( ! empty( $option['default'] ) ) {
-		$selected = array( sanitize_title( $option['label'] ) );
+		$selected = array( $option_id );
 	}
 
 	if ( ! is_array( $selected ) ) {
 		$selected = array( $selected );
 	}
 
-	$current_value = ( in_array( sanitize_title( $option['label'] ), $selected ) ) ? 1 : 0;
+	$current_value = ( in_array( $option_id, $selected ) ) ? 1 : 0;
 
 	$attribute_raw_prices = $option['price'];
 	$attribute_prices = lafka_convert_attribute_raw_prices_to_prices( $attribute_raw_prices );
@@ -50,7 +52,7 @@ foreach ( $addon['options'] as $i => $option ) :
                         <?php endif; ?>
                         data-raw-price="<?php echo esc_attr( $option_price ); ?>"
                         data-price="<?php echo WC_Product_Addons_Helper::get_product_addon_price_for_display( $option_price ); ?>"
-                        value="<?php echo sanitize_title( $option['label'] ); ?>" <?php checked( $current_value, 1 ); ?> /><?php echo ' '; ?>
+                        value="<?php echo esc_attr( $option_id ); ?>" <?php checked( $current_value, 1 ); ?> /><?php echo ' '; ?>
             <?php if ( $custom_image_id ): ?>
                 <?php echo wp_get_attachment_image( $custom_image_id, 'lafka-widgets-thumb', false, array( 'class' => implode( ' ', $custom_image_classes ) ) ); ?>
             <?php endif; ?>

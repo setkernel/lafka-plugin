@@ -69,32 +69,4 @@ if ( ! defined( 'ABSPATH' ) ) {
 		</p>
 	</form>
 </div>
-<script type="text/javascript">
-	// Toggle function
-	function openclose() {
-		jQuery('.wc-metabox').toggleClass( 'closed' ).toggleClass( 'open' );
-	}
-	// Open and close the Product Add-On metaboxes
-	jQuery('.wc-metaboxes-wrapper').on('click', '.wc-metabox h3', function(event){
-		// If the user clicks on some form input inside the h3, like a select list (for variations), the box should not be toggled
-		if (jQuery(event.target).filter(':input, option').length) {
-			return;
-		}
 
-		jQuery(this).next('.wc-metabox-content').toggle();
-		openclose();
-		})
-	.on('click', '.expand_all', function(){
-		jQuery(this).closest('.wc-metaboxes-wrapper').find('.wc-metabox > table').show();
-		openclose();
-		return false;
-	})
-	.on('click', '.close_all', function(){
-		jQuery(this).closest('.wc-metaboxes-wrapper').find('.wc-metabox > table').hide();
-		openclose();
-		return false;
-	});
-	jQuery('.wc-metabox.closed').each(function(){
-		jQuery(this).find('.wc-metabox-content').hide();
-	});
-</script>

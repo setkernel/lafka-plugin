@@ -27,8 +27,14 @@ class Lafka_Product_Addon_Groups {
 
 		$global_group_posts = get_posts( $args );
 
+		// Preload all post meta in a single query to avoid N+1 per-post lookups
+		// for _priority, _product_addons, and _all_products inside the loop.
+		if ( ! empty( $global_group_posts ) ) {
+			update_meta_cache( 'post', wp_list_pluck( $global_group_posts, 'ID' ) );
+		}
+
 		foreach ( (array) $global_group_posts as $global_group_post ) {
-			$global_groups[] = Product_Addon_Global_Group::get_group( $global_group_post );
+			$global_groups[] = Lafka_Product_Addon_Global_Group::get_group( $global_group_post );
 		}
 
 		$cached_groups = $global_groups;
@@ -47,11 +53,11 @@ class Lafka_Product_Addon_Groups {
 		$post = WP_Post::get_instance( $id );
 
 		if ( self::is_a_global_group_id( $id ) ) {
-			return Product_Addon_Global_Group::get_group( $post );
+			return Lafka_Product_Addon_Global_Group::get_group( $post );
 		}
 
 		if ( $post && 'product' === $post->post_type ) {
-			return Product_Addon_Product_Group::get_group( $post );
+			return Lafka_Product_Addon_Product_Group::get_group( $post );
 		}
 
 		return new WP_Error( 'invalid_id', esc_html__( 'Unable to retrieve data. Invalid global add ons group or product ID.', 'lafka-plugin' ) );
@@ -70,10 +76,10 @@ class Lafka_Product_Addon_Groups {
 		$post = WP_Post::get_instance( $id );
 
 		if ( self::is_a_global_group_id( $id ) ) {
-			return Product_Addon_Global_Group::update_group( $post, $args );
+			return Lafka_Product_Addon_Global_Group::update_group( $post, $args );
 		}
 
-		return Product_Addon_Product_Group::update_group( $post, $args );
+		return Lafka_Product_Addon_Product_Group::update_group( $post, $args );
 	}
 
 	/**
@@ -90,7 +96,7 @@ class Lafka_Product_Addon_Groups {
 		}
 
 		$post = WP_Post::get_instance( $id );
-		$trashed_post = Product_Addon_Global_Group::get_group( $post );
+		$trashed_post = Lafka_Product_Addon_Global_Group::get_group( $post );
 		wp_delete_post( $id, true );
 
 		return $trashed_post;
@@ -125,17 +131,23 @@ class Lafka_Product_Addon_Groups {
 	 */
 	static public function coerce_options_to_contain_all_keys_before_saving_to_meta( $fields ) {
 		$option_defaults = array(
+			'id'    => '',
 			'label' => '(empty)',
 			'price' => '',
-			'min' => '',
-			'max' => '',
+			'min'   => '',
+			'max'   => '',
 		);
 
 		foreach ( $fields as $key => $field ) {
 			if ( array_key_exists( 'options', $field ) ) {
 				$coerced_options = array();
 				foreach ( $field['options'] as $option ) {
-					$coerced_options[] = wp_parse_args( $option, $option_defaults );
+					$option = wp_parse_args( $option, $option_defaults );
+					// Auto-generate stable ID for legacy options that lack one.
+					if ( empty( $option['id'] ) ) {
+						$option['id'] = wp_generate_uuid4();
+					}
+					$coerced_options[] = $option;
 				}
 				$fields[ $key ]['options'] = $coerced_options;
 			}
@@ -159,18 +171,10 @@ class Lafka_Product_Addon_Groups {
 		foreach ( $fields as $field_key => $field ) {
 			if ( array_key_exists( 'options', $field ) ) {
 				foreach ( $field['options'] as $option_key => $option ) {
-					switch ( $field['type'] ) {
-						case 'custom_price':
-							unset( $option['price'] );
-							break;
-						case 'checkbox':
-						case 'custom_email':
-						case 'file_upload':
-						case 'radiobutton':
-						case 'select':
-							unset( $option['min'] );
-							unset( $option['max'] );
-							break;
+					// Checkbox and radiobutton fields don't use min/max
+					if ( in_array( $field['type'], array( 'checkbox', 'radiobutton' ), true ) ) {
+						unset( $option['min'] );
+						unset( $option['max'] );
 					}
 
 					$fields[ $field_key ]['options'][ $option_key ] = $option;

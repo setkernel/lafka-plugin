@@ -1,7 +1,7 @@
 <?php defined( 'ABSPATH' ) || exit; ?>
 <?php
 
-class Product_Addon_Group_Validator {
+class Lafka_Product_Addon_Group_Validator {
 
 	/**
 	 * Validates that the passed update is valid to apply to a global add-ons group
@@ -323,23 +323,10 @@ class Product_Addon_Group_Validator {
 		);
 
 		foreach ( $arg as $field ) {
-			// If a type was given (as it should have been), we can do a better test than just is_array for options
-			// (If not, this is going to blow up anyways and we'll catch that.)
+			// Textarea fields support optional min/max character limits
 			$options_validator = 'is_array_of_basic_options';
-			if ( array_key_exists( 'type', $field ) ) {
-				switch( $field['type'] ) {
-					case 'custom':
-					case 'textarea':
-					case 'custom_letters_only':
-					case 'custom_digits_only':
-					case 'custom_letters_or_digits':
-					$options_validator = 'is_array_of_options_with_optional_integer_limits';
-						break;
-					case 'custom_price':
-					case 'input_multiplier':
-					$options_validator = 'is_array_of_options_with_optional_float_limits';
-						break;
-				}
+			if ( array_key_exists( 'type', $field ) && 'textarea' === $field['type'] ) {
+				$options_validator = 'is_array_of_options_with_optional_integer_limits';
 			}
 
 			$schema['options']['validator'] = $options_validator;
@@ -362,9 +349,7 @@ class Product_Addon_Group_Validator {
 	 */
 	protected static function is_field_type( $arg ) {
 		$supported_types = array(
-			'checkbox', 'radiobutton', 'custom', 'textarea', 'custom_price', 'custom_letters_only',
-			'custom_digits_only', 'custom_letters_or_digits', 'custom_email', 'input_multiplier', 'select',
-			'file_upload'
+			'checkbox', 'radiobutton', 'textarea',
 		);
 
 		if ( ! in_array( $arg, $supported_types ) ) {
@@ -390,6 +375,10 @@ class Product_Addon_Group_Validator {
 		}
 
 		$schema = array(
+			'id' => array(
+				'required' => false,
+				'validator' => 'is_string'
+			),
 			'label' => array(
 				'required' => true,
 				'validator' => 'is_non_empty_string'
@@ -423,6 +412,10 @@ class Product_Addon_Group_Validator {
 		}
 
 		$schema = array(
+			'id' => array(
+				'required' => false,
+				'validator' => 'is_string'
+			),
 			'label' => array(
 				'required' => true,
 				'validator' => 'is_non_empty_string'
@@ -438,47 +431,6 @@ class Product_Addon_Group_Validator {
 			'max' => array(
 				'required' => false,
 				'validator' => 'is_empty_or_integer'
-			)
-		);
-
-		foreach ( $arg as $option ) {
-			self::validate( $option, $schema );
-		}
-
-		return true;
-	}
-
-	/**
-	 * Validates that the passed argument is an array of options with optional float limits.
-	 * An empty array IS acceptable. Used in validation schemas.
-	 *
-	 * @since 2.9.0
-	 *
-	 * @param array $arg The data to validate
-	 * @throws Exception If the passed data is not an array of options with float limits
-	 * @return true
-	 */
-	protected static function is_array_of_options_with_optional_float_limits( $arg ) {
-		if ( ! is_array( $arg ) ) {
-			throw new Exception( 'Array expected for options.' );
-		}
-
-		$schema = array(
-			'label' => array(
-				'required' => true,
-				'validator' => 'is_non_empty_string'
-			),
-			'price' => array(
-				'required' => false,
-				'validator' => 'is_empty_or_numeric'
-			),
-			'min' => array(
-				'required' => false,
-				'validator' => 'is_empty_or_numeric'
-			),
-			'max' => array(
-				'required' => false,
-				'validator' => 'is_empty_or_numeric'
 			)
 		);
 

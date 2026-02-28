@@ -39,7 +39,7 @@ class Lafka_Product_Addon_Display {
 		$suffix = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
 
 		wp_register_script( 'accounting', WC()->plugin_url() . '/assets/js/accounting/accounting' . $suffix . '.js', array( 'jquery' ), '0.4.2' );
-		wp_enqueue_script( 'lafka-addons', plugins_url( '../assets/js/addons' . $suffix . '.js', __FILE__ ), array( 'jquery', 'accounting' ), '1.0', true );
+		wp_enqueue_script( 'lafka-addons', plugins_url( '../assets/js/addons' . $suffix . '.js', __FILE__ ), array( 'jquery', 'accounting' ), lafka_plugin_asset_version( 'incl/addons/assets/js/addons' . $suffix . '.js' ), true );
 
 		$params = array(
 			'price_display_suffix'         => esc_attr( get_option( 'woocommerce_price_display_suffix' ) ),

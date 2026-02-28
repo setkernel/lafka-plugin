@@ -18,12 +18,14 @@ foreach ( $addon['options'] as $i => $option ) :
 
 	$price = apply_filters( 'lafka_product_addons_option_price', $option_price_for_display, $option, $i, 'radiobutton' );
 
+	$option_id = ! empty( $option['id'] ) ? $option['id'] : sanitize_title( $option['label'] );
+
 	$current_value = 0;
 
 	if ( isset( $_POST[ 'addon-' . sanitize_title( $addon['field-name'] ) ] ) ) {
 		$current_value = (
 				isset( $_POST[ 'addon-' . sanitize_title( $addon['field-name'] ) ] ) &&
-				in_array( sanitize_title( $option['label'] ), $_POST[ 'addon-' . sanitize_title( $addon['field-name'] ) ] )
+				in_array( $option_id, $_POST[ 'addon-' . sanitize_title( $addon['field-name'] ) ] )
 				) ? 1 : 0;
 	} elseif ( ! empty( $option['default'] ) ) {
 		$current_value = $option['default'];
@@ -48,7 +50,7 @@ foreach ( $addon['options'] as $i => $option ) :
                     <?php endif; ?>
                     data-raw-price="<?php echo esc_attr( $option_price ); ?>"
                     data-price="<?php echo WC_Product_Addons_Helper::get_product_addon_price_for_display( $option_price ); ?>"
-                    value="<?php echo sanitize_title( $option['label'] ); ?>" <?php checked( $current_value, 1 ); ?> /><?php echo ' '; ?>
+                    value="<?php echo esc_attr( $option_id ); ?>" <?php checked( $current_value, 1 ); ?> /><?php echo ' '; ?>
 			<?php if ( $custom_image_id ): ?>
 				<?php echo wp_get_attachment_image( $custom_image_id, 'lafka-widgets-thumb', false, array( 'class' => implode( ' ', $custom_image_classes ) ) ); ?>
 			<?php endif; ?>
