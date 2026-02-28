@@ -73,9 +73,10 @@ class Lafka_KDS_Frontend {
 		$ajax_url        = admin_url( 'admin-ajax.php' );
 		$asset_base      = dirname( __DIR__ ) . '/assets';
 		$css_ver         = filemtime( $asset_base . '/css/lafka-kds.css' );
-		$js_ver          = filemtime( $asset_base . '/js/lafka-kds.js' );
+		$js_suffix       = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
+		$js_ver          = filemtime( $asset_base . '/js/lafka-kds' . $js_suffix . '.js' );
 		$css_url         = plugins_url( '../assets/css/lafka-kds.css', __FILE__ ) . '?ver=' . $css_ver;
-		$js_url          = plugins_url( '../assets/js/lafka-kds.js', __FILE__ ) . '?ver=' . $js_ver;
+		$js_url          = plugins_url( '../assets/js/lafka-kds' . $js_suffix . '.js', __FILE__ ) . '?ver=' . $js_ver;
 		$sound_url       = plugins_url( '../assets/sounds/new-order.mp3', __FILE__ );
 		$site_name       = get_bloginfo( 'name' );
 		$pickup_times    = array_map( 'absint', array_filter( explode( ',', $options['pickup_times'] ) ) );

@@ -20,10 +20,11 @@ class Lafka_KDS_Customer_View {
 		}
 
 		$css_url = plugins_url( '../assets/css/lafka-kds-customer.css', __FILE__ );
-		$js_url  = plugins_url( '../assets/js/lafka-kds-customer.js', __FILE__ );
+		$js_suffix = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
+		$js_url  = plugins_url( '../assets/js/lafka-kds-customer' . $js_suffix . '.js', __FILE__ );
 
 		$css_ver = filemtime( dirname( __DIR__ ) . '/assets/css/lafka-kds-customer.css' );
-		$js_ver  = filemtime( dirname( __DIR__ ) . '/assets/js/lafka-kds-customer.js' );
+		$js_ver  = filemtime( dirname( __DIR__ ) . '/assets/js/lafka-kds-customer' . $js_suffix . '.js' );
 
 		wp_enqueue_style( 'lafka-kds-customer', $css_url, array(), $css_ver );
 		wp_enqueue_script( 'lafka-kds-customer', $js_url, array(), $js_ver, true );

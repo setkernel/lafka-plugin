@@ -92,6 +92,22 @@ class Lafka_KDS_Ajax {
 			if ( ! empty( $all_item_ids ) ) {
 				update_meta_cache( 'order_item', $all_item_ids );
 			}
+
+			// PERF-H19: Batch-prime product_cat term cache for all products across all orders.
+			// This avoids N+1 wp_get_post_terms() calls per line item in format_order().
+			$all_product_ids = array();
+			foreach ( array_merge( $orders, $completed ) as $order ) {
+				foreach ( $order->get_items() as $item ) {
+					$product = $item->get_product();
+					if ( $product ) {
+						$all_product_ids[] = $product->get_id();
+					}
+				}
+			}
+			if ( ! empty( $all_product_ids ) ) {
+				$all_product_ids = array_unique( $all_product_ids );
+				update_object_term_cache( $all_product_ids, 'product' );
+			}
 		}
 
 		foreach ( $orders as $order ) {
