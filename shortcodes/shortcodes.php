@@ -56,6 +56,20 @@ if (defined('WPB_VC_VERSION')) {
 
 	}
 
+	/**
+	 * Register the lafka_content_slider shortcode on frontend.
+	 *
+	 * vc_map() is only called in admin (PERF-H09), but WPBakery needs
+	 * vc_map() to auto-register shortcodes. This explicit registration
+	 * ensures the shortcode works on the frontend.
+	 */
+	if ( ! is_admin() && class_exists( 'WPBakeryShortCode_Lafka_Content_Slider' ) ) {
+		add_shortcode( 'lafka_content_slider', function( $atts, $content = null ) {
+			$shortcode = new WPBakeryShortCode_Lafka_Content_Slider( array( 'base' => 'lafka_content_slider' ) );
+			return $shortcode->output( $atts, $content );
+		});
+	}
+
 }
 
 /**
