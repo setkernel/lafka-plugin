@@ -64,6 +64,30 @@ if (defined('WPB_VC_VERSION')) {
 	 * ensures the shortcode works on the frontend.
 	 */
 	if ( ! is_admin() && class_exists( 'WPBakeryShortCode_Lafka_Content_Slider' ) ) {
+		// Register minimal vc_map for frontend so vc_map_get_attributes() works with defaults
+		add_action( 'vc_after_init', function() {
+			if ( ! WPBMap::exists( 'lafka_content_slider' ) ) {
+				vc_map( array(
+					'name'   => 'Content Slider',
+					'base'   => 'lafka_content_slider',
+					'params' => array(
+						array( 'param_name' => 'autoplay', 'type' => 'dropdown', 'std' => 'none' ),
+						array( 'param_name' => 'navigation', 'type' => 'checkbox', 'std' => 'yes' ),
+						array( 'param_name' => 'navigation_color', 'type' => 'dropdown', 'std' => 'lafka_content_slider_light_nav' ),
+						array( 'param_name' => 'pause_on_hover', 'type' => 'checkbox', 'std' => 'yes' ),
+						array( 'param_name' => 'pagination', 'type' => 'checkbox', 'std' => '' ),
+						array( 'param_name' => 'pagination_type', 'type' => 'dropdown', 'std' => 'lafka-pagination-bullets' ),
+						array( 'param_name' => 'transition', 'type' => 'dropdown', 'std' => 'fade' ),
+						array( 'param_name' => 'full_height', 'type' => 'checkbox', 'std' => '' ),
+						array( 'param_name' => 'el_class', 'type' => 'textfield', 'std' => '' ),
+						array( 'param_name' => 'css', 'type' => 'css_editor', 'std' => '' ),
+						array( 'param_name' => 'title', 'type' => 'textfield', 'std' => '' ),
+						array( 'param_name' => 'no_fill_content_area', 'type' => 'hidden', 'std' => true ),
+					),
+				) );
+			}
+		}, 5 );
+
 		add_shortcode( 'lafka_content_slider', function( $atts, $content = null ) {
 			$shortcode = new WPBakeryShortCode_Lafka_Content_Slider( array( 'base' => 'lafka_content_slider' ) );
 			return $shortcode->output( $atts, $content );
