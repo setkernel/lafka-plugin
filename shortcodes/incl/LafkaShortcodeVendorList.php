@@ -84,7 +84,20 @@ if (!class_exists('LafkaShortcodeVendorList')) {
 	     */
         public static function output($atts) {
             global $WCMp;
-            extract(shortcode_atts(array('orderby' => 'registered', 'order' => 'ASC', 'limit' => '', 'hide_order_by' => ''), $atts, 'lafka_wcmp_vendorslist'));
+            $atts = shortcode_atts(
+                array(
+                    'orderby'       => 'registered',
+                    'order'         => 'ASC',
+                    'limit'         => '',
+                    'hide_order_by' => '',
+                ),
+                $atts,
+                'lafka_wcmp_vendorslist'
+            );
+            $orderby       = sanitize_key( $atts['orderby'] );
+            $order         = strtoupper( $atts['order'] ) === 'DESC' ? 'DESC' : 'ASC';
+            $limit         = $atts['limit'];
+            $hide_order_by = $atts['hide_order_by'];
 	        $selected_category = '';
 	        $sort_type = $orderby;
 

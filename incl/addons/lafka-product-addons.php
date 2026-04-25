@@ -71,6 +71,9 @@ class Lafka_Product_Addons {
 				'query_var'           => false,
 				'supports'            => array( 'title' ),
 				'show_in_nav_menus'   => false,
+				// REST exposure for admin tooling / block editor; capability gated to manage_woocommerce
+				'show_in_rest'        => true,
+				'rest_base'           => 'lafka-global-addons',
 			)
 		);
 

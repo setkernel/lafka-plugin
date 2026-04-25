@@ -12,6 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @class    WC_Combined_Item
  * @version  6.7.7
  */
+#[\AllowDynamicProperties]
 class WC_Combined_Item {
 
 	/**

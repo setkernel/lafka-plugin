@@ -10,6 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @class    WC_Product_Combo
  * @version  6.7.7
  */
+#[\AllowDynamicProperties]
 class WC_Product_Combo extends WC_Product {
 
 	/**

@@ -14,6 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @class    Lafka_Combos
  * @version  6.8.0
  */
+#[\AllowDynamicProperties]
 class Lafka_Combos {
 
 	public $version  = '6.8.0';

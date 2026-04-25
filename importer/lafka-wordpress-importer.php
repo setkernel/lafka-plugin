@@ -1,4 +1,5 @@
 <?php
+defined( 'ABSPATH' ) || exit;
 /*
   Plugin Name: WordPress Importer
   Plugin URI: https://wordpress.org/plugins/wordpress-importer/

@@ -1,4 +1,33 @@
 <?php
+/**
+ * KDS AJAX endpoints.
+ *
+ * AUTH MODEL (do not weaken without thinking through every endpoint):
+ *
+ *   1. Operator opens `https://site/kitchen-display/<TOKEN>/`. The standalone
+ *      page renders only if `hash_equals($options['token'], $url_token)` —
+ *      see Lafka_KDS_Frontend::handle_request().
+ *   2. The page injects `LAFKA_KDS = { token, nonce, … }` into the global
+ *      JS scope. The page sets `Referrer-Policy: no-referrer` so the token
+ *      never leaks via Referer.
+ *   3. JS calls AJAX endpoints with both `kds_token` and `nonce`. Every
+ *      KDS endpoint validates BOTH via `verify_kds_auth()` (the nonce check
+ *      uses `check_ajax_referer($action, $query, false)` so we can rate-limit
+ *      failures rather than `wp_die()` on the first bad nonce).
+ *   4. `refresh_nonce` — token-only renewal — exists because nonces expire
+ *      every ~12-24h and the standalone page is open all day. It is the
+ *      most security-sensitive endpoint: failure-only IP rate limiter
+ *      caps brute-force / DOS attempts at 5/min.
+ *
+ * GOTCHAS:
+ *   - Token is stored plaintext in `lafka_kds_options['token']` because it
+ *     is also embedded in the visible page URL. Hashing storage is tracked
+ *     as P2-02a (would require token-id + secret split).
+ *   - Both `wp_ajax_` and `wp_ajax_nopriv_` versions are registered. The
+ *     `_nopriv_` variant is essential — the standalone page has no WP login.
+ *     Token + nonce + rate-limit are the gate, not user authentication.
+ */
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -26,17 +55,54 @@ class Lafka_KDS_Ajax {
 	}
 
 	/**
-	 * Verify KDS token from request.
+	 * Verify KDS token + nonce from request. Bails with 403/429 on failure.
+	 *
+	 * Failure modes are folded into one generic "Invalid credentials" response so
+	 * an attacker cannot probe nonce-vs-token state. Failed attempts are counted
+	 * by IP via {@see track_auth_failure()}; sustained failures yield 429.
 	 */
 	private function verify_kds_auth() {
-		check_ajax_referer( 'lafka_kds_nonce', 'nonce' );
+		// Don't auto-die on bad nonce — we want to count it toward the rate limit.
+		$valid_nonce = (bool) check_ajax_referer( 'lafka_kds_nonce', 'nonce', false );
 
-		$token   = isset( $_POST['kds_token'] ) ? sanitize_text_field( $_POST['kds_token'] ) : '';
-		$options = Lafka_Kitchen_Display::get_options();
+		$token       = isset( $_POST['kds_token'] ) ? sanitize_text_field( $_POST['kds_token'] ) : '';
+		$options     = Lafka_Kitchen_Display::get_options();
+		$valid_token = ! empty( $options['token'] ) && hash_equals( $options['token'], $token );
 
-		if ( empty( $options['token'] ) || ! hash_equals( $options['token'], $token ) ) {
-			wp_send_json_error( array( 'message' => 'Invalid token' ), 403 );
+		if ( $valid_nonce && $valid_token ) {
+			return;
 		}
+
+		if ( $this->track_auth_failure( 'kds_auth' ) ) {
+			wp_send_json_error( array( 'message' => 'Too many failed attempts' ), 429 );
+		}
+		wp_send_json_error( array( 'message' => 'Invalid credentials' ), 403 );
+	}
+
+	/**
+	 * Increment a per-IP failure counter for `$bucket`; return true if the new
+	 * count puts this IP over `$max_per_minute`.
+	 *
+	 * Counter resets every 60s after the *last* hit (transient TTL is reset on
+	 * each `set_transient()`). Acceptable for a security wall — an attacker that
+	 * stops attacking gets re-armed eventually, while one that keeps hammering
+	 * stays blocked indefinitely.
+	 *
+	 * Behind a reverse proxy (Cloudflare, AWS ALB) `REMOTE_ADDR` collapses to
+	 * the LB's IP and all clients share one bucket. Filter `lafka_kds_client_ip`
+	 * to feed e.g. `CF-Connecting-IP` or the rightmost-trusted XFF hop.
+	 */
+	private function track_auth_failure( $bucket, $max_per_minute = 5 ) {
+		$ip = isset( $_SERVER['REMOTE_ADDR'] )
+			? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) )
+			: '0.0.0.0';
+		$ip = apply_filters( 'lafka_kds_client_ip', $ip );
+
+		$key   = 'lafka_kds_failrate_' . $bucket . '_' . md5( $ip );
+		$count = (int) get_transient( $key ) + 1;
+		set_transient( $key, $count, MINUTE_IN_SECONDS );
+
+		return $count > $max_per_minute;
 	}
 
 	/**
@@ -337,7 +403,13 @@ class Lafka_KDS_Ajax {
 	 * Customer-facing status check (authenticated via order key).
 	 */
 	public function customer_status() {
-		check_ajax_referer( 'lafka_kds_customer_nonce', 'nonce' );
+		$valid_nonce = (bool) check_ajax_referer( 'lafka_kds_customer_nonce', 'nonce', false );
+		if ( ! $valid_nonce ) {
+			if ( $this->track_auth_failure( 'customer_status' ) ) {
+				wp_send_json_error( array( 'message' => 'Too many failed attempts' ), 429 );
+			}
+			wp_send_json_error( array( 'message' => 'Invalid credentials' ), 403 );
+		}
 
 		$order_id  = isset( $_POST['order_id'] ) ? absint( $_POST['order_id'] ) : 0;
 		$order_key = isset( $_POST['order_key'] ) ? sanitize_text_field( $_POST['order_key'] ) : '';
@@ -348,7 +420,10 @@ class Lafka_KDS_Ajax {
 
 		$order = wc_get_order( $order_id );
 		if ( ! $order || ! hash_equals( $order->get_order_key(), $order_key ) ) {
-			wp_send_json_error( array( 'message' => 'Invalid order' ) );
+			if ( $this->track_auth_failure( 'customer_status' ) ) {
+				wp_send_json_error( array( 'message' => 'Too many failed attempts' ), 429 );
+			}
+			wp_send_json_error( array( 'message' => 'Invalid order' ), 403 );
 		}
 
 		$status    = $order->get_status();
@@ -367,13 +442,20 @@ class Lafka_KDS_Ajax {
 
 	/**
 	 * Refresh nonce (token-only auth, no nonce required).
-	 * Called by the KDS JS when the current nonce is about to expire.
+	 * Called by the KDS JS when the current nonce is about to expire (~30 min cadence).
+	 *
+	 * Most security-sensitive endpoint: it mints fresh nonces on token-only proof,
+	 * so a stolen token = unbounded fresh credentials. Failure-only IP rate limiter
+	 * caps brute-force at 5/min per IP. Legit operators hit this 2×/hour at most.
 	 */
 	public function refresh_nonce() {
 		$token   = isset( $_POST['kds_token'] ) ? sanitize_text_field( $_POST['kds_token'] ) : '';
 		$options = Lafka_Kitchen_Display::get_options();
 
 		if ( empty( $options['token'] ) || ! hash_equals( $options['token'], $token ) ) {
+			if ( $this->track_auth_failure( 'refresh_nonce' ) ) {
+				wp_send_json_error( array( 'message' => 'Too many failed attempts' ), 429 );
+			}
 			wp_send_json_error( array( 'message' => 'Invalid token' ), 403 );
 		}
 

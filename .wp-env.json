@@ -1,0 +1,21 @@
+{
+	"core": "WordPress/WordPress#6.9.4",
+	"phpVersion": "8.2",
+	"plugins": [
+		".",
+		"https://downloads.wordpress.org/plugin/woocommerce.10.7.0.zip"
+	],
+	"themes": [],
+	"config": {
+		"WP_DEBUG": true,
+		"WP_DEBUG_LOG": true,
+		"WP_DEBUG_DISPLAY": false,
+		"SCRIPT_DEBUG": true,
+		"WP_ENVIRONMENT_TYPE": "development"
+	},
+	"mappings": {
+		"wp-content/uploads": "./.wp-env-uploads"
+	},
+	"port": 8883,
+	"testsPort": 8884
+}

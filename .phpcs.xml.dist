@@ -19,15 +19,15 @@
 		<exclude name="Universal.Arrays.DisallowShortArraySyntax"/>
 	</rule>
 
-	<!-- Check for cross-version PHP compatibility -->
-	<config name="testVersion" value="7.4-"/>
+	<!-- Check for cross-version PHP compatibility (PHP 7.4 EOL'd 2022; 8.0 EOL'd 2023; 8.1 EOL'd 2024) -->
+	<config name="testVersion" value="8.1-"/>
 	<rule ref="PHPCompatibilityWP"/>
 
 	<!-- WordPress text domain -->
 	<config name="text_domain" value="lafka-plugin"/>
 
-	<!-- Minimum supported WordPress version -->
-	<config name="minimum_wp_version" value="5.6"/>
+	<!-- Minimum supported WordPress version (WP 6.6 = mid-2024 baseline) -->
+	<config name="minimum_wp_version" value="6.6"/>
 
 	<!-- Exclude third-party / vendor directories -->
 	<exclude-pattern>/vendor/*</exclude-pattern>

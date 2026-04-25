@@ -125,16 +125,12 @@
 
 	function playNewOrderSound() {
 		if (!config.soundEnabled) {
-			console.log('KDS: Sound disabled in config');
 			return;
 		}
 
 		if (!soundReady) {
-			console.log('KDS: Sound not ready yet - user needs to click overlay');
 			return;
 		}
-
-		console.log('KDS: Playing new order sound');
 
 		// Play bell — hold reference until it finishes
 		var bell = new Audio(config.soundUrl);
@@ -158,9 +154,7 @@
 			}
 		});
 
-		bell.play().then(function() {
-			console.log('KDS: Sound played successfully');
-		}).catch(function (err) {
+		bell.play().catch(function (err) {
 			console.error('KDS: Failed to play sound:', err);
 		});
 

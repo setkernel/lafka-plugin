@@ -380,11 +380,17 @@ class WC_Product_Combo_Data_Store_CPT extends WC_Product_Data_Store_CPT {
 
 		} else {
 
+			// Defense in depth: coerce IDs to integers before interpolation. Prevents SQLi
+			// even if a future caller passes unvalidated user input.
+			$safe_ids = array_filter( array_map( 'absint', (array) $combo_ids ) );
+			if ( empty( $safe_ids ) ) {
+				return;
+			}
 			$wpdb->query( "
 				UPDATE {$wpdb->postmeta}
 				SET meta_value = 'unsynced'
 				WHERE meta_key = '_wc_pb_combined_items_stock_sync_status'
-				AND post_id IN (" . implode( ',', $combo_ids ) . ")
+				AND post_id IN (" . implode( ',', $safe_ids ) . ")
 			" );
 
 			foreach ( $combo_ids as $combo_id ) {
@@ -411,13 +417,17 @@ class WC_Product_Combo_Data_Store_CPT extends WC_Product_Data_Store_CPT {
 		global $wpdb;
 
 		if ( ! empty( $ids ) ) {
+			$safe_ids = array_filter( array_map( 'absint', (array) $ids ) );
+			if ( empty( $safe_ids ) ) {
+				return;
+			}
 			$wpdb->query( "
 				DELETE FROM {$wpdb->postmeta}
 				WHERE meta_key = '_wc_pb_combined_items_stock_sync_status'
-				AND post_id IN (" . implode( ',', $ids ) . ")
+				AND post_id IN (" . implode( ',', $safe_ids ) . ")
 			" );
 
-			foreach ( $ids as $id ) {
+			foreach ( $safe_ids as $id ) {
 				wp_cache_delete( $id, 'post_meta' );
 			}
 		}
@@ -434,11 +444,13 @@ class WC_Product_Combo_Data_Store_CPT extends WC_Product_Data_Store_CPT {
 
 		global $wpdb;
 
-		$results = $wpdb->get_results( "
-			SELECT meta.post_id as id FROM {$wpdb->postmeta} AS meta
-			WHERE meta.meta_key = '_wc_pb_combined_items_stock_sync_status' AND meta.meta_value = '$status'
-			GROUP BY meta.post_id;
-		" );
+		$results = $wpdb->get_results( $wpdb->prepare(
+			"SELECT meta.post_id as id FROM {$wpdb->postmeta} AS meta
+			 WHERE meta.meta_key = %s AND meta.meta_value = %s
+			 GROUP BY meta.post_id",
+			'_wc_pb_combined_items_stock_sync_status',
+			$status
+		) );
 
 		return is_array( $results ) ? wp_list_pluck( $results, 'id' ) : array();
 	}
@@ -454,13 +466,17 @@ class WC_Product_Combo_Data_Store_CPT extends WC_Product_Data_Store_CPT {
 		global $wpdb;
 
 		if ( ! empty( $ids ) ) {
+			$safe_ids = array_filter( array_map( 'absint', (array) $ids ) );
+			if ( empty( $safe_ids ) ) {
+				return;
+			}
 			$wpdb->query( "
 				DELETE FROM {$wpdb->postmeta}
 				WHERE meta_key = '_wc_pb_combined_items_stock_status'
-				AND post_id IN (" . implode( ',', $ids ) . ")
+				AND post_id IN (" . implode( ',', $safe_ids ) . ")
 			" );
 
-			foreach ( $ids as $id ) {
+			foreach ( $safe_ids as $id ) {
 				wp_cache_delete( $id, 'post_meta' );
 			}
 		}
@@ -479,11 +495,13 @@ class WC_Product_Combo_Data_Store_CPT extends WC_Product_Data_Store_CPT {
 
 		global $wpdb;
 
-		$results = $wpdb->get_results( "
-			SELECT meta.post_id as id FROM {$wpdb->postmeta} AS meta
-			WHERE meta.meta_key = '_wc_pb_combined_items_stock_status' AND meta.meta_value = '$status'
-			GROUP BY meta.post_id;
-		" );
+		$results = $wpdb->get_results( $wpdb->prepare(
+			"SELECT meta.post_id as id FROM {$wpdb->postmeta} AS meta
+			 WHERE meta.meta_key = %s AND meta.meta_value = %s
+			 GROUP BY meta.post_id",
+			'_wc_pb_combined_items_stock_status',
+			$status
+		) );
 
 		return is_array( $results ) ? wp_list_pluck( $results, 'id' ) : array();
 	}

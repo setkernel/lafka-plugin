@@ -1,10 +1,14 @@
-name: Lint
+name: CI
 
 on:
   push:
     branches: [main, master]
   pull_request:
     branches: [main, master]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   lint-js-css:
@@ -26,19 +30,27 @@ jobs:
       - name: Stylelint
         run: npm run lint:css
 
-  lint-php:
-    name: PHPCS
+  php:
+    name: PHP ${{ matrix.php }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.1', '8.2', '8.3']
     steps:
       - uses: actions/checkout@v4
 
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.1'
+          php-version: ${{ matrix.php }}
           tools: composer
+          coverage: none
 
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist
 
       - name: PHPCS
         run: composer phpcs
+
+      - name: PHPUnit
+        run: composer test

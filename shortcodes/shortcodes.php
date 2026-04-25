@@ -117,8 +117,7 @@ if (!function_exists('lafka_counter_shortcode')) {
 				'i_icon_etline' => 'icon-mobile',
 				'i_icon_flaticon' => 'flaticon-001-popcorn',
 				'i_custom_color' => '',
-										), $atts)
-		);
+										), $atts), EXTR_SKIP );
 
 		$iconClass = '';
 
@@ -175,8 +174,7 @@ if (!function_exists('lafka_typed_shortcode')) {
 				'loop' => 'yes',
 				'el_class' => '',
 				'css' => '',
-										), $atts)
-		);
+										), $atts), EXTR_SKIP );
 
 		$unique_id = uniqid('lafka_typed');
 
@@ -374,7 +372,7 @@ if (!function_exists('lafka_foodmenu_shortcode')) {
 				'offset'               => '',
 				'date_sort'            => 'DESC',
 				'css'                  => ''
-			), $atts ) );
+			), $atts ), EXTR_SKIP );
 
 		// css from Design options
 		$css_design_class = '';
@@ -757,8 +755,7 @@ if (!function_exists('lafka_banner_shortcode')) {
 				'color_scheme' => '',
 				'appear_animation' => '',
 				'css' => ''
-										), $atts)
-		);
+										), $atts), EXTR_SKIP );
 
 		// css from Design options
 		$css_design_class = '';
@@ -825,8 +822,7 @@ if (!function_exists('lafka_cloudzoom_gallery_shortcode')) {
 		extract(shortcode_atts(
 										array(
 				'images' => ''
-										), $atts)
-		);
+										), $atts), EXTR_SKIP );
 
 		$img_size = 'lafka-640x640';
 
@@ -901,8 +897,7 @@ if (!function_exists('lafka_icon_teaser_shortcode')) {
                 'align' => 'teaser-left',
                 'appear_animation' => '',
                 'titles_color' => ''
-                                        ), $atts)
-        );
+                                        ), $atts), EXTR_SKIP );
 
         // Enqueue font-awesome.
         wp_enqueue_style('font_awesome_6');
@@ -995,8 +990,7 @@ if (!function_exists('lafka_icon_box_shortcode')) {
                 'icon_style' => '',
                 'appear_animation' => '',
                 'titles_color' => ''
-                                        ), $atts)
-        );
+                                        ), $atts), EXTR_SKIP );
 
         // Enqueue font-awesome.
         wp_enqueue_style('font_awesome_6');
@@ -1064,8 +1058,7 @@ if (!function_exists('lafka_countdown_shortcode')) {
                 'date' => '',
                 'counter_size' => '',
                 'color' => '',
-                                        ), $atts)
-        );
+                                        ), $atts), EXTR_SKIP );
 
         $output = '';
 
@@ -1106,8 +1099,7 @@ if (!function_exists('lafka_map_shortcode')) {
                 'map_latitude' => '',
                 'map_longitude' => '',
                 'height' => '400'
-                                        ), $atts)
-        );
+                                        ), $atts), EXTR_SKIP );
 
         $output = '';
 
@@ -1182,8 +1174,7 @@ if (!function_exists('lafka_pricing_table_shortcode')) {
                 'link' => '',
                 'accent_color' => '',
                 'featured' => 'no'
-                                        ), $atts)
-        );
+                                        ), $atts), EXTR_SKIP );
 
         ob_start();
         ?>

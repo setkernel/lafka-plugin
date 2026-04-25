@@ -14,6 +14,9 @@ node_modules/
 package-lock.json
 vendor/
 
+# Test artefacts
+.phpunit.result.cache
+
 # Misc
 *.log
 *.bak

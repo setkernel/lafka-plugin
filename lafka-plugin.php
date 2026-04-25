@@ -3,11 +3,13 @@
   Plugin Name: Lafka Plugin
   Plugin URI: https://github.com/setkernel/lafka-plugin
   Description: Companion plugin for the Lafka WooCommerce theme. Originally by theAlThemist, now community-maintained.
-  Version: 8.6.0
+  Version: 8.7.0
   Author: theAlThemist, Contributors
   Author URI: https://github.com/setkernel/lafka-plugin
-  WC requires at least: 8
-  WC tested up to: 9
+  Requires at least: 6.6
+  Requires PHP: 8.1
+  WC requires at least: 9.5
+  WC tested up to: 10.7
   License: GPL v2 or later
   License URI: https://www.gnu.org/licenses/gpl-2.0.html
  */
@@ -25,9 +27,24 @@ if ( ! defined( 'LAFKA_PLUGIN_FILE' ) ) {
  * @since 8.6.0
  */
 if ( ! function_exists( 'lafka_plugin_asset_version' ) ) {
+	/**
+	 * Returns a cache-busting version string for an asset.
+	 *
+	 * Memoizes filemtime lookups per request — the original implementation
+	 * stat'd every asset on every page load, which is measurable on slow/
+	 * networked storage when 20+ assets are enqueued.
+	 *
+	 * @param string $relative_path Path relative to the plugin root (e.g. "assets/js/foo.js").
+	 * @return string mtime as string, or fallback "1.0.0" if file missing.
+	 */
 	function lafka_plugin_asset_version( $relative_path ) {
-		$file = plugin_dir_path( LAFKA_PLUGIN_FILE ) . $relative_path;
-		return file_exists( $file ) ? (string) filemtime( $file ) : '1.0.0';
+		static $cache = array();
+		if ( isset( $cache[ $relative_path ] ) ) {
+			return $cache[ $relative_path ];
+		}
+		$file  = plugin_dir_path( LAFKA_PLUGIN_FILE ) . $relative_path;
+		$cache[ $relative_path ] = file_exists( $file ) ? (string) filemtime( $file ) : '1.0.0';
+		return $cache[ $relative_path ];
 	}
 }
 
@@ -127,6 +144,24 @@ function is_lafka_kitchen_display( $lafka_options = null ) {
 	return Lafka_Options::is_enabled( 'kitchen_display' );
 }
 
+/**
+ * BOGO + delivery-minimum + promo banner (P2-01).
+ *
+ * When OFF (default), the legacy implementation in lafka-child/functions.php
+ * stays active. When ON, that child code self-gates off and this plugin module
+ * owns all promo behavior. Mutual-exclusion gate prevents double-applied hooks
+ * during rollout.
+ */
+function is_lafka_promotions( $lafka_options = null ) {
+	return Lafka_Options::is_enabled( 'promotions' );
+}
+
+/**
+ * Security headers + user-enum hardening (P2-05). Loaded unconditionally;
+ * the module itself decides whether to attach hooks (see Lafka_Security_Headers::is_active()).
+ */
+require_once plugin_dir_path( __FILE__ ) . 'incl/security/class-lafka-security-headers.php';
+
 add_action( 'before_woocommerce_init', function() {
 	if ( class_exists( \Automattic\WooCommerce\Utilities\FeaturesUtil::class ) ) {
 		\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', __FILE__, true );
@@ -160,6 +195,11 @@ if ( LAFKA_PLUGIN_IS_WOOCOMMERCE ) {
 	if( is_lafka_kitchen_display( get_option( 'lafka' )) ) {
 		/* Load kitchen display */
 		require_once( plugin_dir_path( __FILE__ ) . '/incl/kitchen-display/class-lafka-kitchen-display.php' );
+	}
+
+	if ( is_lafka_promotions() ) {
+		/* Load BOGO + delivery-min + banner (P2-01). Child code self-gates off. */
+		require_once( plugin_dir_path( __FILE__ ) . '/incl/promotions/class-lafka-promotions.php' );
 	}
 }
 
@@ -332,12 +372,15 @@ if (!function_exists('lafka_register_cpt_lafka_foodmenu')) {
 				'labels' => $labels,
 				'hierarchical' => false,
 				'description' => esc_html__( 'Lafka Restaurant Menu Post Type', 'lafka-plugin' ),
-				'supports' => array('title', 'editor', 'excerpt', 'author', 'thumbnail', 'revisions'),
+				'supports' => array('title', 'editor', 'excerpt', 'author', 'thumbnail', 'revisions', 'custom-fields'),
 				'taxonomies' => array('lafka_foodmenu_category'),
 				'public' => true,
 				'show_ui' => true,
 				'show_in_menu' => true,
 				'show_in_nav_menus' => true,
+				'show_in_rest' => true,
+				'rest_base' => 'menu-items',
+				'rest_controller_class' => 'WP_REST_Posts_Controller',
 				'publicly_queryable' => true,
 				'exclude_from_search' => false,
 				'has_archive' => true,
@@ -387,6 +430,9 @@ if (!function_exists('lafka_register_taxonomy_lafka_foodmenu_category')) {
 				'public' => true,
 				'show_in_nav_menus' => true,
 				'show_ui' => true,
+				'show_in_rest' => true,
+				'rest_base' => 'menu-categories',
+				'rest_controller_class' => 'WP_REST_Terms_Controller',
 				'show_tagcloud' => true,
 				'show_admin_column' => false,
 				'hierarchical' => true,
@@ -514,7 +560,7 @@ if (!function_exists('lafka_register_admin_plugin_scripts')) {
 			'confirm_import_2' => esc_html__('. Current Theme Options will be overwritten. Continue?', 'lafka-plugin'),
 			'import_success' => esc_html__('Options successfully imported. Reloading.', 'lafka-plugin'),
 			'upload_error' => esc_html__('There was a problem with the upload. Error', 'lafka-plugin'),
-			'export_url' => esc_url( add_query_arg( 'action', 'lafka_options_export', admin_url( 'admin-post.php' ) ) ),
+			'export_url' => esc_url( wp_nonce_url( add_query_arg( 'action', 'lafka_options_export', admin_url( 'admin-post.php' ) ), 'lafka_options_export' ) ),
 			'options_upload_nonce' => wp_create_nonce( 'lafka_options_upload_nonce' )
 		));
 
@@ -1063,18 +1109,52 @@ add_action('wp_ajax_lafka_options_upload', 'lafka_options_upload');
 if ( ! function_exists( 'lafka_options_upload' ) ) {
 	function lafka_options_upload() {
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
+			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'lafka-plugin' ) ), 403 );
 		}
 
 		check_ajax_referer( 'lafka_options_upload_nonce', 'security' );
 
-		if ( isset( $_FILES['file']['tmp_name'] ) ) {
-			$lafka_transfer_content = Lafka_Transfer_Content::getInstance();
-			$result = $lafka_transfer_content->importSettings( $_FILES['file']['tmp_name'], false, false, false, true );
-			wp_send_json_success( $result );
-		} else {
-			wp_send_json_error( array( 'message' => 'No file provided' ) );
+		if ( ! isset( $_FILES['file'] ) || ! is_array( $_FILES['file'] ) || empty( $_FILES['file']['tmp_name'] ) ) {
+			wp_send_json_error( array( 'message' => __( 'No file provided', 'lafka-plugin' ) ), 400 );
 		}
+
+		$file = $_FILES['file'];
+
+		if ( ! empty( $file['error'] ) ) {
+			wp_send_json_error( array( 'message' => __( 'Upload failed', 'lafka-plugin' ) ), 400 );
+		}
+
+		// Size cap — settings exports are small text/JSON files; 5MB is far more than enough.
+		$max_size = 5 * MB_IN_BYTES;
+		if ( ! empty( $file['size'] ) && (int) $file['size'] > $max_size ) {
+			wp_send_json_error( array( 'message' => __( 'File too large (5 MB max)', 'lafka-plugin' ) ), 400 );
+		}
+
+		// Server-side MIME sniff (do not trust client-supplied $_FILES['file']['type']).
+		$allowed_types = array( 'application/json', 'text/plain', 'application/xml', 'text/xml' );
+		$detected_type = '';
+		if ( function_exists( 'finfo_open' ) ) {
+			$finfo = finfo_open( FILEINFO_MIME_TYPE );
+			if ( $finfo ) {
+				$detected_type = (string) finfo_file( $finfo, $file['tmp_name'] );
+				finfo_close( $finfo );
+			}
+		}
+		if ( $detected_type && ! in_array( $detected_type, $allowed_types, true ) ) {
+			wp_send_json_error(
+				array( 'message' => sprintf( /* translators: %s: detected MIME type */ __( 'Invalid file type (%s). Only JSON/XML/plain text are allowed.', 'lafka-plugin' ), $detected_type ) ),
+				400
+			);
+		}
+
+		// Confirm the uploaded file is in fact an uploaded file (not a path-traversal attempt).
+		if ( ! is_uploaded_file( $file['tmp_name'] ) ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid upload', 'lafka-plugin' ) ), 400 );
+		}
+
+		$lafka_transfer_content = Lafka_Transfer_Content::getInstance();
+		$result = $lafka_transfer_content->importSettings( $file['tmp_name'], false, false, false, true );
+		wp_send_json_success( $result );
 	}
 }
 
@@ -1082,26 +1162,35 @@ if ( ! function_exists( 'lafka_options_upload' ) ) {
 add_action( 'admin_post_lafka_options_export', 'lafka_options_export' );
 if ( ! function_exists( 'lafka_options_export' ) ) {
 	function lafka_options_export() {
-		if ( current_user_can( 'administrator' ) ) {
-			$lafka_transfer_content = Lafka_Transfer_Content::getInstance();
-			$export_file_path       = $lafka_transfer_content->exportThemeOptions();
-
-			if ( file_exists( $export_file_path ) ) {
-				header( 'Content-Description: File Transfer' );
-				header( 'Content-Type: application/octet-stream' );
-				header( 'Content-Disposition: attachment; filename="' . basename( $export_file_path ) . '"' );
-				header( 'Expires: 0' );
-				header( 'Cache-Control: must-revalidate' );
-				header( 'Pragma: public' );
-				header( 'Content-Length: ' . filesize( $export_file_path ) );
-				readfile( $export_file_path );
-				exit;
-			} else {
-				wp_redirect( admin_url( 'admin.php?page=lafka-optionsframework' ) );
-			}
-		} else {
-			wp_redirect(home_url());
+		// Capability + CSRF check before doing any work.
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'You do not have permission to export theme options.', 'lafka-plugin' ), 403 );
 		}
+		check_admin_referer( 'lafka_options_export' );
+
+		$lafka_transfer_content = Lafka_Transfer_Content::getInstance();
+		$export_file_path       = $lafka_transfer_content->exportThemeOptions();
+
+		// Defense in depth: require export to live inside the expected directory so a
+		// compromised exportThemeOptions() can't be used to readfile() arbitrary paths.
+		$export_dir   = realpath( get_template_directory() . '/store/settings' );
+		$resolved     = $export_file_path ? realpath( $export_file_path ) : false;
+		$path_is_safe = $resolved && $export_dir && str_starts_with( $resolved, $export_dir . DIRECTORY_SEPARATOR );
+
+		if ( $path_is_safe && file_exists( $resolved ) ) {
+			nocache_headers();
+			header( 'Content-Description: File Transfer' );
+			header( 'Content-Type: application/octet-stream' );
+			header( 'Content-Disposition: attachment; filename="' . basename( $resolved ) . '"' );
+			header( 'Content-Length: ' . filesize( $resolved ) );
+			readfile( $resolved );
+			// Best-effort cleanup so /store/settings/ doesn't fill up.
+			@unlink( $resolved );
+			exit;
+		}
+
+		wp_safe_redirect( admin_url( 'admin.php?page=lafka-optionsframework' ) );
+		exit;
 	}
 }
 

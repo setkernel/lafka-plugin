@@ -1,0 +1,87 @@
+/*
+ * Lafka_Promotions — banner + cart-notice + savings-line styles.
+ * Extracted from inline <style> in lafka-child/functions.php (P2-01).
+ */
+
+/* ─── Cart delivery-min notice ─────────────────────────────────────────── */
+.lafka-delivery-min-notice {
+	background-color: #e94560;
+	color: #fff;
+	border-top-color: #c4374d;
+	padding: 12px 20px;
+	font-size: 15px;
+	font-weight: 600;
+}
+
+/* ─── BOGO savings line under cart subtotal ────────────────────────────── */
+.lafka-bogo-savings {
+	color: #4ecca3;
+	font-weight: 600;
+}
+
+/* ─── Promotional banner ───────────────────────────────────────────────── */
+#lafka-bogo-banner {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	background: #c62828;
+	color: #fff;
+	z-index: 10000;
+	transform: translateY(-100%);
+	opacity: 0;
+	transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+	            opacity 0.3s ease;
+	box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
+#lafka-bogo-banner.is-visible {
+	transform: translateY(0);
+	opacity: 1;
+}
+
+.lafka-bogo-inner {
+	max-width: 1200px;
+	margin: 0 auto;
+	padding: 14px 48px;
+	text-align: center;
+	font-size: 15px;
+	font-weight: 600;
+	letter-spacing: 0.3px;
+}
+
+.lafka-bogo-close {
+	position: absolute;
+	right: 18px;
+	top: 50%;
+	transform: translateY(-50%);
+	cursor: pointer;
+	font-size: 20px;
+	line-height: 1;
+	opacity: 0.9;
+	background: none;
+	border: none;
+	color: inherit;
+	padding: 8px;
+}
+
+.lafka-bogo-close:hover,
+.lafka-bogo-close:focus {
+	opacity: 1;
+	outline: 2px solid rgba(255, 255, 255, 0.6);
+	outline-offset: 2px;
+	border-radius: 4px;
+}
+
+@media (max-width: 768px) {
+	.lafka-bogo-inner {
+		padding: 12px 48px 12px 16px;
+		font-size: 14px;
+		text-align: left;
+	}
+
+	.lafka-bogo-close {
+		right: 10px;
+		font-size: 24px;
+	}
+}

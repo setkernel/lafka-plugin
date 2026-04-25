@@ -382,38 +382,57 @@ class WC_LafkaCombos_DB {
 
 		global $wpdb;
 
-		if ( ! empty( $combined_item_ids ) ) {
+		if ( empty( $combined_item_ids ) ) {
+			return false;
+		}
 
-			$rows_updated = $wpdb->query( "
-				UPDATE {$wpdb->prefix}woocommerce_lafka_combined_itemmeta
-				SET meta_value = '" . wc_clean( $meta_value ) . "'
-				WHERE meta_key = '" . $meta_key . "'
-				AND combined_item_id IN ( " . implode( ',', $combined_item_ids ) . " )
-			" );
+		// Coerce IDs to integers — defense in depth even though all current callers
+		// pass internal IDs. With the IDs guaranteed-integer the IN clause is safe to
+		// inline; meta_key and meta_value go through $wpdb->prepare().
+		$safe_ids = array_filter( array_map( 'absint', (array) $combined_item_ids ) );
+		if ( empty( $safe_ids ) ) {
+			return false;
+		}
+		$ids_csv = implode( ',', $safe_ids );
 
-			if ( $rows_updated !== count( $combined_item_ids ) ) {
+		$table = $wpdb->prefix . 'woocommerce_lafka_combined_itemmeta';
 
-				$rows_affected = $wpdb->get_var( "
-					SELECT COUNT(meta_id) FROM {$wpdb->prefix}woocommerce_lafka_combined_itemmeta
-					WHERE meta_key = '" . $meta_key . "'
-					AND combined_item_id IN ( " . implode( ',', $combined_item_ids ) . " )
-				" );
+		$rows_updated = $wpdb->query( $wpdb->prepare(
+			"UPDATE {$table}
+			 SET meta_value = %s
+			 WHERE meta_key = %s
+			 AND combined_item_id IN ( {$ids_csv} )",
+			$meta_value,
+			$meta_key
+		) );
 
-				if ( $rows_affected !== count( $combined_item_ids ) ) {
+		if ( $rows_updated !== count( $safe_ids ) ) {
 
-					$wpdb->query( "
-						INSERT INTO {$wpdb->prefix}woocommerce_lafka_combined_itemmeta (combined_item_id, meta_key, meta_value)
-						SELECT combined_items.combined_item_id, '" . $meta_key . "', '" . $meta_value . "' FROM {$wpdb->prefix}woocommerce_lafka_combined_items AS combined_items
-						LEFT OUTER JOIN {$wpdb->prefix}woocommerce_lafka_combined_itemmeta AS item_meta ON item_meta.combined_item_id = combined_items.combined_item_id AND item_meta.meta_key = '" . $meta_key . "'
-						WHERE item_meta.meta_key IS NULL AND combined_items.combined_item_id IN ( " . implode( ',', $combined_item_ids ) . " )
-					" );
-				}
+			$rows_affected = $wpdb->get_var( $wpdb->prepare(
+				"SELECT COUNT(meta_id) FROM {$table}
+				 WHERE meta_key = %s
+				 AND combined_item_id IN ( {$ids_csv} )",
+				$meta_key
+			) );
+
+			if ( (int) $rows_affected !== count( $safe_ids ) ) {
+
+				$items_table = $wpdb->prefix . 'woocommerce_lafka_combined_items';
+				$wpdb->query( $wpdb->prepare(
+					"INSERT INTO {$table} (combined_item_id, meta_key, meta_value)
+					 SELECT combined_items.combined_item_id, %s, %s FROM {$items_table} AS combined_items
+					 LEFT OUTER JOIN {$table} AS item_meta ON item_meta.combined_item_id = combined_items.combined_item_id AND item_meta.meta_key = %s
+					 WHERE item_meta.meta_key IS NULL AND combined_items.combined_item_id IN ( {$ids_csv} )",
+					$meta_key,
+					$meta_value,
+					$meta_key
+				) );
 			}
+		}
 
-			foreach ( $combined_item_ids as $combined_item_id ) {
-				$cache_key = WC_Cache_Helper::get_cache_prefix( 'combined_item_meta' ) . $combined_item_id;
-				wp_cache_delete( $cache_key, 'combined_item_meta' );
-			}
+		foreach ( $safe_ids as $combined_item_id ) {
+			$cache_key = WC_Cache_Helper::get_cache_prefix( 'combined_item_meta' ) . $combined_item_id;
+			wp_cache_delete( $cache_key, 'combined_item_meta' );
 		}
 
 		return false;
@@ -432,13 +451,17 @@ class WC_LafkaCombos_DB {
 
 		if ( ! empty( $combined_item_ids ) ) {
 
+			$safe_ids = array_filter( array_map( 'absint', (array) $combined_item_ids ) );
+			if ( empty( $safe_ids ) ) {
+				return;
+			}
 			$wpdb->query( "
 				DELETE FROM {$wpdb->prefix}woocommerce_lafka_combined_itemmeta
 				WHERE meta_key IN ( 'stock_status', 'max_stock' )
-				AND combined_item_id IN (" . implode( ',', $combined_item_ids ) . ")
+				AND combined_item_id IN (" . implode( ',', $safe_ids ) . ")
 			" );
 
-			foreach ( $combined_item_ids as $combined_item_id ) {
+			foreach ( $safe_ids as $combined_item_id ) {
 				$cache_key = WC_Cache_Helper::get_cache_prefix( 'combined_item_meta' ) . $combined_item_id;
 				wp_cache_delete( $cache_key, 'combined_item_meta' );
 			}

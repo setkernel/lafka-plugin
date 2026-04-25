@@ -120,19 +120,22 @@ class WC_LafkaCombos_WP_IE_Compatibility {
 
 			if ( ! empty( $processed_products ) ) {
 				foreach ( $processed_products as $old_id => $new_id ) {
-					if ( absint( $old_id ) !== absint( $new_id ) ) {
-						$update_products[ $old_id ] = 'WHEN ' . $old_id . ' THEN ' . $new_id;
+					$old_int = absint( $old_id );
+					$new_int = absint( $new_id );
+					// Cast both ends to int so the CASE expression can never carry SQL.
+					if ( $old_int && $new_int && $old_int !== $new_int ) {
+						$update_products[ $old_int ] = 'WHEN ' . $old_int . ' THEN ' . $new_int;
 					}
 				}
 			}
 
 			if ( ! empty( $update_products ) ) {
-				// Reassociate ids.
+				$id_keys = array_keys( $update_products ); // already absint
 				$wpdb->query( "
 					UPDATE {$wpdb->prefix}woocommerce_lafka_combined_items
 					SET product_id = CASE product_id " . implode( ' ', $update_products ) .  " ELSE product_id END
-					WHERE product_id IN (" . implode( ',', array_keys( $update_products ) ) . ")
-					AND combo_id IN (" . implode( ',', array_keys( $update_products ) ) . ")
+					WHERE product_id IN (" . implode( ',', $id_keys ) . ")
+					AND combo_id IN (" . implode( ',', $id_keys ) . ")
 				" );
 			}
 
