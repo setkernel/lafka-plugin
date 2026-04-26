@@ -46,19 +46,19 @@ if ( ! class_exists( 'Lafka_Promotions' ) ) {
 
 		private function __construct() {
 			// Delivery minimum
-			add_filter( 'woocommerce_package_rates',         array( $this, 'apply_delivery_minimum' ), 10, 2 );
-			add_action( 'woocommerce_before_cart',           array( $this, 'render_delivery_notice' ) );
-			add_action( 'woocommerce_before_checkout_form',  array( $this, 'render_delivery_notice' ) );
+			add_filter( 'woocommerce_package_rates', array( $this, 'apply_delivery_minimum' ), 10, 2 );
+			add_action( 'woocommerce_before_cart', array( $this, 'render_delivery_notice' ) );
+			add_action( 'woocommerce_before_checkout_form', array( $this, 'render_delivery_notice' ) );
 
 			// BOGO 50%
 			add_action( 'woocommerce_before_calculate_totals', array( $this, 'apply_bogo_to_cart' ), 20, 1 );
-			add_filter( 'woocommerce_get_item_data',           array( $this, 'render_bogo_label' ), 10, 2 );
-			add_filter( 'woocommerce_cart_item_price',         array( $this, 'render_bogo_unit_price' ), 10, 3 );
-			add_filter( 'woocommerce_cart_item_subtotal',      array( $this, 'render_bogo_subtotal' ), 10, 3 );
+			add_filter( 'woocommerce_get_item_data', array( $this, 'render_bogo_label' ), 10, 2 );
+			add_filter( 'woocommerce_cart_item_price', array( $this, 'render_bogo_unit_price' ), 10, 3 );
+			add_filter( 'woocommerce_cart_item_subtotal', array( $this, 'render_bogo_subtotal' ), 10, 3 );
 
 			// Banner
 			add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_banner_assets' ) );
-			add_action( 'wp_footer',          array( $this, 'render_banner' ) );
+			add_action( 'wp_footer', array( $this, 'render_banner' ) );
 		}
 
 		// ─── Pure math helpers (also used by tests) ──────────────────────────
@@ -91,7 +91,7 @@ if ( ! class_exists( 'Lafka_Promotions' ) ) {
 				if ( ! isset( $distribution[ $k ] ) ) {
 					$distribution[ $k ] = 0;
 				}
-				$distribution[ $k ]++;
+				++$distribution[ $k ];
 			}
 
 			return $distribution;
@@ -200,7 +200,10 @@ if ( ! class_exists( 'Lafka_Promotions' ) ) {
 			foreach ( $cart->get_cart() as $key => $cart_item ) {
 				$price = (float) $cart->cart_contents[ $key ]['_bogo_original_price'];
 				for ( $i = 0; $i < $cart_item['quantity']; $i++ ) {
-					$units[] = array( 'key' => $key, 'price' => $price );
+					$units[] = array(
+						'key'   => $key,
+						'price' => $price,
+					);
 				}
 			}
 

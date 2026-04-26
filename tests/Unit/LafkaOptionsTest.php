@@ -80,9 +80,9 @@ final class LafkaOptionsTest extends TestCase {
 	 */
 	private function reset_lafka_options_static_state(): void {
 		Lafka_Options::flush();
-		$reflection      = new ReflectionClass( Lafka_Options::class );
-		$defaults_prop   = $reflection->getProperty( 'defaults' );
-		$defaults_prop->setAccessible( true );
+		// ReflectionProperty has been accessible-by-default since PHP 8.1; no setAccessible() needed.
+		$reflection    = new ReflectionClass( Lafka_Options::class );
+		$defaults_prop = $reflection->getProperty( 'defaults' );
 		$defaults_prop->setValue( null, array() );
 	}
 }

@@ -36,8 +36,8 @@ if ( ! class_exists( 'Lafka_Security_Headers' ) ) {
 			if ( ! $this->is_active() ) {
 				return;
 			}
-			add_action( 'send_headers',     array( $this, 'send_security_headers' ) );
-			add_filter( 'rest_endpoints',   array( $this, 'disable_user_enum_rest' ) );
+			add_action( 'send_headers', array( $this, 'send_security_headers' ) );
+			add_filter( 'rest_endpoints', array( $this, 'disable_user_enum_rest' ) );
 			add_action( 'template_redirect', array( $this, 'block_author_enum' ) );
 		}
 
