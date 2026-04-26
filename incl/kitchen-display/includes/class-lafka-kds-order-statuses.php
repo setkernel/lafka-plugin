@@ -20,41 +20,53 @@ class Lafka_KDS_Order_Statuses {
 	 * Register custom post statuses.
 	 */
 	public function register_statuses() {
-		register_post_status( 'wc-accepted', array(
-			'label'                     => _x( 'Accepted', 'Order status', 'lafka-plugin' ),
-			'public'                    => true,
-			'exclude_from_search'       => false,
-			'show_in_admin_all_list'    => true,
-			'show_in_admin_status_list' => true,
-			'label_count'               => _n_noop( 'Accepted <span class="count">(%s)</span>', 'Accepted <span class="count">(%s)</span>', 'lafka-plugin' ),
-		) );
+		register_post_status(
+			'wc-accepted',
+			array(
+				'label'                     => _x( 'Accepted', 'Order status', 'lafka-plugin' ),
+				'public'                    => true,
+				'exclude_from_search'       => false,
+				'show_in_admin_all_list'    => true,
+				'show_in_admin_status_list' => true,
+				'label_count'               => _n_noop( 'Accepted <span class="count">(%s)</span>', 'Accepted <span class="count">(%s)</span>', 'lafka-plugin' ),
+			)
+		);
 
-		register_post_status( 'wc-preparing', array(
-			'label'                     => _x( 'Preparing', 'Order status', 'lafka-plugin' ),
-			'public'                    => true,
-			'exclude_from_search'       => false,
-			'show_in_admin_all_list'    => true,
-			'show_in_admin_status_list' => true,
-			'label_count'               => _n_noop( 'Preparing <span class="count">(%s)</span>', 'Preparing <span class="count">(%s)</span>', 'lafka-plugin' ),
-		) );
+		register_post_status(
+			'wc-preparing',
+			array(
+				'label'                     => _x( 'Preparing', 'Order status', 'lafka-plugin' ),
+				'public'                    => true,
+				'exclude_from_search'       => false,
+				'show_in_admin_all_list'    => true,
+				'show_in_admin_status_list' => true,
+				'label_count'               => _n_noop( 'Preparing <span class="count">(%s)</span>', 'Preparing <span class="count">(%s)</span>', 'lafka-plugin' ),
+			)
+		);
 
-		register_post_status( 'wc-ready', array(
-			'label'                     => _x( 'Ready', 'Order status', 'lafka-plugin' ),
-			'public'                    => true,
-			'exclude_from_search'       => false,
-			'show_in_admin_all_list'    => true,
-			'show_in_admin_status_list' => true,
-			'label_count'               => _n_noop( 'Ready <span class="count">(%s)</span>', 'Ready <span class="count">(%s)</span>', 'lafka-plugin' ),
-		) );
+		register_post_status(
+			'wc-ready',
+			array(
+				'label'                     => _x( 'Ready', 'Order status', 'lafka-plugin' ),
+				'public'                    => true,
+				'exclude_from_search'       => false,
+				'show_in_admin_all_list'    => true,
+				'show_in_admin_status_list' => true,
+				'label_count'               => _n_noop( 'Ready <span class="count">(%s)</span>', 'Ready <span class="count">(%s)</span>', 'lafka-plugin' ),
+			)
+		);
 
-		register_post_status( 'wc-rejected', array(
-			'label'                     => _x( 'Rejected', 'Order status', 'lafka-plugin' ),
-			'public'                    => true,
-			'exclude_from_search'       => false,
-			'show_in_admin_all_list'    => true,
-			'show_in_admin_status_list' => true,
-			'label_count'               => _n_noop( 'Rejected <span class="count">(%s)</span>', 'Rejected <span class="count">(%s)</span>', 'lafka-plugin' ),
-		) );
+		register_post_status(
+			'wc-rejected',
+			array(
+				'label'                     => _x( 'Rejected', 'Order status', 'lafka-plugin' ),
+				'public'                    => true,
+				'exclude_from_search'       => false,
+				'show_in_admin_all_list'    => true,
+				'show_in_admin_status_list' => true,
+				'label_count'               => _n_noop( 'Rejected <span class="count">(%s)</span>', 'Rejected <span class="count">(%s)</span>', 'lafka-plugin' ),
+			)
+		);
 	}
 
 	/**
@@ -166,12 +178,15 @@ class Lafka_KDS_Order_Statuses {
 			}
 			$order->set_status( $new_status );
 			$order->save();
-			$changed++;
+			++$changed;
 		}
 
-		return add_query_arg( array(
-			'bulk_action' => $action,
-			'changed'     => $changed,
-		), $redirect_to );
+		return add_query_arg(
+			array(
+				'bulk_action' => $action,
+				'changed'     => $changed,
+			),
+			$redirect_to
+		);
 	}
 }

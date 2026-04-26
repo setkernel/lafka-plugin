@@ -24,7 +24,9 @@ class WC_LafkaCombos_TAWS_Variation_Swatches_Compatibility {
 	 */
 	public static function tawc_variation_swatches_form_support() {
 
-		wp_add_inline_script( 'woocommerce', "
+		wp_add_inline_script(
+			'woocommerce',
+			"
 			jQuery( function( $ ) {
 				var init_tawcvs_variation_swatches_form = function() {
 					if ( typeof $.fn.tawcvs_variation_swatches_form === 'function' ) {
@@ -37,7 +39,8 @@ class WC_LafkaCombos_TAWS_Variation_Swatches_Compatibility {
 					init_tawcvs_variation_swatches_form();
 				}
 			} );
-		" );
+		"
+		);
 	}
 }
 

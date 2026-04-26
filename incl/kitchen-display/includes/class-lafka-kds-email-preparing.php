@@ -54,7 +54,7 @@ class Lafka_KDS_Email_Preparing extends WC_Email {
 
 		if ( $this->is_enabled() && $this->get_recipient() ) {
 			$this->send( $this->get_recipient(), $this->get_subject(), $this->get_content(), $this->get_headers(), $this->get_attachments() );
-			
+
 			// Mark email as sent
 			$order->update_meta_data( $sent_flag, time() );
 			$order->save();
@@ -110,12 +110,14 @@ class Lafka_KDS_Email_Preparing extends WC_Email {
 
 
 	protected function get_store_address() {
-		$parts = array_filter( array(
-			get_option( 'woocommerce_store_address' ),
-			get_option( 'woocommerce_store_address_2' ),
-			get_option( 'woocommerce_store_city' ),
-			get_option( 'woocommerce_store_postcode' ),
-		) );
+		$parts = array_filter(
+			array(
+				get_option( 'woocommerce_store_address' ),
+				get_option( 'woocommerce_store_address_2' ),
+				get_option( 'woocommerce_store_city' ),
+				get_option( 'woocommerce_store_postcode' ),
+			)
+		);
 		return implode( ', ', $parts );
 	}
 
@@ -127,4 +129,3 @@ class Lafka_KDS_Email_Preparing extends WC_Email {
 		return $phone;
 	}
 }
-

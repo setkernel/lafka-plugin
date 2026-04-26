@@ -29,7 +29,9 @@
                 return o;
             }
         }
-        catch (e) { }
+        catch (_err) {
+            // Invalid JSON — fall through to return [].
+        }
 
         return [];
     }

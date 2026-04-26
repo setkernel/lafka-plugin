@@ -69,18 +69,18 @@ class Lafka_KDS_Frontend {
 		header( 'Referrer-Policy: no-referrer' );
 		header( 'Cache-Control: no-store, no-cache, must-revalidate, private' );
 
-		$nonce           = wp_create_nonce( 'lafka_kds_nonce' );
-		$ajax_url        = admin_url( 'admin-ajax.php' );
-		$asset_base      = dirname( __DIR__ ) . '/assets';
-		$css_ver         = filemtime( $asset_base . '/css/lafka-kds.css' );
-		$js_suffix       = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
-		$js_ver          = filemtime( $asset_base . '/js/lafka-kds' . $js_suffix . '.js' );
-		$css_url         = plugins_url( '../assets/css/lafka-kds.css', __FILE__ ) . '?ver=' . $css_ver;
-		$js_url          = plugins_url( '../assets/js/lafka-kds' . $js_suffix . '.js', __FILE__ ) . '?ver=' . $js_ver;
-		$sound_url       = plugins_url( '../assets/sounds/new-order.mp3', __FILE__ );
-		$site_name       = get_bloginfo( 'name' );
-		$pickup_times    = array_map( 'absint', array_filter( explode( ',', $options['pickup_times'] ) ) );
-		$delivery_times  = array_map( 'absint', array_filter( explode( ',', $options['delivery_times'] ) ) );
+		$nonce          = wp_create_nonce( 'lafka_kds_nonce' );
+		$ajax_url       = admin_url( 'admin-ajax.php' );
+		$asset_base     = dirname( __DIR__ ) . '/assets';
+		$css_ver        = filemtime( $asset_base . '/css/lafka-kds.css' );
+		$js_suffix      = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
+		$js_ver         = filemtime( $asset_base . '/js/lafka-kds' . $js_suffix . '.js' );
+		$css_url        = plugins_url( '../assets/css/lafka-kds.css', __FILE__ ) . '?ver=' . $css_ver;
+		$js_url         = plugins_url( '../assets/js/lafka-kds' . $js_suffix . '.js', __FILE__ ) . '?ver=' . $js_ver;
+		$sound_url      = plugins_url( '../assets/sounds/new-order.mp3', __FILE__ );
+		$site_name      = get_bloginfo( 'name' );
+		$pickup_times   = array_map( 'absint', array_filter( explode( ',', $options['pickup_times'] ) ) );
+		$delivery_times = array_map( 'absint', array_filter( explode( ',', $options['delivery_times'] ) ) );
 
 		$config = array(
 			'ajaxUrl'       => $ajax_url,
@@ -96,46 +96,46 @@ class Lafka_KDS_Frontend {
 				'criticalMinutes' => 40,
 			),
 			'i18n'          => array(
-				'newOrders'    => __( 'New Orders', 'lafka-plugin' ),
-				'accepted'     => __( 'Accepted', 'lafka-plugin' ),
-				'preparing'    => __( 'Preparing', 'lafka-plugin' ),
-				'ready'        => __( 'Ready', 'lafka-plugin' ),
-				'accept'       => __( 'Accept', 'lafka-plugin' ),
-				'startPrep'    => __( 'Start Preparing', 'lafka-plugin' ),
-				'markReady'    => __( 'Mark Ready', 'lafka-plugin' ),
-				'complete'     => __( 'Complete', 'lafka-plugin' ),
-				'completed'    => __( 'Completed', 'lafka-plugin' ),
-				'reject'       => __( 'Reject', 'lafka-plugin' ),
-				'undo'         => __( 'Undo', 'lafka-plugin' ),
-				'rejectConfirm' => __( 'Are you sure you want to reject this order?', 'lafka-plugin' ),
-				'setEta'       => __( 'Set ETA', 'lafka-plugin' ),
-				'pickup'       => __( 'Pickup', 'lafka-plugin' ),
-				'delivery'     => __( 'Delivery', 'lafka-plugin' ),
-				'paidOnline'      => __( 'Paid Online', 'lafka-plugin' ),
-				'cashOnCounter'   => __( 'Cash on Counter', 'lafka-plugin' ),
-				'cashOnDelivery'  => __( 'Cash on Delivery', 'lafka-plugin' ),
-				'overdue'      => __( 'OVERDUE', 'lafka-plugin' ),
-				'noOrders'     => __( 'No orders', 'lafka-plugin' ),
-				'min'          => __( 'min', 'lafka-plugin' ),
-				'customMin'    => __( 'Custom (minutes)', 'lafka-plugin' ),
-				'confirm'      => __( 'Confirm', 'lafka-plugin' ),
-				'cancel'       => __( 'Cancel', 'lafka-plugin' ),
-				'clickSound'   => __( 'Click anywhere to enable sounds', 'lafka-plugin' ),
-				'order'        => __( 'Order', 'lafka-plugin' ),
-				'scheduled'    => __( 'Scheduled', 'lafka-plugin' ),
-				'note'         => __( 'Note', 'lafka-plugin' ),
-				'etaLabel'     => __( 'ETA', 'lafka-plugin' ),
-				'elapsed'      => __( 'ago', 'lafka-plugin' ),
-				'deliveryAddr' => __( 'Deliver to', 'lafka-plugin' ),
-				'specialInstr' => __( 'Special Instructions', 'lafka-plugin' ),
-				'allergens'    => __( 'Allergens', 'lafka-plugin' ),
-				'uncategorized' => __( 'Other Items', 'lafka-plugin' ),
+				'newOrders'            => __( 'New Orders', 'lafka-plugin' ),
+				'accepted'             => __( 'Accepted', 'lafka-plugin' ),
+				'preparing'            => __( 'Preparing', 'lafka-plugin' ),
+				'ready'                => __( 'Ready', 'lafka-plugin' ),
+				'accept'               => __( 'Accept', 'lafka-plugin' ),
+				'startPrep'            => __( 'Start Preparing', 'lafka-plugin' ),
+				'markReady'            => __( 'Mark Ready', 'lafka-plugin' ),
+				'complete'             => __( 'Complete', 'lafka-plugin' ),
+				'completed'            => __( 'Completed', 'lafka-plugin' ),
+				'reject'               => __( 'Reject', 'lafka-plugin' ),
+				'undo'                 => __( 'Undo', 'lafka-plugin' ),
+				'rejectConfirm'        => __( 'Are you sure you want to reject this order?', 'lafka-plugin' ),
+				'setEta'               => __( 'Set ETA', 'lafka-plugin' ),
+				'pickup'               => __( 'Pickup', 'lafka-plugin' ),
+				'delivery'             => __( 'Delivery', 'lafka-plugin' ),
+				'paidOnline'           => __( 'Paid Online', 'lafka-plugin' ),
+				'cashOnCounter'        => __( 'Cash on Counter', 'lafka-plugin' ),
+				'cashOnDelivery'       => __( 'Cash on Delivery', 'lafka-plugin' ),
+				'overdue'              => __( 'OVERDUE', 'lafka-plugin' ),
+				'noOrders'             => __( 'No orders', 'lafka-plugin' ),
+				'min'                  => __( 'min', 'lafka-plugin' ),
+				'customMin'            => __( 'Custom (minutes)', 'lafka-plugin' ),
+				'confirm'              => __( 'Confirm', 'lafka-plugin' ),
+				'cancel'               => __( 'Cancel', 'lafka-plugin' ),
+				'clickSound'           => __( 'Click anywhere to enable sounds', 'lafka-plugin' ),
+				'order'                => __( 'Order', 'lafka-plugin' ),
+				'scheduled'            => __( 'Scheduled', 'lafka-plugin' ),
+				'note'                 => __( 'Note', 'lafka-plugin' ),
+				'etaLabel'             => __( 'ETA', 'lafka-plugin' ),
+				'elapsed'              => __( 'ago', 'lafka-plugin' ),
+				'deliveryAddr'         => __( 'Deliver to', 'lafka-plugin' ),
+				'specialInstr'         => __( 'Special Instructions', 'lafka-plugin' ),
+				'allergens'            => __( 'Allergens', 'lafka-plugin' ),
+				'uncategorized'        => __( 'Other Items', 'lafka-plugin' ),
 				'newOrderAnnouncement' => sprintf(
 					/* translators: %s: site name */
 					__( '%s, New Order Received!', 'lafka-plugin' ),
 					$site_name
 				),
-				'soundReadyMsg' => __( 'Sound alerts ready', 'lafka-plugin' ),
+				'soundReadyMsg'        => __( 'Sound alerts ready', 'lafka-plugin' ),
 			),
 		);
 

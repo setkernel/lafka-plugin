@@ -11,10 +11,23 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # ESLint + Stylelint disabled in CI: codebase has pre-existing JS/CSS lint
-  # violations (mostly missing-globals for WP/WC injected vars + legacy code
-  # patterns). Re-enable after a dedicated cleanup pass — tracked as P5-CS.
-  # Run locally with: npm install && npm run lint:js && npm run lint:css
+  lint-js-css:
+    name: ESLint & Stylelint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - run: npm install --no-audit --no-fund
+
+      - name: ESLint
+        run: npm run lint:js
+
+      - name: Stylelint
+        run: npm run lint:css
 
   php:
     name: PHP ${{ matrix.php }}
@@ -35,9 +48,8 @@ jobs:
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist
 
-      # PHPCS disabled in CI: codebase has ~15.7k pre-existing WordPress-Extra
-      # violations (mostly tabs-vs-spaces from older contributors). Re-enable
-      # after a dedicated codebase-wide phpcbf cleanup pass — tracked as P5-CS.
-      # Run locally with: composer phpcs
+      - name: PHPCS
+        run: composer phpcs
+
       - name: PHPUnit
         run: composer test

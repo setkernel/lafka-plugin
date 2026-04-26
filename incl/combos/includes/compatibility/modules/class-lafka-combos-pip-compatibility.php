@@ -144,7 +144,7 @@ class WC_LafkaCombos_PIP_Compatibility {
 
 		if ( false === self::$recounting_items && self::$document ) {
 			self::$recounting_items = true;
-			$count = self::$document->get_items_count();
+			$count                  = self::$document->get_items_count();
 			self::$recounting_items = false;
 		}
 
@@ -162,7 +162,7 @@ class WC_LafkaCombos_PIP_Compatibility {
 	 * @return array
 	 */
 	public static function row_item_data( $item_data, $item, $product, $order_id, $type ) {
-		$item_data[ 'wc_pb_item_data' ] = $item;
+		$item_data['wc_pb_item_data'] = $item;
 		return $item_data;
 	}
 
@@ -187,67 +187,67 @@ class WC_LafkaCombos_PIP_Compatibility {
 
 				$filtered_table_rows[ $table_row_key ] = $table_row_data;
 
-				if ( empty( $table_row_data[ 'items' ] ) ) {
+				if ( empty( $table_row_data['items'] ) ) {
 					continue;
 				}
 
 				$sorted_rows = array();
 
-				foreach ( $table_row_data[ 'items' ] as $row_item ) {
+				foreach ( $table_row_data['items'] as $row_item ) {
 
-					if ( isset( $row_item[ 'wc_pb_item_data' ] ) && isset( $row_item[ 'wc_pb_item_data' ][ 'combined_items' ] ) ) {
+					if ( isset( $row_item['wc_pb_item_data'] ) && isset( $row_item['wc_pb_item_data']['combined_items'] ) ) {
 
 						$show_parent    = true;
 						$virtual_parent = false;
-						$group_mode     = $row_item[ 'wc_pb_item_data' ][ 'combo_group_mode' ];
+						$group_mode     = $row_item['wc_pb_item_data']['combo_group_mode'];
 						$group_mode     = $group_mode ? $group_mode : 'parent';
 
 						// Virtual parent items should be hidden in packing lists when the corresponding PIP option is active.
 						if ( self::$document && 'packing-list' === self::$document->type ) {
-							if ( 'yes' === $row_item[ 'wc_pb_item_data' ][ 'wc_pb_container_item_virtual' ] ) {
+							if ( 'yes' === $row_item['wc_pb_item_data']['wc_pb_container_item_virtual'] ) {
 								$virtual_parent = true;
 							}
 						}
 
 						// By default, nothing should be hidden in invoices, but here's an exception.
-						if ( false === WC_Product_Combo::group_mode_has( $group_mode, 'parent_item' ) || WC_Product_Combo::group_mode_has( $group_mode, 'component_multiselect' )  ) {
+						if ( false === WC_Product_Combo::group_mode_has( $group_mode, 'parent_item' ) || WC_Product_Combo::group_mode_has( $group_mode, 'component_multiselect' ) ) {
 							$show_parent = false;
 						}
 
-						if ( $show_parent )	{
+						if ( $show_parent ) {
 
 							if ( $virtual_parent ) {
-								$row_item[ 'quantity' ] = str_replace( 'class="quantity', 'class="quantity virtual-container', $row_item[ 'quantity' ] );
-								$row_item[ 'weight' ] = str_replace( 'class="weight', 'class="weight virtual-container', $row_item[ 'weight' ] );
+								$row_item['quantity'] = str_replace( 'class="quantity', 'class="quantity virtual-container', $row_item['quantity'] );
+								$row_item['weight']   = str_replace( 'class="weight', 'class="weight virtual-container', $row_item['weight'] );
 							}
 
 							$sorted_rows[] = $row_item;
 						}
 
-						$children = wc_pc_get_combined_order_items( $row_item[ 'wc_pb_item_data' ], $order );
+						$children = wc_pc_get_combined_order_items( $row_item['wc_pb_item_data'], $order );
 
 						// Look for its children in all table rows and bring them over in the original order.
 						if ( ! empty( $children ) ) {
 							foreach ( $children as $child_order_item ) {
 
-								if ( empty( $child_order_item[ 'combo_cart_key' ] ) ) {
+								if ( empty( $child_order_item['combo_cart_key'] ) ) {
 									continue;
 								}
 
 								// Look for the child in all table rows and bring it over.
 								foreach ( $table_rows as $table_row_key_inner => $table_row_data_inner ) {
-									foreach ( $table_row_data_inner[ 'items' ] as $row_item_inner ) {
+									foreach ( $table_row_data_inner['items'] as $row_item_inner ) {
 
 										$is_child = false;
 
-										if ( isset( $row_item_inner[ 'wc_pb_item_data' ] ) && isset( $row_item_inner[ 'wc_pb_item_data' ][ 'combo_cart_key' ] ) ) {
-											$is_child = $row_item_inner[ 'wc_pb_item_data' ][ 'combo_cart_key' ] === $child_order_item[ 'combo_cart_key' ];
+										if ( isset( $row_item_inner['wc_pb_item_data'] ) && isset( $row_item_inner['wc_pb_item_data']['combo_cart_key'] ) ) {
+											$is_child = $row_item_inner['wc_pb_item_data']['combo_cart_key'] === $child_order_item['combo_cart_key'];
 										}
 
 										if ( $is_child ) {
 
 											if ( ! $show_parent ) {
-												$row_item_inner[ 'product' ] = str_replace( 'combined-product ', '', $row_item_inner[ 'product' ] );
+												$row_item_inner['product'] = str_replace( 'combined-product ', '', $row_item_inner['product'] );
 											}
 
 											$sorted_rows[] = $row_item_inner;
@@ -256,11 +256,10 @@ class WC_LafkaCombos_PIP_Compatibility {
 								}
 							}
 						}
-
 					} else {
 
 						// Do not copy combined items (will be looked up by their parents).
-						if ( ! isset( $row_item[ 'wc_pb_item_data' ] ) || ! isset( $row_item[ 'wc_pb_item_data' ][ 'combined_by' ] ) ) {
+						if ( ! isset( $row_item['wc_pb_item_data'] ) || ! isset( $row_item['wc_pb_item_data']['combined_by'] ) ) {
 							$sorted_rows[] = $row_item;
 						}
 					}
@@ -268,17 +267,17 @@ class WC_LafkaCombos_PIP_Compatibility {
 
 				// Unset our (now redundant) data.
 				foreach ( $sorted_rows as $sorted_row_item => $sorted_row_item_data ) {
-					if ( isset( $sorted_row_item_data[ 'wc_pb_item_data' ] ) ) {
-						unset( $sorted_rows[ $sorted_row_item ][ 'wc_pb_item_data' ]  );
+					if ( isset( $sorted_row_item_data['wc_pb_item_data'] ) ) {
+						unset( $sorted_rows[ $sorted_row_item ]['wc_pb_item_data'] );
 					}
 				}
 
-				$filtered_table_rows[ $table_row_key ][ 'items' ] = $sorted_rows;
+				$filtered_table_rows[ $table_row_key ]['items'] = $sorted_rows;
 			}
 
 			// Ensure empty categories are not displayed at all.
 			foreach ( $filtered_table_rows as $table_row_key => $table_row_data ) {
-				if ( empty( $table_row_data[ 'items' ] ) && isset( $table_row_data[ 'headings' ] ) && isset( $table_row_data[ 'headings' ][ 'breadcrumbs' ] ) ) {
+				if ( empty( $table_row_data['items'] ) && isset( $table_row_data['headings'] ) && isset( $table_row_data['headings']['breadcrumbs'] ) ) {
 					unset( $filtered_table_rows[ $table_row_key ] );
 				}
 			}
@@ -366,7 +365,7 @@ class WC_LafkaCombos_PIP_Compatibility {
 					}
 
 					if ( $flat ) {
-						$assembled_item_meta_html = wp_kses_post( __( 'Packaged in:', 'lafka-plugin' ) . ' ' .  wpautop( $parent_item->get_name() ) );
+						$assembled_item_meta_html = wp_kses_post( __( 'Packaged in:', 'lafka-plugin' ) . ' ' . wpautop( $parent_item->get_name() ) );
 					} else {
 						$assembled_item_meta_html = '<dl class="variation assembled"><dt>' . __( 'Packaged in:', 'lafka-plugin' ) . '</dt><dd>' . $parent_item->get_name() . '</dd></dl>';
 					}
@@ -402,7 +401,6 @@ class WC_LafkaCombos_PIP_Compatibility {
 
 				$order_item->add_meta_data( '_wc_pb_container_item_virtual', 'yes', true );
 			}
-
 		} elseif ( wc_pc_is_combined_order_item( $order_item, $order ) ) {
 			if ( self::$document && 'packing-list' === self::$document->type && 'no' === $order_item->get_meta( '_combined_item_needs_shipping', true ) ) {
 				$hide = true;
@@ -426,7 +424,7 @@ class WC_LafkaCombos_PIP_Compatibility {
 
 			$parent_item = wc_pc_get_combined_order_item_container( $item, $order );
 
-			$group_mode = $parent_item[ 'combo_group_mode' ];
+			$group_mode = $parent_item['combo_group_mode'];
 			$group_mode = $group_mode ? $group_mode : 'parent';
 
 			if ( WC_Product_Combo::group_mode_has( $group_mode, 'parent_item' ) ) {

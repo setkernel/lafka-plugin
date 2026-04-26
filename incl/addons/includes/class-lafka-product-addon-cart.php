@@ -58,7 +58,7 @@ class Lafka_Product_Addon_Cart {
 				$price = (float) $cart_item['credit_amount'];
 			}
 
-			$cart_item['addons'] = $this->apply_attribute_specific_price($cart_item['addons'], $cart_item);
+			$cart_item['addons'] = $this->apply_attribute_specific_price( $cart_item['addons'], $cart_item );
 			foreach ( $cart_item['addons'] as $addon ) {
 				if ( $addon['price'] !== 0 ) {
 					$price += (float) $addon['price'];
@@ -81,7 +81,7 @@ class Lafka_Product_Addon_Cart {
 	public function get_cart_item_from_session( $cart_item, $values ) {
 		if ( ! empty( $values['addons'] ) ) {
 			$cart_item['addons'] = $values['addons'];
-			$cart_item = $this->add_cart_item( $cart_item );
+			$cart_item           = $this->add_cart_item( $cart_item );
 		}
 
 		return $cart_item;
@@ -105,7 +105,7 @@ class Lafka_Product_Addon_Cart {
 				}
 
 				$name = '';
-				if($addon['name'] !== $last_used_name) {
+				if ( $addon['name'] !== $last_used_name ) {
 					$name = $addon['name'];
 				}
 				$last_used_name = $addon['name'];
@@ -164,8 +164,8 @@ class Lafka_Product_Addon_Cart {
 		}
 
 		if ( is_array( $product_addons ) && ! empty( $product_addons ) ) {
-			include_once( dirname( __FILE__ ) . '/fields/abstract-class-product-addon-field.php' );
-			include_once( dirname( __FILE__ ) . '/fields/class-lafka-addon-field-factory.php' );
+			include_once __DIR__ . '/fields/abstract-class-product-addon-field.php';
+			include_once __DIR__ . '/fields/class-lafka-addon-field-factory.php';
 
 			foreach ( $product_addons as $addon ) {
 
@@ -213,8 +213,8 @@ class Lafka_Product_Addon_Cart {
 		$product_addons = WC_Product_Addons_Helper::get_product_addons( $product_id );
 
 		if ( is_array( $product_addons ) && ! empty( $product_addons ) ) {
-			include_once( dirname( __FILE__ ) . '/fields/abstract-class-product-addon-field.php' );
-			include_once( dirname( __FILE__ ) . '/fields/class-lafka-addon-field-factory.php' );
+			include_once __DIR__ . '/fields/abstract-class-product-addon-field.php';
+			include_once __DIR__ . '/fields/class-lafka-addon-field-factory.php';
 
 			foreach ( $product_addons as $addon ) {
 
@@ -288,7 +288,7 @@ class Lafka_Product_Addon_Cart {
 		}
 
 		if ( is_array( $product_addons ) && ! empty( $product_addons ) ) {
-			include_once( dirname( __FILE__ ) . '/fields/abstract-class-product-addon-field.php' );
+			include_once __DIR__ . '/fields/abstract-class-product-addon-field.php';
 
 			foreach ( $product_addons as $addon ) {
 				$value = '';
@@ -321,7 +321,7 @@ class Lafka_Product_Addon_Cart {
 					continue;
 				}
 
-				include_once( dirname( __FILE__ ) . '/fields/class-lafka-addon-field-factory.php' );
+				include_once __DIR__ . '/fields/class-lafka-addon-field-factory.php';
 				$field = Lafka_Addon_Field_Factory::create( $addon, $value );
 
 				// Make sure a field is set (if not it could be product with no add-ons).

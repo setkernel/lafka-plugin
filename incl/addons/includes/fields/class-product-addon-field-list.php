@@ -12,14 +12,14 @@ class Lafka_Product_Addon_Field_List extends Lafka_Product_Addon_Field {
 	 */
 	public function validate() {
 		if ( ! empty( $this->addon['required'] ) ) {
-			if ( ! $this->value || ( is_array($this->value) && sizeof( $this->value ) ) == 0 ) {
+			if ( ! $this->value || ( is_array( $this->value ) && sizeof( $this->value ) ) == 0 ) {
 				return new WP_Error( 'error', sprintf( esc_html__( '"%s" is a required field.', 'lafka-plugin' ), $this->addon['name'] ) );
 			}
 		}
 
 		if ( ! empty( $this->addon['limit'] ) ) {
 			if ( is_array( $this->value ) && sizeof( $this->value ) > intval( $this->addon['limit'] ) ) {
-				return new WP_Error( 'error', sprintf( esc_html__( 'Select up to %d "%s".', 'lafka-plugin' ), $this->addon['limit'], $this->addon['name'] ) );
+				return new WP_Error( 'error', sprintf( esc_html__( 'Select up to %1$d "%2$s".', 'lafka-plugin' ), $this->addon['limit'], $this->addon['name'] ) );
 			}
 		}
 
@@ -48,17 +48,17 @@ class Lafka_Product_Addon_Field_List extends Lafka_Product_Addon_Field {
 		}
 
 		foreach ( $this->addon['options'] as $option ) {
-			$option_id    = ! empty( $option['id'] ) ? $option['id'] : sanitize_title( $option['label'] );
-			$value_lower  = array_map( 'strtolower', array_values( $value ) );
+			$option_id   = ! empty( $option['id'] ) ? $option['id'] : sanitize_title( $option['label'] );
+			$value_lower = array_map( 'strtolower', array_values( $value ) );
 			// Match by stable ID first, then fall back to label slug for legacy data.
 			$matched = in_array( strtolower( $option_id ), $value_lower, true )
-			        || in_array( strtolower( sanitize_title( $option['label'] ) ), $value_lower, true );
+					|| in_array( strtolower( sanitize_title( $option['label'] ) ), $value_lower, true );
 			if ( $matched ) {
 				$cart_item_data[] = array(
 					'name'  => $this->addon['name'],
 					'image' => $option['image'] ?? '',
 					'value' => $option['label'],
-					'price' => $this->get_option_price( $option )
+					'price' => $this->get_option_price( $option ),
 				);
 			}
 		}

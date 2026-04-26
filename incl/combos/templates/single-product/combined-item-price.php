@@ -17,5 +17,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 if ( $combined_item->is_priced_individually() ) {
-	?><span class="price"><?php echo $combined_item->product->get_price_html(); ?></span><?php
+	?><span class="price"><?php echo $combined_item->product->get_price_html(); ?></span>
+	<?php
 }

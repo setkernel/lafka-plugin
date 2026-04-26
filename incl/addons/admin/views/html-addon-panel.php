@@ -15,11 +15,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 		<?php
 			$loop = 0;
 
-			foreach ( $product_addons as $addon ) {
-				include( dirname( __FILE__ ) . '/html-addon.php' );
+		foreach ( $product_addons as $addon ) {
+			include __DIR__ . '/html-addon.php';
 
-				$loop++;
-			}
+			++$loop;
+		}
 		?>
 
 	</div>

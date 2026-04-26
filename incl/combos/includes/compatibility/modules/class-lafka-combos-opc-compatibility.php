@@ -35,21 +35,26 @@ class WC_LafkaCombos_OPC_Compatibility {
 		if ( $product->is_purchasable() ) {
 
 			$combined_items = $product->get_combined_items();
-			$form_classes  = array( 'layout_' . $product->get_layout(), 'group_mode_' . $product->get_group_mode() );
+			$form_classes   = array( 'layout_' . $product->get_layout(), 'group_mode_' . $product->get_group_mode() );
 
 			if ( ! empty( $combined_items ) ) {
 
 				ob_start();
 
-				wc_get_template( 'single-product/add-to-cart/combo.php', array(
-					'combined_items'     => $combined_items,
-					'product'           => $product,
-					'classes'           => implode( ' ', apply_filters( 'woocommerce_combo_form_classes', $form_classes, $product ) ),
-					// Back-compat.
-					'product_id'        => $product->get_id(),
-					'availability_html' => wc_get_stock_html( $product ),
-					'combo_price_data' => $product->get_combo_form_data()
-				), false, WC_LafkaCombos()->plugin_path() . '/templates/' );
+				wc_get_template(
+					'single-product/add-to-cart/combo.php',
+					array(
+						'combined_items'    => $combined_items,
+						'product'           => $product,
+						'classes'           => implode( ' ', apply_filters( 'woocommerce_combo_form_classes', $form_classes, $product ) ),
+						// Back-compat.
+						'product_id'        => $product->get_id(),
+						'availability_html' => wc_get_stock_html( $product ),
+						'combo_price_data'  => $product->get_combo_form_data(),
+					),
+					false,
+					WC_LafkaCombos()->plugin_path() . '/templates/'
+				);
 
 				echo str_replace( array( '<form method="post" enctype="multipart/form-data"', '</form>' ), array( '<div', '</div>' ), ob_get_clean() );
 			}

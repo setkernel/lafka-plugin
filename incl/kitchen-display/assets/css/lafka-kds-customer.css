@@ -62,7 +62,9 @@
 }
 
 @keyframes lafka-kds-dot-pulse {
+
 	0%, 100% { box-shadow: 0 0 0 2px #e94560, 0 0 0 6px rgba(233, 69, 96, 0.2); }
+
 	50% { box-shadow: 0 0 0 2px #e94560, 0 0 0 10px rgba(233, 69, 96, 0.1); }
 }
 
@@ -107,6 +109,7 @@
 
 /* Mobile */
 @media (max-width: 480px) {
+
 	.lafka-kds-progress {
 		padding: 16px 12px;
 	}
@@ -132,9 +135,13 @@
 }
 
 @keyframes lafka-kds-step-pop {
+
 	0%   { transform: scale(1); }
+
 	30%  { transform: scale(1.5); }
+
 	60%  { transform: scale(0.9); }
+
 	100% { transform: scale(1); }
 }
 
@@ -143,9 +150,13 @@
 }
 
 @keyframes lafka-kds-label-flash {
+
 	0%, 100% { color: #e94560; }
+
 	25%      { color: #ff8c00; }
+
 	50%      { color: #e94560; }
+
 	75%      { color: #ff8c00; }
 }
 
@@ -156,7 +167,9 @@
 }
 
 @keyframes lafka-kds-overdue-blink {
+
 	0%, 100% { opacity: 1; }
+
 	50%      { opacity: 0.5; }
 }
 

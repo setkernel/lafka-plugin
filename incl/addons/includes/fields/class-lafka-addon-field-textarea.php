@@ -19,22 +19,22 @@ class Lafka_Addon_Field_Textarea extends Lafka_Product_Addon_Field {
 					$option_key = $legacy_key;
 				}
 			}
-			$posted     = isset( $this->value[ $option_key ] ) ? $this->value[ $option_key ] : '';
+			$posted = isset( $this->value[ $option_key ] ) ? $this->value[ $option_key ] : '';
 
 			// Required addon checks
 			if ( ! empty( $this->addon['required'] ) ) {
-				if ( $posted === "" || ( is_array($posted) && sizeof( $posted ) == 0 ) ) {
+				if ( $posted === '' || ( is_array( $posted ) && sizeof( $posted ) == 0 ) ) {
 					return new WP_Error( 'error', sprintf( __( '"%s" is a required field.', 'lafka-plugin' ), $this->addon['name'] ) );
 				}
 			}
 
 			// Min/max character length checks for textarea
 			if ( ! empty( $option['min'] ) && ! empty( $posted ) && mb_strlen( $posted, 'UTF-8' ) < $option['min'] ) {
-				return new WP_Error( 'error', sprintf( __( 'The minimum allowed length for "%s - %s" is %s.', 'lafka-plugin' ), $this->addon['name'], $option['label'], $option['min'] ) );
+				return new WP_Error( 'error', sprintf( __( 'The minimum allowed length for "%1$s - %2$s" is %3$s.', 'lafka-plugin' ), $this->addon['name'], $option['label'], $option['min'] ) );
 			}
 
 			if ( ! empty( $option['max'] ) && ! empty( $posted ) && mb_strlen( $posted, 'UTF-8' ) > $option['max'] ) {
-				return new WP_Error( 'error', sprintf( __( 'The maximum allowed length for "%s - %s" is %s.', 'lafka-plugin' ), $this->addon['name'], $option['label'], $option['max'] ) );
+				return new WP_Error( 'error', sprintf( __( 'The maximum allowed length for "%1$s - %2$s" is %3$s.', 'lafka-plugin' ), $this->addon['name'], $option['label'], $option['max'] ) );
 			}
 		}
 		return true;
@@ -45,7 +45,7 @@ class Lafka_Addon_Field_Textarea extends Lafka_Product_Addon_Field {
 	 * @return array on success, WP_ERROR on failure
 	 */
 	public function get_cart_item_data() {
-		$cart_item_data           = array();
+		$cart_item_data = array();
 
 		foreach ( $this->addon['options'] as $key => $option ) {
 			$option_key = ! empty( $option['id'] ) ? $option['id'] : ( empty( $option['label'] ) ? $key : sanitize_title( $option['label'] ) );
@@ -56,7 +56,7 @@ class Lafka_Addon_Field_Textarea extends Lafka_Product_Addon_Field {
 					$option_key = $legacy_key;
 				}
 			}
-			$posted     = isset( $this->value[ $option_key ] ) ? $this->value[ $option_key ] : '';
+			$posted = isset( $this->value[ $option_key ] ) ? $this->value[ $option_key ] : '';
 
 			if ( '' === $posted ) {
 				continue;
@@ -66,13 +66,12 @@ class Lafka_Addon_Field_Textarea extends Lafka_Product_Addon_Field {
 			$price = $this->get_option_price( $option );
 
 			$cart_item_data[] = array(
-				'name'   => $label,
-				'value'  => wp_kses_post( $posted ),
-				'price'  => $price,
+				'name'  => $label,
+				'value' => wp_kses_post( $posted ),
+				'price' => $price,
 			);
 		}
 
 		return $cart_item_data;
 	}
-
 }

@@ -47,7 +47,7 @@
 		var currentIdx = steps.indexOf(status);
 		if (currentIdx === -1) return;
 
-		var container = document.getElementById('lafka-kds-progress');
+		container = document.getElementById('lafka-kds-progress');
 		if (!container) return;
 
 		// Detect status change for animation

@@ -131,7 +131,7 @@ jQuery( document ).ready( function($) {
 
 			} else if ( $( variation.price_html ).find( '.amount:last' ).length ) {
 
-				product_price = $( variation.price_html ).find( '.amount:last' ).text();
+				var product_price = $( variation.price_html ).find( '.amount:last' ).text();
 				product_price = product_price.replace( lafka_addons_params.currency_format_symbol, '' );
 				product_price = product_price.replace( lafka_addons_params.currency_format_thousand_sep, '' );
 				product_price = product_price.replace( lafka_addons_params.currency_format_decimal_sep, '.' );
@@ -252,13 +252,13 @@ jQuery( document ).ready( function($) {
 			$totals.data( 'addons-raw-price', total_raw );
 
 			if ( $cart.find( 'input.qty' ).length) {
-				var qty = 0;
+				qty = 0;
 
 				$cart.find( 'input.qty' ).each( function() {
 					qty += parseFloat( $( this ).val() );
 				});
 			} else {
-				var qty = 1;
+				qty = 1;
 			}
 
 			if ( total !== 0 && qty > 0 ) {

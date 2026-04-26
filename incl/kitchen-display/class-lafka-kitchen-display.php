@@ -46,14 +46,14 @@ class Lafka_Kitchen_Display {
 	 * Load dependencies.
 	 */
 	private function includes() {
-		require_once dirname( __FILE__ ) . '/includes/class-lafka-kds-order-statuses.php';
-		require_once dirname( __FILE__ ) . '/includes/class-lafka-kds-ajax.php';
-		require_once dirname( __FILE__ ) . '/includes/class-lafka-kds-frontend.php';
-		require_once dirname( __FILE__ ) . '/includes/class-lafka-kds-customer-view.php';
+		require_once __DIR__ . '/includes/class-lafka-kds-order-statuses.php';
+		require_once __DIR__ . '/includes/class-lafka-kds-ajax.php';
+		require_once __DIR__ . '/includes/class-lafka-kds-frontend.php';
+		require_once __DIR__ . '/includes/class-lafka-kds-customer-view.php';
 		// Email classes loaded lazily in register_emails() — WC_Email not available yet
 
 		if ( is_admin() ) {
-			require_once dirname( __FILE__ ) . '/includes/class-lafka-kds-admin.php';
+			require_once __DIR__ . '/includes/class-lafka-kds-admin.php';
 		}
 	}
 
@@ -81,10 +81,10 @@ class Lafka_Kitchen_Display {
 	 * Register WC email classes.
 	 */
 	public function register_emails( $email_classes ) {
-		require_once dirname( __FILE__ ) . '/includes/class-lafka-kds-email-accepted.php';
-		require_once dirname( __FILE__ ) . '/includes/class-lafka-kds-email-preparing.php';
-		require_once dirname( __FILE__ ) . '/includes/class-lafka-kds-email-ready.php';
-		require_once dirname( __FILE__ ) . '/includes/class-lafka-kds-email-rejected.php';
+		require_once __DIR__ . '/includes/class-lafka-kds-email-accepted.php';
+		require_once __DIR__ . '/includes/class-lafka-kds-email-preparing.php';
+		require_once __DIR__ . '/includes/class-lafka-kds-email-ready.php';
+		require_once __DIR__ . '/includes/class-lafka-kds-email-rejected.php';
 
 		$email_classes['Lafka_KDS_Email_Accepted']  = new Lafka_KDS_Email_Accepted();
 		$email_classes['Lafka_KDS_Email_Preparing'] = new Lafka_KDS_Email_Preparing();
@@ -100,8 +100,8 @@ class Lafka_Kitchen_Display {
 	 * This is the only admin-facing email — status-change emails go to the customer only.
 	 */
 	public function add_kds_admin_to_new_order( $recipient, $order ) {
-		$options    = self::get_options();
-		$kds_email  = sanitize_email( $options['order_notification_email'] );
+		$options   = self::get_options();
+		$kds_email = sanitize_email( $options['order_notification_email'] );
 
 		if ( ! $kds_email || ! is_email( $kds_email ) ) {
 			return $recipient;

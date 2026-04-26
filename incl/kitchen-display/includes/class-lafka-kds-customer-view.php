@@ -19,9 +19,9 @@ class Lafka_KDS_Customer_View {
 			return;
 		}
 
-		$css_url = plugins_url( '../assets/css/lafka-kds-customer.css', __FILE__ );
+		$css_url   = plugins_url( '../assets/css/lafka-kds-customer.css', __FILE__ );
 		$js_suffix = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
-		$js_url  = plugins_url( '../assets/js/lafka-kds-customer' . $js_suffix . '.js', __FILE__ );
+		$js_url    = plugins_url( '../assets/js/lafka-kds-customer' . $js_suffix . '.js', __FILE__ );
 
 		$css_ver = filemtime( dirname( __DIR__ ) . '/assets/css/lafka-kds-customer.css' );
 		$js_ver  = filemtime( dirname( __DIR__ ) . '/assets/js/lafka-kds-customer' . $js_suffix . '.js' );
@@ -70,15 +70,16 @@ class Lafka_KDS_Customer_View {
 			'completed'  => __( 'Complete', 'lafka-plugin' ),
 		);
 
-		$step_keys    = array_keys( $steps );
-		$current_idx  = array_search( $status, $step_keys, true );
-		$eta          = $order->get_meta( '_lafka_kds_eta' );
-		$options      = Lafka_Kitchen_Display::get_options();
+		$step_keys   = array_keys( $steps );
+		$current_idx = array_search( $status, $step_keys, true );
+		$eta         = $order->get_meta( '_lafka_kds_eta' );
+		$options     = Lafka_Kitchen_Display::get_options();
 
 		?>
 		<div class="lafka-kds-progress" id="lafka-kds-progress" data-order-id="<?php echo esc_attr( $order_id ); ?>" data-status="<?php echo esc_attr( $status ); ?>">
 			<div class="lafka-kds-steps">
-				<?php foreach ( $steps as $step_key => $step_label ) :
+				<?php
+				foreach ( $steps as $step_key => $step_label ) :
 					$step_idx = array_search( $step_key, $step_keys, true );
 					$class    = 'lafka-kds-step';
 					if ( $step_idx < $current_idx ) {
@@ -127,7 +128,7 @@ class Lafka_KDS_Customer_View {
 				}
 			};
 			</script>
-		<?php
+			<?php
 		endif;
 	}
 }

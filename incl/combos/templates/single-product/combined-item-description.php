@@ -20,6 +20,8 @@ if ( ! $description ) {
 	return;
 }
 
-?><div class="combined_product_excerpt product_excerpt"><?php
+?><div class="combined_product_excerpt product_excerpt">
+<?php
 		echo $description;
-?></div>
+?>
+</div>

@@ -18,7 +18,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 ?>
 <div class="woocommerce-variation-add-to-cart variations_button combined_item_after_cart_details combined_item_button">
-	<input type="hidden" class="variation_id" name="<?php echo $combo_fields_prefix . 'combo_variation_id_' . $combined_item->get_id(); ?>" value=""/><?php
+	<input type="hidden" class="variation_id" name="<?php echo $combo_fields_prefix . 'combo_variation_id_' . $combined_item->get_id(); ?>" value=""/>
+	<?php
 
 	/**
 	 * 'woocommerce_after_combined_item_cart_details' hook.
@@ -31,4 +32,5 @@ if ( ! defined( 'ABSPATH' ) ) {
 	 */
 	do_action( 'woocommerce_after_combined_item_cart_details', $combined_item );
 
-?></div><?php
+	?>
+	</div><?php

@@ -32,7 +32,7 @@ if ( $eta_timestamp ) {
 }
 
 if ( $plain_text ) :
-	echo "= " . wp_strip_all_tags( $email_heading ) . " =\n\n";
+	echo '= ' . wp_strip_all_tags( $email_heading ) . " =\n\n";
 	/* translators: %s: Customer first name */
 	printf( esc_html__( 'Hi %s,', 'lafka-plugin' ), esc_html( $order->get_billing_first_name() ) );
 	echo "\n\n";

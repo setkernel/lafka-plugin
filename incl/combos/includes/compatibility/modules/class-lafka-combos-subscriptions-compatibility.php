@@ -50,8 +50,8 @@ class WC_LafkaCombos_Subscriptions_Compatibility {
 
 		global $wp;
 
-		if ( isset( $_GET[ 'pay_for_order' ] ) && isset( $_GET[ 'key' ] ) && isset( $wp->query_vars[ 'order-pay' ] ) ) {
-			if ( isset( $cart_item_data[ 'is_order_again_combined' ] ) && isset( $cart_item_data[ 'subscription_initial_payment' ] ) ) {
+		if ( isset( $_GET['pay_for_order'] ) && isset( $_GET['key'] ) && isset( $wp->query_vars['order-pay'] ) ) {
+			if ( isset( $cart_item_data['is_order_again_combined'] ) && isset( $cart_item_data['subscription_initial_payment'] ) ) {
 				unset( WC()->cart->cart_contents[ $cart_item_key ] );
 			}
 		}
@@ -76,7 +76,6 @@ class WC_LafkaCombos_Subscriptions_Compatibility {
 					return false;
 				}
 			}
-
 		}
 
 		return $valid;

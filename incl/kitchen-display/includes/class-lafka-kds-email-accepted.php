@@ -111,12 +111,14 @@ class Lafka_KDS_Email_Accepted extends WC_Email {
 	 * Get store address from WooCommerce settings.
 	 */
 	protected function get_store_address() {
-		$parts = array_filter( array(
-			get_option( 'woocommerce_store_address' ),
-			get_option( 'woocommerce_store_address_2' ),
-			get_option( 'woocommerce_store_city' ),
-			get_option( 'woocommerce_store_postcode' ),
-		) );
+		$parts = array_filter(
+			array(
+				get_option( 'woocommerce_store_address' ),
+				get_option( 'woocommerce_store_address_2' ),
+				get_option( 'woocommerce_store_city' ),
+				get_option( 'woocommerce_store_postcode' ),
+			)
+		);
 		return implode( ', ', $parts );
 	}
 

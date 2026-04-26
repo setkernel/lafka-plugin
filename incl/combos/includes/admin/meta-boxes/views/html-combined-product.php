@@ -24,15 +24,20 @@ if ( ! defined( 'ABSPATH' ) ) {
 		</div>
 	</h3>
 	<div class="item-data wc-metabox-content">
-		<input type="hidden" name="combo_data[<?php echo $loop; ?>][menu_order]" class="item_menu_order" value="<?php echo $loop; ?>" /><?php
+		<input type="hidden" name="combo_data[<?php echo $loop; ?>][menu_order]" class="item_menu_order" value="<?php echo $loop; ?>" />
+		<?php
 
 		if ( false !== $item_id ) {
-			?><input type="hidden" name="combo_data[<?php echo $loop; ?>][item_id]" class="item_id" value="<?php echo $item_id; ?>" /><?php
+			?>
+			<input type="hidden" name="combo_data[<?php echo $loop; ?>][item_id]" class="item_id" value="<?php echo $item_id; ?>" />
+			<?php
 		}
 
-		?><input type="hidden" name="combo_data[<?php echo $loop; ?>][product_id]" class="product_id" value="<?php echo $product_id; ?>" />
+		?>
+		<input type="hidden" name="combo_data[<?php echo $loop; ?>][product_id]" class="product_id" value="<?php echo $product_id; ?>" />
 
-		<ul class="subsubsub"><?php
+		<ul class="subsubsub">
+		<?php
 
 			/*--------------------------------*/
 			/*  Tab menu items.               */
@@ -40,18 +45,24 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 			$tab_loop = 0;
 
-			foreach ( $tabs as $tab_values ) {
+		foreach ( $tabs as $tab_values ) {
 
-				$tab_id = $tab_values[ 'id' ];
+			$tab_id = $tab_values['id'];
 
-				?><li><a href="#" data-tab="<?php echo $tab_id; ?>" class="<?php echo $tab_loop === 0 ? 'current' : ''; ?>"><?php
-					echo $tab_values[ 'title' ];
-				?></a></li><?php
+			?>
+				<li><a href="#" data-tab="<?php echo $tab_id; ?>" class="<?php echo $tab_loop === 0 ? 'current' : ''; ?>">
+				<?php
+				echo $tab_values['title'];
+				?>
+				</a></li>
+				<?php
 
-				$tab_loop++;
-			}
+				++$tab_loop;
+		}
 
-		?></ul><?php
+		?>
+		</ul>
+		<?php
 
 		/*--------------------------------*/
 		/*  Tab contents.                 */
@@ -61,17 +72,22 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 		foreach ( $tabs as $tab_values ) {
 
-			$tab_id = $tab_values[ 'id' ];
+			$tab_id = $tab_values['id'];
 
-			?><div class="options_group options_group_<?php echo $tab_id; ?> <?php echo $tab_loop > 0 ? 'options_group_hidden' : ''; ?>"><?php
+			?>
+			<div class="options_group options_group_<?php echo $tab_id; ?> <?php echo $tab_loop > 0 ? 'options_group_hidden' : ''; ?>">
+			<?php
 				/**
 				 * 'woocommerce_combined_product_admin_{$tab_id}_html' action.
 				 */
 				do_action( 'woocommerce_combined_product_admin_' . $tab_id . '_html', $loop, $product_id, $item_data, $post_id );
-			?></div><?php
+			?>
+			</div>
+			<?php
 
-			$tab_loop++;
+			++$tab_loop;
 		}
 
-	?></div>
+		?>
+		</div>
 </div>

@@ -108,7 +108,9 @@ html, body {
 
 /* New order flash animation */
 @keyframes kds-flash-bg {
+
 	0%, 100% { filter: brightness(1); }
+
 	50% { filter: brightness(1.8); }
 }
 
@@ -117,9 +119,13 @@ html, body {
 }
 
 .kds-status-processing { background: var(--kds-accent); color: #fff; }
+
 .kds-status-accepted { background: var(--kds-info); color: #fff; }
+
 .kds-status-preparing { background: var(--kds-warning); color: #1a1a2e; }
+
 .kds-status-ready { background: var(--kds-success); color: #1a1a2e; }
+
 .kds-status-completed { background: #555; color: #ccc; }
 
 .kds-column-count {
@@ -210,8 +216,11 @@ html, body {
 }
 
 .kds-badge-pickup { background: #4ecca3; color: #1a1a2e; }
+
 .kds-badge-delivery { background: #6c9bcf; color: #fff; }
+
 .kds-badge-paid { background: #4ecca3; color: #1a1a2e; }
+
 .kds-badge-cod { background: #f0a500; color: #1a1a2e; }
 
 .kds-scheduled {
@@ -362,7 +371,9 @@ html, body {
 }
 
 @keyframes kds-pulse {
+
 	0%, 100% { opacity: 1; }
+
 	50% { opacity: 0.5; }
 }
 
@@ -404,8 +415,11 @@ html, body {
 
 .kds-status-processing .kds-btn-action,
 [data-status="processing"] .kds-btn-action { background: var(--kds-accent); }
+
 [data-status="accepted"] .kds-btn-action { background: var(--kds-warning); color: #1a1a2e; }
+
 [data-status="preparing"] .kds-btn-action { background: var(--kds-success); color: #1a1a2e; }
+
 [data-status="ready"] .kds-btn-action { background: #7b68ee; }
 
 /* Secondary action row (Undo / Reject) */
@@ -627,6 +641,7 @@ html, body {
 
 /* Responsive */
 @media (max-width: 1280px) {
+
 	.kds-board {
 		grid-template-columns: repeat(3, 1fr);
 		grid-template-rows: auto;
@@ -643,6 +658,7 @@ html, body {
 }
 
 @media (max-width: 1024px) {
+
 	.kds-board {
 		grid-template-columns: repeat(2, 1fr);
 	}
@@ -653,6 +669,7 @@ html, body {
 }
 
 @media (max-width: 600px) {
+
 	.kds-board {
 		grid-template-columns: 1fr;
 		overflow-y: auto;
@@ -666,6 +683,7 @@ html, body {
 
 /* Print Styles (Issue #35) */
 @media print {
+
 	/* Hide UI elements */
 	.kds-header,
 	.kds-sound-overlay,

@@ -54,7 +54,7 @@ class Lafka_Addon_Field_Factory {
 		$map = self::$types[ $type ];
 
 		// Lazy-include the class file once.
-		include_once dirname( __FILE__ ) . '/' . $map['file'];
+		include_once __DIR__ . '/' . $map['file'];
 
 		return new $map['class']( $addon, $value );
 	}

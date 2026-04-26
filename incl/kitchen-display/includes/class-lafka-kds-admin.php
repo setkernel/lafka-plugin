@@ -114,7 +114,7 @@ class Lafka_KDS_Admin {
 		// Preserve existing token, or generate one if missing
 		$output['token'] = ! empty( $current['token'] ) ? $current['token'] : wp_generate_password( 32, false );
 
-		$output['pickup_times']   = isset( $input['pickup_times'] )
+		$output['pickup_times'] = isset( $input['pickup_times'] )
 			? $this->sanitize_time_presets( $input['pickup_times'], $current['pickup_times'] )
 			: $current['pickup_times'];
 

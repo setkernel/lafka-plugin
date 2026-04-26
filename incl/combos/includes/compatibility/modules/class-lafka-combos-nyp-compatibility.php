@@ -26,7 +26,7 @@ class WC_LafkaCombos_NYP_Compatibility {
 		// Support for NYP.
 		add_action( 'woocommerce_combined_product_add_to_cart', array( __CLASS__, 'nyp_price_input_support' ), 9, 2 );
 
-		if( version_compare( WC_Name_Your_Price()->version, '3.0', '>=' ) ) {
+		if ( version_compare( WC_Name_Your_Price()->version, '3.0', '>=' ) ) {
 			add_filter( 'wc_nyp_field_suffix', array( __CLASS__, 'nyp_cart_suffix' ), 10, 2 );
 		} else {
 			add_filter( 'nyp_field_prefix', array( __CLASS__, 'nyp_cart_suffix' ), 10, 2 );
@@ -44,7 +44,6 @@ class WC_LafkaCombos_NYP_Compatibility {
 
 		// Load child NYP data from the parent cart item data array.
 		add_filter( 'woocommerce_combined_item_cart_data', array( __CLASS__, 'get_combined_cart_item_data_from_parent' ), 10, 2 );
-
 	}
 
 	/**
@@ -68,7 +67,7 @@ class WC_LafkaCombos_NYP_Compatibility {
 
 			self::$nyp_suffix = $item->get_id();
 
-			if( $item->is_optional() || ! $item->get_quantity( 'min' ) ) {
+			if ( $item->is_optional() || ! $item->get_quantity( 'min' ) ) {
 				add_filter( 'wc_nyp_data_attributes', array( __CLASS__, 'nyp_data_attributes' ) );
 			}
 
@@ -89,7 +88,7 @@ class WC_LafkaCombos_NYP_Compatibility {
 	 * @return array
 	 */
 	public static function nyp_data_attributes( $attributes ) {
-		$attributes[ 'optional' ] = 'yes';
+		$attributes['optional'] = 'yes';
 		return $attributes;
 	}
 
@@ -127,15 +126,15 @@ class WC_LafkaCombos_NYP_Compatibility {
 		// Set nyp suffix.
 		self::$nyp_suffix = $combined_item_id;
 
-		$combined_product_id = $combined_item_stamp[ 'product_id' ];
+		$combined_product_id = $combined_item_stamp['product_id'];
 
 		$nyp_data = WC_Name_Your_Price()->cart->add_cart_item_data( $nyp_data, $combined_product_id, '' );
 
 		// Reset nyp suffix.
 		self::$nyp_suffix = '';
 
-		if ( ! empty( $nyp_data[ 'nyp' ] ) ) {
-			$combined_item_stamp[ 'nyp' ] = $nyp_data[ 'nyp' ];
+		if ( ! empty( $nyp_data['nyp'] ) ) {
+			$combined_item_stamp['nyp'] = $nyp_data['nyp'];
 		}
 
 		return $combined_item_stamp;
@@ -152,14 +151,14 @@ class WC_LafkaCombos_NYP_Compatibility {
 	public static function validate_combined_item_nyp( $add, $combo, $combined_item, $quantity, $variation_id ) {
 
 		// Ordering again? When ordering again, do not revalidate.
-		$order_again = isset( $_GET[ 'order_again' ] ) && isset( $_GET[ '_wpnonce' ] ) && wp_verify_nonce( wc_clean( $_GET[ '_wpnonce' ] ), 'woocommerce-order_again' );
+		$order_again = isset( $_GET['order_again'] ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( wc_clean( $_GET['_wpnonce'] ), 'woocommerce-order_again' );
 
-		if ( $order_again  ) {
+		if ( $order_again ) {
 			return $add;
 		}
 
 		$combined_item_id = $combined_item->get_id();
-		$product_id      = $combined_item->get_product_id();
+		$product_id       = $combined_item->get_product_id();
 
 		if ( $combined_item->is_priced_individually() ) {
 
@@ -206,7 +205,7 @@ class WC_LafkaCombos_NYP_Compatibility {
 	public static function before_combined_add_to_cart( $product_id, $quantity, $variation_id, $variations, $combined_item_cart_data ) {
 
 		// Set nyp suffix.
-		self::$nyp_suffix = $combined_item_cart_data[ 'combined_item_id' ];
+		self::$nyp_suffix = $combined_item_cart_data['combined_item_id'];
 
 		remove_filter( 'woocommerce_add_cart_item_data', array( WC_Name_Your_Price()->cart, 'add_cart_item_data' ), 5, 3 );
 	}
@@ -221,8 +220,8 @@ class WC_LafkaCombos_NYP_Compatibility {
 	public static function get_combined_cart_item_data_from_parent( $combined_item_cart_data, $cart_item_data ) {
 
 		// NYP cart item data is already stored in the composite_data array, so we can grab it from there instead of allowing NYP to re-add it.
-		if ( isset( $combined_item_cart_data[ 'combined_item_id' ] ) && isset( $cart_item_data[ 'stamp' ][ $combined_item_cart_data[ 'combined_item_id' ] ][ 'nyp' ] ) ) {
-			$combined_item_cart_data[ 'nyp' ] = $cart_item_data[ 'stamp' ][ $combined_item_cart_data[ 'combined_item_id' ] ][ 'nyp' ];
+		if ( isset( $combined_item_cart_data['combined_item_id'] ) && isset( $cart_item_data['stamp'][ $combined_item_cart_data['combined_item_id'] ]['nyp'] ) ) {
+			$combined_item_cart_data['nyp'] = $cart_item_data['stamp'][ $combined_item_cart_data['combined_item_id'] ]['nyp'];
 		}
 
 		return $combined_item_cart_data;
@@ -240,6 +239,5 @@ class WC_LafkaCombos_NYP_Compatibility {
 		wc_deprecated_function( __METHOD__, '6.2.2', 'Method has been renamed nyp_cart_suffix' );
 		return self::nyp_cart_suffix( $prefix, $product_id );
 	}
-
 }
 WC_LafkaCombos_NYP_Compatibility::init();

@@ -60,7 +60,7 @@ class WC_LafkaCombos_Install {
 	 */
 	public static function product_selector_filter( $options ) {
 
-		$options[ 'combo' ] = __( 'Product combo', 'lafka-plugin' );
+		$options['combo'] = __( 'Product combo', 'lafka-plugin' );
 
 		return $options;
 	}
@@ -143,7 +143,7 @@ class WC_LafkaCombos_Install {
 		}
 
 		if ( ! class_exists( 'WC_LafkaCombos_Admin_Notices' ) ) {
-			require_once( WC_LafkaCombos_ABSPATH . 'includes/admin/class-lafka-combos-admin-notices.php' );
+			require_once WC_LafkaCombos_ABSPATH . 'includes/admin/class-lafka-combos-admin-notices.php';
 		}
 
 		// Update plugin version - once set, 'maybe_install' will not call 'install' again.
@@ -160,7 +160,7 @@ class WC_LafkaCombos_Install {
 	private static function create_tables() {
 		global $wpdb;
 		$wpdb->hide_errors();
-		require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 		dbDelta( self::get_schema() );
 	}
 

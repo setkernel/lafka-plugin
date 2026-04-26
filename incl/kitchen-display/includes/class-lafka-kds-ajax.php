@@ -117,21 +117,25 @@ class Lafka_KDS_Ajax {
 		}
 
 		// Active orders (all statuses in the workflow)
-		$orders = wc_get_orders( array(
-			'status'  => array( 'processing', 'accepted', 'preparing', 'ready' ),
-			'limit'   => 100,
-			'orderby' => 'date',
-			'order'   => 'ASC',
-		) );
+		$orders = wc_get_orders(
+			array(
+				'status'  => array( 'processing', 'accepted', 'preparing', 'ready' ),
+				'limit'   => 100,
+				'orderby' => 'date',
+				'order'   => 'ASC',
+			)
+		);
 
 		// Recently completed orders (last 4 hours) so staff can still see them
-		$completed = wc_get_orders( array(
-			'status'     => 'completed',
-			'limit'      => 50,
-			'orderby'    => 'date',
-			'order'      => 'DESC',
-			'date_after' => gmdate( 'Y-m-d H:i:s', time() - 4 * HOUR_IN_SECONDS ),
-		) );
+		$completed = wc_get_orders(
+			array(
+				'status'     => 'completed',
+				'limit'      => 50,
+				'orderby'    => 'date',
+				'order'      => 'DESC',
+				'date_after' => gmdate( 'Y-m-d H:i:s', time() - 4 * HOUR_IN_SECONDS ),
+			)
+		);
 
 		$data     = array();
 		$seen_ids = array();
@@ -180,21 +184,23 @@ class Lafka_KDS_Ajax {
 			$id = $order->get_id();
 			if ( ! isset( $seen_ids[ $id ] ) ) {
 				$seen_ids[ $id ] = true;
-				$data[] = $this->format_order( $order );
+				$data[]          = $this->format_order( $order );
 			}
 		}
 		foreach ( $completed as $order ) {
 			$id = $order->get_id();
 			if ( ! isset( $seen_ids[ $id ] ) ) {
 				$seen_ids[ $id ] = true;
-				$data[] = $this->format_order( $order );
+				$data[]          = $this->format_order( $order );
 			}
 		}
 
-		wp_send_json_success( array(
-			'orders'      => $data,
-			'server_time' => time(),
-		) );
+		wp_send_json_success(
+			array(
+				'orders'      => $data,
+				'server_time' => time(),
+			)
+		);
 	}
 
 	/**
@@ -253,7 +259,7 @@ class Lafka_KDS_Ajax {
 		// Issue #30: Add missing order metadata
 		$delivery_address = '';
 		if ( 'delivery' === $order_type ) {
-			$address_parts = array(
+			$address_parts    = array(
 				$order->get_shipping_address_1(),
 				$order->get_shipping_address_2(),
 				$order->get_shipping_city(),
@@ -319,7 +325,7 @@ class Lafka_KDS_Ajax {
 		// Atomic database-level lock (fixes TOCTOU race condition with transients)
 		global $wpdb;
 		$lock_name = 'kds_order_' . $order_id;
-		$acquired  = $wpdb->get_var( $wpdb->prepare( "SELECT GET_LOCK(%s, 0)", $lock_name ) );
+		$acquired  = $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 0)', $lock_name ) );
 		if ( ! $acquired ) {
 			wp_send_json_error( array( 'message' => 'Order is being updated, please try again' ), 409 );
 		}
@@ -337,12 +343,12 @@ class Lafka_KDS_Ajax {
 
 		// Prevent modifications to completed/rejected orders
 		if ( in_array( $current, array( 'completed', 'rejected' ), true ) ) {
-			$wpdb->query( $wpdb->prepare( "SELECT RELEASE_LOCK(%s)", $lock_name ) );
+			$wpdb->query( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock_name ) );
 			wp_send_json_error( array( 'message' => 'Cannot modify ' . $current . ' orders' ), 400 );
 		}
 
 		if ( ! isset( $allowed[ $current ] ) || ! in_array( $new_status, $allowed[ $current ], true ) ) {
-			$wpdb->query( $wpdb->prepare( "SELECT RELEASE_LOCK(%s)", $lock_name ) );
+			$wpdb->query( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock_name ) );
 			wp_send_json_error( array( 'message' => 'Invalid status transition' ) );
 		}
 
@@ -355,12 +361,14 @@ class Lafka_KDS_Ajax {
 		$order->save();
 
 		// Release lock
-		$wpdb->query( $wpdb->prepare( "SELECT RELEASE_LOCK(%s)", $lock_name ) );
+		$wpdb->query( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock_name ) );
 
-		wp_send_json_success( array(
-			'order_id'   => $order_id,
-			'new_status' => $new_status,
-		) );
+		wp_send_json_success(
+			array(
+				'order_id'   => $order_id,
+				'new_status' => $new_status,
+			)
+		);
 	}
 
 	/**
@@ -392,11 +400,13 @@ class Lafka_KDS_Ajax {
 		$order->update_meta_data( '_lafka_kds_eta_minutes', $minutes );
 		$order->save();
 
-		wp_send_json_success( array(
-			'order_id'    => $order_id,
-			'eta'         => $eta_timestamp,
-			'eta_minutes' => $minutes,
-		) );
+		wp_send_json_success(
+			array(
+				'order_id'    => $order_id,
+				'eta'         => $eta_timestamp,
+				'eta_minutes' => $minutes,
+			)
+		);
 	}
 
 	/**
@@ -431,13 +441,15 @@ class Lafka_KDS_Ajax {
 		$statuses  = wc_get_order_statuses();
 		$wc_status = 'wc-' . $status;
 
-		wp_send_json_success( array(
-			'status'       => $status,
-			'status_label' => isset( $statuses[ $wc_status ] ) ? $statuses[ $wc_status ] : $status,
-			'eta'          => $eta ? (int) $eta : null,
-			'order_type'   => Lafka_Kitchen_Display::get_order_type( $order ),
-			'server_time'  => time(),
-		) );
+		wp_send_json_success(
+			array(
+				'status'       => $status,
+				'status_label' => isset( $statuses[ $wc_status ] ) ? $statuses[ $wc_status ] : $status,
+				'eta'          => $eta ? (int) $eta : null,
+				'order_type'   => Lafka_Kitchen_Display::get_order_type( $order ),
+				'server_time'  => time(),
+			)
+		);
 	}
 
 	/**
@@ -459,8 +471,10 @@ class Lafka_KDS_Ajax {
 			wp_send_json_error( array( 'message' => 'Invalid token' ), 403 );
 		}
 
-		wp_send_json_success( array(
-			'nonce' => wp_create_nonce( 'lafka_kds_nonce' ),
-		) );
+		wp_send_json_success(
+			array(
+				'nonce' => wp_create_nonce( 'lafka_kds_nonce' ),
+			)
+		);
 	}
 }

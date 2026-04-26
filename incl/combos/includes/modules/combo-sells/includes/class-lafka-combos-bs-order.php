@@ -41,7 +41,7 @@ class WC_LafkaCombos_BS_Order {
 			$order_item->add_meta_data( '_combo_sells', $bunde_sell_cart_items, true );
 			$order_item->add_meta_data( '_combo_sell_key', $cart_item_key, true );
 		} elseif ( wc_pb_is_combo_sell_cart_item( $cart_item ) ) {
-			$order_item->add_meta_data( '_combo_sell_of', $cart_item[ 'combo_sell_of' ], true );
+			$order_item->add_meta_data( '_combo_sell_of', $cart_item['combo_sell_of'], true );
 			$order_item->add_meta_data( '_combo_sell_key', $cart_item_key, true );
 		}
 	}

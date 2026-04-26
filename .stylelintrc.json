@@ -17,6 +17,12 @@
 		}],
 		"no-duplicate-selectors": null,
 		"shorthand-property-no-redundant-values": null,
-		"declaration-block-no-shorthand-property-overrides": null
+		"declaration-block-no-shorthand-property-overrides": null,
+		"declaration-property-unit-allowed-list": null,
+		"block-no-empty": null,
+		"color-named": null,
+		"property-no-unknown": [true, {
+			"ignoreProperties": ["font-smoothing"]
+		}]
 	}
 }
