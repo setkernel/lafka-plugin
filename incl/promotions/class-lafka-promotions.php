@@ -333,5 +333,9 @@ if ( ! class_exists( 'Lafka_Promotions' ) ) {
 		}
 	}
 
-	Lafka_Promotions::instance();
+	// Auto-instantiate when WP runtime is present (skipped in tests so the
+	// class can be loaded standalone for static-method assertions).
+	if ( function_exists( 'add_action' ) ) {
+		Lafka_Promotions::instance();
+	}
 }
