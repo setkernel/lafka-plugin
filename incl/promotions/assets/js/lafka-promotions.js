@@ -25,13 +25,17 @@
 			var ts = window.localStorage.getItem( DISMISS_KEY );
 			if ( ! ts ) return false;
 			return ( Date.now() - parseInt( ts, 10 ) ) < ( DISMISS_DAYS * DAY_MS );
-		} catch ( e ) {
+		} catch ( _err ) {
 			return false;
 		}
 	}
 
 	function dismiss( banner ) {
-		try { window.localStorage.setItem( DISMISS_KEY, Date.now().toString() ); } catch ( e ) {}
+		try {
+			window.localStorage.setItem( DISMISS_KEY, Date.now().toString() );
+		} catch ( _err ) {
+			// Private mode / storage full — silently ignore; the banner just won't stay dismissed.
+		}
 		banner.classList.remove( 'is-visible' );
 	}
 
