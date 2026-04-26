@@ -163,6 +163,11 @@ function is_lafka_promotions( $lafka_options = null ) {
 require_once plugin_dir_path( __FILE__ ) . 'incl/security/class-lafka-security-headers.php';
 
 /**
+ * Admin UI for the security-headers toggle (P2-05a). Self-gates to is_admin().
+ */
+require_once plugin_dir_path( __FILE__ ) . 'incl/security/class-lafka-security-admin.php';
+
+/**
  * Site Health diagnostics (P5-02). Self-gates to is_admin().
  */
 require_once plugin_dir_path( __FILE__ ) . 'incl/site-health/class-lafka-site-health.php';
@@ -208,6 +213,10 @@ if ( LAFKA_PLUGIN_IS_WOOCOMMERCE ) {
 	if ( is_lafka_promotions() ) {
 		/* Load BOGO + delivery-min + banner (P2-01). Child code self-gates off. */
 		require_once plugin_dir_path( __FILE__ ) . '/incl/promotions/class-lafka-promotions.php';
+		if ( is_admin() ) {
+			/* Admin UI for the 4 promo knobs (P2-01a). */
+			require_once plugin_dir_path( __FILE__ ) . '/incl/promotions/class-lafka-promotions-admin.php';
+		}
 	}
 }
 

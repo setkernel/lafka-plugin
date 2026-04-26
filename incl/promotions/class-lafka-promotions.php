@@ -33,6 +33,31 @@ if ( ! class_exists( 'Lafka_Promotions' ) ) {
 		const BOGO_DISCOUNT = 0.5;
 		const PROMO_KEY     = 'bogo50_feb2026';
 		const DISMISS_DAYS  = 7;
+		const OPTION_KEY    = 'lafka_promotions_options';
+
+		/**
+		 * Read a knob from `lafka_promotions_options` with the constant as fallback.
+		 * Admin UI (Lafka_Promotions_Admin) writes to this option.
+		 */
+		public static function knob( $name ) {
+			static $opts = null;
+			if ( null === $opts ) {
+				$opts = get_option( self::OPTION_KEY, array() );
+				if ( ! is_array( $opts ) ) {
+					$opts = array();
+				}
+			}
+			$defaults = array(
+				'delivery_min'  => self::DELIVERY_MIN,
+				'bogo_discount' => self::BOGO_DISCOUNT,
+				'promo_key'     => self::PROMO_KEY,
+				'dismiss_days'  => self::DISMISS_DAYS,
+			);
+			if ( isset( $opts[ $name ] ) && '' !== $opts[ $name ] ) {
+				return $opts[ $name ];
+			}
+			return isset( $defaults[ $name ] ) ? $defaults[ $name ] : null;
+		}
 
 		/** @var Lafka_Promotions|null */
 		private static $instance = null;
@@ -115,7 +140,7 @@ if ( ! class_exists( 'Lafka_Promotions' ) ) {
 			}
 
 			$full_units = $qty - $disc_qty;
-			return ( $full_units * $orig + $disc_qty * $orig * self::BOGO_DISCOUNT ) / $qty;
+			return ( $full_units * $orig + $disc_qty * $orig * (float) self::knob( 'bogo_discount' ) ) / $qty;
 		}
 
 		/**
@@ -124,7 +149,7 @@ if ( ! class_exists( 'Lafka_Promotions' ) ) {
 		 * Boundary semantics: `<` not `<=` — exactly at the threshold ALLOWS delivery.
 		 */
 		public static function should_block_delivery( $contents_cost ) {
-			return (float) $contents_cost < (float) self::DELIVERY_MIN;
+			return (float) $contents_cost < (float) (float) self::knob( 'delivery_min' );
 		}
 
 		// ─── Delivery-minimum hooks ──────────────────────────────────────────
@@ -151,17 +176,17 @@ if ( ! class_exists( 'Lafka_Promotions' ) ) {
 				$subtotal += $item['line_subtotal'];
 			}
 
-			if ( $subtotal >= self::DELIVERY_MIN ) {
+			if ( $subtotal >= (float) self::knob( 'delivery_min' ) ) {
 				return;
 			}
 
-			$remaining = self::DELIVERY_MIN - $subtotal;
+			$remaining = (float) self::knob( 'delivery_min' ) - $subtotal;
 			printf(
 				'<div class="woocommerce-info lafka-delivery-min-notice">%s</div>',
 				sprintf(
 					/* translators: 1: minimum in store currency, 2: remaining amount */
 					esc_html__( 'Delivery is available on orders over %1$s. Add %2$s more to your cart for delivery.', 'lafka-plugin' ),
-					wp_kses_post( wc_price( self::DELIVERY_MIN ) ),
+					wp_kses_post( wc_price( (float) self::knob( 'delivery_min' ) ) ),
 					wp_kses_post( wc_price( $remaining ) )
 				)
 			);
@@ -214,7 +239,7 @@ if ( ! class_exists( 'Lafka_Promotions' ) ) {
 				$qty  = (int) $item['quantity'];
 				$orig = (float) $item['_bogo_original_price'];
 
-				$savings = $orig * self::BOGO_DISCOUNT * $disc_qty;
+				$savings = $orig * (float) self::knob( 'bogo_discount' ) * $disc_qty;
 				$blended = self::blended_price( $orig, $qty, $disc_qty );
 
 				$item['data']->set_price( $blended );
@@ -290,8 +315,8 @@ if ( ! class_exists( 'Lafka_Promotions' ) ) {
 				'lafka-promotions',
 				'LAFKA_PROMO',
 				array(
-					'promoKey'    => self::PROMO_KEY,
-					'dismissDays' => self::DISMISS_DAYS,
+					'promoKey'    => self::knob( 'promo_key' ),
+					'dismissDays' => (int) self::knob( 'dismiss_days' ),
 				)
 			);
 		}
