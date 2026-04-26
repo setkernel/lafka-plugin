@@ -1,1 +1,0 @@
-Couldn't find the requested file /dist/l10n/el.js in flatpickr.
