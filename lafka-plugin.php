@@ -162,6 +162,11 @@ function is_lafka_promotions( $lafka_options = null ) {
  */
 require_once plugin_dir_path( __FILE__ ) . 'incl/security/class-lafka-security-headers.php';
 
+/**
+ * Site Health diagnostics (P5-02). Self-gates to is_admin().
+ */
+require_once plugin_dir_path( __FILE__ ) . 'incl/site-health/class-lafka-site-health.php';
+
 add_action(
 	'before_woocommerce_init',
 	function () {
