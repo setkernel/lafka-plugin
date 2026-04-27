@@ -7,16 +7,23 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-?><div class="wc-combined-item wc-metabox <?php echo $toggle; ?> <?php echo $stock_status; ?>" rel="<?php echo $loop; ?>">
+?><div class="wc-combined-item wc-metabox <?php echo esc_attr( $toggle ); ?> <?php echo esc_attr( $stock_status ); ?>" rel="<?php echo (int) $loop; ?>">
 	<h3>
-		<span class="combined-item-product-id">#<span class="combined-product-id"><?php echo $product_id; ?></span></span>
-		<span class="combined-item-title-inner"><strong class="item-title"><?php echo $title; ?></strong></span>
+		<span class="combined-item-product-id">#<span class="combined-product-id"><?php echo (int) $product_id; ?></span></span>
+		<span class="combined-item-title-inner"><strong class="item-title"><?php echo esc_html( $title ); ?></strong></span>
 		<?php
-			echo ( false !== $item_id && 'in_stock' !== $stock_status ) ? sprintf( '<div class="woocommerce-help-tip combined-item-status combined-item-status--%s" data-tip="%s"></div>', $stock_status, $stock_status_label ) : '';
+			// HIGH-3: $stock_status is a hardcoded enum, but $stock_status_label
+			// is a translated WC string. Escape both for belt-and-suspenders.
+			echo ( false !== $item_id && 'in_stock' !== $stock_status )
+				? '<div class="woocommerce-help-tip combined-item-status combined-item-status--' . esc_attr( $stock_status ) . '" data-tip="' . esc_attr( $stock_status_label ) . '"></div>'
+				: '';
 		?>
 		<div class="handle">
 			<?php
-				echo $sku ? ( '<small class="item-sku">' . sprintf( _x( 'SKU: %s', 'combined product sku', 'lafka-plugin' ), $sku ) . '</small>' ) : '';
+				// $sku is merchant-controlled (product->get_sku()). Escape it.
+				echo $sku
+					? ( '<small class="item-sku">' . sprintf( esc_html_x( 'SKU: %s', 'combined product sku', 'lafka-plugin' ), esc_html( $sku ) ) . '</small>' )
+					: '';
 			?>
 			<div class="handle-item toggle-item" aria-label="<?php esc_attr_e( 'Click to toggle', 'woocommerce' ); ?>"></div>
 			<div class="handle-item sort-item" aria-label="<?php esc_attr_e( 'Drag and drop to set order', 'lafka-plugin' ); ?>"></div>
@@ -24,17 +31,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 		</div>
 	</h3>
 	<div class="item-data wc-metabox-content">
-		<input type="hidden" name="combo_data[<?php echo $loop; ?>][menu_order]" class="item_menu_order" value="<?php echo $loop; ?>" />
+		<input type="hidden" name="combo_data[<?php echo (int) $loop; ?>][menu_order]" class="item_menu_order" value="<?php echo (int) $loop; ?>" />
 		<?php
 
 		if ( false !== $item_id ) {
 			?>
-			<input type="hidden" name="combo_data[<?php echo $loop; ?>][item_id]" class="item_id" value="<?php echo $item_id; ?>" />
+			<input type="hidden" name="combo_data[<?php echo (int) $loop; ?>][item_id]" class="item_id" value="<?php echo (int) $item_id; ?>" />
 			<?php
 		}
 
 		?>
-		<input type="hidden" name="combo_data[<?php echo $loop; ?>][product_id]" class="product_id" value="<?php echo $product_id; ?>" />
+		<input type="hidden" name="combo_data[<?php echo (int) $loop; ?>][product_id]" class="product_id" value="<?php echo (int) $product_id; ?>" />
 
 		<ul class="subsubsub">
 		<?php
