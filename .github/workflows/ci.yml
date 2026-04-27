@@ -26,7 +26,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           # Built-in npm cache keyed on package-lock.json hash. Cuts
           # `npm ci` install time from ~30s to ~5s on cache hit.
           cache: npm

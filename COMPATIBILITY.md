@@ -14,7 +14,7 @@ checklist passes in staging.
 | **PHP**     | 8.1     | 8.3         | 8.3.30        |
 | **WordPress** | 6.6   | 6.9         | 6.9.4         |
 | **WooCommerce** | 9.5 | 10.7        | 10.7.0        |
-| **Node.js** (build only) | 20 | 20 | 20         |
+| **Node.js** (build only) | 20 | 24 | 24         |
 | **Apache** (recommended for security headers) | 2.4 | 2.4.66+ | 2.4.66 |
 
 The "Latest tested" column was verified end-to-end in Session 5
