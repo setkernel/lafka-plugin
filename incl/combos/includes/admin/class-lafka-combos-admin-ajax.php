@@ -160,6 +160,17 @@ class WC_LafkaCombos_Admin_Ajax {
 	 */
 	public static function ajax_add_combined_product() {
 
+		// Cap check before nonce: HIGH-1. Endpoint is registered as `wp_ajax_*`
+		// only (no nopriv variant), so anyone reaching this is at least logged
+		// in — but a subscriber with a valid nonce (nonces are session-scoped,
+		// not role-scoped, and the surface for harvesting is the product-edit
+		// page) could otherwise probe stock status / titles for arbitrary
+		// product IDs. The actual workflow is product-editing, so gate on
+		// `edit_products`.
+		if ( ! current_user_can( 'edit_products' ) ) {
+			wp_send_json( array( 'message' => '' ) );
+		}
+
 		check_ajax_referer( 'wc_combos_add_combined_product', 'security' );
 
 		$loop         = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : 0;
@@ -233,6 +244,13 @@ class WC_LafkaCombos_Admin_Ajax {
 		$failure = array(
 			'result' => 'failure',
 		);
+
+		// HIGH-1: nonce-only let any authenticated subscriber render this form
+		// for arbitrary order IDs (sequential ints) and read line-item config.
+		// Gate on the WC capability that authorises editing orders.
+		if ( ! current_user_can( 'edit_shop_orders' ) ) {
+			wp_send_json( $failure );
+		}
 
 		if ( ! check_ajax_referer( 'wc_combos_edit_combo', 'security', false ) ) {
 			wp_send_json( $failure );
