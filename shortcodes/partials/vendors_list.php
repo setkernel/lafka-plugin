@@ -54,8 +54,8 @@ global $WCMp;
 				?>
 				<div class="wcmp_sorted_vendors">
 					<?php do_action( 'wcmp_vendor_lists_single_before_image', $vendor['term_id'], $vendor['ID'] ); ?>
-					<a href="<?php echo $vendor['vendor_permalink']; ?>">
-						<img class="vendor_img" src="<?php echo $vendor['vendor_image']; ?>" id="vendor_image_display" width="125">
+					<a href="<?php echo esc_url( $vendor['vendor_permalink'] ); ?>">
+						<img class="vendor_img" src="<?php echo esc_url( $vendor['vendor_image'] ); ?>" id="vendor_image_display" width="125">
 					</a>
 
 					<?php
@@ -64,7 +64,7 @@ global $WCMp;
 					?>
 					<?php do_action( 'wcmp_vendor_lists_single_after_image', $vendor['term_id'], $vendor['ID'] ); ?>
 					<?php $button_text = apply_filters( 'wcmp_vendor_lists_single_button_text', $vendor['vendor_name'] ); ?>
-					<a href="<?php echo $vendor['vendor_permalink']; ?>" class="button"><?php echo $button_text; ?></a>
+					<a href="<?php echo esc_url( $vendor['vendor_permalink'] ); ?>" class="button"><?php echo esc_html( $button_text ); ?></a>
 					<?php do_action( 'wcmp_vendor_lists_single_after_button', $vendor['term_id'], $vendor['ID'] ); ?>
 				</div>
 				<?php

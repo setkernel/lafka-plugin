@@ -27,21 +27,42 @@ $lafka_address        = array_key_exists( 'lafka_address', $_POST ) ? sanitize_t
 $lafka_message        = array_key_exists( 'lafka_enquiry', $_POST ) ? sanitize_textarea_field( wp_unslash( $_POST['lafka_enquiry'] ) ) : '';
 $lafka_captcha_rand   = array_key_exists( 'lafka_contact_submitted', $_POST ) ? sanitize_text_field( $_POST['lafka_contact_submitted'] ) : '';
 $lafka_captcha_answer = array_key_exists( 'lafka_captcha_answer', $_POST ) ? sanitize_text_field( $_POST['lafka_captcha_answer'] ) : '';
-// shortcode params
-if ( ! isset( $lafka_shortcode_params_for_tpl ) ) {
-	$lafka_shortcode_params_for_tpl = array_key_exists( 'shortcode_params_for_tpl', $_POST ) ? stripcslashes( $_POST['shortcode_params_for_tpl'] ) : '';
+/*
+ * SECURITY: do NOT honour POST-supplied `shortcode_params_for_tpl` for the
+ * recipient. Earlier versions used a variable-variable assignment that let an
+ * attacker forge `lafka_contact_mail_to` via JSON in the POST body, turning
+ * the site's wp_mail() into an unauthenticated mail relay (CVE-class issue).
+ *
+ * In the shortcode-render path (PHP include from `shortcodes.php`), the
+ * caller pre-sets these PHP variables from trusted shortcode attributes —
+ * the `isset()` guards below detect that case and pass through untouched.
+ *
+ * In the AJAX handler context (lafka_submit_contact, _nopriv_), none of
+ * these variables are set on include, so the secure defaults below apply:
+ * - recipient defaults to admin email (filterable by `lafka_contact_form_recipient`)
+ * - captcha is always on
+ * - the form-fields allowlist is the conservative `name + email + message`
+ *
+ * Per-shortcode recipient customisation is no longer wire-controlled. To
+ * customise per-page, hook the `lafka_contact_form_recipient` filter
+ * server-side (return an email; the input is the default admin email).
+ */
+if ( ! isset( $lafka_contact_mail_to ) ) {
+	$lafka_contact_mail_to = sanitize_email(
+		apply_filters( 'lafka_contact_form_recipient', get_option( 'admin_email' ) )
+	);
 }
-
-if ( $lafka_shortcode_params_for_tpl ) {
-	$lafka_shortcode_params_array = json_decode( $lafka_shortcode_params_for_tpl, true );
-	if ( is_array( $lafka_shortcode_params_array ) ) {
-		$lafka_allowed_keys = array( 'lafka_contact_mail_to', 'lafka_contact_form_fields', 'lafka_simple_captcha', 'lafka_title' );
-		foreach ( $lafka_allowed_keys as $lafka_key ) {
-			if ( isset( $lafka_shortcode_params_array[ $lafka_key ] ) ) {
-				$$lafka_key = $lafka_shortcode_params_array[ $lafka_key ];
-			}
-		}
-	}
+if ( ! isset( $lafka_simple_captcha ) ) {
+	$lafka_simple_captcha = true;
+}
+if ( ! isset( $lafka_contact_form_fields ) ) {
+	$lafka_contact_form_fields = array(
+		'name'  => true,
+		'email' => true,
+	);
+}
+if ( ! isset( $lafka_title ) ) {
+	$lafka_title = '';
 }
 
 $lafka_headers              = '';
@@ -77,7 +98,13 @@ if ( isset( $_POST['lafka_contact_submitted'] ) ) {
 		$lafka_has_error   = true;
 		$lafka_email_error = lafka_contact_form_generate_response( 'error', $lafka_email_invalid );
 	} else {
-		$lafka_headers = 'From: ' . sanitize_email( $lafka_email ) . "\r\n" . 'Reply-To: ' . sanitize_email( $lafka_email ) . "\r\n";
+		// SECURITY: From: is hard-set to the site admin email so SPF/DKIM
+		// alignment doesn't get weaponised for spoofing. The user's address
+		// goes into Reply-To: only — that's where the recipient hits "Reply"
+		// to actually contact them.
+		$lafka_from_email = sanitize_email( get_option( 'admin_email' ) );
+		$lafka_headers    = 'From: ' . $lafka_from_email . "\r\n" .
+			( $lafka_email ? 'Reply-To: ' . sanitize_email( $lafka_email ) . "\r\n" : '' );
 	}
 
 	/* Check if all fields are filled */
@@ -102,10 +129,30 @@ if ( isset( $_POST['lafka_contact_submitted'] ) ) {
 		}
 	}
 
+	// SECURITY: per-IP rate limit. 5 successful submissions per hour.
+	// Mirrors KDS auth pattern — pluggable via `lafka_contact_form_client_ip` filter
+	// for sites behind a reverse proxy (Cloudflare CF-Connecting-IP, etc.).
+	$lafka_client_ip = isset( $_SERVER['REMOTE_ADDR'] )
+		? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) )
+		: '0.0.0.0';
+	$lafka_client_ip   = apply_filters( 'lafka_contact_form_client_ip', $lafka_client_ip );
+	$lafka_rate_key    = 'lafka_cf_rate_' . md5( $lafka_client_ip );
+	$lafka_rate_count  = (int) get_transient( $lafka_rate_key );
+	$lafka_rate_max    = (int) apply_filters( 'lafka_contact_form_rate_max', 5 );
+	if ( $lafka_rate_count >= $lafka_rate_max ) {
+		$lafka_has_error            = true;
+		$lafka_contactform_response = lafka_contact_form_generate_response(
+			'error',
+			esc_html__( 'You are sending too many messages. Please try again later.', 'lafka-plugin' )
+		);
+	}
+
 	if ( ! $lafka_has_error ) {
 		$lafka_sent = wp_mail( sanitize_email( $lafka_contact_mail_to ), ( $lafka_subject ? sanitize_text_field( $lafka_subject ) : sprintf( esc_html__( 'Someone sent a message from %s', 'lafka-plugin' ), sanitize_text_field( get_bloginfo( 'name' ) ) ) ), ( $lafka_name ? 'Name: ' . sanitize_text_field( $lafka_name ) : '' ) . "\r\n" . ( $lafka_email ? 'E-Mail Address: ' . sanitize_text_field( $lafka_email ) . "\r\n" : '' ) . ( $lafka_phone ? 'Phone: ' . sanitize_text_field( $lafka_phone ) . "\r\n" : '' ) . ( $lafka_address ? 'Street Address: ' . sanitize_text_field( $lafka_address ) . "\r\n" : '' ) . "\r\n" . wp_kses_post( $lafka_message ), $lafka_headers );
 		if ( $lafka_sent ) {
 			$lafka_contactform_response = lafka_contact_form_generate_response( 'success', $lafka_message_sent ); //message sent!
+			// Bump the per-IP rate counter only on successful sends so attackers spamming garbage don't lock out legit users.
+			set_transient( $lafka_rate_key, $lafka_rate_count + 1, HOUR_IN_SECONDS );
 			//clear values
 			$lafka_subject = $lafka_email = $lafka_name = $lafka_phone = $lafka_address = $lafka_message = '';
 		} else {
