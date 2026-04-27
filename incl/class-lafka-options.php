@@ -62,6 +62,19 @@ class Lafka_Options {
 		}
 
 		// 3. Registered defaults from the theme's options framework.
+		// PERF-C05 follow-up: defaults are populated by lafka_get_default_values()
+		// in the theme. When the plugin is active, the standalone fallback path in
+		// lafka_get_option() is skipped, so defaults may never have been populated.
+		// Trigger that population once on first miss — but only after `init` has
+		// fired, because lafka-options.php contains hundreds of esc_html_x() calls
+		// that emit a "_load_textdomain_just_in_time" notice when run pre-init.
+		if (
+			empty( self::$defaults )
+			&& did_action( 'init' )
+			&& function_exists( 'lafka_get_default_values' )
+		) {
+			lafka_get_default_values();
+		}
 		if ( isset( self::$defaults[ $name ] ) ) {
 			return self::$defaults[ $name ];
 		}
@@ -96,7 +109,11 @@ class Lafka_Options {
 	 * @return bool
 	 */
 	public static function is_enabled( $name ) {
-		return 'enabled' === self::get( $name );
+		// Pass an explicit empty-string default so feature-flag checks short-
+		// circuit before triggering the framework defaults load (which calls
+		// translators / esc_html_x in lafka-options.php and would fire the
+		// "_load_textdomain_just_in_time" notice on pre-init paths).
+		return 'enabled' === self::get( $name, '' );
 	}
 
 	/**

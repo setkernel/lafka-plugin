@@ -67,7 +67,10 @@ if ( ! function_exists( 'lafka_write_log' ) ) {
  */
 if ( ! function_exists( 'lafka_get_option' ) ) {
 	function lafka_get_option( $name, $default = false ) {
-		return Lafka_Options::get( $name, $default );
+		// Match the theme's helper: any falsy "no default given" sentinel falls
+		// through to registered defaults. Only an explicit truthy default short-
+		// circuits the framework defaults lookup.
+		return Lafka_Options::get( $name, $default ?: null );
 	}
 }
 
