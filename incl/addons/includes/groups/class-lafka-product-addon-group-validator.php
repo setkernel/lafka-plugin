@@ -256,7 +256,13 @@ class Lafka_Product_Addon_Group_Validator {
 			throw new Exception( 'Array expected.' );
 		}
 
-		$terms    = get_terms( 'product_cat', array( 'hide_empty' => 0 ) );
+		// Modern array-form (WP 4.5+); positional first-arg removed in WP 7.0.
+		$terms    = get_terms(
+			array(
+				'taxonomy'   => 'product_cat',
+				'hide_empty' => 0,
+			)
+		);
 		$term_ids = array();
 		foreach ( $terms as $term ) {
 			$term_ids[] = $term->term_id;

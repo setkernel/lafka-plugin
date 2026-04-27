@@ -38,7 +38,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 						<option value="0" <?php selected( in_array( '0', $objects ), true ); ?>><?php esc_html_e( 'All Products', 'lafka-plugin' ); ?></option>
 						<optgroup label="<?php esc_html_e( 'Product category notifications', 'lafka-plugin' ); ?>">
 							<?php
-								$terms = get_terms( 'product_cat', array( 'hide_empty' => 0 ) );
+								// Modern array-form (WP 4.5+); positional first-arg removed in WP 7.0.
+								$terms = get_terms(
+									array(
+										'taxonomy'   => 'product_cat',
+										'hide_empty' => 0,
+									)
+								);
 
 							foreach ( $terms as $term ) {
 								echo '<option value="' . $term->term_id . '" ' . selected( in_array( $term->term_id, $objects ), true, false ) . '>' . esc_html__( 'Category:', 'lafka-plugin' ) . ' ' . $term->name . '</option>';

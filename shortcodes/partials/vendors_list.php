@@ -32,7 +32,8 @@ global $WCMp;
 					><?php echo __( 'By Category', 'lafka-plugin' ); ?></option>
 				</select>
 				<?php
-				$product_category = get_terms( 'product_cat' );
+				// Modern array-form (WP 4.5+); positional first-arg removed in WP 7.0.
+				$product_category = get_terms( array( 'taxonomy' => 'product_cat' ) );
 				$options_html     = '';
 				foreach ( $product_category as $category ) {
 					if ( $category->term_id == $selected_category ) {
