@@ -174,9 +174,21 @@ if ( ! class_exists( 'Lafka_Site_Health' ) ) {
 
 		/**
 		 * Format a feature-flag value as a human-readable label.
+		 *
+		 * The `enable_security_headers` flag lives in the dedicated
+		 * `lafka_security_options` array (see Lafka_Security_Headers::OPTION_KEY)
+		 * — falls back to the main `lafka` option for back-compat with
+		 * pre-P2-05a-fix installs.
 		 */
 		private function flag_label( $key ) {
-			$value = \Lafka_Options::get( $key, '' );
+			if ( 'enable_security_headers' === $key && class_exists( '\Lafka_Security_Headers' ) ) {
+				$opts  = get_option( \Lafka_Security_Headers::OPTION_KEY, array() );
+				$value = is_array( $opts ) && isset( $opts[ \Lafka_Security_Headers::TOGGLE_OPTION_KEY ] )
+					? $opts[ \Lafka_Security_Headers::TOGGLE_OPTION_KEY ]
+					: \Lafka_Options::get( $key, '' );
+			} else {
+				$value = \Lafka_Options::get( $key, '' );
+			}
 			if ( 'enabled' === $value ) {
 				return esc_html__( 'Enabled', 'lafka-plugin' );
 			}

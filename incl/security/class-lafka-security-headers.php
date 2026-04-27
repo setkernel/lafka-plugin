@@ -22,6 +22,19 @@ if ( ! class_exists( 'Lafka_Security_Headers' ) ) {
 
 		const TOGGLE_OPTION_KEY = 'enable_security_headers';
 
+		/**
+		 * Dedicated option array for the security-headers toggle. Stored separately
+		 * from the main `lafka` option because the theme's options-framework
+		 * `register_setting('lafka', ...)` sanitize callback would otherwise drop
+		 * unregistered keys on save (caught during P2-05a admin-UI smoke test).
+		 *
+		 * Backwards compat: also reads `lafka['enable_security_headers']` if the
+		 * dedicated option is absent — so existing WP-CLI users who set the flag
+		 * via `wp option patch update lafka enable_security_headers enabled`
+		 * still get the right behavior until they re-save through the admin UI.
+		 */
+		const OPTION_KEY = 'lafka_security_options';
+
 		/** @var Lafka_Security_Headers|null */
 		private static $instance = null;
 
@@ -45,12 +58,20 @@ if ( ! class_exists( 'Lafka_Security_Headers' ) ) {
 		 * Resolve whether the module is currently enabled.
 		 *
 		 * Order of precedence:
-		 *   1. Admin toggle: `Lafka_Options::get( 'enable_security_headers' )` —
-		 *      explicit `'enabled'` or `'disabled'` always wins.
-		 *   2. Otherwise the install-time default returned by {@see should_default_on()}.
+		 *   1. Dedicated option `lafka_security_options['enable_security_headers']`
+		 *      — what the admin UI writes to.
+		 *   2. Back-compat: `lafka['enable_security_headers']` — what early
+		 *      WP-CLI adopters may have set before P2-05a moved storage out of
+		 *      the main option array.
+		 *   3. Otherwise the install-time default returned by {@see should_default_on()}.
 		 */
 		public function is_active() {
-			$override = Lafka_Options::get( self::TOGGLE_OPTION_KEY, '' );
+			$opts     = get_option( self::OPTION_KEY, array() );
+			$override = is_array( $opts ) && isset( $opts[ self::TOGGLE_OPTION_KEY ] ) ? $opts[ self::TOGGLE_OPTION_KEY ] : '';
+			if ( '' === $override ) {
+				// Fall back to the legacy storage location.
+				$override = Lafka_Options::get( self::TOGGLE_OPTION_KEY, '' );
+			}
 			if ( 'enabled' === $override ) {
 				return true;
 			}

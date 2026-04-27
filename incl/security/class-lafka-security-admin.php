@@ -60,17 +60,16 @@ if ( ! class_exists( 'Lafka_Security_Admin' ) ) {
 			$requested = isset( $_POST['enable_security_headers'] ) ? sanitize_text_field( wp_unslash( $_POST['enable_security_headers'] ) ) : 'disabled';
 			$value     = ( 'enabled' === $requested ) ? 'enabled' : 'disabled';
 
-			$options = get_option( 'lafka', array() );
-			if ( ! is_array( $options ) ) {
-				$options = array();
+			// Store in dedicated `lafka_security_options` option (NOT in the main `lafka`
+			// option) — the theme's options-framework `register_setting('lafka', ...)`
+			// sanitize callback drops unregistered keys, so writing through `lafka` would
+			// silently lose this toggle.
+			$opts = get_option( Lafka_Security_Headers::OPTION_KEY, array() );
+			if ( ! is_array( $opts ) ) {
+				$opts = array();
 			}
-			$options['enable_security_headers'] = $value;
-			update_option( 'lafka', $options );
-
-			// Flush the in-request cache so subsequent calls in this request see the new value.
-			if ( method_exists( 'Lafka_Options', 'flush' ) ) {
-				Lafka_Options::flush();
-			}
+			$opts[ Lafka_Security_Headers::TOGGLE_OPTION_KEY ] = $value;
+			update_option( Lafka_Security_Headers::OPTION_KEY, $opts );
 
 			wp_safe_redirect(
                 add_query_arg(
@@ -89,7 +88,10 @@ if ( ! class_exists( 'Lafka_Security_Admin' ) ) {
 				wp_die( esc_html__( 'You do not have permission to view this page.', 'lafka-plugin' ), 403 );
 			}
 
-			$current = Lafka_Options::get( 'enable_security_headers', '' );
+			$opts    = get_option( Lafka_Security_Headers::OPTION_KEY, array() );
+			$current = is_array( $opts ) && isset( $opts[ Lafka_Security_Headers::TOGGLE_OPTION_KEY ] )
+				? $opts[ Lafka_Security_Headers::TOGGLE_OPTION_KEY ]
+				: Lafka_Options::get( Lafka_Security_Headers::TOGGLE_OPTION_KEY, '' );
 			$active  = class_exists( 'Lafka_Security_Headers' )
 				&& Lafka_Security_Headers::instance()->is_active();
 
@@ -155,7 +157,7 @@ if ( ! class_exists( 'Lafka_Security_Admin' ) ) {
 					<p>
 						<?php esc_html_e( 'To roll back: change Disabled and Save.', 'lafka-plugin' ); ?>
 						<?php esc_html_e( 'WP-CLI equivalent:', 'lafka-plugin' ); ?>
-						<code>wp option patch update lafka enable_security_headers enabled</code>
+						<code>wp option patch insert lafka_security_options enable_security_headers enabled</code>
 					</p>
 
 					<?php submit_button( esc_html__( 'Save', 'lafka-plugin' ) ); ?>
