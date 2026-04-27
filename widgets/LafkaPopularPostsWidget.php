@@ -31,23 +31,45 @@ class LafkaPopularPostsWidget extends WP_Widget {
 			$number = 5;
 		}
 
-		$r = new WP_Query(
-			apply_filters(
-				'widget_posts_args',
-				array(
-					'posts_per_page'      => $number,
-					'no_found_rows'       => true,
-					'post_status'         => 'publish',
-					'ignore_sticky_posts' => true,
-					'orderby'             => 'comment_count',
-				),
-				$instance
-			)
-		);
-
-		if ( ! $r->have_posts() ) {
+		// PERF-9: cache the popular-posts ID list. Without this, every page that
+		// renders the widget runs a `SELECT … ORDER BY comment_count DESC LIMIT N`
+		// — a filesort that doesn't get query-cached because the LIMIT depends on
+		// the widget instance. Mirror the LafkaLatestMenuEntriesWidget pattern:
+		// `wp_cache_get/set` keyed by widget id + number, busted on save_post /
+		// deleted_post via the lafka_popular_posts_widget_flush() helper below.
+		$cache_ver = (int) wp_cache_get( 'lafka_popular_widget_ver', 'widget' );
+		$cache_key = 'lafka_popular_widget_' . $args['widget_id'] . '_' . $number . '_v' . $cache_ver;
+		$ids       = wp_cache_get( $cache_key, 'widget' );
+		if ( false === $ids ) {
+			$query = new WP_Query(
+				apply_filters(
+					'widget_posts_args',
+					array(
+						'posts_per_page'         => $number,
+						'no_found_rows'          => true,
+						'post_status'            => 'publish',
+						'ignore_sticky_posts'    => true,
+						'orderby'                => 'comment_count',
+						'fields'                 => 'ids',
+						'update_post_meta_cache' => false,
+						'update_post_term_cache' => false,
+					),
+					$instance
+				)
+			);
+			$ids = $query->posts;
+			wp_cache_set( $cache_key, $ids, 'widget', HOUR_IN_SECONDS );
+		}
+		if ( empty( $ids ) ) {
 			return;
 		}
+		// Prime the post cache in one shot so `get_the_title($id)` /
+		// `has_post_thumbnail($id)` calls below are memory hits.
+		_prime_post_caches( $ids, true, true );
+		$popular_posts = array_map( 'get_post', $ids );
+		// Build a tiny "have_posts"-equivalent for the existing template loop.
+		$r          = new stdClass();
+		$r->posts   = $popular_posts;
 
 		echo wp_kses_post( $args['before_widget'] );
 		if ( $title ) {
@@ -115,4 +137,24 @@ if ( ! function_exists( 'lafka_register_lafka_popular_widget' ) ) {
 		register_widget( 'LafkaPopularPostsWidget' );
 	}
 
+}
+
+/**
+ * Bust the popular-posts widget cache whenever post comment counts can change.
+ * The widget caches a list of post IDs ordered by `comment_count`, which
+ * shifts on `save_post`, `deleted_post`, `wp_set_comment_status`, and
+ * `comment_post`. We don't have a per-instance cache key, so flush the whole
+ * `widget` cache group prefix here — the impact is one extra cache miss for
+ * any other widget consuming that group, which is negligible.
+ */
+if ( ! function_exists( 'lafka_popular_posts_widget_flush' ) ) {
+	function lafka_popular_posts_widget_flush() {
+		// Bump a single integer "version" so cached entries become unreachable.
+		$ver = (int) wp_cache_get( 'lafka_popular_widget_ver', 'widget' );
+		wp_cache_set( 'lafka_popular_widget_ver', $ver + 1, 'widget' );
+	}
+	add_action( 'save_post', 'lafka_popular_posts_widget_flush' );
+	add_action( 'deleted_post', 'lafka_popular_posts_widget_flush' );
+	add_action( 'wp_set_comment_status', 'lafka_popular_posts_widget_flush' );
+	add_action( 'comment_post', 'lafka_popular_posts_widget_flush' );
 }
