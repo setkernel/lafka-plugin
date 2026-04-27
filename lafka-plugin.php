@@ -512,6 +512,18 @@ if ( ! function_exists( 'lafka_register_plugin_scripts' ) ) {
 		// Do NOT wp_enqueue — that would override the theme's conditional enqueue guards
 		// for cloud-zoom (product pages only), countdown (product pages only),
 		// magnific (product/singular only), etc.
+		//
+		// `lafka_asset_version()` is defined by the Lafka theme; when the plugin runs
+		// without that theme, the function is missing and this whole hook fatals.
+		// Fall back to the plugin's own asset-version helper so the registrations
+		// still go through (the URLs point at the theme dir but registering with a
+		// stable version is harmless when the theme isn't there to actually serve them).
+		if ( ! function_exists( 'lafka_asset_version' ) ) {
+			function lafka_asset_version( $relative_path = '' ) {
+				return lafka_plugin_asset_version( ltrim( $relative_path, '/' ) );
+			}
+		}
+
 		wp_register_script( 'flexslider', get_template_directory_uri() . '/js/flex/jquery.flexslider-min.js', array( 'jquery' ), lafka_asset_version( '/js/flex/jquery.flexslider-min.js' ), true );
 		wp_register_style( 'flexslider', get_template_directory_uri() . '/styles/flex/flexslider.css', array(), lafka_asset_version( '/styles/flex/flexslider.css' ) );
 
@@ -540,13 +552,15 @@ if ( ! function_exists( 'lafka_register_plugin_scripts' ) ) {
 		wp_register_script( 'magnific', get_template_directory_uri() . '/js/magnific/jquery.magnific-popup.min.js', array( 'jquery' ), lafka_asset_version( '/js/magnific/jquery.magnific-popup.min.js' ), true );
 		wp_register_style( 'magnific', get_template_directory_uri() . '/styles/magnific/magnific-popup.css', array(), lafka_asset_version( '/styles/magnific/magnific-popup.css' ) );
 
-		wp_register_script( 'appear', get_template_directory_uri() . '/js/jquery.appear.min.js', array( 'jquery' ), lafka_asset_version( '/js/jquery.appear.min.js' ), true );
+		// `appear` + `is-in-viewport` removed in P3-05 (theme migrated to native
+		// IntersectionObserver via lafkaOnVisible). The vendor JS files no longer
+		// ship with the theme, so registering them here would 404. Leaving the
+		// handles unregistered: any caller that depends on them will get a
+		// "doing it wrong" notice rather than a broken script tag.
 
 		wp_register_script( 'typed', get_template_directory_uri() . '/js/typed.min.js', array(), lafka_asset_version( '/js/typed.min.js' ), true );
 
 		wp_register_script( 'nice-select', get_template_directory_uri() . '/js/jquery.nice-select.min.js', array( 'jquery' ), lafka_asset_version( '/js/jquery.nice-select.min.js' ), true );
-
-		wp_register_script( 'is-in-viewport', get_template_directory_uri() . '/js/isInViewport.min.js', array( 'jquery' ), lafka_asset_version( '/js/isInViewport.min.js' ), true );
 
 		// Isotope
 		wp_register_script( 'isotope', get_template_directory_uri() . '/js/isotope/dist/isotope.pkgd.min.js', array( 'jquery', 'imagesloaded' ), lafka_asset_version( '/js/isotope/dist/isotope.pkgd.min.js' ), true );
