@@ -149,8 +149,17 @@ class Lafka_KDS_Ajax {
 			$all_order_ids[] = $order->get_id();
 		}
 		if ( ! empty( $all_order_ids ) ) {
-			// Batch-load postmeta for all orders + their line items
-			update_meta_cache( 'post', $all_order_ids );
+			// Batch-load postmeta for legacy CPT orders. Under HPOS the order
+			// meta lives in `wc_orders_meta` and is already loaded into the
+			// `$order` object's in-memory cache when `wc_get_orders()` returned
+			// the WC_Order — so this call is unnecessary (and primes the wrong
+			// cache for orders that don't have a `wp_posts` row at all).
+			if (
+				! class_exists( '\Automattic\WooCommerce\Utilities\OrderUtil' )
+				|| ! \Automattic\WooCommerce\Utilities\OrderUtil::custom_orders_table_usage_is_enabled()
+			) {
+				update_meta_cache( 'post', $all_order_ids );
+			}
 
 			// Also prime order item meta (line items have separate meta table)
 			$all_item_ids = array();
@@ -292,7 +301,10 @@ class Lafka_KDS_Ajax {
 			'eta_minutes'          => $eta_minutes ? (int) $eta_minutes : null,
 			'accepted_at'          => $accepted_at ? (int) $accepted_at : null,
 			'total'                => $order->get_total(),
-			'currency_symbol'      => get_woocommerce_currency_symbol( $order->get_currency() ),
+			// WC stores the symbol HTML-entity-encoded (e.g. '&#36;' for USD); the
+			// KDS JS does textContent escaping which would render the entity
+			// literally. Decode here so JS receives a plain UTF-8 character.
+			'currency_symbol'      => html_entity_decode( get_woocommerce_currency_symbol( $order->get_currency() ), ENT_QUOTES, 'UTF-8' ),
 			'delivery_address'     => $delivery_address,
 			'special_instructions' => $special_instructions,
 			'allergen_info'        => $allergen_info,
