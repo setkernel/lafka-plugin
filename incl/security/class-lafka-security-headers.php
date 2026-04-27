@@ -105,6 +105,12 @@ if ( ! class_exists( 'Lafka_Security_Headers' ) ) {
 			if ( headers_sent() ) {
 				return;
 			}
+			// Strip the version-disclosing `X-Powered-By: PHP/...` header that PHP
+			// or `expose_php = On` adds. Apache's `ServerTokens Prod` setting is
+			// the right place to suppress the `Server:` header — we can't reach
+			// that from PHP — so this is a partial fix; document the Apache side
+			// in COMPATIBILITY.md.
+			header_remove( 'X-Powered-By' );
 			header( 'X-Content-Type-Options: nosniff' );
 			header( 'X-Frame-Options: SAMEORIGIN' );
 			header( 'Referrer-Policy: strict-origin-when-cross-origin' );
