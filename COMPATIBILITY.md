@@ -11,18 +11,27 @@ checklist passes in staging.
 
 | Component   | Minimum | Recommended | Latest tested |
 |-------------|---------|-------------|---------------|
-| **PHP**     | 8.1     | 8.3         | 8.3           |
+| **PHP**     | 8.1     | 8.3         | 8.3.30        |
 | **WordPress** | 6.6   | 6.9         | 6.9.4         |
-| **WooCommerce** | 9.5 | 10.7        | 10.7          |
+| **WooCommerce** | 9.5 | 10.7        | 10.7.0        |
 | **Node.js** (build only) | 20 | 20 | 20         |
+
+The "Latest tested" column was verified end-to-end in Session 5
+(2026-04-27): fresh Docker stack (`wordpress:latest` 6.9.4 + WC 10.7.0
++ MariaDB LTS + PHP 8.3.30) driven via Playwright, 18 fixes shipped,
+0 lines in `debug.log` and 0 console errors after. See
+`LAFKA_PROGRESS.md` Session 5 ledger entry.
 
 ## Package versions
 
 | Package         | Current release | Minimum sibling versions |
 |-----------------|-----------------|--------------------------|
-| lafka-plugin    | **8.7.0**       | theme ≥ 5.8.0, child ≥ 5.5.0 |
-| lafka-theme     | **5.8.0**       | plugin ≥ 8.7.0 (optional but expected) |
-| lafka-child     | **5.5.0**       | theme = 5.8.0 (parent) |
+| lafka-plugin    | **8.7.1** (next: 8.7.2) | theme ≥ 5.8.1, child ≥ 5.5.0 |
+| lafka-theme     | **5.8.1** (next: 5.8.2) | plugin ≥ 8.7.1 (optional but expected) |
+| lafka-child     | **5.5.0**       | theme ≥ 5.8.0 (parent) |
+
+Session 5 work is unreleased post v8.7.1 / v5.8.1 — nine commits each
+on `lafka-plugin` and `lafka-theme` ahead of those tags.
 
 ## CI matrix (per-repo CI runs the full grid)
 
@@ -46,8 +55,54 @@ WP × WC integration matrix is pending integration tests — tracked as P2-04a.
 - **WP < 6.6** — uses `wp_body_open()` (since 5.2) but several other APIs
   the codebase depends on (CPT REST, modern HPOS hooks) are 6.6+.
 - **WC < 9.5** — combos + addons rely on hook signatures changed in 9.5.
+  `woocommerce_checkout_update_order_meta` (deprecated WC 9.0) is no
+  longer used as of Session 5 — all three call sites moved to
+  `woocommerce_checkout_create_order`.
 - **PHP < 8.1** — uses `static fn()` short closures (since 7.4 actually,
   but 8.1 is the floor for declared types in pricing helpers).
+
+## HPOS (custom_order_tables) status
+
+The plugin **declares HPOS compatibility** at boot:
+`FeaturesUtil::declare_compatibility('custom_order_tables', __FILE__, true)`
+(`lafka-plugin.php:181-183`).
+
+Verified clean under HPOS in Session 5:
+- All checkout meta saves go through `woocommerce_checkout_create_order`
+  with `$order->update_meta_data()` — works in both HPOS and CPT stores
+  without branching.
+- `wc_get_orders(['meta_query' => ...])` is used everywhere a custom
+  meta filter is needed (HPOS supports it natively in WC 8.x+).
+  Previously broken `value=>null` clauses (silent no-op under SQL =
+  semantics → slot overbooking) were fixed in Session 5.
+- KDS dashboard meta priming is HPOS-aware: skips
+  `update_meta_cache('post', $ids)` when HPOS is on (order meta lives
+  in `wc_orders_meta`, not `wp_postmeta`); per-order meta is already
+  loaded into the `WC_Order` in-memory cache by `wc_get_orders()`.
+- Branch-scoped admin order count uses `meta_query` form so HPOS and
+  CPT both honor the filter.
+
+## Block-based Cart/Checkout (WC 10.6+ default)
+
+The plugin does **not** yet declare `cart_checkout_blocks` compatibility
+(intentional — full Store API extensions for BOGO / branch selector /
+order-hours / delivery-min are tracked as **P3-01**, blocked).
+
+Until P3-01 ships, the plugin includes a **transitional shim**
+(`incl/compat/class-lafka-block-cart-shim.php`, added Session 5):
+on first `admin_init` after activation, if the Cart and/or Checkout
+pages contain unedited WC default Block content
+(`<!-- wp:woocommerce/cart -->` / `<!-- wp:woocommerce/checkout -->`),
+the shim rewrites them to `[woocommerce_cart]` / `[woocommerce_checkout]`
+classic shortcodes — the path Lafka's classic-cart hooks (BOGO label,
+delivery-min notice, branch selector, order-hours notice) actually fire
+on. Self-disabling: gated by `lafka_block_cart_shim_done` option, only
+swaps unedited Block content (any merchant customization is left alone),
+shows a one-time admin notice on swap.
+
+Operators who prefer the Block-based flow can re-enable it after
+restoring the page content + deleting the option; the shim won't undo
+that decision.
 
 ## Browser support (frontend)
 
@@ -63,6 +118,13 @@ support in core 5.8. Mobile Safari ≥ 14, Chrome/Firefox/Edge ≥ 100.
 - **Manual smoke** — `wp option patch update lafka promotions enabled`
   cutover for the BOGO module; KDS standalone-page rendering; cart with
   mixed-price items; delivery-min boundary at $30.
+- **End-to-end (Session 5)** — full Docker stack on
+  `wordpress:latest` (6.9.4) + WC 10.7.0 + PHP 8.3.30, driven via
+  Playwright with a brand-new Chrome user-data-dir. Storefront
+  (home/shop/product/cart/checkout/order-received), KDS dashboard with
+  state-machine transitions, all 5 admin pages (Promotions / KDS /
+  Order Hours / Shipping Areas / Security), Site Health debug section.
+  Real order placed end-to-end with COD payment + BOGO discounts.
 
 ## Updating this document
 
