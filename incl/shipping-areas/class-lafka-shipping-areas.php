@@ -178,9 +178,14 @@ class Lafka_Shipping_Areas {
 			'publicly_queryable'    => false,
 			'show_ui'               => true,
 			'show_in_menu'          => 'woocommerce',
-			'show_in_rest'          => true,
-			'rest_base'             => 'lafka-shipping-areas',
-			'rest_controller_class' => 'WP_REST_Posts_Controller',
+			// PERF-29: shipping-areas posts hold delivery-zone configuration
+			// (lat/lng, fees, time windows, branch metadata). The CPT is
+			// `publicly_queryable => false` so it doesn't surface in archives or
+			// search, but `show_in_rest => true` was unauthenticated-readable at
+			// `/wp-json/wp/v2/lafka-shipping-areas` — anyone could scrape every
+			// branch's coordinates, fees, and hours. Disable REST exposure;
+			// the admin UI uses its own AJAX endpoints, not the REST API.
+			'show_in_rest'          => false,
 			'query_var'             => true,
 			'rewrite'               => false,
 			'capability_type'       => 'product',
