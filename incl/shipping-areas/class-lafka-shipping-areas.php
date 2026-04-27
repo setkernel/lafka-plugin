@@ -93,8 +93,11 @@ class Lafka_Shipping_Areas {
 		add_action( 'woocommerce_review_order_before_payment', array( $this, 'add_map_to_checkout' ) );
 		// Validate "mandatory to pick address"
 		add_action( 'woocommerce_checkout_process', array( $this, 'validate_checkout_field_process' ) );
-		// Store picked map location to order
-		add_action( 'woocommerce_checkout_update_order_meta', array( $this, 'checkout_update_order_meta' ), 10, 1 );
+		// Store picked map location to order. `woocommerce_checkout_update_order_meta`
+		// was deprecated in WC 9.0; `woocommerce_checkout_create_order` fires before
+		// the order is saved on the classic checkout path, receives WC_Order directly,
+		// and is HPOS-safe without branching.
+		add_action( 'woocommerce_checkout_create_order', array( $this, 'checkout_update_order_meta' ), 10, 2 );
 
 		$options = get_option( 'lafka_shipping_areas_general' );
 		if ( ! empty( $options['lowest_cost_shipping'] ) ) {
@@ -123,8 +126,9 @@ class Lafka_Shipping_Areas {
 			// Retrieve time slots for date
 			add_action( 'wp_ajax_time_slots_for_date', array( $this, 'retrieve_time_slots_for_date' ) );
 			add_action( 'wp_ajax_nopriv_time_slots_for_date', array( $this, 'retrieve_time_slots_for_date' ) );
-			// Save datetime to order
-			add_action( 'woocommerce_checkout_update_order_meta', array( $this, 'checkout_datetime_update_order_meta' ), 10, 1 );
+			// Save datetime to order. See `checkout_update_order_meta` above for the
+			// hook-rename rationale.
+			add_action( 'woocommerce_checkout_create_order', array( $this, 'checkout_datetime_update_order_meta' ), 10, 2 );
 			// Show datetime in order list and make it sortable
 			// Legacy orders
 			add_filter( 'manage_shop_order_posts_columns', array( __CLASS__, 'add_datetime_to_orders_list' ), 20 );
@@ -332,7 +336,14 @@ class Lafka_Shipping_Areas {
 		return $fragments;
 	}
 
-	public function checkout_update_order_meta( $order_id ) {
+	public function checkout_update_order_meta( $order, $data = null ) {
+		// Backward-compat: legacy hook passed an int order_id.
+		if ( is_numeric( $order ) ) {
+			$order = wc_get_order( $order );
+		}
+		if ( ! $order instanceof WC_Order ) {
+			return;
+		}
 		if ( ! empty( $_POST['lafka_picked_delivery_geocoded'] ) && ! empty( $_POST['lafka_is_location_clicked'] ) ) {
 			$raw_geocoded = wp_unslash( $_POST['lafka_picked_delivery_geocoded'] );
 			$decoded      = json_decode( $raw_geocoded );
@@ -348,38 +359,30 @@ class Lafka_Shipping_Areas {
 							'lng' => $lng,
 						)
 					);
-					if ( OrderUtil::custom_orders_table_usage_is_enabled() ) {
-						$order = wc_get_order( $order_id );
-						$order->update_meta_data( 'lafka_picked_delivery_geocoded', $safe_value );
-						$order->save();
-					} else {
-						update_post_meta( $order_id, 'lafka_picked_delivery_geocoded', $safe_value );
-					}
+					// woocommerce_checkout_create_order fires BEFORE save, so
+					// update_meta_data on the in-memory WC_Order is enough — the
+					// caller persists. Works identically under HPOS and CPT.
+					$order->update_meta_data( 'lafka_picked_delivery_geocoded', $safe_value );
 				}
 			}
 		}
 	}
 
-	public function checkout_datetime_update_order_meta( $order_id ) {
+	public function checkout_datetime_update_order_meta( $order, $data = null ) {
+		// Backward-compat: legacy hook passed an int order_id.
+		if ( is_numeric( $order ) ) {
+			$order = wc_get_order( $order );
+		}
+		if ( ! $order instanceof WC_Order ) {
+			return;
+		}
 		if ( ! empty( $_POST['lafka_checkout_date'] ) ) {
-			if ( OrderUtil::custom_orders_table_usage_is_enabled() ) {
-				$order = wc_get_order( $order_id );
-				$order->update_meta_data( 'lafka_checkout_date', sanitize_text_field( $_POST['lafka_checkout_date'] ) );
-				$order->save();
-			} else {
-				update_post_meta( $order_id, 'lafka_checkout_date', sanitize_text_field( $_POST['lafka_checkout_date'] ) );
-			}
+			$order->update_meta_data( 'lafka_checkout_date', sanitize_text_field( wp_unslash( $_POST['lafka_checkout_date'] ) ) );
 		} elseif ( ! empty( $this->order_date_time_mandatory ) ) {
 			wc_add_notice( esc_html__( 'Please enter Delivery/Pickup time.', 'lafka-plugin' ), 'error' );
 		}
 		if ( ! empty( $_POST['lafka_checkout_timeslot'] ) ) {
-			if ( OrderUtil::custom_orders_table_usage_is_enabled() ) {
-				$order = wc_get_order( $order_id );
-				$order->update_meta_data( 'lafka_checkout_timeslot', sanitize_text_field( $_POST['lafka_checkout_timeslot'] ) );
-				$order->save();
-			} else {
-				update_post_meta( $order_id, 'lafka_checkout_timeslot', sanitize_text_field( $_POST['lafka_checkout_timeslot'] ) );
-			}
+			$order->update_meta_data( 'lafka_checkout_timeslot', sanitize_text_field( wp_unslash( $_POST['lafka_checkout_timeslot'] ) ) );
 		} elseif ( ! empty( $this->order_date_time_mandatory ) ) {
 			wc_add_notice( esc_html__( 'Please enter Delivery/Pickup time.', 'lafka-plugin' ), 'error' );
 		}
@@ -709,7 +712,9 @@ class Lafka_Shipping_Areas {
 	}
 
 	public function add_map_to_checkout() {
-		if ( ! is_checkout() || WC()->cart->needs_shipping() === false ) {
+		// WC()->cart is lazy-initialized in WC 10.x and may be null in REST or
+		// admin contexts. Match the guard used by clear_wc_shipping_rates_cache().
+		if ( ! is_checkout() || ! isset( WC()->cart ) || WC()->cart->needs_shipping() === false ) {
 			return;
 		}
 
@@ -911,49 +916,54 @@ class Lafka_Shipping_Areas {
 	}
 
 	private static function get_number_of_orders_per_timeslot( $branch_id, DateTime $order_date, $order_timeslot ): int {
-		$meta_query_args = array();
+		// Branch clause: a numeric ID matches that branch's orders; anything else
+		// (empty/null/non-numeric) matches orders with NO branch assigned. Using
+		// `'value' => null` was a bug because SQL `meta_value = NULL` never
+		// matches — orders were silently undercounted, leading to overbooking.
+		// Use `compare => 'NOT EXISTS'` for the unset case.
 		if ( is_numeric( $branch_id ) ) {
-			$meta_query_args[] = array(
-				'key'   => 'lafka_selected_branch_id',
-				'value' => $branch_id,
+			$branch_clause = array(
+				'key'     => 'lafka_selected_branch_id',
+				'value'   => $branch_id,
+				'compare' => '=',
 			);
 		} else {
-			$meta_query_args[] = array(
-				'key'   => 'lafka_selected_branch_id',
-				'value' => null,
+			$branch_clause = array(
+				'key'     => 'lafka_selected_branch_id',
+				'compare' => 'NOT EXISTS',
 			);
 		}
 
-		$meta_query_args[] = array(
-			'key'   => 'lafka_checkout_date',
-			'value' => $order_date->format( 'Y-m-d' ),
+		$meta_query = array(
+			'relation' => 'AND',
+			$branch_clause,
+			array(
+				'key'     => 'lafka_checkout_date',
+				'value'   => $order_date->format( 'Y-m-d' ),
+				'compare' => '=',
+			),
+			array(
+				'key'     => 'lafka_checkout_timeslot',
+				'value'   => ( $order_timeslot['start'] ?? '' ) . ' - ' . ( $order_timeslot['end'] ?? '' ),
+				'compare' => '=',
+			),
 		);
-		$meta_query_args[] = array(
-			'key'   => 'lafka_checkout_timeslot',
-			'value' => ( $order_timeslot['start'] ?? '' ) . ' - ' . ( $order_timeslot['end'] ?? '' ),
-		);
-		if ( OrderUtil::custom_orders_table_usage_is_enabled() ) {
-			$args        = array(
+
+		// `wc_get_orders()` supports meta_query natively in both HPOS (WC 8.x+
+		// OrdersTableQuery) and the CPT data store. `'return' => 'ids'` skips
+		// hydrating WC_Order objects we never use. Counting via `count()` on the
+		// id list is O(N) over the matched rows, which for a per-timeslot query
+		// is bounded by the slot capacity and stays small.
+		$ids = wc_get_orders(
+			array(
 				'status'     => 'wc-processing',
-				'limit'      => - 1,
-				'meta_query' => $meta_query_args,
-			);
-			$orders      = wc_get_orders( $args );
-			$order_count = count( $orders );
-		} else {
-			$query_args  = [
-				'post_type'      => 'shop_order',
-				'post_status'    => 'wc-processing',
-				'posts_per_page' => - 1,
-				'meta_query'     => [
-					$meta_query_args,
-				],
-			];
-			$query       = new WP_Query( $query_args );
-			$order_count = $query->post_count;
-		}
+				'limit'      => -1,
+				'return'     => 'ids',
+				'meta_query' => $meta_query,
+			)
+		);
 
-		return $order_count;
+		return count( $ids );
 	}
 
 	private static function get_delivery_location_link( $location ): string {
