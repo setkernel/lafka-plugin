@@ -83,14 +83,19 @@ class Lafka_KDS_Ajax {
 	 * Increment a per-IP failure counter for `$bucket`; return true if the new
 	 * count puts this IP over `$max_per_minute`.
 	 *
-	 * Counter resets every 60s after the *last* hit (transient TTL is reset on
-	 * each `set_transient()`). Acceptable for a security wall — an attacker that
-	 * stops attacking gets re-armed eventually, while one that keeps hammering
-	 * stays blocked indefinitely.
+	 * HIGH-2: implements a *fixed* sliding window. The previous version called
+	 * `set_transient($key, $count, MINUTE_IN_SECONDS)` on every failure, which
+	 * resets the TTL each time — an attacker pacing requests at 1 per 61s
+	 * keeps the counter at 1 forever and is never blocked. We now store the
+	 * counter alongside an `expires_at` timestamp set on the FIRST failure of
+	 * a window, so the window expires on real time, not on quiet time.
 	 *
 	 * Behind a reverse proxy (Cloudflare, AWS ALB) `REMOTE_ADDR` collapses to
 	 * the LB's IP and all clients share one bucket. Filter `lafka_kds_client_ip`
-	 * to feed e.g. `CF-Connecting-IP` or the rightmost-trusted XFF hop.
+	 * to feed e.g. `CF-Connecting-IP` or the rightmost-trusted XFF hop. The
+	 * filter implementor is responsible for validating that the upstream
+	 * header comes from a trusted proxy — a naive header-trust opens up
+	 * trivial bypass via spoofed `X-Forwarded-For`.
 	 */
 	private function track_auth_failure( $bucket, $max_per_minute = 5 ) {
 		$ip = isset( $_SERVER['REMOTE_ADDR'] )
@@ -98,11 +103,27 @@ class Lafka_KDS_Ajax {
 			: '0.0.0.0';
 		$ip = apply_filters( 'lafka_kds_client_ip', $ip );
 
-		$key   = 'lafka_kds_failrate_' . $bucket . '_' . md5( $ip );
-		$count = (int) get_transient( $key ) + 1;
-		set_transient( $key, $count, MINUTE_IN_SECONDS );
+		$key    = 'lafka_kds_failrate_' . $bucket . '_' . md5( $ip );
+		$now    = time();
+		$window = MINUTE_IN_SECONDS;
+		$entry  = get_transient( $key );
 
-		return $count > $max_per_minute;
+		if ( ! is_array( $entry ) || empty( $entry['expires_at'] ) || $entry['expires_at'] <= $now ) {
+			// New window starts at this failure. Set the expiry once.
+			$entry = array(
+				'count'      => 1,
+				'expires_at' => $now + $window,
+			);
+		} else {
+			$entry['count'] = (int) $entry['count'] + 1;
+		}
+
+		// Compute remaining TTL for the transient so it self-expires when the
+		// window does (no point keeping it longer in storage).
+		$ttl = max( 1, $entry['expires_at'] - $now );
+		set_transient( $key, $entry, $ttl );
+
+		return $entry['count'] > $max_per_minute;
 	}
 
 	/**
