@@ -3,7 +3,7 @@
 	Plugin Name: Lafka Plugin
 	Plugin URI: https://github.com/setkernel/lafka-plugin
 	Description: Companion plugin for the Lafka WooCommerce theme. Originally by theAlThemist, now community-maintained.
-	Version: 8.7.0
+	Version: 8.7.1
 	Author: theAlThemist, Contributors
 	Author URI: https://github.com/setkernel/lafka-plugin
 	Requires at least: 6.6
