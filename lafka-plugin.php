@@ -3,7 +3,7 @@
 	Plugin Name: Lafka Plugin
 	Plugin URI: https://github.com/setkernel/lafka-plugin
 	Description: Companion plugin for the Lafka WooCommerce theme. Originally by theAlThemist, now community-maintained.
-	Version: 8.7.2
+	Version: 8.7.3
 	Author: theAlThemist, Contributors
 	Author URI: https://github.com/setkernel/lafka-plugin
 	Requires at least: 6.6
@@ -413,7 +413,12 @@ if ( ! function_exists( 'lafka_register_cpt_lafka_foodmenu' ) ) {
 			'show_in_menu'          => true,
 			'show_in_nav_menus'     => true,
 			'show_in_rest'          => true,
-			'rest_base'             => 'menu-items',
+			// `menu-items` collides with WP 5.9+ core nav-menu items endpoint
+			// (`/wp/v2/menu-items`) — core registers it later, wins, and
+			// returns 401 unauth. Lafka's CPT is therefore shadowed for
+			// public consumers. Use a Lafka-specific rest_base so the
+			// food-menu posts have a stable, unambiguous URL.
+			'rest_base'             => 'lafka-foodmenu',
 			'rest_controller_class' => 'WP_REST_Posts_Controller',
 			'publicly_queryable'    => true,
 			'exclude_from_search'   => false,
@@ -465,7 +470,12 @@ if ( ! function_exists( 'lafka_register_taxonomy_lafka_foodmenu_category' ) ) {
 			'show_in_nav_menus'     => true,
 			'show_ui'               => true,
 			'show_in_rest'          => true,
-			'rest_base'             => 'menu-categories',
+			// Same collision: WP 5.9+ core registers `/wp/v2/menu-categories`
+			// (in fact only `/wp/v2/menus` ships in core, but matching the
+			// CPT's namespacing for consistency). Use the Lafka-prefixed
+			// path so the taxonomy doesn't shadow or get shadowed by any
+			// future core endpoint at the same name.
+			'rest_base'             => 'lafka-foodmenu-categories',
 			'rest_controller_class' => 'WP_REST_Terms_Controller',
 			'show_tagcloud'         => true,
 			'show_admin_column'     => false,
