@@ -10,6 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @class    WC_LafkaCombos_Order
  * @version  6.4.0
  */
+#[\AllowDynamicProperties]
 class WC_LafkaCombos_Order {
 
 	/**
