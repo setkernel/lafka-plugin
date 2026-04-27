@@ -957,9 +957,26 @@ class Lafka_Branch_Locations_Admin {
 		}
 
 		if ( ! empty( $branches_of_current_user ) ) {
-			$orders = wc_get_orders( array( 'lafka_selected_branch_id' => array_keys( $branches_of_current_user ) ) );
+			// `lafka_selected_branch_id` is not a built-in `wc_get_orders` query
+			// key, so it was silently ignored under both CPT and HPOS — branch
+			// managers saw the global pending count instead of their branch
+			// scope. Use the documented `meta_query` form, which works in both
+			// stores in WC 8.x+.
+			$ids = wc_get_orders(
+				array(
+					'limit'      => -1,
+					'return'     => 'ids',
+					'meta_query' => array(
+						array(
+							'key'     => 'lafka_selected_branch_id',
+							'value'   => array_keys( $branches_of_current_user ),
+							'compare' => 'IN',
+						),
+					),
+				)
+			);
 
-			return count( $orders );
+			return count( $ids );
 		}
 
 		return $count;
