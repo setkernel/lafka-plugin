@@ -221,7 +221,14 @@ $lafka_contact_title = isset( $lafka_title ) ? $lafka_title : esc_html__( 'Send 
 		?>
 	</div>
 	<?php if ( $lafka_simple_captcha ) : ?>
-		<?php $lafka_rand_captcha = mt_rand( 0, 8 ); ?>
+		<?php
+		// `wp_rand` is the cryptographically-stronger sibling of `mt_rand`
+		// (uses random_int internally on PHP 7+). The 1/9 success rate of an
+		// integer captcha is still trivially brute-forceable by automation —
+		// for real bot protection use hCaptcha/Turnstile via a filter on the
+		// pre-mail validation. Tracked as M6 in Session 4 audit.
+		$lafka_rand_captcha = wp_rand( 0, 8 );
+		?>
 		<div class="content lafka_form_test">
 			<?php echo esc_html__( "Prove you're a human", 'lafka-plugin' ); ?>: <span class=constant>1</span> + <span class=random><?php echo esc_html( $lafka_rand_captcha ); ?></span> = ? <input type="text" value="" name="lafka_captcha_answer" />
 		</div>

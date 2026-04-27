@@ -73,7 +73,12 @@ class WC_LafkaCombos_Install {
 	 * @return boolean
 	 */
 	private static function must_install() {
-		return version_compare( self::$current_version, WC_LafkaCombos()->plugin_version(), '<' );
+		// `self::$current_version` is null on a fresh install (option not yet
+		// stored); PHP 8.1+ deprecates passing null to non-nullable parameters
+		// (Session 4 audit HIGH-2). Coerce to '0.0.0' so the comparison still
+		// returns true (must install) without emitting a deprecation notice.
+		$current = (string) ( self::$current_version ?? '0.0.0' );
+		return version_compare( $current, WC_LafkaCombos()->plugin_version(), '<' );
 	}
 
 	/**
