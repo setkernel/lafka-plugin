@@ -5,12 +5,23 @@ on:
     tags:
       - 'v*'
 
+# `contents: write` is required for `softprops/action-gh-release` to
+# create / update the GitHub Release. No other write scopes needed.
 permissions:
   contents: write
+
+# Two `git push --tags` racing against each other (e.g. ops manually
+# pushed a tag while a script was also pushing) shouldn't double-build.
+# `cancel-in-progress: false` because we want both releases to publish
+# — just not in parallel — if both tags are valid.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   release:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v6

@@ -1,5 +1,8 @@
 version: 2
 updates:
+  # Composer (PHPCS / WPCS / PHPCompatibility / PHPUnit / Brain Monkey).
+  # Group all minor + patch bumps into a single weekly PR — security
+  # advisories still arrive as their own PRs.
   - package-ecosystem: composer
     directory: /
     schedule:
@@ -8,7 +11,14 @@ updates:
     labels:
       - dependencies
       - composer
+    groups:
+      composer-minor-and-patch:
+        patterns: ['*']
+        update-types: [minor, patch]
 
+  # NPM (ESLint flat config + Stylelint + @wordpress/* configs). Same
+  # grouping rationale — minor/patch into one PR, majors get their own
+  # so the maintainer reviews each carefully.
   - package-ecosystem: npm
     directory: /
     schedule:
@@ -17,7 +27,13 @@ updates:
     labels:
       - dependencies
       - javascript
+    groups:
+      npm-minor-and-patch:
+        patterns: ['*']
+        update-types: [minor, patch]
 
+  # GitHub Actions: bump to latest major when available. Most actions
+  # use `@vN` floats, so this catches major bumps that need attention.
   - package-ecosystem: github-actions
     directory: /
     schedule:
@@ -26,3 +42,7 @@ updates:
     labels:
       - dependencies
       - ci
+    groups:
+      actions-minor-and-patch:
+        patterns: ['*']
+        update-types: [minor, patch]
