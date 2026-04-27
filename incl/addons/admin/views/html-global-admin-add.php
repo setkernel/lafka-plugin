@@ -46,10 +46,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 									)
 								);
 
-							foreach ( $terms as $term ) {
-								echo '<option value="' . $term->term_id . '" ' . selected( in_array( $term->term_id, $objects ), true, false ) . '>' . esc_html__( 'Category:', 'lafka-plugin' ) . ' ' . $term->name . '</option>';
-							}
-							?>
+								foreach ( $terms as $term ) {
+									echo '<option value="' . $term->term_id . '" ' . selected( in_array( $term->term_id, $objects ), true, false ) . '>' . esc_html__( 'Category:', 'lafka-plugin' ) . ' ' . $term->name . '</option>';
+								}
+								?>
 						</optgroup>
 						<?php do_action( 'lafka_product_addons_global_edit_objects', $objects ); ?>
 					</select>
