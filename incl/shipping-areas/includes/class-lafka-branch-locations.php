@@ -20,8 +20,11 @@ class Lafka_Branch_Locations {
 		add_action( 'wp_ajax_nopriv_lafka_change_branch', array( __CLASS__, 'change_branch' ) );
 		add_action( 'wp_ajax_lafka_change_branch', array( __CLASS__, 'change_branch' ) );
 
-		// Add meta fields to the order
-		add_action( 'woocommerce_checkout_update_order_meta', array( __CLASS__, 'checkout_field_update_order_meta_fields' ), 10, 1 );
+		// Add meta fields to the order. `woocommerce_checkout_update_order_meta`
+		// was deprecated in WC 9.0; `woocommerce_checkout_create_order` fires
+		// before save and receives WC_Order directly so HPOS works without
+		// branching.
+		add_action( 'woocommerce_checkout_create_order', array( __CLASS__, 'checkout_field_update_order_meta_fields' ), 10, 2 );
 
 		// Alter Products meta query to get only the corresponding branch products
 		$options_branches = get_option( 'lafka_shipping_areas_branches' );
@@ -572,22 +575,20 @@ class Lafka_Branch_Locations {
 		return $to_return;
 	}
 
-	public static function checkout_field_update_order_meta_fields( $order_id ) {
-		if ( isset( WC()->session ) ) {
-			$branch_location_session = WC()->session->get( 'lafka_branch_location' );
-			if ( OrderUtil::custom_orders_table_usage_is_enabled() ) {
-				$order = wc_get_order( $order_id );
-				$order->update_meta_data( 'lafka_selected_branch_id', sanitize_text_field( $branch_location_session['branch_id'] ?? null ) );
-				if ( ! empty( $branch_location_session['order_type'] ) ) {
-					$order->update_meta_data( 'lafka_order_type', sanitize_text_field( $branch_location_session['order_type'] ) );
-				}
-				$order->save();
-			} else {
-				update_post_meta( $order_id, 'lafka_selected_branch_id', sanitize_text_field( $branch_location_session['branch_id'] ?? null ) );
-				if ( ! empty( $branch_location_session['order_type'] ) ) {
-					update_post_meta( $order_id, 'lafka_order_type', sanitize_text_field( $branch_location_session['order_type'] ) );
-				}
-			}
+	public static function checkout_field_update_order_meta_fields( $order, $data = null ) {
+		// Backward-compat: legacy hook passed an int order_id.
+		if ( is_numeric( $order ) ) {
+			$order = wc_get_order( $order );
+		}
+		if ( ! $order instanceof WC_Order || ! isset( WC()->session ) ) {
+			return;
+		}
+		$branch_location_session = WC()->session->get( 'lafka_branch_location' );
+		// woocommerce_checkout_create_order fires before save, so update_meta_data
+		// on the in-memory WC_Order is enough; HPOS and CPT paths converge.
+		$order->update_meta_data( 'lafka_selected_branch_id', sanitize_text_field( $branch_location_session['branch_id'] ?? null ) );
+		if ( ! empty( $branch_location_session['order_type'] ) ) {
+			$order->update_meta_data( 'lafka_order_type', sanitize_text_field( $branch_location_session['order_type'] ) );
 		}
 	}
 
