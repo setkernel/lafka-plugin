@@ -587,9 +587,23 @@ if ( ! function_exists( 'lafka_register_plugin_scripts' ) ) {
 
 		// Isotope
 		wp_register_script( 'isotope', get_template_directory_uri() . '/js/isotope/dist/isotope.pkgd.min.js', array( 'jquery', 'imagesloaded' ), lafka_asset_version( '/js/isotope/dist/isotope.pkgd.min.js' ), true );
-		// google maps
+		// google maps — only when an API key is configured. Without a key the
+		// loader returns 401 + a console error on every Geocoding/Places call.
+		// Skip the registration so dependent enqueues fail-closed via the
+		// `wp_script_is('lafka-google-maps','registered')` gate at each call
+		// site (`lafka_map` shortcode, shipping-areas shortcode, branch
+		// locations admin, etc.).
 		if ( function_exists( 'lafka_get_option' ) ) {
-			wp_register_script( 'lafka-google-maps', 'https://maps.googleapis.com/maps/api/js?' . ( lafka_get_option( 'google_maps_api_key' ) ? 'key=' . lafka_get_option( 'google_maps_api_key' ) . '&' : '' ) . 'libraries=geometry,places&v=weekly&language=' . get_locale() . '&callback=Function.prototype', array( 'jquery' ), false, true );
+			$lafka_maps_api_key = lafka_get_option( 'google_maps_api_key' );
+			if ( ! empty( $lafka_maps_api_key ) ) {
+				wp_register_script(
+					'lafka-google-maps',
+					'https://maps.googleapis.com/maps/api/js?key=' . rawurlencode( $lafka_maps_api_key ) . '&libraries=geometry,places&v=weekly&language=' . get_locale() . '&callback=Function.prototype',
+					array( 'jquery' ),
+					false,
+					true
+				);
+			}
 		}
 	}
 

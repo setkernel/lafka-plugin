@@ -102,7 +102,9 @@ class Lafka_Shipping_Areas_Admin {
 		wp_enqueue_script( 'lafka-shipping-areas-admin', plugins_url( '../assets/js/backend/lafka-shipping-areas-admin.min.js', __FILE__ ), array( 'jquery' ), lafka_plugin_asset_version( 'incl/shipping-areas/assets/js/backend/lafka-shipping-areas-admin.min.js' ), true );
 		wp_enqueue_style( 'lafka-shipping-areas-admin', plugins_url( '../assets/css/backend/lafka-shipping-areas-admin.css', __FILE__ ), array(), lafka_plugin_asset_version( 'incl/shipping-areas/assets/css/backend/lafka-shipping-areas-admin.css' ) );
 		$screen = get_current_screen();
-		if ( is_object( $screen ) ) {
+		if ( is_object( $screen ) && wp_script_is( 'lafka-google-maps', 'registered' ) ) {
+			// These two map-pick UIs require Google Maps. Skip when no key
+			// is set — the rest of the shipping-areas admin still works.
 			if ( $screen->id === 'woocommerce_page_lafka_shipping_areas_admin' ) {
 				wp_enqueue_script( 'lafka-shipping-areas-admin-store-map', plugins_url( '../assets/js/backend/lafka-shipping-areas-pick-address-map.min.js', __FILE__ ), array( 'lafka-google-maps' ), lafka_plugin_asset_version( 'incl/shipping-areas/assets/js/backend/lafka-shipping-areas-pick-address-map.min.js' ), true );
 			} elseif ( $screen->id === 'lafka_shipping_areas' ) {

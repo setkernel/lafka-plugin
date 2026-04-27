@@ -43,19 +43,25 @@ class Lafka_Branch_Locations_Admin {
 		wp_enqueue_media();
 		wp_enqueue_style( 'lafka-schedule' );
 		wp_enqueue_style( 'flatpickr' );
-		wp_enqueue_script(
-			'lafka-branch-locations-admin',
-			plugins_url( '../assets/js/backend/lafka-branch-locations-admin.min.js', __FILE__ ),
-			array(
-				'jquery',
-				'lafka-google-maps',
-				'select2',
-				'lafka-schedule',
-				'flatpickr',
-			),
-			lafka_plugin_asset_version( 'incl/shipping-areas/assets/js/backend/lafka-branch-locations-admin.min.js' ),
-			true
-		);
+		// Skip the maps-dependent admin JS when no key is configured —
+		// otherwise it console-errors on every admin page-load. Branch
+		// management still works via the dropdown UI; only the map-pick
+		// surface is disabled.
+		if ( wp_script_is( 'lafka-google-maps', 'registered' ) ) {
+			wp_enqueue_script(
+				'lafka-branch-locations-admin',
+				plugins_url( '../assets/js/backend/lafka-branch-locations-admin.min.js', __FILE__ ),
+				array(
+					'jquery',
+					'lafka-google-maps',
+					'select2',
+					'lafka-schedule',
+					'flatpickr',
+				),
+				lafka_plugin_asset_version( 'incl/shipping-areas/assets/js/backend/lafka-branch-locations-admin.min.js' ),
+				true
+			);
+		}
 		$options_branches = get_option( 'lafka_shipping_areas_branches' );
 		wp_localize_script(
 			'lafka-branch-locations-admin',

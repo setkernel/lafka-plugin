@@ -46,6 +46,16 @@ function lafka_shipping_areas_shortcode( $atts = [], $content = null, $tag = '' 
 	$set_store_location = empty( $options['set_store_location'] ) ? 'geo_woo_store' : $options['set_store_location'];
 	$store_map_location = empty( $options['store_map_location'] ) ? '' : $options['store_map_location'];
 	$shortcode_id       = wp_unique_id( 'lafka_shipping_areas_shortcode' );
+	// `[lafka_shipping_areas]` renders an interactive map of delivery zones,
+	// which is meaningless without Google Maps. Show a polite admin-only
+	// notice when no key is configured rather than a console error.
+	if ( ! wp_script_is( 'lafka-google-maps', 'registered' ) ) {
+		return current_user_can( 'manage_options' )
+			? '<div class="lafka-shipping-areas-shortcode lafka-shipping-areas-shortcode--no-key" style="padding:1rem;border:1px dashed #ccc;color:#666;">'
+			  . esc_html__( 'Lafka shipping-areas shortcode: configure a Google Maps API key in Theme Options → General to render the delivery-zone map.', 'lafka-plugin' )
+			  . '</div>'
+			: '';
+	}
 	wp_enqueue_script( 'lafka-shipping-areas-shortcode-' . $shortcode_id, plugins_url( 'assets/js/frontend/lafka-shipping-areas-shortcode.min.js', __DIR__ ), array( 'lafka-google-maps' ), false, true );
 	wp_localize_script(
 		'lafka-shipping-areas-shortcode-' . $shortcode_id,

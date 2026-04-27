@@ -538,7 +538,8 @@ if ( ! function_exists( 'lafka_foodmenu_shortcode' ) ) {
 							);
 						}
 					} else {
-						$foodmenu_categories = get_terms( 'lafka_foodmenu_category' );
+						// Modern array-form (WP 4.5+).
+						$foodmenu_categories = get_terms( array( 'taxonomy' => 'lafka_foodmenu_category' ) );
 					}
 					?>
 					<div class="lafka-foodmenu-categories">
@@ -1228,6 +1229,18 @@ if ( ! function_exists( 'lafka_map_shortcode' ) ) {
 
 		if ( $map_latitude && $map_longitude && ! is_search() ) {
 
+			// `lafka-google-maps` is only registered when a Google Maps API
+			// key is configured (Theme Options → General). Without it, the
+			// shortcode renders a polite admin notice instead of a
+			// nonfunctional map iframe + a console "API key required" error.
+			if ( ! wp_script_is( 'lafka-google-maps', 'registered' ) ) {
+				return current_user_can( 'manage_options' )
+					? '<div class="lafka-google-maps lafka-map-shortcode lafka-map-shortcode--no-key" style="padding:1rem;border:1px dashed #ccc;color:#666;">'
+					  . esc_html__( 'Google Maps shortcode: configure a Google Maps API key in Theme Options → General to render this map.', 'lafka-plugin' )
+					  . '</div>'
+					: '';
+			}
+
 			$map_canvas_unique_id = uniqid( 'map_canvas' );
 			$routeStart_unique_id = uniqid( 'routeStart' );
 
@@ -1826,7 +1839,8 @@ if ( ! function_exists( 'lafka_woo_product_categories_carousel_shortcode' ) ) {
 			'child_of'   => $atts['parent'],
 		);
 
-		$product_categories = get_terms( 'product_cat', $args );
+		// Modern array-form (WP 4.5+); merge any caller args onto the taxonomy key.
+		$product_categories = get_terms( array_merge( array( 'taxonomy' => 'product_cat' ), (array) $args ) );
 
 		if ( '' !== $atts['parent'] ) {
 			$product_categories = wp_list_filter( $product_categories, array( 'parent' => $atts['parent'] ) );

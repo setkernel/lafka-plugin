@@ -75,17 +75,23 @@ class Lafka_Branch_Locations {
 			$closable_because_of_option = true;
 		}
 
-		wp_enqueue_script(
-			'lafka-branch-locations-front',
-			plugins_url( '../assets/js/frontend/lafka-branch-locations-front.min.js', __FILE__ ),
-			array(
-				'lafka-google-maps',
-				'jquery-blockui',
-				'wc-country-select',
-			),
-			lafka_plugin_asset_version( 'incl/shipping-areas/assets/js/frontend/lafka-branch-locations-front.min.js' ),
-			true
-		);
+		// Skip the front-end branch-locations JS entirely when Google Maps
+		// isn't configured: the script hard-depends on `google.maps.*` being
+		// loaded and would throw on every page-load otherwise. The branch
+		// selector falls back to the dropdown-only UX.
+		if ( wp_script_is( 'lafka-google-maps', 'registered' ) ) {
+			wp_enqueue_script(
+				'lafka-branch-locations-front',
+				plugins_url( '../assets/js/frontend/lafka-branch-locations-front.min.js', __FILE__ ),
+				array(
+					'lafka-google-maps',
+					'jquery-blockui',
+					'wc-country-select',
+				),
+				lafka_plugin_asset_version( 'incl/shipping-areas/assets/js/frontend/lafka-branch-locations-front.min.js' ),
+				true
+			);
+		}
 		wp_localize_script(
 			'lafka-branch-locations-front',
 			'lafka_branch_locations_front',

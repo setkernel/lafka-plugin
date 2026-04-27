@@ -267,17 +267,23 @@ class Lafka_Shipping_Areas {
 		wp_enqueue_style( 'lafka-shipping-areas-front', plugins_url( 'assets/css/frontend/lafka-shipping-areas-front.css', __FILE__ ), array(), lafka_plugin_asset_version( 'incl/shipping-areas/assets/css/frontend/lafka-shipping-areas-front.css' ) );
 
 		if ( is_cart() || is_checkout() ) {
-			wp_enqueue_script(
-				'lafka-shipping-areas-handle-shipping',
-				plugins_url( 'assets/js/frontend/lafka-shipping-areas-handle-shipping.min.js', __FILE__ ),
-				array(
-					'jquery',
-					'lafka-google-maps',
-					'jquery-blockui',
-				),
-				lafka_plugin_asset_version( 'incl/shipping-areas/assets/js/frontend/lafka-shipping-areas-handle-shipping.min.js' ),
-				true
-			);
+			// The handle-shipping JS uses Google Maps for geo-fencing the
+			// customer's address against zone polygons. With no key the JS
+			// has no way to validate, so skip it — server-side validation
+			// in `validate_checkout_field_process` still gates the order.
+			if ( wp_script_is( 'lafka-google-maps', 'registered' ) ) {
+				wp_enqueue_script(
+					'lafka-shipping-areas-handle-shipping',
+					plugins_url( 'assets/js/frontend/lafka-shipping-areas-handle-shipping.min.js', __FILE__ ),
+					array(
+						'jquery',
+						'lafka-google-maps',
+						'jquery-blockui',
+					),
+					lafka_plugin_asset_version( 'incl/shipping-areas/assets/js/frontend/lafka-shipping-areas-handle-shipping.min.js' ),
+					true
+				);
+			}
 
 			$options                 = get_option( 'lafka_shipping_areas_general' );
 			$options_advanced        = get_option( 'lafka_shipping_areas_advanced' );
