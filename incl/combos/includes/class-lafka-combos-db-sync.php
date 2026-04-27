@@ -548,9 +548,16 @@ class WC_LafkaCombos_DB_Sync {
 	 * @since  6.7.8
 	 */
 	protected static function throttle_sync() {
-		$throttled = get_option( 'wc_pb_db_sync_task_runner_last_run', 0 );
-		$delay     = self::has_throttled_sync() ? apply_filters( 'woocommerce_combos_sync_task_runner_throttled_sync_delay', 60 ) : apply_filters( 'woocommerce_combos_sync_task_runner_throttle_threshold', 10 );
-		return gmdate( 'U' ) - $throttled < $delay;
+		// PERF-13: per-request memo. Stock changes can fire dozens of times in
+		// the same request (cart calculation, inventory updates, etc.); without
+		// this each call hits `wp_options` twice. Both options are autoloaded
+		// in alloptions, so the cost per read is small but cumulative under load.
+		static $last_run_cache = null;
+		if ( null === $last_run_cache ) {
+			$last_run_cache = (int) get_option( 'wc_pb_db_sync_task_runner_last_run', 0 );
+		}
+		$delay = self::has_throttled_sync() ? apply_filters( 'woocommerce_combos_sync_task_runner_throttled_sync_delay', 60 ) : apply_filters( 'woocommerce_combos_sync_task_runner_throttle_threshold', 10 );
+		return ( time() - $last_run_cache ) < $delay;
 	}
 
 	/**
@@ -559,7 +566,12 @@ class WC_LafkaCombos_DB_Sync {
 	 * @since  6.7.8
 	 */
 	protected static function has_throttled_sync() {
-		return 'yes' === get_option( 'wc_pb_db_sync_task_throttled', 'no' );
+		// PERF-13: per-request memo (see throttle_sync above).
+		static $throttled_cache = null;
+		if ( null === $throttled_cache ) {
+			$throttled_cache = ( 'yes' === get_option( 'wc_pb_db_sync_task_throttled', 'no' ) );
+		}
+		return $throttled_cache;
 	}
 
 	/**
