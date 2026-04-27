@@ -15,6 +15,7 @@ checklist passes in staging.
 | **WordPress** | 6.6   | 6.9         | 6.9.4         |
 | **WooCommerce** | 9.5 | 10.7        | 10.7.0        |
 | **Node.js** (build only) | 20 | 20 | 20         |
+| **Apache** (recommended for security headers) | 2.4 | 2.4.66+ | 2.4.66 |
 
 The "Latest tested" column was verified end-to-end in Session 5
 (2026-04-27): fresh Docker stack (`wordpress:latest` 6.9.4 + WC 10.7.0
@@ -46,6 +47,58 @@ exclusions documented in `.phpcs.xml.dist`) + PHPUnit (Brain Monkey).
 JS/CSS linted separately on Node 20 (ESLint + Stylelint).
 
 WP × WC integration matrix is pending integration tests — tracked as P2-04a.
+
+## Server-level configuration recommendations
+
+Lafka's security-headers module strips `X-Powered-By` (the version-leaking
+PHP header) when the toggle is enabled. The `Server:` header (e.g.
+`Server: Apache/2.4.66 (Debian)`) is set by the web server itself before
+PHP runs, so PHP can't remove it from a hook. Strip it server-side:
+
+**Apache** — add to `httpd.conf` or a vhost:
+
+```apache
+ServerTokens Prod
+ServerSignature Off
+```
+
+`ServerTokens Prod` reduces the header to just `Server: Apache`;
+`ServerSignature Off` suppresses the version footer on default error
+pages.
+
+**Nginx** — add to the `http {}` block or a server block:
+
+```nginx
+server_tokens off;
+```
+
+Pair this with the plugin-level security-headers toggle (Tools → Lafka
+Security) for a complete fingerprint-reduction posture: `X-Powered-By`,
+`Server:`, and the four positive headers (`X-Content-Type-Options`,
+`X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`) all
+correctly set.
+
+## Google Maps integration
+
+The plugin and theme conditionally register the Google Maps loader
+script under handle `lafka-google-maps` only when an API key is set in
+Theme Options → General. With no key, the script is **not registered**
+and dependent enqueues across the codebase fail-closed via
+`wp_script_is( 'lafka-google-maps', 'registered' )` guards:
+
+- `[lafka_map]` shortcode — renders an admin-only configuration notice.
+- `[lafka_shipping_areas]` shortcode — renders an admin-only notice.
+- Front-end branch-locations selector — falls back to dropdown UX.
+- Branch-locations admin (map-pick) — disabled (dropdown still works).
+- Shipping-areas admin (define-area, store-map) — disabled (text-input
+  fallback for coordinates still works).
+- Front-end shipping handler (geo-fence validation) — server-side
+  validation in `validate_checkout_field_process` still gates orders.
+
+Symptom on misconfigured sites prior to this gate: console error
+`Geocoding Service: You must use an API key to authenticate each
+request to Google Maps Platform APIs` on every page that loaded the
+maps loader without a key. Closed in plugin v8.7.4 + theme v5.8.3.
 
 ## Known incompatibilities
 
