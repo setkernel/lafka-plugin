@@ -175,6 +175,16 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/security/class-lafka-security-a
  */
 require_once plugin_dir_path( __FILE__ ) . 'incl/site-health/class-lafka-site-health.php';
 
+/**
+ * Block Cart/Checkout compat shim. Detects WC's default Block-based cart and
+ * checkout pages (which silently disable Lafka's classic-cart notices and
+ * branch selector) and rewrites them to the supported shortcodes. Self-gates
+ * to admin context and runs once per site. See class for full rationale.
+ */
+if ( is_admin() ) {
+	require_once plugin_dir_path( __FILE__ ) . 'incl/compat/class-lafka-block-cart-shim.php';
+}
+
 add_action(
 	'before_woocommerce_init',
 	function () {
