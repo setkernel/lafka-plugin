@@ -1140,19 +1140,122 @@ if ( ! function_exists( 'lafka_share_links' ) ) {
 add_action( 'wp_head', 'lafka_insert_og_tags' );
 if ( ! function_exists( 'lafka_insert_og_tags' ) ) {
 	/**
-	 * Insert og tags sharers
+	 * Emit OpenGraph + Twitter Card tags on every public page.
+	 * P6-SEO-5: full coverage (was og:image only).
 	 */
 	function lafka_insert_og_tags() {
+		if ( is_admin() || is_feed() || is_404() ) {
+			return;
+		}
+
 		global $post;
 
-		if ( is_singular() && lafka_has_to_show_share() ) {
-			$large_size_width  = get_option( 'large_size_w' );
-			$large_size_height = get_option( 'large_size_h' );
-
-			printf( '<meta property="og:image" content="%s">', get_the_post_thumbnail_url( $post->ID, 'large' ) );
-			printf( '<meta property="og:image:width" content="%d">', $large_size_width );
-			printf( '<meta property="og:image:height" content="%d">', $large_size_height );
+		// ===== Resolve title / description / URL / image / type per context =====
+		if ( is_singular() && $post ) {
+			$title       = get_the_title( $post );
+			$description = lafka_resolve_meta_description( $post );
+			$url         = get_permalink( $post );
+			$image       = get_the_post_thumbnail_url( $post->ID, 'large' );
+			$og_type     = ( function_exists( 'is_product' ) && is_product() ) ? 'product' : 'article';
+		} elseif ( is_front_page() || is_home() ) {
+			$title       = get_bloginfo( 'name' );
+			$description = lafka_resolve_meta_description( null );
+			$url         = home_url( '/' );
+			$image       = function_exists( 'get_site_icon_url' ) ? get_site_icon_url( 1200 ) : '';
+			$og_type     = 'restaurant.restaurant';
+		} elseif ( is_tax() || is_category() || is_tag() ) {
+			$term        = get_queried_object();
+			$title       = $term ? $term->name : get_bloginfo( 'name' );
+			$description = $term && ! empty( $term->description ) ? wp_strip_all_tags( $term->description ) : lafka_resolve_meta_description( null );
+			$url         = $term ? get_term_link( $term ) : home_url( '/' );
+			$image       = '';
+			$og_type     = 'website';
+		} else {
+			$title       = wp_get_document_title();
+			$description = lafka_resolve_meta_description( null );
+			$url         = home_url( add_query_arg( null, null ) );
+			$image       = '';
+			$og_type     = 'website';
 		}
+
+		$site_name = get_bloginfo( 'name' );
+		$locale    = str_replace( '-', '_', get_locale() ); // e.g. en_CA
+
+		// ===== Emit =====
+		printf( '<meta property="og:title" content="%s">' . "\n", esc_attr( $title ) );
+		printf( '<meta property="og:description" content="%s">' . "\n", esc_attr( $description ) );
+		printf( '<meta property="og:url" content="%s">' . "\n", esc_url( $url ) );
+		printf( '<meta property="og:type" content="%s">' . "\n", esc_attr( $og_type ) );
+		printf( '<meta property="og:site_name" content="%s">' . "\n", esc_attr( $site_name ) );
+		printf( '<meta property="og:locale" content="%s">' . "\n", esc_attr( $locale ) );
+
+		if ( $image ) {
+			$large_size_width  = (int) get_option( 'large_size_w', 1024 );
+			$large_size_height = (int) get_option( 'large_size_h', 1024 );
+			printf( '<meta property="og:image" content="%s">' . "\n", esc_url( $image ) );
+			printf( '<meta property="og:image:width" content="%d">' . "\n", $large_size_width );
+			printf( '<meta property="og:image:height" content="%d">' . "\n", $large_size_height );
+		}
+
+		printf( '<meta name="twitter:card" content="%s">' . "\n", $image ? 'summary_large_image' : 'summary' );
+		printf( '<meta name="twitter:title" content="%s">' . "\n", esc_attr( $title ) );
+		printf( '<meta name="twitter:description" content="%s">' . "\n", esc_attr( $description ) );
+		if ( $image ) {
+			printf( '<meta name="twitter:image" content="%s">' . "\n", esc_url( $image ) );
+		}
+	}
+}
+
+add_action( 'wp_head', 'lafka_render_meta_description', 1 );
+if ( ! function_exists( 'lafka_render_meta_description' ) ) {
+	/**
+	 * Emit <meta name="description"> from per-post override or context-specific default.
+	 * P6-SEO-4 + P6-SEO-5: replaces silent absence of meta description.
+	 */
+	function lafka_render_meta_description() {
+		if ( is_admin() || is_feed() || is_404() ) {
+			return;
+		}
+		global $post;
+		$desc = lafka_resolve_meta_description( is_singular() && $post ? $post : null );
+		if ( $desc ) {
+			printf( '<meta name="description" content="%s">' . "\n", esc_attr( $desc ) );
+		}
+	}
+}
+
+if ( ! function_exists( 'lafka_resolve_meta_description' ) ) {
+	/**
+	 * Resolution order:
+	 *   1. Per-post `_lafka_meta_description` post meta (manual override; UI in P6-SEO-4 follow-up)
+	 *   2. WC product short description (single product)
+	 *   3. WC term description (taxonomy archive)
+	 *   4. Post excerpt (singular)
+	 *   5. Site tagline (`get_bloginfo('description')`)
+	 */
+	function lafka_resolve_meta_description( $post_or_null ) {
+		if ( $post_or_null ) {
+			$override = get_post_meta( $post_or_null->ID, '_lafka_meta_description', true );
+			if ( $override ) {
+				return $override;
+			}
+			if ( function_exists( 'is_product' ) && is_product() ) {
+				$product = wc_get_product( $post_or_null->ID );
+				if ( $product && $product->get_short_description() ) {
+					return wp_strip_all_tags( $product->get_short_description() );
+				}
+			}
+			if ( ! empty( $post_or_null->post_excerpt ) ) {
+				return wp_strip_all_tags( $post_or_null->post_excerpt );
+			}
+		}
+		if ( is_tax() || is_category() || is_tag() ) {
+			$term = get_queried_object();
+			if ( $term && ! empty( $term->description ) ) {
+				return wp_strip_all_tags( $term->description );
+			}
+		}
+		return get_bloginfo( 'description' );
 	}
 }
 
