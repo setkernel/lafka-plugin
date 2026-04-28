@@ -22,7 +22,7 @@ final class ShippingWorkshopStyleSuppressionTest extends TestCase {
 	protected function setUp(): void {
 		parent::setUp();
 		$this->compat_file = dirname( __DIR__, 2 )
-			. '/incl/compat/class-lafka-address-autocomplete-compat.php';
+			. '/incl/compat/lafka-address-autocomplete-compat.php';
 	}
 
 	// ─── File presence ───────────────────────────────────────────────────────
@@ -30,7 +30,7 @@ final class ShippingWorkshopStyleSuppressionTest extends TestCase {
 	public function test_compat_file_exists(): void {
 		self::assertFileExists(
 			$this->compat_file,
-			'incl/compat/class-lafka-address-autocomplete-compat.php must exist.'
+			'incl/compat/lafka-address-autocomplete-compat.php must exist.'
 		);
 	}
 
@@ -114,7 +114,7 @@ final class ShippingWorkshopStyleSuppressionTest extends TestCase {
 		$source = file_get_contents( $main_plugin );
 		self::assertIsString( $source );
 		self::assertStringContainsString(
-			'incl/compat/class-lafka-address-autocomplete-compat.php',
+			'incl/compat/lafka-address-autocomplete-compat.php',
 			$source,
 			'lafka-plugin.php must require the address-autocomplete compat shim.'
 		);

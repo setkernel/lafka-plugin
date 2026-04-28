@@ -3,7 +3,7 @@
 	Plugin Name: Lafka Plugin
 	Plugin URI: https://github.com/setkernel/lafka-plugin
 	Description: Companion plugin for the Lafka WooCommerce theme. Originally by theAlThemist, now community-maintained.
-	Version: 8.7.5
+	Version: 8.8.0
 	Author: theAlThemist, Contributors
 	Author URI: https://github.com/setkernel/lafka-plugin
 	Requires at least: 6.6
@@ -190,7 +190,7 @@ if ( is_admin() ) {
  * build/style-index.css is absent (P6-PERF-10). Self-heals when the upstream
  * plugin ships the file.
  */
-require_once plugin_dir_path( __FILE__ ) . 'incl/compat/class-lafka-address-autocomplete-compat.php';
+require_once plugin_dir_path( __FILE__ ) . 'incl/compat/lafka-address-autocomplete-compat.php';
 
 add_action(
 	'before_woocommerce_init',
