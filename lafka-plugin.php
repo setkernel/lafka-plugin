@@ -582,11 +582,48 @@ if ( ! function_exists( 'lafka_register_plugin_scripts' ) ) {
 
 		// Flatpickr (plugin-only asset — not in theme)
 		wp_register_script( 'flatpickr', plugins_url( 'assets/js/flatpickr/flatpickr.min.js', __FILE__ ), array( 'jquery' ), lafka_plugin_asset_version( 'assets/js/flatpickr/flatpickr.min.js' ), true );
-		$flatpickr_locale = apply_filters( 'lafka_flatpickr_locale', strtok( get_locale(), '_' ), get_locale() );
-		if ( file_exists( untrailingslashit( plugin_dir_path( LAFKA_PLUGIN_FILE ) . "assets/js/flatpickr/l10n/$flatpickr_locale.js" ) ) ) {
-			wp_register_script( 'flatpickr-local', plugins_url( "assets/js/flatpickr/l10n/$flatpickr_locale.js", __FILE__ ), array( 'flatpickr' ), lafka_plugin_asset_version( "assets/js/flatpickr/l10n/$flatpickr_locale.js" ), true );
-		} elseif ( file_exists( untrailingslashit( get_stylesheet_directory() . "/lafka_plugin_templates/flatpickr_l10n/$flatpickr_locale.js" ) ) ) {
-			wp_register_script( 'flatpickr-local', get_stylesheet_directory_uri() . "/lafka_plugin_templates/flatpickr_l10n/$flatpickr_locale.js", array( 'flatpickr' ), lafka_plugin_asset_version( 'assets/js/flatpickr/flatpickr.min.js' ), true );
+
+		// P6-PERF-6: enqueue ONLY the current site locale's flatpickr l10n file.
+		// Try candidate filenames in priority order:
+		//   1. Full locale lowercased with hyphen   (e.g. en-ca.js)
+		//   2. Full locale lowercased with underscore (e.g. en_ca.js)
+		//   3. Short-code only                       (e.g. en.js, fr.js)
+		// English (en_US, en_CA, en_GB) is flatpickr's built-in default — no l10n file needed.
+		$fp_locale       = get_locale(); // e.g. en_CA, fr_CA
+		$fp_short        = strtolower( substr( $fp_locale, 0, 2 ) );
+		$fp_candidates   = array(
+			str_replace( '_', '-', strtolower( $fp_locale ) ) . '.js',
+			strtolower( $fp_locale ) . '.js',
+			$fp_short . '.js',
+		);
+		$fp_l10n_dir     = plugin_dir_path( LAFKA_PLUGIN_FILE ) . 'assets/js/flatpickr/l10n/';
+		$fp_l10n_url_base = plugins_url( 'assets/js/flatpickr/l10n/', __FILE__ );
+		$fp_picked       = null;
+		foreach ( $fp_candidates as $fp_candidate ) {
+			if ( file_exists( $fp_l10n_dir . $fp_candidate ) ) {
+				$fp_picked = $fp_candidate;
+				break;
+			}
+		}
+		if ( null === $fp_picked ) {
+			// Check the theme's custom l10n override directory using the same priority list.
+			$fp_theme_dir     = get_stylesheet_directory() . '/lafka_plugin_templates/flatpickr_l10n/';
+			$fp_theme_url_base = get_stylesheet_directory_uri() . '/lafka_plugin_templates/flatpickr_l10n/';
+			foreach ( $fp_candidates as $fp_candidate ) {
+				if ( file_exists( $fp_theme_dir . $fp_candidate ) ) {
+					wp_register_script( 'flatpickr-l10n', $fp_theme_url_base . $fp_candidate, array( 'flatpickr' ), lafka_plugin_asset_version( 'assets/js/flatpickr/flatpickr.min.js' ), true );
+					break;
+				}
+			}
+		} else {
+			wp_register_script( 'flatpickr-l10n', $fp_l10n_url_base . $fp_picked, array( 'flatpickr' ), lafka_plugin_asset_version( 'assets/js/flatpickr/l10n/' . $fp_picked ), true );
+		}
+		// Back-compat alias: 'flatpickr-local' is still referenced in shipping-areas.
+		// If it is not already registered, alias it to the new handle (or skip when
+		// no l10n file was found, as before).
+		if ( wp_script_is( 'flatpickr-l10n', 'registered' ) && ! wp_script_is( 'flatpickr-local', 'registered' ) ) {
+			$fp_l10n_obj = wp_scripts()->query( 'flatpickr-l10n', 'registered' );
+			wp_register_script( 'flatpickr-local', $fp_l10n_obj->src, $fp_l10n_obj->deps, $fp_l10n_obj->ver, true );
 		}
 
 		wp_register_style( 'flatpickr', plugins_url( 'assets/js/flatpickr/flatpickr.min.css', __FILE__ ), array(), lafka_plugin_asset_version( 'assets/js/flatpickr/flatpickr.min.css' ) );
