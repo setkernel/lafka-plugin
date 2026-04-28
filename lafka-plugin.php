@@ -3,7 +3,7 @@
 	Plugin Name: Lafka Plugin
 	Plugin URI: https://github.com/setkernel/lafka-plugin
 	Description: Companion plugin for the Lafka WooCommerce theme. Originally by theAlThemist, now community-maintained.
-	Version: 8.8.0
+	Version: 8.9.0
 	Author: theAlThemist, Contributors
 	Author URI: https://github.com/setkernel/lafka-plugin
 	Requires at least: 6.6
@@ -191,6 +191,37 @@ if ( is_admin() ) {
  * plugin ships the file.
  */
 require_once plugin_dir_path( __FILE__ ) . 'incl/compat/lafka-address-autocomplete-compat.php';
+
+/**
+ * P6-SEO-1/2/3/6: JSON-LD structured data — Restaurant, Menu, Product,
+ * BreadcrumbList. Loads on both frontend and admin (admin is gated inside the
+ * class). The helpers file also provides lafka_schema_get_nap() which is the
+ * single source-of-truth for the [lafka_nap] shortcode below.
+ */
+require_once plugin_dir_path( __FILE__ ) . 'incl/schema/class-lafka-json-ld.php';
+
+/**
+ * P6-SEO-4 (W2-T2): Per-post meta description override meta box.
+ * Provides the admin UI for _lafka_meta_description, which
+ * lafka_resolve_meta_description() already reads as its highest-priority source.
+ */
+if ( is_admin() ) {
+	require_once plugin_dir_path( __FILE__ ) . 'incl/admin/lafka-meta-description-box.php';
+}
+
+/**
+ * P6-SEO-12 (W2-T6): Canonical URL for paginated/filtered shop archives.
+ * WP core's rel_canonical() skips non-singular pages; this module emits
+ * canonical for shop/product-taxonomy archives and strips sort/filter params.
+ */
+require_once plugin_dir_path( __FILE__ ) . 'incl/seo/lafka-shop-canonical.php';
+
+/**
+ * P6-A11Y-9 (W2-T7): WP-CLI command to backfill missing/garbage image alt text.
+ * Self-gates: the file returns early when WP_CLI is not defined, so it is safe
+ * to require unconditionally here — it only attaches behaviour during WP-CLI runs.
+ */
+require_once plugin_dir_path( __FILE__ ) . 'incl/cli/lafka-image-alt-backfill.php';
 
 add_action(
 	'before_woocommerce_init',
@@ -1528,8 +1559,9 @@ if ( ! function_exists( 'lafka_js_async_exclude' ) ) {
 add_shortcode( 'lafka_nap', 'lafka_nap_shortcode' );
 if ( ! function_exists( 'lafka_nap_shortcode' ) ) {
 	/**
-	 * P6-UX-5: canonical NAP block. Single source-of-truth so all pages stay
-	 * byte-identical (required for local SEO citation consistency).
+	 * P6-UX-5: canonical NAP block. Delegates to lafka_schema_get_nap() from
+	 * incl/schema/lafka-schema-helpers.php — single source-of-truth shared with
+	 * the JSON-LD structured data module (P6-SEO-1/2/3/6).
 	 *
 	 * Usage:
 	 *   [lafka_nap]                       // full address block
@@ -1544,13 +1576,16 @@ if ( ! function_exists( 'lafka_nap_shortcode' ) ) {
 	function lafka_nap_shortcode( $atts ) {
 		$atts = shortcode_atts( array( 'part' => 'all' ), $atts, 'lafka_nap' );
 
-		$name   = 'Peppery Pizza & Poutine';
-		$street = '512 Sackville Drive';
-		$city   = 'Lower Sackville';
-		$region = 'NS';
-		$postal = 'B4C 2R8';
-		$phone  = '+1 902-252-5353';
-		$tel    = '+19022525353';
+		// Delegate to the canonical helper — shared with JSON-LD schema module.
+		$nap = lafka_schema_get_nap();
+
+		$name   = $nap['name'];
+		$street = $nap['street'];
+		$city   = $nap['city'];
+		$region = $nap['region'];
+		$postal = $nap['postal'];
+		$phone  = $nap['telephone_display'];
+		$tel    = $nap['telephone'];
 
 		$address = sprintf( '%s, %s, %s %s', $street, $city, $region, $postal );
 

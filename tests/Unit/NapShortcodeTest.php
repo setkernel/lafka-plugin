@@ -6,14 +6,28 @@ namespace LafkaPlugin\Tests\Unit;
 use PHPUnit\Framework\TestCase;
 
 /**
- * P6-UX-5 regression lock: canonical NAP must be the single source-of-truth.
+ * P6-UX-5 + P6-SEO-1 regression lock: canonical NAP must be the single
+ * source-of-truth.
+ *
+ * After the W2-T1 refactor the literal strings live in
+ * incl/schema/lafka-schema-helpers.php (lafka_schema_get_nap()) and the
+ * [lafka_nap] shortcode in lafka-plugin.php delegates to that helper.
+ * Tests verify:
+ *   1. Canonical values are present in the helpers file.
+ *   2. The shortcode in lafka-plugin.php delegates to lafka_schema_get_nap()
+ *      instead of duplicating the literals.
+ *   3. The shortcode is registered and implements the part= attribute.
+ *
  * If these strings ever drift from GBP / Yelp / TripAdvisor citation values,
  * local SEO consistency breaks.
  */
 final class NapShortcodeTest extends TestCase {
 
-    public function test_canonical_nap_values_in_shortcode(): void {
-        $src = file_get_contents( dirname( __DIR__, 2 ) . '/lafka-plugin.php' );
+    /**
+     * Canonical NAP values must live in the schema helpers file (single source-of-truth).
+     */
+    public function test_canonical_nap_values_in_helpers(): void {
+        $src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-helpers.php' );
         // Restaurant name
         $this->assertStringContainsString( "Peppery Pizza & Poutine", $src );
         // Street: must be "Drive" (full word), not "Dr"
@@ -24,10 +38,22 @@ final class NapShortcodeTest extends TestCase {
         $this->assertStringContainsString( "'NS'", $src );
         // Postal
         $this->assertStringContainsString( "'B4C 2R8'", $src );
-        // Phone: tel link must be all-digit "+19022525353"
+        // Phone: E.164 format
         $this->assertStringContainsString( "'+19022525353'", $src );
         // Display phone in human-friendly form
         $this->assertStringContainsString( "'+1 902-252-5353'", $src );
+    }
+
+    /**
+     * The shortcode must delegate to lafka_schema_get_nap() — no inline literals.
+     */
+    public function test_shortcode_delegates_to_nap_helper(): void {
+        $src = file_get_contents( dirname( __DIR__, 2 ) . '/lafka-plugin.php' );
+        $this->assertStringContainsString(
+            'lafka_schema_get_nap()',
+            $src,
+            'lafka_nap_shortcode must call lafka_schema_get_nap() (not duplicate inline literals)'
+        );
     }
 
     public function test_shortcode_registered(): void {
