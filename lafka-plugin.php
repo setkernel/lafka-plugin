@@ -3,7 +3,7 @@
 	Plugin Name: Lafka Plugin
 	Plugin URI: https://github.com/setkernel/lafka-plugin
 	Description: Companion plugin for the Lafka WooCommerce theme. Originally by theAlThemist, now community-maintained.
-	Version: 8.9.0
+	Version: 8.10.0
 	Author: theAlThemist, Contributors
 	Author URI: https://github.com/setkernel/lafka-plugin
 	Requires at least: 6.6
@@ -223,6 +223,30 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/seo/lafka-shop-canonical.php';
  */
 require_once plugin_dir_path( __FILE__ ) . 'incl/cli/lafka-image-alt-backfill.php';
 
+/**
+ * P6-UX-8 (W3-T6): WP-CLI helpers for WooCommerce product review configuration.
+ * Self-gates: the file returns early when WP_CLI is not defined.
+ *
+ *   wp lafka reviews status
+ *   wp lafka reviews enable
+ *   wp lafka reviews disable
+ */
+require_once plugin_dir_path( __FILE__ ) . 'incl/cli/lafka-reviews-cli.php';
+
+/**
+ * P6-UX-8 (W3-T6): Post-order review prompt email.
+ * Schedules a WP-Cron event N days after order completion (default 7, filterable)
+ * that sends the customer a personalised review-request email.
+ */
+require_once plugin_dir_path( __FILE__ ) . 'incl/emails/lafka-review-prompt-email.php';
+
+/**
+ * P6-PERF-4 (W3-T2, 2026-04-28): Asset pruning — dequeue heavy third-party assets
+ * on pages that don't use them. Currently handles Revolution Slider (~150 KB CSS+JS).
+ * Self-gates via is_admin() inside the module; safe to load unconditionally.
+ */
+require_once plugin_dir_path( __FILE__ ) . 'incl/perf/lafka-asset-pruning.php';
+
 add_action(
 	'before_woocommerce_init',
 	function () {
@@ -233,6 +257,12 @@ add_action(
 );
 
 if ( LAFKA_PLUGIN_IS_WOOCOMMERCE ) {
+
+	/**
+	 * P6-UX-7 (W3-T5, 2026-04-28): Normalise price HTML — strip <sup> cents,
+	 * unify variable-range separator to en-dash, remove "Price range:" prefix.
+	 */
+	require_once plugin_dir_path( __FILE__ ) . 'incl/woocommerce/lafka-price-presentation.php';
 
 	/* Load nutrition and allergens */
 	require_once plugin_dir_path( __FILE__ ) . '/incl/nutrition/lafka-nutrition.php';
@@ -361,6 +391,9 @@ function lafka_plugin_after_plugins_loaded() {
 
 	/* Load foodmenu_category ordering in admin */
 	require_once plugin_dir_path( __FILE__ ) . '/incl/foodmenu-category-ordering.php';
+
+	/* P6-UX-6 W3-T10: mobile menu IA grouping walker (opt-in via Customizer) */
+	require_once plugin_dir_path( __FILE__ ) . 'incl/menu/class-lafka-mobile-grouped-walker.php';
 
 	/* include customizer class — PERF-H09: admin-only (customize_register hook) */
 	if ( is_admin() ) {
