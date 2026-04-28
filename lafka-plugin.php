@@ -3,7 +3,7 @@
 	Plugin Name: Lafka Plugin
 	Plugin URI: https://github.com/setkernel/lafka-plugin
 	Description: Companion plugin for the Lafka WooCommerce theme. Originally by theAlThemist, now community-maintained.
-	Version: 8.7.4
+	Version: 8.7.5
 	Author: theAlThemist, Contributors
 	Author URI: https://github.com/setkernel/lafka-plugin
 	Requires at least: 6.6
@@ -295,11 +295,23 @@ function lafka_plugin_after_plugins_loaded() {
 	/* shortcodes */
 	require_once plugin_dir_path( __FILE__ ) . 'shortcodes/shortcodes.php';
 
-	/* Map all Lafka shortcodes to VC — PERF-H09: VC mapping is admin-only */
-	if ( is_admin() ) {
-		add_action( 'vc_before_init', 'lafka_integrateWithVC' );
-		require_once plugin_dir_path( __FILE__ ) . 'shortcodes/shortcodes_to_vc_mapping.php';
-	}
+	/*
+	 * Map all Lafka shortcodes to WPBakery's Visual Composer.
+	 *
+	 * Must run on the frontend too, not just admin: `vc_map()` registers the
+	 * editor metadata AND triggers WPBakery's `Vc_Mapper` to instantiate the
+	 * matching `WPBakeryShortCode_*` class for class-based custom shortcodes
+	 * (`as_parent`/`as_child` elements like `lafka_content_slider`). The
+	 * class's parent constructor calls `add_shortcode()`, which is what makes
+	 * the shortcode actually render content on the frontend.
+	 *
+	 * Was previously gated to `is_admin()` under PERF-H09 (Session 2). That
+	 * skipped the admin metadata too — but it ALSO skipped the frontend
+	 * shortcode registration, which broke `[lafka_content_slider]` and any
+	 * other class-based VC element on every public page that used them.
+	 */
+	add_action( 'vc_before_init', 'lafka_integrateWithVC' );
+	require_once plugin_dir_path( __FILE__ ) . 'shortcodes/shortcodes_to_vc_mapping.php';
 
 	/* Load variation product swatches */
 	require_once plugin_dir_path( __FILE__ ) . 'incl/swatches/variation-swatches.php';
