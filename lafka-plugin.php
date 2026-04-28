@@ -1524,3 +1524,64 @@ if ( ! function_exists( 'lafka_js_async_exclude' ) ) {
 		return $exclude_list;
 	}
 }
+
+add_shortcode( 'lafka_nap', 'lafka_nap_shortcode' );
+if ( ! function_exists( 'lafka_nap_shortcode' ) ) {
+	/**
+	 * P6-UX-5: canonical NAP block. Single source-of-truth so all pages stay
+	 * byte-identical (required for local SEO citation consistency).
+	 *
+	 * Usage:
+	 *   [lafka_nap]                       // full address block
+	 *   [lafka_nap part="address"]        // address line only
+	 *   [lafka_nap part="phone"]          // tap-to-call phone link
+	 *   [lafka_nap part="name"]           // restaurant name
+	 *   [lafka_nap part="street"]         // 512 Sackville Drive
+	 *   [lafka_nap part="city"]           // Lower Sackville
+	 *   [lafka_nap part="region"]         // NS
+	 *   [lafka_nap part="postal"]         // B4C 2R8
+	 */
+	function lafka_nap_shortcode( $atts ) {
+		$atts = shortcode_atts( array( 'part' => 'all' ), $atts, 'lafka_nap' );
+
+		$name   = 'Peppery Pizza & Poutine';
+		$street = '512 Sackville Drive';
+		$city   = 'Lower Sackville';
+		$region = 'NS';
+		$postal = 'B4C 2R8';
+		$phone  = '+1 902-252-5353';
+		$tel    = '+19022525353';
+
+		$address = sprintf( '%s, %s, %s %s', $street, $city, $region, $postal );
+
+		switch ( $atts['part'] ) {
+			case 'name':
+				return esc_html( $name );
+			case 'address':
+				return esc_html( $address );
+			case 'street':
+				return esc_html( $street );
+			case 'city':
+				return esc_html( $city );
+			case 'region':
+				return esc_html( $region );
+			case 'postal':
+				return esc_html( $postal );
+			case 'phone':
+				return sprintf(
+					'<a href="tel:%s">%s</a>',
+					esc_attr( $tel ),
+					esc_html( $phone )
+				);
+			case 'all':
+			default:
+				return sprintf(
+					'<address class="lafka-nap"><strong>%s</strong><br>%s<br><a href="tel:%s">%s</a></address>',
+					esc_html( $name ),
+					esc_html( $address ),
+					esc_attr( $tel ),
+					esc_html( $phone )
+				);
+		}
+	}
+}
