@@ -185,6 +185,13 @@ if ( is_admin() ) {
 	require_once plugin_dir_path( __FILE__ ) . 'incl/compat/class-lafka-block-cart-shim.php';
 }
 
+/**
+ * Suppress the 404 from address-field-autocomplete-for-woocommerce when its
+ * build/style-index.css is absent (P6-PERF-10). Self-heals when the upstream
+ * plugin ships the file.
+ */
+require_once plugin_dir_path( __FILE__ ) . 'incl/compat/class-lafka-address-autocomplete-compat.php';
+
 add_action(
 	'before_woocommerce_init',
 	function () {
