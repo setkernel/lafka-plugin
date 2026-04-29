@@ -1,0 +1,34 @@
+{
+  "_doc": "Sample input for scripts/migrate-restaurant-info.php — copy this file outside the repo, fill in your operator data, and pass the absolute path via LAFKA_RESTAURANT_INFO_JSON. Empty strings are ignored. Hours use 24h 'HH:MM-HH:MM' or 'closed'. Public OSS repo intentionally ships no real NAP.",
+
+  "name": "",
+  "business_type": "Restaurant",
+  "price_range": "$$",
+
+  "street": "",
+  "city": "",
+  "region": "",
+  "postal": "",
+  "country": "",
+  "geo_lat": "",
+  "geo_lng": "",
+
+  "phone_e164": "",
+  "phone_display": "",
+  "email": "",
+
+  "cuisines": "",
+  "payment_methods": "Cash, Visa, Mastercard, AMEX",
+
+  "same_as": "",
+
+  "hours": {
+    "mon": "",
+    "tue": "",
+    "wed": "",
+    "thu": "",
+    "fri": "",
+    "sat": "",
+    "sun": ""
+  }
+}

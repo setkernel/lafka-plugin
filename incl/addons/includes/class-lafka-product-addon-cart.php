@@ -100,7 +100,7 @@ class Lafka_Product_Addon_Cart {
 			foreach ( $cart_item['addons'] as $addon ) {
 				$value = $addon['value'];
 
-				if ( $addon['price'] !== 0 && apply_filters( 'lafka_addons_add_price_to_name', '__return_true' ) ) {
+				if ( $addon['price'] !== 0 && apply_filters( 'lafka_addons_add_price_to_name', true ) ) {
 					$value .= ' ' . wc_price( WC_Product_Addons_Helper::get_product_addon_price_for_display( $addon['price'], $cart_item['data'] ) ) . '';
 				}
 
