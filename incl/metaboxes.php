@@ -238,7 +238,7 @@ if ( ! function_exists( 'lafka_save_layout_postdata' ) ) {
 
 		// verify this came from our screen and with proper authorization,
 		// because save_post can be triggered at other times
-		if ( isset( $_POST['layout_nonce'] ) && ! wp_verify_nonce( $_POST['layout_nonce'], 'lafka_save_layout_postdata' ) ) {
+		if ( ! isset( $_POST['layout_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['layout_nonce'] ) ), 'lafka_save_layout_postdata' ) ) {
 			return;
 		}
 
@@ -557,7 +557,7 @@ if ( ! function_exists( 'lafka_save_page_options_postdata' ) ) {
 
 		// verify this came from our screen and with proper authorization,
 		// because save_post can be triggered at other times
-		if ( isset( $_POST['page_options_nonce'] ) && ! wp_verify_nonce( $_POST['page_options_nonce'], 'lafka_save_page_options_postdata' ) ) {
+		if ( ! isset( $_POST['page_options_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['page_options_nonce'] ) ), 'lafka_save_page_options_postdata' ) ) {
 			return;
 		}
 
@@ -736,7 +736,7 @@ if ( ! function_exists( 'lafka_save_revolution_slider_postdata' ) ) {
 
 		// verify this came from our screen and with proper authorization,
 		// because save_post can be triggered at other times
-		if ( isset( $_POST['lafka_revolution_slider'] ) && ! wp_verify_nonce( $_POST['lafka_revolution_slider'], 'lafka_save_revolution_slider_postdata' ) ) {
+		if ( ! isset( $_POST['lafka_revolution_slider'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['lafka_revolution_slider'] ) ), 'lafka_save_revolution_slider_postdata' ) ) {
 			return;
 		}
 
@@ -879,7 +879,7 @@ if ( ! function_exists( 'lafka_save_video_bckgr_postdata' ) ) {
 		// verify this came from our screen and with proper authorization,
 		// because save_post can be triggered at other times
 
-		if ( isset( $_POST['video_bckgr_nonce'] ) && ! wp_verify_nonce( $_POST['video_bckgr_nonce'], 'lafka_save_video_bckgr_postdata' ) ) {
+		if ( ! isset( $_POST['video_bckgr_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['video_bckgr_nonce'] ) ), 'lafka_save_video_bckgr_postdata' ) ) {
 			return;
 		}
 
@@ -1033,13 +1033,8 @@ if ( ! function_exists( 'lafka_save_foodmenu_postdata' ) ) {
 
 	function lafka_save_foodmenu_postdata( $post_id ) {
 
-		// Check if our nonce is set.
-		if ( ! isset( $_POST['lafka_foodmenu_nonce'] ) ) {
-			return;
-		}
-
-		// Verify that the nonce is valid.
-		if ( ! wp_verify_nonce( $_POST['lafka_foodmenu_nonce'], 'lafka_save_foodmenu_postdata' ) ) {
+		// Check if our nonce is set, and verify in negated form.
+		if ( ! isset( $_POST['lafka_foodmenu_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['lafka_foodmenu_nonce'] ) ), 'lafka_save_foodmenu_postdata' ) ) {
 			return;
 		}
 
@@ -1179,7 +1174,7 @@ if ( ! function_exists( 'lafka_save_additonal_featured_meta_postdata' ) ) {
 		// verify this came from our screen and with proper authorization,
 		// because save_post can be triggered at other times
 
-		if ( isset( $_POST['lafka_featuredmeta'] ) && ! wp_verify_nonce( $_POST['lafka_featuredmeta'], 'lafka_save_additonal_featured_meta_postdata' ) ) {
+		if ( ! isset( $_POST['lafka_featuredmeta'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['lafka_featuredmeta'] ) ), 'lafka_save_additonal_featured_meta_postdata' ) ) {
 			return;
 		}
 
@@ -1272,7 +1267,7 @@ if ( ! function_exists( 'lafka_save_foodmenu_cz_postdata' ) ) {
 		// verify this came from our screen and with proper authorization,
 		// because save_post can be triggered at other times
 
-		if ( isset( $_POST['foodmenu_cz_nonce'] ) && ! wp_verify_nonce( $_POST['foodmenu_cz_nonce'], 'lafka_save_foodmenu_cz_postdata' ) ) {
+		if ( ! isset( $_POST['foodmenu_cz_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['foodmenu_cz_nonce'] ) ), 'lafka_save_foodmenu_cz_postdata' ) ) {
 			return;
 		}
 
@@ -1368,7 +1363,7 @@ if ( ! function_exists( 'lafka_save_product_video_postdata' ) ) {
 		// verify this came from our screen and with proper authorization,
 		// because save_post can be triggered at other times
 
-		if ( isset( $_POST['product_video_nonce'] ) && ! wp_verify_nonce( $_POST['product_video_nonce'], 'lafka_save_product_video_postdata' ) ) {
+		if ( ! isset( $_POST['product_video_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['product_video_nonce'] ) ), 'lafka_save_product_video_postdata' ) ) {
 			return;
 		}
 
@@ -1460,7 +1455,7 @@ if ( ! function_exists( 'lafka_save_product_gallery_type_postdata' ) ) {
 		// verify this came from our screen and with proper authorization,
 		// because save_post can be triggered at other times
 
-		if ( isset( $_POST['product_gallery_type_nonce'] ) && ! wp_verify_nonce( $_POST['product_gallery_type_nonce'], 'lafka_save_product_gallery_type_postdata' ) ) {
+		if ( ! isset( $_POST['product_gallery_type_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['product_gallery_type_nonce'] ) ), 'lafka_save_product_gallery_type_postdata' ) ) {
 			return;
 		}
 

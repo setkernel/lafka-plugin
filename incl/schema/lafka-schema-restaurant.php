@@ -1,10 +1,15 @@
 <?php
 /**
- * P6-SEO-1: Restaurant + LocalBusiness + FoodEstablishment schema generator.
+ * P6-SEO-1 + W2-T1: Restaurant + LocalBusiness + FoodEstablishment schema generator.
  *
- * Emitted on every page (sitewide). Provides the knowledge-panel signals
- * Google uses for local-intent rich results: restaurant type, opening hours,
- * price range, cuisine, address, geo, telephone, and citation sameAs links.
+ * Emitted on every page (sitewide) when the operator has populated the basics
+ * via Customizer (panel "Lafka — Restaurant Information"). Provides the
+ * knowledge-panel signals Google uses for local-intent rich results: restaurant
+ * type, opening hours, price range, cuisine, address, geo, telephone, sameAs.
+ *
+ * All field values come from `lafka_get_restaurant_info()`. Empty fields are
+ * SKIPPED — never emitted as empty strings/arrays — so unconfigured installs
+ * don't broadcast garbage to crawlers.
  *
  * @package Lafka\Plugin\Schema
  * @since   8.8.1
@@ -15,33 +20,89 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Build and return the Restaurant schema array.
  *
- * Returns null only if something critical is missing (e.g. no home_url),
- * which is never expected in a running WP install.
+ * Returns null if essential identity fields are missing — schema emitter
+ * MUST treat null as "skip emission entirely".
  *
  * @return array<string, mixed>|null
  */
 function lafka_schema_restaurant(): ?array {
+	$info     = lafka_get_restaurant_info();
 	$nap      = lafka_schema_get_nap();
-	$home_url = trailingslashit( home_url( '/' ) );
+	$home_url = function_exists( 'home_url' ) && function_exists( 'trailingslashit' )
+		? trailingslashit( home_url( '/' ) )
+		: '/';
 	$logo_url = lafka_schema_get_logo_url();
 
+	$business_type = ! empty( $info['business_type'] ) && is_array( $info['business_type'] )
+		? array_values( $info['business_type'] )
+		: array( 'Restaurant', 'LocalBusiness', 'FoodEstablishment' );
+
 	$schema = array(
-		'@type'                      => array( 'Restaurant', 'LocalBusiness', 'FoodEstablishment' ),
-		'@id'                        => $home_url . '#restaurant',
-		'name'                       => $nap['name'],
-		'url'                        => $home_url,
-		'telephone'                  => $nap['telephone'],
-		'priceRange'                 => '$$',
-		'servesCuisine'              => array( 'Pizza', 'Donair', 'Poutine', 'Maritime Canadian' ),
-		'address'                    => lafka_schema_get_postal_address(),
-		'geo'                        => lafka_schema_get_geo(),
-		'openingHoursSpecification'  => lafka_schema_get_opening_hours(),
-		'acceptsReservations'        => false,
-		'hasMenu'                    => trailingslashit( home_url( '/menu/' ) ),
-		'paymentAccepted'            => 'Cash, Credit Card, Visa, Mastercard, Amex',
-		'currenciesAccepted'         => 'CAD',
-		'sameAs'                     => lafka_schema_get_same_as(),
+		'@type' => $business_type,
+		'@id'   => $home_url . '#restaurant',
+		'url'   => $home_url,
 	);
+
+	// Identity (only emit non-empty).
+	if ( '' !== $nap['name'] ) {
+		$schema['name'] = $nap['name'];
+	}
+	if ( '' !== $nap['telephone'] ) {
+		$schema['telephone'] = $nap['telephone'];
+	}
+	if ( ! empty( $info['email'] ) ) {
+		$schema['email'] = (string) $info['email'];
+	}
+	if ( ! empty( $info['price_range'] ) ) {
+		$schema['priceRange'] = (string) $info['price_range'];
+	}
+	if ( ! empty( $info['cuisines'] ) ) {
+		$schema['servesCuisine'] = array_values( $info['cuisines'] );
+	}
+
+	// Address — skip when no address fields configured.
+	$address = lafka_schema_get_postal_address();
+	if ( null !== $address ) {
+		$schema['address'] = $address;
+	}
+
+	// Geo — skip when lat/lng not both set.
+	$geo = lafka_schema_get_geo();
+	if ( null !== $geo ) {
+		$schema['geo'] = $geo;
+	}
+
+	// Hours — skip when nothing configured.
+	$hours = lafka_schema_get_opening_hours();
+	if ( ! empty( $hours ) ) {
+		$schema['openingHoursSpecification'] = $hours;
+	}
+
+	$schema['acceptsReservations'] = false;
+
+	// Menu URL — only when configured.
+	if ( ! empty( $info['menu_url'] ) ) {
+		$schema['hasMenu'] = (string) $info['menu_url'];
+	}
+
+	// Payment methods — schema.org expects comma-separated string.
+	if ( ! empty( $info['payment_methods'] ) ) {
+		$schema['paymentAccepted'] = implode( ', ', array_values( $info['payment_methods'] ) );
+	}
+
+	// Currency — derive from WooCommerce when active, else skip.
+	if ( function_exists( 'get_woocommerce_currency' ) ) {
+		$currency = (string) get_woocommerce_currency();
+		if ( '' !== $currency ) {
+			$schema['currenciesAccepted'] = $currency;
+		}
+	}
+
+	// sameAs — citation URLs (skip when empty).
+	$same_as = lafka_schema_get_same_as();
+	if ( ! empty( $same_as ) ) {
+		$schema['sameAs'] = $same_as;
+	}
 
 	if ( '' !== $logo_url ) {
 		$schema['image'] = $logo_url;
@@ -53,5 +114,8 @@ function lafka_schema_restaurant(): ?array {
 	 * @since 8.8.1
 	 * @param array<string, mixed> $schema The assembled schema array.
 	 */
-	return (array) apply_filters( 'lafka_schema_restaurant', $schema );
+	if ( function_exists( 'apply_filters' ) ) {
+		$schema = (array) apply_filters( 'lafka_schema_restaurant', $schema );
+	}
+	return $schema;
 }

@@ -56,7 +56,7 @@ foreach ( $addon['options'] as $i => $option ) :
 			<?php if ( $custom_image_id ) : ?>
 				<?php echo wp_get_attachment_image( $custom_image_id, 'lafka-widgets-thumb', false, array( 'class' => implode( ' ', $custom_image_classes ) ) ); ?>
 			<?php endif; ?>
-			<?php echo wptexturize( $option['label'] . ' ' . $price ); ?></label>
+			<?php echo esc_html( wptexturize( $option['label'] ) ) . ' ' . esc_html( $price ); ?></label>
 	</p>
 
 <?php endforeach; ?>

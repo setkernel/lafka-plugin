@@ -12,13 +12,33 @@
  *
  * All output is wrapped in an @graph array per Google's recommended
  * multi-type pattern. JSON encoded via wp_json_encode (handles UTF-8 and
- * ensures the "&" in "Peppery Pizza & Poutine" is not HTML-escaped in JSON-LD).
+ * ensures any "&" in the operator-configured restaurant name is not
+ * HTML-escaped inside JSON-LD).
  *
  * @package Lafka\Plugin\Schema
  * @since   8.8.1
  */
 
 defined( 'ABSPATH' ) || exit;
+
+/**
+ * Suppress WooCommerce's native Product structured data on product pages.
+ * Lafka's @graph block at wp_head priority 11 carries Product + Restaurant +
+ * BreadcrumbList in one merge-friendly @graph, with proper escaping (HEX_TAG).
+ * WC's native block can contain double-encoded entities (&amp;amp;) that
+ * invalidate it — so removing it tightens the schema surface.
+ *
+ * Filterable for operators who need WC's native block back.
+ */
+add_filter( 'woocommerce_structured_data_product', 'lafka_schema_suppress_wc_native_product', 99 );
+if ( ! function_exists( 'lafka_schema_suppress_wc_native_product' ) ) {
+	function lafka_schema_suppress_wc_native_product( $markup ) {
+		if ( apply_filters( 'lafka_schema_keep_wc_native_product', false ) ) {
+			return $markup;
+		}
+		return array();
+	}
+}
 
 require_once __DIR__ . '/lafka-schema-helpers.php';
 require_once __DIR__ . '/lafka-schema-restaurant.php';
@@ -61,8 +81,20 @@ if ( ! class_exists( 'Lafka_JSON_LD' ) ) {
 
 			$graph = array();
 
-			// Restaurant schema — emitted on every public page.
-			$graph[] = lafka_schema_restaurant();
+			// Restaurant schema — emitted on every public page IF the operator has
+			// populated the basics via Customizer ("Lafka — Restaurant Information").
+			// We refuse to emit Restaurant JSON-LD when name/street/city/postal/phone
+			// are missing, otherwise an unconfigured install would advertise empty
+			// strings to Google and degrade the knowledge-panel signal.
+			$info       = function_exists( 'lafka_get_restaurant_info' ) ? lafka_get_restaurant_info() : array();
+			$has_basics = ! empty( $info['name'] )
+				&& ! empty( $info['street'] )
+				&& ! empty( $info['city'] )
+				&& ! empty( $info['postal'] )
+				&& ! empty( $info['phone_e164'] );
+			if ( $has_basics ) {
+				$graph[] = lafka_schema_restaurant();
+			}
 
 			// Single product page.
 			if ( function_exists( 'is_product' ) && is_product() ) {
@@ -99,10 +131,18 @@ if ( ! class_exists( 'Lafka_JSON_LD' ) ) {
 			);
 
 			// JSON_UNESCAPED_SLASHES: URLs render as-is, not with \/ escaping.
+			// JSON_HEX_TAG / HEX_AMP / HEX_APOS / HEX_QUOT: stored-XSS defense
+			// inside <script> context. Without HEX_TAG a `</script>` substring in
+			// any value (e.g. a product name) would close the tag and let the
+			// remainder render as HTML. HEX_TAG escapes `<` and `>` as < /
+			// > so the closing tag literal cannot reach the parser.
 			// Not pretty-printed in production — saves ~20 % bytes.
 			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 			echo "\n<script type=\"application/ld+json\">"
-				. wp_json_encode( $payload, JSON_UNESCAPED_SLASHES )
+				. wp_json_encode(
+					$payload,
+					JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
+				)
 				. "</script>\n";
 		}
 	}

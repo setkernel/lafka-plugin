@@ -45,7 +45,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 							?>
 							</td>
 							<td>
-								<a href="<?php echo add_query_arg( 'edit', $global_addon['id'], admin_url( 'edit.php?post_type=product&page=lafka_global_addons' ) ); ?>" class="button"><?php esc_html_e( 'Edit', 'lafka-plugin' ); ?></a> <a href="<?php echo wp_nonce_url( add_query_arg( 'delete', $global_addon['id'], admin_url( 'edit.php?post_type=product&page=lafka_global_addons' ) ), 'delete_addon' ); ?>" class="button"><?php esc_html_e( 'Delete', 'lafka-plugin' ); ?></a>
+								<a href="<?php echo add_query_arg( 'edit', $global_addon['id'], admin_url( 'edit.php?post_type=product&page=lafka_global_addons' ) ); ?>" class="button"><?php esc_html_e( 'Edit', 'lafka-plugin' ); ?></a> <a href="<?php echo esc_url( wp_nonce_url( add_query_arg( 'delete', $global_addon['id'], admin_url( 'edit.php?post_type=product&page=lafka_global_addons' ) ), 'delete_addon_' . $global_addon['id'] ) ); ?>" class="button"><?php esc_html_e( 'Delete', 'lafka-plugin' ); ?></a>
 							</td>
 						</tr>
 						<?php

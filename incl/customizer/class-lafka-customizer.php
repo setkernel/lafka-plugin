@@ -5,6 +5,9 @@
 
 defined( 'ABSPATH' ) || exit;
 
+// W2-T1: Restaurant Information panel — single source of operator NAP/geo/hours/social.
+require_once __DIR__ . '/class-lafka-customizer-restaurant-info.php';
+
 class Lafka_Customizer {
 	function __construct() {
 		add_action( 'customize_register', array( $this, 'add_sections' ) );

@@ -62,11 +62,29 @@ if ( ! function_exists( 'lafka_write_log' ) ) {
 }
 
 /**
- * Fallback for lafka_get_option() when the Lafka theme is not active.
- * Delegates to Lafka_Options helper for consistent caching and defaults.
+ * Plugin shim for lafka_get_option().
+ *
+ * Precedence: Lafka_Options class (plugin canonical) → theme fallback → false.
+ * When both plugin + theme load, the plugin defines this shim first (plugins_loaded
+ * fires before after_setup_theme), so the theme's function_exists() guard prevents
+ * double-definition. Lafka_Options::get() is the single source of truth.
+ *
+ * @see incl/class-lafka-options.php  Canonical implementation (Lafka_Options::get).
+ * @see lafka-theme/incl/system/core-functions.php  Fallback: only fires if lafka-plugin is not active.
+ *      Plugin's class-lafka-options.php definition supersedes this when both load.
  */
 if ( ! function_exists( 'lafka_get_option' ) ) {
 	function lafka_get_option( $name, $default = false ) {
+		// Defensive guard: if this shim fires before Lafka_Options loaded, surface
+		// a clear error rather than a silent fatal on the next line.
+		if ( ! class_exists( 'Lafka_Options' ) ) {
+			_doing_it_wrong(
+				__FUNCTION__,
+				'lafka_get_option() called before Lafka_Options class loaded. Ensure class-lafka-options.php is required before this shim.',
+				'8.8.1'
+			);
+			return $default;
+		}
 		// Match the theme's helper: any falsy "no default given" sentinel falls
 		// through to registered defaults. Only an explicit truthy default short-
 		// circuits the framework defaults lookup.
@@ -405,7 +423,12 @@ function lafka_plugin_after_plugins_loaded() {
 	remove_filter( 'woocommerce_product_loop_start', 'woocommerce_maybe_show_product_subcategories' );
 }
 
-add_action( 'init', 'lafka_load_plugin_text_domain' );
+// C-10: hook on `plugins_loaded` (priority 10) so the text domain is available
+// before `init` fires. CPT/taxonomy labels are registered at `init` priority 5
+// in this plugin, so loading the text domain at `init` priority 10 was too late
+// — non-default-locale labels rendered untranslated. `plugins_loaded` runs
+// strictly before `init`, fixing the ordering.
+add_action( 'plugins_loaded', 'lafka_load_plugin_text_domain' );
 if ( ! function_exists( 'lafka_load_plugin_text_domain' ) ) {
 	function lafka_load_plugin_text_domain() {
 		load_plugin_textdomain( 'lafka-plugin', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
@@ -1592,24 +1615,25 @@ if ( ! function_exists( 'lafka_js_async_exclude' ) ) {
 add_shortcode( 'lafka_nap', 'lafka_nap_shortcode' );
 if ( ! function_exists( 'lafka_nap_shortcode' ) ) {
 	/**
-	 * P6-UX-5: canonical NAP block. Delegates to lafka_schema_get_nap() from
-	 * incl/schema/lafka-schema-helpers.php — single source-of-truth shared with
-	 * the JSON-LD structured data module (P6-SEO-1/2/3/6).
+	 * P6-UX-5 + W2-T1: canonical NAP block. Reads from lafka_get_restaurant_info()
+	 * via lafka_schema_get_nap() — the single source-of-truth shared with the
+	 * JSON-LD module and the editorial templates. Operator content flows from
+	 * the Customizer panel "Lafka — Restaurant Information".
 	 *
 	 * Usage:
 	 *   [lafka_nap]                       // full address block
 	 *   [lafka_nap part="address"]        // address line only
 	 *   [lafka_nap part="phone"]          // tap-to-call phone link
 	 *   [lafka_nap part="name"]           // restaurant name
-	 *   [lafka_nap part="street"]         // 512 Sackville Drive
-	 *   [lafka_nap part="city"]           // Lower Sackville
-	 *   [lafka_nap part="region"]         // NS
-	 *   [lafka_nap part="postal"]         // B4C 2R8
+	 *   [lafka_nap part="street"]         // street address
+	 *   [lafka_nap part="city"]           // city
+	 *   [lafka_nap part="region"]         // region/state
+	 *   [lafka_nap part="postal"]         // postal/ZIP code
 	 */
 	function lafka_nap_shortcode( $atts ) {
 		$atts = shortcode_atts( array( 'part' => 'all' ), $atts, 'lafka_nap' );
 
-		// Delegate to the canonical helper — shared with JSON-LD schema module.
+		// Delegate to the canonical helper — Customizer-driven.
 		$nap = lafka_schema_get_nap();
 
 		$name   = $nap['name'];
@@ -1620,7 +1644,8 @@ if ( ! function_exists( 'lafka_nap_shortcode' ) ) {
 		$phone  = $nap['telephone_display'];
 		$tel    = $nap['telephone'];
 
-		$address = sprintf( '%s, %s, %s %s', $street, $city, $region, $postal );
+		$address_parts = array_filter( array( $street, trim( $city . ', ' . $region . ' ' . $postal, ' ,' ) ) );
+		$address       = implode( ', ', $address_parts );
 
 		switch ( $atts['part'] ) {
 			case 'name':
@@ -1636,6 +1661,9 @@ if ( ! function_exists( 'lafka_nap_shortcode' ) ) {
 			case 'postal':
 				return esc_html( $postal );
 			case 'phone':
+				if ( '' === $tel ) {
+					return '';
+				}
 				return sprintf(
 					'<a href="tel:%s">%s</a>',
 					esc_attr( $tel ),
@@ -1643,12 +1671,19 @@ if ( ! function_exists( 'lafka_nap_shortcode' ) ) {
 				);
 			case 'all':
 			default:
+				$phone_html = '';
+				if ( '' !== $tel ) {
+					$phone_html = sprintf(
+						'<br><a href="tel:%s">%s</a>',
+						esc_attr( $tel ),
+						esc_html( $phone )
+					);
+				}
 				return sprintf(
-					'<address class="lafka-nap"><strong>%s</strong><br>%s<br><a href="tel:%s">%s</a></address>',
+					'<address class="lafka-nap"><strong>%s</strong><br>%s%s</address>',
 					esc_html( $name ),
 					esc_html( $address ),
-					esc_attr( $tel ),
-					esc_html( $phone )
+					$phone_html
 				);
 		}
 	}

@@ -56,11 +56,17 @@ if ( ! function_exists( 'lafka_seo_shop_canonical_url' ) ) {
 			$raw_base = html_entity_decode( get_pagenum_link( 1 ), ENT_QUOTES, 'UTF-8' );
 		}
 
-		// Build the canonical from the raw path only (scheme + host + path),
+		// Build the canonical from the raw path only (scheme + host + port + path),
 		// then re-add any query args that are NOT sort/filter params.
+		// Independent audit 2026-04-29 caught the missing port: when site_url
+		// includes a non-default port (e.g. http://localhost:8891 in dev,
+		// https://example.com:8443 in some prod), the rebuild dropped it,
+		// emitting a canonical that didn't match the host the page was served
+		// from — Google treats that as a deduplication signal and depowers.
 		$parsed = wp_parse_url( $raw_base );
 		$path   = ( isset( $parsed['scheme'] ) ? $parsed['scheme'] . '://' : '' )
 			. ( isset( $parsed['host'] ) ? $parsed['host'] : '' )
+			. ( isset( $parsed['port'] ) ? ':' . $parsed['port'] : '' )
 			. ( isset( $parsed['path'] ) ? $parsed['path'] : '' );
 
 		// Collect any surviving (non-filter) query args from the raw URL.

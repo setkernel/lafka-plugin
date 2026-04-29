@@ -257,7 +257,7 @@ class Lafka_Order_Hours_Admin {
 		<input id="<?php echo esc_attr( $args['label_for'] ); ?>"
 				name="lafka_order_hours_options[<?php echo esc_attr( $args['label_for'] ); ?>]"
 				type="text"
-				value="<?php echo isset( $options[ $args['label_for'] ] ) ? ( $options[ $args['label_for'] ] ) : ( '' ); ?>"
+				value="<?php echo isset( $options[ $args['label_for'] ] ) ? esc_attr( $options[ $args['label_for'] ] ) : ''; ?>"
 			<?php echo isset( $options[ $args['label_for'] ] ) ? ( checked( $options[ $args['label_for'] ], 1 ) ) : ( '' ); ?>
 		>
 		<p class="description"><?php esc_html_e( 'Enter message that will appear below "Add to Cart" and instead of "Checkout" and "Place Order" links.', 'lafka-plugin' ); ?></p>
@@ -310,7 +310,7 @@ class Lafka_Order_Hours_Admin {
 		<input id="<?php echo esc_attr( $args['label_for'] ); ?>"
 				name="lafka_order_hours_options[<?php echo esc_attr( $args['label_for'] ); ?>]"
 				type="text"
-				value="<?php echo isset( $options[ $args['label_for'] ] ) ? ( $options[ $args['label_for'] ] ) : ( '' ); ?>"
+				value="<?php echo isset( $options[ $args['label_for'] ] ) ? esc_attr( $options[ $args['label_for'] ] ) : ''; ?>"
 			<?php echo isset( $options[ $args['label_for'] ] ) ? ( checked( $options[ $args['label_for'] ], 1 ) ) : ( '' ); ?>
 		>
 		<p class="description"><?php esc_html_e( 'The message when all branches are closed.', 'lafka-plugin' ); ?></p>

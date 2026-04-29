@@ -169,7 +169,9 @@ $lafka_contact_title = isset( $lafka_title ) ? $lafka_title : esc_html__( 'Send 
 <form action="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>" method="post" class="contact-form">
 	<?php if ( isset( $lafka_contacts_fields['name'] ) ) : ?>
 		<div class="content lafka_name"> <span><?php esc_html_e( 'Your Name', 'lafka-plugin' ); ?>:</span>
-			<input type="text" value="<?php echo esc_attr( $lafka_name ); ?>" name="lafka_name" />
+			<?php /* C-11 C-A11Y-Audit-2026-04-29: programmatic label for screen readers (WCAG 4.1.2 / 1.3.1) */ ?>
+			<label for="lafka-contact-name" class="screen-reader-text"><?php esc_html_e( 'Your Name', 'lafka-plugin' ); ?></label>
+			<input id="lafka-contact-name" type="text" value="<?php echo esc_attr( $lafka_name ); ?>" name="lafka_name" />
 			<?php
 			if ( $lafka_name_error ) {
 				echo wp_kses_post( $lafka_name_error );}
@@ -179,7 +181,9 @@ $lafka_contact_title = isset( $lafka_title ) ? $lafka_title : esc_html__( 'Send 
 	<?php endif; ?>
 	<?php if ( isset( $lafka_contacts_fields['email'] ) ) : ?>
 		<div class="content lafka_email"> <span><?php esc_html_e( 'E-Mail Address', 'lafka-plugin' ); ?>:</span>
-			<input type="text" value="<?php echo esc_attr( $lafka_email ); ?>" name="lafka_email" />
+			<?php /* C-11 C-A11Y-Audit-2026-04-29: programmatic label for screen readers (WCAG 4.1.2 / 1.3.1) */ ?>
+			<label for="lafka-contact-email" class="screen-reader-text"><?php esc_html_e( 'E-Mail Address', 'lafka-plugin' ); ?></label>
+			<input id="lafka-contact-email" type="text" value="<?php echo esc_attr( $lafka_email ); ?>" name="lafka_email" />
 			<?php
 			if ( $lafka_email_error ) {
 				echo wp_kses_post( $lafka_email_error );}
@@ -188,7 +192,9 @@ $lafka_contact_title = isset( $lafka_title ) ? $lafka_title : esc_html__( 'Send 
 	<?php endif; ?>
 	<?php if ( isset( $lafka_contacts_fields['phone'] ) ) : ?>
 		<div class="content lafka_phone"> <span><?php esc_html_e( 'Phone', 'lafka-plugin' ); ?>:</span>
-			<input type="text" value="<?php echo esc_attr( $lafka_phone ); ?>" name="lafka_phone" />
+			<?php /* C-11 C-A11Y-Audit-2026-04-29: programmatic label for screen readers (WCAG 4.1.2 / 1.3.1) */ ?>
+			<label for="lafka-contact-phone" class="screen-reader-text"><?php esc_html_e( 'Phone', 'lafka-plugin' ); ?></label>
+			<input id="lafka-contact-phone" type="text" value="<?php echo esc_attr( $lafka_phone ); ?>" name="lafka_phone" />
 			<?php
 			if ( $lafka_phone_error ) {
 				echo wp_kses_post( $lafka_phone_error );}
@@ -197,7 +203,9 @@ $lafka_contact_title = isset( $lafka_title ) ? $lafka_title : esc_html__( 'Send 
 	<?php endif; ?>
 	<?php if ( isset( $lafka_contacts_fields['address'] ) ) : ?>
 		<div class="content lafka_address"> <span><?php esc_html_e( 'Street Address', 'lafka-plugin' ); ?>:</span>
-			<input type="text" value="<?php echo esc_attr( $lafka_address ); ?>" name="lafka_address" />
+			<?php /* C-11 C-A11Y-Audit-2026-04-29: programmatic label for screen readers (WCAG 4.1.2 / 1.3.1) */ ?>
+			<label for="lafka-contact-address" class="screen-reader-text"><?php esc_html_e( 'Street Address', 'lafka-plugin' ); ?></label>
+			<input id="lafka-contact-address" type="text" value="<?php echo esc_attr( $lafka_address ); ?>" name="lafka_address" />
 			<?php
 			if ( $lafka_address_error ) {
 				echo wp_kses_post( $lafka_address_error );}
@@ -206,7 +214,9 @@ $lafka_contact_title = isset( $lafka_title ) ? $lafka_title : esc_html__( 'Send 
 	<?php endif; ?>
 	<?php if ( isset( $lafka_contacts_fields['subject'] ) ) : ?>
 		<div class="content lafka_subject"> <span><?php esc_html_e( 'Subject', 'lafka-plugin' ); ?>:</span>
-			<input type="text" value="<?php echo esc_attr( $lafka_subject ); ?>" name="lafka_subject" />
+			<?php /* C-11 C-A11Y-Audit-2026-04-29: programmatic label for screen readers (WCAG 4.1.2 / 1.3.1) */ ?>
+			<label for="lafka-contact-subject" class="screen-reader-text"><?php esc_html_e( 'Subject', 'lafka-plugin' ); ?></label>
+			<input id="lafka-contact-subject" type="text" value="<?php echo esc_attr( $lafka_subject ); ?>" name="lafka_subject" />
 			<?php
 			if ( $lafka_subject_error ) {
 				echo wp_kses_post( $lafka_subject_error );}
@@ -214,7 +224,9 @@ $lafka_contact_title = isset( $lafka_title ) ? $lafka_title : esc_html__( 'Send 
 		</div>
 	<?php endif; ?>
 	<div class="content lafka_enquiry"> <span><?php esc_html_e( 'Message Text', 'lafka-plugin' ); ?>:</span>
-		<textarea style="width: 99%;" rows="10" cols="40" name="lafka_enquiry"><?php echo esc_textarea( $lafka_message ); ?></textarea>
+		<?php /* C-11 C-A11Y-Audit-2026-04-29: programmatic label for screen readers (WCAG 4.1.2 / 1.3.1) */ ?>
+		<label for="lafka-contact-message" class="screen-reader-text"><?php esc_html_e( 'Message Text', 'lafka-plugin' ); ?></label>
+		<textarea id="lafka-contact-message" style="width: 99%;" rows="10" cols="40" name="lafka_enquiry"><?php echo esc_textarea( $lafka_message ); ?></textarea>
 		<?php
 		if ( $lafka_message_error ) {
 			echo wp_kses_post( $lafka_message_error );}
@@ -230,7 +242,10 @@ $lafka_contact_title = isset( $lafka_title ) ? $lafka_title : esc_html__( 'Send 
 		$lafka_rand_captcha = wp_rand( 0, 8 );
 		?>
 		<div class="content lafka_form_test">
-			<?php echo esc_html__( "Prove you're a human", 'lafka-plugin' ); ?>: <span class=constant>1</span> + <span class=random><?php echo esc_html( $lafka_rand_captcha ); ?></span> = ? <input type="text" value="" name="lafka_captcha_answer" />
+			<?php echo esc_html__( "Prove you're a human", 'lafka-plugin' ); ?>: <span class=constant>1</span> + <span class=random><?php echo esc_html( $lafka_rand_captcha ); ?></span> = ?
+			<?php /* C-11 C-A11Y-Audit-2026-04-29: programmatic label for screen readers (WCAG 4.1.2 / 1.3.1) */ ?>
+			<label for="lafka-contact-captcha" class="screen-reader-text"><?php esc_html_e( 'Captcha answer: 1 plus the number shown', 'lafka-plugin' ); ?></label>
+			<input id="lafka-contact-captcha" type="text" value="" name="lafka_captcha_answer" />
 		</div>
 		<?php
 		if ( $lafka_captcha_error ) {

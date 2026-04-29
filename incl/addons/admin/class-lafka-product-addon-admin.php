@@ -164,9 +164,28 @@ class Lafka_Product_Addon_Admin {
 			include __DIR__ . '/views/html-global-admin-add.php';
 		} else {
 
-			if ( ! empty( $_GET['delete'] ) && wp_verify_nonce( $_REQUEST['_wpnonce'], 'delete_addon' ) ) {
-				wp_delete_post( absint( $_GET['delete'] ), true );
-				echo '<div class="updated"><p>' . esc_html__( 'Add-on deleted successfully', 'lafka-plugin' ) . '</p></div>';
+			if ( ! empty( $_GET['delete'] ) ) {
+				$id = absint( $_GET['delete'] );
+
+				// Validate target is an actual addon CPT (prevents IDOR / deleting any post by ID).
+				if ( ! $id || 'lafka_glb_addon' !== get_post_type( $id ) ) {
+					wp_die( esc_html__( 'Invalid addon ID.', 'lafka-plugin' ) );
+				}
+
+				// Per-ID nonce blocks blanket forged deletion links.
+				$nonce = isset( $_REQUEST['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['_wpnonce'] ) ) : '';
+				if ( ! wp_verify_nonce( $nonce, 'delete_addon_' . $id ) ) {
+					wp_die( esc_html__( 'Security check failed.', 'lafka-plugin' ) );
+				}
+
+				// Capability check — must be able to delete this specific post.
+				if ( ! current_user_can( 'delete_post', $id ) ) {
+					wp_die( esc_html__( 'You do not have permission to delete this addon.', 'lafka-plugin' ) );
+				}
+
+				// Trash (recoverable) instead of force-delete.
+				wp_trash_post( $id );
+				echo '<div class="updated"><p>' . esc_html__( 'Add-on moved to trash.', 'lafka-plugin' ) . '</p></div>';
 			}
 
 			include __DIR__ . '/views/html-global-admin.php';
