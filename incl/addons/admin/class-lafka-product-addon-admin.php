@@ -317,9 +317,21 @@ class Lafka_Product_Addon_Admin {
 		$to_return = array();
 
 		if ( taxonomy_exists( $taxonomy ) ) {
-			$terms = get_terms( $taxonomy, 'hide_empty=0' );
-			foreach ( $terms as $term ) {
-				$to_return[ $taxonomy ][ $term->slug ] = htmlspecialchars( $term->name );
+			// WP 4.5 deprecated the positional get_terms( $taxonomy, $args ) form;
+			// WP 7.0 removed it. The previous call silently returned WP_Error on
+			// modern WP, which made foreach a no-op and broke the entire per-
+			// attribute addon pricing UI (empty data-attribute-values JSON →
+			// JS rebuild loop iterates nothing → no per-term price columns).
+			$terms = get_terms(
+				array(
+					'taxonomy'   => $taxonomy,
+					'hide_empty' => false,
+				)
+			);
+			if ( ! is_wp_error( $terms ) && ! empty( $terms ) ) {
+				foreach ( $terms as $term ) {
+					$to_return[ $taxonomy ][ $term->slug ] = htmlspecialchars( $term->name );
+				}
 			}
 		}
 
