@@ -423,6 +423,11 @@ function lafka_plugin_after_plugins_loaded() {
 	 */
 	require_once plugin_dir_path( __FILE__ ) . 'incl/customizer/class-lafka-customizer-pdp.php';
 
+	/**
+	 * P6-PDP (W4-T2, 2026-04-29): Best-seller eyebrow data + render.
+	 */
+	require_once plugin_dir_path( __FILE__ ) . 'incl/woocommerce/lafka-bestseller.php';
+
 	// Removed because causes categories to appear twice in shop and category view.
 	// Functionality not lost, because "woocommerce_maybe_show_product_subcategories" is called
 	remove_filter( 'woocommerce_product_loop_start', 'woocommerce_maybe_show_product_subcategories' );
