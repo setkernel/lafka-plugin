@@ -50,10 +50,19 @@ jobs:
                    ./ lafka-plugin/
           zip -r lafka-plugin.zip lafka-plugin/
 
+      # Integrity check operators can verify with `sha256sum -c`.
+      # Both files are uploaded to the GitHub Release.
+      - name: Generate SHA256 checksum
+        run: |
+          sha256sum lafka-plugin.zip > lafka-plugin.zip.sha256
+          cat lafka-plugin.zip.sha256
+
       - name: Create or update release
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           generate_release_notes: true
-          files: lafka-plugin.zip
+          files: |
+            lafka-plugin.zip
+            lafka-plugin.zip.sha256
           fail_on_unmatched_files: true

@@ -1,10 +1,25 @@
 name: CodeQL
 
 on:
+  workflow_dispatch:
   push:
     branches: [main, master]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'languages/**'
+      - 'LICENSE'
+      - '.gitignore'
+      - '.editorconfig'
   pull_request:
     branches: [main, master]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'languages/**'
+      - 'LICENSE'
+      - '.gitignore'
+      - '.editorconfig'
   schedule:
     # Mondays at 06:00 UTC — runs even on quiet weeks so CodeQL DB stays fresh
     # and new advisories get flagged within the week.
@@ -23,13 +38,16 @@ jobs:
   analyze:
     name: Analyze ${{ matrix.language }}
     runs-on: ubuntu-latest
-    # CodeQL initialization + analysis on a small JS codebase finishes
-    # in ~5min on average; cap at 30 to catch a hung scanner.
-    timeout-minutes: 30
+    # JS analysis ~5 min, PHP analysis can run 15-25 min on a WP plugin/theme
+    # of this size. Cap at 45 to catch a hung scanner without flapping.
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
-        language: [javascript-typescript]
+        # PHP added 2026-04-29: roughly half the codebase is PHP and CodeQL's
+        # PHP queries find taint flows that PHPCS can't (file_get_contents →
+        # output without escape, prepared-statement bypasses, etc.).
+        language: [javascript-typescript, php]
     steps:
       - uses: actions/checkout@v6
 

@@ -1,10 +1,28 @@
 name: CI
 
 on:
+  # Manual trigger from the Actions UI (re-run on any branch without an empty commit).
+  workflow_dispatch:
   push:
     branches: [main, master]
+    # Skip CI when only docs / config-only changes land — saves runner minutes
+    # and keeps the green-build signal meaningful.
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'languages/**'
+      - 'LICENSE'
+      - '.gitignore'
+      - '.editorconfig'
   pull_request:
     branches: [main, master]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'languages/**'
+      - 'LICENSE'
+      - '.gitignore'
+      - '.editorconfig'
 
 # Default to read-only at the workflow level; jobs that need to write
 # (none here) must opt in explicitly. Defense in depth against
@@ -85,3 +103,49 @@ jobs:
 
       - name: PHPUnit
         run: composer test
+
+  # Lints the workflow YAML itself. Catches typos in step names, unused
+  # `needs:` references, broken expressions, and most common GH Actions
+  # gotchas before they manifest as red builds.
+  actionlint:
+    name: actionlint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+      - name: Run actionlint
+        run: |
+          bash <(curl -sSf https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+          ./actionlint -color
+
+  # Flags any PR that introduces a new vulnerable composer or npm
+  # dependency at moderate severity or above. PR-only — push events
+  # have nothing to compare against.
+  dependency-review:
+    name: Dependency review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: moderate
+
+  # Single status check that all CI jobs pass. Use this in branch
+  # protection rules instead of every individual matrix job.
+  ci-passed:
+    name: CI passed
+    needs: [lint-js-css, php, actionlint]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Verify all required jobs succeeded
+        env:
+          JOBS_FAILED: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}
+        run: |
+          if [ "$JOBS_FAILED" = "true" ]; then
+            echo "::error::One or more required jobs failed or were cancelled."
+            exit 1
+          fi
+          echo "All required CI jobs passed."

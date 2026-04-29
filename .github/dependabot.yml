@@ -1,12 +1,26 @@
+# Dependabot configuration.
+#
+# Three ecosystems: composer, npm, github-actions. All bumps grouped:
+# minor + patch updates collapse into one weekly PR per ecosystem; major
+# bumps get their own PR so the maintainer reviews each carefully.
+#
+# Security advisories still arrive as separate PRs even when they're a
+# patch — we never want to delay a security fix for batching.
+#
+# All groups capped at 5 open PRs to keep the queue manageable. Bumps
+# land on main; CI gates them automatically. Auto-merge is NOT enabled;
+# the operator merges after review.
+
 version: 2
 updates:
   # Composer (PHPCS / WPCS / PHPCompatibility / PHPUnit / Brain Monkey).
-  # Group all minor + patch bumps into a single weekly PR — security
-  # advisories still arrive as their own PRs.
   - package-ecosystem: composer
     directory: /
     schedule:
       interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: 'America/Halifax'
     open-pull-requests-limit: 5
     labels:
       - dependencies
@@ -17,12 +31,14 @@ updates:
         update-types: [minor, patch]
 
   # NPM (ESLint flat config + Stylelint + @wordpress/* configs). Same
-  # grouping rationale — minor/patch into one PR, majors get their own
-  # so the maintainer reviews each carefully.
+  # grouping rationale as composer.
   - package-ecosystem: npm
     directory: /
     schedule:
       interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: 'America/Halifax'
     open-pull-requests-limit: 5
     labels:
       - dependencies
@@ -32,12 +48,16 @@ updates:
         patterns: ['*']
         update-types: [minor, patch]
 
-  # GitHub Actions: bump to latest major when available. Most actions
-  # use `@vN` floats, so this catches major bumps that need attention.
+  # GitHub Actions: weekly bumps. Dependabot will gradually convert
+  # tag-pinned refs (@v6) to SHA-pinned refs with version comments —
+  # supply-chain hardening at no maintenance cost.
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: 'America/Halifax'
     open-pull-requests-limit: 5
     labels:
       - dependencies
