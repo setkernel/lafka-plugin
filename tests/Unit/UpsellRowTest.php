@@ -23,4 +23,19 @@ final class UpsellRowTest extends TestCase {
         $this->assertMatchesRegularExpression( '/\$i\s*<=\s*4/', $src );
         $this->assertStringContainsString( 'for ( $i = 1', $src );
     }
+
+    public function test_render_function_exists(): void {
+        $src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/woocommerce/lafka-upsell-row.php' );
+        $this->assertStringContainsString( 'function lafka_pdp_render_upsell_row', $src );
+    }
+
+    public function test_get_upsell_ids_function(): void {
+        $src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/woocommerce/lafka-upsell-row.php' );
+        $this->assertStringContainsString( 'function lafka_pdp_get_upsell_ids', $src );
+    }
+
+    public function test_falls_back_to_bestsellers(): void {
+        $src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/woocommerce/lafka-upsell-row.php' );
+        $this->assertStringContainsString( 'lafka_pdp_get_bestseller_ids', $src );
+    }
 }
