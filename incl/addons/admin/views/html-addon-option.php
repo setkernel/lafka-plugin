@@ -30,7 +30,20 @@ if ( ! defined( 'ABSPATH' ) ) {
 			<?php endforeach; ?>
 		<?php endforeach; ?>
 	<?php else : ?>
-		<?php $price = is_array( $option['price'] ) ? (string) reset( $option['price'] ) : $option['price']; ?>
+		<?php
+		// Price can be a multi-dimensional array (when the addon was originally
+		// configured with `variations: 1` and per-attribute pricing) but the
+		// addon's attribute taxonomy may have been deleted or the variations
+		// flag turned off. The previous (string)reset() on a nested array
+		// produced the literal string "Array". Walk into nested arrays until
+		// we hit a scalar; if everything is array-shaped, render empty so the
+		// operator can re-enter the price cleanly.
+		$price = $option['price'];
+		while ( is_array( $price ) ) {
+			$price = empty( $price ) ? '' : reset( $price );
+		}
+		$price = is_scalar( $price ) ? (string) $price : '';
+		?>
 		<td class="price_column">
 			<input type="text" name="product_addon_option_price[<?php echo $loop; ?>][]" value="<?php echo esc_attr( wc_format_localized_price( $price ) ); ?>" placeholder="0.00" class="wc_input_price"/>
 		</td>

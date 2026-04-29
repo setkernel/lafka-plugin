@@ -2,8 +2,10 @@
 /**
  * Best-seller eyebrow data + render.
  *
- * 90-day order data → top-3 product IDs, cached as a transient for 6 hours.
- * Render function checks the eyebrow Customizer toggle.
+ * 90-day order data → top product IDs, cached as a transient for 6 hours.
+ * The eyebrow uses the top 3 (where rank gets displayed); the upsell
+ * fallback consumes the wider list. Render function checks the eyebrow
+ * Customizer toggle.
  *
  * @package Lafka\Plugin\WooCommerce
  * @since   8.12.0
@@ -40,7 +42,7 @@ if ( ! function_exists( 'lafka_pdp_get_bestseller_ids' ) ) {
 			    AND p.ID IS NOT NULL
 			  GROUP BY p.ID
 			  ORDER BY COUNT(*) DESC
-			  LIMIT 3"
+			  LIMIT 10"
 		);
 
 		$ids = array_map( 'intval', (array) $rows );
@@ -54,7 +56,8 @@ if ( ! function_exists( 'lafka_pdp_render_bestseller_eyebrow' ) ) {
 		if ( 'no' === get_theme_mod( 'lafka_pdp_show_bestseller_eyebrow', 'yes' ) ) {
 			return;
 		}
-		$ids = lafka_pdp_get_bestseller_ids();
+		// Eyebrow only renders for top-3 (the wider list serves the upsell fallback).
+		$ids  = array_slice( lafka_pdp_get_bestseller_ids(), 0, 3 );
 		$rank = array_search( $product_id, $ids, true );
 		if ( false === $rank ) {
 			return;

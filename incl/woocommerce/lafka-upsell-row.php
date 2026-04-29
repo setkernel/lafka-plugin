@@ -45,18 +45,35 @@ if ( ! function_exists( 'lafka_pdp_get_upsell_ids' ) ) {
 }
 
 if ( ! function_exists( 'lafka_pdp_get_upsell_fallback_ids' ) ) {
+    /**
+     * Resolve up to 8 candidate IDs for the upsell row.
+     *
+     * Combines: top bestsellers (up to 10) + recent in-stock products to
+     * fill any remaining slots. Returns more than 4 because the renderer
+     * filters out the current PDP product before slicing — without padding,
+     * a top-3 list with current product as #1 would render only 2 cards.
+     */
     function lafka_pdp_get_upsell_fallback_ids(): array {
-        if ( function_exists( 'lafka_pdp_get_bestseller_ids' ) ) {
-            $ids = lafka_pdp_get_bestseller_ids();
-            if ( ! empty( $ids ) ) {
-                return array_slice( $ids, 0, 4 );
+        $ids = function_exists( 'lafka_pdp_get_bestseller_ids' )
+            ? (array) lafka_pdp_get_bestseller_ids()
+            : array();
+
+        if ( count( $ids ) < 8 ) {
+            $more = wc_get_products( array(
+                'limit'        => 8 - count( $ids ),
+                'status'       => 'publish',
+                'stock_status' => 'instock',
+                'return'       => 'ids',
+                'exclude'      => $ids,
+                'orderby'      => 'date',
+                'order'        => 'DESC',
+            ) );
+            if ( is_array( $more ) ) {
+                $ids = array_merge( $ids, $more );
             }
         }
-        $q = wc_get_products( array(
-            'limit' => 4, 'status' => 'publish',
-            'stock_status' => 'instock', 'return' => 'ids',
-        ) );
-        return is_array( $q ) ? $q : array();
+
+        return array_values( array_unique( array_map( 'intval', $ids ) ) );
     }
 }
 
