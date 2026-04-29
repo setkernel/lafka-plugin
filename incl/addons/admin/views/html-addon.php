@@ -113,11 +113,37 @@ global $post;
 								<th class="label_column"><?php esc_html_e( 'Label', 'lafka-plugin' ); ?></th>
 								<th class="image_column"><?php esc_html_e( 'Image', 'lafka-plugin' ); ?></th>
 								<?php
-								if ( isset( $addon['variations'] ) && $addon['variations'] === 1 && is_int( $addon['attribute'] ) ) {
-									$attribute_values = Lafka_Product_Addon_Admin::lafka_get_addons_variations_attribute_values( wc_attribute_taxonomy_name_by_id( $addon['attribute'] ) );
+								// Resolve which taxonomy this addon's per-attribute pricing
+								// should be keyed by. Two-step resolution:
+								//   1. Configured attribute (preferred) — $addon['attribute'] is
+								//      a WC attribute_taxonomy ID. Look up its taxonomy slug.
+								//   2. Detected from data — if the configured attribute doesn't
+								//      resolve to terms (e.g. attribute was deleted, or the ID
+								//      was stale from an earlier site state), fall back to
+								//      whatever taxonomy the FIRST option's price array is
+								//      keyed by (e.g. 'pa_size'). This preserves the data
+								//      structure operators painstakingly built and prevents
+								//      the form from overwriting good data with empty values.
+								$attribute_values = array();
+								$has_variations   = isset( $addon['variations'] ) && (int) $addon['variations'] === 1;
+
+								if ( $has_variations && ! empty( $addon['attribute'] ) ) {
+									$attribute_values = Lafka_Product_Addon_Admin::lafka_get_addons_variations_attribute_values(
+										wc_attribute_taxonomy_name_by_id( (int) $addon['attribute'] )
+									);
+								}
+
+								if ( $has_variations && empty( $attribute_values ) && ! empty( $addon['options'] ) ) {
+									$first_option = reset( $addon['options'] );
+									if ( ! empty( $first_option['price'] ) && is_array( $first_option['price'] ) ) {
+										$detected_taxonomy = (string) key( $first_option['price'] );
+										if ( $detected_taxonomy && taxonomy_exists( $detected_taxonomy ) ) {
+											$attribute_values = Lafka_Product_Addon_Admin::lafka_get_addons_variations_attribute_values( $detected_taxonomy );
+										}
+									}
 								}
 								?>
-								<?php if ( isset( $addon['variations'] ) && $addon['variations'] === 1 && ! empty( $attribute_values ) ) : ?>
+								<?php if ( $has_variations && ! empty( $attribute_values ) ) : ?>
 									<?php foreach ( $attribute_values as $attribute_name => $name_value_pair ) : ?>
 										<?php foreach ( $name_value_pair as $slug => $value ) : ?>
 											<th class="price_column"><?php esc_html_e( 'Price', 'lafka-plugin' ); ?> <?php echo esc_html( $value ); ?></th>

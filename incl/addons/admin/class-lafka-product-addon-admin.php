@@ -449,6 +449,28 @@ class Lafka_Product_Addon_Admin {
 				$data['options']     = $addon_options;
 				$data['required']    = isset( $addon_required[ $i ] ) ? 1 : 0;
 
+				// Self-heal: when variations=1 and the saved options[*]['price']
+				// arrays are keyed by a real taxonomy ('pa_size' etc.), but the
+				// configured `attribute` ID is 0 (operator never picked one) or
+				// resolves to a different taxonomy, sync `attribute` to the
+				// taxonomy actually present in the data. Keeps subsequent edits
+				// rendering the correct columns instead of falling into the
+				// "Array" / single-price branch.
+				if ( 1 === $data['variations'] && ! empty( $addon_options ) ) {
+					$first_price = $addon_options[0]['price'] ?? null;
+					if ( is_array( $first_price ) && ! empty( $first_price ) ) {
+						$detected_tax = (string) key( $first_price );
+						if ( $detected_tax && taxonomy_exists( $detected_tax ) ) {
+							$detected_id = function_exists( 'wc_attribute_taxonomy_id_by_name' )
+								? (int) wc_attribute_taxonomy_id_by_name( $detected_tax )
+								: 0;
+							if ( $detected_id > 0 && $detected_id !== $data['attribute'] ) {
+								$data['attribute'] = $detected_id;
+							}
+						}
+					}
+				}
+
 				// Add to array.
 				$product_addons[] = apply_filters( 'lafka_product_addons_save_data', $data, $i );
 			}

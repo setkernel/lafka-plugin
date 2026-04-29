@@ -14,18 +14,48 @@ if ( ! defined( 'ABSPATH' ) ) {
 		<?php echo lafka_medialibrary_uploader( $image_input_id, ( empty( $option['image'] ) ? '' : $option['image'] ), '', $image_input_name, false, true ); ?>
 	</td>
 	<?php
-	if ( isset( $addon['variations'] ) && $addon['variations'] === 1 && is_int( $addon['attribute'] ) ) {
-		$attribute_values = Lafka_Product_Addon_Admin::lafka_get_addons_variations_attribute_values( wc_attribute_taxonomy_name_by_id( $addon['attribute'] ) );
+	// Resolve attribute taxonomy — same two-step logic as html-addon.php:
+	// configured attribute first, fall back to data-detected taxonomy. Keeping
+	// the resolution in this file too because option rows are rendered in a
+	// foreach loop and we want each row to use the same column structure as
+	// the parent header.
+	$attribute_values = array();
+	$has_variations   = isset( $addon['variations'] ) && (int) $addon['variations'] === 1;
+
+	if ( $has_variations && ! empty( $addon['attribute'] ) ) {
+		$attribute_values = Lafka_Product_Addon_Admin::lafka_get_addons_variations_attribute_values(
+			wc_attribute_taxonomy_name_by_id( (int) $addon['attribute'] )
+		);
+	}
+	if ( $has_variations && empty( $attribute_values ) && ! empty( $option['price'] ) && is_array( $option['price'] ) ) {
+		$detected_taxonomy = (string) key( $option['price'] );
+		if ( $detected_taxonomy && taxonomy_exists( $detected_taxonomy ) ) {
+			$attribute_values = Lafka_Product_Addon_Admin::lafka_get_addons_variations_attribute_values( $detected_taxonomy );
+		}
 	}
 	?>
-	<?php if ( isset( $addon['variations'] ) && $addon['variations'] === 1 && ! empty( $attribute_values ) ) : ?>
-		<?php $prices_array = (array) $option['price']; ?>
+	<?php if ( $has_variations && ! empty( $attribute_values ) ) : ?>
+		<?php $prices_array = is_array( $option['price'] ) ? $option['price'] : array(); ?>
 		<?php foreach ( $attribute_values as $attribute_name => $name_value_pair ) : ?>
+			<?php
+			// Per-attribute price array, e.g. ['small' => '1.00', 'medium' => '1.50'].
+			// Fix from upstream: previous code had `(string) isset(...) ? ... : ...`
+			// which casts the bool to string ("1" or ""), making the ternary always
+			// evaluate the truthy branch. That meant the fallback to reset() never
+			// fired correctly. Pure ternary now.
+			$attr_prices = isset( $prices_array[ $attribute_name ] ) && is_array( $prices_array[ $attribute_name ] )
+				? $prices_array[ $attribute_name ]
+				: array();
+			?>
 			<?php foreach ( $name_value_pair as $slug => $value ) : ?>
-				<?php $price = (string) isset( $prices_array[ $attribute_name ] ) ? $prices_array[ $attribute_name ] : reset( $prices_array ); ?>
+				<?php
+				$cell_value = isset( $attr_prices[ $slug ] ) && is_scalar( $attr_prices[ $slug ] )
+					? wc_format_localized_price( $attr_prices[ $slug ] )
+					: '';
+				?>
 				<td class="price_column">
-					<input type="text" name="product_addon_option_price[<?php echo $loop; ?>][<?php echo esc_attr( $attribute_name ); ?>][<?php echo esc_attr( $slug ); ?>][]" 
-							value="<?php echo isset( $price[ $slug ] ) ? esc_attr( wc_format_localized_price( $price[ $slug ] ) ) : ''; ?>" placeholder="0.00" class="wc_input_price"/>
+					<input type="text" name="product_addon_option_price[<?php echo $loop; ?>][<?php echo esc_attr( $attribute_name ); ?>][<?php echo esc_attr( $slug ); ?>][]"
+							value="<?php echo esc_attr( $cell_value ); ?>" placeholder="0.00" class="wc_input_price"/>
 				</td>
 			<?php endforeach; ?>
 		<?php endforeach; ?>
