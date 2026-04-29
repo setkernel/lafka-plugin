@@ -448,6 +448,11 @@ function lafka_plugin_after_plugins_loaded() {
 	 */
 	require_once plugin_dir_path( __FILE__ ) . 'incl/woocommerce/lafka-upsell-row.php';
 
+	/**
+	 * P6-PDP (W4-T7, 2026-04-29): Cart drawer fragments.
+	 */
+	require_once plugin_dir_path( __FILE__ ) . 'incl/woocommerce/lafka-cart-drawer-fragments.php';
+
 	// Removed because causes categories to appear twice in shop and category view.
 	// Functionality not lost, because "woocommerce_maybe_show_product_subcategories" is called
 	remove_filter( 'woocommerce_product_loop_start', 'woocommerce_maybe_show_product_subcategories' );
