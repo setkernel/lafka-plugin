@@ -3,10 +3,21 @@
  * Operator helper: populate the "Lafka — Restaurant Information" Customizer
  * settings (`lafka_business_*`) in bulk from a JSON config file.
  *
- * Run via WP-CLI:
+ * Two run modes:
  *
- *   LAFKA_RESTAURANT_INFO_JSON=/abs/path/to/config.json \
- *     wp eval-file wp-content/plugins/lafka-plugin/scripts/migrate-restaurant-info.php
+ *   1. WP-CLI (preferred when wp-cli is installed):
+ *
+ *      LAFKA_RESTAURANT_INFO_JSON=/abs/path/to/config.json \
+ *        wp eval-file wp-content/plugins/lafka-plugin/scripts/migrate-restaurant-info.php
+ *
+ *   2. Plain PHP CLI (no wp-cli needed; self-bootstraps WordPress):
+ *
+ *      LAFKA_RESTAURANT_INFO_JSON=/abs/path/to/config.json \
+ *        php wp-content/plugins/lafka-plugin/scripts/migrate-restaurant-info.php
+ *
+ *      Walks up the directory tree from this file until it finds wp-load.php,
+ *      then includes it. Refuses to run under any non-CLI SAPI to prevent the
+ *      script from being invoked via HTTP.
  *
  * Optional environment flags:
  *
@@ -30,8 +41,35 @@
 declare(strict_types=1);
 
 if ( ! defined( 'ABSPATH' ) ) {
-	fwrite( STDERR, "ERROR: This script must be run via `wp eval-file`.\n" );
-	exit( 1 );
+	// Standalone-php run mode. Bootstrap WordPress ourselves.
+	if ( PHP_SAPI !== 'cli' ) {
+		// Refuse to run via HTTP — exposing this would let anyone overwrite the
+		// site's identity. CLI-only is the security boundary.
+		http_response_code( 403 );
+		exit( "This script may only be run from the CLI.\n" );
+	}
+
+	$wp_load = null;
+	$dir     = __DIR__;
+	for ( $i = 0; $i < 8 && '/' !== $dir; $i++ ) {
+		if ( is_readable( $dir . '/wp-load.php' ) ) {
+			$wp_load = $dir . '/wp-load.php';
+			break;
+		}
+		$dir = dirname( $dir );
+	}
+
+	if ( null === $wp_load ) {
+		fwrite( STDERR, "ERROR: Could not find wp-load.php walking up from " . __DIR__ . ".\n" );
+		fwrite( STDERR, "Try running this from the WordPress root with: php " . __FILE__ . "\n" );
+		exit( 1 );
+	}
+
+	// Skip theme bootstrap — we only need core + active plugins for theme_mods.
+	if ( ! defined( 'WP_USE_THEMES' ) ) {
+		define( 'WP_USE_THEMES', false );
+	}
+	require_once $wp_load;
 }
 
 /**
