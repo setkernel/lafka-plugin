@@ -5,8 +5,8 @@ on:
     tags:
       - 'v*'
 
-# `contents: write` is required for `softprops/action-gh-release` to
-# create / update the GitHub Release. No other write scopes needed.
+# `contents: write` is required so the gh CLI can create / update the
+# GitHub Release. No other write scopes needed.
 permissions:
   contents: write
 
@@ -17,6 +17,10 @@ permissions:
 concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: false
+
+# POLICY: First-party GitHub-org actions only (actions/*, github/*).
+# Release publishing uses the pre-installed `gh` CLI on the runner —
+# no third-party release action.
 
 jobs:
   release:
@@ -57,12 +61,26 @@ jobs:
           sha256sum lafka-plugin.zip > lafka-plugin.zip.sha256
           cat lafka-plugin.zip.sha256
 
+      # Idempotent release publish via the pre-installed `gh` CLI.
+      # `gh release create` succeeds the first time the tag is built;
+      # `gh release upload --clobber` covers re-runs (workflow re-dispatch
+      # or manually deleted release-then-re-tagged) by uploading to the
+      # existing release rather than failing.
       - name: Create or update release
-        uses: softprops/action-gh-release@v3
-        with:
-          tag_name: ${{ steps.version.outputs.tag }}
-          generate_release_notes: true
-          files: |
-            lafka-plugin.zip
-            lafka-plugin.zip.sha256
-          fail_on_unmatched_files: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists — uploading assets with --clobber."
+            gh release upload "$TAG" \
+              lafka-plugin.zip \
+              lafka-plugin.zip.sha256 \
+              --clobber
+          else
+            gh release create "$TAG" \
+              --title "$TAG" \
+              --generate-notes \
+              lafka-plugin.zip \
+              lafka-plugin.zip.sha256
+          fi

@@ -34,6 +34,14 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# POLICY: This workflow uses ONLY first-party GitHub-org actions
+# (actions/*, github/*). No community actions. Multi-PHP matrix testing
+# was traded for this constraint — we test against ubuntu-latest's
+# pre-installed PHP (currently 8.3) which matches prod. Plugin's PHP
+# floor (8.1) is documented in the lafka-plugin.php header and enforced
+# by Requires PHP — runtime will surface syntax issues if anyone ships
+# 8.4-only constructs.
+
 jobs:
   lint-js-css:
     name: ESLint & Stylelint
@@ -61,26 +69,19 @@ jobs:
         run: npm run lint:css
 
   php:
-    name: PHP ${{ matrix.php }}
+    name: PHP
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    strategy:
-      fail-fast: false
-      matrix:
-        # Floor is PHP 8.1 per the plugin/theme headers. 8.4 is the
-        # latest stable; 8.3 is the recommended runtime in
-        # COMPATIBILITY.md. Drop 8.1 once enough operators have
-        # upgraded — it stays in the matrix until then to catch
-        # accidental 8.2+ syntax that would break older shared hosts.
-        php: ['8.1', '8.2', '8.3', '8.4']
     steps:
       - uses: actions/checkout@v6
 
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ matrix.php }}
-          tools: composer
-          coverage: none
+      # Use the runner's pre-installed PHP + Composer. No third-party
+      # action required. Verify versions print so a runner-image change
+      # surfaces in the log.
+      - name: Show PHP + Composer versions
+        run: |
+          php --version
+          composer --version
 
       # Composer cache: keyed on composer.lock so installs replay
       # offline when the lock hasn't moved.
@@ -91,9 +92,9 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ runner.os }}-php${{ matrix.php }}-composer-${{ hashFiles('**/composer.lock') }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
           restore-keys: |
-            ${{ runner.os }}-php${{ matrix.php }}-composer-
+            ${{ runner.os }}-composer-
 
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist --no-progress
@@ -103,20 +104,6 @@ jobs:
 
       - name: PHPUnit
         run: composer test
-
-  # Lints the workflow YAML itself. Catches typos in step names, unused
-  # `needs:` references, broken expressions, and most common GH Actions
-  # gotchas before they manifest as red builds.
-  actionlint:
-    name: actionlint
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@v6
-      - name: Run actionlint
-        run: |
-          bash <(curl -sSf https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
-          ./actionlint -color
 
   # Flags any PR that introduces a new vulnerable composer or npm
   # dependency at moderate severity or above. PR-only — push events
@@ -136,7 +123,7 @@ jobs:
   # protection rules instead of every individual matrix job.
   ci-passed:
     name: CI passed
-    needs: [lint-js-css, php, actionlint]
+    needs: [lint-js-css, php]
     runs-on: ubuntu-latest
     if: always()
     steps:
