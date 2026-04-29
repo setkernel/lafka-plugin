@@ -38,16 +38,15 @@ jobs:
   analyze:
     name: Analyze ${{ matrix.language }}
     runs-on: ubuntu-latest
-    # JS analysis ~5 min, PHP analysis can run 15-25 min on a WP plugin/theme
-    # of this size. Cap at 45 to catch a hung scanner without flapping.
-    timeout-minutes: 45
+    # JS-only analysis ~5 min on a codebase this size; cap at 30 to catch
+    # a hung scanner. PHP is NOT a CodeQL-supported language
+    # (https://codeql.github.com/docs/codeql-overview/supported-languages-and-frameworks/),
+    # so PHP source-quality checks live in the `php` job in ci.yml (PHPCS).
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
-        # PHP added 2026-04-29: roughly half the codebase is PHP and CodeQL's
-        # PHP queries find taint flows that PHPCS can't (file_get_contents →
-        # output without escape, prepared-statement bypasses, etc.).
-        language: [javascript-typescript, php]
+        language: [javascript-typescript]
     steps:
       - uses: actions/checkout@v6
 
