@@ -69,6 +69,19 @@ if ( ! defined( 'ABSPATH' ) ) {
 	if ( ! defined( 'WP_USE_THEMES' ) ) {
 		define( 'WP_USE_THEMES', false );
 	}
+
+	// Suppress wp-cron's spawn-on-bootstrap behavior. Without this, wp-load.php
+	// fires an async HTTP self-request to /wp-cron.php — which can hang for
+	// 30+ seconds on Cloudflare-fronted sites where the loopback request gets
+	// stuck waiting for the edge. Migration is a one-shot operation; cron will
+	// fire normally on the next real visitor.
+	if ( ! defined( 'DISABLE_WP_CRON' ) ) {
+		define( 'DISABLE_WP_CRON', true );
+	}
+	if ( ! defined( 'DOING_CRON' ) ) {
+		define( 'DOING_CRON', true );
+	}
+
 	require_once $wp_load;
 }
 
