@@ -3,7 +3,7 @@
 	Plugin Name: Lafka Plugin
 	Plugin URI: https://github.com/setkernel/lafka-plugin
 	Description: Companion plugin for the Lafka WooCommerce theme. Originally by theAlThemist, now community-maintained.
-	Version: 8.11.3
+	Version: 8.11.4
 	Author: theAlThemist, Contributors
 	Author URI: https://github.com/setkernel/lafka-plugin
 	Requires at least: 6.6
@@ -1238,18 +1238,27 @@ if ( ! function_exists( 'lafka_insert_og_tags' ) ) {
 		global $post;
 
 		// ===== Resolve title / description / URL / image / type per context =====
-		if ( is_singular() && $post ) {
+		// Front-page check MUST come before is_singular() — when the homepage is a
+		// static page (Settings → Reading), both are true. We want the front-page
+		// branch to win so the homepage carries og:type=restaurant.restaurant and
+		// og:title=site-name (not the page's literal title like "Home New").
+		// We still pass $post to the description resolver so any per-page
+		// _lafka_meta_description override is honored on the static front page.
+		if ( is_front_page() || is_home() ) {
+			$title       = get_bloginfo( 'name' );
+			$description = lafka_resolve_meta_description( ( is_singular() && $post ) ? $post : null );
+			$url         = home_url( '/' );
+			$image       = ( is_singular() && $post ) ? get_the_post_thumbnail_url( $post->ID, 'large' ) : '';
+			if ( ! $image && function_exists( 'get_site_icon_url' ) ) {
+				$image = get_site_icon_url( 1200 );
+			}
+			$og_type     = 'restaurant.restaurant';
+		} elseif ( is_singular() && $post ) {
 			$title       = get_the_title( $post );
 			$description = lafka_resolve_meta_description( $post );
 			$url         = get_permalink( $post );
 			$image       = get_the_post_thumbnail_url( $post->ID, 'large' );
 			$og_type     = ( function_exists( 'is_product' ) && is_product() ) ? 'product' : 'article';
-		} elseif ( is_front_page() || is_home() ) {
-			$title       = get_bloginfo( 'name' );
-			$description = lafka_resolve_meta_description( null );
-			$url         = home_url( '/' );
-			$image       = function_exists( 'get_site_icon_url' ) ? get_site_icon_url( 1200 ) : '';
-			$og_type     = 'restaurant.restaurant';
 		} elseif ( is_tax() || is_category() || is_tag() ) {
 			$term        = get_queried_object();
 			$title       = $term ? $term->name : get_bloginfo( 'name' );
