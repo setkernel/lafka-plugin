@@ -46,9 +46,12 @@ class LafkaAboutWidget extends WP_Widget {
 			<select class="widefat" id="<?php echo esc_attr( $this->get_field_id( 'aboutus_page' ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( 'aboutus_page' ) ); ?>">
 				<?php
 				foreach ( $pages as $page ) {
-					echo '<option value="' . intval( $page->ID ) . '"'
-					. selected( $instance['aboutus_page'], $page->ID, false )
-					. '>' . $page->post_title . "</option>\n";
+					printf(
+						'<option value="%d"%s>%s</option>' . "\n",
+						(int) $page->ID,
+						selected( $instance['aboutus_page'], $page->ID, false ), // already returns ' selected="selected"' or ''  // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+						esc_html( $page->post_title )
+					);
 				}
 				?>
 			</select>
@@ -58,8 +61,8 @@ class LafkaAboutWidget extends WP_Widget {
 
 	public function update( $new_instance, $old_instance ) {
 		$instance                 = $old_instance;
-		$instance['title']        = strip_tags( $new_instance['title'] );
-		$instance['aboutus_page'] = $new_instance['aboutus_page'];
+		$instance['title']        = isset( $new_instance['title'] ) ? sanitize_text_field( wp_unslash( $new_instance['title'] ) ) : '';
+		$instance['aboutus_page'] = isset( $new_instance['aboutus_page'] ) ? (int) $new_instance['aboutus_page'] : 0;
 
 		return $instance;
 	}

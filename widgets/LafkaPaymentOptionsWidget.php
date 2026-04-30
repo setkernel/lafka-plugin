@@ -105,7 +105,7 @@ class LafkaPaymentOptionsWidget extends WP_Widget {
 
 	public function update( $new_instance, $old_instance ) {
 		$instance                     = $old_instance;
-		$instance['title']            = strip_tags( $new_instance['title'] );
+		$instance['title']            = isset( $new_instance['title'] ) ? sanitize_text_field( wp_unslash( $new_instance['title'] ) ) : '';
 		$instance['american-express'] = ! empty( $new_instance['american-express'] );
 		$instance['cirrus']           = ! empty( $new_instance['cirrus'] );
 		$instance['maestro']          = ! empty( $new_instance['maestro'] );

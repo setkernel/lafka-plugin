@@ -64,7 +64,13 @@ class LafkaLatestMenuEntriesWidget extends WP_Widget {
 					?>
 					<?php if ( has_post_thumbnail() ) : ?>
 						<li>
-							<a href="<?php esc_url( the_permalink() ); ?>" title="<?php echo esc_attr( get_the_title() ? the_title_attribute( 'echo=0' ) : get_the_ID() ); ?>">
+							<?php
+							// Pre-fix this was `esc_url( the_permalink() )` — the_permalink()
+							// echoes and returns null, so esc_url( null ) emitted '' AFTER the
+							// raw permalink had already been printed. Correct form is
+							// echo esc_url( get_permalink() ).
+							?>
+							<a href="<?php echo esc_url( get_permalink() ); ?>" title="<?php echo esc_attr( get_the_title() ? get_the_title() : (string) get_the_ID() ); ?>">
 								<?php the_post_thumbnail( 'lafka-general-small-size' ); ?>
 							</a>
 						</li>
@@ -84,8 +90,9 @@ class LafkaLatestMenuEntriesWidget extends WP_Widget {
 
 	function update( $new_instance, $old_instance ) {
 		$instance           = $old_instance;
-		$instance['title']  = strip_tags( $new_instance['title'] );
-		$instance['number'] = (int) $new_instance['number'];
+		// sanitize_text_field over strip_tags: also decodes entities + normalises whitespace.
+		$instance['title']  = isset( $new_instance['title'] ) ? sanitize_text_field( wp_unslash( $new_instance['title'] ) ) : '';
+		$instance['number'] = isset( $new_instance['number'] ) ? max( 1, (int) $new_instance['number'] ) : 5;
 		$this->flush_widget_cache();
 
 		$alloptions = wp_cache_get( 'alloptions', 'options' );

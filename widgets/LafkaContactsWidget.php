@@ -95,13 +95,16 @@ class LafkaContactsWidget extends WP_Widget {
 	}
 
 	public function update( $new_instance, $old_instance ) {
+		// sanitize_text_field over strip_tags: also decodes entities + normalises
+		// whitespace + strips line breaks. sanitize_email for the email field
+		// applies the additional address-shape check.
 		$instance             = $old_instance;
-		$instance['title']    = strip_tags( $new_instance['title'] );
-		$instance['worktime'] = strip_tags( $new_instance['worktime'] );
-		$instance['address']  = strip_tags( $new_instance['address'] );
-		$instance['phone']    = strip_tags( $new_instance['phone'] );
-		$instance['fax']      = strip_tags( $new_instance['fax'] );
-		$instance['email']    = strip_tags( $new_instance['email'] );
+		$instance['title']    = isset( $new_instance['title'] ) ? sanitize_text_field( wp_unslash( $new_instance['title'] ) ) : '';
+		$instance['worktime'] = isset( $new_instance['worktime'] ) ? sanitize_text_field( wp_unslash( $new_instance['worktime'] ) ) : '';
+		$instance['address']  = isset( $new_instance['address'] ) ? sanitize_text_field( wp_unslash( $new_instance['address'] ) ) : '';
+		$instance['phone']    = isset( $new_instance['phone'] ) ? sanitize_text_field( wp_unslash( $new_instance['phone'] ) ) : '';
+		$instance['fax']      = isset( $new_instance['fax'] ) ? sanitize_text_field( wp_unslash( $new_instance['fax'] ) ) : '';
+		$instance['email']    = isset( $new_instance['email'] ) ? sanitize_email( wp_unslash( $new_instance['email'] ) ) : '';
 
 		return $instance;
 	}

@@ -85,16 +85,13 @@ class LafkaPopularPostsWidget extends WP_Widget {
 				}
 				?>
 				<li>
-					<a href="<?php the_permalink( $popular_post->ID ); ?>" <?php echo $aria_current; ?>title="<?php echo esc_attr( get_the_title() ? get_the_title() : get_the_ID() ); ?>">
+					<a href="<?php echo esc_url( get_permalink( $popular_post->ID ) ); ?>"<?php echo $aria_current; /* phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped — controlled literal: '' or ' aria-current="page"'. */ ?> title="<?php echo esc_attr( get_the_title( $popular_post->ID ) ? get_the_title( $popular_post->ID ) : (string) $popular_post->ID ); ?>">
 						<?php if ( has_post_thumbnail( $popular_post->ID ) ) : ?>
-							<?php echo get_the_post_thumbnail( $popular_post->ID, 'lafka-widgets-thumb', '' ); ?>
+							<?php echo get_the_post_thumbnail( $popular_post->ID, 'lafka-widgets-thumb', '' ); /* phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped — get_the_post_thumbnail returns safe HTML. */ ?>
 						<?php endif; ?>
 						<?php
-						if ( get_the_title( $popular_post->ID ) ) {
-							echo get_the_title( $popular_post->ID );
-						} else {
-							echo esc_html( $popular_post->ID );
-						}
+						$lafka_pp_title = get_the_title( $popular_post->ID );
+						echo esc_html( '' !== $lafka_pp_title ? $lafka_pp_title : (string) $popular_post->ID );
 						?>
 						<br>
 						<span class="post-date"><?php echo esc_html( get_the_date( '', $popular_post->ID ) ); ?></span>
