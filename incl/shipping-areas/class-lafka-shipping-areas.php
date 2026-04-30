@@ -55,8 +55,6 @@ class Lafka_Shipping_Areas {
 	private function includes() {
 		$options = get_option( 'lafka_shipping_areas_branches' );
 
-		require_once __DIR__ . '/includes/class-lafka-shipping-areas-method.php';
-		require_once __DIR__ . '/includes/class-lafka-api.php';
 		require_once __DIR__ . '/shortcodes/shortcode-lafka-shipping-areas.php';
 		if ( ! empty( $options['enable_branch_selection_modal'] ) ) {
 			require_once __DIR__ . '/includes/class-lafka-branch-locations.php';
@@ -80,11 +78,12 @@ class Lafka_Shipping_Areas {
 		// Scripts and styles
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 
-		// Shipping Method Register Hooks
-		add_action( 'woocommerce_shipping_init', 'lafka_shipping_areas_method_init' );
-		// Clear shipping rates cache in order to use dynamic shipping calculations
-		add_action( 'woocommerce_shipping_init', array( __CLASS__, 'clear_wc_shipping_rates_cache' ) );
-		add_filter( 'woocommerce_shipping_methods', array( $this, 'add_lafka_shipping_areas_method' ) );
+		// Shipping rate calculation is handled by WooCommerce Distance Rate
+		// Shipping (the official upstream plugin) since v9.1.0. Lafka's own
+		// distance-shipping-method, which had ~700 lines of duplicate impl,
+		// was retired here. The branches/datetime/marketing-map features
+		// below remain Lafka's own.
+
 		// Inject delivery address into ajax update_order_review response
 		add_action( 'woocommerce_update_order_review_fragments', array( $this, 'update_order_review_fragments' ) );
 		// Show picked location in order
@@ -99,20 +98,11 @@ class Lafka_Shipping_Areas {
 		// and is HPOS-safe without branching.
 		add_action( 'woocommerce_checkout_create_order', array( $this, 'checkout_update_order_meta' ), 10, 2 );
 
-		$options = get_option( 'lafka_shipping_areas_general' );
-		if ( ! empty( $options['lowest_cost_shipping'] ) ) {
-			add_action( 'woocommerce_after_shipping_rate', array( $this, 'add_rates_cost_as_hidden' ), 10, 2 );
-		}
-		if ( ! empty( $options['hide_shipping_cost_at_cart'] ) ) {
-			add_filter( 'woocommerce_cart_ready_to_calc_shipping', array( $this, 'disable_shipping_calculation_on_cart' ), 999 );
-		}
-		$advanced_options = get_option( 'lafka_shipping_areas_advanced' );
-		if ( ! empty( $advanced_options['deactivate_post_code'] ) ) {
-			add_filter( 'woocommerce_default_address_fields', array( $this, 'disable_postcode_validation' ) );
-		}
-		if ( ! empty( $advanced_options['disable_state'] ) ) {
-			add_filter( 'woocommerce_checkout_fields', array( $this, 'disable_state_field' ) );
-		}
+		// `lowest_cost_shipping`, `hide_shipping_cost_at_cart`,
+		// `deactivate_post_code`, `disable_state` settings were tied to the
+		// retired Lafka shipping method. WC Distance Rate Shipping handles
+		// these concerns natively (or doesn't need them). Settings are no
+		// longer wired to any behaviour.
 
 		$branches_options = get_option( 'lafka_shipping_areas_branches' );
 		if ( ! empty( $branches_options['hide_address_fields'] ) ) {
@@ -244,12 +234,6 @@ class Lafka_Shipping_Areas {
 				}
 			}
 		}
-	}
-
-	public function add_lafka_shipping_areas_method( $methods ) {
-		$methods['lafka_shipping_areas_method'] = 'Lafka_Shipping_Areas_Method';
-
-		return $methods;
 	}
 
 	public function get_all_delivery_areas(): array {
@@ -496,15 +480,6 @@ class Lafka_Shipping_Areas {
 		return $total_rows;
 	}
 
-	public static function clear_wc_shipping_rates_cache() {
-		if ( isset( WC()->cart ) ) {
-			$packages = WC()->cart->get_shipping_packages();
-			foreach ( $packages as $package_key => $package ) {
-				WC()->session->set( 'shipping_for_package_' . $package_key, false ); // Or true
-			}
-		}
-	}
-
 	public static function get_enabled_dates_for_days_ahead( $days_ahead, $timeslot_duration ): array {
 		$current_time  = Lafka_Order_Hours::get_order_hours_time();
 		$interval      = DateInterval::createFromDateString( '1 day' );
@@ -724,7 +699,7 @@ class Lafka_Shipping_Areas {
 
 	public function add_map_to_checkout() {
 		// WC()->cart is lazy-initialized in WC 10.x and may be null in REST or
-		// admin contexts. Match the guard used by clear_wc_shipping_rates_cache().
+		// admin contexts; guard the deref before calling cart methods.
 		if ( ! is_checkout() || ! isset( WC()->cart ) || WC()->cart->needs_shipping() === false ) {
 			return;
 		}
@@ -785,31 +760,6 @@ class Lafka_Shipping_Areas {
 		if ( ! empty( $options['pick_delivery_address'] ) && ! empty( $options['mandatory_pickup_delivery'] ) && isset( $_POST['lafka_picked_delivery_geocoded'] ) && empty( $_POST['lafka_picked_delivery_geocoded'] ) ) {
 			wc_add_notice( esc_html__( 'Please precise your address on the map.', 'lafka-plugin' ), 'error' );
 		}
-	}
-
-	public function add_rates_cost_as_hidden( $method, $index ) {
-		printf( '<input type="hidden" name="shipping_method[%1$d]_lafka_cost" data-index="%1$d" id="shipping_method_%1$d_%2$s_lafka_cost" value="%3$s" class="lafka-shipping-cost %4$s" />', $index, esc_attr( sanitize_title( $method->id ) ), esc_attr( $method->get_cost() ), sanitize_html_class( $method->get_method_id() ) ); // WPCS: XSS ok.
-	}
-
-	public function disable_shipping_calculation_on_cart( $show_shipping ) {
-		if ( is_cart() ) {
-			return false;
-		}
-
-		return $show_shipping;
-	}
-
-	public function disable_postcode_validation( $fields ): array {
-		$fields['postcode']['required'] = false;
-
-		return $fields;
-	}
-
-	public function disable_state_field( $fields ): array {
-		unset( $fields['billing']['billing_state'] );
-		unset( $fields['shipping']['shipping_state'] );
-
-		return $fields;
 	}
 
 	public function disable_address_fields( $fields ): array {
