@@ -135,6 +135,31 @@ class Lafka_KDS_Order_Statuses {
 	}
 
 	/**
+	 * The KDS workflow transition map: from a current order status, which
+	 * destination statuses are permitted? Includes forward steps, the "undo"
+	 * step back to the previous state, and the reject path. Single source of
+	 * truth — admin bulk actions and the AJAX `update_status` endpoint both
+	 * call this so they can't drift apart.
+	 *
+	 * Filterable so a child plugin can add e.g. an `on-hold` → `rejected`
+	 * path for stores that screen orders manually before processing.
+	 *
+	 * @return array<string, list<string>>
+	 */
+	public static function get_allowed_transitions(): array {
+		return (array) apply_filters(
+			'lafka_kds_allowed_transitions',
+			array(
+				'processing' => array( 'accepted', 'rejected' ),
+				'on-hold'    => array( 'accepted' ),
+				'accepted'   => array( 'preparing', 'rejected', 'processing' ),
+				'preparing'  => array( 'ready', 'accepted' ),
+				'ready'      => array( 'completed', 'preparing' ),
+			)
+		);
+	}
+
+	/**
 	 * Handle bulk status change actions.
 	 */
 	public function handle_bulk_actions( $redirect_to, $action, $order_ids ) {
@@ -149,17 +174,9 @@ class Lafka_KDS_Order_Statuses {
 			return $redirect_to;
 		}
 
-		$new_status = $status_map[ $action ];
-		$changed    = 0;
-
-		// Allowed transitions mirror the KDS workflow (forward, undo, and reject)
-		$allowed_transitions = array(
-			'processing' => array( 'accepted', 'rejected' ),
-			'on-hold'    => array( 'accepted' ),
-			'accepted'   => array( 'preparing', 'rejected', 'processing' ),
-			'preparing'  => array( 'ready', 'accepted' ),
-			'ready'      => array( 'completed', 'preparing' ),
-		);
+		$new_status          = $status_map[ $action ];
+		$changed             = 0;
+		$allowed_transitions = self::get_allowed_transitions();
 
 		foreach ( $order_ids as $order_id ) {
 			$order = wc_get_order( $order_id );

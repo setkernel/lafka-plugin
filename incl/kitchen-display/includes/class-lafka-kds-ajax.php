@@ -363,15 +363,7 @@ class Lafka_KDS_Ajax {
 			wp_send_json_error( array( 'message' => 'Order is being updated, please try again' ), 409 );
 		}
 
-		// Validate transitions (forward, undo, and reject)
-		$allowed = array(
-			'processing' => array( 'accepted', 'rejected' ),
-			'on-hold'    => array( 'accepted' ),
-			'accepted'   => array( 'preparing', 'rejected', 'processing' ),
-			'preparing'  => array( 'ready', 'accepted' ),
-			'ready'      => array( 'completed', 'preparing' ),
-		);
-
+		$allowed = Lafka_KDS_Order_Statuses::get_allowed_transitions();
 		$current = $order->get_status();
 
 		// Prevent modifications to completed/rejected orders
