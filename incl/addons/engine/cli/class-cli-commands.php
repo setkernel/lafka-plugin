@@ -108,6 +108,89 @@ class Lafka_Addons_CLI_Commands {
 			\WP_CLI::log( sprintf( '      options: %d', count( $group->options ) ) );
 		}
 	}
+
+	/**
+	 * Sync attribute-sourced groups against current taxonomy terms.
+	 *
+	 * For each group on the post that uses options_source=attribute,
+	 * pulls fresh terms from its source taxonomy and merges them with
+	 * existing options (preserving prices + included flags by label).
+	 *
+	 * ## OPTIONS
+	 *
+	 * <post_id>
+	 * : Global addon CPT post ID, or a WC product post ID.
+	 *
+	 * [--dry-run]
+	 * : Show what would change without writing.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp lafka-addons sync 123
+	 *     wp lafka-addons sync 123 --dry-run
+	 *
+	 * @when after_wp_load
+	 */
+	public function sync( $args, $assoc_args ): void {
+		$post_id = isset( $args[0] ) ? (int) $args[0] : 0;
+		$dry_run = ! empty( $assoc_args['dry-run'] );
+		if ( $post_id <= 0 ) {
+			\WP_CLI::error( 'A positive integer post_id is required.' );
+		}
+
+		$repo    = Lafka_Addons_Engine::instance()->repository();
+		$sources = Lafka_Addons_Engine::instance()->sources();
+		$groups  = $repo->get_groups( $post_id );
+		if ( empty( $groups ) ) {
+			\WP_CLI::log( "Post {$post_id} has no addon groups." );
+			return;
+		}
+
+		$updated  = array();
+		$rebuilt  = array();
+		foreach ( $groups as $idx => $group ) {
+			if ( Lafka_Addon_Schema::SOURCE_ATTRIBUTE !== $group->options_source ) {
+				$rebuilt[] = $group;
+				continue;
+			}
+			$source = $sources[ Lafka_Addon_Schema::SOURCE_ATTRIBUTE ] ?? null;
+			if ( ! $source ) {
+				$rebuilt[] = $group;
+				continue;
+			}
+			$before = count( $group->options );
+			$synced = $source->sync( $group );
+			$after  = count( $synced->options );
+			if ( $before !== $after || $synced !== $group ) {
+				$updated[] = sprintf(
+					'  [%d] %s — %d → %d options',
+					$idx,
+					$group->name ?: '(unnamed)',
+					$before,
+					$after
+				);
+			}
+			$rebuilt[] = $synced;
+		}
+
+		if ( empty( $updated ) ) {
+			\WP_CLI::log( 'No attribute-sourced groups changed.' );
+			return;
+		}
+
+		\WP_CLI::log( 'Changed:' );
+		foreach ( $updated as $line ) {
+			\WP_CLI::log( $line );
+		}
+
+		if ( $dry_run ) {
+			\WP_CLI::log( 'Dry run — no writes.' );
+			return;
+		}
+
+		$repo->save_groups( $post_id, $rebuilt );
+		\WP_CLI::success( sprintf( 'Synced post %d.', $post_id ) );
+	}
 }
 
 \WP_CLI::add_command( 'lafka-addons', 'Lafka_Addons_CLI_Commands' );
