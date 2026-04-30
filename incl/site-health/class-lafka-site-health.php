@@ -134,11 +134,21 @@ if ( ! class_exists( 'Lafka_Site_Health' ) ) {
 
 		/**
 		 * Recommendation: enable the security-headers module if not already.
+		 *
+		 * Pre-v9.7.16 this checked only the legacy `Lafka_Options::get('enable_security_headers')`
+		 * storage. After v8.7.0 the canonical storage moved to the dedicated
+		 * `lafka_security_options` array (see Lafka_Security_Headers::OPTION_KEY)
+		 * because the theme's options-framework register_setting('lafka', ...)
+		 * sanitize callback drops unregistered keys. So sites that flipped the
+		 * toggle via the admin UI (the canonical write path) showed "not
+		 * enabled" in Site Health — false negative.
+		 *
+		 * Now delegates to is_active() which is the single source of truth for
+		 * the resolution chain (dedicated → legacy → default).
 		 */
 		public function test_security_headers() {
 			$enabled = class_exists( 'Lafka_Security_Headers' )
-				&& Lafka_Security_Headers::should_default_on() === false
-				&& 'enabled' === \Lafka_Options::get( 'enable_security_headers', '' );
+				&& Lafka_Security_Headers::instance()->is_active();
 
 			if ( $enabled ) {
 				return array(

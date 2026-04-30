@@ -48,7 +48,7 @@ if ( ! function_exists( 'lafka_review_prompt_send' ) ) {
 		if ( ! $email_to ) {
 			return;
 		}
-		$customer = $order->get_billing_first_name() ?: 'there';
+		$customer = $order->get_billing_first_name() ?: __( 'there', 'lafka-plugin' );
 		$site     = get_bloginfo( 'name' );
 
 		// Build product list with review-direct links.
@@ -68,17 +68,22 @@ if ( ! function_exists( 'lafka_review_prompt_send' ) ) {
 
 		$subject = apply_filters(
 			'lafka_review_prompt_subject',
-			sprintf( 'How was your order from %s?', $site )
+			/* translators: %s: site name */
+			sprintf( __( 'How was your order from %s?', 'lafka-plugin' ), $site )
 		);
 
 		$body = apply_filters(
 			'lafka_review_prompt_message',
 			sprintf(
-				"Hi %s,\n\n" .
-				"Thanks again for ordering from %s. Hope it was great!\n\n" .
-				"If you have a minute, would you mind leaving a quick review? It really helps us — and helps neighbours decide what to try next.\n\n" .
-				"Click any of these to review what you ordered:\n%s\n\n" .
-				"Thanks,\n%s",
+				/* translators: 1: customer first name, 2: site name, 3: bulleted list of product/review-link lines, 4: site name (signoff) */
+				__(
+					"Hi %1\$s,\n\n" .
+					"Thanks again for ordering from %2\$s. Hope it was great!\n\n" .
+					"If you have a minute, would you mind leaving a quick review? It really helps us — and helps neighbours decide what to try next.\n\n" .
+					"Click any of these to review what you ordered:\n%3\$s\n\n" .
+					"Thanks,\n%4\$s",
+					'lafka-plugin'
+				),
 				$customer,
 				$site,
 				implode( "\n", $links_md ),
@@ -87,7 +92,19 @@ if ( ! function_exists( 'lafka_review_prompt_send' ) ) {
 			$order
 		);
 
-		$headers = array( 'From: ' . $site . ' <' . get_option( 'admin_email' ) . '>' );
+		// Use WC's email-from settings when available so this email matches
+		// the From: identity of every other transactional email the store
+		// sends (admin_email is sometimes a no-reply alias that customers
+		// can't reply to).
+		$from_name    = function_exists( 'get_option' ) ? (string) get_option( 'woocommerce_email_from_name', '' ) : '';
+		$from_address = function_exists( 'get_option' ) ? (string) get_option( 'woocommerce_email_from_address', '' ) : '';
+		if ( '' === $from_name ) {
+			$from_name = $site;
+		}
+		if ( '' === $from_address ) {
+			$from_address = (string) get_option( 'admin_email' );
+		}
+		$headers = array( 'From: ' . $from_name . ' <' . $from_address . '>' );
 		wp_mail( $email_to, $subject, $body, $headers );
 	}
 }
