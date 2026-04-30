@@ -55,10 +55,10 @@ class Lafka_Shipping_Areas {
 	private function includes() {
 		$options = get_option( 'lafka_shipping_areas_branches' );
 
-		require_once __DIR__ . '/shortcodes/shortcode-lafka-shipping-areas.php';
-		// Branches module — extracted into its own incl/branches/ directory
-		// in v9.2.0 (Path A2). Same classes, different home; the shipping-
-		// areas bootstrap still owns the load gate.
+		// Map shortcode — extracted to incl/map-shortcode/ in v9.3.0 (Path A4).
+		require_once __DIR__ . '/../map-shortcode/shortcode-lafka-shipping-areas.php';
+
+		// Branches module — extracted to incl/branches/ in v9.2.0 (Path A2).
 		if ( ! empty( $options['enable_branch_selection_modal'] ) ) {
 			require_once __DIR__ . '/../branches/class-lafka-branch-locations.php';
 		}
@@ -67,7 +67,7 @@ class Lafka_Shipping_Areas {
 			require_once __DIR__ . '/includes/class-lafka-shipping-areas-admin.php';
 			require_once __DIR__ . '/../branches/class-lafka-branch-locations-admin.php';
 			if ( function_exists( 'vc_lean_map' ) ) {
-				vc_lean_map( 'lafka_shipping_areas', null, __DIR__ . '/shortcodes/shortcode-lafka-shipping-areas-to-vc.php' );
+				vc_lean_map( 'lafka_shipping_areas', null, __DIR__ . '/../map-shortcode/shortcode-lafka-shipping-areas-to-vc.php' );
 			}
 		}
 	}
