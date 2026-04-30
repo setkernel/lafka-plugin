@@ -13,7 +13,8 @@ foreach ( $addon['options'] as $i => $option ) :
 	$option_price             = lafka_get_option_price_on_default_attribute( $product, $option['price'] );
 	$option_price_for_display = '';
 	if ( is_numeric( $option_price ) ) {
-		$option_price_for_display = '(' . wc_price( WC_Product_Addons_Helper::get_product_addon_price_for_display( $option_price ) ) . ')';
+		// See checkbox.php for the .lafka-addon-price wrapper rationale.
+		$option_price_for_display = '<span class="lafka-addon-price">(' . wc_price( WC_Product_Addons_Helper::get_product_addon_price_for_display( $option_price ) ) . ')</span>';
 	}
 
 	$price = apply_filters( 'lafka_product_addons_option_price', $option_price_for_display, $option, $i, 'radiobutton' );
