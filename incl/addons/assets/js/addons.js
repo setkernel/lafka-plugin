@@ -205,7 +205,23 @@ jQuery( document ).ready( function($) {
 						attribute_custom_price = prices_data_json[attribute_name][selected_attribute_value];
 
 						var formatted_price = $current_addon.data(selected_attribute_value + '-formatted-price');
-						$current_addon.nextAll('span.woocommerce-Price-amount').replaceWith(formatted_price);
+
+						// Engine v8.17.3+ wraps the option price in
+						// <span class="lafka-addon-price">(<wc_price>)</span>
+						// to give themes a single inline anchor for layout.
+						// Replace the inner .woocommerce-Price-amount span,
+						// keeping the wrapper (and its parens) intact.
+						//
+						// Pre-v8.17.3 fallback: bare .woocommerce-Price-amount
+						// is a direct sibling of the input. Some third-party
+						// themes still ship templates with this older shape,
+						// so we keep the legacy path alive.
+						var $wrapper = $current_addon.nextAll('span.lafka-addon-price');
+						if ($wrapper.length) {
+							$wrapper.find('span.woocommerce-Price-amount').replaceWith(formatted_price);
+						} else {
+							$current_addon.nextAll('span.woocommerce-Price-amount').replaceWith(formatted_price);
+						}
 					}
 				});
 
