@@ -56,7 +56,13 @@ foreach ( $addon['options'] as $i => $option ) :
 			<?php if ( $custom_image_id ) : ?>
 				<?php echo wp_get_attachment_image( $custom_image_id, 'lafka-widgets-thumb', false, array( 'class' => implode( ' ', $custom_image_classes ) ) ); ?>
 			<?php endif; ?>
-			<?php echo esc_html( wptexturize( $option['label'] ) ) . ' ' . esc_html( $price ); ?></label>
+			<?php
+			// $price is HTML built by wc_price() (e.g., "(<span class="amount">$3.50</span>)").
+			// esc_html() would escape the spans to entities and render them as visible text.
+			// wp_kses_post() preserves trusted markup (spans/bdi/sup) while stripping anything
+			// dangerous a hostile filter on lafka_product_addons_option_price might inject.
+			echo esc_html( wptexturize( $option['label'] ) ) . ' ' . wp_kses_post( $price );
+			?></label>
 	</p>
 
 <?php endforeach; ?>

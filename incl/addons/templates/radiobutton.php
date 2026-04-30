@@ -54,7 +54,10 @@ foreach ( $addon['options'] as $i => $option ) :
 			<?php if ( $custom_image_id ) : ?>
 				<?php echo wp_get_attachment_image( $custom_image_id, 'lafka-widgets-thumb', false, array( 'class' => implode( ' ', $custom_image_classes ) ) ); ?>
 			<?php endif; ?>
-			<?php echo esc_html( wptexturize( $option['label'] ) ) . ' ' . esc_html( $price ); ?></label>
+			<?php
+			// See checkbox.php for the wp_kses_post-vs-esc_html rationale.
+			echo esc_html( wptexturize( $option['label'] ) ) . ' ' . wp_kses_post( $price );
+			?></label>
 	</p>
 
 <?php endforeach; ?>

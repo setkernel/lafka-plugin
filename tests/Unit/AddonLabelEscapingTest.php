@@ -4,7 +4,12 @@
  *
  * Source-grep lock that enforces:
  *   - the 3 addon templates (textarea / checkbox / radiobutton) use
- *     `esc_html()` on the label/price output, and
+ *     `esc_html()` on the label output (label is plain text from a
+ *     stored field), and
+ *   - the price output uses `wp_kses_post()` (price is wc_price() HTML
+ *     containing <span>, <bdi>, <sup> tags that must survive — escaping
+ *     it via esc_html() displays raw HTML entities to customers, which
+ *     is the v8.17.0 production bug fixed in v8.17.2), and
  *   - `wptexturize()` is no longer the OUTERMOST call (so HTML in a
  *     stored label can no longer reach the browser).
  *
@@ -48,9 +53,14 @@ final class AddonLabelEscapingTest extends TestCase {
 			"Template {$path} must escape the label via esc_html() (after wptexturize())"
 		);
 		$this->assertStringContainsString(
+			'wp_kses_post( $price )',
+			$src,
+			"Template {$path} must sanitize the price via wp_kses_post() — esc_html() escapes the wc_price() HTML to entities and renders raw <span> markup to customers"
+		);
+		$this->assertStringNotContainsString(
 			'esc_html( $price )',
 			$src,
-			"Template {$path} must escape the price via esc_html()"
+			"Template {$path} must NOT use esc_html(\$price) — that's the v8.17.0 production bug. Use wp_kses_post(\$price) which preserves wc_price() HTML"
 		);
 	}
 
