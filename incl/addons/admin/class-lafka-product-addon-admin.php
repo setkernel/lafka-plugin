@@ -53,24 +53,31 @@ class Lafka_Product_Addon_Admin {
 				true
 			);
 
-			// Render reusable HTML templates for "new option" and "new addon".
+			// "New option" preview: template references $addon; pass a default
+			// shape so the option-row resolver call in the template doesn't
+			// trip over an undefined variable.
+			$preview_addon = array(
+				'name'        => '',
+				'limit'       => '',
+				'description' => '',
+				'required'    => '',
+				'attribute'   => 0,
+				'type'        => 'checkbox',
+				'variations'  => 0,
+				'options'     => array(),
+			);
+
 			ob_start();
 			$option = self::get_new_addon_option();
+			$addon  = $preview_addon;
 			$loop   = '{loop}';
 			include plugin_dir_path( __FILE__ ) . 'views/html-addon-option.php';
 			$new_option_html = str_replace( array( "\n", "\r" ), '', str_replace( "'", '"', ob_get_clean() ) );
 
 			ob_start();
-			$addon = array(
-				'name'        => '',
-				'limit'       => '',
-				'description' => '',
-				'required'    => '',
-				'type'        => 'checkbox',
-				'variations'  => '',
-				'options'     => array( self::get_new_addon_option() ),
-			);
-			$loop  = '{loop}';
+			$addon            = $preview_addon;
+			$addon['options'] = array( self::get_new_addon_option() );
+			$loop             = '{loop}';
 			include plugin_dir_path( __FILE__ ) . 'views/html-addon.php';
 			$new_addon_html = str_replace( array( "\n", "\r" ), '', str_replace( "'", '"', ob_get_clean() ) );
 
@@ -363,10 +370,18 @@ class Lafka_Product_Addon_Admin {
 	 * Returns [] when the addon doesn't use variation pricing OR no taxonomy
 	 * could be resolved. Callers fall back to a single-price column.
 	 *
-	 * @param array $addon Addon group data shape from _product_addons meta.
+	 * Accepts mixed because the option-row template is also used by styles()
+	 * to build a "new option" preview without an addon in scope ($addon is
+	 * undefined / null there). Strict typehints would fatal on that path.
+	 *
+	 * @param mixed $addon Addon group data shape from _product_addons meta, or null/scalar in preview contexts.
 	 * @return array<string, array<string, string>> [ taxonomy => [ slug => name ] ]
 	 */
-	public static function resolve_addon_attribute_values( array $addon ): array {
+	public static function resolve_addon_attribute_values( $addon ): array {
+		if ( ! is_array( $addon ) ) {
+			return array();
+		}
+
 		$has_variations = isset( $addon['variations'] ) && (int) $addon['variations'] === 1;
 		if ( ! $has_variations ) {
 			return array();
@@ -431,12 +446,21 @@ class Lafka_Product_Addon_Admin {
 	 * @return array Merged addons array.
 	 */
 	public static function preserve_nested_prices_on_save( array $new_addons, array $existing_addons ): array {
+		// `(array) ''` from get_post_meta() on an empty key produces [''], not [];
+		// strip non-array entries so downstream offset access is safe.
+		$existing_addons = array_filter( $existing_addons, 'is_array' );
 		if ( empty( $existing_addons ) ) {
 			return $new_addons;
 		}
 
 		foreach ( $new_addons as $addon_index => $new_addon ) {
+			if ( ! is_array( $new_addon ) ) {
+				continue;
+			}
 			if ( 1 !== (int) ( $new_addon['variations'] ?? 0 ) ) {
+				continue;
+			}
+			if ( empty( $new_addon['options'] ) || ! is_array( $new_addon['options'] ) ) {
 				continue;
 			}
 
@@ -448,13 +472,15 @@ class Lafka_Product_Addon_Admin {
 					break;
 				}
 			}
-			if ( ! $existing_match || empty( $existing_match['options'] ) ) {
+			if ( ! $existing_match
+				|| empty( $existing_match['options'] )
+				|| ! is_array( $existing_match['options'] ) ) {
 				continue;
 			}
 
 			$existing_options_by_id = array();
 			foreach ( $existing_match['options'] as $existing_option ) {
-				if ( ! empty( $existing_option['id'] ) ) {
+				if ( is_array( $existing_option ) && ! empty( $existing_option['id'] ) ) {
 					$existing_options_by_id[ $existing_option['id'] ] = $existing_option;
 				}
 			}
@@ -464,6 +490,9 @@ class Lafka_Product_Addon_Admin {
 
 			$prices_restored = false;
 			foreach ( $new_addon['options'] as $option_index => $new_option ) {
+				if ( ! is_array( $new_option ) ) {
+					continue;
+				}
 				if ( is_array( $new_option['price'] ?? null ) ) {
 					continue;
 				}

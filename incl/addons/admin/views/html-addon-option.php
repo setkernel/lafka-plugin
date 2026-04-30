@@ -82,7 +82,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 		<input class="lafka-is-default-switch" type="<?php echo esc_attr( $inputs_type ); ?>" name="<?php echo esc_attr( $inputs_name ); ?>" value="1" <?php checked( 1, $option['default'] ); ?> />
 	</td>
 
-	<?php do_action( 'lafka_product_addons_panel_option_row', isset( $post ) ? $post : null, $product_addons, $loop, $option ); ?>
+	<?php do_action( 'lafka_product_addons_panel_option_row', isset( $post ) ? $post : null, isset( $product_addons ) ? $product_addons : array(), $loop, $option ); ?>
 
 	<td class="actions" width="1%"><button type="button" class="remove_addon_option button">x</button></td>
 </tr>
