@@ -64,8 +64,10 @@ class Lafka_WC_Variation_Swatches_Admin {
 			add_filter( 'manage_pa_' . $tax->attribute_name . '_custom_column', array( $this, 'add_attribute_column_content' ), 10, 3 );
 		}
 
-		add_action( 'created_term', array( $this, 'save_term_meta' ), 10, 2 );
-		add_action( 'edit_term', array( $this, 'save_term_meta' ), 10, 2 );
+		// accepted_args = 3 so save_term_meta() receives the $taxonomy arg
+		// it now uses to gate writes to product-attribute taxonomies only.
+		add_action( 'created_term', array( $this, 'save_term_meta' ), 10, 3 );
+		add_action( 'edit_term', array( $this, 'save_term_meta' ), 10, 3 );
 	}
 
 	/**
@@ -175,15 +177,46 @@ class Lafka_WC_Variation_Swatches_Admin {
 	}
 
 	/**
-	 * Save term meta
+	 * Save term meta — color / image / label swatch values for product
+	 * attribute terms.
 	 *
-	 * @param int $term_id
-	 * @param int $tt_id
+	 * Hooked to `created_term` / `edit_term` which fire for EVERY taxonomy
+	 * (categories, tags, custom taxonomies). Pre-v9.7.10 this read the
+	 * generic POST keys (`color`, `image`, `label`) on every term-save
+	 * regardless of taxonomy — so any plugin or admin form populating those
+	 * fields on a non-product-attribute taxonomy would silently write swatch
+	 * meta to unrelated terms. Plus there was no capability check; WP's
+	 * term-edit screen gated access via its own nonce, but programmatic term
+	 * saves from elsewhere bypassed that gate entirely.
+	 *
+	 * Hardened with three guards:
+	 *   1. Taxonomy must start with `pa_` (WC product-attribute prefix).
+	 *   2. Caller must hold `manage_product_terms` (the same capability WC
+	 *      uses for product-attribute term editing).
+	 *   3. Type must be a known swatch type (color/image/label or whatever
+	 *      `lafka_wcs_attribute_types` extended).
+	 *
+	 * @param int    $term_id  Term ID being created/edited.
+	 * @param int    $tt_id    Term-taxonomy row ID (unused).
+	 * @param string $taxonomy Taxonomy slug — provided by created_term/edit_term as 3rd arg.
 	 */
-	public function save_term_meta( $term_id, $tt_id ) {
+	public function save_term_meta( $term_id, $tt_id, $taxonomy = '' ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
+		// Guard 1: product-attribute taxonomies only. WC prefixes them with `pa_`.
+		if ( ! is_string( $taxonomy ) || 0 !== strpos( $taxonomy, 'pa_' ) ) {
+			return;
+		}
+
+		// Guard 2: capability — same gate WC uses for product-attribute term editing.
+		if ( ! current_user_can( 'manage_product_terms' ) ) {
+			return;
+		}
+
 		foreach ( Lafka_WCVS()->types as $type => $label ) {
 			if ( isset( $_POST[ $type ] ) ) {
-				update_term_meta( $term_id, $type, sanitize_text_field( wp_unslash( $_POST[ $type ] ) ) );
+				// Note: WP's term-edit form supplies its own nonce (verified by
+				// edit_terms / wp-admin/edit-tags.php) before hitting this hook,
+				// so an explicit per-field nonce here would be redundant.
+				update_term_meta( $term_id, $type, sanitize_text_field( wp_unslash( $_POST[ $type ] ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			}
 		}
 	}
