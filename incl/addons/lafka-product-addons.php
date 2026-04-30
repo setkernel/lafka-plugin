@@ -17,10 +17,6 @@ class Lafka_Product_Addons {
 		define( 'WC_PRODUCT_ADDONS_VERSION', '3.1.0' ); // WRCS: DEFINED_VERSION.
 		add_action( 'plugins_loaded', array( $this, 'init_classes' ) );
 		add_action( 'init', array( $this, 'init_post_types' ), 20 );
-		// Note: Lafka_Combos integration was retired in v9.0.0 alongside the
-		// Lafka Combos fork itself. If a future release ships an addons↔
-		// WC Product Bundles bridge, hook it here against
-		// `woocommerce_bundles_compatibility_modules`.
 	}
 
 	/**
@@ -35,13 +31,21 @@ class Lafka_Product_Addons {
 			$this->init_admin();
 		}
 
-		// Cart + display engine instances. Templates and the Combos
+		// Cart + display engine instances. Templates and the bundles
 		// compatibility module reference these globals; the legacy
 		// $Product_Addon_Cart/$Product_Addon_Display dual-globals were
 		// retired in v8.18.0 — only the modern Lafka_Engine_* globals
 		// remain.
 		$GLOBALS['Lafka_Engine_Cart']    = new Lafka_Engine_Cart();
 		$GLOBALS['Lafka_Engine_Display'] = new Lafka_Engine_Display();
+
+		// Bridge: addon engine ↔ WooCommerce Product Bundles. Loads only when
+		// WC PB is active. Restores the toppings-on-bundled-pizzas capability
+		// that the deleted Lafka Combos fork (v9.0.0) used to provide.
+		if ( class_exists( 'WC_Bundled_Item' ) ) {
+			require_once __DIR__ . '/engine/compat/class-bundles-addons-compatibility.php';
+			Lafka_Bundles_Addons_Compatibility::init();
+		}
 	}
 
 	/**
@@ -89,7 +93,6 @@ class Lafka_Product_Addons {
 
 		register_taxonomy_for_object_type( 'product_cat', 'lafka_glb_addon' );
 	}
-
 }
 
 new Lafka_Product_Addons();
