@@ -169,12 +169,38 @@ function lafka_schema_menu(): ?array {
 }
 
 /**
- * Bust the menu schema transient cache whenever a product is saved.
- * Hooked to save_post_product which fires for both new and updated products.
+ * Bust the menu schema transient cache when anything affecting menu output
+ * changes. Without this set of hooks the 12-hour TTL would let stale data
+ * drift after legitimate edits — a product going out of stock would still
+ * read `availability: InStock` to crawlers for hours.
+ *
+ * Triggers:
+ *   - save_post_product                     — product create/update (admin save)
+ *   - delete_post                           — product trash/delete (filtered to product post-type)
+ *   - woocommerce_product_set_stock_status  — explicit stock toggle
+ *   - woocommerce_variation_set_stock_status — variation stock toggle
+ *   - woocommerce_update_product            — programmatic API/CLI updates
+ *   - edited_product_cat / created_product_cat / delete_product_cat — category taxonomy edits
  */
+$lafka_schema_menu_cache_bust = static function () {
+	delete_transient( LAFKA_MENU_JSONLD_TRANSIENT );
+};
+
+add_action( 'save_post_product', $lafka_schema_menu_cache_bust );
+add_action( 'woocommerce_product_set_stock_status', $lafka_schema_menu_cache_bust );
+add_action( 'woocommerce_variation_set_stock_status', $lafka_schema_menu_cache_bust );
+add_action( 'woocommerce_update_product', $lafka_schema_menu_cache_bust );
+add_action( 'edited_product_cat', $lafka_schema_menu_cache_bust );
+add_action( 'created_product_cat', $lafka_schema_menu_cache_bust );
+add_action( 'delete_product_cat', $lafka_schema_menu_cache_bust );
+
+// Trash/delete is post-type-agnostic; filter by product post type to avoid
+// busting the cache on every unrelated post deletion sitewide.
 add_action(
-	'save_post_product',
-	function () {
-		delete_transient( LAFKA_MENU_JSONLD_TRANSIENT );
+	'delete_post',
+	static function ( $post_id ) use ( $lafka_schema_menu_cache_bust ) {
+		if ( 'product' === get_post_type( $post_id ) ) {
+			$lafka_schema_menu_cache_bust();
+		}
 	}
 );

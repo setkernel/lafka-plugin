@@ -363,6 +363,48 @@ final class JsonLdSchemaTest extends TestCase {
 		$this->assertStringContainsString( 'delete_transient', $src );
 	}
 
+	/**
+	 * @dataProvider cacheBustHookProvider
+	 */
+	public function test_menu_cache_busted_on_each_relevant_hook( string $hook ): void {
+		// Regression lock for v9.7.5 — before this version only save_post_product
+		// busted the cache, so a product going out of stock or a category rename
+		// could leave stale schema in the transient for up to 12 hours.
+		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-menu.php' );
+		$this->assertMatchesRegularExpression(
+			"/add_action\(\s*'" . preg_quote( $hook, '/' ) . "'/",
+			$src,
+			"Menu schema must bust its transient cache on the '{$hook}' hook."
+		);
+	}
+
+	/**
+	 * @return array<string, array{0:string}>
+	 */
+	public function cacheBustHookProvider(): array {
+		return array(
+			'product save'              => array( 'save_post_product' ),
+			'product delete'            => array( 'delete_post' ),
+			'stock status change'       => array( 'woocommerce_product_set_stock_status' ),
+			'variation stock change'    => array( 'woocommerce_variation_set_stock_status' ),
+			'product API update'        => array( 'woocommerce_update_product' ),
+			'category edit'             => array( 'edited_product_cat' ),
+			'category create'           => array( 'created_product_cat' ),
+			'category delete'           => array( 'delete_product_cat' ),
+		);
+	}
+
+	public function test_delete_post_bust_filtered_to_product_post_type(): void {
+		// Naively hooking delete_post would bust the cache on every post deletion
+		// sitewide — must be filtered to 'product' to avoid pointless invalidation.
+		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-menu.php' );
+		$this->assertMatchesRegularExpression(
+			"/'product'\s*===\s*get_post_type/",
+			$src,
+			'delete_post hook must filter on product post-type before busting cache.'
+		);
+	}
+
 	public function test_menu_generator_filters_uncategorized(): void {
 		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-menu.php' );
 		$this->assertStringContainsString( 'uncategorized', $src );
