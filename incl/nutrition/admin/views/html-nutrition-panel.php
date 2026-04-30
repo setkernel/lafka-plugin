@@ -4,6 +4,16 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 ?>
 <div id="lafka_product_nutrition_data" class="panel woocommerce_options_panel wc-metaboxes-wrapper">
+	<?php
+	// Panel marker — read by Lafka_Nutrition_Admin::process_meta_box() to
+	// distinguish a save initiated from this product editor (where nutrition
+	// fields are present in $_POST) from saves originating elsewhere
+	// (REST API, Quick Edit, programmatic wp_update_post, third-party
+	// plugins calling woocommerce_process_product_meta). Without this
+	// marker, those non-panel saves used to silently wipe every nutrition
+	// field + allergens because the foreach `else` branch overwrote with ''.
+	?>
+	<input type="hidden" name="_lafka_nutrition_panel_present" value="1">
 	<div class="options_group lafka-nutrition-info-group">
 		<?php foreach ( Lafka_Nutrition_Config::$nutrition_meta_fields as $nutrition_meta_field => $data ) : ?>
 			<p class="form-field">

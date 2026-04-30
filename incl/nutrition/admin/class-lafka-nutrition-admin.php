@@ -46,22 +46,50 @@ class Lafka_Nutrition_Admin {
 	}
 
 	/**
-	 * Process meta box.
+	 * Process meta box on product save.
+	 *
+	 * Hooked to `woocommerce_process_product_meta` which fires for every
+	 * product save WC processes — including REST API writes, Quick Edit,
+	 * bulk-edit, programmatic `wp_update_post` calls, and third-party plugins
+	 * that trigger product saves. Pre-v9.7.13 this loop blindly overwrote
+	 * each nutrition field with `''` when the corresponding `$_POST[]` key
+	 * was missing, silently wiping operator-entered nutrition + allergen
+	 * data on every non-panel save. A single Quick Edit destroyed an entire
+	 * product's nutrition.
+	 *
+	 * Now gated on a hidden marker (`_lafka_nutrition_panel_present`) the
+	 * panel template emits when rendered. Only saves that include the marker
+	 * proceed to overwrite — so out-of-band saves leave existing meta
+	 * untouched.
 	 *
 	 * @param int $post_id Post ID.
 	 */
 	public function process_meta_box( $post_id ) {
+		// phpcs:disable WordPress.Security.NonceVerification.Missing
+		// WC's product-edit screen supplies the nonce verified by the WC
+		// product save flow before this hook fires; we rely on that gate.
+		if ( ! isset( $_POST['_lafka_nutrition_panel_present'] ) ) {
+			return;
+		}
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
+
 		$product = wc_get_product( $post_id );
+		if ( ! $product ) {
+			return;
+		}
 
 		foreach ( Lafka_Nutrition_Config::$nutrition_meta_fields as $field_name => $data ) {
-			if ( isset( $_POST[ '_' . $field_name ] ) ) {
-				$product->update_meta_data( '_' . $field_name, sanitize_text_field( wp_unslash( $_POST[ '_' . $field_name ] ) ) );
+			if ( isset( $_POST[ '_' . $field_name ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
+				$product->update_meta_data( '_' . $field_name, sanitize_text_field( wp_unslash( $_POST[ '_' . $field_name ] ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			} else {
 				$product->update_meta_data( '_' . $field_name, '' );
 			}
 		}
 
-		$product->update_meta_data( '_lafka_product_allergens', sanitize_text_field( wp_unslash( $_POST['_lafka_product_allergens'] ?? '' ) ) );
+		$product->update_meta_data(
+			'_lafka_product_allergens',
+			sanitize_text_field( wp_unslash( $_POST['_lafka_product_allergens'] ?? '' ) ) // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		);
 
 		$product->save();
 	}
