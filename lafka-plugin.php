@@ -3,7 +3,7 @@
 	Plugin Name: Lafka Plugin
 	Plugin URI: https://github.com/setkernel/lafka-plugin
 	Description: Companion plugin for the Lafka WooCommerce theme. Originally by theAlThemist, now community-maintained.
-	Version: 9.7.16
+	Version: 9.7.17
 	Author: theAlThemist, Contributors
 	Author URI: https://github.com/setkernel/lafka-plugin
 	Requires at least: 6.6
@@ -1098,29 +1098,6 @@ if ( ! function_exists( 'lafka_latest_posts_category_field_search' ) ) {
 		}
 
 		return $data;
-	}
-
-}
-add_action( 'admin_init', 'lafka_load_incl_importer', 99 );
-if ( ! function_exists( 'lafka_load_incl_importer' ) ) {
-
-	function lafka_load_incl_importer() {
-		/* load required files */
-
-		// Load Importer API
-		require_once ABSPATH . 'wp-admin/includes/import.php';
-
-		if ( ! class_exists( 'WP_Importer' ) ) {
-			$class_wp_importer = ABSPATH . 'wp-admin/includes/class-wp-importer.php';
-			if ( file_exists( $class_wp_importer ) ) {
-				require_once $class_wp_importer;
-			}
-		}
-
-		$class_lafka_importer = plugin_dir_path( __FILE__ ) . 'importer/lafka-wordpress-importer.php';
-		if ( file_exists( $class_lafka_importer ) ) {
-			require_once $class_lafka_importer;
-		}
 	}
 
 }

@@ -1,6 +1,6 @@
 {
 	"name": "lafka-plugin",
-	"version": "9.7.16",
+	"version": "9.7.17",
 	"private": true,
 	"description": "Lafka Companion Plugin",
 	"scripts": {
