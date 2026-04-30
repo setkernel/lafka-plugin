@@ -13,10 +13,23 @@ defined( 'ABSPATH' ) || exit;
 
 if ( ! function_exists( 'lafka_pdp_render_checkout_email_capture' ) ) {
 	function lafka_pdp_render_checkout_email_capture(): void {
+		// Headline copy is operator-configurable (Customizer: PDP Redesign →
+		// Win-back offer text). Empty = feature disabled, field not rendered.
+		// Pre-v9.7.8 this hardcoded "Save 10% on your next order" — misleading
+		// since the file's also-hardcoded comment said "Win-back email
+		// sequence is deferred — v1 just collects." Operators on a different
+		// discount tier (or no discount at all) ended up promising 10% they
+		// never delivered.
+		$headline = function_exists( 'get_theme_mod' )
+			? trim( (string) get_theme_mod( 'lafka_pdp_winback_offer_text', '' ) )
+			: '';
+		if ( '' === $headline ) {
+			return;
+		}
 		?>
 		<div class="lafka-checkout-winback">
 			<label for="lafka_winback_email" class="lafka-checkout-winback__label">
-				<?php esc_html_e( '💌 Save 10% on your next order', 'lafka-plugin' ); ?>
+				<?php echo esc_html( $headline ); ?>
 				<span class="lafka-checkout-winback__hint"><?php esc_html_e( "Optional — we'll email you a one-time code.", 'lafka-plugin' ); ?></span>
 			</label>
 			<input

@@ -42,8 +42,14 @@ if ( ! function_exists( 'lafka_pdp_cart_drawer_fragments' ) ) {
         $fragments['ul.lafka-cart-drawer__items'] = ob_get_clean();
 
         ob_start();
-        $total          = (float) WC()->cart->get_cart_contents_total();
-        $free_threshold = (float) apply_filters( 'lafka_pdp_free_delivery_threshold', 40 );
+        $total = (float) WC()->cart->get_cart_contents_total();
+        // Free-delivery threshold comes from the PDP Customizer (default 0 =
+        // disabled, no hint rendered). Filter retained as a runtime override
+        // for child plugins that want to vary by package type or user role.
+        $threshold_setting = function_exists( 'get_theme_mod' )
+            ? (float) get_theme_mod( 'lafka_pdp_free_delivery_threshold', 0 )
+            : 0.0;
+        $free_threshold = (float) apply_filters( 'lafka_pdp_free_delivery_threshold', $threshold_setting );
         $remaining      = max( 0, $free_threshold - $total );
         ?>
         <div class="lafka-cart-drawer__total">
