@@ -182,10 +182,24 @@ jQuery( document ).ready( function($) {
 				var attribute_custom_raw_price = null;
 				var attribute_custom_price = null;
 
+				// Resolve attribute selections from BOTH WC's standard variation
+				// form (<table.variations select id="pa_size">) and the lafka
+				// PDP redesign's radio chips (<input name="attribute_pa_size">).
+				// Without this, the redesign's radio-only picker never reaches
+				// per-attribute addon pricing — addons silently bill at
+				// flat/medium price regardless of size.
+				var attribute_selections = {};
 				$cart.find('table.variations select').each(function () {
-					var attribute_name = $(this).attr('id');
-					var selected_attribute_value = $(this).find('option:selected').val();
-
+					var n = $(this).attr('id');
+					if (n) attribute_selections[n] = $(this).find('option:selected').val();
+				});
+				$cart.find('.lafka-pdp-pickers input[type=radio]:checked').each(function () {
+					var n = $(this).attr('name') || '';
+					if (n.indexOf('attribute_') === 0) {
+						attribute_selections[n.substring('attribute_'.length)] = $(this).val();
+					}
+				});
+				$.each(attribute_selections, function (attribute_name, selected_attribute_value) {
 					if (typeof raw_prices_data_json === 'object' && attribute_name in raw_prices_data_json && selected_attribute_value in raw_prices_data_json[attribute_name]) {
 						attribute_custom_raw_price = raw_prices_data_json[attribute_name][selected_attribute_value];
 						attribute_custom_price = prices_data_json[attribute_name][selected_attribute_value];
@@ -415,13 +429,28 @@ jQuery( document ).ready( function($) {
 		});
 	});
 
-	// Variations
+	// Variations (WC standard variations form fires `wc_variation_form` from
+	// its widget init).
 	$(document.body).find('form.variations_form.cart').on('wc_variation_form', function () {
 		$(this).init_addon_totals();
 	});
 
-	// Initialize
+	// Initialize on simple-product carts.
 	$(document.body).find('.cart').not('.cart_group, .variations_form').each(function () {
 		$(this).init_addon_totals();
+	});
+
+	// Lafka PDP redesign initialization. The redesign uses a custom radio-
+	// chip picker (lafka-child/js/pdp-pickers.js) instead of WC's standard
+	// variations widget, so `wc_variation_form` never fires and the block
+	// above misses these forms entirely. Initialize directly when the
+	// redesign markers are present, then bind picker-radio change events
+	// so addon prices recompute on size/crust selection.
+	$(document.body).find('form.cart.variations_form').has('.lafka-pdp-pickers').each(function () {
+		var $form = $(this);
+		$form.init_addon_totals();
+		$form.on('change', '.lafka-pdp-pickers input[type=radio]', function () {
+			$form.trigger('lafka-product-addons-update');
+		});
 	});
 });
