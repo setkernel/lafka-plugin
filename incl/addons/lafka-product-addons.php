@@ -25,15 +25,20 @@ class Lafka_Product_Addons {
 	 * Initializes plugin classes.
 	 */
 	public function init_classes() {
-		// Core (models)
+		// Engine v2 first — it declares Lafka_Engine_Helper and class_aliases
+		// WC_Product_Addons_Helper to it. The legacy helper file below has a
+		// `class_exists` guard so it no-ops once the alias is in place.
+		require_once __DIR__ . '/engine/lafka-addons-engine-bootstrap.php';
+
+		// Core (models) — legacy groups classes still in use by legacy cart
+		// + display until 7b/7c migrate them.
 		include_once __DIR__ . '/includes/groups/class-lafka-product-addon-group-validator.php';
 		include_once __DIR__ . '/includes/groups/class-lafka-product-addon-global-group.php';
 		include_once __DIR__ . '/includes/groups/class-lafka-product-addon-product-group.php';
 		include_once __DIR__ . '/includes/groups/class-lafka-product-addon-groups.php';
 
-		// Per-request groups cache invalidation on save/trash/delete of an
-		// addon CPT post — without this, the admin list page rendered on
-		// the same request after a save shows stale (pre-save) data.
+		// Legacy cache invalidation now duplicates engine bootstrap's hooks;
+		// kept until 7d when the whole groups/ tree retires.
 		Lafka_Product_Addon_Groups::bootstrap();
 
 		// Admin
@@ -41,15 +46,14 @@ class Lafka_Product_Addons {
 			$this->init_admin();
 		}
 
-		// Front-side
+		// Front-side legacy classes — get retired in 7b (cart) and 7c (display).
 		include_once __DIR__ . '/includes/class-lafka-product-addon-display.php';
 		include_once __DIR__ . '/includes/class-lafka-product-addon-cart.php';
-		// Helper class used by other plugins for compatibility
+		// Legacy helper file is a no-op now: WC_Product_Addons_Helper is
+		// already declared by the engine's class_alias above. Kept in the
+		// require list as defense-in-depth in case a third party mode-loads
+		// addons without the engine.
 		include_once __DIR__ . '/includes/class-lafka-product-addons-helper.php';
-
-		// v8.13.0+: the new addon engine. Phase 2 wires the admin form to it.
-		// Phase 3 wires cart/display.
-		require_once __DIR__ . '/engine/lafka-addons-engine-bootstrap.php';
 
 		$GLOBALS['Product_Addon_Display'] = new Lafka_Product_Addon_Display();
 		$GLOBALS['Product_Addon_Cart']    = new Lafka_Product_Addon_Cart();

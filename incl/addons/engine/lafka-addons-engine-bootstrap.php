@@ -51,6 +51,35 @@ require_once __DIR__ . '/admin/class-engine-product-panel.php';
 // it from there because WP_List_Table itself is admin-only.
 require_once __DIR__ . '/class-engine.php';
 require_once __DIR__ . '/class-engine-privacy.php';
+require_once __DIR__ . '/class-engine-resolver.php';
+require_once __DIR__ . '/class-engine-helper.php';
+
+// Cache invalidation: any save/trash/delete of an addon CPT post invalidates
+// both the resolver's per-request VO cache and the helper's legacy-shape
+// cache so admin pages reading on the same request reflect current data.
+if ( function_exists( 'add_action' ) ) {
+	$lafka_addons_clear_caches = static function () {
+		Lafka_Engine_Resolver::clear_cache();
+		Lafka_Engine_Helper::clear_cache();
+	};
+	add_action( 'save_post_lafka_glb_addon', $lafka_addons_clear_caches );
+	add_action(
+		'trashed_post',
+		static function ( $post_id ) use ( $lafka_addons_clear_caches ) {
+			if ( 'lafka_glb_addon' === get_post_type( $post_id ) ) {
+				$lafka_addons_clear_caches();
+			}
+		}
+	);
+	add_action(
+		'deleted_post',
+		static function ( $post_id ) use ( $lafka_addons_clear_caches ) {
+			if ( 'lafka_glb_addon' === get_post_type( $post_id ) ) {
+				$lafka_addons_clear_caches();
+			}
+		}
+	);
+}
 
 // Privacy exporter/eraser registration. The filters only fire inside admin
 // (Tools → Export/Erase Personal Data), so we register on admin_init.
