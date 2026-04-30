@@ -12,10 +12,6 @@ class Lafka_Shipping_Areas {
 	 */
 	protected static $_instance = null;
 
-	private $order_date_time_mandatory;
-	private $order_date_time_days_ahead;
-	private $order_date_time_timeslot_duration;
-
 	/**
 	 * Constructor.
 	 */
@@ -58,6 +54,11 @@ class Lafka_Shipping_Areas {
 		// Map shortcode — extracted to incl/map-shortcode/ in v9.3.0 (Path A4).
 		require_once __DIR__ . '/../map-shortcode/shortcode-lafka-shipping-areas.php';
 
+		// Timeslots module — extracted to incl/timeslots/ in v9.4.0 (Path A3).
+		// Self-registers on instance() — pulls own datetime config + hooks.
+		require_once __DIR__ . '/../timeslots/class-lafka-timeslots.php';
+		Lafka_Timeslots::instance();
+
 		// Branches module — extracted to incl/branches/ in v9.2.0 (Path A2).
 		if ( ! empty( $options['enable_branch_selection_modal'] ) ) {
 			require_once __DIR__ . '/../branches/class-lafka-branch-locations.php';
@@ -76,7 +77,6 @@ class Lafka_Shipping_Areas {
 		// Register Lafka Shipping Areas post type
 		add_action( 'init', array( $this, 'register_lafka_shipping_areas' ) );
 		add_action( 'init', array( $this, 'register_branch_locations_taxonomy' ) );
-		add_action( 'init', array( $this, 'init_order_date_time_options' ), 99 );
 
 		// Scripts and styles
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
@@ -112,30 +112,9 @@ class Lafka_Shipping_Areas {
 			add_filter( 'woocommerce_checkout_fields', array( $this, 'disable_address_fields' ) );
 		}
 
-		$datetime_options = get_option( 'lafka_shipping_areas_datetime' );
-		if ( ! empty( $datetime_options['enable_datetime_option'] ) ) {
-			// Add Delivery/Pickup Time to the checkout page
-			add_action( 'woocommerce_checkout_before_customer_details', array( $this, 'show_datetime_fields_in_checkout' ) );
-			// Retrieve time slots for date
-			add_action( 'wp_ajax_time_slots_for_date', array( $this, 'retrieve_time_slots_for_date' ) );
-			add_action( 'wp_ajax_nopriv_time_slots_for_date', array( $this, 'retrieve_time_slots_for_date' ) );
-			// Save datetime to order. See `checkout_update_order_meta` above for the
-			// hook-rename rationale.
-			add_action( 'woocommerce_checkout_create_order', array( $this, 'checkout_datetime_update_order_meta' ), 10, 2 );
-			// Show datetime in order list and make it sortable
-			// Legacy orders
-			add_filter( 'manage_shop_order_posts_columns', array( __CLASS__, 'add_datetime_to_orders_list' ), 20 );
-			// HPOS
-			add_filter( 'manage_woocommerce_page_wc-orders_columns', array( __CLASS__, 'add_datetime_to_orders_list' ), 20 );
-			// Legacy orders
-			add_action( 'manage_shop_order_posts_custom_column', array( __CLASS__, 'add_datetime_content_to_orders_list' ), 10, 2 );
-			// HPOS
-			add_action( 'manage_woocommerce_page_wc-orders_custom_column', array( __CLASS__, 'add_datetime_content_to_orders_list' ), 10, 2 );
-			// Legacy orders
-			add_action( 'manage_edit-shop_order_sortable_columns', array( __CLASS__, 'add_datetime_to_sortable_columns' ) );
-			// HPOS
-			add_action( 'woocommerce_shop_order_list_table_sortable_columns', array( __CLASS__, 'add_datetime_to_sortable_columns' ) );
-		}
+		// Datetime/timeslot hooks moved to Lafka_Timeslots in v9.4.0
+		// (Path A3). The new class self-registers on instance() —
+		// see includes() above.
 
 		// Output order type, time for delivery/pickup, branch, picked delivery location in all places
 		add_filter( 'woocommerce_get_order_item_totals', array( __CLASS__, 'output_custom_fields_in_thank_you_page' ), 10, 3 );
@@ -219,26 +198,6 @@ class Lafka_Shipping_Areas {
 		register_taxonomy( 'lafka_branch_location', 'product', $args );
 	}
 
-	public function init_order_date_time_options() {
-		$datetime_options = get_option( 'lafka_shipping_areas_datetime' );
-
-		$this->order_date_time_mandatory         = $datetime_options['datetime_mandatory'] ?? false;
-		$this->order_date_time_days_ahead        = $datetime_options['days_ahead'] ?? 30;
-		$this->order_date_time_timeslot_duration = $datetime_options['timeslot_duration'] ?? 60;
-
-		if ( isset( WC()->session ) ) {
-			$lafka_branch_location_id_in_session = WC()->session->get( 'lafka_branch_location' )['branch_id'] ?? null;
-			if ( ! empty( $lafka_branch_location_id_in_session ) ) {
-				$override_global_date_time = get_term_meta( $lafka_branch_location_id_in_session, 'lafka_branch_override_datetime_global', true );
-				if ( ! empty( $override_global_date_time ) ) {
-					$this->order_date_time_mandatory         = get_term_meta( $lafka_branch_location_id_in_session, 'lafka_branch_datetime_mandatory', true );
-					$this->order_date_time_days_ahead        = get_term_meta( $lafka_branch_location_id_in_session, 'lafka_branch_datetime_days_ahead', true );
-					$this->order_date_time_timeslot_duration = get_term_meta( $lafka_branch_location_id_in_session, 'lafka_branch_datetime_timeslot_duration', true );
-				}
-			}
-		}
-	}
-
 	public function get_all_delivery_areas(): array {
 		$args = array(
 			'numberposts' => 100,
@@ -295,10 +254,17 @@ class Lafka_Shipping_Areas {
 
 		$datetime_options = get_option( 'lafka_shipping_areas_datetime' );
 		if ( is_checkout() && ! empty( $datetime_options['enable_datetime_option'] ) ) {
+			// Pull config from Lafka_Timeslots which already loaded it on init
+			// with the per-branch overrides applied.
+			$timeslots          = Lafka_Timeslots::instance();
+			$days_ahead         = $timeslots->get_days_ahead();
+			$timeslot_duration  = $timeslots->get_timeslot_duration();
+			$datetime_mandatory = $timeslots->is_mandatory();
+
 			if ( class_exists( 'Lafka_Order_Hours' ) && ! empty( Lafka_Order_Hours::$lafka_order_hours_schedule ) ) {
-				$enabled_dates = self::get_enabled_dates_for_days_ahead( $this->order_date_time_days_ahead, $this->order_date_time_timeslot_duration );
+				$enabled_dates = Lafka_Timeslots::get_enabled_dates_for_days_ahead( $days_ahead, $timeslot_duration );
 			} else {
-				$enabled_dates = self::get_all_days_ahead( $this->order_date_time_days_ahead );
+				$enabled_dates = Lafka_Timeslots::get_all_days_ahead_public( $days_ahead );
 			}
 			$flatpickr_locale = apply_filters( 'lafka_flatpickr_locale', strtok( get_locale(), '_' ), get_locale() );
 			wp_enqueue_style( 'flatpickr' );
@@ -309,12 +275,12 @@ class Lafka_Shipping_Areas {
 				'lafka_datetime_options',
 				array(
 					'is_order_hours_enabled' => class_exists( 'Lafka_Order_Hours' ),
-					'days_ahead'             => $this->order_date_time_days_ahead,
+					'days_ahead'             => $days_ahead,
 					'enabled_dates'          => $enabled_dates,
 					'ajax_url'               => admin_url( 'admin-ajax.php' ),
 					'nonce'                  => wp_create_nonce( 'time_slots_for_date' ),
 					'select_time_label'      => esc_html__( 'Select time...', 'lafka-plugin' ),
-					'datetime_mandatory'     => ! empty( $this->order_date_time_mandatory ),
+					'datetime_mandatory'     => $datetime_mandatory,
 					'flatpickr_locale'       => $flatpickr_locale,
 				)
 			);
@@ -366,48 +332,6 @@ class Lafka_Shipping_Areas {
 		}
 	}
 
-	public function checkout_datetime_update_order_meta( $order, $data = null ) {
-		// Backward-compat: legacy hook passed an int order_id.
-		if ( is_numeric( $order ) ) {
-			$order = wc_get_order( $order );
-		}
-		if ( ! $order instanceof WC_Order ) {
-			return;
-		}
-		if ( ! empty( $_POST['lafka_checkout_date'] ) ) {
-			$order->update_meta_data( 'lafka_checkout_date', sanitize_text_field( wp_unslash( $_POST['lafka_checkout_date'] ) ) );
-		} elseif ( ! empty( $this->order_date_time_mandatory ) ) {
-			wc_add_notice( esc_html__( 'Please enter Delivery/Pickup time.', 'lafka-plugin' ), 'error' );
-		}
-		if ( ! empty( $_POST['lafka_checkout_timeslot'] ) ) {
-			$order->update_meta_data( 'lafka_checkout_timeslot', sanitize_text_field( wp_unslash( $_POST['lafka_checkout_timeslot'] ) ) );
-		} elseif ( ! empty( $this->order_date_time_mandatory ) ) {
-			wc_add_notice( esc_html__( 'Please enter Delivery/Pickup time.', 'lafka-plugin' ), 'error' );
-		}
-	}
-
-	public static function add_datetime_to_orders_list( $columns ): array {
-		$columns['lafka_datetime_complete'] = esc_html__( 'Delivery/Pickup Time', 'lafka-plugin' );
-
-		return $columns;
-	}
-
-	public static function add_datetime_content_to_orders_list( $column, $order ) {
-		$order = wc_get_order( $order );
-
-		if ( $column === 'lafka_datetime_complete' ) {
-			$date     = self::get_order_meta_backward_compatible( $order->get_id(), 'lafka_checkout_date' );
-			$timeslot = self::get_order_meta_backward_compatible( $order->get_id(), 'lafka_checkout_timeslot' );
-
-			if ( ! empty( $date ) ) {
-				echo '<span class="lafka-delivery-date">' . esc_html( $date ) . '</span>';
-			}
-			if ( ! empty( $timeslot ) ) {
-				echo '<span class="lafka-delivery-timeslot">' . esc_html( $timeslot ) . '</span>';
-			}
-		}
-	}
-
 	public static function add_recipient_to_order_emails( $recipient, $object, $wc_email_object ): string {
 		if ( $object instanceof \Automattic\WooCommerce\Admin\Overrides\Order ) {
 			$recipients      = array_map( 'trim', explode( ',', $recipient ) );
@@ -424,12 +348,6 @@ class Lafka_Shipping_Areas {
 		}
 
 		return $recipient;
-	}
-
-	public static function add_datetime_to_sortable_columns( $columns ): array {
-		$columns['lafka_datetime_complete'] = 'lafka_checkout_date';
-
-		return $columns;
 	}
 
 	public static function output_custom_fields_in_thank_you_page( $total_rows, $order, $tax_display ) {
@@ -481,161 +399,6 @@ class Lafka_Shipping_Areas {
 		}
 
 		return $total_rows;
-	}
-
-	public static function get_enabled_dates_for_days_ahead( $days_ahead, $timeslot_duration ): array {
-		$current_time  = Lafka_Order_Hours::get_order_hours_time();
-		$interval      = DateInterval::createFromDateString( '1 day' );
-		$enabled_dates = array();
-
-		if ( ! empty( Lafka_Order_Hours::$lafka_order_hours_schedule ) ) {
-			$schedule_json  = Lafka_Order_Hours::$lafka_order_hours_schedule;
-			$schedule_array = json_decode( $schedule_json );
-
-			for ( $i = 0; $i <= $days_ahead; $i++ ) {
-				$day_of_the_week_to_check = $current_time->format( 'N' ) - 1;
-				if ( ! empty( $schedule_array[ $day_of_the_week_to_check ]->periods ) && ! Lafka_Order_Hours::is_day_in_vacation( $current_time ) ) {
-					// If is today
-					if ( $current_time->format( 'Y-m-d' ) === Lafka_Order_Hours::get_order_hours_time()->format( 'Y-m-d' ) ) {
-						if ( self::has_future_slots_for_today( $current_time, $timeslot_duration ) ) {
-							$enabled_dates[] = $current_time->format( 'Y-m-d' );
-						}
-					} else {
-						$enabled_dates[] = $current_time->format( 'Y-m-d' );
-					}
-				}
-				$current_time->add( $interval );
-			}
-		}
-
-		return $enabled_dates;
-	}
-
-	public static function get_timeslots_for_date( DateTime $date, $timeslot_duration ): array {
-		$time_periods = array();
-
-		if ( class_exists( 'Lafka_Order_Hours' ) && ! empty( Lafka_Order_Hours::$lafka_order_hours_schedule ) ) {
-			$schedule_json            = Lafka_Order_Hours::$lafka_order_hours_schedule;
-			$schedule_array           = json_decode( $schedule_json );
-			$day_of_the_week_to_check = $date->format( 'N' ) - 1;
-			if ( ! empty( $schedule_array[ $day_of_the_week_to_check ]->periods ) ) {
-				$day_periods = $schedule_array[ $day_of_the_week_to_check ]->periods;
-				usort(
-					$day_periods,
-					function ( $a, $b ) {
-						return strcmp( $a->start, $b->start );
-					}
-				);
-				foreach ( $day_periods as $period ) {
-					if ( $period->end === '00:00' ) {
-						$period->end = '24:00';
-					}
-
-					while ( 1 ) {
-						$entry               = array();
-						$curr_start          = $period->start;
-						$entry['start']      = $curr_start;
-						$current_time        = new DateTime( 'now', $date->getTimezone() );
-						$start_time          = DateTime::createFromFormat( 'Y-m-d H:i', $date->format( 'Y-m-d' ) . ' ' . $period->start, $date->getTimezone() );
-						$end_time            = DateTime::createFromFormat( 'Y-m-d H:i', $date->format( 'Y-m-d' ) . ' ' . $period->end, $date->getTimezone() );
-						$start_plus_timeslot = DateTime::createFromFormat( 'Y-m-d H:i', $date->format( 'Y-m-d' ) . ' ' . $period->start, $date->getTimezone() )->add( DateInterval::createFromDateString( $timeslot_duration . ' minutes' ) );
-						$is_today            = Lafka_Order_Hours::get_order_hours_time()->format( 'Y-m-d' ) === $start_plus_timeslot->format( 'Y-m-d' );
-						if ( $start_plus_timeslot >= $end_time ) {
-							$entry['end'] = $period->end;
-							if ( $is_today ) {
-								if ( $current_time < $start_plus_timeslot && $current_time <= $start_time ) {
-									$time_periods[] = $entry;
-								}
-							} else {
-								$time_periods[] = $entry;
-							}
-							break;
-						} else {
-							$entry['end']  = $start_plus_timeslot->format( 'H:i' );
-							$period->start = $entry['end'];
-							if ( $is_today ) {
-								if ( $current_time < $start_plus_timeslot && $current_time <= $start_time ) {
-									$time_periods[] = $entry;
-								}
-							} else {
-								$time_periods[] = $entry;
-							}
-						}
-					}
-				}
-			}
-		} else {
-			$time_periods = self::get_all_timeslots_static( $date, $timeslot_duration );
-		}
-
-		$branch_id = null;
-		if ( isset( WC()->session ) ) {
-			$branch_id = WC()->session->get( 'lafka_branch_location' )['branch_id'] ?? null;
-		}
-		$max_orders_per_slot = self::get_max_orders_per_slot( $branch_id );
-
-		$response = array();
-		foreach ( $time_periods as $time_period ) {
-			$timeslot_disabled        = false;
-			$option_title             = '';
-			$orders_made_per_timeslot = self::get_number_of_orders_per_timeslot( $branch_id, $date, $time_period );
-			if ( $max_orders_per_slot && $orders_made_per_timeslot >= $max_orders_per_slot ) {
-				$timeslot_disabled = true;
-				$option_title      = esc_html__( 'unavailable. Maximum orders reached.', 'lafka-plugin' );
-			}
-
-			$response[] = array(
-				'id'       => $time_period['start'] . ' - ' . $time_period['end'],
-				'text'     => $time_period['start'] . ' - ' . $time_period['end'],
-				'disabled' => $timeslot_disabled,
-				'title'    => ( $option_title ? $time_period['start'] . ' - ' . $time_period['end'] . ' ' . $option_title : '' ),
-			);
-		}
-
-		return $response;
-	}
-
-	private static function get_max_orders_per_slot( $branch_id ) {
-		$datetime_options = get_option( 'lafka_shipping_areas_datetime' );
-		if ( $branch_id !== null ) {
-			$branch_override_global_datetime = get_term_meta( $branch_id, 'lafka_branch_override_datetime_global', true );
-			$branch_max_orders_per_timeslot  = get_term_meta( $branch_id, 'lafka_branch_datetime_orders_per_timeslot', true );
-			if ( ! empty( $branch_override_global_datetime ) ) {
-				return $branch_max_orders_per_timeslot;
-			}
-		}
-
-		return $datetime_options['orders_per_timeslot'] ?? false;
-	}
-
-	private static function has_future_slots_for_today( DateTime $date, $timeslot_duration ): bool {
-		if ( ! empty( Lafka_Order_Hours::$lafka_order_hours_schedule ) ) {
-			$schedule_json            = Lafka_Order_Hours::$lafka_order_hours_schedule;
-			$schedule_array           = json_decode( $schedule_json );
-			$day_of_the_week_to_check = $date->format( 'N' ) - 1;
-			if ( ! empty( $schedule_array[ $day_of_the_week_to_check ]->periods ) ) {
-				$day_periods = $schedule_array[ $day_of_the_week_to_check ]->periods;
-				usort(
-					$day_periods,
-					function ( $a, $b ) {
-						return strcmp( $a->start, $b->start );
-					}
-				);
-				foreach ( $day_periods as $period ) {
-					if ( $period->end === '00:00' ) {
-						$period->end = '24:00';
-					}
-					$hours_minutes_array_end = explode( ':', $period->end );
-					if ( Lafka_Order_Hours::get_order_hours_time()->setTime( $hours_minutes_array_end[0], $hours_minutes_array_end[1] )->sub( DateInterval::createFromDateString( $timeslot_duration . ' minutes' ) ) > $date ) {
-						return true;
-					}
-				}
-			}
-
-			return false;
-		}
-
-		return false;
 	}
 
 	public function show_checkout_fields_admin_order_meta( $order ) {
@@ -785,149 +548,6 @@ class Lafka_Shipping_Areas {
 		}
 
 		return $fields;
-	}
-
-	public function show_datetime_fields_in_checkout() {
-		$order_type_label = esc_html__( 'Delivery', 'lafka-plugin' );
-		if ( ! empty( WC()->session ) ) {
-			$branch_location_session = WC()->session->get( 'lafka_branch_location' );
-			if ( ! empty( $branch_location_session ) ) {
-				$order_type = $branch_location_session['order_type'];
-				if ( $order_type === 'pickup' ) {
-					$order_type_label = esc_html__( 'Pickup', 'lafka-plugin' );
-				}
-			}
-		}
-		?>
-		<div class="lafka-checkout-datetime-container">
-			<div class="lafka-checkout-datetime-trigger">
-				<a href="javascript:" class="lafka-delivery-time-toggle" title="<?php esc_html_e( 'Toggle Time Pickers', 'lafka-plugin' ); ?>">
-					<?php echo esc_html__( 'Specify', 'lafka-plugin' ) . ' '; ?><?php echo esc_html( $order_type_label ); ?><?php echo ' ' . esc_html__( 'Time', 'lafka-plugin' ); ?>
-					<?php if ( empty( $this->order_date_time_mandatory ) ) : ?>
-						<?php esc_html_e( '(optional)', 'lafka-plugin' ); ?>
-					<?php else : ?>
-						<abbr class="required" title="<?php echo esc_html__( 'required', 'lafka-plugin' ); ?>">*</abbr>
-					<?php endif; ?>
-				</a>
-			</div>
-			<div class="lafka-checkout-datetime-fields
-			<?php
-			if ( empty( $this->order_date_time_mandatory ) ) :
-				?>
-				hidden<?php endif; ?>">
-				<input name="lafka_checkout_date" id="lafka_checkout_date" 
-				<?php
-				if ( $this->order_date_time_days_ahead < 1 ) :
-					?>
-					class="hidden"<?php endif; ?> type="text"
-						placeholder="<?php esc_html_e( 'Select Date', 'lafka-plugin' ); ?>..">
-				<select name="lafka_checkout_timeslot" id="lafka_checkout_timeslot">
-					<?php if ( empty( $this->order_date_time_mandatory ) ) : ?>
-						<option></option>
-					<?php endif; ?>
-				</select>
-				<?php if ( $this->order_date_time_days_ahead > 0 && empty( $this->order_date_time_mandatory ) ) : ?>
-					<a href="javascript:" class="lafka-datetime-clear"
-						title="<?php esc_html_e( 'Clear', 'lafka-plugin' ); ?> <?php echo esc_html( $order_type_label ); ?> <?php esc_html_e( 'Time Entries', 'lafka-plugin' ); ?>"><?php echo esc_html__( 'Clear', 'lafka-plugin' ); ?></a>
-				<?php endif; ?>
-			</div>
-		</div>
-		<?php
-	}
-
-	public function retrieve_time_slots_for_date() {
-		check_ajax_referer( 'time_slots_for_date' );
-
-		$date      = DateTime::createFromFormat( 'Y-m-d', sanitize_text_field( $_POST['date'] ), class_exists( 'Lafka_Order_Hours' ) ? Lafka_Order_Hours::get_timezone() : wp_timezone() );
-		$timeslots = self::get_timeslots_for_date( $date, $this->order_date_time_timeslot_duration );
-		wp_send_json_success( $timeslots );
-	}
-
-	private static function get_all_days_ahead( $days_ahead ): array {
-		$current_time = new DateTime( 'now' );
-		$interval     = DateInterval::createFromDateString( '1 day' );
-		$days         = array( $current_time->format( 'Y-m-d' ) );
-
-		for ( $i = 1; $i <= $days_ahead; $i++ ) {
-			$days[] = $current_time->add( $interval )->format( 'Y-m-d' );
-		}
-
-		return $days;
-	}
-
-	private static function get_all_timeslots_static( DateTime $date, $timeslot_duration ): array {
-		$timeslots = array();
-
-		$curr_time = new DateTime( 'now', $date->getTimezone() );
-		$time      = ( clone $curr_time )->setTime( 0, 0 );
-		$interval  = DateInterval::createFromDateString( $timeslot_duration . ' minutes' );
-		while ( $curr_time->format( 'Y-m-d' ) === $time->format( 'Y-m-d' ) ) {
-			$start = $time->format( 'H:i' );
-			$end   = $time->add( $interval )->format( 'H:i' );
-			if ( $time->format( 'Y-m-d' ) !== $curr_time->format( 'Y-m-d' ) ) {
-				$end = '24:00';
-			}
-			$is_today = $curr_time->format( 'Y-m-d' ) === $date->format( 'Y-m-d' );
-			if ( $is_today && $curr_time <= ( clone $time )->sub( $interval ) || ! $is_today ) {
-				$timeslots[] = array(
-					'start' => $start,
-					'end'   => $end,
-				);
-			}
-		}
-
-		return $timeslots;
-	}
-
-	private static function get_number_of_orders_per_timeslot( $branch_id, DateTime $order_date, $order_timeslot ): int {
-		// Branch clause: a numeric ID matches that branch's orders; anything else
-		// (empty/null/non-numeric) matches orders with NO branch assigned. Using
-		// `'value' => null` was a bug because SQL `meta_value = NULL` never
-		// matches — orders were silently undercounted, leading to overbooking.
-		// Use `compare => 'NOT EXISTS'` for the unset case.
-		if ( is_numeric( $branch_id ) ) {
-			$branch_clause = array(
-				'key'     => 'lafka_selected_branch_id',
-				'value'   => $branch_id,
-				'compare' => '=',
-			);
-		} else {
-			$branch_clause = array(
-				'key'     => 'lafka_selected_branch_id',
-				'compare' => 'NOT EXISTS',
-			);
-		}
-
-		$meta_query = array(
-			'relation' => 'AND',
-			$branch_clause,
-			array(
-				'key'     => 'lafka_checkout_date',
-				'value'   => $order_date->format( 'Y-m-d' ),
-				'compare' => '=',
-			),
-			array(
-				'key'     => 'lafka_checkout_timeslot',
-				'value'   => ( $order_timeslot['start'] ?? '' ) . ' - ' . ( $order_timeslot['end'] ?? '' ),
-				'compare' => '=',
-			),
-		);
-
-		// `wc_get_orders()` supports meta_query natively in both HPOS (WC 8.x+
-		// OrdersTableQuery) and the CPT data store. `'return' => 'ids'` skips
-		// hydrating WC_Order objects we never use. Counting via `count()` on the
-		// id list is O(N) over the matched rows, which for a per-timeslot query
-		// is bounded by the slot capacity and stays small.
-		$ids = wc_get_orders(
-			array(
-				'status'     => 'wc-processing',
-				'limit'      => -1,
-				'return'     => 'ids',
-				'meta_query' => $meta_query,
-			)
-		);
-
-		return count( $ids );
 	}
 
 	private static function get_delivery_location_link( $location ): string {
