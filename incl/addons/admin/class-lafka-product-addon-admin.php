@@ -119,6 +119,14 @@ class Lafka_Product_Addon_Admin {
 			if ( $_POST ) {
 				check_admin_referer( 'lafka_save_global_addons' );
 
+				// Defense in depth: the submenu page is gated on
+				// 'manage_woocommerce', but the POST handler must independently
+				// verify capability — otherwise any user who can browse to the
+				// page and trigger a CSRF chain could write addon data.
+				if ( ! current_user_can( 'manage_woocommerce' ) ) {
+					wp_die( esc_html__( 'You do not have permission to save addons.', 'lafka-plugin' ) );
+				}
+
 				if ( $edit_id = $this->save_global_addons() ) {
 					echo '<div class="updated"><p>' . esc_html__( 'Add-on saved successfully', 'lafka-plugin' ) . '</p></div>';
 				}
@@ -205,6 +213,11 @@ class Lafka_Product_Addon_Admin {
 	 * @return bool success or failure
 	 */
 	public function save_global_addons() {
+		// Defense in depth — see also the cap check in global_addons_admin().
+		if ( ! current_user_can( 'manage_woocommerce' ) ) {
+			return false;
+		}
+
 		$edit_id        = ! empty( $_POST['edit_id'] ) ? absint( $_POST['edit_id'] ) : '';
 		$reference      = wc_clean( $_POST['addon-reference'] );
 		$priority       = absint( $_POST['addon-priority'] );
@@ -218,6 +231,17 @@ class Lafka_Product_Addon_Admin {
 
 		if ( ! $priority && $priority !== 0 ) {
 			$priority = 10;
+		}
+
+		// "All Products" (id 0 in $objects) is mutually exclusive with category
+		// restrictions. Old behavior: when both were present, _all_products was
+		// set to 1 AND categories were also stored, but display logic checked
+		// _all_products FIRST and short-circuited — silently ignoring the
+		// category restriction the operator also set. Resolve up front so the
+		// branches below all use the same canonical $objects.
+		$applies_to_all = in_array( 0, $objects, true );
+		if ( $applies_to_all ) {
+			$objects = array();
 		}
 
 		if ( $edit_id ) {
@@ -250,11 +274,7 @@ class Lafka_Product_Addon_Admin {
 
 		}
 
-		if ( in_array( 0, $objects ) ) {
-			update_post_meta( $edit_id, '_all_products', 1 );
-		} else {
-			update_post_meta( $edit_id, '_all_products', 0 );
-		}
+		update_post_meta( $edit_id, '_all_products', $applies_to_all ? 1 : 0 );
 
 		update_post_meta( $edit_id, '_priority', $priority );
 

@@ -35,7 +35,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 				</th>
 				<td>
 					<select id="addon-objects" name="addon-objects[]" multiple="multiple" style="width:50%;" data-placeholder="<?php esc_html_e( 'Choose some options&hellip;', 'lafka-plugin' ); ?>" class="chosen_select wc-enhanced-select">
-						<option value="0" <?php selected( in_array( '0', $objects ), true ); ?>><?php esc_html_e( 'All Products', 'lafka-plugin' ); ?></option>
+						<option value="0" <?php selected( in_array( 0, $objects, true ), true ); ?>><?php esc_html_e( 'All Products', 'lafka-plugin' ); ?></option>
 						<optgroup label="<?php esc_html_e( 'Product category notifications', 'lafka-plugin' ); ?>">
 							<?php
 								// Modern array-form (WP 4.5+); positional first-arg removed in WP 7.0.
@@ -47,7 +47,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 								);
 
 								foreach ( $terms as $term ) {
-									echo '<option value="' . $term->term_id . '" ' . selected( in_array( $term->term_id, $objects ), true, false ) . '>' . esc_html__( 'Category:', 'lafka-plugin' ) . ' ' . $term->name . '</option>';
+									// Defense in depth: term_id is int from WP, term name is admin-controlled, but escape anyway.
+									echo '<option value="' . esc_attr( (int) $term->term_id ) . '" ' . selected( in_array( (int) $term->term_id, $objects, true ), true, false ) . '>' . esc_html__( 'Category:', 'lafka-plugin' ) . ' ' . esc_html( $term->name ) . '</option>';
 								}
 								?>
 						</optgroup>
@@ -70,12 +71,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 			</tr>
 		</table>
 		<p class="submit">
-			<input type="hidden" name="edit_id" value="
-			<?php
-			if ( ! empty( $edit_id ) ) {
-				echo $edit_id;}
-			?>
-			" />
+			<input type="hidden" name="edit_id" value="<?php echo ! empty( $edit_id ) ? esc_attr( (int) $edit_id ) : ''; ?>" />
 			<input type="submit" name="submit" id="submit" class="button button-primary" value="<?php esc_html_e( 'Save Global Add-on', 'lafka-plugin' ); ?>">
 		</p>
 	</form>

@@ -27,8 +27,17 @@ if ( ! class_exists( 'WC_Product_Addons_Helper' ) ) {
 
 			// PERF-C03: Static per-request cache — avoids re-querying addons for the same product
 			// when called multiple times (display, check_required_addons, validate, add_cart_item_data).
+			//
+			// Cache key includes a filterable suffix so context-sensitive filters
+			// (multilingual via WPML/Polylang, role-segmented addons, A/B test
+			// segments) can append their own discriminator and avoid the first
+			// caller's result being served to a different context. Without the
+			// suffix, a per-locale or per-role addon set silently leaked across
+			// requests within the same process. Hook
+			// `lafka_product_addons_cache_key_extra` to add e.g. ICL_LANGUAGE_CODE.
 			static $product_addons_cache = array();
-			$cache_key                   = $post_id . '|' . ( $prefix ?: 'default' ) . '|' . (int) $inc_parent . '|' . (int) $inc_global;
+			$extra_key = (string) apply_filters( 'lafka_product_addons_cache_key_extra', '', $post_id, $prefix );
+			$cache_key = $post_id . '|' . ( $prefix ?: 'default' ) . '|' . (int) $inc_parent . '|' . (int) $inc_global . '|' . $extra_key;
 			if ( isset( $product_addons_cache[ $cache_key ] ) ) {
 				return $product_addons_cache[ $cache_key ];
 			}
