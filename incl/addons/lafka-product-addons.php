@@ -25,45 +25,24 @@ class Lafka_Product_Addons {
 	 * Initializes plugin classes.
 	 */
 	public function init_classes() {
-		// Engine v2 first — it declares Lafka_Engine_Helper and class_aliases
-		// WC_Product_Addons_Helper to it. The legacy helper file below has a
-		// `class_exists` guard so it no-ops once the alias is in place.
+		// v2 engine bootstrap — declares all engine classes plus the
+		// WC_Product_Addons_Helper class_alias.
 		require_once __DIR__ . '/engine/lafka-addons-engine-bootstrap.php';
 
-		// Core (models) — legacy groups classes still in use by legacy cart
-		// + display until 7b/7c migrate them.
-		include_once __DIR__ . '/includes/groups/class-lafka-product-addon-group-validator.php';
-		include_once __DIR__ . '/includes/groups/class-lafka-product-addon-global-group.php';
-		include_once __DIR__ . '/includes/groups/class-lafka-product-addon-product-group.php';
-		include_once __DIR__ . '/includes/groups/class-lafka-product-addon-groups.php';
-
-		// Legacy cache invalidation now duplicates engine bootstrap's hooks;
-		// kept until 7d when the whole groups/ tree retires.
-		Lafka_Product_Addon_Groups::bootstrap();
-
-		// Admin
 		if ( is_admin() ) {
 			$this->init_admin();
 		}
 
-		// Legacy helper file is a no-op now: WC_Product_Addons_Helper is
-		// already declared by the engine's class_alias above. Kept as
-		// defense-in-depth in case a third party mode-loads addons without
-		// the engine.
-		include_once __DIR__ . '/includes/class-lafka-product-addons-helper.php';
+		// Cart + display: each is a single Lafka_Engine_* instance, exposed
+		// under both the modern and legacy globals. The Combos compatibility
+		// module reads $Product_Addon_Cart, and templates reach for methods
+		// on $Product_Addon_Display, so the dual-global pattern keeps those
+		// integrations working without changes. Both legacy globals retire
+		// in v8.16.x once combos updates and templates rewrite.
+		$engine_cart                      = new Lafka_Engine_Cart();
+		$GLOBALS['Lafka_Engine_Cart']     = $engine_cart;
+		$GLOBALS['Product_Addon_Cart']    = $engine_cart;
 
-		// Cart: single Lafka_Engine_Cart instance, exposed under both globals.
-		// $Product_Addon_Cart is the legacy global the Combos compatibility
-		// module reads — we point it at the engine cart so that integration
-		// keeps working without touching combos. Phase 8 retires the legacy
-		// global once combos updates its references.
-		$engine_cart                   = new Lafka_Engine_Cart();
-		$GLOBALS['Lafka_Engine_Cart']  = $engine_cart;
-		$GLOBALS['Product_Addon_Cart'] = $engine_cart;
-
-		// Display: same dual-global pattern. Templates reach for
-		// $Product_Addon_Display->get_addon_option_custom_image_id() etc.,
-		// so we keep the legacy global pointing at the engine display.
 		$engine_display                   = new Lafka_Engine_Display();
 		$GLOBALS['Lafka_Engine_Display']  = $engine_display;
 		$GLOBALS['Product_Addon_Display'] = $engine_display;
@@ -154,8 +133,8 @@ function lafka_get_option_price_on_default_attribute( $product, $option_price ) 
  * in a scalar.
  *
  * Used by lafka_get_option_price_on_default_attribute() and by
- * Lafka_Product_Addon_Cart's display sites to defensively coerce any
- * leftover array prices before they reach (float) cast or wc_price().
+ * Lafka_Engine_Cart's display sites to defensively coerce any leftover
+ * array prices before they reach (float) cast or wc_price().
  *
  * @param mixed $price Scalar or possibly-nested array.
  * @return string|int|float
