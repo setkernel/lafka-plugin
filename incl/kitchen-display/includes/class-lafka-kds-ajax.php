@@ -234,102 +234,12 @@ class Lafka_KDS_Ajax {
 	}
 
 	/**
-	 * Format order data for KDS.
+	 * Format order data for KDS. Delegates to Lafka_KDS_Order_Formatter so
+	 * each shaping concern (line items, payment, scheduling, delivery) can
+	 * be unit-tested without standing up the AJAX request flow.
 	 */
 	private function format_order( $order ) {
-		$items = array();
-		foreach ( $order->get_items() as $item ) {
-			$item_data = array(
-				'name'     => $item->get_name(),
-				'quantity' => $item->get_quantity(),
-				'meta'     => array(),
-				'category' => '',
-			);
-
-			// Get product category for item grouping on KDS
-			$product = $item->get_product();
-			if ( $product ) {
-				$categories = wp_get_post_terms( $product->get_id(), 'product_cat', array( 'fields' => 'names' ) );
-				if ( ! is_wp_error( $categories ) && ! empty( $categories ) ) {
-					$item_data['category'] = $categories[0];
-				}
-			}
-
-			// Get formatted meta (variations, addons, etc.)
-			$meta_data = $item->get_formatted_meta_data( '_', true );
-			foreach ( $meta_data as $meta ) {
-				$item_data['meta'][] = array(
-					'key'   => wp_strip_all_tags( $meta->display_key ),
-					'value' => wp_strip_all_tags( $meta->display_value ),
-				);
-			}
-
-			$items[] = $item_data;
-		}
-
-		$order_type = Lafka_Kitchen_Display::get_order_type( $order );
-
-		// Payment method
-		$payment_method = $order->get_payment_method();
-		$is_paid_online = ! in_array( $payment_method, array( 'cod', 'cheque', '' ), true );
-
-		// Scheduled time (from lafka shipping areas or similar)
-		$scheduled_date = $order->get_meta( 'lafka_order_date' );
-		$scheduled_time = $order->get_meta( 'lafka_order_time' );
-		$scheduled      = '';
-		if ( $scheduled_date && $scheduled_time ) {
-			$scheduled = $scheduled_date . ' ' . $scheduled_time;
-		}
-
-		// ETA
-		$eta         = $order->get_meta( '_lafka_kds_eta' );
-		$eta_minutes = $order->get_meta( '_lafka_kds_eta_minutes' );
-		$accepted_at = $order->get_meta( '_lafka_kds_accepted_at' );
-
-		// Issue #30: Add missing order metadata
-		$delivery_address = '';
-		if ( 'delivery' === $order_type ) {
-			$address_parts    = array(
-				$order->get_shipping_address_1(),
-				$order->get_shipping_address_2(),
-				$order->get_shipping_city(),
-				$order->get_shipping_state(),
-				$order->get_shipping_postcode(),
-			);
-			$delivery_address = trim( implode( ', ', array_filter( $address_parts ) ) );
-		}
-
-		// Get special instructions from order meta
-		$special_instructions = $order->get_meta( '_lafka_special_instructions' );
-
-		// Get allergen information if available
-		$allergen_info = $order->get_meta( '_lafka_allergen_info' );
-
-		return array(
-			'id'                   => $order->get_id(),
-			'number'               => $order->get_order_number(),
-			'status'               => $order->get_status(),
-			'date_created'         => $order->get_date_created() ? $order->get_date_created()->getTimestamp() : 0,
-			'order_type'           => $order_type,
-			'is_paid_online'       => $is_paid_online,
-			'payment_label'        => $is_paid_online ? __( 'Paid Online', 'lafka-plugin' ) : __( 'Cash on Delivery', 'lafka-plugin' ),
-			'customer_name'        => $order->get_billing_first_name() . ' ' . $order->get_billing_last_name(),
-			'customer_phone'       => $order->get_billing_phone(),
-			'items'                => $items,
-			'customer_note'        => $order->get_customer_note(),
-			'scheduled'            => $scheduled,
-			'eta'                  => $eta ? (int) $eta : null,
-			'eta_minutes'          => $eta_minutes ? (int) $eta_minutes : null,
-			'accepted_at'          => $accepted_at ? (int) $accepted_at : null,
-			'total'                => $order->get_total(),
-			// WC stores the symbol HTML-entity-encoded (e.g. '&#36;' for USD); the
-			// KDS JS does textContent escaping which would render the entity
-			// literally. Decode here so JS receives a plain UTF-8 character.
-			'currency_symbol'      => html_entity_decode( get_woocommerce_currency_symbol( $order->get_currency() ), ENT_QUOTES, 'UTF-8' ),
-			'delivery_address'     => $delivery_address,
-			'special_instructions' => $special_instructions,
-			'allergen_info'        => $allergen_info,
-		);
+		return ( new Lafka_KDS_Order_Formatter() )->format( $order );
 	}
 
 	/**

@@ -47,6 +47,7 @@ class Lafka_Kitchen_Display {
 	 */
 	private function includes() {
 		require_once __DIR__ . '/includes/class-lafka-kds-order-statuses.php';
+		require_once __DIR__ . '/includes/class-lafka-kds-order-formatter.php';
 		require_once __DIR__ . '/includes/class-lafka-kds-ajax.php';
 		require_once __DIR__ . '/includes/class-lafka-kds-frontend.php';
 		require_once __DIR__ . '/includes/class-lafka-kds-customer-view.php';
