@@ -42,7 +42,7 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 
 			$wp_customize->add_panel( 'lafka_restaurant_info', array(
 				'title'       => esc_html__( 'Lafka — Restaurant Information', 'lafka-plugin' ),
-				'description' => esc_html__( 'Single source of truth for your restaurant\'s NAP (name/address/phone), geo coordinates, opening hours, cuisine, payment methods, and social profile/citation URLs. Used by JSON-LD schema, the [lafka_nap] shortcode, and the editorial page templates.', 'lafka-plugin' ),
+				'description' => esc_html__( 'Restaurant-specific extras for JSON-LD schema, the [lafka_nap] shortcode, and editorial templates: opening hours, cuisine, geo coordinates, social/citation URLs, and price range. Address, phone, and country are read from WooCommerce → Settings → General by default — only fill them in here if you want to override the WC values for schema/branding (e.g. multi-location).', 'lafka-plugin' ),
 				'priority'    => 150,
 			) );
 
@@ -258,11 +258,12 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 				'priority' => 20,
 			) );
 
-			self::add_text( $wp_customize, 'lafka_business_street',     'lafka_business_location', esc_html__( 'Street address', 'lafka-plugin' ) );
-			self::add_text( $wp_customize, 'lafka_business_city',       'lafka_business_location', esc_html__( 'City', 'lafka-plugin' ) );
-			self::add_text( $wp_customize, 'lafka_business_region',     'lafka_business_location', esc_html__( 'Region / State (2-letter code preferred)', 'lafka-plugin' ) );
-			self::add_text( $wp_customize, 'lafka_business_postal',     'lafka_business_location', esc_html__( 'Postal / ZIP code', 'lafka-plugin' ) );
-			self::add_text( $wp_customize, 'lafka_business_country',    'lafka_business_location', esc_html__( 'Country (2-letter ISO, e.g. CA, US)', 'lafka-plugin' ) );
+			$wc_default_msg = esc_html__( 'Leave blank to inherit from WooCommerce → Settings → General.', 'lafka-plugin' );
+			self::add_text( $wp_customize, 'lafka_business_street',     'lafka_business_location', esc_html__( 'Street address', 'lafka-plugin' ), '', $wc_default_msg );
+			self::add_text( $wp_customize, 'lafka_business_city',       'lafka_business_location', esc_html__( 'City', 'lafka-plugin' ), '', $wc_default_msg );
+			self::add_text( $wp_customize, 'lafka_business_region',     'lafka_business_location', esc_html__( 'Region / State (2-letter code preferred)', 'lafka-plugin' ), '', $wc_default_msg );
+			self::add_text( $wp_customize, 'lafka_business_postal',     'lafka_business_location', esc_html__( 'Postal / ZIP code', 'lafka-plugin' ), '', $wc_default_msg );
+			self::add_text( $wp_customize, 'lafka_business_country',    'lafka_business_location', esc_html__( 'Country (2-letter ISO, e.g. CA, US)', 'lafka-plugin' ), '', $wc_default_msg );
 
 			$wp_customize->add_setting( 'lafka_business_geo_lat', array(
 				'default'           => '',
@@ -304,14 +305,14 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 				'lafka_business_contact',
 				esc_html__( 'Phone (E.164 format)', 'lafka-plugin' ),
 				'',
-				esc_html__( 'Machine-readable form. Example: +15551234567 (no spaces, no dashes).', 'lafka-plugin' )
+				esc_html__( 'Machine-readable form. Example: +15551234567 (no spaces, no dashes). Leave blank to inherit from WooCommerce → Settings → General → Store phone.', 'lafka-plugin' )
 			);
 
 			self::add_text( $wp_customize, 'lafka_business_phone_display',
 				'lafka_business_contact',
 				esc_html__( 'Phone (human-friendly display)', 'lafka-plugin' ),
 				'',
-				esc_html__( 'Shown to users. Example: +1 555-123-4567.', 'lafka-plugin' )
+				esc_html__( 'Shown to users. Example: +1 555-123-4567. Falls back to the E.164 value (or WC store phone) when blank.', 'lafka-plugin' )
 			);
 		}
 

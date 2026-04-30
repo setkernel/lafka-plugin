@@ -65,9 +65,47 @@ if ( ! function_exists( 'lafka_get_restaurant_info' ) ) {
 	 * @return array<string, mixed>
 	 */
 	function lafka_get_restaurant_info(): array {
-		// Helper: read theme_mod first, then option, then default. Empty string
-		// is treated as "not set" so the next resolver step takes over.
-		$get = function ( $key, $default = '' ) {
+		// WooCommerce already stores the canonical NAP for the shop. Pull defaults
+		// from there so operators don't enter address/phone twice. The Lafka
+		// Customizer fields then act as overrides — useful when the site is multi-
+		// location (one WC store, many physical addresses) or when the schema
+		// branding differs from the WC checkout/email branding.
+		$wc_country_split = static function (): array {
+			if ( ! function_exists( 'get_option' ) ) {
+				return array( '', '' );
+			}
+			$raw = (string) get_option( 'woocommerce_default_country', '' );
+			if ( '' === $raw ) {
+				return array( '', '' );
+			}
+			// WC stores "CA:ON" for country with state, or just "CA" without.
+			$parts   = explode( ':', $raw, 2 );
+			$country = isset( $parts[0] ) ? (string) $parts[0] : '';
+			$region  = isset( $parts[1] ) ? (string) $parts[1] : '';
+			return array( $country, $region );
+		};
+		[ $wc_country, $wc_region ] = $wc_country_split();
+
+		// Map of Lafka resolver keys → equivalent WC store option (or computed
+		// fallback). Keys not in this map fall through to the final default.
+		$wc_fallbacks = array(
+			'street'        => function_exists( 'get_option' ) ? (string) get_option( 'woocommerce_store_address', '' ) : '',
+			'city'          => function_exists( 'get_option' ) ? (string) get_option( 'woocommerce_store_city', '' ) : '',
+			'postal'        => function_exists( 'get_option' ) ? (string) get_option( 'woocommerce_store_postcode', '' ) : '',
+			'country'       => $wc_country,
+			'region'        => $wc_region,
+			// Phone: WC core didn't ship `woocommerce_store_phone` until late
+			// versions; reading the option returns '' on older installs which
+			// is fine — the resolver then falls through to the default.
+			'phone_e164'    => function_exists( 'get_option' ) ? (string) get_option( 'woocommerce_store_phone', '' ) : '',
+			'phone_display' => function_exists( 'get_option' ) ? (string) get_option( 'woocommerce_store_phone', '' ) : '',
+		);
+
+		// Helper: theme_mod → option → WC store fallback → default. Empty strings
+		// are treated as "not set" so the next resolver step takes over. This
+		// keeps Customizer values as overrides while WC settings are the
+		// canonical source for shared NAP fields.
+		$get = function ( $key, $default = '' ) use ( $wc_fallbacks ) {
 			if ( function_exists( 'get_theme_mod' ) ) {
 				$theme_mod = get_theme_mod( 'lafka_business_' . $key, null );
 				if ( null !== $theme_mod && '' !== $theme_mod ) {
@@ -79,6 +117,9 @@ if ( ! function_exists( 'lafka_get_restaurant_info' ) ) {
 				if ( null !== $option && '' !== $option ) {
 					return $option;
 				}
+			}
+			if ( isset( $wc_fallbacks[ $key ] ) && '' !== $wc_fallbacks[ $key ] ) {
+				return $wc_fallbacks[ $key ];
 			}
 			return $default;
 		};
