@@ -45,20 +45,24 @@ $matrix_for_option = is_array( $option->price ) ? $option->price : array();
 	</td>
 
 	<?php
-    if ( $shows_per_option_price ) :
-		$scalar_price = is_scalar( $option->price ) ? (string) $option->price : '';
-		?>
-		<td>
-			<input type="text" name="<?php echo esc_attr( $option_prefix . '[price]' ); ?>" value="<?php echo esc_attr( $scalar_price ); ?>" class="wc_input_price small-text" placeholder="0.00" />
-		</td>
-	<?php endif; ?>
+    // Always emit the per-option price cell so CSS can toggle visibility when
+    // the user changes pricing_mode without saving. Engine save semantics
+    // ignore the field when pricing_mode isn't flat_per_option.
+    $scalar_price = is_scalar( $option->price ) ? (string) $option->price : '';
+    ?>
+	<td class="lafka-col-price">
+		<input type="text" name="<?php echo esc_attr( $option_prefix . '[price]' ); ?>" value="<?php echo esc_attr( $scalar_price ); ?>" class="wc_input_price small-text" placeholder="0.00" />
+	</td>
 
 	<?php
-    if ( $shows_matrix_price && ! empty( $matrix_columns ) ) :
+    // Always emit matrix cells when columns exist (regardless of current
+    // pricing_mode). CSS hides them outside matrix mode. If the saved data
+    // has no matrix prices yet, cells render empty for the user to fill in.
+    if ( ! empty( $matrix_columns ) ) :
 		foreach ( $matrix_columns as $col ) :
 			$cell_value = $matrix_for_option[ $col['taxonomy'] ][ $col['slug'] ] ?? '';
 			?>
-			<td>
+			<td class="lafka-col-matrix" data-tax="<?php echo esc_attr( $col['taxonomy'] ); ?>" data-slug="<?php echo esc_attr( $col['slug'] ); ?>">
 				<input type="text"
 					name="<?php echo esc_attr( $option_prefix . '[matrix_price][' . $col['taxonomy'] . '][' . $col['slug'] . ']' ); ?>"
 					value="<?php echo esc_attr( is_scalar( $cell_value ) ? (string) $cell_value : '' ); ?>"

@@ -34,7 +34,7 @@ $is_size_mode = in_array(
 	true
 );
 ?>
-<fieldset class="lafka-engine-fieldset lafka-engine-size-section" <?php echo $is_size_mode ? '' : 'style="display:none;"'; ?> data-lafka-size-section>
+<fieldset class="lafka-engine-fieldset lafka-engine-size-section" data-pricing-mode="<?php echo esc_attr( $group->pricing_mode ); ?>" <?php echo $is_size_mode ? '' : 'style="display:none;"'; ?> data-lafka-size-section>
 	<legend><?php esc_html_e( 'Size attribute (for per-size pricing)', 'lafka-plugin' ); ?></legend>
 
 	<p>
@@ -72,9 +72,11 @@ $is_size_mode = in_array(
 				<label class="lafka-engine-size-term">
 					<input type="checkbox" name="<?php echo esc_attr( $prefix . '[included_size_slugs][]' ); ?>" value="<?php echo esc_attr( $slug ); ?>" <?php checked( $included ); ?> />
 					<?php echo esc_html( $term->name ); ?>
-					<?php if ( Lafka_Addon_Schema::PRICING_FLAT_PER_SIZE === $group->pricing_mode ) : ?>
-						<input type="text" name="<?php echo esc_attr( $prefix . '[group_size_prices][' . $slug . ']' ); ?>" value="<?php echo esc_attr( $group->group_size_prices[ $slug ] ?? '' ); ?>" class="wc_input_price small-text" placeholder="0.00" />
-					<?php endif; ?>
+					<input type="text"
+						class="wc_input_price small-text lafka-engine-size-term-price"
+						name="<?php echo esc_attr( $prefix . '[group_size_prices][' . $slug . ']' ); ?>"
+						value="<?php echo esc_attr( $group->group_size_prices[ $slug ] ?? '' ); ?>"
+						placeholder="0.00" />
 				</label>
 			<?php endforeach; ?>
 		</div>

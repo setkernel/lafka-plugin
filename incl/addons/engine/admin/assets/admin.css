@@ -4,7 +4,36 @@
 .lafka-engine-admin .wp-list-table th { font-weight: 600; }
 .lafka-engine-edit .lafka-engine-form { max-width: 1100px; }
 
-.lafka-engine-categories { margin-top: 8px; }
+.lafka-engine-applies-to {
+	border: 1px solid #dcdcde;
+	border-radius: 3px;
+	padding: 12px;
+	background: #fff;
+}
+.lafka-engine-applies-to__option {
+	display: block;
+	margin-bottom: 6px;
+}
+.lafka-engine-categories {
+	margin-top: 12px;
+	padding-top: 12px;
+	border-top: 1px dashed #dcdcde;
+}
+.lafka-engine-category-list {
+	max-height: 200px;
+	overflow-y: auto;
+	margin: 8px 0;
+	padding: 8px 12px;
+	background: #f6f7f7;
+	border: 1px solid #dcdcde;
+	border-radius: 3px;
+	column-count: 2;
+	column-gap: 16px;
+}
+.lafka-engine-category-list li {
+	margin: 0 0 4px;
+	break-inside: avoid;
+}
 
 .lafka-engine-groups { display: flex; flex-direction: column; gap: 16px; }
 
@@ -60,6 +89,29 @@
 	display: inline-block;
 	padding: 4px 0;
 	color: #1d2327;
+}
+
+/*
+ * Pricing-mode-driven column visibility.
+ * Per-option Price column shows ONLY in flat_per_option mode.
+ * Matrix per-size columns show ONLY in matrix mode.
+ * Toggling pricing_mode (admin.js) updates data-pricing-mode on the table
+ * and CSS handles the rest — no DOM rebuild required.
+ */
+.lafka-engine-options-table:not([data-pricing-mode="flat_per_option"]) .lafka-col-price {
+	display: none;
+}
+.lafka-engine-options-table:not([data-pricing-mode="matrix"]) .lafka-col-matrix {
+	display: none;
+}
+
+/*
+ * Per-size price input (inside size-picker term checkbox label) shows ONLY
+ * in flat_per_size mode. In matrix mode the per-option×per-size cells in the
+ * options table take over; in other modes the input is irrelevant.
+ */
+.lafka-engine-size-section:not([data-pricing-mode="flat_per_size"]) .lafka-engine-size-term-price {
+	display: none;
 }
 
 .lafka-engine-add-group-row { margin-top: 12px; }

@@ -20,9 +20,11 @@
 			return;
 		}
 
-		// Category visibility toggle.
-		$form.on( 'change', '#lafka_addon_applies_to_all', function () {
-			$form.find( '.lafka-engine-categories' ).toggle( ! $( this ).is( ':checked' ) );
+		// Category visibility toggle. Now driven by radios (All vs Specific
+		// categories) — show category checkboxes only when "Specific" is on.
+		$form.on( 'change', 'input[name="lafka_addon_applies_to_all"]', function () {
+			var appliesToAll = $form.find( 'input[name="lafka_addon_applies_to_all"]:checked' ).val() === '1';
+			$form.find( '.lafka-engine-categories' ).toggle( ! appliesToAll );
 		} );
 
 		// Group-level events: pricing mode + source toggles.
@@ -34,6 +36,21 @@
 			$group.find( '.lafka-engine-per-size-input' ).toggle( mode === 'flat_per_size' );
 			$group.find( '.lafka-engine-matrix-hint' ).toggle( mode === 'matrix' );
 			$group.find( '.lafka-engine-size-section' ).toggle( mode === 'flat_per_size' || mode === 'matrix' );
+
+			// data-pricing-mode drives CSS column visibility on the options
+			// table + per-size price input visibility in the size picker.
+			// Updating these attributes is the entire client-side toggle —
+			// no DOM rebuild required.
+			$group.find( '.lafka-engine-options-table' ).attr( 'data-pricing-mode', mode );
+			$group.find( '.lafka-engine-size-section' ).attr( 'data-pricing-mode', mode );
+
+			// Matrix mode without saved size attribute → show notice instead
+			// of phantom (zero-column) matrix area.
+			var $matrixNeedsAttr = $group.find( '.lafka-engine-matrix-needs-attribute' );
+			if ( $matrixNeedsAttr.length ) {
+				var hasMatrixCols = $group.find( '.lafka-engine-options-table .lafka-col-matrix' ).length > 0;
+				$matrixNeedsAttr.toggle( mode === 'matrix' && ! hasMatrixCols );
+			}
 		} );
 
 		$form.on( 'change', '[data-lafka-source]', function () {

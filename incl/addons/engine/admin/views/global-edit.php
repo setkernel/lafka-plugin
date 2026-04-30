@@ -68,21 +68,34 @@ $list_url = add_query_arg(
 			<tr>
 				<th scope="row"><?php esc_html_e( 'Applies to', 'lafka-plugin' ); ?></th>
 				<td>
-					<label>
-						<input type="checkbox" id="lafka_addon_applies_to_all" name="lafka_addon_applies_to_all" value="1" <?php checked( $applies_to_all ); ?> />
-						<?php esc_html_e( 'All products', 'lafka-plugin' ); ?>
-					</label>
+					<fieldset class="lafka-engine-applies-to">
+						<label class="lafka-engine-applies-to__option">
+							<input type="radio" name="lafka_addon_applies_to_all" value="1" <?php checked( $applies_to_all ); ?> />
+							<?php esc_html_e( 'All products', 'lafka-plugin' ); ?>
+						</label>
+						<label class="lafka-engine-applies-to__option">
+							<input type="radio" name="lafka_addon_applies_to_all" value="0" <?php checked( ! $applies_to_all ); ?> />
+							<?php esc_html_e( 'Only specific product categories', 'lafka-plugin' ); ?>
+						</label>
 
-					<div class="lafka-engine-categories" <?php echo $applies_to_all ? 'style="display:none;"' : ''; ?>>
-						<p><?php esc_html_e( 'Or restrict to specific categories:', 'lafka-plugin' ); ?></p>
-						<select id="lafka_addon_categories" name="lafka_addon_categories[]" multiple class="regular-text">
-							<?php foreach ( $product_categories as $term ) : ?>
-								<option value="<?php echo esc_attr( (int) $term->term_id ); ?>" <?php selected( in_array( (int) $term->term_id, $category_ids, true ), true ); ?>>
-									<?php echo esc_html( $term->name ); ?>
-								</option>
-							<?php endforeach; ?>
-						</select>
-					</div>
+						<div class="lafka-engine-categories" <?php echo $applies_to_all ? 'style="display:none;"' : ''; ?>>
+							<p class="description"><?php esc_html_e( 'Tick categories to restrict this group to:', 'lafka-plugin' ); ?></p>
+							<?php if ( empty( $product_categories ) ) : ?>
+								<p><em><?php esc_html_e( 'No product categories defined yet. Add categories under Products → Categories first.', 'lafka-plugin' ); ?></em></p>
+							<?php else : ?>
+								<ul class="lafka-engine-category-list">
+									<?php foreach ( $product_categories as $term ) : ?>
+										<li>
+											<label>
+												<input type="checkbox" name="lafka_addon_categories[]" value="<?php echo esc_attr( (int) $term->term_id ); ?>" <?php checked( in_array( (int) $term->term_id, $category_ids, true ), true ); ?> />
+												<?php echo esc_html( $term->name ); ?>
+											</label>
+										</li>
+									<?php endforeach; ?>
+								</ul>
+							<?php endif; ?>
+						</div>
+					</fieldset>
 				</td>
 			</tr>
 		</table>

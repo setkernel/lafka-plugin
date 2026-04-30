@@ -120,7 +120,9 @@ class Lafka_Engine_Editor {
 
 		$reference      = sanitize_text_field( $post_data['lafka_addon_reference'] ?? '' );
 		$priority       = isset( $post_data['lafka_addon_priority'] ) ? (int) $post_data['lafka_addon_priority'] : 10;
-		$applies_to_all = ! empty( $post_data['lafka_addon_applies_to_all'] );
+		// applies_to_all is now a radio (values "1" or "0") rather than a
+		// checkbox. String "0" is non-empty, so use explicit equality.
+		$applies_to_all = '1' === (string) ( $post_data['lafka_addon_applies_to_all'] ?? '1' );
 		$category_ids   = isset( $post_data['lafka_addon_categories'] )
 			? array_map( 'absint', (array) $post_data['lafka_addon_categories'] )
 			: array();
