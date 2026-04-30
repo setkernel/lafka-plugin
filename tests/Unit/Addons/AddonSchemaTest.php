@@ -31,7 +31,6 @@ final class AddonSchemaTest extends TestCase {
 		self::assertSame( 'flat_per_option', Lafka_Addon_Schema::PRICING_FLAT_PER_OPTION );
 		self::assertSame( 'flat_per_size', Lafka_Addon_Schema::PRICING_FLAT_PER_SIZE );
 		self::assertSame( 'matrix', Lafka_Addon_Schema::PRICING_MATRIX );
-		self::assertSame( 'legacy', Lafka_Addon_Schema::PRICING_LEGACY );
 	}
 
 	public function test_source_constants_defined(): void {
@@ -42,7 +41,7 @@ final class AddonSchemaTest extends TestCase {
 	public function test_default_group_returns_canonical_shape(): void {
 		$defaults = Lafka_Addon_Schema::default_group();
 
-		self::assertSame( 'legacy', $defaults['pricing_mode'] );
+		self::assertSame( 'flat_per_option', $defaults['pricing_mode'] );
 		self::assertSame( 'manual', $defaults['options_source'] );
 		self::assertSame( 2, $defaults['schema_version'] );
 		self::assertSame( '', $defaults['name'] );
@@ -65,9 +64,11 @@ final class AddonSchemaTest extends TestCase {
 
 	public function test_pricing_modes_returns_all_known_modes(): void {
 		$modes = Lafka_Addon_Schema::pricing_modes();
-		self::assertCount( 5, $modes );
+		self::assertCount( 4, $modes );
 		self::assertContains( 'flat_group', $modes );
+		self::assertContains( 'flat_per_option', $modes );
+		self::assertContains( 'flat_per_size', $modes );
 		self::assertContains( 'matrix', $modes );
-		self::assertContains( 'legacy', $modes );
+		self::assertNotContains( 'legacy', $modes );
 	}
 }

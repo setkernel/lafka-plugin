@@ -27,7 +27,6 @@ class Lafka_Addon_Schema {
 	const PRICING_FLAT_PER_OPTION = 'flat_per_option';
 	const PRICING_FLAT_PER_SIZE   = 'flat_per_size';
 	const PRICING_MATRIX          = 'matrix';
-	const PRICING_LEGACY          = 'legacy';
 
 	/**
 	 * Options source constants.
@@ -52,8 +51,9 @@ class Lafka_Addon_Schema {
 			'attribute'                => 0,
 			'options'                  => array(),
 
-			// v2 fields.
-			'pricing_mode'             => self::PRICING_LEGACY,
+			// v2 fields. Default mode matches the most common operator pattern
+			// (flat per option). Operator changes mode via the editor.
+			'pricing_mode'             => self::PRICING_FLAT_PER_OPTION,
 			'options_source'           => self::SOURCE_MANUAL,
 			'options_source_attribute' => '',
 			'included_size_slugs'      => array(),
@@ -92,7 +92,6 @@ class Lafka_Addon_Schema {
 			self::PRICING_FLAT_PER_OPTION,
 			self::PRICING_FLAT_PER_SIZE,
 			self::PRICING_MATRIX,
-			self::PRICING_LEGACY,
 		);
 	}
 

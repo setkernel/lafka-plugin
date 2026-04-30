@@ -8,7 +8,6 @@ use Lafka_Addon_Group;
 use Lafka_Addon_Repository;
 use Lafka_Addon_Schema;
 use Lafka_Addons_Upgrader;
-use Lafka_Migration_V8_13_0;
 use PHPUnit\Framework\TestCase;
 
 require_once dirname( __DIR__, 3 ) . '/incl/addons/engine/lafka-addons-engine-bootstrap.php';
@@ -50,9 +49,8 @@ final class AddonRepositoryTest extends TestCase {
 	}
 
 	private function repo(): Lafka_Addon_Repository {
-		$upgrader = new Lafka_Addons_Upgrader();
-		$upgrader->register( new Lafka_Migration_V8_13_0() );
-		return new Lafka_Addon_Repository( $upgrader );
+		// v8.13.0 ships no built-in migrations; the upgrader is empty.
+		return new Lafka_Addon_Repository( new Lafka_Addons_Upgrader() );
 	}
 
 	public function test_get_groups_returns_empty_array_for_post_with_no_meta(): void {
@@ -76,7 +74,10 @@ final class AddonRepositoryTest extends TestCase {
 		self::assertSame( 2, $this->stored_meta[42][0]['schema_version'] );
 	}
 
-	public function test_get_groups_runs_migrations_on_legacy_data(): void {
+	public function test_get_groups_normalizes_legacy_shape_via_schema_defaults(): void {
+		// Even without built-in migrations, raw-shape data round-trips
+		// through Lafka_Addon_Group::from_array which fills v2 fields from
+		// schema defaults — fresh groups land at flat_per_option mode.
 		$this->stored_meta[7] = array(
 			array(
 				'name'    => 'Old Group',
@@ -87,7 +88,7 @@ final class AddonRepositoryTest extends TestCase {
 
 		self::assertCount( 1, $groups );
 		self::assertSame( 'Old Group', $groups[0]->name );
-		self::assertSame( Lafka_Addon_Schema::PRICING_LEGACY, $groups[0]->pricing_mode );
+		self::assertSame( Lafka_Addon_Schema::PRICING_FLAT_PER_OPTION, $groups[0]->pricing_mode );
 		self::assertSame( 2, $groups[0]->schema_version );
 	}
 

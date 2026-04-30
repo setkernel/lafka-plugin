@@ -16,22 +16,6 @@
 
 defined( 'ABSPATH' ) || exit;
 
-/**
- * Legacy passthrough — preserves whatever shape the data is in. Used for
- * groups that haven't been migrated to a specific mode.
- */
-class Lafka_Legacy_Pricing extends Lafka_Abstract_Pricing_Strategy {
-	public function id(): string {
-		return Lafka_Addon_Schema::PRICING_LEGACY;
-	}
-	public function label(): string {
-		return __( 'Legacy (no transformation)', 'lafka-plugin' );
-	}
-	public function expand( Lafka_Addon_Group $group ): Lafka_Addon_Group {
-		return $group;
-	}
-}
-
 class Lafka_Pricing_Resolver {
 
 	/** @var array<string, Lafka_Pricing_Strategy> */
@@ -43,7 +27,6 @@ class Lafka_Pricing_Resolver {
 			Lafka_Addon_Schema::PRICING_FLAT_PER_OPTION => new Lafka_Flat_Per_Option_Pricing(),
 			Lafka_Addon_Schema::PRICING_FLAT_PER_SIZE   => new Lafka_Flat_Per_Size_Pricing(),
 			Lafka_Addon_Schema::PRICING_MATRIX          => new Lafka_Matrix_Pricing(),
-			Lafka_Addon_Schema::PRICING_LEGACY          => new Lafka_Legacy_Pricing(),
 		);
 
 		if ( function_exists( 'apply_filters' ) ) {
@@ -53,12 +36,18 @@ class Lafka_Pricing_Resolver {
 		}
 	}
 
+	/**
+	 * Resolve the strategy for a group. Falls back to flat-per-option (the
+	 * canonical default mode for fresh groups) when the stored pricing_mode
+	 * isn't recognized — keeps the system safe against unknown values
+	 * without raising an exception in the hot path.
+	 */
 	public function for_group( Lafka_Addon_Group $group ): Lafka_Pricing_Strategy {
 		$mode = $group->pricing_mode;
 		if ( isset( $this->strategies[ $mode ] ) ) {
 			return $this->strategies[ $mode ];
 		}
-		return $this->strategies[ Lafka_Addon_Schema::PRICING_LEGACY ];
+		return $this->strategies[ Lafka_Addon_Schema::PRICING_FLAT_PER_OPTION ];
 	}
 
 	/**

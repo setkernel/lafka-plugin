@@ -68,37 +68,26 @@ final class PricingResolverTest extends TestCase {
 		self::assertInstanceOf( Lafka_Matrix_Pricing::class, $this->resolver->for_group( $group ) );
 	}
 
-	public function test_legacy_mode_returns_passthrough_strategy(): void {
-		$group = Lafka_Addon_Group::from_array( array(
-			'name'         => 'G',
-			'pricing_mode' => Lafka_Addon_Schema::PRICING_LEGACY,
-		) );
-		$strategy = $this->resolver->for_group( $group );
-		self::assertSame( Lafka_Addon_Schema::PRICING_LEGACY, $strategy->id() );
-
-		// Legacy is passthrough — expand returns the group unchanged.
-		$original_options = $group->options;
-		$expanded = $strategy->expand( $group );
-		self::assertSame( $original_options, $expanded->options );
-	}
-
-	public function test_unknown_mode_falls_back_to_legacy(): void {
+	public function test_unknown_mode_falls_back_to_flat_per_option(): void {
+		// v8.13.0 dropped the legacy strategy. Unknown modes fall back to
+		// the canonical default (flat_per_option), which is also the schema
+		// default for fresh groups.
 		$group = Lafka_Addon_Group::from_array( array(
 			'name'         => 'G',
 			'pricing_mode' => 'something_unknown',
 		) );
 		$strategy = $this->resolver->for_group( $group );
-		self::assertSame( Lafka_Addon_Schema::PRICING_LEGACY, $strategy->id() );
+		self::assertSame( Lafka_Addon_Schema::PRICING_FLAT_PER_OPTION, $strategy->id() );
 	}
 
 	public function test_register_filter_allows_third_party_strategies(): void {
 		$resolver = new Lafka_Pricing_Resolver();
 		$strategies = $resolver->all_strategies();
 
+		self::assertCount( 4, $strategies );
 		self::assertArrayHasKey( Lafka_Addon_Schema::PRICING_FLAT_GROUP, $strategies );
 		self::assertArrayHasKey( Lafka_Addon_Schema::PRICING_FLAT_PER_OPTION, $strategies );
 		self::assertArrayHasKey( Lafka_Addon_Schema::PRICING_FLAT_PER_SIZE, $strategies );
 		self::assertArrayHasKey( Lafka_Addon_Schema::PRICING_MATRIX, $strategies );
-		self::assertArrayHasKey( Lafka_Addon_Schema::PRICING_LEGACY, $strategies );
 	}
 }

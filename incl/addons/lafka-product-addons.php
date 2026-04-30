@@ -47,8 +47,8 @@ class Lafka_Product_Addons {
 		// Helper class used by other plugins for compatibility
 		include_once __DIR__ . '/includes/class-lafka-product-addons-helper.php';
 
-		// Phase 1 (v8.13.0): the new addon engine. Loaded alongside legacy code;
-		// remains dormant until Phase 2 admin form rewires to it.
+		// v8.13.0+: the new addon engine. Phase 2 wires the admin form to it.
+		// Phase 3 wires cart/display.
 		require_once __DIR__ . '/engine/lafka-addons-engine-bootstrap.php';
 
 		$GLOBALS['Product_Addon_Display'] = new Lafka_Product_Addon_Display();
@@ -57,10 +57,20 @@ class Lafka_Product_Addons {
 
 	/**
 	 * Initializes plugin admin.
+	 *
+	 * Phase 2 (v8.13.1): the v2 engine's admin replaces the legacy
+	 * Lafka_Product_Addon_Admin global addons surface. Per-product addon
+	 * panel integration on the WC product editor is still handled by
+	 * legacy code (Phase 3 will move that too).
 	 */
 	protected function init_admin() {
-		include_once __DIR__ . '/admin/class-lafka-product-addon-admin.php';
-		$GLOBALS['Lafka_Product_Addon_Admin'] = new Lafka_Product_Addon_Admin();
+		// Engine bootstrap is required before instantiating the admin since
+		// the engine classes must be loaded. The bootstrap is also required
+		// from init_classes() above for runtime; this is defense-in-depth
+		// in case admin runs without init_classes (theoretically impossible
+		// but safer).
+		require_once __DIR__ . '/engine/lafka-addons-engine-bootstrap.php';
+		$GLOBALS['Lafka_Engine_Admin'] = new Lafka_Engine_Admin();
 	}
 
 	/**

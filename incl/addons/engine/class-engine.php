@@ -52,7 +52,9 @@ class Lafka_Addons_Engine {
 	public function upgrader(): Lafka_Addons_Upgrader {
 		if ( null === $this->upgrader ) {
 			$upgrader = new Lafka_Addons_Upgrader();
-			$upgrader->register( new Lafka_Migration_V8_13_0() );
+			// No built-in migrations as of v8.13.0 — framework is here for
+			// when future schema changes need it. Third parties can register
+			// migrations via the filter below.
 			if ( function_exists( 'apply_filters' ) ) {
 				$upgrader = apply_filters( 'lafka_addons_register_migration', $upgrader );
 			}

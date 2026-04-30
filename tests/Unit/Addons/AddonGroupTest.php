@@ -43,13 +43,13 @@ final class AddonGroupTest extends TestCase {
 		self::assertSame( 'Cheese', $group->options[0]->label );
 	}
 
-	public function test_legacy_data_preserved_when_no_pricing_mode(): void {
+	public function test_default_pricing_mode_is_flat_per_option_when_unset(): void {
 		$group = Lafka_Addon_Group::from_array( array(
-			'name'    => 'Old Group',
+			'name'    => 'Fresh Group',
 			'options' => array( array( 'label' => 'X', 'price' => '1.00' ) ),
 		) );
 
-		self::assertSame( Lafka_Addon_Schema::PRICING_LEGACY, $group->pricing_mode );
+		self::assertSame( Lafka_Addon_Schema::PRICING_FLAT_PER_OPTION, $group->pricing_mode );
 		self::assertSame( Lafka_Addon_Schema::SOURCE_MANUAL, $group->options_source );
 	}
 

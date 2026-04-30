@@ -38,7 +38,12 @@ require_once __DIR__ . '/pricing/class-pricing-resolver.php';
 require_once __DIR__ . '/sources/abstract-options-source.php';
 require_once __DIR__ . '/sources/class-manual-source.php';
 require_once __DIR__ . '/sources/class-attribute-source.php';
+// Migration framework — interface + upgrader are kept for future schema
+// changes. v8.13.0 has no v1→v2 migration class because legacy addon data
+// is intentionally not preserved (fresh start per operator decision).
 require_once __DIR__ . '/migrations/abstract-migration.php';
-require_once __DIR__ . '/migrations/class-migration-v8-13-0.php';
 require_once __DIR__ . '/migrations/class-upgrader.php';
+require_once __DIR__ . '/admin/class-engine-admin.php';
+require_once __DIR__ . '/admin/class-engine-editor.php';
+require_once __DIR__ . '/admin/class-engine-ajax.php';
 require_once __DIR__ . '/class-engine.php';

@@ -43,13 +43,12 @@ final class EngineFacadeTest extends TestCase {
 		self::assertInstanceOf( Lafka_Addon_Repository::class, $repo );
 	}
 
-	public function test_upgrader_has_v8_13_0_migration_registered(): void {
+	public function test_upgrader_is_available_with_no_built_in_migrations(): void {
+		// v8.13.0 ships no v1→v2 migration class because legacy addon data
+		// isn't preserved by design. The framework is here for future use.
 		$upgrader = Lafka_Addons_Engine::instance()->upgrader();
 		self::assertInstanceOf( Lafka_Addons_Upgrader::class, $upgrader );
-
-		$migrations = $upgrader->all();
-		self::assertGreaterThanOrEqual( 1, count( $migrations ) );
-		self::assertSame( '8.13.0', $migrations[0]->id() );
+		self::assertSame( array(), $upgrader->all() );
 	}
 
 	public function test_sources_resolves_manual_and_attribute(): void {
