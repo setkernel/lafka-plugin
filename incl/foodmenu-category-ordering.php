@@ -194,7 +194,12 @@ if ( ! function_exists( 'lafka_terms_clauses' ) ) {
 		}
 
 		// No need to filter counts.
-		if ( strpos( 'COUNT(*)', $clauses['fields'] ) !== false ) {
+		// Pre-fix the haystack/needle were swapped — strpos was checking
+		// whether `$clauses['fields']` was a substring of the literal string
+		// 'COUNT(*)', which is only true for vanishingly small inputs. The
+		// optimization never triggered, so every term-clauses filter call
+		// paid for the LEFT JOIN + ORDER BY even on COUNT queries.
+		if ( false !== strpos( (string) $clauses['fields'], 'COUNT(*)' ) ) {
 			return $clauses;
 		}
 
