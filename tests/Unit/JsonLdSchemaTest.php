@@ -424,6 +424,30 @@ final class JsonLdSchemaTest extends TestCase {
 		$this->assertSame( 'EUR', \lafka_schema_get_price_currency() );
 	}
 
+	// ────────────────────────────────────────────────────────────────────────
+	// 8. Breadcrumb i18n (v9.7.4 — labels translatable for non-English stores)
+	// ────────────────────────────────────────────────────────────────────────
+
+	public function test_breadcrumb_home_label_is_translatable(): void {
+		// Regression lock: 'Home' as a string literal in lafka_schema_breadcrumb_item()
+		// would emit untranslated to non-English stores. Must be wrapped in __().
+		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-breadcrumb.php' );
+		$this->assertMatchesRegularExpression(
+			"/__\(\s*'Home'\s*,\s*'lafka-plugin'\s*\)/",
+			$src,
+			"Breadcrumb 'Home' label must be translatable via __()."
+		);
+	}
+
+	public function test_breadcrumb_menu_label_is_translatable(): void {
+		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-breadcrumb.php' );
+		$this->assertMatchesRegularExpression(
+			"/__\(\s*'Menu'\s*,\s*'lafka-plugin'\s*\)/",
+			$src,
+			"Breadcrumb 'Menu' label must be translatable via __()."
+		);
+	}
+
 	public function test_currency_filter_can_override(): void {
 		Functions\when( 'get_woocommerce_currency' )->justReturn( 'CAD' );
 		Functions\when( 'apply_filters' )->alias(

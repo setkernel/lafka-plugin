@@ -34,15 +34,17 @@ function lafka_schema_breadcrumb(): ?array {
 	$items     = array();
 	$position  = 1;
 
-	// Always start with Home.
-	$items[] = lafka_schema_breadcrumb_item( $position++, 'Home', $home_url );
+	// Always start with Home. Labels are translatable so non-English stores
+	// emit breadcrumbs that match their locale (Google uses the label
+	// directly in the SERP breadcrumb trail).
+	$items[] = lafka_schema_breadcrumb_item( $position++, __( 'Home', 'lafka-plugin' ), $home_url );
 
 	$obj = get_queried_object();
 
 	if ( function_exists( 'is_product' ) && is_product() && $obj instanceof WP_Post ) {
 		// Single product: Home → Menu → [Primary Category] → Product.
 		$menu_url = trailingslashit( home_url( '/menu/' ) );
-		$items[]  = lafka_schema_breadcrumb_item( $position++, 'Menu', $menu_url );
+		$items[]  = lafka_schema_breadcrumb_item( $position++, __( 'Menu', 'lafka-plugin' ), $menu_url );
 
 		// Primary category (first term).
 		$terms = get_the_terms( $obj->ID, 'product_cat' );
@@ -61,17 +63,16 @@ function lafka_schema_breadcrumb(): ?array {
 	} elseif ( function_exists( 'is_product_category' ) && is_product_category() && $obj instanceof WP_Term ) {
 		// Product category archive: Home → Menu → Category.
 		$menu_url = trailingslashit( home_url( '/menu/' ) );
-		$items[]  = lafka_schema_breadcrumb_item( $position++, 'Menu', $menu_url );
+		$items[]  = lafka_schema_breadcrumb_item( $position++, __( 'Menu', 'lafka-plugin' ), $menu_url );
 		$cat_url  = get_term_link( $obj );
 		if ( ! is_wp_error( $cat_url ) ) {
 			$items[] = lafka_schema_breadcrumb_item( $position++, $obj->name, $cat_url );
-		}
-
+		}   
 	} elseif ( function_exists( 'is_shop' ) && is_shop() ) {
 		// Shop / menu page: Home → Menu.
 		$shop_url = function_exists( 'wc_get_page_permalink' ) ? wc_get_page_permalink( 'shop' ) : home_url( '/menu/' );
 		$shop_url = $shop_url ?: home_url( '/menu/' );
-		$items[]  = lafka_schema_breadcrumb_item( $position++, 'Menu', $shop_url );
+		$items[]  = lafka_schema_breadcrumb_item( $position++, __( 'Menu', 'lafka-plugin' ), $shop_url );
 
 	} elseif ( is_singular() && $obj instanceof WP_Post ) {
 		// Standard pages and posts.
@@ -88,8 +89,7 @@ function lafka_schema_breadcrumb(): ?array {
 				}
 			}
 			$items[] = lafka_schema_breadcrumb_item( $position++, get_the_title( $obj ), get_permalink( $obj ) );
-		}
-
+		}   
 	} elseif ( is_category() && $obj instanceof WP_Term ) {
 		$cat_url = get_term_link( $obj );
 		if ( ! is_wp_error( $cat_url ) ) {
