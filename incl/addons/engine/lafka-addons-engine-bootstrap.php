@@ -46,4 +46,5 @@ require_once __DIR__ . '/migrations/class-upgrader.php';
 require_once __DIR__ . '/admin/class-engine-admin.php';
 require_once __DIR__ . '/admin/class-engine-editor.php';
 require_once __DIR__ . '/admin/class-engine-ajax.php';
+require_once __DIR__ . '/admin/class-engine-product-panel.php';
 require_once __DIR__ . '/class-engine.php';

@@ -177,9 +177,12 @@ class Lafka_Engine_Editor {
 	 * Form shape: $_POST['lafka_addon_groups'] is an indexed array of
 	 * group dicts, each with its own `options` array.
 	 *
+	 * Public so Lafka_Engine_Product_Panel can reuse the parser when
+	 * saving the per-product addon panel on the WC product editor.
+	 *
 	 * @return Lafka_Addon_Group[]
 	 */
-	private function parse_groups( array $post_data ): array {
+	public function parse_groups( array $post_data ): array {
 		$raw_groups = isset( $post_data['lafka_addon_groups'] ) && is_array( $post_data['lafka_addon_groups'] )
 			? $post_data['lafka_addon_groups']
 			: array();
@@ -329,10 +332,13 @@ class Lafka_Engine_Editor {
 	 * options[i]['price'] is in the canonical shape that downstream code
 	 * (cart, display) expects regardless of mode.
 	 *
+	 * Public so Lafka_Engine_Product_Panel can reuse the expand pipeline
+	 * when saving the per-product addon panel.
+	 *
 	 * @param Lafka_Addon_Group[] $groups
 	 * @return Lafka_Addon_Group[]
 	 */
-	private function expand_groups( array $groups ): array {
+	public function expand_groups( array $groups ): array {
 		$resolver = Lafka_Addons_Engine::instance()->pricing();
 		$out      = array();
 		foreach ( $groups as $group ) {

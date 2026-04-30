@@ -25,10 +25,12 @@ class Lafka_Engine_Admin {
 
 	private Lafka_Engine_Editor $editor;
 	private Lafka_Engine_Ajax $ajax;
+	private Lafka_Engine_Product_Panel $product_panel;
 
 	public function __construct() {
-		$this->editor = new Lafka_Engine_Editor();
-		$this->ajax   = new Lafka_Engine_Ajax();
+		$this->editor        = new Lafka_Engine_Editor();
+		$this->ajax          = new Lafka_Engine_Ajax();
+		$this->product_panel = new Lafka_Engine_Product_Panel( $this->editor );
 
 		add_action( 'admin_menu', array( $this, 'register_menu' ), 9 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
@@ -109,7 +111,14 @@ class Lafka_Engine_Admin {
 	 */
 	public function enqueue_assets(): void {
 		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
-		if ( ! $screen || self::SCREEN_ID !== $screen->id ) {
+		if ( ! $screen ) {
+			return;
+		}
+		// Two screens use the editor: the global addons page AND the WC
+		// product editor (where the per-product addon panel lives).
+		$is_addons_page = self::SCREEN_ID === $screen->id;
+		$is_product_edit = ( 'product' === $screen->id || 'product' === ( $screen->post_type ?? '' ) );
+		if ( ! $is_addons_page && ! $is_product_edit ) {
 			return;
 		}
 

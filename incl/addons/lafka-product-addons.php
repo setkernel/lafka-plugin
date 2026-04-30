@@ -58,10 +58,11 @@ class Lafka_Product_Addons {
 	/**
 	 * Initializes plugin admin.
 	 *
-	 * Phase 2 (v8.13.1): the v2 engine's admin replaces the legacy
-	 * Lafka_Product_Addon_Admin global addons surface. Per-product addon
-	 * panel integration on the WC product editor is still handled by
-	 * legacy code (Phase 3 will move that too).
+	 * Phase 2 (v8.13.1): v2 engine admin replaces the legacy global addons
+	 * surface.
+	 *
+	 * Phase 3 (v8.13.2): per-product addon panel on the WC product editor
+	 * also uses the engine. Legacy `incl/addons/admin/` directory deleted.
 	 */
 	protected function init_admin() {
 		// Engine bootstrap is required before instantiating the admin since
