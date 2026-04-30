@@ -44,7 +44,30 @@ if ( ! function_exists( 'lafka_show_variable_in_catalog_option' ) ) {
 
 add_action( 'woocommerce_save_product_variation', 'lafka_save_variable_in_catalog_option', 10, 2 );
 if ( ! function_exists( 'lafka_save_variable_in_catalog_option' ) ) {
+	/**
+	 * Persist the per-variation "show in catalog" checkbox.
+	 *
+	 * Pre-v9.7.15 this wrote `false` whenever `$_POST['_lafka_variable_in_catalog'][$i]`
+	 * was missing — but the hook fires on every variation save, including
+	 * programmatic wp_update_post, REST API writes, and bulk operations
+	 * (anything that doesn't include the variation-options form fields).
+	 * Result: any out-of-band variation save silently flipped "show in catalog"
+	 * to OFF for that variation. A single bulk price update destroyed all
+	 * catalog visibility flags on every variation it touched.
+	 *
+	 * Fix: only write when the form sent the parent array key, signalling
+	 * the variation-edit form is the actual save context. Out-of-band saves
+	 * leave the existing meta untouched.
+	 *
+	 * @param int $variation_id Variation post ID.
+	 * @param int $i            Loop index for the variation in the admin form.
+	 */
 	function lafka_save_variable_in_catalog_option( $variation_id, $i ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WC's variation save flow gates on its own nonce before this hook fires.
+		if ( ! isset( $_POST['_lafka_variable_in_catalog'] ) || ! is_array( $_POST['_lafka_variable_in_catalog'] ) ) {
+			return;
+		}
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
 		update_post_meta( $variation_id, '_lafka_variable_in_catalog', isset( $_POST['_lafka_variable_in_catalog'][ $i ] ) );
 	}
 }
