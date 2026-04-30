@@ -53,6 +53,11 @@ require_once __DIR__ . '/class-engine.php';
 require_once __DIR__ . '/class-engine-privacy.php';
 require_once __DIR__ . '/class-engine-resolver.php';
 require_once __DIR__ . '/class-engine-helper.php';
+require_once __DIR__ . '/cart/fields/abstract-engine-field.php';
+require_once __DIR__ . '/cart/fields/class-engine-field-list.php';
+require_once __DIR__ . '/cart/fields/class-engine-field-textarea.php';
+require_once __DIR__ . '/cart/fields/class-engine-field-factory.php';
+require_once __DIR__ . '/cart/class-engine-cart.php';
 
 // Cache invalidation: any save/trash/delete of an addon CPT post invalidates
 // both the resolver's per-request VO cache and the helper's legacy-shape
