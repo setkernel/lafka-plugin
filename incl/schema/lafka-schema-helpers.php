@@ -356,6 +356,35 @@ function lafka_schema_get_logo_url(): string {
 }
 
 /**
+ * Return the currency code to emit in JSON-LD Offer/AggregateOffer blocks.
+ *
+ * Reads `get_woocommerce_currency()` when WC is active. Falls back to USD
+ * (the schema.org docs default) when the helper isn't available — the only
+ * realistic case is a code path running before WC has booted, in which case
+ * the calling generator is wrong to be running at all.
+ *
+ * Filterable via `lafka_schema_price_currency` so an operator running a
+ * multi-currency setup can scope per-product rather than per-store.
+ *
+ * @since 9.7.3
+ *
+ * @return string ISO-4217 currency code, e.g. 'CAD', 'USD', 'EUR'.
+ */
+function lafka_schema_get_price_currency(): string {
+	$currency = function_exists( 'get_woocommerce_currency' )
+		? (string) get_woocommerce_currency()
+		: 'USD';
+	if ( '' === $currency ) {
+		$currency = 'USD';
+	}
+
+	if ( function_exists( 'apply_filters' ) ) {
+		$currency = (string) apply_filters( 'lafka_schema_price_currency', $currency );
+	}
+	return $currency;
+}
+
+/**
  * Build a single MenuItem schema array from a WC_Product.
  *
  * Used by lafka-schema-menu.php. Extracted here to keep that file <=200 LOC.
@@ -416,14 +445,14 @@ function lafka_schema_build_offer_for_menu_item( WC_Product $product ): ?array {
 					'@type'         => 'AggregateOffer',
 					'lowPrice'      => number_format( (float) $low, 2, '.', '' ),
 					'highPrice'     => number_format( (float) $high, 2, '.', '' ),
-					'priceCurrency' => 'CAD',
+					'priceCurrency' => lafka_schema_get_price_currency(),
 					'availability'  => $avail,
 				);
 			}
 			return array(
 				'@type'         => 'Offer',
 				'price'         => number_format( (float) $low, 2, '.', '' ),
-				'priceCurrency' => 'CAD',
+				'priceCurrency' => lafka_schema_get_price_currency(),
 				'availability'  => $avail,
 			);
 		}
@@ -437,7 +466,7 @@ function lafka_schema_build_offer_for_menu_item( WC_Product $product ): ?array {
 	return array(
 		'@type'         => 'Offer',
 		'price'         => number_format( (float) $price, 2, '.', '' ),
-		'priceCurrency' => 'CAD',
+		'priceCurrency' => lafka_schema_get_price_currency(),
 		'availability'  => $avail,
 	);
 }

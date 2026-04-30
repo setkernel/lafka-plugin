@@ -395,4 +395,52 @@ final class JsonLdSchemaTest extends TestCase {
 		$this->assertStringContainsString( 'get_review_count', $src );
 		$this->assertStringContainsString( 'get_average_rating', $src );
 	}
+
+	// ────────────────────────────────────────────────────────────────────────
+	// 7. Currency resolution (v9.7.3 — replaces hardcoded 'CAD' literals)
+	// ────────────────────────────────────────────────────────────────────────
+
+	public function test_no_hardcoded_currency_literals_in_schema_files(): void {
+		// Regression lock for v9.7.3. Before this version six 'priceCurrency'
+		// emissions were hardcoded to 'CAD' — wrong on every non-CAD store.
+		$paths = array(
+			dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-helpers.php',
+			dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-product.php',
+		);
+		foreach ( $paths as $path ) {
+			$src = file_get_contents( $path );
+			$this->assertDoesNotMatchRegularExpression(
+				"/'priceCurrency'\s*=>\s*'[A-Z]{3}'/",
+				$src,
+				basename( $path ) . ' must not hardcode an ISO-4217 currency literal in priceCurrency.'
+			);
+		}
+	}
+
+	public function test_currency_helper_reads_woocommerce_currency(): void {
+		Functions\when( 'get_woocommerce_currency' )->justReturn( 'EUR' );
+		Functions\when( 'apply_filters' )->returnArg( 2 );
+
+		$this->assertSame( 'EUR', \lafka_schema_get_price_currency() );
+	}
+
+	public function test_currency_filter_can_override(): void {
+		Functions\when( 'get_woocommerce_currency' )->justReturn( 'CAD' );
+		Functions\when( 'apply_filters' )->alias(
+			static function ( $hook, $value ) {
+				return 'lafka_schema_price_currency' === $hook ? 'GBP' : $value;
+			}
+		);
+
+		$this->assertSame( 'GBP', \lafka_schema_get_price_currency() );
+	}
+
+	public function test_currency_helper_treats_empty_wc_currency_as_usd(): void {
+		// Some headless WC configurations return '' from get_woocommerce_currency
+		// during early bootstrap; emitting '' would produce invalid schema.
+		Functions\when( 'get_woocommerce_currency' )->justReturn( '' );
+		Functions\when( 'apply_filters' )->returnArg( 2 );
+
+		$this->assertSame( 'USD', \lafka_schema_get_price_currency() );
+	}
 }

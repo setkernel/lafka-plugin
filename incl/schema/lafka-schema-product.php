@@ -121,7 +121,7 @@ function lafka_schema_build_product_offer( WC_Product $product, string $url ): ?
 					'url'             => $url,
 					'lowPrice'        => number_format( (float) $low, 2, '.', '' ),
 					'highPrice'       => number_format( (float) $high, 2, '.', '' ),
-					'priceCurrency'   => 'CAD',
+					'priceCurrency'   => lafka_schema_get_price_currency(),
 					'availability'    => $avail,
 					'priceValidUntil' => $valid_until,
 				);
@@ -130,7 +130,7 @@ function lafka_schema_build_product_offer( WC_Product $product, string $url ): ?
 				'@type'           => 'Offer',
 				'url'             => $url,
 				'price'           => number_format( (float) $low, 2, '.', '' ),
-				'priceCurrency'   => 'CAD',
+				'priceCurrency'   => lafka_schema_get_price_currency(),
 				'availability'    => $avail,
 				'priceValidUntil' => $valid_until,
 			);
@@ -146,7 +146,7 @@ function lafka_schema_build_product_offer( WC_Product $product, string $url ): ?
 		'@type'           => 'Offer',
 		'url'             => $url,
 		'price'           => number_format( (float) $price, 2, '.', '' ),
-		'priceCurrency'   => 'CAD',
+		'priceCurrency'   => lafka_schema_get_price_currency(),
 		'availability'    => $avail,
 		'priceValidUntil' => $valid_until,
 	);
