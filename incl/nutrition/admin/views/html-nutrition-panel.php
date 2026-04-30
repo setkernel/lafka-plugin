@@ -18,8 +18,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 		<?php foreach ( Lafka_Nutrition_Config::$nutrition_meta_fields as $nutrition_meta_field => $data ) : ?>
 			<p class="form-field">
 				<label for="_<?php echo esc_attr( $nutrition_meta_field ); ?>"><?php echo esc_html( $data['label'] ); ?></label>
-				<input type="text" name="_<?php echo esc_attr( $nutrition_meta_field ); ?>" placeholder="<?php echo esc_attr( $data['placeholder'] ); ?>"
-						id="_<?php echo esc_attr( $nutrition_meta_field ); ?>" value="<?php echo esc_attr( ${$nutrition_meta_field} ); ?>">
+				<input type="number" min="0" step="0.01" inputmode="decimal"
+						name="_<?php echo esc_attr( $nutrition_meta_field ); ?>"
+						placeholder="<?php echo esc_attr( $data['placeholder'] ); ?>"
+						id="_<?php echo esc_attr( $nutrition_meta_field ); ?>"
+						value="<?php echo esc_attr( ${$nutrition_meta_field} ); ?>">
 			</p>
 		<?php endforeach; ?>
 	</div>

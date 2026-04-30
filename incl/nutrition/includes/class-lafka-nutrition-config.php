@@ -17,6 +17,18 @@ class Lafka_Nutrition_Config {
 	/**
 	 * Initialize nutrition meta fields with translated labels.
 	 * Called on 'init' to ensure textdomain is loaded.
+	 *
+	 * The default DI (Daily Intake) values follow US FDA "% Daily Value"
+	 * targets calibrated to a 2000-calorie diet. EU/UK/Canada/etc. use
+	 * different reference intakes — operators in those markets override
+	 * the entire field map (or a subset) via the `lafka_nutrition_meta_fields`
+	 * filter rather than forking the plugin.
+	 *
+	 * Filter signature:
+	 *   apply_filters( 'lafka_nutrition_meta_fields', array $defaults ) → array
+	 *
+	 * Each field is keyed by its meta-key suffix (e.g. `lafka_nutrition_protein`)
+	 * and contains: label, frontend_label, frontend_label_weight, placeholder, DI.
 	 */
 	public static function init_fields() {
 		if ( self::$initialized ) {
@@ -24,7 +36,7 @@ class Lafka_Nutrition_Config {
 		}
 		self::$initialized = true;
 
-		self::$nutrition_meta_fields = array(
+		$defaults = array(
 			'lafka_nutrition_energy'      => array(
 				'label'                 => esc_html__( 'Energy (Calories)', 'lafka-plugin' ),
 				'frontend_label'        => esc_html__( 'Energy', 'lafka-plugin' ),
@@ -96,6 +108,19 @@ class Lafka_Nutrition_Config {
 				'DI'                    => 5,
 			),
 		);
+
+		/**
+		 * Filter the nutrition meta fields map.
+		 *
+		 * Use to override DI targets for non-US markets, change placeholder
+		 * values, or add new fields (e.g. omega-3, calcium). Each field must
+		 * keep the keys: label, frontend_label, frontend_label_weight,
+		 * placeholder, DI.
+		 *
+		 * @since 9.7.14
+		 * @param array<string, array<string, mixed>> $defaults FDA-calibrated defaults.
+		 */
+		self::$nutrition_meta_fields = (array) apply_filters( 'lafka_nutrition_meta_fields', $defaults );
 	}
 }
 
