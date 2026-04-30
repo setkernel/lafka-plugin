@@ -376,7 +376,11 @@ class Lafka_Product_Addon_Admin {
 			);
 			if ( ! is_wp_error( $terms ) && ! empty( $terms ) ) {
 				foreach ( $terms as $term ) {
-					$to_return[ $taxonomy ][ $term->slug ] = htmlspecialchars( $term->name );
+					// Pass raw — every consumer template runs esc_html() on
+					// these values. Pre-escaping with htmlspecialchars()
+					// here produced double-encoded output (a term named
+					// "Pizza & Pasta" rendered as "Pizza &amp;amp; Pasta").
+					$to_return[ $taxonomy ][ $term->slug ] = $term->name;
 				}
 			}
 		}

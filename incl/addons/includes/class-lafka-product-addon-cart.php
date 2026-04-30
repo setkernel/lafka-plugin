@@ -100,8 +100,17 @@ class Lafka_Product_Addon_Cart {
 			foreach ( $cart_item['addons'] as $addon ) {
 				$value = $addon['value'];
 
-				if ( $addon['price'] !== 0 && apply_filters( 'lafka_addons_add_price_to_name', true ) ) {
-					$value .= ' ' . wc_price( WC_Product_Addons_Helper::get_product_addon_price_for_display( $addon['price'], $cart_item['data'] ) ) . '';
+				// Defensive: addon price should be scalar by this point
+				// (apply_attribute_specific_price coerces in add_cart_item),
+				// but session restore / third-party cart manipulation can
+				// reach this site with a still-nested array. Coerce or
+				// wc_price() emits notices and renders the literal "Array".
+				$addon_price = function_exists( 'lafka_addons_walk_to_scalar_price' )
+					? lafka_addons_walk_to_scalar_price( $addon['price'] )
+					: ( is_array( $addon['price'] ) ? 0 : $addon['price'] );
+
+				if ( (float) $addon_price !== 0.0 && apply_filters( 'lafka_addons_add_price_to_name', true ) ) {
+					$value .= ' ' . wc_price( WC_Product_Addons_Helper::get_product_addon_price_for_display( $addon_price, $cart_item['data'] ) ) . '';
 				}
 
 				$name = '';
@@ -258,8 +267,13 @@ class Lafka_Product_Addon_Cart {
 			foreach ( $values['addons'] as $addon ) {
 				$key = $addon['name'];
 
-				if ( $addon['price'] !== 0 && apply_filters( 'lafka_addons_add_price_to_name', true ) ) {
-					$key .= ' (' . strip_tags( wc_price( WC_Product_Addons_Helper::get_product_addon_price_for_display( $addon['price'], $values['data'] ) ) ) . ')';
+				// Defensive scalar coercion — see get_item_data() for context.
+				$addon_price = function_exists( 'lafka_addons_walk_to_scalar_price' )
+					? lafka_addons_walk_to_scalar_price( $addon['price'] )
+					: ( is_array( $addon['price'] ) ? 0 : $addon['price'] );
+
+				if ( (float) $addon_price !== 0.0 && apply_filters( 'lafka_addons_add_price_to_name', true ) ) {
+					$key .= ' (' . strip_tags( wc_price( WC_Product_Addons_Helper::get_product_addon_price_for_display( $addon_price, $values['data'] ) ) ) . ')';
 				}
 
 				$item->add_meta_data( $key, $addon['value'] );

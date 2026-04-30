@@ -2,6 +2,24 @@
 <?php
 
 class Lafka_Product_Addon_Groups {
+
+	/**
+	 * Wire cache invalidation hooks. Called once at plugin bootstrap.
+	 */
+	public static function bootstrap(): void {
+		// Any save/trash/delete of an addon CPT post invalidates the cache so
+		// admin list pages reading on the same request reflect the change.
+		add_action( 'save_post_lafka_glb_addon', array( __CLASS__, 'clear_cache' ) );
+		add_action( 'trashed_post', array( __CLASS__, 'maybe_clear_cache_for_post' ) );
+		add_action( 'deleted_post', array( __CLASS__, 'maybe_clear_cache_for_post' ) );
+	}
+
+	public static function maybe_clear_cache_for_post( $post_id ): void {
+		if ( 'lafka_glb_addon' === get_post_type( $post_id ) ) {
+			self::clear_cache();
+		}
+	}
+
 	/**
 	 * Returns all the global groups (if any) and their add-ons
 	 *
@@ -9,10 +27,23 @@ class Lafka_Product_Addon_Groups {
 	 *
 	 * @return array
 	 */
+	/**
+	 * Per-request cache. Invalidated by clear_cache() — must be called
+	 * after any save_post / update_post_meta touching a `lafka_glb_addon`
+	 * post or the admin list will show stale data on the same-request
+	 * POST → render path.
+	 *
+	 * @var array|null
+	 */
+	private static $cached_groups = null;
+
+	public static function clear_cache(): void {
+		self::$cached_groups = null;
+	}
+
 	public static function get_all_global_groups() {
-		static $cached_groups = null;
-		if ( null !== $cached_groups ) {
-			return $cached_groups;
+		if ( null !== self::$cached_groups ) {
+			return self::$cached_groups;
 		}
 
 		$global_groups = array();
@@ -37,8 +68,8 @@ class Lafka_Product_Addon_Groups {
 			$global_groups[] = Lafka_Product_Addon_Global_Group::get_group( $global_group_post );
 		}
 
-		$cached_groups = $global_groups;
-		return $cached_groups;
+		self::$cached_groups = $global_groups;
+		return self::$cached_groups;
 	}
 
 	/**

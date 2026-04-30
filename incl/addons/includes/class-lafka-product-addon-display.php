@@ -15,9 +15,22 @@ class Lafka_Product_Addon_Display {
 		// Styles.
 		add_action( 'wp_enqueue_scripts', array( $this, 'addon_scripts' ) );
 
-		// Addon display.
-		add_action( 'woocommerce_before_add_to_cart_button', array( $this, 'display' ), 10 );
-		add_action( 'woocommerce_before_variations_form', array( $this, 'reposition_display_for_variable_product' ), 10 );
+		// Addon display — two scoped callbacks, one for simple/grouped/etc.
+		// at standard `before_add_to_cart_button`, one for variable at
+		// `single_variation` (priority 15, between WC's two stock callbacks
+		// at 10 and 20). Each callback early-returns if the OTHER product
+		// type is in scope, so they stay correctly partitioned without ever
+		// mutating the global hook table.
+		//
+		// The previous design used a `reposition_display_for_variable_product`
+		// callback hooked to `woocommerce_before_variations_form` that called
+		// remove_action + add_action at runtime. That mutation persisted for
+		// the whole request, so on shop archives mixing simple + variable
+		// products, every simple product rendered AFTER the first variable
+		// product lost its addons display permanently. The kept method is a
+		// no-op now (back-compat for any third-party that called it directly).
+		add_action( 'woocommerce_before_add_to_cart_button', array( $this, 'display_for_simple_product' ), 10 );
+		add_action( 'woocommerce_single_variation', array( $this, 'display_for_variable_product' ), 15 );
 		add_action( 'lafka-product-addons_end', array( $this, 'totals' ), 10 );
 
 		// Change buttons/cart urls.
@@ -84,6 +97,35 @@ class Lafka_Product_Addon_Display {
 	 */
 	public function plugin_path() {
 		return $this->plugin_path = untrailingslashit( plugin_dir_path( __DIR__ ) );
+	}
+
+	/**
+	 * Render addons for non-variable products. Hooked to
+	 * `woocommerce_before_add_to_cart_button` at priority 10. Early-returns
+	 * when the in-scope product is variable (the variable callback handles
+	 * those at `woocommerce_single_variation`).
+	 */
+	public function display_for_simple_product( $post_id = false, $prefix = false ) {
+		global $product;
+		if ( $product instanceof WC_Product && $product->is_type( 'variable' ) ) {
+			return;
+		}
+		$this->display( $post_id, $prefix );
+	}
+
+	/**
+	 * Render addons for variable products. Hooked to
+	 * `woocommerce_single_variation` at priority 15 (between WC's stock
+	 * callbacks at 10 and 20). Early-returns when the in-scope product
+	 * is not variable, defending against any non-WC code path that fires
+	 * the action with the wrong product context.
+	 */
+	public function display_for_variable_product( $post_id = false, $prefix = false ) {
+		global $product;
+		if ( $product instanceof WC_Product && ! $product->is_type( 'variable' ) ) {
+			return;
+		}
+		$this->display( $post_id, $prefix );
 	}
 
 	/**
@@ -392,12 +434,20 @@ class Lafka_Product_Addon_Display {
 	}
 
 	/**
-	 * Fix product addons position on variable products - show them after a single variation description
-	 * or out of stock message.
+	 * Back-compat no-op. Previously this callback (hooked to
+	 * `woocommerce_before_variations_form`) mutated the global hook table
+	 * at runtime, which broke shop archives mixing simple + variable
+	 * products. The current design hooks two separate scoped callbacks
+	 * (`display_for_simple_product` + `display_for_variable_product`) at
+	 * construct time, so no runtime reposition is needed.
+	 *
+	 * Kept as a public no-op in case any third party calls this method
+	 * directly. Calling it is safe — it does nothing.
+	 *
+	 * @deprecated 8.12.8 No replacement; remove the call site.
 	 */
 	public function reposition_display_for_variable_product() {
-		remove_action( 'woocommerce_before_add_to_cart_button', array( $this, 'display' ), 10 );
-		add_action( 'woocommerce_single_variation', array( $this, 'display' ), 15 );
+		// Intentionally empty. See docblock.
 	}
 
 	/**
