@@ -46,15 +46,11 @@ class Lafka_Product_Addons {
 			$this->init_admin();
 		}
 
-		// Front-side. Display still legacy (retires in 7c). Cart now engine.
-		include_once __DIR__ . '/includes/class-lafka-product-addon-display.php';
-		// Legacy helper + cart files are no-ops now: WC_Product_Addons_Helper
-		// is already declared by the engine's class_alias above, and the cart
-		// hooks belong to Lafka_Engine_Cart. Includes kept as defense-in-depth
-		// in case a third party mode-loads addons without the engine.
+		// Legacy helper file is a no-op now: WC_Product_Addons_Helper is
+		// already declared by the engine's class_alias above. Kept as
+		// defense-in-depth in case a third party mode-loads addons without
+		// the engine.
 		include_once __DIR__ . '/includes/class-lafka-product-addons-helper.php';
-
-		$GLOBALS['Product_Addon_Display'] = new Lafka_Product_Addon_Display();
 
 		// Cart: single Lafka_Engine_Cart instance, exposed under both globals.
 		// $Product_Addon_Cart is the legacy global the Combos compatibility
@@ -64,6 +60,13 @@ class Lafka_Product_Addons {
 		$engine_cart                   = new Lafka_Engine_Cart();
 		$GLOBALS['Lafka_Engine_Cart']  = $engine_cart;
 		$GLOBALS['Product_Addon_Cart'] = $engine_cart;
+
+		// Display: same dual-global pattern. Templates reach for
+		// $Product_Addon_Display->get_addon_option_custom_image_id() etc.,
+		// so we keep the legacy global pointing at the engine display.
+		$engine_display                   = new Lafka_Engine_Display();
+		$GLOBALS['Lafka_Engine_Display']  = $engine_display;
+		$GLOBALS['Product_Addon_Display'] = $engine_display;
 	}
 
 	/**

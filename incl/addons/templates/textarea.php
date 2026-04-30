@@ -4,7 +4,7 @@
 foreach ( $addon['options'] as $key => $option ) :
 	/**
 	 * @var WC_Product $product
-	 * @var Lafka_Product_Addon_Display $Product_Addon_Display
+	 * @var Lafka_Engine_Display $Product_Addon_Display
 	 */
 
 	global $product;
