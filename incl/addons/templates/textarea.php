@@ -4,17 +4,17 @@
 foreach ( $addon['options'] as $key => $option ) :
 	/**
 	 * @var WC_Product $product
-	 * @var Lafka_Engine_Display $Product_Addon_Display
+	 * @var Lafka_Engine_Display $Lafka_Engine_Display
 	 */
 
 	global $product;
-	global $Product_Addon_Display;
+	global $Lafka_Engine_Display;
 
 	$option_price             = lafka_get_option_price_on_default_attribute( $product, $option['price'] );
 	$option_price_for_display = '';
 	if ( is_numeric( $option_price ) ) {
 		// See checkbox.php for the .lafka-addon-price wrapper rationale.
-		$option_price_for_display = '<span class="lafka-addon-price">(' . wc_price( WC_Product_Addons_Helper::get_product_addon_price_for_display( $option_price ) ) . ')</span>';
+		$option_price_for_display = '<span class="lafka-addon-price">(' . wc_price( Lafka_Engine_Helper::get_product_addon_price_for_display( $option_price ) ) . ')</span>';
 	}
 
 	$addon_key     = 'addon-' . sanitize_title( $addon['field-name'] );
@@ -31,8 +31,8 @@ foreach ( $addon['options'] as $key => $option ) :
 	$attribute_raw_prices = $option['price'];
 	$attribute_prices     = lafka_convert_attribute_raw_prices_to_prices( $attribute_raw_prices );
 
-	$custom_image_id      = $Product_Addon_Display->get_addon_option_custom_image_id( $option );
-	$custom_image_classes = $Product_Addon_Display->get_addon_option_image_classes( $custom_image_id );
+	$custom_image_id      = $Lafka_Engine_Display->get_addon_option_custom_image_id( $option );
+	$custom_image_classes = $Lafka_Engine_Display->get_addon_option_image_classes( $custom_image_id );
 	?>
 
 	<p class="form-row form-row-wide addon-wrap-<?php echo sanitize_title( $addon['field-name'] ); ?>">
@@ -57,7 +57,7 @@ foreach ( $addon['options'] as $key => $option ) :
 						<?php endforeach; ?>
 					<?php endif; ?>
 					data-raw-price="<?php echo esc_attr( $option_price ); ?>"
-					data-price="<?php echo WC_Product_Addons_Helper::get_product_addon_price_for_display( $option_price ); ?>"
+					data-price="<?php echo Lafka_Engine_Helper::get_product_addon_price_for_display( $option_price ); ?>"
 					name="<?php echo $addon_key; ?>[<?php echo $option_key; ?>]" rows="4" cols="20" 
 					<?php
 					if ( ! empty( $option['max'] ) ) {

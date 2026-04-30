@@ -73,11 +73,16 @@ final class EngineHelperTest extends TestCase {
 		self::assertSame( 'opt-1', $arr['options'][0]['id'] );
 	}
 
-	public function test_alias_routes_legacy_class_calls(): void {
-		// WC_Product_Addons_Helper is class_aliased to Lafka_Engine_Helper.
-		self::assertTrue( class_exists( 'WC_Product_Addons_Helper' ) );
-		// Static method calls via the alias hit the engine helper.
-		self::assertSame( array(), \WC_Product_Addons_Helper::get_product_addons( 0 ) );
+	public function test_legacy_class_alias_dropped_in_v8_18_0(): void {
+		// v8.18.0 removed the WC_Product_Addons_Helper class_alias. Internal
+		// callers (templates, combos compat) all reference Lafka_Engine_Helper
+		// directly now. Third-party themes/plugins that depended on the old
+		// class name need to update — this is a deliberate breaking change
+		// in the major-cleanup release.
+		self::assertFalse(
+			class_exists( 'WC_Product_Addons_Helper', false ),
+			'WC_Product_Addons_Helper alias should be gone — Lafka_Engine_Helper is the canonical class'
+		);
 	}
 
 	public function test_is_addon_required_with_empty(): void {

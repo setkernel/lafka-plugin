@@ -80,7 +80,7 @@ class WC_LafkaCombos_Addons_Compatibility {
 		$addons = WC_LafkaCombos_Helpers::cache_get( $cache_key );
 
 		if ( is_null( $addons ) ) {
-			$addons = WC_Product_Addons_Helper::get_product_addons( $product_id, false, false );
+			$addons = Lafka_Engine_Helper::get_product_addons( $product_id, false, false );
 			WC_LafkaCombos_Helpers::cache_set( $cache_key, $addons );
 		}
 
@@ -156,9 +156,9 @@ class WC_LafkaCombos_Addons_Compatibility {
 	 */
 	public static function addons_support( $product_id, $item ) {
 
-		global $Product_Addon_Display, $product;
+		global $Lafka_Engine_Display, $product;
 
-		if ( ! empty( $Product_Addon_Display ) ) {
+		if ( ! empty( $Lafka_Engine_Display ) ) {
 
 			if ( doing_action( 'wp_ajax_woocommerce_configure_combo_order_item' ) ) {
 				return;
@@ -178,7 +178,7 @@ class WC_LafkaCombos_Addons_Compatibility {
 			WC_LafkaCombos_Compatibility::$addons_prefix           = $item->get_id();
 			WC_LafkaCombos_Compatibility::$compat_combined_product = $item->get_product();
 
-			$Product_Addon_Display->display( $product_id, false );
+			$Lafka_Engine_Display->display( $product_id, false );
 
 			WC_LafkaCombos_Compatibility::$addons_prefix = WC_LafkaCombos_Compatibility::$compat_combined_product = '';
 
@@ -217,10 +217,10 @@ class WC_LafkaCombos_Addons_Compatibility {
 	 */
 	public static function combined_item_addons_stamp( $combined_item_stamp, $combined_item_id ) {
 
-		global $Product_Addon_Cart;
+		global $Lafka_Engine_Cart;
 
 		// Store combined item addons add-ons config in stamp to avoid generating the same combo cart id.
-		if ( ! empty( $Product_Addon_Cart ) ) {
+		if ( ! empty( $Lafka_Engine_Cart ) ) {
 
 			$addon_data = array();
 
@@ -229,7 +229,7 @@ class WC_LafkaCombos_Addons_Compatibility {
 
 			$combined_product_id = $combined_item_stamp['product_id'];
 
-			$addon_data = $Product_Addon_Cart->add_cart_item_data( $addon_data, $combined_product_id );
+			$addon_data = $Lafka_Engine_Cart->add_cart_item_data( $addon_data, $combined_product_id );
 
 			// Reset addons prefix.
 			WC_LafkaCombos_Compatibility::$addons_prefix = '';
@@ -263,13 +263,13 @@ class WC_LafkaCombos_Addons_Compatibility {
 		$product_id       = $combined_item->get_product_id();
 
 		// Validate add-ons.
-		global $Product_Addon_Cart;
+		global $Lafka_Engine_Cart;
 
-		if ( ! empty( $Product_Addon_Cart ) ) {
+		if ( ! empty( $Lafka_Engine_Cart ) ) {
 
 			WC_LafkaCombos_Compatibility::$addons_prefix = $combined_item_id;
 
-			if ( false === $combined_item->disable_addons() && false === $Product_Addon_Cart->validate_add_cart_item( true, $product_id, $quantity ) ) {
+			if ( false === $combined_item->disable_addons() && false === $Lafka_Engine_Cart->validate_add_cart_item( true, $product_id, $quantity ) ) {
 				$add = false;
 			}
 
@@ -291,13 +291,13 @@ class WC_LafkaCombos_Addons_Compatibility {
 	 */
 	public static function after_combined_add_to_cart( $product_id, $quantity, $variation_id, $variations, $combined_item_cart_data ) {
 
-		global $Product_Addon_Cart;
+		global $Lafka_Engine_Cart;
 
 		// Reset addons prefix.
 		WC_LafkaCombos_Compatibility::$addons_prefix = '';
 
-		if ( ! empty( $Product_Addon_Cart ) ) {
-			add_filter( 'woocommerce_add_cart_item_data', array( $Product_Addon_Cart, 'add_cart_item_data' ), 10, 2 );
+		if ( ! empty( $Lafka_Engine_Cart ) ) {
+			add_filter( 'woocommerce_add_cart_item_data', array( $Lafka_Engine_Cart, 'add_cart_item_data' ), 10, 2 );
 		}
 	}
 
@@ -313,7 +313,7 @@ class WC_LafkaCombos_Addons_Compatibility {
 	 */
 	public static function before_combined_add_to_cart( $product_id, $quantity, $variation_id, $variations, $combined_item_cart_data ) {
 
-		global $Product_Addon_Cart;
+		global $Lafka_Engine_Cart;
 
 		// Set addons prefix.
 		WC_LafkaCombos_Compatibility::$addons_prefix = $combined_item_cart_data['combined_item_id'];
@@ -321,8 +321,8 @@ class WC_LafkaCombos_Addons_Compatibility {
 		// Add-ons cart item data is already stored in the composite_data array, so we can grab it from there instead of allowing Addons to re-add it.
 		// Not doing so results in issues with file upload validation.
 
-		if ( ! empty( $Product_Addon_Cart ) ) {
-			remove_filter( 'woocommerce_add_cart_item_data', array( $Product_Addon_Cart, 'add_cart_item_data' ), 10, 2 );
+		if ( ! empty( $Lafka_Engine_Cart ) ) {
+			remove_filter( 'woocommerce_add_cart_item_data', array( $Lafka_Engine_Cart, 'add_cart_item_data' ), 10, 2 );
 		}
 	}
 

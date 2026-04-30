@@ -206,22 +206,14 @@ jQuery( document ).ready( function($) {
 
 						var formatted_price = $current_addon.data(selected_attribute_value + '-formatted-price');
 
-						// Engine v8.17.3+ wraps the option price in
-						// <span class="lafka-addon-price">(<wc_price>)</span>
-						// to give themes a single inline anchor for layout.
-						// Replace the inner .woocommerce-Price-amount span,
-						// keeping the wrapper (and its parens) intact.
-						//
-						// Pre-v8.17.3 fallback: bare .woocommerce-Price-amount
-						// is a direct sibling of the input. Some third-party
-						// themes still ship templates with this older shape,
-						// so we keep the legacy path alive.
-						var $wrapper = $current_addon.nextAll('span.lafka-addon-price');
-						if ($wrapper.length) {
-							$wrapper.find('span.woocommerce-Price-amount').replaceWith(formatted_price);
-						} else {
-							$current_addon.nextAll('span.woocommerce-Price-amount').replaceWith(formatted_price);
-						}
+						// Replace the inner wc_price span inside the
+						// <span class="lafka-addon-price"> wrapper that the
+						// plugin's templates emit since v8.17.3. The wrapper
+						// is the canonical anchor; legacy bare-sibling
+						// markup support was dropped in v8.18.0.
+						$current_addon.nextAll('span.lafka-addon-price')
+							.find('span.woocommerce-Price-amount')
+							.replaceWith(formatted_price);
 					}
 				});
 
@@ -240,9 +232,16 @@ jQuery( document ).ready( function($) {
 					addon_cost     = $( this ).data( 'price' ) * $( this ).val();
 					addon_cost_raw = $( this ).data( 'raw-price' ) * $( this ).val();
 				} else if ( $( this ).is( '.addon-checkbox, .addon-radio' ) ) {
-					if($( this ).is( ':checked' ) && attribute_custom_raw_price) {
-						$(this).prop('data-raw-price', attribute_custom_raw_price);
-						$(this).prop('data-price', attribute_custom_price);
+					if ( $( this ).is( ':checked' ) && attribute_custom_raw_price ) {
+						// Use .attr() not .prop() — `prop('data-raw-price', ...)`
+						// sets a JS property literally named "data-raw-price"
+						// rather than updating the HTML attribute or the data
+						// cache. Pre-v8.18.0 this silently broke per-attribute
+						// pricing readback for any code that did
+						// `$el.data('raw-price')` after a size change.
+						$( this ).attr( 'data-raw-price', attribute_custom_raw_price );
+						$( this ).attr( 'data-price', attribute_custom_price );
+						$( this ).removeData( 'raw-price' ).removeData( 'price' );
 						addon_cost     = attribute_custom_price;
 						addon_cost_raw = attribute_custom_raw_price;
 					}
@@ -257,8 +256,11 @@ jQuery( document ).ready( function($) {
 					}
 				} else {
 					if ( $( this ).val() && attribute_custom_raw_price ) {
-						$(this).prop('data-raw-price', attribute_custom_raw_price);
-						$(this).prop('data-price', attribute_custom_price);
+						// See above — .attr() + removeData() so subsequent
+						// .data() reads pick up the new value.
+						$( this ).attr( 'data-raw-price', attribute_custom_raw_price );
+						$( this ).attr( 'data-price', attribute_custom_price );
+						$( this ).removeData( 'raw-price' ).removeData( 'price' );
 						addon_cost     = attribute_custom_price;
 						addon_cost_raw = attribute_custom_raw_price;
 					} else if ( $( this ).val() ) {

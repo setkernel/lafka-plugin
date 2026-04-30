@@ -33,19 +33,13 @@ class Lafka_Product_Addons {
 			$this->init_admin();
 		}
 
-		// Cart + display: each is a single Lafka_Engine_* instance, exposed
-		// under both the modern and legacy globals. The Combos compatibility
-		// module reads $Product_Addon_Cart, and templates reach for methods
-		// on $Product_Addon_Display, so the dual-global pattern keeps those
-		// integrations working without changes. Both legacy globals retire
-		// in v8.16.x once combos updates and templates rewrite.
-		$engine_cart                      = new Lafka_Engine_Cart();
-		$GLOBALS['Lafka_Engine_Cart']     = $engine_cart;
-		$GLOBALS['Product_Addon_Cart']    = $engine_cart;
-
-		$engine_display                   = new Lafka_Engine_Display();
-		$GLOBALS['Lafka_Engine_Display']  = $engine_display;
-		$GLOBALS['Product_Addon_Display'] = $engine_display;
+		// Cart + display engine instances. Templates and the Combos
+		// compatibility module reference these globals; the legacy
+		// $Product_Addon_Cart/$Product_Addon_Display dual-globals were
+		// retired in v8.18.0 — only the modern Lafka_Engine_* globals
+		// remain.
+		$GLOBALS['Lafka_Engine_Cart']    = new Lafka_Engine_Cart();
+		$GLOBALS['Lafka_Engine_Display'] = new Lafka_Engine_Display();
 	}
 
 	/**
@@ -154,7 +148,7 @@ function lafka_convert_attribute_raw_prices_to_prices( $raw_attribute_prices ) {
 			if ( is_array( $prices ) ) {
 				foreach ( $prices as $attr_value => $price ) {
 					if ( is_numeric( $price ) ) {
-						$raw_attribute_prices[ $attribute ][ $attr_value ] = WC_Product_Addons_Helper::get_product_addon_price_for_display( $price );
+						$raw_attribute_prices[ $attribute ][ $attr_value ] = Lafka_Engine_Helper::get_product_addon_price_for_display( $price );
 					}
 				}
 			}

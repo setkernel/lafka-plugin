@@ -243,9 +243,3 @@ class Lafka_Engine_Helper {
 	}
 }
 
-// Back-compat alias. Third-party themes/plugins reaching for the old class
-// name keep working. v8.15.0 is the last release where this alias is
-// guaranteed; v8.16.x may drop it.
-if ( ! class_exists( 'WC_Product_Addons_Helper', false ) ) {
-	class_alias( 'Lafka_Engine_Helper', 'WC_Product_Addons_Helper' );
-}

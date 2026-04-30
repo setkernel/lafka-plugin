@@ -4,11 +4,11 @@
 foreach ( $addon['options'] as $i => $option ) :
 	/**
 	 * @var WC_Product $product
-	 * @var Lafka_Engine_Display $Product_Addon_Display
+	 * @var Lafka_Engine_Display $Lafka_Engine_Display
 	 */
 
 	global $product;
-	global $Product_Addon_Display;
+	global $Lafka_Engine_Display;
 
 	$option_price             = lafka_get_option_price_on_default_attribute( $product, $option['price'] );
 	$option_price_for_display = '';
@@ -19,7 +19,7 @@ foreach ( $addon['options'] as $i => $option ) :
 		// .woocommerce-Price-amount span when a theme uses flex/grid alignment
 		// — splitting "(" left and ")$3.50" right. The span is structural, not
 		// stylistic: themes that don't target it still see "(<wc_price>)".
-		$option_price_for_display = '<span class="lafka-addon-price">(' . wc_price( WC_Product_Addons_Helper::get_product_addon_price_for_display( $option_price ) ) . ')</span>';
+		$option_price_for_display = '<span class="lafka-addon-price">(' . wc_price( Lafka_Engine_Helper::get_product_addon_price_for_display( $option_price ) ) . ')</span>';
 	}
 
 	$price = apply_filters( 'lafka_product_addons_option_price', $option_price_for_display, $option, $i, 'checkbox' );
@@ -42,8 +42,8 @@ foreach ( $addon['options'] as $i => $option ) :
 	$attribute_raw_prices = $option['price'];
 	$attribute_prices     = lafka_convert_attribute_raw_prices_to_prices( $attribute_raw_prices );
 
-	$custom_image_id      = $Product_Addon_Display->get_addon_option_custom_image_id( $option );
-	$custom_image_classes = $Product_Addon_Display->get_addon_option_image_classes( $custom_image_id );
+	$custom_image_id      = $Lafka_Engine_Display->get_addon_option_custom_image_id( $option );
+	$custom_image_classes = $Lafka_Engine_Display->get_addon_option_image_classes( $custom_image_id );
 	?>
 
 	<p class="form-row form-row-wide addon-wrap-<?php echo sanitize_title( $addon['field-name'] ) . '-' . $i; ?>">
@@ -57,7 +57,7 @@ foreach ( $addon['options'] as $i => $option ) :
 							<?php endforeach; ?>
 						<?php endif; ?>
 						data-raw-price="<?php echo esc_attr( $option_price ); ?>"
-						data-price="<?php echo WC_Product_Addons_Helper::get_product_addon_price_for_display( $option_price ); ?>"
+						data-price="<?php echo Lafka_Engine_Helper::get_product_addon_price_for_display( $option_price ); ?>"
 						value="<?php echo esc_attr( $option_id ); ?>" <?php checked( $current_value, 1 ); ?> /><?php echo ' '; ?>
 			<?php if ( $custom_image_id ) : ?>
 				<?php echo wp_get_attachment_image( $custom_image_id, 'lafka-widgets-thumb', false, array( 'class' => implode( ' ', $custom_image_classes ) ) ); ?>
