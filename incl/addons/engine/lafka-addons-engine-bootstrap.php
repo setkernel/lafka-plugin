@@ -48,3 +48,23 @@ require_once __DIR__ . '/admin/class-engine-editor.php';
 require_once __DIR__ . '/admin/class-engine-ajax.php';
 require_once __DIR__ . '/admin/class-engine-product-panel.php';
 require_once __DIR__ . '/class-engine.php';
+
+// REST controller is loaded lazily on rest_api_init because it extends
+// WP_REST_Controller, which is only defined when WP's REST stack is loaded.
+// Loading the file at bootstrap time would fatal under unit tests + CLI.
+if ( function_exists( 'add_action' ) ) {
+	add_action(
+		'rest_api_init',
+		static function () {
+			if ( class_exists( 'WP_REST_Controller' ) ) {
+				require_once __DIR__ . '/api/class-rest-groups-controller.php';
+				( new Lafka_Addons_REST_Groups_Controller() )->register_routes();
+			}
+		}
+	);
+}
+
+// WP-CLI command surface — file no-ops when WP_CLI isn't defined.
+if ( defined( 'WP_CLI' ) && WP_CLI ) {
+	require_once __DIR__ . '/cli/class-cli-commands.php';
+}
