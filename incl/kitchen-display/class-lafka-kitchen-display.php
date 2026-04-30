@@ -81,6 +81,8 @@ class Lafka_Kitchen_Display {
 	 * Register WC email classes.
 	 */
 	public function register_emails( $email_classes ) {
+		// Base must load before subclasses so PHP can resolve the `extends` reference.
+		require_once __DIR__ . '/includes/class-lafka-kds-email-base.php';
 		require_once __DIR__ . '/includes/class-lafka-kds-email-accepted.php';
 		require_once __DIR__ . '/includes/class-lafka-kds-email-preparing.php';
 		require_once __DIR__ . '/includes/class-lafka-kds-email-ready.php';
