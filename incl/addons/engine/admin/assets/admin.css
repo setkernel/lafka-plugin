@@ -1,0 +1,65 @@
+/**
+ * Lafka Addons Engine — admin editor styles.
+ */
+.lafka-engine-admin .wp-list-table th { font-weight: 600; }
+.lafka-engine-edit .lafka-engine-form { max-width: 1100px; }
+
+.lafka-engine-categories { margin-top: 8px; }
+
+.lafka-engine-groups { display: flex; flex-direction: column; gap: 16px; }
+
+.lafka-engine-group {
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	padding: 16px;
+}
+.lafka-engine-group__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 12px;
+	padding-bottom: 8px;
+	border-bottom: 1px solid #f0f0f1;
+}
+.lafka-engine-group__header h3 { margin: 0; font-size: 14px; font-weight: 600; }
+.lafka-engine-group__title-display { color: #1d2327; }
+
+.lafka-engine-fieldset {
+	border: 1px solid #dcdcde;
+	border-radius: 3px;
+	margin: 12px 0;
+	padding: 12px;
+}
+.lafka-engine-fieldset legend {
+	padding: 0 6px;
+	font-weight: 600;
+	color: #1d2327;
+}
+
+.lafka-engine-pricing-mode__option { display: block; margin: 4px 0; }
+
+.lafka-engine-source-attribute { margin: 8px 0 0 24px; }
+
+.lafka-engine-size-terms { margin-top: 8px; }
+.lafka-engine-size-term {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	margin: 4px 12px 4px 0;
+	padding: 4px 8px;
+	background: #f6f7f7;
+	border-radius: 3px;
+}
+
+.lafka-engine-options-table {
+	margin-top: 8px;
+}
+.lafka-engine-options-table th { background: #f6f7f7; }
+.lafka-engine-option-label-readonly {
+	display: inline-block;
+	padding: 4px 0;
+	color: #1d2327;
+}
+
+.lafka-engine-add-group-row { margin-top: 12px; }

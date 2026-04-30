@@ -25,38 +25,46 @@ class Lafka_Product_Addons {
 	 * Initializes plugin classes.
 	 */
 	public function init_classes() {
-		// Core (models)
-		include_once __DIR__ . '/includes/groups/class-lafka-product-addon-group-validator.php';
-		include_once __DIR__ . '/includes/groups/class-lafka-product-addon-global-group.php';
-		include_once __DIR__ . '/includes/groups/class-lafka-product-addon-product-group.php';
-		include_once __DIR__ . '/includes/groups/class-lafka-product-addon-groups.php';
+		// v2 engine bootstrap — declares all engine classes plus the
+		// WC_Product_Addons_Helper class_alias.
+		require_once __DIR__ . '/engine/lafka-addons-engine-bootstrap.php';
 
-		// Per-request groups cache invalidation on save/trash/delete of an
-		// addon CPT post — without this, the admin list page rendered on
-		// the same request after a save shows stale (pre-save) data.
-		Lafka_Product_Addon_Groups::bootstrap();
-
-		// Admin
 		if ( is_admin() ) {
 			$this->init_admin();
 		}
 
-		// Front-side
-		include_once __DIR__ . '/includes/class-lafka-product-addon-display.php';
-		include_once __DIR__ . '/includes/class-lafka-product-addon-cart.php';
-		// Helper class used by other plugins for compatibility
-		include_once __DIR__ . '/includes/class-lafka-product-addons-helper.php';
+		// Cart + display: each is a single Lafka_Engine_* instance, exposed
+		// under both the modern and legacy globals. The Combos compatibility
+		// module reads $Product_Addon_Cart, and templates reach for methods
+		// on $Product_Addon_Display, so the dual-global pattern keeps those
+		// integrations working without changes. Both legacy globals retire
+		// in v8.16.x once combos updates and templates rewrite.
+		$engine_cart                      = new Lafka_Engine_Cart();
+		$GLOBALS['Lafka_Engine_Cart']     = $engine_cart;
+		$GLOBALS['Product_Addon_Cart']    = $engine_cart;
 
-		$GLOBALS['Product_Addon_Display'] = new Lafka_Product_Addon_Display();
-		$GLOBALS['Product_Addon_Cart']    = new Lafka_Product_Addon_Cart();
+		$engine_display                   = new Lafka_Engine_Display();
+		$GLOBALS['Lafka_Engine_Display']  = $engine_display;
+		$GLOBALS['Product_Addon_Display'] = $engine_display;
 	}
 
 	/**
 	 * Initializes plugin admin.
+	 *
+	 * Phase 2 (v8.13.1): v2 engine admin replaces the legacy global addons
+	 * surface.
+	 *
+	 * Phase 3 (v8.13.2): per-product addon panel on the WC product editor
+	 * also uses the engine. Legacy `incl/addons/admin/` directory deleted.
 	 */
 	protected function init_admin() {
-		include_once __DIR__ . '/admin/class-lafka-product-addon-admin.php';
-		$GLOBALS['Lafka_Product_Addon_Admin'] = new Lafka_Product_Addon_Admin();
+		// Engine bootstrap is required before instantiating the admin since
+		// the engine classes must be loaded. The bootstrap is also required
+		// from init_classes() above for runtime; this is defense-in-depth
+		// in case admin runs without init_classes (theoretically impossible
+		// but safer).
+		require_once __DIR__ . '/engine/lafka-addons-engine-bootstrap.php';
+		$GLOBALS['Lafka_Engine_Admin'] = new Lafka_Engine_Admin();
 	}
 
 	/**
@@ -125,8 +133,8 @@ function lafka_get_option_price_on_default_attribute( $product, $option_price ) 
  * in a scalar.
  *
  * Used by lafka_get_option_price_on_default_attribute() and by
- * Lafka_Product_Addon_Cart's display sites to defensively coerce any
- * leftover array prices before they reach (float) cast or wc_price().
+ * Lafka_Engine_Cart's display sites to defensively coerce any leftover
+ * array prices before they reach (float) cast or wc_price().
  *
  * @param mixed $price Scalar or possibly-nested array.
  * @return string|int|float

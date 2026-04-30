@@ -34,12 +34,11 @@ namespace LafkaPlugin\Tests\Unit {
 
 	use Brain\Monkey;
 	use Brain\Monkey\Functions;
-	use Lafka_Product_Addon_Field_List;
+	use Lafka_Engine_Field_List;
 	use PHPUnit\Framework\TestCase;
 	use WP_Error;
 
-	require_once dirname( __DIR__, 2 ) . '/incl/addons/includes/fields/abstract-class-product-addon-field.php';
-	require_once dirname( __DIR__, 2 ) . '/incl/addons/includes/fields/class-product-addon-field-list.php';
+	require_once dirname( __DIR__, 2 ) . '/incl/addons/engine/lafka-addons-engine-bootstrap.php';
 
 final class AddonFieldListRequiredValidationTest extends TestCase {
 
@@ -54,13 +53,13 @@ final class AddonFieldListRequiredValidationTest extends TestCase {
 		parent::tearDown();
 	}
 
-	private function make_field( $value, bool $required = true ): Lafka_Product_Addon_Field_List {
+	private function make_field( $value, bool $required = true ): Lafka_Engine_Field_List {
 		$addon = array(
 			'name'     => 'Toppings',
 			'required' => $required ? 1 : 0,
 			'options'  => array(),
 		);
-		return new Lafka_Product_Addon_Field_List( $addon, $value );
+		return new Lafka_Engine_Field_List( $addon, $value );
 	}
 
 	public function test_required_passes_with_one_selection(): void {

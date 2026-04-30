@@ -27,14 +27,14 @@ namespace LafkaPlugin\Tests\Unit;
 
 use Brain\Monkey;
 use Brain\Monkey\Functions;
-use Lafka_Product_Addon_Cart;
+use Lafka_Engine_Cart;
 use PHPUnit\Framework\TestCase;
 
-require_once dirname( __DIR__, 2 ) . '/incl/addons/includes/class-lafka-product-addon-cart.php';
+require_once dirname( __DIR__, 2 ) . '/incl/addons/engine/lafka-addons-engine-bootstrap.php';
 
 final class AddonCartPriceResolutionTest extends TestCase {
 
-	private Lafka_Product_Addon_Cart $cart;
+	private Lafka_Engine_Cart $cart;
 
 	protected function setUp(): void {
 		parent::setUp();
@@ -42,7 +42,7 @@ final class AddonCartPriceResolutionTest extends TestCase {
 		// add_action/add_filter are pre-stubbed by tests/bootstrap.php as no-ops;
 		// don't redefine them via Brain Monkey or Patchwork raises
 		// DefinedTooEarly. Anything cart-internal that needs stubs goes here.
-		$this->cart = new Lafka_Product_Addon_Cart();
+		$this->cart = new Lafka_Engine_Cart();
 	}
 
 	protected function tearDown(): void {
