@@ -4,8 +4,7 @@
 		"vendor/**",
 		"node_modules/**",
 		"assets/js/flatpickr/**",
-		"assets/css/schedule/**",
-		"incl/combos/assets/css/admin/select2*.css"
+		"assets/css/schedule/**"
 	],
 	"rules": {
 		"no-descending-specificity": null,

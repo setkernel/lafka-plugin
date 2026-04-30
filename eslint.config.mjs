@@ -58,8 +58,6 @@ export default [
 			"assets/js/flatpickr/**",
 			"assets/js/schedule/jquery.schedule.js",
 			"assets/js/schedule/jquery.schedule.min.js",
-			"incl/combos/assets/js/admin/select2.js",
-			"incl/combos/assets/js/admin/select2.min.js",
 			// Minified files
 			"**/*.min.js",
 			// Importer

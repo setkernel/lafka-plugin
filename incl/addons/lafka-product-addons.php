@@ -17,8 +17,10 @@ class Lafka_Product_Addons {
 		define( 'WC_PRODUCT_ADDONS_VERSION', '3.1.0' ); // WRCS: DEFINED_VERSION.
 		add_action( 'plugins_loaded', array( $this, 'init_classes' ) );
 		add_action( 'init', array( $this, 'init_post_types' ), 20 );
-		// Product Combos compatibility
-		add_filter( 'woocommerce_combos_compatibility_modules', array( $this, 'init_pb_compatibility_module' ) );
+		// Note: Lafka_Combos integration was retired in v9.0.0 alongside the
+		// Lafka Combos fork itself. If a future release ships an addons↔
+		// WC Product Bundles bridge, hook it here against
+		// `woocommerce_bundles_compatibility_modules`.
 	}
 
 	/**
@@ -88,14 +90,6 @@ class Lafka_Product_Addons {
 		register_taxonomy_for_object_type( 'product_cat', 'lafka_glb_addon' );
 	}
 
-	public function init_pb_compatibility_module( $module_paths ) {
-		// Include the compatibility class for the addons of Product Bundles plugin
-		if ( class_exists( 'WC_Combos' ) ) {
-			$module_paths['product_addons'] = 'modules/class-wc-pb-addons-compatibility.php';
-		}
-
-		return $module_paths;
-	}
 }
 
 new Lafka_Product_Addons();
