@@ -41,3 +41,4 @@ require_once __DIR__ . '/sources/class-attribute-source.php';
 require_once __DIR__ . '/migrations/abstract-migration.php';
 require_once __DIR__ . '/migrations/class-migration-v8-13-0.php';
 require_once __DIR__ . '/migrations/class-upgrader.php';
+require_once __DIR__ . '/class-engine.php';

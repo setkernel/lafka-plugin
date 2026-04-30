@@ -47,6 +47,10 @@ class Lafka_Product_Addons {
 		// Helper class used by other plugins for compatibility
 		include_once __DIR__ . '/includes/class-lafka-product-addons-helper.php';
 
+		// Phase 1 (v8.13.0): the new addon engine. Loaded alongside legacy code;
+		// remains dormant until Phase 2 admin form rewires to it.
+		require_once __DIR__ . '/engine/lafka-addons-engine-bootstrap.php';
+
 		$GLOBALS['Product_Addon_Display'] = new Lafka_Product_Addon_Display();
 		$GLOBALS['Product_Addon_Cart']    = new Lafka_Product_Addon_Cart();
 	}
