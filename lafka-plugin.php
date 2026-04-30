@@ -3,7 +3,7 @@
 	Plugin Name: Lafka Plugin
 	Plugin URI: https://github.com/setkernel/lafka-plugin
 	Description: Companion plugin for the Lafka WooCommerce theme. Originally by theAlThemist, now community-maintained.
-	Version: 9.7.19
+	Version: 9.7.20
 	Author: theAlThemist, Contributors
 	Author URI: https://github.com/setkernel/lafka-plugin
 	Requires at least: 6.6
@@ -1201,40 +1201,42 @@ if ( ! function_exists( 'lafka_share_links' ) ) {
 			$media            = get_the_post_thumbnail_url( $post->ID, 'large' );
 			$share_links_html = '<span>' . esc_html__( 'Share', 'lafka-plugin' ) . ':</span>';
 
+			// HTTPS on all share endpoints — modern browsers either upgrade
+			// http://→https:// or block mixed content; emitting https from
+			// the start avoids both. rawurlencode (not urlencode) for URL
+			// query params per RFC 3986. esc_url() on the full href as
+			// defense-in-depth even though host is hardcoded.
+			$decoded_title = html_entity_decode( $title );
 			$share_links_html .= sprintf(
-				'<a class="lafka-share-facebook" title="%s" href="http://www.facebook.com/sharer.php?u=%s&t=%s" target="_blank" ></a>',
+				'<a class="lafka-share-facebook" title="%s" href="%s" target="_blank" rel="noopener noreferrer"></a>',
 				esc_attr__( 'Share on Facebook', 'lafka-plugin' ),
-				urlencode( $link ),
-				urlencode( html_entity_decode( $title ) )
+				esc_url( 'https://www.facebook.com/sharer.php?u=' . rawurlencode( $link ) . '&t=' . rawurlencode( $decoded_title ) )
 			);
 			$share_links_html .= sprintf(
-				'<a class="lafka-share-twitter"  title="%s" href="http://twitter.com/share?text=%s&url=%s" target="_blank"></a>',
+				'<a class="lafka-share-twitter" title="%s" href="%s" target="_blank" rel="noopener noreferrer"></a>',
 				esc_attr__( 'Share on Twitter', 'lafka-plugin' ),
-				urlencode( html_entity_decode( $title ) ),
-				urlencode( $link )
+				esc_url( 'https://twitter.com/share?text=' . rawurlencode( $decoded_title ) . '&url=' . rawurlencode( $link ) )
 			);
 			$share_links_html .= sprintf(
-				'<a class="lafka-share-pinterest" title="%s"  href="http://pinterest.com/pin/create/button?media=%s&url=%s&description=%s" target="_blank"></a>',
+				'<a class="lafka-share-pinterest" title="%s" href="%s" target="_blank" rel="noopener noreferrer"></a>',
 				esc_attr__( 'Share on Pinterest', 'lafka-plugin' ),
-				urlencode( $media ),
-				urlencode( $link ),
-				urlencode( html_entity_decode( $title ) )
+				esc_url( 'https://pinterest.com/pin/create/button?media=' . rawurlencode( (string) $media ) . '&url=' . rawurlencode( $link ) . '&description=' . rawurlencode( $decoded_title ) )
 			);
 			$share_links_html .= sprintf(
-				'<a class="lafka-share-linkedin" title="%s" href="http://www.linkedin.com/shareArticle?url=%s&title=%s" target="_blank"></a>',
+				'<a class="lafka-share-linkedin" title="%s" href="%s" target="_blank" rel="noopener noreferrer"></a>',
 				esc_attr__( 'Share on LinkedIn', 'lafka-plugin' ),
-				urlencode( $link ),
-				urlencode( html_entity_decode( $title ) )
+				esc_url( 'https://www.linkedin.com/shareArticle?url=' . rawurlencode( $link ) . '&title=' . rawurlencode( $decoded_title ) )
 			);
 			$share_links_html .= sprintf(
-				'<a class="lafka-share-vkontakte" title="%s"  href="http://vk.com/share.php?url=%s&title=%s&image=%s" target="_blank"></a>',
+				'<a class="lafka-share-vkontakte" title="%s" href="%s" target="_blank" rel="noopener noreferrer"></a>',
 				esc_attr__( 'Share on VK', 'lafka-plugin' ),
-				urlencode( $link ),
-				urlencode( html_entity_decode( $title ) ),
-				urlencode( $media )
+				esc_url( 'https://vk.com/share.php?url=' . rawurlencode( $link ) . '&title=' . rawurlencode( $decoded_title ) . '&image=' . rawurlencode( (string) $media ) )
 			);
 
-			printf( '<div class="lafka-share-links">%s<div class="clear"></div></div>', $share_links_html );
+			// Each <a> built above is fully escaped; wp_kses_post on the
+			// container is defense-in-depth for any future addition that
+			// might forget per-piece escaping.
+			echo '<div class="lafka-share-links">' . wp_kses_post( $share_links_html ) . '<div class="clear"></div></div>';
 		}
 	}
 }
