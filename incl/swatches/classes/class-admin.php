@@ -20,7 +20,7 @@ class Lafka_WC_Variation_Swatches_Admin {
 	 * @return Lafka_WC_Variation_Swatches_Admin
 	 */
 	public static function instance() {
-		if ( null == self::$instance ) {
+		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
 
@@ -134,14 +134,16 @@ class Lafka_WC_Variation_Swatches_Admin {
 			return;
 		}
 
-		// Print the open tag of field container
+		// Print the open tag of field container. Translated label flows from
+		// Lafka_WCVS()->types[ $type ]; escape it before printf since a
+		// malicious or buggy translation could otherwise inject HTML.
 		printf(
 			'<%s class="form-field">%s<label for="term-%s">%s</label>%s',
-			'edit' == $form ? 'tr' : 'div',
-			'edit' == $form ? '<th>' : '',
+			'edit' === $form ? 'tr' : 'div',
+			'edit' === $form ? '<th>' : '',
 			esc_attr( $type ),
-			Lafka_WCVS()->types[ $type ],
-			'edit' == $form ? '</th><td>' : ''
+			esc_html( (string) ( Lafka_WCVS()->types[ $type ] ?? $type ) ),
+			'edit' === $form ? '</th><td>' : ''
 		);
 
 		switch ( $type ) {
@@ -172,8 +174,8 @@ class Lafka_WC_Variation_Swatches_Admin {
 				break;
 		}
 
-		// Print the close tag of field container
-		echo 'edit' == $form ? '</td></tr>' : '</div>';
+		// Print the close tag of field container.
+		echo 'edit' === $form ? '</td></tr>' : '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 	}
 
 	/**

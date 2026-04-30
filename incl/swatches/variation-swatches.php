@@ -25,7 +25,7 @@ final class Lafka_WC_Variation_Swatches {
 	 * @return Lafka_WC_Variation_Swatches
 	 */
 	public static function instance() {
-		if ( null == self::$instance ) {
+		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
 
@@ -45,12 +45,21 @@ final class Lafka_WC_Variation_Swatches {
 	/**
 	 * Initialize translatable type labels.
 	 * Deferred to 'init' to avoid _load_textdomain_just_in_time notice.
+	 *
+	 * Filterable via `lafka_wcs_attribute_types` so child plugins can register
+	 * custom swatch types (e.g. gradient, pattern, fabric) by appending to the
+	 * map. Each type also needs a `case` arm in
+	 * Lafka_WC_Variation_Swatches_Frontend::swatch_html() to render its markup;
+	 * extensions typically hook `lafka-wcs_swatch_html` for that.
 	 */
 	public function init_types() {
-		$this->types = array(
-			'color' => esc_html__( 'Color', 'lafka-plugin' ),
-			'image' => esc_html__( 'Image', 'lafka-plugin' ),
-			'label' => esc_html__( 'Label', 'lafka-plugin' ),
+		$this->types = (array) apply_filters(
+			'lafka_wcs_attribute_types',
+			array(
+				'color' => esc_html__( 'Color', 'lafka-plugin' ),
+				'image' => esc_html__( 'Image', 'lafka-plugin' ),
+				'label' => esc_html__( 'Label', 'lafka-plugin' ),
+			)
 		);
 	}
 

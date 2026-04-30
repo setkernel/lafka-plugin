@@ -20,7 +20,7 @@ class Lafka_WC_Variation_Swatches_Frontend {
 	 * @return Lafka_WC_Variation_Swatches_Frontend
 	 */
 	public static function instance() {
-		if ( null == self::$instance ) {
+		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
 
@@ -111,7 +111,7 @@ class Lafka_WC_Variation_Swatches_Frontend {
 	 * @return string
 	 */
 	public function swatch_html( $html, $term, $attr, $args ) {
-		$selected = sanitize_title( $args['selected'] ) == $term->slug ? 'selected' : '';
+		$selected = sanitize_title( $args['selected'] ) === $term->slug ? 'selected' : '';
 		$name     = esc_html( apply_filters( 'woocommerce_variation_option_name', $term->name ) );
 
 		switch ( $attr->attribute_type ) {
