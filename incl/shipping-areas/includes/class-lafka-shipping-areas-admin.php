@@ -154,38 +154,6 @@ class Lafka_Shipping_Areas_Admin {
 		<?php
 	}
 
-	public static function lowest_cost_shipping_method_cb( $args ) {
-		$options = get_option( 'lafka_shipping_areas_general' );
-		?>
-		<label for="<?php echo esc_attr( $args['label_for'] ); ?>">
-			<input id="<?php echo esc_attr( $args['label_for'] ); ?>"
-					name="lafka_shipping_areas_general[<?php echo esc_attr( $args['label_for'] ); ?>]"
-					type="checkbox"
-					value="1"
-				<?php echo isset( $options[ $args['label_for'] ] ) ? ( checked( $options[ $args['label_for'] ], 1 ) ) : ( '' ); ?>
-			>
-			<?php esc_html_e( 'At checkout, show only the available shipping method with the lowest cost. Might be more than one if cost is the same.', 'lafka-plugin' ); ?>
-			<br>
-			<?php esc_html_e( 'Note: If there is "Local pickup", it always be included in the list as an option.', 'lafka-plugin' ); ?>
-		</label>
-		<?php
-	}
-
-	public static function hide_shipping_cost_at_cart_cb( $args ) {
-		$options = get_option( 'lafka_shipping_areas_general' );
-		?>
-		<label for="<?php echo esc_attr( $args['label_for'] ); ?>">
-			<input id="<?php echo esc_attr( $args['label_for'] ); ?>"
-					name="lafka_shipping_areas_general[<?php echo esc_attr( $args['label_for'] ); ?>]"
-					type="checkbox"
-					value="1"
-				<?php echo isset( $options[ $args['label_for'] ] ) ? ( checked( $options[ $args['label_for'] ], 1 ) ) : ( '' ); ?>
-			>
-			<?php esc_html_e( 'At cart page, hide the shipping costs.', 'lafka-plugin' ); ?>
-		</label>
-		<?php
-	}
-
 	public static function pick_delivery_address_cb( $args ) {
 		$options = get_option( 'lafka_shipping_areas_general' );
 		$values  = array(
@@ -220,54 +188,6 @@ class Lafka_Shipping_Areas_Admin {
 				<?php echo isset( $options[ $args['label_for'] ] ) ? ( checked( $options[ $args['label_for'] ], 1 ) ) : ( '' ); ?>
 			>
 			<?php esc_html_e( 'Make it mandatory to pick delivery address from map.', 'lafka-plugin' ); ?>
-		</label>
-		<?php
-	}
-
-	public static function deactivate_post_code_cb( $args ) {
-		$options = get_option( 'lafka_shipping_areas_advanced' );
-		?>
-		<label for="<?php echo esc_attr( $args['label_for'] ); ?>">
-			<input id="<?php echo esc_attr( $args['label_for'] ); ?>"
-					name="lafka_shipping_areas_advanced[<?php echo esc_attr( $args['label_for'] ); ?>]"
-					type="checkbox"
-					value="1"
-				<?php echo isset( $options[ $args['label_for'] ] ) ? ( checked( $options[ $args['label_for'] ], 1 ) ) : ( '' ); ?>
-			>
-			<?php esc_html_e( 'Makes postcode field optional in address and checkout forms and disables post code restrictions.', 'lafka-plugin' ); ?>
-		</label>
-		<?php
-	}
-
-	public static function disable_state_cb( $args ) {
-		$options = get_option( 'lafka_shipping_areas_advanced' );
-		?>
-		<label for="<?php echo esc_attr( $args['label_for'] ); ?>">
-			<input id="<?php echo esc_attr( $args['label_for'] ); ?>"
-					name="lafka_shipping_areas_advanced[<?php echo esc_attr( $args['label_for'] ); ?>]"
-					type="checkbox"
-					value="1"
-				<?php echo isset( $options[ $args['label_for'] ] ) ? ( checked( $options[ $args['label_for'] ], 1 ) ) : ( '' ); ?>
-			>
-			<?php esc_html_e( 'Remove State field from the checkout form.', 'lafka-plugin' ); ?>
-			<p class="description">
-				<?php esc_html_e( 'This is useful when google address lookup doesn\'t return state for some countries and customers can\'t complete their order.', 'lafka-plugin' ); ?>
-			</p>
-		</label>
-		<?php
-	}
-
-	public static function debug_mode_cb( $args ) {
-		$options = get_option( 'lafka_shipping_areas_advanced' );
-		?>
-		<label for="<?php echo esc_attr( $args['label_for'] ); ?>">
-			<input id="<?php echo esc_attr( $args['label_for'] ); ?>"
-					name="lafka_shipping_areas_advanced[<?php echo esc_attr( $args['label_for'] ); ?>]"
-					type="checkbox"
-					value="1"
-				<?php echo isset( $options[ $args['label_for'] ] ) ? ( checked( $options[ $args['label_for'] ], 1 ) ) : ( '' ); ?>
-			>
-			<?php esc_html_e( 'Show request and response data from Google calls.', 'lafka-plugin' ); ?>
 		</label>
 		<?php
 	}
@@ -796,32 +716,6 @@ class Lafka_Shipping_Areas_Admin {
 			]
 		);
 		add_settings_field(
-			'lowest_cost_shipping',
-			esc_html__( 'Show only lowest cost shipping method', 'lafka-plugin' ),
-			array(
-				__CLASS__,
-				'lowest_cost_shipping_method_cb',
-			),
-			'lafka_shipping_areas_general',
-			'general_section',
-			[
-				'label_for' => 'lowest_cost_shipping',
-			]
-		);
-		add_settings_field(
-			'hide_shipping_cost_at_cart',
-			esc_html__( 'Hide shipping costs at cart page', 'lafka-plugin' ),
-			array(
-				__CLASS__,
-				'hide_shipping_cost_at_cart_cb',
-			),
-			'lafka_shipping_areas_general',
-			'general_section',
-			[
-				'label_for' => 'hide_shipping_cost_at_cart',
-			]
-		);
-		add_settings_field(
 			'pick_delivery_address',
 			esc_html__( 'Pick Precise Delivery Address from Map', 'lafka-plugin' ),
 			array(
@@ -850,42 +744,6 @@ class Lafka_Shipping_Areas_Admin {
 		);
 
 		add_settings_section( 'advanced_section', '', null, 'lafka_shipping_areas_advanced' );
-		add_settings_field(
-			'deactivate_post_code',
-			esc_html__( 'Optional Postcode Field', 'lafka-plugin' ),
-			array(
-				__CLASS__,
-				'deactivate_post_code_cb',
-			),
-			'lafka_shipping_areas_advanced',
-			'advanced_section',
-			[
-				'label_for' => 'deactivate_post_code',
-			]
-		);
-		add_settings_field(
-			'disable_state',
-			esc_html__( 'Disable State Field on Checkout', 'lafka-plugin' ),
-			array(
-				__CLASS__,
-				'disable_state_cb',
-			),
-			'lafka_shipping_areas_advanced',
-			'advanced_section',
-			[
-				'label_for' => 'disable_state',
-			]
-		);
-		add_settings_field(
-			'debug_mode',
-			esc_html__( 'Debug Mode', 'lafka-plugin' ),
-			array( __CLASS__, 'debug_mode_cb' ),
-			'lafka_shipping_areas_advanced',
-			'advanced_section',
-			[
-				'label_for' => 'debug_mode',
-			]
-		);
 		add_settings_field(
 			'set_store_location',
 			esc_html__( 'Set Store Location', 'lafka-plugin' ),
