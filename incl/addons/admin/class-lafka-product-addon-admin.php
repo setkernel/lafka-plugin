@@ -297,15 +297,46 @@ class Lafka_Product_Addon_Admin {
 	 * @param int $post_id Post ID.
 	 */
 	public function process_meta_box( $post_id ) {
+		// Defense in depth: WC's metabox save handler does its own nonce + cap
+		// check before firing `woocommerce_process_product_meta`, but this hook
+		// also fires from non-admin paths (WC_AJAX, programmatic saves, REST
+		// passthroughs). Guard independently so we never overwrite addon data
+		// from a context that wasn't a real operator save.
+		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+			return;
+		}
+		if ( wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) {
+			return;
+		}
+		if ( 'product' !== get_post_type( $post_id ) ) {
+			return;
+		}
+		if ( ! current_user_can( 'edit_post', $post_id ) ) {
+			return;
+		}
+		// `product_addon_name` is the form's canonical "the addon panel was
+		// rendered + posted" marker. If it's absent, this isn't an addon-panel
+		// save — bail rather than blanket-clearing _product_addons.
+		if ( ! isset( $_POST['product_addon_name'] ) ) {
+			return;
+		}
+
 		// Save addons as serialised array.
 		$product_addons                = $this->get_posted_product_addons();
 		$product_addons_exclude_global = isset( $_POST['_product_addons_exclude_global'] ) ? 1 : 0;
 
 		$product = wc_get_product( $post_id );
+		if ( ! $product instanceof WC_Product ) {
+			return;
+		}
 
-		// Defensive merge: preserve nested per-attribute price arrays when the
-		// form rendered flat for any reason.
-		$existing_addons = (array) $product->get_meta( '_product_addons' );
+		// Read existing meta DIRECTLY from postmeta (not via $product->get_meta)
+		// so the preserve-merge sees authoritative DB state. wc_get_product()
+		// returns a cached object whose meta cache may already reflect an
+		// in-progress update from earlier in the same request — which would
+		// silently no-op the preserve guard. get_post_meta() bypasses the
+		// product object's runtime cache.
+		$existing_addons = (array) get_post_meta( $post_id, '_product_addons', true );
 		$product_addons  = self::preserve_nested_prices_on_save( $product_addons, $existing_addons );
 
 		$product->update_meta_data( '_product_addons', $product_addons );

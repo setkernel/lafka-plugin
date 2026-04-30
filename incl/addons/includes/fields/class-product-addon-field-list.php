@@ -12,7 +12,24 @@ class Lafka_Product_Addon_Field_List extends Lafka_Product_Addon_Field {
 	 */
 	public function validate() {
 		if ( ! empty( $this->addon['required'] ) ) {
-			if ( ! $this->value || ( is_array( $this->value ) && sizeof( $this->value ) ) == 0 ) {
+			// Misplaced parenthesis in upstream collapsed the array-empty
+			// branch into a no-op (`sizeof($x) ) == 0` evaluated `bool == 0`,
+			// always false on a non-empty array). The required-field check
+			// was bypassable by submitting `[""]`. Reset both branches:
+			// scalar-empty OR array-of-only-empties OR array of size 0.
+			$is_empty = false;
+			if ( is_array( $this->value ) ) {
+				$filtered = array_filter(
+					$this->value,
+					static function ( $v ) {
+						return is_array( $v ) ? ! empty( $v ) : '' !== trim( (string) $v );
+					}
+				);
+				$is_empty = empty( $filtered );
+			} else {
+				$is_empty = '' === trim( (string) $this->value );
+			}
+			if ( $is_empty ) {
 				return new WP_Error( 'error', sprintf( esc_html__( '"%s" is a required field.', 'lafka-plugin' ), $this->addon['name'] ) );
 			}
 		}

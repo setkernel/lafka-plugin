@@ -298,13 +298,24 @@ class Lafka_Product_Addon_Cart {
 				$value = array();
 
 				if ( in_array( $addon['type'], array( 'checkbox', 'radiobutton' ), true ) ) {
+					// One meta entry per selection (see add_meta_data() in
+					// order_line_item below — `$item->add_meta_data( $key,
+					// $addon['value'] )` writes a SCALAR per selection).
+					// Original code did `count($meta->value)` which on a
+					// string returns 1, dropping any future array-shaped
+					// meta. Iterate every matching meta key and accumulate;
+					// each entry contributes one value to the reconstructed
+					// selection set.
 					foreach ( $product->get_meta_data() as $meta ) {
-						if ( stripos( $meta->key, $addon['name'] ) === 0 ) {
-							if ( 1 < count( $meta->value ) ) {
-								$value[] = array_map( 'sanitize_title', $meta->value );
-							} else {
-								$value[] = sanitize_title( $meta->value );
+						if ( stripos( $meta->key, $addon['name'] ) !== 0 ) {
+							continue;
+						}
+						if ( is_array( $meta->value ) ) {
+							foreach ( $meta->value as $entry ) {
+								$value[] = sanitize_title( (string) $entry );
 							}
+						} else {
+							$value[] = sanitize_title( (string) $meta->value );
 						}
 					}
 				} elseif ( 'textarea' === $addon['type'] ) {
@@ -352,15 +363,45 @@ class Lafka_Product_Addon_Cart {
 	 */
 	public function apply_attribute_specific_price( array $addons, array $cart_item ): array {
 		foreach ( $addons as $key => $addon ) {
-			if ( isset( $addon['price'] ) && is_array( $addon['price'] ) && isset( $cart_item['variation'] ) && is_array( $cart_item['variation'] ) ) {
+			if ( ! isset( $addon['price'] ) || ! is_array( $addon['price'] ) ) {
+				continue;
+			}
+
+			$matched = false;
+
+			if ( isset( $cart_item['variation'] ) && is_array( $cart_item['variation'] ) ) {
 				foreach ( $cart_item['variation'] as $prefixed_variation_name => $variation_value ) {
 					$variation_name = str_replace( 'attribute_', '', $prefixed_variation_name );
-					if ( isset( $addon['price'][ $variation_name ][ $variation_value ] ) ) {
-						$new_price      = $addon['price'][ $variation_name ][ $variation_value ];
-						$addon['price'] = $new_price;
+					if ( isset( $addon['price'][ $variation_name ][ $variation_value ] ) && is_scalar( $addon['price'][ $variation_name ][ $variation_value ] ) ) {
+						$addon['price'] = $addon['price'][ $variation_name ][ $variation_value ];
 						$addons[ $key ] = $addon;
+						$matched        = true;
+						// Deterministic precedence: stop at the first match
+						// rather than last-write-wins. For multi-attribute
+						// addons (Size + Crust), the configured `attribute`
+						// taxonomy is iterated first by virtue of $_POST key
+						// order matching the form's attribute order.
+						break;
 					}
 				}
+			}
+
+			// Critical safety net: when no variation matched but the price
+			// stayed a nested array, naive `(float) $array` casts to 1.0 and
+			// silently overcharges the customer $1.00 per such addon. Walk
+			// into the nested array until we hit a scalar (defensively
+			// bounded so a corrupted infinite-depth structure can't loop).
+			// This mirrors the read-time fallback in
+			// lafka_get_option_price_on_default_attribute().
+			if ( ! $matched && is_array( $addon['price'] ) ) {
+				$walked = $addon['price'];
+				$depth  = 0;
+				while ( is_array( $walked ) && ! empty( $walked ) && $depth < 10 ) {
+					$walked = reset( $walked );
+					++$depth;
+				}
+				$addon['price'] = is_scalar( $walked ) ? $walked : 0;
+				$addons[ $key ] = $addon;
 			}
 		}
 
