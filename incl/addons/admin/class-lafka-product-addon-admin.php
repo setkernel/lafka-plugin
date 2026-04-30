@@ -250,6 +250,12 @@ class Lafka_Product_Addon_Admin {
 		}
 
 		update_post_meta( $edit_id, '_priority', $priority );
+
+		// Defensive merge: preserve nested per-attribute price arrays when the
+		// form rendered flat for any reason. Skipped on first insert (no existing).
+		$existing_addons = (array) get_post_meta( $edit_id, '_product_addons', true );
+		$product_addons  = self::preserve_nested_prices_on_save( $product_addons, $existing_addons );
+
 		update_post_meta( $edit_id, '_product_addons', $product_addons );
 
 		return $edit_id;
@@ -289,6 +295,12 @@ class Lafka_Product_Addon_Admin {
 		$product_addons_exclude_global = isset( $_POST['_product_addons_exclude_global'] ) ? 1 : 0;
 
 		$product = wc_get_product( $post_id );
+
+		// Defensive merge: preserve nested per-attribute price arrays when the
+		// form rendered flat for any reason.
+		$existing_addons = (array) $product->get_meta( '_product_addons' );
+		$product_addons  = self::preserve_nested_prices_on_save( $product_addons, $existing_addons );
+
 		$product->update_meta_data( '_product_addons', $product_addons );
 		$product->update_meta_data( '_product_addons_exclude_global', $product_addons_exclude_global );
 		$product->save();
@@ -317,11 +329,7 @@ class Lafka_Product_Addon_Admin {
 		$to_return = array();
 
 		if ( taxonomy_exists( $taxonomy ) ) {
-			// WP 4.5 deprecated the positional get_terms( $taxonomy, $args ) form;
-			// WP 7.0 removed it. The previous call silently returned WP_Error on
-			// modern WP, which made foreach a no-op and broke the entire per-
-			// attribute addon pricing UI (empty data-attribute-values JSON →
-			// JS rebuild loop iterates nothing → no per-term price columns).
+			// Modern array-form (WP 4.5+); positional first-arg scheduled for removal.
 			$terms = get_terms(
 				array(
 					'taxonomy'   => $taxonomy,
@@ -336,6 +344,165 @@ class Lafka_Product_Addon_Admin {
 		}
 
 		return $to_return;
+	}
+
+	/**
+	 * Resolve which attribute taxonomy this addon's per-attribute pricing is
+	 * keyed by, returning the term-values map for column rendering.
+	 *
+	 * Two-step resolution:
+	 *   1. Configured attribute (preferred) — $addon['attribute'] is a WC
+	 *      attribute_taxonomy ID; look up its taxonomy slug.
+	 *   2. Detected from data — if (1) yields nothing (attribute deleted, ID
+	 *      stale, or never picked), iterate ALL options to find the first
+	 *      whose price is a non-empty nested array; the first key is the
+	 *      taxonomy. Iterating beyond option 0 matters: a partial regression
+	 *      may have flattened option 0's price while later options still
+	 *      pin the correct taxonomy.
+	 *
+	 * Returns [] when the addon doesn't use variation pricing OR no taxonomy
+	 * could be resolved. Callers fall back to a single-price column.
+	 *
+	 * @param array $addon Addon group data shape from _product_addons meta.
+	 * @return array<string, array<string, string>> [ taxonomy => [ slug => name ] ]
+	 */
+	public static function resolve_addon_attribute_values( array $addon ): array {
+		$has_variations = isset( $addon['variations'] ) && (int) $addon['variations'] === 1;
+		if ( ! $has_variations ) {
+			return array();
+		}
+
+		if ( ! empty( $addon['attribute'] ) ) {
+			$taxonomy = wc_attribute_taxonomy_name_by_id( (int) $addon['attribute'] );
+			if ( $taxonomy ) {
+				$values = self::lafka_get_addons_variations_attribute_values( $taxonomy );
+				if ( ! empty( $values ) ) {
+					return $values;
+				}
+			}
+		}
+
+		if ( ! empty( $addon['options'] ) && is_array( $addon['options'] ) ) {
+			foreach ( $addon['options'] as $option ) {
+				if ( empty( $option['price'] ) || ! is_array( $option['price'] ) ) {
+					continue;
+				}
+				$detected_taxonomy = (string) key( $option['price'] );
+				if ( $detected_taxonomy && taxonomy_exists( $detected_taxonomy ) ) {
+					$values = self::lafka_get_addons_variations_attribute_values( $detected_taxonomy );
+					if ( ! empty( $values ) ) {
+						return $values;
+					}
+				}
+			}
+		}
+
+		return array();
+	}
+
+	/**
+	 * Defensively merge freshly-posted addon groups against the existing meta,
+	 * preserving per-attribute nested price arrays when the form rendered as
+	 * a single flat price input.
+	 *
+	 * Why this exists: the admin form's price input shape depends on whether
+	 * the per-term column rendering succeeds (configured attribute resolves +
+	 * data-detected fallback). When it fails for any reason — stale attribute
+	 * ID, deleted taxonomy, type-drift in serialized meta — the form falls
+	 * back to a single flat input. The save handler then reads $_POST and
+	 * builds a SCALAR price, irreversibly overwriting any nested array that
+	 * was previously stored. Once flattened, the data-detection fallback
+	 * can't reconstruct the taxonomy and every subsequent edit compounds the
+	 * loss. This guard breaks the cycle.
+	 *
+	 * Match strategy:
+	 *   - Addons matched by 'name' (loop position is unstable across reorders).
+	 *   - Options matched by 'id' (UUID; stable across edits).
+	 *
+	 * Preserve rule: only when the new addon's variations === 1 (operator
+	 * intends per-attribute pricing) AND new option price is scalar AND the
+	 * existing matched option's price is a non-empty nested array.
+	 *
+	 * Operators can still legitimately remove per-attribute pricing by
+	 * unchecking "Use in Variations" (then variations === 0 → no preservation).
+	 *
+	 * @param array $new_addons      Addons array built from $_POST.
+	 * @param array $existing_addons Existing _product_addons meta from DB.
+	 * @return array Merged addons array.
+	 */
+	public static function preserve_nested_prices_on_save( array $new_addons, array $existing_addons ): array {
+		if ( empty( $existing_addons ) ) {
+			return $new_addons;
+		}
+
+		foreach ( $new_addons as $addon_index => $new_addon ) {
+			if ( 1 !== (int) ( $new_addon['variations'] ?? 0 ) ) {
+				continue;
+			}
+
+			$existing_match = null;
+			foreach ( $existing_addons as $candidate ) {
+				if ( ! empty( $candidate['name'] ) && ! empty( $new_addon['name'] )
+					&& $candidate['name'] === $new_addon['name'] ) {
+					$existing_match = $candidate;
+					break;
+				}
+			}
+			if ( ! $existing_match || empty( $existing_match['options'] ) ) {
+				continue;
+			}
+
+			$existing_options_by_id = array();
+			foreach ( $existing_match['options'] as $existing_option ) {
+				if ( ! empty( $existing_option['id'] ) ) {
+					$existing_options_by_id[ $existing_option['id'] ] = $existing_option;
+				}
+			}
+			if ( empty( $existing_options_by_id ) ) {
+				continue;
+			}
+
+			$prices_restored = false;
+			foreach ( $new_addon['options'] as $option_index => $new_option ) {
+				if ( is_array( $new_option['price'] ?? null ) ) {
+					continue;
+				}
+				if ( empty( $new_option['id'] ) || ! isset( $existing_options_by_id[ $new_option['id'] ] ) ) {
+					continue;
+				}
+				$existing_option = $existing_options_by_id[ $new_option['id'] ];
+				if ( ! is_array( $existing_option['price'] ?? null ) || empty( $existing_option['price'] ) ) {
+					continue;
+				}
+				$new_addons[ $addon_index ]['options'][ $option_index ]['price'] = $existing_option['price'];
+				$prices_restored = true;
+			}
+
+			// If we restored nested prices, re-align `attribute` to match the
+			// taxonomy actually present in the merged data. Otherwise the next
+			// render would fall through the configured-attribute path (because
+			// $addon['attribute'] may be 0 or stale) and rely on data detection.
+			// Aligning here means subsequent edits use the fast path and the
+			// operator's attribute selector reflects reality.
+			if ( $prices_restored && function_exists( 'wc_attribute_taxonomy_id_by_name' ) ) {
+				foreach ( $new_addons[ $addon_index ]['options'] as $merged_option ) {
+					if ( empty( $merged_option['price'] ) || ! is_array( $merged_option['price'] ) ) {
+						continue;
+					}
+					$detected_taxonomy = (string) key( $merged_option['price'] );
+					if ( ! $detected_taxonomy || ! taxonomy_exists( $detected_taxonomy ) ) {
+						continue;
+					}
+					$detected_id = (int) wc_attribute_taxonomy_id_by_name( $detected_taxonomy );
+					if ( $detected_id > 0 ) {
+						$new_addons[ $addon_index ]['attribute'] = $detected_id;
+					}
+					break;
+				}
+			}
+		}
+
+		return $new_addons;
 	}
 
 	/**

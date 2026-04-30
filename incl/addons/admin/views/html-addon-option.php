@@ -14,25 +14,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 		<?php echo lafka_medialibrary_uploader( $image_input_id, ( empty( $option['image'] ) ? '' : $option['image'] ), '', $image_input_name, false, true ); ?>
 	</td>
 	<?php
-	// Resolve attribute taxonomy — same two-step logic as html-addon.php:
-	// configured attribute first, fall back to data-detected taxonomy. Keeping
-	// the resolution in this file too because option rows are rendered in a
-	// foreach loop and we want each row to use the same column structure as
-	// the parent header.
-	$attribute_values = array();
+	// Use the same resolution as the column header (Lafka_Product_Addon_Admin::
+	// resolve_addon_attribute_values) so each row renders cells matching the
+	// header's columns. Scans all options to find the data taxonomy.
 	$has_variations   = isset( $addon['variations'] ) && (int) $addon['variations'] === 1;
-
-	if ( $has_variations && ! empty( $addon['attribute'] ) ) {
-		$attribute_values = Lafka_Product_Addon_Admin::lafka_get_addons_variations_attribute_values(
-			wc_attribute_taxonomy_name_by_id( (int) $addon['attribute'] )
-		);
-	}
-	if ( $has_variations && empty( $attribute_values ) && ! empty( $option['price'] ) && is_array( $option['price'] ) ) {
-		$detected_taxonomy = (string) key( $option['price'] );
-		if ( $detected_taxonomy && taxonomy_exists( $detected_taxonomy ) ) {
-			$attribute_values = Lafka_Product_Addon_Admin::lafka_get_addons_variations_attribute_values( $detected_taxonomy );
-		}
-	}
+	$attribute_values = Lafka_Product_Addon_Admin::resolve_addon_attribute_values( $addon );
 	?>
 	<?php if ( $has_variations && ! empty( $attribute_values ) ) : ?>
 		<?php $prices_array = is_array( $option['price'] ) ? $option['price'] : array(); ?>
