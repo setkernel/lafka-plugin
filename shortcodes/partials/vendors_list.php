@@ -9,27 +9,15 @@ global $WCMp;
 		<form name="vendor_sort" method="get">
 			<div class="vendor_sort">
 				<select class="select short" id="vendor_sort_type" name="vendor_sort_type">
-					<option value="registered" 
-					<?php
-					if ( $sort_type == 'registered' ) {
-						echo 'selected="selected"';
-					}
-					?>
-					><?php echo __( 'By date', 'lafka-plugin' ); ?></option>
-					<option value="name" 
-					<?php
-					if ( $sort_type == 'name' ) {
-						echo 'selected="selected"';
-					}
-					?>
-					><?php echo __( 'By Alphabetically', 'lafka-plugin' ); ?></option>
-					<option value="category" 
-					<?php
-					if ( $sort_type == 'category' ) {
-						echo 'selected="selected"';
-					}
-					?>
-					><?php echo __( 'By Category', 'lafka-plugin' ); ?></option>
+					<option value="registered" <?php selected( $sort_type, 'registered' ); ?>>
+						<?php esc_html_e( 'By date', 'lafka-plugin' ); ?>
+					</option>
+					<option value="name" <?php selected( $sort_type, 'name' ); ?>>
+						<?php esc_html_e( 'By Alphabetically', 'lafka-plugin' ); ?>
+					</option>
+					<option value="category" <?php selected( $sort_type, 'category' ); ?>>
+						<?php esc_html_e( 'By Category', 'lafka-plugin' ); ?>
+					</option>
 				</select>
 				<?php
 				// Modern array-form (WP 4.5+); positional first-arg removed in WP 7.0.
@@ -43,8 +31,8 @@ global $WCMp;
 					}
 				}
 				?>
-				<select name="vendor_sort_category" id="vendor_sort_category" class="select"><?php echo $options_html; ?></select>
-				<input value="<?php echo __( 'Sort', 'lafka-plugin' ); ?>" type="submit">
+				<select name="vendor_sort_category" id="vendor_sort_category" class="select"><?php echo $options_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $options_html built from esc_attr/esc_html above. ?></select>
+				<input value="<?php echo esc_attr__( 'Sort', 'lafka-plugin' ); ?>" type="submit">
 			</div>
 		</form>
 	<?php endif; ?>

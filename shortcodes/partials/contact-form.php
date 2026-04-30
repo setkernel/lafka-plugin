@@ -65,6 +65,16 @@ if ( ! isset( $lafka_title ) ) {
 	$lafka_title = '';
 }
 
+// Hidden round-trip field for shortcode_params_for_tpl is defunct (security
+// fix above retired its server-side use), but the form still emits it for
+// backward-compat with theme overrides that may grep for the input. The
+// shortcode-render path (shortcodes.php:1414) sets this value; the AJAX
+// re-render path doesn't, so default it here to avoid an undefined-variable
+// notice when the partial is included from `lafka_submit_contact`.
+if ( ! isset( $lafka_shortcode_params_for_tpl ) ) {
+	$lafka_shortcode_params_for_tpl = '';
+}
+
 $lafka_headers              = '';
 $lafka_contactform_response = '';
 $lafka_rand_captcha         = '';
