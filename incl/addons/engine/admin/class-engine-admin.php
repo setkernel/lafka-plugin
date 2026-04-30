@@ -94,15 +94,9 @@ class Lafka_Engine_Admin {
 	}
 
 	private function render_list(): void {
-		$groups = get_posts(
-			array(
-				'post_type'      => 'lafka_glb_addon',
-				'post_status'    => 'publish',
-				'posts_per_page' => -1,
-				'orderby'        => 'title',
-				'order'          => 'ASC',
-			)
-		);
+		require_once __DIR__ . '/class-list-table.php';
+		$table = new Lafka_Engine_Addons_List_Table();
+		$table->prepare_items();
 		require __DIR__ . '/views/global-list.php';
 	}
 

@@ -47,7 +47,21 @@ require_once __DIR__ . '/admin/class-engine-admin.php';
 require_once __DIR__ . '/admin/class-engine-editor.php';
 require_once __DIR__ . '/admin/class-engine-ajax.php';
 require_once __DIR__ . '/admin/class-engine-product-panel.php';
+// List table is required by class-engine-admin's render_list(); we lazy-require
+// it from there because WP_List_Table itself is admin-only.
 require_once __DIR__ . '/class-engine.php';
+require_once __DIR__ . '/class-engine-privacy.php';
+
+// Privacy exporter/eraser registration. The filters only fire inside admin
+// (Tools → Export/Erase Personal Data), so we register on admin_init.
+if ( function_exists( 'add_action' ) ) {
+	add_action(
+		'admin_init',
+		static function () {
+			( new Lafka_Engine_Privacy() )->register();
+		}
+	);
+}
 
 // REST controller is loaded lazily on rest_api_init because it extends
 // WP_REST_Controller, which is only defined when WP's REST stack is loaded.
