@@ -3,7 +3,7 @@
 	Plugin Name: Lafka Plugin
 	Plugin URI: https://github.com/setkernel/lafka-plugin
 	Description: Companion plugin for the Lafka WooCommerce theme. Originally by theAlThemist, now community-maintained.
-	Version: 9.7.17
+	Version: 9.7.18
 	Author: theAlThemist, Contributors
 	Author URI: https://github.com/setkernel/lafka-plugin
 	Requires at least: 6.6
@@ -205,6 +205,13 @@ if ( is_admin() ) {
  * plugin ships the file.
  */
 require_once plugin_dir_path( __FILE__ ) . 'incl/compat/lafka-address-autocomplete-compat.php';
+
+/**
+ * Bridge for upstream wordpressdotorg/wordpress-importer (replaces v9.7.17
+ * deleted Lafka fork). Auto-creates missing WC product-attribute taxonomies
+ * during WXR imports so products land with their attribute terms intact.
+ */
+require_once plugin_dir_path( __FILE__ ) . 'incl/compat/wp-importer-wc-attrs-bridge.php';
 
 /**
  * P6-SEO-1/2/3/6: JSON-LD structured data — Restaurant, Menu, Product,
