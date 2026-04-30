@@ -111,10 +111,73 @@ if ( ! class_exists( 'Lafka_Security_Headers' ) ) {
 			// that from PHP — so this is a partial fix; document the Apache side
 			// in COMPATIBILITY.md.
 			header_remove( 'X-Powered-By' );
-			header( 'X-Content-Type-Options: nosniff' );
-			header( 'X-Frame-Options: SAMEORIGIN' );
-			header( 'Referrer-Policy: strict-origin-when-cross-origin' );
-			header( 'Permissions-Policy: interest-cohort=()' );
+
+			$headers = self::get_default_headers();
+
+			/**
+			 * Filter the security headers map before emission.
+			 *
+			 * Use this to add `Content-Security-Policy`, `Strict-Transport-Security`,
+			 * or any other site-specific header without forking the module. The
+			 * filter receives the full assoc array `[ 'Header-Name' => 'value', ... ]`;
+			 * remove a key to suppress that header, set a key to '' for the same
+			 * effect, or add new keys.
+			 *
+			 * @since 9.7.12
+			 * @param array<string, string> $headers Header name => value map.
+			 */
+			$headers = (array) apply_filters( 'lafka_security_headers', $headers );
+
+			foreach ( $headers as $name => $value ) {
+				if ( ! is_string( $name ) || '' === $name || ! is_string( $value ) || '' === $value ) {
+					continue;
+				}
+				header( $name . ': ' . $value );
+			}
+		}
+
+		/**
+		 * Default security-header map. Conservative — designed to be safe on a
+		 * typical restaurant site (no third-party iframes for ordering, no
+		 * geolocation prompts, no PWA camera scanners). Operators with unusual
+		 * needs override via the `lafka_security_headers` filter.
+		 *
+		 * Permissions-Policy denies a curated list of sensors that a typical
+		 * restaurant frontend has no business asking for. Adding `payment=(self)`
+		 * for stores that use the Payment Request API is filterable.
+		 *
+		 * @since 9.7.12
+		 * @return array<string, string>
+		 */
+		public static function get_default_headers() {
+			return array(
+				'X-Content-Type-Options' => 'nosniff',
+				'X-Frame-Options'        => 'SAMEORIGIN',
+				'Referrer-Policy'        => 'strict-origin-when-cross-origin',
+				'Permissions-Policy'     => self::get_default_permissions_policy(),
+			);
+		}
+
+		/**
+		 * Default Permissions-Policy directive list. Each entry's value `()`
+		 * denies the feature to every origin (including the site itself);
+		 * operators that need any of these must override via filter.
+		 *
+		 * @since 9.7.12
+		 */
+		public static function get_default_permissions_policy(): string {
+			$directives = array(
+				'interest-cohort=()', // Opt out of FLoC.
+				'geolocation=()',     // No location prompts on a menu site.
+				'microphone=()',
+				'camera=()',
+				'payment=()',         // Override to `payment=(self)` for Payment Request API.
+				'usb=()',
+				'magnetometer=()',
+				'accelerometer=()',
+				'gyroscope=()',
+			);
+			return implode( ', ', $directives );
 		}
 
 		/**
@@ -147,5 +210,11 @@ if ( ! class_exists( 'Lafka_Security_Headers' ) ) {
 		}
 	}
 
-	Lafka_Security_Headers::instance();
+	// Gate auto-instantiation on a WP-runtime function the unit-test
+	// bootstrap doesn't stub. Mirrors the pattern in promotions/ —
+	// lets PHPUnit require this file standalone for static-method
+	// assertions without triggering get_option() at file load.
+	if ( function_exists( 'wp_safe_redirect' ) ) {
+		Lafka_Security_Headers::instance();
+	}
 }
