@@ -411,7 +411,7 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 		private static function register_homepage_hero_section( $wp_customize ): void {
 			$wp_customize->add_section( 'lafka_homepage_hero', array(
 				'title'       => esc_html__( 'Homepage Hero (LCP)', 'lafka-plugin' ),
-				'description' => esc_html__( 'Image preloaded on the homepage for fastest Largest Contentful Paint. Used by the lafka_lcp_image_url filter in lafka-child/functions.php.', 'lafka-plugin' ),
+				'description' => esc_html__( 'Image preloaded on the homepage for fastest Largest Contentful Paint. Used by the lafka_lcp_image_url filter in lafka-plugin (incl/perf/lcp-preload.php). Image emitted as a `<link rel="preload">` from the theme\'s header.php.', 'lafka-plugin' ),
 				'panel'       => 'lafka_restaurant_info',
 				'priority'    => 70,
 			) );

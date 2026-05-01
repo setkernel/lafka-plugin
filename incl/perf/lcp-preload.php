@@ -31,6 +31,17 @@ add_filter( 'lafka_lcp_image_url', function ( $url ) {
 	return esc_url_raw( (string) $hero );
 } );
 
+/**
+ * Apply fetchpriority="high" + loading="eager" to the homepage hero <img>.
+ *
+ * The hero attachment ID is stored in the `lafka_homepage_hero_attachment_id`
+ * OPTION (not the `lafka_homepage_hero_image` theme_mod that Hook 1 reads).
+ * The option is the canonical numeric ID; the theme_mod can also be a string
+ * URL. Customizer code is expected to keep the two in sync when an attachment
+ * (vs. raw URL) is selected. When the option is unset (default 0), this hook
+ * no-ops — the parent theme can still load the hero <img>, just without the
+ * priority hints.
+ */
 add_filter( 'wp_get_attachment_image_attributes', function ( $attr, $attachment ) {
 	if ( ! is_front_page() ) {
 		return $attr;
