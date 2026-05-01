@@ -210,9 +210,11 @@ class Lafka_Order_Hours {
 	/**
 	 * Format a DateTime as a human-readable next-open string.
 	 *
-	 * Uses date_i18n() so it respects the operator's WP locale and timezone.
-	 * Returns empty string for null input. Operators can override the format
-	 * via the `lafka_next_open_time_format` filter.
+	 * Uses wp_date() so it respects the operator's WP locale AND the
+	 * DateTime's own timezone (critical for multi-branch operators where a
+	 * branch can have its own timezone). Returns empty string for null
+	 * input. Operators can override the format via the
+	 * `lafka_next_open_time_format` filter.
 	 *
 	 * @param DateTime|null $datetime The next-open DateTime from get_next_opening_time().
 	 * @return string Human-readable string like "Saturday at 11:00 AM", or empty.
@@ -230,9 +232,11 @@ class Lafka_Order_Hours {
 		 * @param string   $format   WP date_i18n format string.
 		 * @param DateTime $datetime The next-open DateTime.
 		 */
-		$format = apply_filters( 'lafka_next_open_time_format', 'l \a\t g:i A', $datetime );
+		/* translators: WP date_i18n format for "next-open" rendering. Default 'l \a\t g:i A' produces "Saturday at 11:00 AM". Translators: provide a localized format like 'l \à H\hi' for "samedi à 11h00". */
+		$default_format = _x( 'l \a\t g:i A', 'next-open time format', 'lafka' );
+		$format         = apply_filters( 'lafka_next_open_time_format', $default_format, $datetime );
 
-		return date_i18n( $format, $datetime->getTimestamp() );
+		return wp_date( $format, $datetime->getTimestamp(), $datetime->getTimezone() );
 	}
 
 	public static function get_first_opening_branch_datetime( $all_legit_branches ) {
