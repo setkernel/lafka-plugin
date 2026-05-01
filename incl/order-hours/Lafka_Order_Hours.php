@@ -322,6 +322,15 @@ class Lafka_Order_Hours {
 
 			add_action( 'woocommerce_after_add_to_cart_button', array( $this, 'echo_closed_store_message' ), 99 );
 			add_filter( 'woocommerce_order_button_html', array( $this, 'get_closed_store_message' ) );
+
+			// v9.7.26: when operator opts into disable_add_to_cart, replace the
+			// PDP add-to-cart button entirely with the closed-store card.
+			// Without this gate, the option was a no-op (only added a body class).
+			if ( ! empty( self::$lafka_order_hours_options['lafka_order_hours_disable_add_to_cart'] ) ) {
+				remove_action( 'woocommerce_after_add_to_cart_button', array( $this, 'echo_closed_store_message' ), 99 );
+				remove_action( 'woocommerce_single_product_summary', 'woocommerce_template_single_add_to_cart', 30 );
+				add_action( 'woocommerce_single_product_summary', array( $this, 'echo_closed_store_message' ), 30 );
+			}
 		}
 	}
 
