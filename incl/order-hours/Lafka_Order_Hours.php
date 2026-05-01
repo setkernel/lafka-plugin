@@ -207,6 +207,34 @@ class Lafka_Order_Hours {
 		return false;
 	}
 
+	/**
+	 * Format a DateTime as a human-readable next-open string.
+	 *
+	 * Uses date_i18n() so it respects the operator's WP locale and timezone.
+	 * Returns empty string for null input. Operators can override the format
+	 * via the `lafka_next_open_time_format` filter.
+	 *
+	 * @param DateTime|null $datetime The next-open DateTime from get_next_opening_time().
+	 * @return string Human-readable string like "Saturday at 11:00 AM", or empty.
+	 * @since  9.7.26
+	 */
+	public static function format_next_open_time_human( ?DateTime $datetime ): string {
+		if ( null === $datetime ) {
+			return '';
+		}
+
+		/**
+		 * Filter the date-format string used to render the next-open time.
+		 * Default 'l \a\t g:i A' produces "Saturday at 11:00 AM".
+		 *
+		 * @param string   $format   WP date_i18n format string.
+		 * @param DateTime $datetime The next-open DateTime.
+		 */
+		$format = apply_filters( 'lafka_next_open_time_format', 'l \a\t g:i A', $datetime );
+
+		return date_i18n( $format, $datetime->getTimestamp() );
+	}
+
 	public static function get_first_opening_branch_datetime( $all_legit_branches ) {
 		$branches_open_times = array();
 
