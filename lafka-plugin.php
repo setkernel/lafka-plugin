@@ -3,7 +3,7 @@
 	Plugin Name: Lafka Plugin
 	Plugin URI: https://github.com/setkernel/lafka-plugin
 	Description: Companion plugin for the Lafka WooCommerce theme. Originally by theAlThemist, now community-maintained.
-	Version: 9.7.23
+	Version: 9.7.24
 	Author: theAlThemist, Contributors
 	Author URI: https://github.com/setkernel/lafka-plugin
 	Requires at least: 6.6
@@ -1198,40 +1198,80 @@ if ( ! function_exists( 'lafka_share_links' ) ) {
 		if ( $has_to_show_share ) {
 			global $post;
 
-			$media            = get_the_post_thumbnail_url( $post->ID, 'large' );
-			$share_links_html = '<span>' . esc_html__( 'Share', 'lafka-plugin' ) . ':</span>';
-
-			// HTTPS on all share endpoints — modern browsers either upgrade
-			// http://→https:// or block mixed content; emitting https from
-			// the start avoids both. rawurlencode (not urlencode) for URL
-			// query params per RFC 3986. esc_url() on the full href as
-			// defense-in-depth even though host is hardcoded.
+			$media         = get_the_post_thumbnail_url( $post->ID, 'large' );
 			$decoded_title = html_entity_decode( $title );
-			$share_links_html .= sprintf(
-				'<a class="lafka-share-facebook" title="%s" href="%s" target="_blank" rel="noopener noreferrer"></a>',
-				esc_attr__( 'Share on Facebook', 'lafka-plugin' ),
-				esc_url( 'https://www.facebook.com/sharer.php?u=' . rawurlencode( $link ) . '&t=' . rawurlencode( $decoded_title ) )
+
+			// v9.7.24: filterable network list. Pre-fix the 5 hardcoded
+			// networks (Facebook / Twitter / Pinterest / LinkedIn / VK)
+			// were frozen circa 2015 — operators couldn't add WhatsApp,
+			// Telegram, Mastodon, BlueSky, or even an email-this-page link
+			// without forking. Now defaults include the modern essentials
+			// and child plugins / themes hook the filter to extend.
+			//
+			// rawurlencode (not urlencode) for URL query params per RFC 3986;
+			// esc_url() on the full href as defense-in-depth even though
+			// hosts are hardcoded; HTTPS on every endpoint.
+			//
+			// Filter signature:
+			//   apply_filters( 'lafka_share_networks',
+			//     array $defaults, string $title, string $link, string $media )
+			//   → array<string, array{ label:string, url:string }>
+			$networks = (array) apply_filters(
+				'lafka_share_networks',
+				array(
+					'facebook'  => array(
+						'label' => esc_attr__( 'Share on Facebook', 'lafka-plugin' ),
+						'url'   => 'https://www.facebook.com/sharer.php?u=' . rawurlencode( $link ) . '&t=' . rawurlencode( $decoded_title ),
+					),
+					'twitter'   => array(
+						'label' => esc_attr__( 'Share on X (Twitter)', 'lafka-plugin' ),
+						'url'   => 'https://twitter.com/share?text=' . rawurlencode( $decoded_title ) . '&url=' . rawurlencode( $link ),
+					),
+					'pinterest' => array(
+						'label' => esc_attr__( 'Share on Pinterest', 'lafka-plugin' ),
+						'url'   => 'https://pinterest.com/pin/create/button?media=' . rawurlencode( (string) $media ) . '&url=' . rawurlencode( $link ) . '&description=' . rawurlencode( $decoded_title ),
+					),
+					'linkedin'  => array(
+						'label' => esc_attr__( 'Share on LinkedIn', 'lafka-plugin' ),
+						'url'   => 'https://www.linkedin.com/shareArticle?url=' . rawurlencode( $link ) . '&title=' . rawurlencode( $decoded_title ),
+					),
+					'whatsapp'  => array(
+						'label' => esc_attr__( 'Share on WhatsApp', 'lafka-plugin' ),
+						// `wa.me` redirects to native app on mobile, web.whatsapp.com on desktop.
+						'url'   => 'https://wa.me/?text=' . rawurlencode( $decoded_title . ' ' . $link ),
+					),
+					'telegram'  => array(
+						'label' => esc_attr__( 'Share on Telegram', 'lafka-plugin' ),
+						'url'   => 'https://t.me/share/url?url=' . rawurlencode( $link ) . '&text=' . rawurlencode( $decoded_title ),
+					),
+					'email'     => array(
+						'label' => esc_attr__( 'Share by email', 'lafka-plugin' ),
+						'url'   => 'mailto:?subject=' . rawurlencode( $decoded_title ) . '&body=' . rawurlencode( $link ),
+					),
+					'vkontakte' => array(
+						// Legacy network kept for back-compat with existing CSS overrides.
+						'label' => esc_attr__( 'Share on VK', 'lafka-plugin' ),
+						'url'   => 'https://vk.com/share.php?url=' . rawurlencode( $link ) . '&title=' . rawurlencode( $decoded_title ) . '&image=' . rawurlencode( (string) $media ),
+					),
+				),
+				$decoded_title,
+				$link,
+				(string) $media
 			);
-			$share_links_html .= sprintf(
-				'<a class="lafka-share-twitter" title="%s" href="%s" target="_blank" rel="noopener noreferrer"></a>',
-				esc_attr__( 'Share on Twitter', 'lafka-plugin' ),
-				esc_url( 'https://twitter.com/share?text=' . rawurlencode( $decoded_title ) . '&url=' . rawurlencode( $link ) )
-			);
-			$share_links_html .= sprintf(
-				'<a class="lafka-share-pinterest" title="%s" href="%s" target="_blank" rel="noopener noreferrer"></a>',
-				esc_attr__( 'Share on Pinterest', 'lafka-plugin' ),
-				esc_url( 'https://pinterest.com/pin/create/button?media=' . rawurlencode( (string) $media ) . '&url=' . rawurlencode( $link ) . '&description=' . rawurlencode( $decoded_title ) )
-			);
-			$share_links_html .= sprintf(
-				'<a class="lafka-share-linkedin" title="%s" href="%s" target="_blank" rel="noopener noreferrer"></a>',
-				esc_attr__( 'Share on LinkedIn', 'lafka-plugin' ),
-				esc_url( 'https://www.linkedin.com/shareArticle?url=' . rawurlencode( $link ) . '&title=' . rawurlencode( $decoded_title ) )
-			);
-			$share_links_html .= sprintf(
-				'<a class="lafka-share-vkontakte" title="%s" href="%s" target="_blank" rel="noopener noreferrer"></a>',
-				esc_attr__( 'Share on VK', 'lafka-plugin' ),
-				esc_url( 'https://vk.com/share.php?url=' . rawurlencode( $link ) . '&title=' . rawurlencode( $decoded_title ) . '&image=' . rawurlencode( (string) $media ) )
-			);
+
+			$share_links_html = '<span>' . esc_html__( 'Share', 'lafka-plugin' ) . ':</span>';
+			foreach ( $networks as $key => $net ) {
+				if ( ! is_array( $net ) || empty( $net['url'] ) || empty( $net['label'] ) ) {
+					continue;
+				}
+				$share_links_html .= sprintf(
+					'<a class="lafka-share-%s" title="%s" href="%s" target="_blank" rel="noopener noreferrer"><span class="screen-reader-text">%s</span></a>',
+					esc_attr( $key ),
+					esc_attr( $net['label'] ),
+					esc_url( $net['url'] ),
+					esc_html( $net['label'] )
+				);
+			}
 
 			// Each <a> built above is fully escaped; wp_kses_post on the
 			// container is defense-in-depth for any future addition that
@@ -1261,33 +1301,67 @@ if ( ! function_exists( 'lafka_insert_og_tags' ) ) {
 		// og:title=site-name (not the page's literal title like "Home New").
 		// We still pass $post to the description resolver so any per-page
 		// _lafka_meta_description override is honored on the static front page.
+		// Resolve image URL + actual width/height. Pre-v9.7.24 the dimensions
+		// were always WP's `large_size_w`/`large_size_h` option (default
+		// 1024×1024) regardless of the actual image — so a portrait 800×1200
+		// thumbnail emitted og:image:width=1024, og:image:height=1024,
+		// causing Facebook/LinkedIn/Slack to crop badly or compute wrong
+		// aspect ratios in cached previews.
+		//
+		// Now we look up the actual image src array via
+		// wp_get_attachment_image_src(), which returns [url, width, height,
+		// is_intermediate]. For site-icon fallback we know the requested
+		// size (1200×1200 — site icons are square).
+		$image        = '';
+		$image_width  = 0;
+		$image_height = 0;
+
+		$resolve_post_image = static function ( $post_id ) use ( &$image, &$image_width, &$image_height ) {
+			$thumb_id = (int) get_post_thumbnail_id( $post_id );
+			if ( ! $thumb_id ) {
+				return;
+			}
+			$src = wp_get_attachment_image_src( $thumb_id, 'large' );
+			if ( ! is_array( $src ) || empty( $src[0] ) ) {
+				return;
+			}
+			$image        = (string) $src[0];
+			$image_width  = (int) ( $src[1] ?? 0 );
+			$image_height = (int) ( $src[2] ?? 0 );
+		};
+
 		if ( is_front_page() || is_home() ) {
 			$title       = get_bloginfo( 'name' );
 			$description = lafka_resolve_meta_description( ( is_singular() && $post ) ? $post : null );
 			$url         = home_url( '/' );
-			$image       = ( is_singular() && $post ) ? get_the_post_thumbnail_url( $post->ID, 'large' ) : '';
-			if ( ! $image && function_exists( 'get_site_icon_url' ) ) {
-				$image = get_site_icon_url( 1200 );
+			if ( is_singular() && $post ) {
+				$resolve_post_image( $post->ID );
+			}
+			if ( '' === $image && function_exists( 'get_site_icon_url' ) ) {
+				$icon = get_site_icon_url( 1200 );
+				if ( $icon ) {
+					$image        = $icon;
+					$image_width  = 1200; // site icons are always square at the requested size.
+					$image_height = 1200;
+				}
 			}
 			$og_type     = 'restaurant.restaurant';
 		} elseif ( is_singular() && $post ) {
 			$title       = get_the_title( $post );
 			$description = lafka_resolve_meta_description( $post );
 			$url         = get_permalink( $post );
-			$image       = get_the_post_thumbnail_url( $post->ID, 'large' );
+			$resolve_post_image( $post->ID );
 			$og_type     = ( function_exists( 'is_product' ) && is_product() ) ? 'product' : 'article';
 		} elseif ( is_tax() || is_category() || is_tag() ) {
 			$term        = get_queried_object();
 			$title       = $term ? $term->name : get_bloginfo( 'name' );
 			$description = $term && ! empty( $term->description ) ? wp_strip_all_tags( $term->description ) : lafka_resolve_meta_description( null );
 			$url         = $term ? get_term_link( $term ) : home_url( '/' );
-			$image       = '';
 			$og_type     = 'website';
 		} else {
 			$title       = wp_get_document_title();
 			$description = lafka_resolve_meta_description( null );
 			$url         = home_url( add_query_arg( null, null ) );
-			$image       = '';
 			$og_type     = 'website';
 		}
 
@@ -1303,11 +1377,14 @@ if ( ! function_exists( 'lafka_insert_og_tags' ) ) {
 		printf( '<meta property="og:locale" content="%s">' . "\n", esc_attr( $locale ) );
 
 		if ( $image ) {
-			$large_size_width  = (int) get_option( 'large_size_w', 1024 );
-			$large_size_height = (int) get_option( 'large_size_h', 1024 );
 			printf( '<meta property="og:image" content="%s">' . "\n", esc_url( $image ) );
-			printf( '<meta property="og:image:width" content="%d">' . "\n", $large_size_width );
-			printf( '<meta property="og:image:height" content="%d">' . "\n", $large_size_height );
+			// Emit dimensions only when we actually know them — emitting wrong
+			// dimensions is worse than omitting them (crawlers fall back to
+			// fetching+measuring vs trusting bad metadata).
+			if ( $image_width > 0 && $image_height > 0 ) {
+				printf( '<meta property="og:image:width" content="%d">' . "\n", $image_width );
+				printf( '<meta property="og:image:height" content="%d">' . "\n", $image_height );
+			}
 		}
 
 		printf( '<meta name="twitter:card" content="%s">' . "\n", $image ? 'summary_large_image' : 'summary' );

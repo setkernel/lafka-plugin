@@ -12,11 +12,15 @@ use PHPUnit\Framework\TestCase;
 final class OgTwitterTagsTest extends TestCase {
 
     public function test_lafka_insert_og_tags_emits_full_og_set(): void {
+        // v9.7.24: lafka_insert_og_tags now declares an inner closure
+        // (`$resolve_post_image`) for image-src lookup, which trips brace-
+        // counting regexes that try to extract the function body. Switched
+        // to a fixed-size window slice anchored at the function name —
+        // 6,000 bytes covers the full body comfortably.
         $src = file_get_contents( dirname( __DIR__, 2 ) . '/lafka-plugin.php' );
-        // Pull just the function body for lafka_insert_og_tags
-        preg_match( '/function\s+lafka_insert_og_tags\s*\([^)]*\)\s*\{(.*?)\n\s*\}\s*\}/s', $src, $m );
-        $this->assertNotEmpty( $m, 'function lafka_insert_og_tags not found' );
-        $body = $m[1];
+        $fn_start = strpos( $src, 'function lafka_insert_og_tags' );
+        $this->assertNotFalse( $fn_start, 'function lafka_insert_og_tags not found' );
+        $body = substr( $src, $fn_start, 6000 );
 
         $required = [
             'og:title',
@@ -34,6 +38,28 @@ final class OgTwitterTagsTest extends TestCase {
         foreach ( $required as $tag ) {
             $this->assertStringContainsString( $tag, $body, "Missing $tag in lafka_insert_og_tags" );
         }
+    }
+
+    public function test_og_image_dimensions_use_actual_image_size(): void {
+        // v9.7.24: og:image:width / og:image:height now reflect actual
+        // attachment dimensions (looked up via wp_get_attachment_image_src)
+        // rather than the WP `large_size_w/h` option (which was emitted
+        // regardless of the image's real size — Facebook/LinkedIn cached
+        // wrong aspect ratios for any non-square thumbnail).
+        $src = file_get_contents( dirname( __DIR__, 2 ) . '/lafka-plugin.php' );
+        $fn_start = strpos( $src, 'function lafka_insert_og_tags' );
+        $body = substr( $src, $fn_start, 6000 );
+
+        $this->assertStringContainsString(
+            'wp_get_attachment_image_src',
+            $body,
+            'og:image dimensions must come from wp_get_attachment_image_src() (actual size), not the large_size_w/h option.'
+        );
+        $this->assertDoesNotMatchRegularExpression(
+            "/get_option\(\s*'large_size_w'/",
+            $body,
+            'og:image must not regress to reading large_size_w/h option for dimensions.'
+        );
     }
 
     public function test_meta_description_callback_registered(): void {
