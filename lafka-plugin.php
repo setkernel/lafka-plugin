@@ -3,7 +3,7 @@
 	Plugin Name: Lafka Plugin
 	Plugin URI: https://github.com/setkernel/lafka-plugin
 	Description: Companion plugin for the Lafka WooCommerce theme. Originally by theAlThemist, now community-maintained.
-	Version: 9.7.24
+	Version: 9.7.25
 	Author: theAlThemist, Contributors
 	Author URI: https://github.com/setkernel/lafka-plugin
 	Requires at least: 6.6
@@ -267,6 +267,11 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/emails/lafka-review-prompt-emai
  * Self-gates via is_admin() inside the module; safe to load unconditionally.
  */
 require_once plugin_dir_path( __FILE__ ) . 'incl/perf/lafka-asset-pruning.php';
+
+// Perf modules (CLS image-dim + LCP preload) — migrated from lafka-child
+// v5.10.6 in lafka-plugin v9.7.25.
+require_once __DIR__ . '/incl/perf/image-dimensions.php';
+require_once __DIR__ . '/incl/perf/lcp-preload.php';
 
 add_action(
 	'before_woocommerce_init',
