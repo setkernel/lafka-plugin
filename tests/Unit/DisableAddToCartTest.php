@@ -14,12 +14,15 @@ final class DisableAddToCartTest extends TestCase {
 	}
 
 	public function test_handle_shop_status_gates_disable_block_on_option(): void {
-		// New conditional block must check the lafka_order_hours_disable_add_to_cart
-		// option before removing the WC add-to-cart action.
-		$method_pos = strpos( $this->src, 'function handle_shop_status' );
-		$this->assertNotFalse( $method_pos );
-		$method_slice = substr( $this->src, $method_pos, 2000 );
-		$this->assertStringContainsString( 'lafka_order_hours_disable_add_to_cart', $method_slice );
+		// The disable conditional must specifically check the option via
+		// `if ( ! empty( self::$lafka_order_hours_options['lafka_order_hours_disable_add_to_cart'] ) )`.
+		// Pre-patch the option name appeared elsewhere (in add_body_class), so a substring
+		// check alone is a false positive — must lock the gating pattern itself.
+		$this->assertMatchesRegularExpression(
+			"/if\s*\(\s*!\s*empty\(\s*self::\\\$lafka_order_hours_options\[\s*['\"]lafka_order_hours_disable_add_to_cart['\"]\s*\]\s*\)\s*\)/",
+			$this->src,
+			'must gate the disable block on `if ( ! empty( self::$lafka_order_hours_options[\"lafka_order_hours_disable_add_to_cart\"] ) )`'
+		);
 	}
 
 	public function test_remove_action_for_wc_template_single_add_to_cart(): void {
