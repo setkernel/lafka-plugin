@@ -336,50 +336,54 @@ class Lafka_Order_Hours {
 	}
 
 	public function echo_closed_store_message() {
-		global $post;
+		$operator_message = self::$lafka_order_hours_options['lafka_order_hours_message'] ?? '';
+		$title            = '' !== $operator_message ? $operator_message : __( 'Closed right now', 'lafka' );
 
-		if ( isset( self::$lafka_order_hours_options['lafka_order_hours_message'] ) && self::$lafka_order_hours_options['lafka_order_hours_message'] ) {
-			?>
-			<div class="lafka-closed-store-message"><?php echo esc_html( self::$lafka_order_hours_options['lafka_order_hours_message'] ); ?>
-				<?php
-				if ( isset( self::$lafka_order_hours_options['lafka_order_hours_message_countdown'] ) && self::$lafka_order_hours_options['lafka_order_hours_message_countdown'] ) {
-					$lafka_branch_location_id_in_session = null;
-					$opening_datetime                    = null;
-					if ( isset( WC()->session ) ) {
-						$lafka_branch_location_id_in_session = WC()->session->get( 'lafka_branch_location' )['branch_id'] ?? null;
-					}
-					if ( $lafka_branch_location_id_in_session !== null ) {
-						$timezone_object  = empty( self::$timezone ) ? null : new DateTimeZone( self::$timezone );
-						$opening_datetime = self::get_next_opening_time( $timezone_object );
-					} elseif ( class_exists( 'Lafka_Shipping_Areas' ) ) {
-						$all_legit_branch_locations = Lafka_Shipping_Areas::get_all_legit_branch_locations();
-						$opening_datetime           = self::get_first_opening_branch_datetime( $all_legit_branch_locations );
-					}
+		$lafka_branch_location_id_in_session = null;
+		$opening_datetime                    = null;
+		if ( isset( WC()->session ) ) {
+			$lafka_branch_location_id_in_session = WC()->session->get( 'lafka_branch_location' )['branch_id'] ?? null;
+		}
+		if ( null !== $lafka_branch_location_id_in_session ) {
+			$timezone_object  = empty( self::$timezone ) ? null : new DateTimeZone( self::$timezone );
+			$opening_datetime = self::get_next_opening_time( $timezone_object );
+		} elseif ( class_exists( 'Lafka_Shipping_Areas' ) ) {
+			$all_legit_branch_locations = Lafka_Shipping_Areas::get_all_legit_branch_locations();
+			$opening_datetime           = self::get_first_opening_branch_datetime( $all_legit_branch_locations );
+		}
 
-					if ( $opening_datetime ) {
-						$countdown_output_format = '{hn}:{mnn}:{snn}';
-						$difference              = $opening_datetime->diff( self::get_order_hours_time() );
-						if ( $difference && $difference->d > 0 ) {
-							$countdown_output_format = '{dn} {dl} {hn}:{mnn}:{snn}';
-						}
-						?>
-						<div class="count_holder_small">
-							<div class="lafka_order_hours_countdown"
-								data-diff-days="<?php echo esc_attr( $difference->d ); ?>"
-								data-diff-hours="<?php echo esc_attr( $difference->h ); ?>"
-								data-diff-minutes="<?php echo esc_attr( $difference->i ); ?>"
-								data-diff-seconds="<?php echo esc_attr( $difference->s ); ?>"
-								data-output-format="<?php echo esc_attr( $countdown_output_format ); ?>"
-							></div>
-							<div class="clear"></div>
-						</div>
-						<?php
-					}
+		$subtitle_human = self::format_next_open_time_human( $opening_datetime );
+		?>
+		<div class="lafka-store-closed-card">
+			<p class="lafka-store-closed-card__title"><?php echo esc_html( $title ); ?></p>
+			<?php if ( '' !== $subtitle_human ) : ?>
+				<p class="lafka-store-closed-card__subtitle">
+					<?php echo esc_html( sprintf( __( 'Opens %s', 'lafka' ), $subtitle_human ) ); ?>
+				</p>
+			<?php endif; ?>
+			<?php
+			if ( ! empty( self::$lafka_order_hours_options['lafka_order_hours_message_countdown'] ) && $opening_datetime ) {
+				$countdown_output_format = '{hn}:{mnn}:{snn}';
+				$difference              = $opening_datetime->diff( self::get_order_hours_time() );
+				if ( $difference && $difference->d > 0 ) {
+					$countdown_output_format = '{dn} {dl} {hn}:{mnn}:{snn}';
 				}
 				?>
-			</div>
-			<?php
-		}
+				<div class="lafka-store-closed-card__countdown count_holder_small">
+					<div class="lafka_order_hours_countdown"
+						data-diff-days="<?php echo esc_attr( $difference->d ); ?>"
+						data-diff-hours="<?php echo esc_attr( $difference->h ); ?>"
+						data-diff-minutes="<?php echo esc_attr( $difference->i ); ?>"
+						data-diff-seconds="<?php echo esc_attr( $difference->s ); ?>"
+						data-output-format="<?php echo esc_attr( $countdown_output_format ); ?>"
+					></div>
+					<div class="clear"></div>
+				</div>
+				<?php
+			}
+			?>
+		</div>
+		<?php
 	}
 
 	public function get_closed_store_message() {
