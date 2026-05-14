@@ -79,15 +79,15 @@ class LafkaPopularPostsWidget extends WP_Widget {
 		<ul class="post-list fixed">
 			<?php foreach ( $r->posts as $popular_post ) : ?>
 				<?php
-				$aria_current = '';
-				if ( get_queried_object_id() === $popular_post->ID ) {
-					$aria_current = ' aria-current="page"';
-				}
+				$is_current = get_queried_object_id() === $popular_post->ID;
 				?>
 				<li>
-					<a href="<?php echo esc_url( get_permalink( $popular_post->ID ) ); ?>"<?php echo $aria_current; /* phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped — controlled literal: '' or ' aria-current="page"'. */ ?> title="<?php echo esc_attr( get_the_title( $popular_post->ID ) ? get_the_title( $popular_post->ID ) : (string) $popular_post->ID ); ?>">
+					<a href="<?php echo esc_url( get_permalink( $popular_post->ID ) ); ?>"<?php echo $is_current ? ' aria-current="page"' : ''; ?> title="<?php echo esc_attr( get_the_title( $popular_post->ID ) ? get_the_title( $popular_post->ID ) : (string) $popular_post->ID ); ?>">
 						<?php if ( has_post_thumbnail( $popular_post->ID ) ) : ?>
-							<?php echo get_the_post_thumbnail( $popular_post->ID, 'lafka-widgets-thumb', '' ); /* phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped — get_the_post_thumbnail returns safe HTML. */ ?>
+							<?php
+							// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- get_the_post_thumbnail() returns trusted WP-core HTML with attributes pre-escaped.
+							echo get_the_post_thumbnail( $popular_post->ID, 'lafka-widgets-thumb', '' );
+							?>
 						<?php endif; ?>
 						<?php
 						$lafka_pp_title = get_the_title( $popular_post->ID );

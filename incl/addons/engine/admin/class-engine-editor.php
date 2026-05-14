@@ -116,6 +116,8 @@ class Lafka_Engine_Editor {
 	 * failure. Insert + update both flow through this single method.
 	 */
 	private function save( int $edit_id ): int {
+		// Nonce verified by caller (line 36): check_admin_referer( self::NONCE_ACTION ).
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- caller verifies nonce via check_admin_referer.
 		$post_data = wp_unslash( $_POST );
 
 		$reference      = sanitize_text_field( $post_data['lafka_addon_reference'] ?? '' );

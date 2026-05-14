@@ -1,5 +1,9 @@
 <?php defined( 'ABSPATH' ) || exit; ?>
 <?php
+// $_POST reads in this template are for preserving form state on re-render
+// during validation failures. WC verifies the add-to-cart nonce upstream
+// before this template is included in the variations form output.
+// phpcs:disable WordPress.Security.NonceVerification.Missing,WordPress.Security.NonceVerification.Recommended
 /** @var array $addon */
 foreach ( $addon['options'] as $key => $option ) :
 	/**
@@ -35,7 +39,7 @@ foreach ( $addon['options'] as $key => $option ) :
 	$custom_image_classes = $Lafka_Engine_Display->get_addon_option_image_classes( $custom_image_id );
 	?>
 
-	<p class="form-row form-row-wide addon-wrap-<?php echo sanitize_title( $addon['field-name'] ); ?>">
+	<p class="form-row form-row-wide addon-wrap-<?php echo esc_attr( sanitize_title( $addon['field-name'] ) ); ?>">
 		<?php if ( ! empty( $option['label'] ) ) : ?>
 			<label>
 				<?php if ( $custom_image_id ) : ?>
@@ -57,13 +61,14 @@ foreach ( $addon['options'] as $key => $option ) :
 						<?php endforeach; ?>
 					<?php endif; ?>
 					data-raw-price="<?php echo esc_attr( $option_price ); ?>"
-					data-price="<?php echo Lafka_Engine_Helper::get_product_addon_price_for_display( $option_price ); ?>"
-					name="<?php echo $addon_key; ?>[<?php echo $option_key; ?>]" rows="4" cols="20" 
+					data-price="<?php echo esc_attr( Lafka_Engine_Helper::get_product_addon_price_for_display( $option_price ) ); ?>"
+					name="<?php echo esc_attr( $addon_key ); ?>[<?php echo esc_attr( $option_key ); ?>]" rows="4" cols="20"
 					<?php
 					if ( ! empty( $option['max'] ) ) {
-						echo 'maxlength="' . $option['max'] . '"';}
+						echo 'maxlength="' . esc_attr( $option['max'] ) . '"';}
 					?>
 					><?php echo esc_textarea( $current_value ); ?></textarea>
 	</p>
 
 <?php endforeach; ?>
+<?php // phpcs:enable WordPress.Security.NonceVerification.Missing,WordPress.Security.NonceVerification.Recommended ?>

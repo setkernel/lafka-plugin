@@ -1,5 +1,13 @@
 <?php defined( 'ABSPATH' ) || exit; ?>
 <?php
+// CSRF: this template runs in two contexts:
+//   1. Shortcode render (PHP include from shortcodes.php): no POST data
+//      is processed for state mutation; values populate form fields.
+//   2. AJAX submit (wp_ajax_(nopriv_)lafka_submit_contact in lafka-plugin.php):
+//      `check_ajax_referer('lafka_contact_form_submit')` runs BEFORE this
+//      template is included.
+// PHPCS can't trace either path; disable the sniff for this template scope.
+// phpcs:disable WordPress.Security.NonceVerification.Missing,WordPress.Security.NonceVerification.Recommended
 wp_enqueue_script( 'jquery-form' );
 
 //fields translatable strings
@@ -269,3 +277,4 @@ $lafka_contact_title = isset( $lafka_title ) ? $lafka_title : esc_html__( 'Send 
 		<div class="left"><input class="button button-orange" value="<?php esc_html_e( 'Send message', 'lafka-plugin' ); ?>" type="submit"></div>
 	</div>
 </form>
+<?php // phpcs:enable WordPress.Security.NonceVerification.Missing,WordPress.Security.NonceVerification.Recommended ?>

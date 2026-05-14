@@ -50,13 +50,17 @@ if ( ! function_exists( 'lafka_pdp_set_last_order_cookie' ) ) {
             return;
         }
 
-        setcookie( LAFKA_PDP_LAST_ORDER_COOKIE, $json, array(
-            'expires'  => time() + YEAR_IN_SECONDS,
-            'path'     => '/',
-            'secure'   => is_ssl(),
-            'httponly' => false,
-            'samesite' => 'Lax',
-        ) );
+        setcookie(
+            LAFKA_PDP_LAST_ORDER_COOKIE,
+            $json,
+            array(
+				'expires'  => time() + YEAR_IN_SECONDS,
+				'path'     => '/',
+				'secure'   => is_ssl(),
+				'httponly' => false,
+				'samesite' => 'Lax',
+            ) 
+        );
         $_COOKIE[ LAFKA_PDP_LAST_ORDER_COOKIE ] = $json;
     }
     add_action( 'woocommerce_thankyou', 'lafka_pdp_set_last_order_cookie' );
@@ -65,13 +69,15 @@ if ( ! function_exists( 'lafka_pdp_set_last_order_cookie' ) ) {
 if ( ! function_exists( 'lafka_pdp_get_last_order' ) ) {
     function lafka_pdp_get_last_order(): ?array {
         if ( is_user_logged_in() ) {
-            $orders = wc_get_orders( array(
-                'customer_id' => get_current_user_id(),
-                'status'      => array( 'completed', 'processing' ),
-                'orderby'     => 'date',
-                'order'       => 'DESC',
-                'limit'       => 1,
-            ) );
+            $orders = wc_get_orders(
+                array(
+					'customer_id' => get_current_user_id(),
+					'status'      => array( 'completed', 'processing' ),
+					'orderby'     => 'date',
+					'order'       => 'DESC',
+					'limit'       => 1,
+                ) 
+            );
             if ( ! empty( $orders ) ) {
                 $order = $orders[0];
                 $items = array();
@@ -83,7 +89,10 @@ if ( ! function_exists( 'lafka_pdp_get_last_order' ) ) {
                         'name'         => $item->get_name(),
                     );
                 }
-                return array( 'order_id' => $order->get_id(), 'items' => $items );
+                return array(
+					'order_id' => $order->get_id(),
+					'items' => $items,
+				);
             }
         }
 
@@ -112,7 +121,7 @@ if ( ! function_exists( 'lafka_pdp_render_last_order_card' ) ) {
                 <span class="lafka-pdp-last-order__heading"><?php esc_html_e( 'Your usual?', 'lafka-plugin' ); ?></span>
             </div>
             <ul class="lafka-pdp-last-order__items">
-                <?php foreach ( $items as $i ): ?>
+                <?php foreach ( $items as $i ) : ?>
                     <li><?php echo esc_html( $i['name'] ); ?></li>
                 <?php endforeach; ?>
             </ul>
@@ -167,6 +176,6 @@ if ( ! function_exists( 'lafka_pdp_reorder_ajax' ) ) {
 
         WC_AJAX::get_refreshed_fragments();
     }
-    add_action( 'wp_ajax_lafka_pdp_reorder',        'lafka_pdp_reorder_ajax' );
+    add_action( 'wp_ajax_lafka_pdp_reorder', 'lafka_pdp_reorder_ajax' );
     add_action( 'wp_ajax_nopriv_lafka_pdp_reorder', 'lafka_pdp_reorder_ajax' );
 }

@@ -21,7 +21,7 @@ class LafkaAboutWidget extends WP_Widget {
 			echo wp_kses_post( $args['before_title'] . $title . $args['after_title'] );
 		}
 		?>
-		<?php echo lafka_get_excerpt_by_id( intval( $instance['aboutus_page'] ) ); ?>
+		<?php echo wp_kses_post( lafka_get_excerpt_by_id( intval( $instance['aboutus_page'] ) ) ); ?>
 		<a class="r_more" href="<?php echo esc_url( get_permalink( intval( $instance['aboutus_page'] ) ) ); ?>"><?php esc_html_e( 'Read more', 'lafka-plugin' ); ?>...</a>
 		<?php
 		echo wp_kses_post( $args['after_widget'] );

@@ -94,6 +94,7 @@ if ( ! class_exists( 'Lafka_Promotions_Admin' ) ) {
 			$promo_key     = Lafka_Promotions::knob( 'promo_key' );
 			$dismiss_days  = Lafka_Promotions::knob( 'dismiss_days' );
 			$gated_on      = function_exists( 'is_lafka_promotions' ) && is_lafka_promotions();
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- "updated" success banner $_GET flag from WP Settings API redirect; no state mutation.
 			$updated       = isset( $_GET['updated'] );
 			?>
 			<div class="wrap">

@@ -23,7 +23,7 @@ if ( $has_options_with_images ) {
 	$classes[] = 'lafka-addon-with-images';
 }
 ?>
-<div class="<?php echo implode( ' ', $classes ); ?>"
+<div class="<?php echo esc_attr( implode( ' ', $classes ) ); ?>"
 	<?php
 	if ( ! empty( $addon['limit'] ) ) {
 		echo 'data-addon-group-limit="' . esc_attr( $addon['limit'] ) . '"';}
@@ -32,7 +32,7 @@ if ( $has_options_with_images ) {
 	<?php do_action( 'wc_product_addon_start', $addon ); ?>
 
 	<?php if ( $name ) : ?>
-		<h3 class="addon-name"><?php echo wptexturize( $name ); ?>
+		<h3 class="addon-name"><?php echo esc_html( wptexturize( $name ) ); ?>
 		<?php
 		if ( 1 == $required ) {
 			echo '<abbr class="required" title="' . esc_html__( 'Required field', 'lafka-plugin' ) . '">*</abbr>';}
@@ -41,7 +41,11 @@ if ( $has_options_with_images ) {
 	<?php endif; ?>
 
 	<?php if ( $description ) : ?>
-		<?php echo '<div class="addon-description">' . wpautop( wptexturize( $description ) ) . '</div>'; ?>
+		<?php
+		// wp_kses_post() lets wpautop's <p> tags through while stripping any dangerous
+		// markup that may have leaked in via the operator-defined description.
+		echo '<div class="addon-description">' . wp_kses_post( wpautop( wptexturize( $description ) ) ) . '</div>';
+		?>
 	<?php endif; ?>
 
 	<?php do_action( 'wc_product_addon_options', $addon ); ?>

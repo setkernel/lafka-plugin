@@ -13,6 +13,11 @@
  * @since   8.7.0
  */
 
+// $_GET reads in this admin file are for display state (which tab is active,
+// banner dismissals, etc.) — no state mutation. Form submits go through WP
+// Settings API which verifies its own nonce.
+// phpcs:disable WordPress.Security.NonceVerification.Recommended
+
 defined( 'ABSPATH' ) || exit;
 
 if ( ! class_exists( 'Lafka_Security_Admin' ) ) {

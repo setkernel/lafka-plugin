@@ -38,7 +38,10 @@ class Lafka_Reviews_CLI_Command {
 		);
 		$items = array();
 		foreach ( $settings as $key ) {
-			$items[] = array( 'setting' => $key, 'value' => get_option( $key, '(unset)' ) );
+			$items[] = array(
+				'setting' => $key,
+				'value' => get_option( $key, '(unset)' ),
+			);
 		}
 		WP_CLI\Utils\format_items( 'table', $items, array( 'setting', 'value' ) );
 	}

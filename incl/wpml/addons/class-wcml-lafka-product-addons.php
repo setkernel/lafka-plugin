@@ -3,6 +3,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+// PHPCS suppression for this WPML extension class: hooks fire from WPML/WC
+// product-save flow where nonce verification happens upstream in the WC
+// product editor (update-post_<id>) before our hook callbacks run. Reads
+// of $_GET in display methods are for admin UI state, not state mutation.
+// phpcs:disable WordPress.Security.NonceVerification.Missing,WordPress.Security.NonceVerification.Recommended
+
 /**
  * Class WCML_Lafka_Product_Addons
  */
@@ -438,6 +444,7 @@ class WCML_Lafka_Product_Addons {
 	 */
 	private function render_edit_price_element( $model ) {
 		$twig_loader = $this->get_twig_loader();
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Twig template engine auto-escapes by default for HTML context; bundled WPML/WCML pattern.
 		echo $twig_loader->get_template()->show( $model, self::DIALOG_TEMPLATE );
 	}
 
@@ -521,7 +528,7 @@ class WCML_Lafka_Product_Addons {
 					foreach ( $active_currencies as $code => $currency ) {
 						$price_option_key = self::PRICE_OPTION_KEY;
 
-						if ( in_array( $product_addon['type'], $this->get_one_price_types() ) ) {
+						if ( in_array( $product_addon['type'], $this->get_one_price_types(), true ) ) {
 							$product_addons = $this->update_single_option_prices( $product_addons, $price_option_key, $addon_key, $code );
 						} else {
 							$product_addons = $this->update_multiple_options_prices( $product_addons, $price_option_key, $addon_key, $code );
@@ -589,7 +596,7 @@ class WCML_Lafka_Product_Addons {
 			),
 			'custom_prices_on'  => $custom_prices_on,
 			'dialog_id'         => '_product_addon_option_' . md5( uniqid( $loop . $label ) ),
-			'option_id'         => isset( $product_addons[ $loop ]['options'] ) ? array_search( $option, $product_addons[ $loop ]['options'] ) : '',
+			'option_id'         => isset( $product_addons[ $loop ]['options'] ) ? array_search( $option, $product_addons[ $loop ]['options'], true ) : '',
 			'addon_id'          => $loop,
 			'option_details'    => $option,
 			'default_currency'  => get_option( 'woocommerce_currency' ),
@@ -599,6 +606,7 @@ class WCML_Lafka_Product_Addons {
 
 	public function custom_prices_settings_block() {
 		$twig_loader = $this->get_twig_loader();
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Twig template engine auto-escapes by default for HTML context; bundled WPML/WCML pattern.
 		echo $twig_loader->get_template()->show( $this->get_custom_prices_settings_model(), self::SETTINGS_TEMPLATE );
 	}
 
@@ -626,3 +634,4 @@ class WCML_Lafka_Product_Addons {
 		}
 	}
 }
+// phpcs:enable WordPress.Security.NonceVerification.Missing,WordPress.Security.NonceVerification.Recommended

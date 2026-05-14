@@ -42,6 +42,7 @@ class Lafka_Shipping_Areas {
 	 * Unserializing instances of this class is forbidden.
 	 */
 	public function __wakeup() {
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- _doing_it_wrong() emits to error log + do_action hook, not HTML; escaping would corrupt plain-text log output.
 		_doing_it_wrong( __FUNCTION__, __( 'Foul!', 'lafka-plugin' ), '1.0.0' );
 	}
 
@@ -308,7 +309,11 @@ class Lafka_Shipping_Areas {
 		if ( ! $order instanceof WC_Order ) {
 			return;
 		}
+		// CSRF: hooked to woocommerce_checkout_order_processed; WC core verifies
+		// its own checkout nonce upstream before this hook fires.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WC core verifies checkout nonce upstream.
 		if ( ! empty( $_POST['lafka_picked_delivery_geocoded'] ) && ! empty( $_POST['lafka_is_location_clicked'] ) ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WC core verifies checkout nonce upstream.
 			$raw_geocoded = wp_unslash( $_POST['lafka_picked_delivery_geocoded'] );
 			$decoded      = json_decode( $raw_geocoded );
 
@@ -455,7 +460,7 @@ class Lafka_Shipping_Areas {
 				?>
 				<p>
 					<strong><?php esc_html_e( 'Picked Delivery Location', 'lafka-plugin' ); ?>:</strong>
-					<?php echo self::get_delivery_location_link( $location ); ?>
+					<?php echo wp_kses_post( self::get_delivery_location_link( $location ) ); ?>
 				</p>
 				<?php
 			}
@@ -523,6 +528,7 @@ class Lafka_Shipping_Areas {
 	public function validate_checkout_field_process() {
 		$options = get_option( 'lafka_shipping_areas_general' );
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- woocommerce_checkout_process filter context; WC core verifies checkout nonce upstream.
 		if ( ! empty( $options['pick_delivery_address'] ) && ! empty( $options['mandatory_pickup_delivery'] ) && isset( $_POST['lafka_picked_delivery_geocoded'] ) && empty( $_POST['lafka_picked_delivery_geocoded'] ) ) {
 			wc_add_notice( esc_html__( 'Please precise your address on the map.', 'lafka-plugin' ), 'error' );
 		}

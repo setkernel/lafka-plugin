@@ -83,7 +83,7 @@ class Lafka_WC_Variation_Swatches_Frontend {
 				$terms = wc_get_product_terms( $product->get_id(), $attribute, array( 'fields' => 'all' ) );
 
 				foreach ( $terms as $term ) {
-					if ( in_array( $term->slug, $options ) ) {
+					if ( in_array( $term->slug, $options, true ) ) {
 						$swatches .= apply_filters( 'lafka-wcs_swatch_html', '', $term, $attr, $args );
 					}
 				}

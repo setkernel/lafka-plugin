@@ -291,6 +291,7 @@ class Lafka_Engine_Display {
 			return $url;
 		}
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- WC_Quick_View frontend $_GET param read for context detection; no state mutation.
 		$is_quick_view = isset( $_GET['wc-api'] ) && 'WC_Quick_View' === sanitize_text_field( wp_unslash( $_GET['wc-api'] ) );
 		$applicable    = ! is_single( $product->get_id() )
 			&& in_array( $product->get_type(), (array) apply_filters( 'lafka_product_addons_add_to_cart_product_types', array( 'subscription', 'simple' ) ), true )

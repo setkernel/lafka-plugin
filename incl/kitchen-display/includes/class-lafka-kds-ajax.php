@@ -32,6 +32,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+// PHPCS suppression: every public AJAX handler in this class calls
+// `verify_kds_auth()` (or `verify_kds_customer_auth()`) as its first action,
+// which in turn calls `check_ajax_referer()`. PHPCS doesn't trace nonce
+// verification through helper methods; suppression is correct here.
+// phpcs:disable WordPress.Security.NonceVerification.Missing,WordPress.Security.NonceVerification.Recommended
+
 class Lafka_KDS_Ajax {
 
 	public function __construct() {
@@ -413,3 +419,4 @@ class Lafka_KDS_Ajax {
 		);
 	}
 }
+// phpcs:enable WordPress.Security.NonceVerification.Missing,WordPress.Security.NonceVerification.Recommended

@@ -235,16 +235,19 @@ if ( ! function_exists( 'lafka_mobile_menu_sort_by_group' ) ) {
 		}
 
 		// Stable sort: group order first, then original menu_order within a group.
-		usort( $items, function ( $a, $b ) use ( $group_index ) {
-			$ag = $a->_lafka_group ?? 'Everything else';
-			$bg = $b->_lafka_group ?? 'Everything else';
-			$ai = $group_index[ $ag ] ?? PHP_INT_MAX;
-			$bi = $group_index[ $bg ] ?? PHP_INT_MAX;
-			if ( $ai !== $bi ) {
-				return $ai - $bi;
-			}
-			return ( (int) $a->menu_order ) - ( (int) $b->menu_order );
-		} );
+		usort(
+            $items,
+            function ( $a, $b ) use ( $group_index ) {
+				$ag = $a->_lafka_group ?? 'Everything else';
+				$bg = $b->_lafka_group ?? 'Everything else';
+				$ai = $group_index[ $ag ] ?? PHP_INT_MAX;
+				$bi = $group_index[ $bg ] ?? PHP_INT_MAX;
+				if ( $ai !== $bi ) {
+					return $ai - $bi;
+				}
+				return ( (int) $a->menu_order ) - ( (int) $b->menu_order );
+			} 
+        );
 
 		return $items;
 	}

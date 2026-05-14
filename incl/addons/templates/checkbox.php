@@ -1,5 +1,9 @@
 <?php defined( 'ABSPATH' ) || exit; ?>
 <?php
+// $_POST reads in this template are for preserving form state on re-render
+// during validation failures. WC verifies the add-to-cart nonce upstream
+// before this template is included in the variations form output.
+// phpcs:disable WordPress.Security.NonceVerification.Missing,WordPress.Security.NonceVerification.Recommended
 /** @var array $addon */
 foreach ( $addon['options'] as $i => $option ) :
 	/**
@@ -37,7 +41,7 @@ foreach ( $addon['options'] as $i => $option ) :
 		$selected = array( $selected );
 	}
 
-	$current_value = ( in_array( $option_id, $selected ) ) ? 1 : 0;
+	$current_value = ( in_array( (string) $option_id, array_map( 'strval', (array) $selected ), true ) ) ? 1 : 0;
 
 	$attribute_raw_prices = $option['price'];
 	$attribute_prices     = lafka_convert_attribute_raw_prices_to_prices( $attribute_raw_prices );
@@ -46,8 +50,8 @@ foreach ( $addon['options'] as $i => $option ) :
 	$custom_image_classes = $Lafka_Engine_Display->get_addon_option_image_classes( $custom_image_id );
 	?>
 
-	<p class="form-row form-row-wide addon-wrap-<?php echo sanitize_title( $addon['field-name'] ) . '-' . $i; ?>">
-		<label><input type="checkbox" class="addon addon-checkbox" name="addon-<?php echo sanitize_title( $addon['field-name'] ); ?>[]"
+	<p class="form-row form-row-wide addon-wrap-<?php echo esc_attr( sanitize_title( $addon['field-name'] ) . '-' . $i ); ?>">
+		<label><input type="checkbox" class="addon addon-checkbox" name="addon-<?php echo esc_attr( sanitize_title( $addon['field-name'] ) ); ?>[]"
 						data-attribute-raw-prices="<?php echo esc_attr( json_encode( $attribute_raw_prices ) ); ?>"
 						data-attribute-prices="<?php echo esc_attr( json_encode( $attribute_prices ) ); ?>"
 						<?php $addon_attribute = isset( $addon['attribute'] ) ? wc_get_attribute( $addon['attribute'] ) : null; ?>
@@ -57,7 +61,7 @@ foreach ( $addon['options'] as $i => $option ) :
 							<?php endforeach; ?>
 						<?php endif; ?>
 						data-raw-price="<?php echo esc_attr( $option_price ); ?>"
-						data-price="<?php echo Lafka_Engine_Helper::get_product_addon_price_for_display( $option_price ); ?>"
+						data-price="<?php echo esc_attr( Lafka_Engine_Helper::get_product_addon_price_for_display( $option_price ) ); ?>"
 						value="<?php echo esc_attr( $option_id ); ?>" <?php checked( $current_value, 1 ); ?> /><?php echo ' '; ?>
 			<?php if ( $custom_image_id ) : ?>
 				<?php echo wp_get_attachment_image( $custom_image_id, 'lafka-widgets-thumb', false, array( 'class' => implode( ' ', $custom_image_classes ) ) ); ?>
@@ -68,7 +72,9 @@ foreach ( $addon['options'] as $i => $option ) :
 			// wp_kses_post() preserves trusted markup (spans/bdi/sup) while stripping anything
 			// dangerous a hostile filter on lafka_product_addons_option_price might inject.
 			echo esc_html( wptexturize( $option['label'] ) ) . ' ' . wp_kses_post( $price );
-			?></label>
+			?>
+            </label>
 	</p>
 
 <?php endforeach; ?>
+<?php // phpcs:enable WordPress.Security.NonceVerification.Missing,WordPress.Security.NonceVerification.Recommended ?>

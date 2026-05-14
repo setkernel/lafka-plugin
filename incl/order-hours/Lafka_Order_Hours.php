@@ -56,7 +56,7 @@ class Lafka_Order_Hours {
 		if ( $holidays_calendar ) {
 			$vacation_dates_array = explode( ', ', $holidays_calendar );
 
-			return in_array( $date->format( 'Y-m-d' ), $vacation_dates_array );
+			return in_array( $date->format( 'Y-m-d' ), $vacation_dates_array, true );
 		}
 
 		return false;

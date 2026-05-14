@@ -219,7 +219,8 @@ if ( ! function_exists( 'lafka_layout_callback' ) ) {
 			}
 		}
 
-		echo $output; // All dynamic data escaped
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $output built with esc_attr/esc_html/esc_html__ per dynamic value; static markup is literal.
+		echo $output;
 	}
 
 }
@@ -540,7 +541,8 @@ if ( ! function_exists( 'lafka_page_options_callback' ) ) {
 
 		$output .= '</select>';
 
-		echo $output; // All dynamic data escaped
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $output built with esc_attr/esc_html/esc_html__ per dynamic value; static markup is literal.
+		echo $output;
 	}
 
 }
@@ -719,7 +721,8 @@ if ( ! function_exists( 'lafka_revolution_slider_callback' ) ) {
 			$output .= '<p><label for="lafka_rev_slider_before_header">';
 			$output .= "<input type='checkbox' id='lafka_rev_slider_before_header' name='lafka_rev_slider_before_header' value='1' " . checked( esc_attr( $val_before_header ), 1, false ) . '><b>' . esc_html__( 'Place before header', 'lafka-plugin' ) . '</b></label></p>';
 		}
-		echo $output; // All dynamic data escaped
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $output built with esc_attr/esc_html/esc_html__ per dynamic value; static markup is literal.
+		echo $output;
 	}
 
 }
@@ -859,7 +862,8 @@ if ( ! function_exists( 'lafka_video_bckgr_callback' ) ) {
 		$output .= '<p><label for="lafka_video_bckgr_mute">';
 		$output .= "<input type='checkbox' id='lafka_video_bckgr_mute' name='lafka_video_bckgr_mute' value='1' " . checked( esc_attr( $values['lafka_video_bckgr_mute'] ), 1, false ) . '><b>' . esc_html__( 'Mute', 'lafka-plugin' ) . '</b></label></p>';
 
-		echo $output; // All dynamic data escaped
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $output built with esc_attr/esc_html/esc_html__ per dynamic value; static markup is literal.
+		echo $output;
 	}
 
 }
@@ -969,14 +973,14 @@ if ( ! function_exists( 'lafka_foodmenu_callback' ) ) {
 
 		for ( $i = 1; $i <= 3; $i++ ) {
 			echo '<div>';
-			echo '<label for="lafka_item_size' . $i . '">';
+			echo '<label for="lafka_item_size' . (int) $i . '">';
 			esc_html_e( 'Option', 'lafka-plugin' );
 			echo '</label> ';
-			echo '<input type="text" id="lafka_item_size1" name="lafka_item_size' . $i . '" value="' . esc_attr( get_post_meta( $post->ID, 'lafka_item_size' . $i, true ) ) . '" class="regular-text" />';
-			echo ' <label for="lafka_item_price' . $i . '">';
+			echo '<input type="text" id="lafka_item_size1" name="lafka_item_size' . (int) $i . '" value="' . esc_attr( get_post_meta( $post->ID, 'lafka_item_size' . $i, true ) ) . '" class="regular-text" />';
+			echo ' <label for="lafka_item_price' . (int) $i . '">';
 			esc_html_e( 'Price', 'lafka-plugin' );
 			echo '</label> ';
-			echo '<input type="text" id="lafka_item_price' . $i . '" name="lafka_item_price' . $i . '" value="' . esc_attr( get_post_meta( $post->ID, 'lafka_item_price' . $i, true ) ) . '" class="small-text" /> ' . esc_html( $currency );
+			echo '<input type="text" id="lafka_item_price' . (int) $i . '" name="lafka_item_price' . (int) $i . '" value="' . esc_attr( get_post_meta( $post->ID, 'lafka_item_price' . $i, true ) ) . '" class="small-text" /> ' . esc_html( $currency );
 			echo '</div>';
 		}
 
@@ -1156,7 +1160,8 @@ if ( ! function_exists( 'lafka_additonal_featured_meta_callback' ) ) {
 
 		$output .= '</p>';
 
-		echo $output; // All dynamic data escaped
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $output built with esc_attr/esc_html/esc_html__ per dynamic value; static markup is literal.
+		echo $output;
 	}
 
 }
@@ -1249,7 +1254,8 @@ if ( ! function_exists( 'lafka_foodmenu_cz_callback' ) ) {
 		$output .= '<div><input id="lafka_prtfl_gallery_list" ' . checked( $lafka_prtfl_gallery, 'list', false ) . ' type="radio" value="list" name="lafka_prtfl_gallery">';
 		$output .= '<label for="lafka_prtfl_gallery_list">' . esc_html__( 'Image List', 'lafka-plugin' ) . '</label></div>';
 
-		echo $output; // All dynamic data escaped
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $output built with esc_attr/esc_html/esc_html__ per dynamic value; static markup is literal.
+		echo $output;
 	}
 
 }
@@ -1343,7 +1349,8 @@ if ( ! function_exists( 'lafka_product_video_callback' ) ) {
 		$output .= '<p><label for="lafka_product_video_url"><b>' . esc_html__( 'Video URL', 'lafka-plugin' ) . '</b></label></p>';
 		$output .= '<input type="text" id="lafka_product_video_url" name="lafka_product_video_url" value="' . esc_attr( $values['lafka_product_video_url'] ) . '" class="large-text" />';
 
-		echo $output; // All dynamic data escaped
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $output built with esc_attr/esc_html/esc_html__ per dynamic value; static markup is literal.
+		echo $output;
 	}
 
 }
@@ -1436,6 +1443,7 @@ if ( ! function_exists( 'lafka_product_gallery_type_callback' ) ) {
 		}
 		$output .= '</select>';
 
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $output built with esc_attr/esc_html/esc_html__ per dynamic value; static markup is literal.
 		echo $output;
 	}
 

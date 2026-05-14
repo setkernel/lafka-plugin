@@ -20,7 +20,7 @@ class LafkaPaymentOptionsWidget extends WP_Widget {
 		}
 
 		foreach ( $instance as $field_name => $value ) {
-			if ( ! in_array( $field_name, array( 'title', 'seal' ) ) && $value ) : ?>
+			if ( ! in_array( $field_name, array( 'title', 'seal' ), true ) && $value ) : ?>
 				<div class="<?php echo esc_attr( $field_name ); ?>_icon cards_icon"></div>
 				<?php
 			endif;
@@ -89,7 +89,7 @@ class LafkaPaymentOptionsWidget extends WP_Widget {
 			<input class="widefat" id="<?php echo esc_attr( $this->get_field_id( 'title' ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( 'title' ) ); ?>" type="text" value="<?php echo esc_attr( $instance['title'] ); ?>" />
 		</p>
 		<?php foreach ( $instance as $field_name => $value ) : ?>
-			<?php if ( ! in_array( $field_name, array( 'title', 'seal' ) ) ) : ?>
+			<?php if ( ! in_array( $field_name, array( 'title', 'seal' ), true ) ) : ?>
 				<p>
 					<input class="checkbox" type="checkbox" <?php checked( $value ); ?> id="<?php echo esc_attr( $this->get_field_id( $field_name ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( $field_name ) ); ?>" value="on" />&nbsp;
 					<label for="<?php echo esc_attr( $this->get_field_id( $field_name ) ); ?>"><?php echo esc_html( $labels[ $field_name ] ); ?></label>

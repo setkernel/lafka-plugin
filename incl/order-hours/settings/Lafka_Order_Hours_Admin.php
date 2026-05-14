@@ -3,6 +3,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+// $_GET reads in this admin file are for routing/display state on the
+// Order Hours settings page; submits go through WP Settings API (nonce-verified).
+// phpcs:disable WordPress.Security.NonceVerification.Recommended
+
 class Lafka_Order_Hours_Admin {
 	public function __construct() {
 		add_action( 'admin_enqueue_scripts', array( $this, 'styles' ), 99 );
@@ -244,8 +248,8 @@ class Lafka_Order_Hours_Admin {
 	public function lafka_order_hours_status_section_cb( $args ) {
 		?>
 		<p><?php esc_html_e( 'WooCommerce main store current time', 'lafka-plugin' ); ?>:<br>
-			<span class="lafka-order-hours-current-time <?php echo Lafka_Order_Hours::get_shop_status()->code; ?>">
-				<?php echo Lafka_Order_Hours::get_order_hours_time()->format( 'H:i' ); ?> <?php esc_html_e( 'Status', 'lafka-plugin' ); ?>: <?php echo strtoupper( Lafka_Order_Hours::get_shop_status()->value ); ?>
+			<span class="lafka-order-hours-current-time <?php echo esc_attr( Lafka_Order_Hours::get_shop_status()->code ); ?>">
+				<?php echo esc_html( Lafka_Order_Hours::get_order_hours_time()->format( 'H:i' ) ); ?> <?php esc_html_e( 'Status', 'lafka-plugin' ); ?>: <?php echo esc_html( strtoupper( Lafka_Order_Hours::get_shop_status()->value ) ); ?>
 			</span>
 		</p>
 		<?php

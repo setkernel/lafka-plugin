@@ -3,6 +3,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+// Public/admin display $_GET reads for state detection — no state mutation.
+// phpcs:disable WordPress.Security.NonceVerification.Recommended
+
 class Lafka_Nutrition_Display {
 	/**
 	 * @var string

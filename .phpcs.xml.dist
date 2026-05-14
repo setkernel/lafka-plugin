@@ -41,19 +41,13 @@
 		<exclude name="Universal.Operators.StrictComparisons.LooseNotEqual"/>
 		<exclude name="WordPress.PHP.StrictComparisons.LooseComparison"/>
 
-		<!-- Security sniffs need per-call manual audit, not script-fix
-		     (auto-escaping with the wrong escaper context = double-encoded HTML
-		     or breaks output). Tracked as P5-Sec; re-enable after that pass. -->
-		<exclude name="WordPress.Security.EscapeOutput.OutputNotEscaped"/>
-		<exclude name="WordPress.Security.EscapeOutput.UnsafePrintingFunction"/>
-		<exclude name="WordPress.Security.NonceVerification.Recommended"/>
-		<exclude name="WordPress.Security.NonceVerification.Missing"/>
-		<exclude name="WordPress.Security.ValidatedSanitizedInput.InputNotSanitized"/>
-		<exclude name="WordPress.Security.ValidatedSanitizedInput.InputNotValidated"/>
-		<exclude name="WordPress.Security.ValidatedSanitizedInput.MissingUnslash"/>
-		<exclude name="WordPress.PHP.StrictInArray.MissingTrueStrict"/>
-		<exclude name="WordPress.DB.PreparedSQL.NotPrepared"/>
-		<exclude name="WordPress.DB.PreparedSQL.InterpolatedNotPrepared"/>
+		<!-- P5-Sec audit pass (2026-05-14): all security sniff families re-enabled.
+		     WordPress.DB.PreparedSQL.* (foundation), WordPress.Security.EscapeOutput.*,
+		     WordPress.Security.NonceVerification.* (Missing + Recommended), and
+		     WordPress.PHP.StrictInArray all audited per call site. Real CSRF/XSS
+		     surfaces hardened with wp_verify_nonce + esc_*. Framework/filter
+		     contexts suppressed with documented per-line `phpcs:ignore` annotations.
+		     in_array() / array_search() updated to strict comparison. -->
 
 		<!-- Polish-tier sniffs that need contextual judgment per call site.
 		     Tracked as P5-Polish. -->

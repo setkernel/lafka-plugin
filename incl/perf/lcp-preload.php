@@ -16,20 +16,23 @@
 
 defined( 'ABSPATH' ) || exit;
 
-add_filter( 'lafka_lcp_image_url', function ( $url ) {
-	if ( ! is_front_page() ) {
-		return $url;
-	}
-	$hero = get_theme_mod( 'lafka_homepage_hero_image', '' );
-	if ( '' === $hero || null === $hero ) {
-		return $url;
-	}
-	if ( is_numeric( $hero ) ) {
-		$resolved = wp_get_attachment_image_url( (int) $hero, 'full' );
-		return $resolved ? $resolved : $url;
-	}
-	return esc_url_raw( (string) $hero );
-} );
+add_filter(
+    'lafka_lcp_image_url',
+    function ( $url ) {
+		if ( ! is_front_page() ) {
+			return $url;
+		}
+		$hero = get_theme_mod( 'lafka_homepage_hero_image', '' );
+		if ( '' === $hero || null === $hero ) {
+			return $url;
+		}
+		if ( is_numeric( $hero ) ) {
+			$resolved = wp_get_attachment_image_url( (int) $hero, 'full' );
+			return $resolved ? $resolved : $url;
+		}
+		return esc_url_raw( (string) $hero );
+	} 
+);
 
 /**
  * Apply fetchpriority="high" + loading="eager" to the homepage hero <img>.
@@ -42,14 +45,19 @@ add_filter( 'lafka_lcp_image_url', function ( $url ) {
  * no-ops — the parent theme can still load the hero <img>, just without the
  * priority hints.
  */
-add_filter( 'wp_get_attachment_image_attributes', function ( $attr, $attachment ) {
-	if ( ! is_front_page() ) {
+add_filter(
+    'wp_get_attachment_image_attributes',
+    function ( $attr, $attachment ) {
+		if ( ! is_front_page() ) {
+			return $attr;
+		}
+		$hero_attachment_id = (int) get_option( 'lafka_homepage_hero_attachment_id', 0 );
+		if ( $hero_attachment_id && $hero_attachment_id === (int) ( is_object( $attachment ) ? $attachment->ID : 0 ) ) {
+			$attr['fetchpriority'] = 'high';
+			$attr['loading']       = 'eager';
+		}
 		return $attr;
-	}
-	$hero_attachment_id = (int) get_option( 'lafka_homepage_hero_attachment_id', 0 );
-	if ( $hero_attachment_id && $hero_attachment_id === (int) ( is_object( $attachment ) ? $attachment->ID : 0 ) ) {
-		$attr['fetchpriority'] = 'high';
-		$attr['loading']       = 'eager';
-	}
-	return $attr;
-}, 10, 2 );
+	},
+    10,
+    2 
+);

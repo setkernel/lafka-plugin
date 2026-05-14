@@ -328,6 +328,7 @@ if ( ! function_exists( 'lafka_blogposts_shortcode' ) ) {
 					//]]>
 				</script>
 				<?php
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- captured ob_start() block above is a literal <script> tag with hardcoded JS; no dynamic data.
 				echo ob_get_clean();
 				break;
 		}
@@ -923,6 +924,7 @@ if ( ! function_exists( 'lafka_cloudzoom_gallery_shortcode' ) ) {
 						$first_image_attach_id  = $images[0];
 						$first_image            = wp_get_attachment_image( $first_image_attach_id, $img_size );
 						$first_image_attach_url = wp_get_attachment_url( $first_image_attach_id );
+						// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- %s argument $first_image is wp_get_attachment_image() output (trusted WP-core HTML with attributes pre-escaped).
 						printf( '<a id="%s" href="%s" itemprop="image" class="cloud-zoom" rel="position: \'inside\' , showTitle: false, adjustX:-4, adjustY:-4">%s</a>', esc_attr( $unique_id ), esc_url( $first_image_attach_url ), $first_image );
 						?>
 
@@ -935,7 +937,10 @@ if ( ! function_exists( 'lafka_cloudzoom_gallery_shortcode' ) ) {
 								$image_attach_url = wp_get_attachment_url( $attach_id );
 								?>
 								<li>
-									<?php printf( '<a rel="useZoom: \'%s\', smallImage: \'%s\'" class="cloud-zoom-gallery" href="%s">%s</a>', esc_attr( $unique_id ), esc_url( $small_image_params[0] ), esc_url( $image_attach_url ), $thumb_image ); ?>
+									<?php
+									// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- %s argument $thumb_image is wp_get_attachment_image() output (trusted WP-core HTML with attributes pre-escaped).
+									printf( '<a rel="useZoom: \'%s\', smallImage: \'%s\'" class="cloud-zoom-gallery" href="%s">%s</a>', esc_attr( $unique_id ), esc_url( $small_image_params[0] ), esc_url( $image_attach_url ), $thumb_image );
+									?>
 								</li>
 							<?php endforeach; ?>
 						</ul>
@@ -1995,7 +2000,7 @@ if ( ! function_exists( 'lafka_woo_products_slider_shortcode' ) ) {
 						],
 						autoplay: <?php echo $atts['autoplay'] ? 'true' : 'false'; ?>,
 						<?php if ( is_numeric( $atts['timeout'] ) ) : ?>
-						autoplayTimeout: <?php echo $atts['timeout'] * 1000; ?>,
+						autoplayTimeout: <?php echo (int) ( $atts['timeout'] * 1000 ); ?>,
 						<?php endif; ?>
 						loop: true,
 						autoplayHoverPause: true
@@ -2025,7 +2030,7 @@ if ( ! function_exists( 'lafka_woo_products_slider_shortcode' ) ) {
 							<?php if ( has_post_thumbnail() ) : ?>
 								<?php echo get_the_post_thumbnail( get_the_ID(), apply_filters( 'shop_single_image_size', 'shop_single' ), array( 'title' => the_title_attribute( 'echo=0' ) ) ); ?>
 							<?php else : ?>
-								<?php printf( '<img src="%s" alt="%s" />', wc_placeholder_img_src(), esc_html__( 'Placeholder', 'lafka-plugin' ) ); ?>
+								<?php printf( '<img src="%s" alt="%s" />', esc_url( wc_placeholder_img_src() ), esc_attr__( 'Placeholder', 'lafka-plugin' ) ); ?>
 							<?php endif; ?>
 						</a>
 					</div>
@@ -2035,13 +2040,16 @@ if ( ! function_exists( 'lafka_woo_products_slider_shortcode' ) ) {
 							<?php if ( $post->post_excerpt ) : ?>
 								<?php echo wp_kses_post( wp_trim_words( apply_filters( 'woocommerce_short_description', $post->post_excerpt ), 23, '...' ) ); ?>
 							<?php else : ?>
-								<?php echo wp_trim_words( get_the_content(), 23, '...' ); ?>
+								<?php echo esc_html( wp_trim_words( get_the_content(), 23, '...' ) ); ?>
 							<?php endif; ?>
 						</span>
 						<div class="lafka-product-slide-countdown"><?php lafka_product_sale_countdown(); ?></div>
 						<span class="lafka-product-slide-price"><?php echo wp_kses_post( $product->get_price_html() ); ?></span>
 						<span class="lafka-product-slide-cart">
-							<?php echo apply_filters( 'woocommerce_loop_add_to_cart_link', sprintf( '<a href="%s" rel="nofollow" data-product_id="%s" data-product_sku="%s" data-quantity="%s" class="button %s product_type_%s %s">%s</a>', esc_url( $product->add_to_cart_url() ), esc_attr( $product->get_id() ), esc_attr( $product->get_sku() ), esc_attr( isset( $quantity ) ? $quantity : 1 ), $product->is_purchasable() && $product->is_in_stock() ? 'add_to_cart_button' : '', esc_attr( $product->get_type() ), ( ( 'yes' === get_option( 'woocommerce_enable_ajax_add_to_cart' ) && $product->get_type() === 'simple' ) ? 'ajax_add_to_cart' : '' ), esc_html( $product->add_to_cart_text() ) ), $product ); ?>
+							<?php
+							// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- matches WC core pattern: sprintf args are esc_url/esc_attr/esc_html escaped; filter consumers responsible for safe output.
+							echo apply_filters( 'woocommerce_loop_add_to_cart_link', sprintf( '<a href="%s" rel="nofollow" data-product_id="%s" data-product_sku="%s" data-quantity="%s" class="button %s product_type_%s %s">%s</a>', esc_url( $product->add_to_cart_url() ), esc_attr( $product->get_id() ), esc_attr( $product->get_sku() ), esc_attr( isset( $quantity ) ? $quantity : 1 ), $product->is_purchasable() && $product->is_in_stock() ? 'add_to_cart_button' : '', esc_attr( $product->get_type() ), ( ( 'yes' === get_option( 'woocommerce_enable_ajax_add_to_cart' ) && $product->get_type() === 'simple' ) ? 'ajax_add_to_cart' : '' ), esc_html( $product->add_to_cart_text() ) ), $product );
+							?>
 						</span>
 					</div>
 				</div>

@@ -4,6 +4,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+// Public shortcode display — $_GET/$_POST reads in this file are for filter
+// state (orderby, paged, category) from vendor-listing URL params; no state mutation.
+// phpcs:disable WordPress.Security.NonceVerification.Recommended
+
 if ( ! class_exists( 'LafkaShortcodeVendorList' ) ) {
 
 	class LafkaShortcodeVendorList {
@@ -40,7 +44,7 @@ if ( ! class_exists( 'LafkaShortcodeVendorList' ) ) {
 				$product_ids = wp_list_pluck( $products, 'ID' );
 				foreach ( $product_ids as $product_id ) {
 					$vendor = get_wcmp_product_vendors( $product_id );
-					if ( $vendor && ! in_array( $vendor->id, $block_vendors ) ) {
+					if ( $vendor && ! in_array( $vendor->id, $block_vendors, true ) ) {
 						$vendor_info[ $vendor->id ] = array(
 							'vendor_permalink' => $vendor->permalink,
 							'vendor_name'      => $vendor->user_data->display_name,
@@ -65,7 +69,7 @@ if ( ! class_exists( 'LafkaShortcodeVendorList' ) ) {
 				$vendors_counter = 0;
 				foreach ( $vendors as $vendor ) {
 					++$vendors_counter;
-					if ( ! in_array( $vendor->id, $block_vendors ) && $vendors_counter <= $limit ) {
+					if ( ! in_array( $vendor->id, $block_vendors, true ) && $vendors_counter <= $limit ) {
 						$vendor_info[ $vendor->id ] = array(
 							'vendor_permalink' => $vendor->permalink,
 							'vendor_name'      => $vendor->user_data->display_name,

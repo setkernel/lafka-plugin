@@ -1,6 +1,12 @@
 <?php
 defined( 'ABSPATH' ) || exit;
 
+// $_GET reads across this admin class are for filter state on the
+// order-list / branch-list / shop-order screens (branch_location_filter,
+// order_type_filter, etc.). All are read-only display logic; no state
+// mutation. Write paths (edit_branch_location) have explicit nonce checks.
+// phpcs:disable WordPress.Security.NonceVerification.Recommended
+
 class Lafka_Branch_Locations_Admin {
 	/**
 	 * Setup Admin class.
@@ -308,10 +314,10 @@ class Lafka_Branch_Locations_Admin {
 			<td>
 				<select class="lafka-select2" name="lafka_branch_user" id="lafka_branch_user" data-allow-clear="true"
 						data-placeholder="<?php esc_attr_e( 'Choose Branch Manager&hellip;', 'lafka-plugin' ); ?>" aria-label="<?php esc_attr_e( 'Branch Manager', 'lafka-plugin' ); ?>">
-					<option value="" <?php echo wc_selected( '', $branch_user_id ); ?>><?php esc_attr_e( 'Choose Branch Manager&hellip;', 'lafka-plugin' ); ?></option>
+					<option value=""<?php echo empty( $branch_user_id ) ? ' selected' : ''; ?>><?php esc_attr_e( 'Choose Branch Manager&hellip;', 'lafka-plugin' ); ?></option>
 					<?php /** @var WP_User $user */ ?>
 					<?php foreach ( $manage_woocommerce_users as $user ) : ?>
-						<option value="<?php echo esc_attr( $user->ID ); ?>" <?php echo wc_selected( $user->ID, $branch_user_id ); ?>><?php echo esc_html( $user->user_nicename ); ?></option>
+						<option value="<?php echo esc_attr( $user->ID ); ?>"<?php echo ( (int) $user->ID === (int) $branch_user_id ) ? ' selected' : ''; ?>><?php echo esc_html( $user->user_nicename ); ?></option>
 					<?php endforeach; ?>
 				</select>
 				<p><?php esc_html_e( 'Selected user will see only the orders for this or any other assigned to him branches. The user will also get new orders push and email notifications only for his branches.', 'lafka-plugin' ); ?></p>
@@ -368,7 +374,7 @@ class Lafka_Branch_Locations_Admin {
 						class="lafka-admin-select2"
 				>
 					<?php foreach ( $delivery_areas as $option_key => $option_value ) : ?>
-						<option value="<?php echo esc_attr( $option_key ); ?>" <?php echo wc_selected( $option_key, $branch_shipping_areas ); ?>><?php echo esc_html( $option_value ); ?></option>
+						<option value="<?php echo esc_attr( $option_key ); ?>"<?php echo ( is_array( $branch_shipping_areas ) && in_array( $option_key, $branch_shipping_areas, true ) ) ? ' selected' : ''; ?>><?php echo esc_html( $option_value ); ?></option>
 					<?php endforeach; ?>
 				</select>
 				<p class="description"><?php esc_html_e( 'Choose Lafka Shipping Areas covered by this branch.', 'lafka-plugin' ); ?></p>
@@ -492,7 +498,7 @@ class Lafka_Branch_Locations_Admin {
 				<td>
 					<select class="lafka-select2" name="lafka_branch_timezone" id="lafka_branch_timezone">
 						<?php foreach ( $timezones_options as $key => $value ) : ?>
-							<option value="<?php echo esc_attr( $key ); ?>" <?php echo wc_selected( $key, $branch_timezone ); ?>>
+							<option value="<?php echo esc_attr( $key ); ?>"<?php echo ( (string) $key === (string) $branch_timezone ) ? ' selected' : ''; ?>>
 								<?php esc_html_e( $value ); ?>
 							</option>
 						<?php endforeach; ?>
@@ -520,8 +526,8 @@ class Lafka_Branch_Locations_Admin {
 				</th>
 				<td>
 					<select class="select" name="lafka_branch_order_hours_force_override_status" id="lafka_branch_order_hours_force_override_status" style="">
-						<option value="" <?php echo wc_selected( false, $order_hours_force_override_status ); ?>><?php esc_html_e( 'Disabled', 'lafka-plugin' ); ?></option>
-						<option value="1" <?php echo wc_selected( 1, $order_hours_force_override_status ); ?>><?php esc_html_e( 'Enabled', 'lafka-plugin' ); ?></option>
+						<option value=""<?php echo empty( $order_hours_force_override_status ) ? ' selected' : ''; ?>><?php esc_html_e( 'Disabled', 'lafka-plugin' ); ?></option>
+						<option value="1"<?php echo ( (int) $order_hours_force_override_status === 1 ) ? ' selected' : ''; ?>><?php esc_html_e( 'Enabled', 'lafka-plugin' ); ?></option>
 					</select>
 				</td>
 			</tr>
@@ -568,8 +574,21 @@ class Lafka_Branch_Locations_Admin {
 	}
 
 	public static function edit_branch_location( $term_id ) {
+		// CSRF: hooked to created_<tax> + edit_<tax>, which fire from any caller
+		// of wp_insert_term/wp_update_term. Verify a WP-admin nonce to ensure
+		// the call came from a verified admin form before processing $_POST.
+		if ( ! is_admin() ) {
+			return;
+		}
+		$lafka_nonce_action = ! empty( $_POST['action'] ) && 'editedtag' === $_POST['action']
+			? 'update-tag_' . (int) $term_id
+			: 'add-tag';
+		if ( ! isset( $_POST['_wpnonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ), $lafka_nonce_action ) ) {
+			return;
+		}
+
 		if ( isset( $_POST['lafka_branch_user'] ) ) {
-			update_term_meta( $term_id, 'lafka_branch_user', sanitize_text_field( $_POST['lafka_branch_user'] ) );
+			update_term_meta( $term_id, 'lafka_branch_user', sanitize_text_field( wp_unslash( $_POST['lafka_branch_user'] ) ) );
 		}
 		if ( isset( $_POST['lafka_branch_order_type'] ) ) {
 			update_term_meta( $term_id, 'lafka_branch_order_type', sanitize_text_field( $_POST['lafka_branch_order_type'] ) );
@@ -701,8 +720,8 @@ class Lafka_Branch_Locations_Admin {
 			if ( is_lafka_order_hours( get_option( 'lafka' ) ) && class_exists( 'Lafka_Order_Hours' ) ) {
 				$branch_status = Lafka_Order_Hours::get_branch_working_status( $id );
 				?>
-				<span class="lafka-order-hours-current-time <?php echo $branch_status->code; ?>">
-					<?php echo Lafka_Order_Hours::get_order_hours_time( $branch_status->branch_timezone )->format( 'H:i' ); ?> | <?php echo strtoupper( $branch_status->value ); ?>
+				<span class="lafka-order-hours-current-time <?php echo esc_attr( $branch_status->code ); ?>">
+					<?php echo esc_html( Lafka_Order_Hours::get_order_hours_time( $branch_status->branch_timezone )->format( 'H:i' ) ); ?> | <?php echo esc_html( strtoupper( $branch_status->value ) ); ?>
 				</span>
 				<?php
 			}

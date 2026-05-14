@@ -25,7 +25,7 @@ foreach ( $order->get_items() as $item ) {
 $summary_text = implode( ', ', $items_summary );
 
 if ( $plain_text ) :
-	echo '= ' . wp_strip_all_tags( $email_heading ) . " =\n\n";
+	echo '= ' . esc_html( wp_strip_all_tags( $email_heading ) ) . " =\n\n";
 	/* translators: %s: Customer first name */
 	printf( esc_html__( 'Hi %s,', 'lafka-plugin' ), esc_html( $order->get_billing_first_name() ) );
 	echo "\n\n";

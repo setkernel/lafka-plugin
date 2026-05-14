@@ -161,5 +161,5 @@ if ( ! function_exists( 'lafka_seo_filter_shop_canonical' ) ) {
 	}
 
 	add_filter( 'get_canonical_url', 'lafka_seo_filter_shop_canonical', 99, 2 );
-	add_filter( 'wpseo_canonical',   'lafka_seo_filter_shop_canonical', 99, 2 );
+	add_filter( 'wpseo_canonical', 'lafka_seo_filter_shop_canonical', 99, 2 );
 }

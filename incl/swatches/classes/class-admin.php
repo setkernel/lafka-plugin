@@ -130,7 +130,7 @@ class Lafka_WC_Variation_Swatches_Admin {
 	 */
 	public function attribute_fields( $type, $value, $form ) {
 		// Return if this is a default attribute type
-		if ( in_array( $type, array( 'select', 'text' ) ) ) {
+		if ( in_array( $type, array( 'select', 'text' ), true ) ) {
 			return;
 		}
 
@@ -213,14 +213,16 @@ class Lafka_WC_Variation_Swatches_Admin {
 			return;
 		}
 
+		// Note: WP's term-edit form supplies its own nonce (verified by
+		// edit_terms / wp-admin/edit-tags.php) before hitting this hook,
+		// so an explicit per-field nonce here would be redundant.
+		// phpcs:disable WordPress.Security.NonceVerification.Missing
 		foreach ( Lafka_WCVS()->types as $type => $label ) {
 			if ( isset( $_POST[ $type ] ) ) {
-				// Note: WP's term-edit form supplies its own nonce (verified by
-				// edit_terms / wp-admin/edit-tags.php) before hitting this hook,
-				// so an explicit per-field nonce here would be redundant.
-				update_term_meta( $term_id, $type, sanitize_text_field( wp_unslash( $_POST[ $type ] ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
+				update_term_meta( $term_id, $type, sanitize_text_field( wp_unslash( $_POST[ $type ] ) ) );
 			}
 		}
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
 	}
 
 	/**
@@ -239,7 +241,9 @@ class Lafka_WC_Variation_Swatches_Admin {
 		$taxonomy_name = wc_attribute_taxonomy_name( $taxonomy->attribute_name );
 
 		$product_id = $thepostid;
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WC product attribute metabox context; WC core verifies its metabox nonce upstream.
 		if ( is_null( $thepostid ) && isset( $_POST['post_id'] ) ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WC product attribute metabox context; WC core verifies its metabox nonce upstream.
 			$product_id = absint( $_POST['post_id'] );
 		}
 		?>
@@ -295,6 +299,7 @@ class Lafka_WC_Variation_Swatches_Admin {
 	 * @param $term_id
 	 */
 	public function add_attribute_column_content( $columns, $column, $term_id ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- WP terms-list-table display context; taxonomy URL arg from admin filter UI; no state mutation.
 		$attr  = Lafka_WCVS()->get_tax_attribute( sanitize_text_field( wp_unslash( $_REQUEST['taxonomy'] ) ) );
 		$value = get_term_meta( $term_id, $attr->attribute_type, true );
 
@@ -321,7 +326,7 @@ class Lafka_WC_Variation_Swatches_Admin {
 	public function add_attribute_term_template() {
 		global $pagenow, $post;
 		?>
-		<?php if ( in_array( $pagenow, array( 'post.php', 'post-new.php' ) ) && isset( $post ) && get_post_type( $post->ID ) === 'product' ) : ?>
+		<?php if ( in_array( $pagenow, array( 'post.php', 'post-new.php' ), true ) && isset( $post ) && get_post_type( $post->ID ) === 'product' ) : ?>
 			<div id="lafka-wcs-modal-container" class="lafka-wcs-modal-container">
 				<div class="lafka-wcs-modal">
 					<button type="button" class="button-link media-modal-close lafka-wcs-modal-close">
@@ -345,7 +350,7 @@ class Lafka_WC_Variation_Swatches_Admin {
 						</div>
 						<div class="hidden lafka-wcs-term-tax"></div>
 
-						<input type="hidden" class="lafka-wcs-input" name="nonce" value="<?php echo wp_create_nonce( '_lafka-wcs_create_attribute' ); ?>">
+						<input type="hidden" class="lafka-wcs-input" name="nonce" value="<?php echo esc_attr( wp_create_nonce( '_lafka-wcs_create_attribute' ) ); ?>">
 					</div>
 					<div class="lafka-wcs-modal-footer">
 						<button class="button button-secondary lafka-wcs-modal-close"><?php esc_html_e( 'Cancel', 'lafka-plugin' ); ?></button>

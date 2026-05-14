@@ -51,13 +51,18 @@ class Lafka_Engine_Cart {
 
 		$price = (float) $cart_item['data']->get_price( 'edit' );
 
-		// Smart Coupons self-declared gift amount compat.
+		// Smart Coupons self-declared gift amount compat. Reads $_POST in
+		// woocommerce_add_cart_item filter context — WC verifies its own nonces
+		// upstream (woocommerce-add-to-cart / order-again flows) before this
+		// hook fires.
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- WC core verifies nonce before woocommerce_add_cart_item filter fires.
 		if ( empty( $price ) && ! empty( $_POST['credit_called'] ) ) {
 			$id = $cart_item['data']->get_id();
 			if ( isset( $_POST['credit_called'][ $id ] ) ) {
 				$price = (float) wc_format_decimal( sanitize_text_field( wp_unslash( $_POST['credit_called'][ $id ] ) ) );
 			}
 		}
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
 		if ( empty( $price ) && ! empty( $cart_item['credit_amount'] ) ) {
 			$price = (float) $cart_item['credit_amount'];
 		}
@@ -128,7 +133,9 @@ class Lafka_Engine_Cart {
 	 * @throws Exception When a field validation returns WP_Error.
 	 */
 	public function add_cart_item_data( $cart_item_meta, $product_id, $post_data = null ): array {
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- woocommerce_add_cart_item_data filter context; WC core verifies its add-to-cart nonce upstream before this hook fires.
 		if ( null === $post_data && isset( $_POST ) ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WC core verifies add-to-cart nonce upstream.
 			$post_data = $_POST;
 		}
 
@@ -160,7 +167,7 @@ class Lafka_Engine_Cart {
 
 			$data = $field->get_cart_item_data();
 			if ( is_wp_error( $data ) ) {
-				throw new Exception( $data->get_error_message() );
+				throw new Exception( esc_html( $data->get_error_message() ) );
 			}
 			if ( $data ) {
 				$cart_item_meta['addons'] = array_merge(
@@ -180,7 +187,9 @@ class Lafka_Engine_Cart {
 	 * @return bool
 	 */
 	public function validate_add_cart_item( $passed, $product_id, $qty, $post_data = null ): bool {
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- woocommerce_add_to_cart_validation filter context; WC core verifies its add-to-cart nonce upstream before this hook fires.
 		if ( null === $post_data && isset( $_POST ) ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WC core verifies add-to-cart nonce upstream.
 			$post_data = $_POST;
 		}
 
@@ -275,10 +284,12 @@ class Lafka_Engine_Cart {
 				continue;
 			}
 			if ( $data ) {
+				// phpcs:disable WordPress.Security.NonceVerification.Missing -- order-again context; WC verifies nonce in customer_orders flow upstream.
 				$cart_item_meta['addons'] = array_merge(
 					$cart_item_meta['addons'],
 					(array) apply_filters( 'lafka_product_addon_reorder_cart_item_data', $data, $addon, $product['product_id'], $_POST )
 				);
+				// phpcs:enable WordPress.Security.NonceVerification.Missing
 			}
 		}
 

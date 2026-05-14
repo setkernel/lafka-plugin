@@ -15,6 +15,11 @@
 
 defined( 'ABSPATH' ) || exit;
 
+// $_GET reads in this list-table file are for column-sort, search, paged,
+// and orderby URL params — standard WP_List_Table display contract; no
+// state mutation.
+// phpcs:disable WordPress.Security.NonceVerification.Recommended
+
 if ( ! class_exists( 'WP_List_Table' ) ) {
 	require_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
 }

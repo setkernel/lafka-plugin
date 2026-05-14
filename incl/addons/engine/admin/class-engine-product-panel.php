@@ -92,6 +92,11 @@ class Lafka_Engine_Product_Panel {
 		if ( ! current_user_can( 'edit_post', $post_id ) ) {
 			return;
 		}
+		// CSRF: hook fires from WC's product editor (`save_post_product`) which
+		// only runs after WP-core verifies `update-post_<post_id>` nonce. The
+		// current_user_can('edit_post', $post_id) gate above blocks unauthorized
+		// callers. PHPCS doesn't trace WP's upstream verification.
+		// phpcs:disable WordPress.Security.NonceVerification.Missing
 		// `lafka_addon_groups` is the panel's canonical marker. If absent,
 		// the addon panel wasn't part of this save — bail rather than wipe.
 		if ( ! isset( $_POST['lafka_addon_groups'] ) ) {
@@ -107,5 +112,6 @@ class Lafka_Engine_Product_Panel {
 
 		$exclude_global = ! empty( $post_data['lafka_addons_exclude_global'] ) ? 1 : 0;
 		update_post_meta( $post_id, '_product_addons_exclude_global', $exclude_global );
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
 	}
 }

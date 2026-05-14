@@ -35,13 +35,13 @@ class Lafka_Branch_Locations {
 			add_filter( 'woocommerce_subcategory_count_html', '__return_false' );
 		}
 		// Where to show branch info box (for 'shop' look in the theme)
-		if ( isset( $options_branches['show_branches_info_in'] ) && in_array( 'mini_cart', $options_branches['show_branches_info_in'] ) ) {
+		if ( isset( $options_branches['show_branches_info_in'] ) && in_array( 'mini_cart', $options_branches['show_branches_info_in'], true ) ) {
 			add_action( 'woocommerce_before_mini_cart', array( __CLASS__, 'show_change_branch' ) );
 		}
-		if ( isset( $options_branches['show_branches_info_in'] ) && in_array( 'cart', $options_branches['show_branches_info_in'] ) ) {
+		if ( isset( $options_branches['show_branches_info_in'] ) && in_array( 'cart', $options_branches['show_branches_info_in'], true ) ) {
 			add_action( 'woocommerce_before_cart_totals', array( __CLASS__, 'show_change_branch' ) );
 		}
-		if ( isset( $options_branches['show_branches_info_in'] ) && in_array( 'checkout', $options_branches['show_branches_info_in'] ) ) {
+		if ( isset( $options_branches['show_branches_info_in'] ) && in_array( 'checkout', $options_branches['show_branches_info_in'], true ) ) {
 			add_action( 'woocommerce_checkout_order_review', array( __CLASS__, 'show_change_branch' ), 1 );
 		}
 
@@ -193,10 +193,10 @@ class Lafka_Branch_Locations {
 			<?php else : ?>
 				<form id="lafka_select_branch_form">
 					<div class="lafka-branch-order-type">
-						<?php if ( in_array( 'delivery', self::get_order_type() ) ) : ?>
+						<?php if ( in_array( 'delivery', self::get_order_type(), true ) ) : ?>
 							<a href="javascript:" class="lafka-branch-delivery"><?php esc_html_e( 'Delivery', 'lafka-plugin' ); ?></a>
 						<?php endif; ?>
-						<?php if ( in_array( 'pickup', self::get_order_type() ) ) : ?>
+						<?php if ( in_array( 'pickup', self::get_order_type(), true ) ) : ?>
 							<a href="javascript:" class="lafka-branch-pickup"><?php esc_html_e( 'Local pickup', 'lafka-plugin' ); ?></a>
 						<?php endif; ?>
 					</div>

@@ -109,6 +109,7 @@ class Lafka_Timeslots {
 	}
 
 	public function __wakeup() {
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- _doing_it_wrong() emits to error log + do_action hook, not HTML; escaping would corrupt plain-text log output.
 		_doing_it_wrong( __FUNCTION__, __( 'Foul!', 'lafka-plugin' ), '9.4.0' );
 	}
 
@@ -171,6 +172,9 @@ class Lafka_Timeslots {
 		if ( ! $order instanceof WC_Order ) {
 			return;
 		}
+		// CSRF: hooked to woocommerce_checkout_order_processed / woocommerce_checkout_process;
+		// WC core verifies its own checkout nonce upstream before this hook fires.
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- WC core verifies checkout nonce upstream.
 		if ( ! empty( $_POST['lafka_checkout_date'] ) ) {
 			$order->update_meta_data( 'lafka_checkout_date', sanitize_text_field( wp_unslash( $_POST['lafka_checkout_date'] ) ) );
 		} elseif ( ! empty( $this->order_date_time_mandatory ) ) {
@@ -181,6 +185,7 @@ class Lafka_Timeslots {
 		} elseif ( ! empty( $this->order_date_time_mandatory ) ) {
 			wc_add_notice( esc_html__( 'Please enter Delivery/Pickup time.', 'lafka-plugin' ), 'error' );
 		}
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
 	}
 
 	public static function add_datetime_to_orders_list( $columns ): array {

@@ -32,6 +32,7 @@ class Lafka_Kitchen_Display {
 	 * Cloning is forbidden.
 	 */
 	public function __clone() {
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- _doing_it_wrong() emits to error log + do_action hook, not HTML; escaping would corrupt plain-text log output.
 		_doing_it_wrong( __FUNCTION__, __( 'Cloning is forbidden.', 'lafka-plugin' ), '1.0.0' );
 	}
 
@@ -39,6 +40,7 @@ class Lafka_Kitchen_Display {
 	 * Unserializing instances of this class is forbidden.
 	 */
 	public function __wakeup() {
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- _doing_it_wrong() emits to error log + do_action hook, not HTML; escaping would corrupt plain-text log output.
 		_doing_it_wrong( __FUNCTION__, __( 'Foul!', 'lafka-plugin' ), '1.0.0' );
 	}
 

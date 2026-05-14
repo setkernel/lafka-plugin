@@ -32,7 +32,7 @@ if ( $eta_timestamp ) {
 }
 
 if ( $plain_text ) :
-	echo '= ' . wp_strip_all_tags( $email_heading ) . " =\n\n";
+	echo '= ' . esc_html( wp_strip_all_tags( $email_heading ) ) . " =\n\n";
 	/* translators: %s: Customer first name */
 	printf( esc_html__( 'Hi %s,', 'lafka-plugin' ), esc_html( $order->get_billing_first_name() ) );
 	echo "\n\n";
@@ -50,7 +50,7 @@ if ( $plain_text ) :
 
 	if ( $eta_remaining > 0 ) {
 		/* translators: %d: minutes */
-		printf( esc_html__( 'Estimated ready in about %d minutes.', 'lafka-plugin' ), $eta_remaining );
+		printf( esc_html__( 'Estimated ready in about %d minutes.', 'lafka-plugin' ), (int) $eta_remaining );
 		echo "\n\n";
 	}
 
@@ -91,7 +91,7 @@ else :
 
 	<?php if ( $eta_remaining > 0 ) : ?>
 		<p style="font-size:18px;font-weight:bold;">
-			<?php printf( esc_html__( 'Estimated ready in about %d minutes', 'lafka-plugin' ), $eta_remaining ); ?>
+			<?php printf( esc_html__( 'Estimated ready in about %d minutes', 'lafka-plugin' ), (int) $eta_remaining ); ?>
 		</p>
 	<?php endif; ?>
 

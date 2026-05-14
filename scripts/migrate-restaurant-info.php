@@ -60,8 +60,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	}
 
 	if ( null === $wp_load ) {
-		fwrite( STDERR, "ERROR: Could not find wp-load.php walking up from " . __DIR__ . ".\n" );
-		fwrite( STDERR, "Try running this from the WordPress root with: php " . __FILE__ . "\n" );
+		fwrite( STDERR, 'ERROR: Could not find wp-load.php walking up from ' . __DIR__ . ".\n" );
+		fwrite( STDERR, 'Try running this from the WordPress root with: php ' . __FILE__ . "\n" );
 		exit( 1 );
 	}
 
@@ -91,10 +91,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 $log = static function ( string $msg, string $level = 'info' ): void {
 	if ( class_exists( 'WP_CLI' ) ) {
 		switch ( $level ) {
-			case 'error':   WP_CLI::error( $msg, false ); return;
-			case 'warning': WP_CLI::warning( $msg ); return;
-			case 'success': WP_CLI::success( $msg ); return;
-			default:        WP_CLI::log( $msg ); return;
+			case 'error':   
+                WP_CLI::error( $msg, false );
+                return;
+			case 'warning': 
+                WP_CLI::warning( $msg );
+                return;
+			case 'success': 
+                WP_CLI::success( $msg );
+                return;
+			default:        
+                WP_CLI::log( $msg );
+                return;
 		}
 	}
 	$prefix = 'error' === $level ? 'ERROR: ' : ( 'warning' === $level ? 'WARN: ' : '' );

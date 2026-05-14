@@ -202,6 +202,7 @@ if ( ! class_exists( 'Lafka_Security_Headers' ) ) {
 			if ( is_user_logged_in() ) {
 				return;
 			}
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- public-page presence check for ?author=N user-enum probe; no state mutation.
 			if ( ! is_author() && ! isset( $_GET['author'] ) ) {
 				return;
 			}

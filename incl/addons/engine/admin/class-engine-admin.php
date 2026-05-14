@@ -17,6 +17,11 @@
 
 defined( 'ABSPATH' ) || exit;
 
+// $_GET reads in this admin controller are for routing display state
+// (list vs edit mode, edit_id, action, paged) — no state mutation.
+// Write actions (save/trash) go through check_admin_referer() in their handlers.
+// phpcs:disable WordPress.Security.NonceVerification.Recommended
+
 class Lafka_Engine_Admin {
 
 	const PAGE_SLUG  = 'lafka_addons';

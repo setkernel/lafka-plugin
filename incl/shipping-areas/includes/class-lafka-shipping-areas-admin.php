@@ -1,6 +1,11 @@
 <?php
 defined( 'ABSPATH' ) || exit;
 
+// $_GET/$_POST reads in this admin file for display state (which tab,
+// post_id metabox context, settings-api updated flag) — no state mutation.
+// Settings API submits are nonce-verified by WP core.
+// phpcs:disable WordPress.Security.NonceVerification.Recommended
+
 class Lafka_Shipping_Areas_Admin {
 	/**
 	 * Setup Admin class.
@@ -128,7 +133,7 @@ class Lafka_Shipping_Areas_Admin {
 		>
 		<p class="description">
 			<?php esc_html_e( 'Note: Google Maps API Key may already be set in', 'lafka-plugin' ); ?>
-			<a href="<?php echo admin_url( 'admin.php?page=lafka-optionsframework#of-option-general' ); ?>" target="_blank"><?php esc_html_e( 'Theme Options', 'lafka-plugin' ); ?></a>.
+			<a href="<?php echo esc_url( admin_url( 'admin.php?page=lafka-optionsframework#of-option-general' ) ); ?>" target="_blank"><?php esc_html_e( 'Theme Options', 'lafka-plugin' ); ?></a>.
 			<?php esc_html_e( 'In this case it will be pre-filled.', 'lafka-plugin' ); ?>
 			<br>
 			<?php esc_html_e( 'If you don\'t have API key, see how to ', 'lafka-plugin' ); ?>
@@ -234,7 +239,7 @@ class Lafka_Shipping_Areas_Admin {
 		<input id="<?php echo esc_attr( $args['label_for'] ); ?>"
 				name="lafka_shipping_areas_advanced[<?php echo esc_attr( $args['label_for'] ); ?>]"
 				type="hidden"
-				value="<?php echo ! empty( $options[ $args['label_for'] ] ) ? ( $options[ $args['label_for'] ] ) : ''; ?>"
+				value="<?php echo ! empty( $options[ $args['label_for'] ] ) ? esc_attr( $options[ $args['label_for'] ] ) : ''; ?>"
 		>
 		<button type="button" class="button-secondary"
 				id="lafka_shipping_store_map_locate"><?php esc_html_e( 'Try to Geocode WooCommerce Store Address and save the coordinates', 'lafka-plugin' ); ?></button>
@@ -287,7 +292,7 @@ class Lafka_Shipping_Areas_Admin {
 				type="number"
 				min="0"
 				max="365"
-				value="<?php echo isset( $options[ $args['label_for'] ] ) ? ( $options[ $args['label_for'] ] ) : ( '30' ); ?>"
+				value="<?php echo isset( $options[ $args['label_for'] ] ) ? esc_attr( $options[ $args['label_for'] ] ) : '30'; ?>"
 		>
 		<p class="description">
 			<?php esc_html_e( 'Enter for how many days ahead user can make an order. The following days will be disabled in the calendar on the checkout page.', 'lafka-plugin' ); ?>
@@ -303,7 +308,7 @@ class Lafka_Shipping_Areas_Admin {
 				type="number"
 				min="1"
 				max="720"
-				value="<?php echo isset( $options[ $args['label_for'] ] ) ? ( $options[ $args['label_for'] ] ) : ( '60' ); ?>"
+				value="<?php echo isset( $options[ $args['label_for'] ] ) ? esc_attr( $options[ $args['label_for'] ] ) : '60'; ?>"
 		>
 		<?php esc_html_e( 'Minutes', 'lafka-plugin' ); ?>
 		<p class="description">
@@ -404,7 +409,7 @@ class Lafka_Shipping_Areas_Admin {
 				name="lafka_shipping_areas_branches[<?php echo esc_attr( $args['label_for'] ); ?>]"
 				class="lafka-admin-wide-input"
 				type="text"
-				value="<?php echo $options[ $args['label_for'] ] ?? ''; ?>"
+				value="<?php echo esc_attr( $options[ $args['label_for'] ] ?? '' ); ?>"
 		>
 		<p class="description">
 			<?php esc_html_e( 'Rectangle coordinates to set strict bounds where google will look to autocomplete the address. Enter the coordinates, separated by commas in the following format', 'lafka-plugin' ); ?>
@@ -426,7 +431,7 @@ class Lafka_Shipping_Areas_Admin {
 				data-placeholder="<?php esc_attr_e( 'Choose up to 5 countries', 'lafka-plugin' ); ?>"
 				aria-label="<?php esc_attr_e( 'Country / Region', 'lafka-plugin' ); ?>">
 			<?php foreach ( WC()->countries->get_countries() as $code => $label ) : ?>
-				<?php $selected = isset( $options[ $args['label_for'] ] ) && is_array( $options[ $args['label_for'] ] ) && in_array( $code, $options[ $args['label_for'] ] ) ? ' selected="selected" ' : ''; ?>
+				<?php $selected = isset( $options[ $args['label_for'] ] ) && is_array( $options[ $args['label_for'] ] ) && in_array( $code, $options[ $args['label_for'] ], true ) ? ' selected="selected" ' : ''; ?>
 				<option value="<?php echo esc_attr( $code ); ?>" <?php echo esc_html( $selected ); ?>><?php echo esc_html( $label ); ?></option>
 			<?php endforeach; ?>
 		</select>
@@ -466,7 +471,7 @@ class Lafka_Shipping_Areas_Admin {
 		<select id="<?php echo esc_attr( $args['label_for'] ); ?>" multiple="multiple" class="lafka-admin-select2"
 				name="lafka_shipping_areas_branches[<?php echo esc_attr( $args['label_for'] ); ?>][]">
 			<?php foreach ( $values as $key => $value ) : ?>
-				<?php $selected = isset( $options[ $args['label_for'] ] ) && in_array( $key, $options[ $args['label_for'] ] ) ? ' selected="selected" ' : ''; ?>
+				<?php $selected = isset( $options[ $args['label_for'] ] ) && is_array( $options[ $args['label_for'] ] ) && in_array( (string) $key, array_map( 'strval', $options[ $args['label_for'] ] ), true ) ? ' selected="selected" ' : ''; ?>
 				<option value="<?php echo esc_attr( $key ); ?>" <?php echo esc_html( $selected ); ?>>
 					<?php echo esc_html( $value ); ?>
 				</option>

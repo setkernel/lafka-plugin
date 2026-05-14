@@ -242,4 +242,3 @@ class Lafka_Engine_Helper {
 		return (string) apply_filters( 'woocommerce_product_addons_no_image_select_placeholder_src', $src );
 	}
 }
-

@@ -273,19 +273,31 @@ if ( ! function_exists( 'lafka_woocommerce_custom_cat_fields_edit' ) ) {
 if ( ! function_exists( 'lafka_woocommerce_custom_cat_fields_save' ) ) {
 	function lafka_woocommerce_custom_cat_fields_save( $term_id, $tt_id = '', $taxonomy = '' ) {
 
-		if ( isset( $_POST['lafka_term_header_img_id'] ) && in_array( $taxonomy, array( 'product_cat', 'product_tag' ) ) ) {
+		// CSRF: hooked to created_<tax>/edit_<tax> which fire from any
+		// wp_insert_term/wp_update_term caller. Verify WP-admin nonce.
+		if ( ! is_admin() ) {
+			return;
+		}
+		$lafka_nonce_action = ! empty( $_POST['action'] ) && 'editedtag' === $_POST['action']
+			? 'update-tag_' . (int) $term_id
+			: 'add-tag';
+		if ( ! isset( $_POST['_wpnonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ), $lafka_nonce_action ) ) {
+			return;
+		}
+
+		if ( isset( $_POST['lafka_term_header_img_id'] ) && in_array( $taxonomy, array( 'product_cat', 'product_tag' ), true ) ) {
 			update_term_meta( $term_id, 'lafka_term_header_img_id', absint( $_POST['lafka_term_header_img_id'] ) );
 		}
 
-		if ( isset( $_POST['lafka_term_header_style'] ) && in_array( $taxonomy, array( 'product_cat', 'product_tag' ) ) ) {
+		if ( isset( $_POST['lafka_term_header_style'] ) && in_array( $taxonomy, array( 'product_cat', 'product_tag' ), true ) ) {
 			update_term_meta( $term_id, 'lafka_term_header_style', sanitize_text_field( wp_unslash( $_POST['lafka_term_header_style'] ) ) );
 		}
 
-		if ( isset( $_POST['lafka_term_header_subtitle'] ) && in_array( $taxonomy, array( 'product_cat', 'product_tag' ) ) ) {
+		if ( isset( $_POST['lafka_term_header_subtitle'] ) && in_array( $taxonomy, array( 'product_cat', 'product_tag' ), true ) ) {
 			update_term_meta( $term_id, 'lafka_term_header_subtitle', sanitize_text_field( wp_unslash( $_POST['lafka_term_header_subtitle'] ) ) );
 		}
 
-		if ( isset( $_POST['lafka_term_header_alignment'] ) && in_array( $taxonomy, array( 'product_cat', 'product_tag' ) ) ) {
+		if ( isset( $_POST['lafka_term_header_alignment'] ) && in_array( $taxonomy, array( 'product_cat', 'product_tag' ), true ) ) {
 			update_term_meta( $term_id, 'lafka_term_header_alignment', sanitize_text_field( wp_unslash( $_POST['lafka_term_header_alignment'] ) ) );
 		}
 	}

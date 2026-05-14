@@ -24,13 +24,19 @@ if ( ! function_exists( 'lafka_pdp_cart_drawer_fragments' ) ) {
         echo '<ul class="lafka-cart-drawer__items">';
         foreach ( WC()->cart->get_cart() as $cart_item_key => $cart_item ) {
             $product = $cart_item['data'] ?? null;
-            if ( ! $product ) { continue; }
+            if ( ! $product ) {
+				continue; }
             $name  = apply_filters( 'woocommerce_cart_item_name', $product->get_name(), $cart_item, $cart_item_key );
             $thumb = $product->get_image( 'woocommerce_gallery_thumbnail', array( 'loading' => 'lazy' ) );
             $price = WC()->cart->get_product_subtotal( $product, $cart_item['quantity'] );
             ?>
             <li class="lafka-cart-drawer__item" data-cart-key="<?php echo esc_attr( $cart_item_key ); ?>">
-                <span class="lafka-cart-drawer__thumb"><?php echo $thumb; ?></span>
+                <span class="lafka-cart-drawer__thumb">
+					<?php
+					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- WC_Product::get_image() returns trusted WC-core HTML with attributes pre-escaped.
+					echo $thumb;
+					?>
+				</span>
                 <span class="lafka-cart-drawer__name"><?php echo wp_kses_post( $name ); ?></span>
                 <span class="lafka-cart-drawer__qty">×<?php echo esc_html( (string) (int) $cart_item['quantity'] ); ?></span>
                 <span class="lafka-cart-drawer__price"><?php echo wp_kses_post( $price ); ?></span>
@@ -57,7 +63,7 @@ if ( ! function_exists( 'lafka_pdp_cart_drawer_fragments' ) ) {
                 <span><?php esc_html_e( 'Subtotal', 'lafka-plugin' ); ?></span>
                 <strong><?php echo wp_kses_post( wc_price( $total ) ); ?></strong>
             </div>
-            <?php if ( $free_threshold > 0 && $remaining > 0 ): ?>
+            <?php if ( $free_threshold > 0 && $remaining > 0 ) : ?>
                 <div class="lafka-cart-drawer__threshold">
                     <?php
                     printf(
@@ -66,7 +72,7 @@ if ( ! function_exists( 'lafka_pdp_cart_drawer_fragments' ) ) {
                     );
                     ?>
                 </div>
-            <?php elseif ( $free_threshold > 0 ): ?>
+            <?php elseif ( $free_threshold > 0 ) : ?>
                 <div class="lafka-cart-drawer__threshold lafka-cart-drawer__threshold--reached">
                     <?php esc_html_e( '✓ Free delivery unlocked', 'lafka-plugin' ); ?>
                 </div>

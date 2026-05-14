@@ -59,15 +59,17 @@ if ( ! function_exists( 'lafka_pdp_get_upsell_fallback_ids' ) ) {
             : array();
 
         if ( count( $ids ) < 8 ) {
-            $more = wc_get_products( array(
-                'limit'        => 8 - count( $ids ),
-                'status'       => 'publish',
-                'stock_status' => 'instock',
-                'return'       => 'ids',
-                'exclude'      => $ids,
-                'orderby'      => 'date',
-                'order'        => 'DESC',
-            ) );
+            $more = wc_get_products(
+                array(
+					'limit'        => 8 - count( $ids ),
+					'status'       => 'publish',
+					'stock_status' => 'instock',
+					'return'       => 'ids',
+					'exclude'      => $ids,
+					'orderby'      => 'date',
+					'order'        => 'DESC',
+                ) 
+            );
             if ( is_array( $more ) ) {
                 $ids = array_merge( $ids, $more );
             }
@@ -89,10 +91,11 @@ if ( ! function_exists( 'lafka_pdp_render_upsell_row' ) ) {
         <div class="lafka-pdp-upsell">
             <h3 class="lafka-pdp-upsell__heading"><?php esc_html_e( 'Make it a meal', 'lafka-plugin' ); ?></h3>
             <div class="lafka-pdp-upsell__grid">
-                <?php foreach ( $ids as $id ): ?>
+                <?php foreach ( $ids as $id ) : ?>
                     <?php
                     $product = wc_get_product( $id );
-                    if ( ! $product || ! $product->is_visible() ) { continue; }
+                    if ( ! $product || ! $product->is_visible() ) {
+						continue; }
                     $url   = get_permalink( $id );
                     $img   = get_the_post_thumbnail( $id, 'woocommerce_thumbnail', array( 'loading' => 'lazy' ) );
                     $price = $product->get_price_html();
@@ -100,7 +103,10 @@ if ( ! function_exists( 'lafka_pdp_render_upsell_row' ) ) {
                     ?>
                     <article class="lafka-pdp-upsell__card">
                         <a class="lafka-pdp-upsell__link" href="<?php echo esc_url( $url ); ?>">
-                            <?php echo $img; // escaped by core ?>
+                            <?php
+                            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- get_the_post_thumbnail() returns trusted WP-core HTML with attributes pre-escaped.
+                            echo $img;
+                            ?>
                             <span class="lafka-pdp-upsell__name"><?php echo esc_html( $product->get_name() ); ?></span>
                             <span class="lafka-pdp-upsell__price"><?php echo wp_kses_post( $price ); ?></span>
                         </a>

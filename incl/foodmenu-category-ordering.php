@@ -189,7 +189,8 @@ if ( ! function_exists( 'lafka_terms_clauses' ) ) {
 		}
 
 		// No sorting in admin when sorting by a column.
-		if ( is_admin() && isset( $_GET['orderby'] ) ) { // WPCS: input var ok, CSRF ok.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only check for admin column-sort presence; no state mutation, no output of the value.
+		if ( is_admin() && isset( $_GET['orderby'] ) ) {
 			return $clauses;
 		}
 
