@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+#
+# Pre-push hook for lafka-plugin.
+#
+# Runs the same gates CI runs: PHPCS, PHPUnit, ESLint, Stylelint.
+# Catches lint/test failures locally before they hit a stylelint-fail
+# CI cycle that costs a patch release to recover from.
+#
+# Install (one-time per clone):
+#     git config core.hooksPath .githooks
+#
+# Bypass for one push (use sparingly):
+#     git push --no-verify
+#
+
+set -euo pipefail
+
+cd "$(git rev-parse --show-toplevel)"
+
+red()   { printf '\033[31m%s\033[0m\n' "$1"; }
+green() { printf '\033[32m%s\033[0m\n' "$1"; }
+blue()  { printf '\033[36m%s\033[0m\n' "$1"; }
+
+fail() {
+	red "✖ pre-push: $1 FAILED"
+	red "   fix locally, or bypass with: git push --no-verify"
+	exit 1
+}
+
+blue "▸ pre-push: composer phpcs"
+composer phpcs --quiet 2>&1 | tail -5 || fail "PHPCS"
+
+blue "▸ pre-push: composer test"
+composer test --quiet 2>&1 | tail -3 || fail "PHPUnit"
+
+if [ -d node_modules ]; then
+	blue "▸ pre-push: npm run lint:js"
+	npm run lint:js --silent 2>&1 | tail -5 || fail "ESLint"
+
+	blue "▸ pre-push: npm run lint:css"
+	npm run lint:css --silent 2>&1 | tail -5 || fail "Stylelint"
+else
+	red "⚠ pre-push: node_modules absent — skipping JS/CSS lint."
+	red "   run 'npm ci' to enable full local checks."
+fi
+
+green "✓ pre-push: all gates passed"
