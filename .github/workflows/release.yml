@@ -62,25 +62,17 @@ jobs:
           cat lafka-plugin.zip.sha256
 
       # Idempotent release publish via the pre-installed `gh` CLI.
-      # `gh release create` succeeds the first time the tag is built;
-      # `gh release upload --clobber` covers re-runs (workflow re-dispatch
-      # or manually deleted release-then-re-tagged) by uploading to the
-      # existing release rather than failing.
+      # Race-free: create-tolerated + upload-clobber covers all states
+      # (release missing, release exists, partial assets, re-runs). No
+      # check-then-act window where a concurrent manual `gh release create`
+      # can wedge the workflow.
       - name: Create or update release
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.version.outputs.tag }}
         run: |
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            echo "Release $TAG already exists — uploading assets with --clobber."
-            gh release upload "$TAG" \
-              lafka-plugin.zip \
-              lafka-plugin.zip.sha256 \
-              --clobber
-          else
-            gh release create "$TAG" \
-              --title "$TAG" \
-              --generate-notes \
-              lafka-plugin.zip \
-              lafka-plugin.zip.sha256
-          fi
+          gh release create "$TAG" --title "$TAG" --generate-notes || true
+          gh release upload "$TAG" \
+            lafka-plugin.zip \
+            lafka-plugin.zip.sha256 \
+            --clobber
