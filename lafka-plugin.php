@@ -3,7 +3,7 @@
 	Plugin Name: Lafka Plugin
 	Plugin URI: https://github.com/setkernel/lafka-plugin
 	Description: Companion plugin for the Lafka WooCommerce theme. Originally by theAlThemist, now community-maintained.
-	Version: 9.9.0
+	Version: 9.10.0
 	Author: theAlThemist, Contributors
 	Author URI: https://github.com/setkernel/lafka-plugin
 	Requires at least: 6.6
@@ -255,6 +255,17 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/cli/lafka-image-alt-backfill.ph
 require_once plugin_dir_path( __FILE__ ) . 'incl/cli/lafka-reviews-cli.php';
 
 /**
+ * WP-CLI: bulk-generate WebP siblings for every PNG/JPG in wp-content/uploads.
+ * Pairs with incl/perf/webp-swap.php which auto-swaps src/srcset to .webp
+ * when the sibling exists. Self-gates: returns when WP_CLI is not defined.
+ *
+ *   wp lafka images convert-webp
+ *   wp lafka images convert-webp --quality=85 --force
+ *   wp lafka images convert-webp --path=2026/01 --dry-run
+ */
+require_once plugin_dir_path( __FILE__ ) . 'incl/cli/lafka-webp-convert.php';
+
+/**
  * P6-UX-8 (W3-T6): Post-order review prompt email.
  * Schedules a WP-Cron event N days after order completion (default 7, filterable)
  * that sends the customer a personalised review-request email.
@@ -272,6 +283,9 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/perf/lafka-asset-pruning.php';
 // v5.10.6 in lafka-plugin v9.7.25.
 require_once __DIR__ . '/incl/perf/image-dimensions.php';
 require_once __DIR__ . '/incl/perf/lcp-preload.php';
+// WebP auto-swap (v9.10.0). No-op until .webp siblings exist on disk;
+// generates them via `wp lafka images convert-webp`.
+require_once __DIR__ . '/incl/perf/webp-swap.php';
 
 add_action(
 	'before_woocommerce_init',
