@@ -3,7 +3,7 @@
 	Plugin Name: Lafka Plugin
 	Plugin URI: https://github.com/setkernel/lafka-plugin
 	Description: Companion plugin for the Lafka WooCommerce theme. Originally by theAlThemist, now community-maintained.
-	Version: 9.7.26
+	Version: 9.8.0
 	Author: theAlThemist, Contributors
 	Author URI: https://github.com/setkernel/lafka-plugin
 	Requires at least: 6.6
@@ -93,7 +93,7 @@ if ( ! function_exists( 'lafka_get_option' ) ) {
 }
 
 // Check if WooCommerce is active (supports regular plugins and MU-plugins)
-if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) )
+if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ), true )
 	|| ( is_multisite() && array_key_exists( 'woocommerce/woocommerce.php', get_site_option( 'active_sitewide_plugins', array() ) ) )
 	|| class_exists( 'WooCommerce' ) ) {
 	define( 'LAFKA_PLUGIN_IS_WOOCOMMERCE', true );
@@ -108,7 +108,7 @@ if ( class_exists( 'bbPress' ) ) {
 	define( 'LAFKA_PLUGIN_IS_BBPRESS', false );
 }
 
-if ( in_array( 'revslider/revslider.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) )
+if ( in_array( 'revslider/revslider.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ), true )
 	|| ( is_multisite() && array_key_exists( 'revslider/revslider.php', get_site_option( 'active_sitewide_plugins', array() ) ) )
 	|| class_exists( 'RevSliderBase' ) ) {
 	define( 'LAFKA_PLUGIN_IS_REVOLUTION', true );
@@ -117,7 +117,7 @@ if ( in_array( 'revslider/revslider.php', apply_filters( 'active_plugins', get_o
 }
 
 // Check if WC Marketplace is active
-if ( in_array( 'dc-woocommerce-multi-vendor/dc_product_vendor.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) )
+if ( in_array( 'dc-woocommerce-multi-vendor/dc_product_vendor.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ), true )
 	|| ( is_multisite() && array_key_exists( 'dc-woocommerce-multi-vendor/dc_product_vendor.php', get_site_option( 'active_sitewide_plugins', array() ) ) )
 	|| class_exists( 'WCMp' ) ) {
 	define( 'LAFKA_PLUGIN_IS_WC_MARKETPLACE', true );
@@ -836,7 +836,8 @@ if ( ! function_exists( 'lafka_register_admin_plugin_scripts' ) ) {
 
 		$screen    = get_current_screen();
 		$screen_id = $screen ? $screen->id : '';
-		if ( strstr( $screen_id, 'lafka_foodmenu_category' ) && ! empty( $_GET['taxonomy'] ) && in_array( wp_unslash( $_GET['taxonomy'] ), array( 'lafka_foodmenu_category' ) ) ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- admin taxonomy screen detection from $_GET['taxonomy']; read-only display gating, no state mutation.
+		if ( strstr( $screen_id, 'lafka_foodmenu_category' ) && ! empty( $_GET['taxonomy'] ) && in_array( wp_unslash( $_GET['taxonomy'] ), array( 'lafka_foodmenu_category' ), true ) ) {
 			wp_register_script( 'lafka-plugin-term-ordering', plugins_url( 'assets/js/lafka-plugin-foodmenu-cat-ordering.js', __FILE__ ), array( 'jquery-ui-sortable' ), lafka_plugin_asset_version( 'assets/js/lafka-plugin-foodmenu-cat-ordering.js' ) );
 			wp_enqueue_script( 'lafka-plugin-term-ordering' );
 			wp_localize_script(
@@ -1161,7 +1162,8 @@ if ( ! function_exists( 'lafka_submit_contact' ) ) {
 		$output = ob_get_contents();
 		ob_end_clean();
 
-		echo $output; // All dynamic data escaped
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $output is captured contact-form template render; all dynamic values escaped at construction in the partial.
+		echo $output;
 		wp_die();
 	}
 
@@ -1387,8 +1389,8 @@ if ( ! function_exists( 'lafka_insert_og_tags' ) ) {
 			// dimensions is worse than omitting them (crawlers fall back to
 			// fetching+measuring vs trusting bad metadata).
 			if ( $image_width > 0 && $image_height > 0 ) {
-				printf( '<meta property="og:image:width" content="%d">' . "\n", $image_width );
-				printf( '<meta property="og:image:height" content="%d">' . "\n", $image_height );
+				printf( '<meta property="og:image:width" content="%d">' . "\n", (int) $image_width );
+				printf( '<meta property="og:image:height" content="%d">' . "\n", (int) $image_height );
 			}
 		}
 
