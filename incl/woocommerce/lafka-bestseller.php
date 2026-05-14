@@ -15,8 +15,16 @@ defined( 'ABSPATH' ) || exit;
 
 if ( ! function_exists( 'lafka_pdp_get_bestseller_ids' ) ) {
 	function lafka_pdp_get_bestseller_ids(): array {
+		// Two-tier cache: object cache (μs hot path) over DB transient (warm path).
+		// On Redis/Memcached-equipped sites this avoids the transient SELECT entirely
+		// after the first request per cache cycle.
+		$cached = wp_cache_get( 'lafka_pdp_bestsellers', 'lafka' );
+		if ( false !== $cached && is_array( $cached ) ) {
+			return $cached;
+		}
 		$cached = get_transient( 'lafka_pdp_bestsellers' );
 		if ( false !== $cached && is_array( $cached ) ) {
+			wp_cache_set( 'lafka_pdp_bestsellers', $cached, 'lafka', HOUR_IN_SECONDS );
 			return $cached;
 		}
 
@@ -31,52 +39,63 @@ if ( ! function_exists( 'lafka_pdp_get_bestseller_ids' ) ) {
 		// what's active. The status + date filters mirror the legacy WC
 		// post-statuses + the new wc_orders.status enum, both of which use
 		// the same `wc-completed` / `wc-processing` shape.
+		//
+		// Query structure (modern, index-friendly):
+		//   1. Drive from the indexed orders table (date_created_gmt + status filter).
+		//   2. INNER JOIN order_items + order_itemmeta — both have PRIMARY/MUL indices.
+		//   3. Group by meta_value directly (varchar product id) — skip CAST+posts join.
+		//   4. Post-filter dead/non-product IDs in PHP via wc_get_product() cache.
 		$is_hpos = class_exists( '\Automattic\WooCommerce\Utilities\OrderUtil' )
 			&& \Automattic\WooCommerce\Utilities\OrderUtil::custom_orders_table_usage_is_enabled();
 
 		if ( $is_hpos ) {
-			$sql = "SELECT p.ID
-				   FROM {$wpdb->prefix}woocommerce_order_items oi
-			  LEFT JOIN {$wpdb->prefix}woocommerce_order_itemmeta oim
-				     ON oi.order_item_id = oim.order_item_id
+			$sql = "SELECT oim.meta_value AS product_id
+				   FROM {$wpdb->prefix}wc_orders o
+			 INNER JOIN {$wpdb->prefix}woocommerce_order_items oi
+				     ON oi.order_id = o.id
+			 INNER JOIN {$wpdb->prefix}woocommerce_order_itemmeta oim
+				     ON oim.order_item_id = oi.order_item_id
 				    AND oim.meta_key = '_product_id'
-			  LEFT JOIN {$wpdb->posts} p
-				     ON p.ID = CAST(oim.meta_value AS UNSIGNED)
-				    AND p.post_type = 'product'
-			  LEFT JOIN {$wpdb->prefix}wc_orders o
-				     ON o.id = oi.order_id
 				  WHERE o.date_created_gmt > DATE_SUB(NOW(), INTERVAL 90 DAY)
 				    AND o.status IN ('wc-completed','wc-processing')
-				    AND p.ID IS NOT NULL
-				  GROUP BY p.ID
+				  GROUP BY oim.meta_value
 				  ORDER BY COUNT(*) DESC
-				  LIMIT 10";
+				  LIMIT 25";
 		} else {
 			// Legacy CPT order storage — orders live in wp_posts as `shop_order` rows.
-			$sql = "SELECT p.ID
-				   FROM {$wpdb->prefix}woocommerce_order_items oi
-			  LEFT JOIN {$wpdb->prefix}woocommerce_order_itemmeta oim
-				     ON oi.order_item_id = oim.order_item_id
+			$sql = "SELECT oim.meta_value AS product_id
+				   FROM {$wpdb->posts} o
+			 INNER JOIN {$wpdb->prefix}woocommerce_order_items oi
+				     ON oi.order_id = o.ID
+			 INNER JOIN {$wpdb->prefix}woocommerce_order_itemmeta oim
+				     ON oim.order_item_id = oi.order_item_id
 				    AND oim.meta_key = '_product_id'
-			  LEFT JOIN {$wpdb->posts} p
-				     ON p.ID = CAST(oim.meta_value AS UNSIGNED)
-				    AND p.post_type = 'product'
-			  LEFT JOIN {$wpdb->posts} o
-				     ON o.ID = oi.order_id
-				    AND o.post_type = 'shop_order'
-				  WHERE o.post_date_gmt > DATE_SUB(NOW(), INTERVAL 90 DAY)
+				  WHERE o.post_type = 'shop_order'
+				    AND o.post_date_gmt > DATE_SUB(NOW(), INTERVAL 90 DAY)
 				    AND o.post_status IN ('wc-completed','wc-processing')
-				    AND p.ID IS NOT NULL
-				  GROUP BY p.ID
+				  GROUP BY oim.meta_value
 				  ORDER BY COUNT(*) DESC
-				  LIMIT 10";
+				  LIMIT 25";
 		}
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- no user input; all values are hardcoded SQL literals / table names.
 		$rows = $wpdb->get_col( $sql );
 
-		$ids = array_map( 'intval', (array) $rows );
+		// Filter to live products only. wc_get_product() uses the WC object cache,
+		// so this loop costs ~0 extra DB queries when products are already cached.
+		$ids = array();
+		foreach ( (array) $rows as $raw ) {
+			$id = (int) $raw;
+			if ( $id > 0 && wc_get_product( $id ) instanceof WC_Product ) {
+				$ids[] = $id;
+				if ( count( $ids ) >= 10 ) {
+					break;
+				}
+			}
+		}
+
 		set_transient( 'lafka_pdp_bestsellers', $ids, 6 * HOUR_IN_SECONDS );
+		wp_cache_set( 'lafka_pdp_bestsellers', $ids, 'lafka', HOUR_IN_SECONDS );
 		return $ids;
 	}
 }
@@ -105,5 +124,6 @@ add_action( 'woocommerce_order_status_processing', 'lafka_pdp_flush_bestseller_c
 if ( ! function_exists( 'lafka_pdp_flush_bestseller_cache' ) ) {
 	function lafka_pdp_flush_bestseller_cache(): void {
 		delete_transient( 'lafka_pdp_bestsellers' );
+		wp_cache_delete( 'lafka_pdp_bestsellers', 'lafka' );
 	}
 }

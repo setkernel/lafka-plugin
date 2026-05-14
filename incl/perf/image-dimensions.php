@@ -45,9 +45,7 @@ if ( ! function_exists( 'lafka_inject_image_dimensions' ) ) {
 					$attachment_id = (int) $cls[1];
 				}
 				if ( ! $attachment_id ) {
-					$attachment_id = function_exists( 'attachment_url_to_postid' )
-						? (int) attachment_url_to_postid( $url )
-						: 0;
+					$attachment_id = lafka_attachment_url_to_postid_cached( $url );
 				}
 
 				$w = 0;
@@ -102,5 +100,34 @@ if ( ! function_exists( 'lafka_url_to_local_path' ) ) {
 			return WP_CONTENT_DIR . substr( $url, strlen( $content_url ) );
 		}
 		return null;
+	}
+}
+
+if ( ! function_exists( 'lafka_attachment_url_to_postid_cached' ) ) {
+	/**
+	 * Per-request memoized wrapper around attachment_url_to_postid().
+	 *
+	 * Each call to attachment_url_to_postid() is a `posts` table query joined
+	 * against `postmeta`. Without memoization, a page with N <img> tags from
+	 * non-WP-managed URLs (WPBakery output, hardcoded src) hits the DB N times
+	 * per content-filter invocation, and the_content/post_thumbnail_html/widget_text
+	 * each fire the filter independently.
+	 *
+	 * Static cache hoists the result to the request scope. WP core does NOT
+	 * cache this lookup (unlike wp_get_attachment_metadata which uses the
+	 * post-meta cache).
+	 *
+	 * @param string $url Absolute URL of the image.
+	 * @return int Attachment ID, or 0 if not a managed attachment.
+	 */
+	function lafka_attachment_url_to_postid_cached( string $url ): int {
+		static $cache = array();
+		if ( array_key_exists( $url, $cache ) ) {
+			return $cache[ $url ];
+		}
+		$cache[ $url ] = function_exists( 'attachment_url_to_postid' )
+			? (int) attachment_url_to_postid( $url )
+			: 0;
+		return $cache[ $url ];
 	}
 }
