@@ -79,6 +79,140 @@ function lafka_perf_dequeue_unused_revslider() {
 }
 
 /**
+ * Dequeue WP block-library CSS on pages that don't use Gutenberg blocks.
+ *
+ * `wp-block-library` is ~17 KB of CSS that WP enqueues globally. Most Lafka
+ * sites build with WPBakery (VC) shortcodes, not blocks, so this CSS is dead
+ * weight on every page-load. Detection: scan post_content for the block
+ * marker `<!-- wp:` — if absent, the post has no Gutenberg blocks.
+ *
+ * Operator override: add_filter( 'lafka_keep_block_library_css', '__return_true' );
+ */
+if ( ! function_exists( 'lafka_perf_dequeue_unused_block_library' ) ) {
+	add_action( 'wp_enqueue_scripts', 'lafka_perf_dequeue_unused_block_library', 99 );
+	function lafka_perf_dequeue_unused_block_library() {
+		if ( is_admin() ) {
+			return;
+		}
+		if ( apply_filters( 'lafka_keep_block_library_css', false ) ) {
+			return;
+		}
+		// Always-keep on archive pages — we can't cheaply detect whether the
+		// individual posts in the loop use blocks. Only prune on singular pages
+		// where we can scan a single post_content.
+		if ( ! is_singular() ) {
+			return;
+		}
+		$post = get_post();
+		if ( $post && false === strpos( (string) $post->post_content, '<!-- wp:' ) ) {
+			wp_dequeue_style( 'wp-block-library' );
+			wp_dequeue_style( 'wp-block-library-theme' );
+			wp_dequeue_style( 'global-styles' );
+			wp_dequeue_style( 'classic-theme-styles' );
+		}
+	}
+}
+
+/**
+ * Dequeue WPBakery (VC) front-end CSS on pages that don't use VC shortcodes.
+ *
+ * `js_composer_front` is ~48 KB and is enqueued unconditionally by WPBakery
+ * whenever the plugin is active, but only ~5 KB of it applies on a typical
+ * landing page that uses a handful of vc_row / vc_column shortcodes. Empty
+ * landing pages (no VC content at all) waste the entire 48 KB.
+ *
+ * Detection: scan post_content for the `[vc_` shortcode prefix. If absent,
+ * VC isn't being used on the post.
+ *
+ * Operator override: add_filter( 'lafka_keep_vc_css', '__return_true' );
+ */
+if ( ! function_exists( 'lafka_perf_dequeue_unused_vc' ) ) {
+	add_action( 'wp_enqueue_scripts', 'lafka_perf_dequeue_unused_vc', 99 );
+	function lafka_perf_dequeue_unused_vc() {
+		if ( is_admin() ) {
+			return;
+		}
+		if ( apply_filters( 'lafka_keep_vc_css', false ) ) {
+			return;
+		}
+		if ( ! is_singular() ) {
+			return;
+		}
+		$post = get_post();
+		if ( ! $post ) {
+			return;
+		}
+		$content = (string) $post->post_content;
+		// Cheap content marker: [vc_ shortcode is the canonical VC entry.
+		if ( false !== strpos( $content, '[vc_' ) ) {
+			return;
+		}
+		// VC handles vary slightly by version; dequeue the family.
+		foreach ( array( 'js_composer_front', 'vc_animate-css', 'vc_settings', 'vc_lightbox', 'vc_carousel', 'vc_carousel_skin', 'vc_pretty-photo', 'vc_tta_style', 'vc_font_awesome_5_shims', 'vc_font_awesome_5_brands', 'vc_font_awesome_5_solid', 'vc_font_awesome_5' ) as $h ) {
+			wp_dequeue_style( $h );
+		}
+	}
+}
+
+/**
+ * Dequeue Font Awesome on pages that don't render any FA icons.
+ *
+ * Lafka registers `font_awesome_6` (~22 KB) as a frontend stylesheet. Many
+ * pages don't use FA icons (esp. landing pages composed of WPBakery content
+ * sliders + image grids). Detection: scan post_content for FA class markers
+ * (`fa-`, `fas`, `far`, `fab`, `fal`) OR for any `[lafka_icon_` shortcode
+ * (which renders an FA icon).
+ *
+ * Conservative: when in doubt, keep FA. The marker scan errs on the side
+ * of keeping it.
+ *
+ * Operator override: add_filter( 'lafka_keep_font_awesome_css', '__return_true' );
+ */
+if ( ! function_exists( 'lafka_perf_dequeue_unused_font_awesome' ) ) {
+	add_action( 'wp_enqueue_scripts', 'lafka_perf_dequeue_unused_font_awesome', 99 );
+	function lafka_perf_dequeue_unused_font_awesome() {
+		if ( is_admin() ) {
+			return;
+		}
+		if ( apply_filters( 'lafka_keep_font_awesome_css', false ) ) {
+			return;
+		}
+		if ( ! is_singular() ) {
+			return;
+		}
+		$post = get_post();
+		if ( ! $post ) {
+			return;
+		}
+		$content = (string) $post->post_content;
+		// Any FA class marker, or any lafka icon shortcode → keep FA.
+		if ( preg_match( '/\b(fa-|class=["\'"][^"\']*\b(fa[sblr]?)\b|\[lafka_icon)/i', $content ) ) {
+			return;
+		}
+		// Mega-menu items may use FA icons via menu item meta — conservative
+		// keep when the current layout has a mega-menu active.
+		if ( has_nav_menu( 'primary' ) ) {
+			$mega_menu_in_use = wp_cache_get( 'lafka_mega_menu_has_icons', 'lafka' );
+			if ( false === $mega_menu_in_use ) {
+				global $wpdb;
+				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- one-shot cached lookup; result memoized for the request.
+				$count = (int) $wpdb->get_var(
+					"SELECT COUNT(*) FROM {$wpdb->postmeta} WHERE meta_key = '_lafka-menu-item-icon' AND meta_value != ''"
+				);
+				$mega_menu_in_use = $count > 0 ? 1 : 0;
+				wp_cache_set( 'lafka_mega_menu_has_icons', $mega_menu_in_use, 'lafka', HOUR_IN_SECONDS );
+			}
+			if ( $mega_menu_in_use ) {
+				return;
+			}
+		}
+		foreach ( array( 'font_awesome_6', 'font_awesome_6_v4shims', 'font-awesome' ) as $h ) {
+			wp_dequeue_style( $h );
+		}
+	}
+}
+
+/**
  * P6-PERF-7 (W3-T7): dequeue jquery-migrate on the front-end since lafka
  * first-party code is now Migrate-clean. Filterable for compat with stragglers.
  *

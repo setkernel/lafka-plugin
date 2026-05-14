@@ -3,7 +3,7 @@
 	Plugin Name: Lafka Plugin
 	Plugin URI: https://github.com/setkernel/lafka-plugin
 	Description: Companion plugin for the Lafka WooCommerce theme. Originally by theAlThemist, now community-maintained.
-	Version: 9.8.2
+	Version: 9.9.0
 	Author: theAlThemist, Contributors
 	Author URI: https://github.com/setkernel/lafka-plugin
 	Requires at least: 6.6
@@ -1423,12 +1423,17 @@ if ( ! function_exists( 'lafka_render_meta_description' ) ) {
 
 if ( ! function_exists( 'lafka_resolve_meta_description' ) ) {
 	/**
-	 * Resolution order:
-	 *   1. Per-post `_lafka_meta_description` post meta (manual override; UI in P6-SEO-4 follow-up)
-	 *   2. WC product short description (single product)
-	 *   3. WC term description (taxonomy archive)
-	 *   4. Post excerpt (singular)
-	 *   5. Site tagline (`get_bloginfo('description')`)
+	 * Resolution order (first non-empty wins):
+	 *   1. Per-post `_lafka_meta_description` post meta (manual override).
+	 *   2. WC product short description (single product).
+	 *   3. Post excerpt (any singular).
+	 *   4. WC term description (taxonomy archive).
+	 *   5. Site tagline (Settings → General → Tagline).
+	 *   6. Restaurant Information description (Customizer panel) — final fallback
+	 *      so the homepage gets a meaningful <meta name="description"> even when
+	 *      the operator hasn't set a tagline yet. Without this, fresh installs
+	 *      ship with no meta description at all, capping Lighthouse SEO ≤92.
+	 *   7. Constructed local-business pitch from name + servedCuisine + locality.
 	 */
 	function lafka_resolve_meta_description( $post_or_null ) {
 		if ( $post_or_null ) {
@@ -1452,7 +1457,49 @@ if ( ! function_exists( 'lafka_resolve_meta_description' ) ) {
 				return wp_strip_all_tags( $term->description );
 			}
 		}
-		return get_bloginfo( 'description' );
+		$tagline = get_bloginfo( 'description' );
+		if ( $tagline ) {
+			return $tagline;
+		}
+		if ( function_exists( 'lafka_get_restaurant_info' ) ) {
+			$info = lafka_get_restaurant_info();
+			if ( ! empty( $info['description'] ) ) {
+				return wp_strip_all_tags( $info['description'] );
+			}
+			// Construct a sensible auto-pitch when the operator has set NAP but
+			// not a description: "{name} — fresh {cuisine} in {locality}".
+			$bits = array();
+			if ( ! empty( $info['name'] ) ) {
+				$bits[] = $info['name'];
+			}
+			$cuisine = '';
+			if ( ! empty( $info['servedCuisine'] ) ) {
+				$cuisine = is_array( $info['servedCuisine'] )
+					? implode( ', ', array_map( 'strval', $info['servedCuisine'] ) )
+					: (string) $info['servedCuisine'];
+			}
+			$locality = ! empty( $info['address']['addressLocality'] )
+				? $info['address']['addressLocality']
+				: '';
+			if ( $cuisine && $locality ) {
+				$bits[] = sprintf(
+					/* translators: 1: cuisine list, 2: city/locality */
+					__( 'Fresh %1$s in %2$s — order online or call.', 'lafka-plugin' ),
+					$cuisine,
+					$locality
+				);
+			} elseif ( $locality ) {
+				$bits[] = sprintf(
+					/* translators: %s: city/locality */
+					__( 'Serving %s — order online or call.', 'lafka-plugin' ),
+					$locality
+				);
+			}
+			if ( ! empty( $bits ) ) {
+				return implode( ' — ', $bits );
+			}
+		}
+		return '';
 	}
 }
 
