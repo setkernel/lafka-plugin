@@ -87,10 +87,17 @@ class Lafka_Branch_Locations {
 					'lafka-google-maps',
 					'jquery-blockui',
 					'wc-country-select',
+					// P3-04: this minified vendor-style file calls $.magnificPopup.open()
+					// for the branch-selection modal. We don't have a non-min source to
+					// migrate it from, and branch selection is on the order critical
+					// path — so magnific is preserved specifically as a dep here while
+					// removed from the global enqueue everywhere else.
+					'magnific',
 				),
 				lafka_plugin_asset_version( 'incl/shipping-areas/assets/js/frontend/lafka-branch-locations-front.min.js' ),
 				true
 			);
+			wp_enqueue_style( 'magnific' );
 		}
 		wp_localize_script(
 			'lafka-branch-locations-front',

@@ -495,20 +495,10 @@ if ( ! function_exists( 'lafka_foodmenu_shortcode' ) ) {
 							});
 						});
 
-						// Add magnific function
-						$isotopedGrid.isotope('on', 'layoutComplete',
-							function (isoInstance, laidOutItems) {
-								$isotopedGrid.find('a.foodmenu-lightbox-link').magnificPopup({
-									mainClass: 'mfp-fade',
-									type: 'image'
-								});
-							}
-						);
-					<?php else : ?>
-						$container.find('a.foodmenu-lightbox-link').magnificPopup({
-							mainClass: 'mfp-fade',
-							type: 'image'
-						});
+						// P3-04: foodmenu-lightbox-link clicks are now handled site-wide
+						// by the theme's document-delegated handler in lafka-libs-config.js
+						// (uses window.lafkaDialog.image()). No per-shortcode wiring needed
+						// — delegation catches isotope-rendered items automatically.
 					<?php endif; ?>
 				});
 			})(window.jQuery);
@@ -1046,16 +1036,22 @@ if ( ! function_exists( 'lafka_icon_teaser_shortcode' ) ) {
 		<!-- End The popup -->
 		<script>
 			//<![CDATA[
-			(function ($) {
+			(function () {
 				"use strict";
-				$(document).ready(function () {
-					$('.lafka-icon-teaser-popup-link').magnificPopup({
-						mainClass: 'lafka-icon-teaser-lightbox mfp-fade',
-						type: 'inline',
-						midClick: true // Allow opening popup on middle mouse click. Always set it to true if you don't provide alternative source in href.
-					});
+				// P3-04: icon-teaser inline popup migrated to lafkaDialog.
+				// Clicks on .lafka-icon-teaser-popup-link with an href like #element-id
+				// open the referenced hidden element's HTML inside a native <dialog>.
+				document.addEventListener('click', function (e) {
+					var link = e.target.closest('.lafka-icon-teaser-popup-link');
+					if (!link || !window.lafkaDialog) { return; }
+					var href = link.getAttribute('href') || '';
+					if (href.charAt(0) !== '#') { return; }
+					var src = document.querySelector(href);
+					if (!src) { return; }
+					e.preventDefault();
+					window.lafkaDialog.inline(src.innerHTML, { className: 'lafka-icon-teaser-lightbox' });
 				});
-			})(window.jQuery);
+			})();
 			//]]>
 		</script>
 		<?php

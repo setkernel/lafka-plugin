@@ -3,7 +3,7 @@
 	Plugin Name: Lafka Plugin
 	Plugin URI: https://github.com/setkernel/lafka-plugin
 	Description: Companion plugin for the Lafka WooCommerce theme. Originally by theAlThemist, now community-maintained.
-	Version: 9.10.1
+	Version: 9.11.0
 	Author: theAlThemist, Contributors
 	Author URI: https://github.com/setkernel/lafka-plugin
 	Requires at least: 6.6
@@ -772,6 +772,17 @@ if ( ! function_exists( 'lafka_register_plugin_scripts' ) ) {
 
 		wp_register_style( 'flatpickr', plugins_url( 'assets/js/flatpickr/flatpickr.min.css', __FILE__ ), array(), lafka_plugin_asset_version( 'assets/js/flatpickr/flatpickr.min.css' ) );
 
+		// P3-04: lafka-dialog (native <dialog> wrapper) — replaces magnific
+		// for everything except the branch-locations modal (which still uses
+		// magnific because its minified vendor file calls $.magnificPopup.open
+		// and we don't have a source to migrate it from).
+		$lafka_dialog_suffix = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
+		wp_register_script( 'lafka-dialog', get_template_directory_uri() . '/js/lafka-dialog' . $lafka_dialog_suffix . '.js', array(), lafka_asset_version( '/js/lafka-dialog' . $lafka_dialog_suffix . '.js' ), true );
+		wp_register_style( 'lafka-dialog', get_template_directory_uri() . '/styles/lafka-dialog.css', array(), lafka_asset_version( '/styles/lafka-dialog.css' ) );
+
+		// Magnific stays registered — branch-locations.min.js (ordering critical
+		// path) depends on it. It is no longer globally enqueued; only loads
+		// when the branch-locations feature pulls it in via its deps array.
 		wp_register_script( 'magnific', get_template_directory_uri() . '/js/magnific/jquery.magnific-popup.min.js', array( 'jquery' ), lafka_asset_version( '/js/magnific/jquery.magnific-popup.min.js' ), true );
 		wp_register_style( 'magnific', get_template_directory_uri() . '/styles/magnific/magnific-popup.css', array(), lafka_asset_version( '/styles/magnific/magnific-popup.css' ) );
 
@@ -1562,17 +1573,24 @@ if ( ! function_exists( 'lafka_show_custom_product_popup_link' ) ) {
 			echo wp_kses_post( do_shortcode( $popup_content ) );
 			echo '</div>';
 
-			$inline_script_data = "(function ($) {
-                $(document).ready(function () {
-                    $('.lafka-product-popup-link a').magnificPopup({
-                        mainClass: 'lafka-product-popup-content mfp-fade',
-                        type: 'inline',
-                        midClick: true
-                    });
+			// P3-04: product-popup-link migrated from magnificPopup to lafkaDialog.
+			// Pure vanilla — no jQuery dependency. Click handler matches the same
+			// `.lafka-product-popup-link a` selector and opens the linked anchor
+			// element's content inside a native <dialog>.
+			$inline_script_data = "(function () {
+                document.addEventListener('click', function (e) {
+                    var link = e.target.closest('.lafka-product-popup-link a');
+                    if (!link || !window.lafkaDialog) { return; }
+                    var href = link.getAttribute('href') || '';
+                    if (href.charAt(0) !== '#') { return; }
+                    var src = document.querySelector(href);
+                    if (!src) { return; }
+                    e.preventDefault();
+                    window.lafkaDialog.inline(src.innerHTML, { className: 'lafka-product-popup-content' });
                 });
-            })(window.jQuery);";
+            })();";
 
-			wp_add_inline_script( 'magnific', $inline_script_data );
+			wp_add_inline_script( 'lafka-dialog', $inline_script_data );
 
 		}
 	}
