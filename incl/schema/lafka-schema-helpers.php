@@ -528,6 +528,11 @@ if ( ! function_exists( 'lafka_schema_normalize_csv_list' ) ) {
 	 * Without this, casting a stored array to (string) yielded the literal
 	 * "Array" inside servesCuisine / paymentAccepted, a bad SEO signal.
 	 *
+	 * Also strips the literal "Array" sentinel (case-insensitive) from
+	 * output. That value only appears in a stored option when a previous
+	 * code path cast a PHP array to string before saving — it's never a
+	 * legitimate cuisine or payment-method label.
+	 *
 	 * @param mixed $value Raw option / theme-mod value.
 	 * @return array<int, string>
 	 */
@@ -540,6 +545,13 @@ if ( ! function_exists( 'lafka_schema_normalize_csv_list' ) ) {
 			return array();
 		}
 		$items = array_map( 'trim', $items );
-		return array_values( array_filter( $items, static fn( $v ) => '' !== $v ) );
+		return array_values(
+            array_filter(
+                $items,
+                static function ( $v ) {
+					return '' !== $v && 0 !== strcasecmp( $v, 'Array' );
+				} 
+            ) 
+        );
 	}
 }
