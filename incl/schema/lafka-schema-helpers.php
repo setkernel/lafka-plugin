@@ -148,8 +148,12 @@ if ( ! function_exists( 'lafka_get_restaurant_info' ) ) {
 			'geo_lat'         => $get( 'geo_lat', null ),
 			'geo_lng'         => $get( 'geo_lng', null ),
 			'price_range'     => $get( 'price_range', '$$' ),
-			'cuisines'        => array_values( array_filter( array_map( 'trim', explode( ',', (string) $get( 'cuisines' ) ) ) ) ),
-			'payment_methods' => array_values( array_filter( array_map( 'trim', explode( ',', (string) $get( 'payment_methods' ) ) ) ) ),
+			// v9.11.1: handle both string (operator-typed CSV) and array
+			// (some plugins / filters return arrays from option storage)
+			// inputs. Without this, `(string) $array` produced the literal
+			// "Array" inside servesCuisine — bad SEO signal to Google.
+			'cuisines'        => lafka_schema_normalize_csv_list( $get( 'cuisines' ) ),
+			'payment_methods' => lafka_schema_normalize_csv_list( $get( 'payment_methods' ) ),
 			'business_type'   => array( 'Restaurant', 'LocalBusiness', 'FoodEstablishment' ),
 			'same_as'         => array_values(
 				array_filter(
@@ -167,6 +171,9 @@ if ( ! function_exists( 'lafka_get_restaurant_info' ) ) {
 		if ( '' === $info['phone_display'] && '' !== $info['phone_e164'] ) {
 			$info['phone_display'] = $info['phone_e164'];
 		}
+
+		// Normalize cuisines/payment_methods: cast to string array regardless
+		// of input shape. See `lafka_schema_normalize_csv_list()` below.
 
 		// Build address_display + address_short (template-friendly composites).
 		$line1 = $info['street'];
@@ -510,4 +517,29 @@ function lafka_schema_build_offer_for_menu_item( WC_Product $product ): ?array {
 		'priceCurrency' => lafka_schema_get_price_currency(),
 		'availability'  => $avail,
 	);
+}
+
+if ( ! function_exists( 'lafka_schema_normalize_csv_list' ) ) {
+	/**
+	 * Normalize a comma-separated list field that may have been stored as
+	 * a string OR as an array (depending on Customizer sanitization or
+	 * filter chain). Returns a clean string[] of trimmed, non-empty entries.
+	 *
+	 * Without this, casting a stored array to (string) yielded the literal
+	 * "Array" inside servesCuisine / paymentAccepted, a bad SEO signal.
+	 *
+	 * @param mixed $value Raw option / theme-mod value.
+	 * @return array<int, string>
+	 */
+	function lafka_schema_normalize_csv_list( $value ) {
+		if ( is_array( $value ) ) {
+			$items = array_map( static fn( $v ) => is_scalar( $v ) ? (string) $v : '', $value );
+		} elseif ( is_scalar( $value ) ) {
+			$items = explode( ',', (string) $value );
+		} else {
+			return array();
+		}
+		$items = array_map( 'trim', $items );
+		return array_values( array_filter( $items, static fn( $v ) => '' !== $v ) );
+	}
 }
