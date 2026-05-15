@@ -3,7 +3,7 @@
 	Plugin Name: Lafka Plugin
 	Plugin URI: https://github.com/setkernel/lafka-plugin
 	Description: Companion plugin for the Lafka WooCommerce theme. Originally by theAlThemist, now community-maintained.
-	Version: 9.11.2
+	Version: 9.12.0
 	Author: theAlThemist, Contributors
 	Author URI: https://github.com/setkernel/lafka-plugin
 	Requires at least: 6.6
@@ -708,6 +708,25 @@ if ( ! function_exists( 'lafka_register_plugin_scripts' ) ) {
 			function lafka_asset_version( $relative_path = '' ) {
 				return lafka_plugin_asset_version( ltrim( $relative_path, '/' ) );
 			}
+		}
+
+		/**
+		 * v9.12.0: Theme-URL fallback registrations are guarded so they only
+		 * fire when the Lafka theme (parent or child) is the active stylesheet.
+		 *
+		 * Why: previously these `wp_register_*` calls used
+		 * `get_template_directory_uri()` unconditionally — when this plugin
+		 * is active alongside a NON-Lafka theme (operator switched themes,
+		 * plugin used standalone, etc.), the registered URLs pointed to
+		 * non-existent assets in the other theme's directory. If any
+		 * plugin/theme then tried to enqueue these handles, the browser
+		 * would 404 on owl-carousel, flexslider, etc.
+		 *
+		 * Guard: only register when the active theme template is 'lafka'.
+		 */
+		$lafka_theme_active = function_exists( 'wp_get_theme' ) && 'lafka' === (string) wp_get_theme()->get_template();
+		if ( ! $lafka_theme_active ) {
+			return;
 		}
 
 		wp_register_script( 'flexslider', get_template_directory_uri() . '/js/flex/jquery.flexslider-min.js', array( 'jquery' ), lafka_asset_version( '/js/flex/jquery.flexslider-min.js' ), true );
