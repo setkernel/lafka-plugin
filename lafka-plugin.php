@@ -3,7 +3,7 @@
 	Plugin Name: Lafka Plugin
 	Plugin URI: https://github.com/setkernel/lafka-plugin
 	Description: Companion plugin for the Lafka WooCommerce theme. Originally by theAlThemist, now community-maintained.
-	Version: 9.12.0
+	Version: 9.13.0
 	Author: theAlThemist, Contributors
 	Author URI: https://github.com/setkernel/lafka-plugin
 	Requires at least: 6.6
@@ -474,6 +474,13 @@ function lafka_plugin_after_plugins_loaded() {
 	 * P6-PDP (W4-T8, 2026-04-29): Checkout email-capture field.
 	 */
 	require_once plugin_dir_path( __FILE__ ) . 'incl/woocommerce/lafka-checkout-email-capture.php';
+
+	/**
+	 * v9.13.0 (2026-05-15): Dietary tag seeder — ensures the four filter
+	 * chip terms (popular/vegetarian/vegan/spicy) exist so the menu
+	 * archive dietary filter actually has terms to match against.
+	 */
+	require_once plugin_dir_path( __FILE__ ) . 'incl/woocommerce/lafka-dietary-tags.php';
 
 	// Removed because causes categories to appear twice in shop and category view.
 	// Functionality not lost, because "woocommerce_maybe_show_product_subcategories" is called
