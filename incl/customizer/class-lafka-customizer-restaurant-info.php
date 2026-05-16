@@ -31,26 +31,6 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 		 */
 		public static function init(): void {
 			add_action( 'customize_register', array( __CLASS__, 'register' ) );
-			// v9.16.0: enqueue the JS that locks panel.active=true on the
-			// client side. The PHP active_callback gets overwritten by
-			// WP's contextual re-evaluator; this JS layer pins it.
-			add_action( 'customize_controls_enqueue_scripts', array( __CLASS__, 'enqueue_controls_js' ) );
-		}
-
-		/**
-		 * Enqueue the controls-side JS on the Customizer admin page.
-		 */
-		public static function enqueue_controls_js(): void {
-			$rel  = '/incl/customizer/js/lafka-customizer-force-active.js';
-			$path = plugin_dir_path( LAFKA_PLUGIN_FILE ) . ltrim( $rel, '/' );
-			$ver  = file_exists( $path ) ? (string) filemtime( $path ) : '9.16.0';
-			wp_enqueue_script(
-				'lafka-customizer-force-active',
-				plugin_dir_url( LAFKA_PLUGIN_FILE ) . ltrim( $rel, '/' ),
-				array( 'customize-controls' ),
-				$ver,
-				true
-			);
 		}
 
 		/**
@@ -63,22 +43,13 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 			$wp_customize->add_panel(
                 'lafka_restaurant_info',
                 array(
-					'title'           => esc_html__( 'Lafka — Restaurant Information', 'lafka-plugin' ),
-					'description'     => esc_html__( 'Restaurant-specific extras for JSON-LD schema, the [lafka_nap] shortcode, and editorial templates: opening hours, cuisine, geo coordinates, social/citation URLs, and price range. Address, phone, and country are read from WooCommerce → Settings → General by default — only fill them in here if you want to override the WC values for schema/branding (e.g. multi-location).', 'lafka-plugin' ),
-					// v9.15.0: priority dropped 150 → 32 so this panel sits
-					// with the other Lafka panels at the top of the sidebar
-					// (Announce Bar 28, Site Settings 30, Home Page 35).
-					// Was buried at 150 between WP-core "Homepage Settings"
-					// (120) and "Additional CSS" (200) — operator reported
-					// "Restaurant Information gets lost" which read as
-					// visibility-flash but is more likely the panel being
-					// far enough down the sidebar that the operator's
-					// browser-cached Customizer state collapsed it.
-					'priority'        => 32,
-					// v9.14.0: force-visible (Panel.active=true). Defensive
-					// against WP's JS auto-hide heuristic for panels whose
-					// sections it can't immediately resolve.
-					'active_callback' => '__return_true',
+					'title'       => esc_html__( 'Lafka — Restaurant Information', 'lafka-plugin' ),
+					'description' => esc_html__( 'Restaurant-specific extras for JSON-LD schema, the [lafka_nap] shortcode, and editorial templates: opening hours, cuisine, geo coordinates, social/citation URLs, and price range. Address, phone, and country are read from WooCommerce → Settings → General by default — only fill them in here if you want to override the WC values for schema/branding (e.g. multi-location).', 'lafka-plugin' ),
+					// Priority 32 groups this with the other Lafka panels
+					// at the top of the Customizer sidebar (Announce Bar 28,
+					// Site Settings 30, Home Page 35) — pure positioning,
+					// not a visibility hack.
+					'priority'    => 32,
                 )
             );
 
@@ -242,7 +213,6 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 					'title'    => esc_html__( 'Identity', 'lafka-plugin' ),
 					'panel'    => 'lafka_restaurant_info',
 					'priority' => 10,
-					'active_callback' => '__return_true',
                 ) 
             );
 
@@ -320,7 +290,6 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 					'title'    => esc_html__( 'Location', 'lafka-plugin' ),
 					'panel'    => 'lafka_restaurant_info',
 					'priority' => 20,
-					'active_callback' => '__return_true',
                 ) 
             );
 
@@ -379,7 +348,6 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 					'title'    => esc_html__( 'Contact', 'lafka-plugin' ),
 					'panel'    => 'lafka_restaurant_info',
 					'priority' => 30,
-					'active_callback' => '__return_true',
                 ) 
             );
 
@@ -414,7 +382,6 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 					'panel'           => 'lafka_restaurant_info',
 					'description'     => esc_html__( 'Per-day opening hours in 24h format "HH:MM-HH:MM" (e.g. 11:00-23:00). Use "closed" for closed days. Empty values are simply skipped.', 'lafka-plugin' ),
 					'priority'        => 40,
-					'active_callback' => '__return_true',
                 )
             );
 
@@ -459,7 +426,6 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 					'title'    => esc_html__( 'Cuisine & Payment', 'lafka-plugin' ),
 					'panel'    => 'lafka_restaurant_info',
 					'priority' => 50,
-					'active_callback' => '__return_true',
                 ) 
             );
 
@@ -496,7 +462,6 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 					'description' => esc_html__( 'Authoritative URLs Google uses to corroborate your business identity. One URL per line. Invalid lines are silently dropped at render. Recommended: Facebook, Instagram, Yelp, TripAdvisor, Google Business Profile, YellowPages.', 'lafka-plugin' ),
 					'panel'       => 'lafka_restaurant_info',
 					'priority'    => 60,
-					'active_callback' => '__return_true',
                 ) 
             );
 
@@ -530,7 +495,6 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 					'description' => esc_html__( 'Image preloaded on the homepage for fastest Largest Contentful Paint. Used by the lafka_lcp_image_url filter in lafka-plugin (incl/perf/lcp-preload.php). Image emitted as a `<link rel="preload">` from the theme\'s header.php.', 'lafka-plugin' ),
 					'panel'       => 'lafka_restaurant_info',
 					'priority'    => 70,
-					'active_callback' => '__return_true',
                 ) 
             );
 
