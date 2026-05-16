@@ -43,10 +43,16 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 			$wp_customize->add_panel(
                 'lafka_restaurant_info',
                 array(
-					'title'       => esc_html__( 'Lafka — Restaurant Information', 'lafka-plugin' ),
-					'description' => esc_html__( 'Restaurant-specific extras for JSON-LD schema, the [lafka_nap] shortcode, and editorial templates: opening hours, cuisine, geo coordinates, social/citation URLs, and price range. Address, phone, and country are read from WooCommerce → Settings → General by default — only fill them in here if you want to override the WC values for schema/branding (e.g. multi-location).', 'lafka-plugin' ),
-					'priority'    => 150,
-                ) 
+					'title'           => esc_html__( 'Lafka — Restaurant Information', 'lafka-plugin' ),
+					'description'     => esc_html__( 'Restaurant-specific extras for JSON-LD schema, the [lafka_nap] shortcode, and editorial templates: opening hours, cuisine, geo coordinates, social/citation URLs, and price range. Address, phone, and country are read from WooCommerce → Settings → General by default — only fill them in here if you want to override the WC values for schema/branding (e.g. multi-location).', 'lafka-plugin' ),
+					'priority'        => 150,
+					// v9.14.0: force-visible. Operator reported "panel
+					// flashes then hides" — WP Customizer's default JS
+					// Panel.active() auto-collapses panels whose sections
+					// it can't immediately resolve. Pinning active=true
+					// bypasses that heuristic.
+					'active_callback' => '__return_true',
+                )
             );
 
 			self::register_identity_section( $wp_customize );
@@ -209,6 +215,7 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 					'title'    => esc_html__( 'Identity', 'lafka-plugin' ),
 					'panel'    => 'lafka_restaurant_info',
 					'priority' => 10,
+					'active_callback' => '__return_true',
                 ) 
             );
 
@@ -286,6 +293,7 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 					'title'    => esc_html__( 'Location', 'lafka-plugin' ),
 					'panel'    => 'lafka_restaurant_info',
 					'priority' => 20,
+					'active_callback' => '__return_true',
                 ) 
             );
 
@@ -344,6 +352,7 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 					'title'    => esc_html__( 'Contact', 'lafka-plugin' ),
 					'panel'    => 'lafka_restaurant_info',
 					'priority' => 30,
+					'active_callback' => '__return_true',
                 ) 
             );
 
@@ -374,11 +383,12 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 			$wp_customize->add_section(
                 'lafka_business_hours',
                 array(
-					'title'       => esc_html__( 'Hours', 'lafka-plugin' ),
-					'panel'       => 'lafka_restaurant_info',
-					'description' => esc_html__( 'Per-day opening hours in 24h format "HH:MM-HH:MM" (e.g. 11:00-23:00). Use "closed" for closed days. Empty values are simply skipped.', 'lafka-plugin' ),
-					'priority'    => 40,
-                ) 
+					'title'           => esc_html__( 'Hours', 'lafka-plugin' ),
+					'panel'           => 'lafka_restaurant_info',
+					'description'     => esc_html__( 'Per-day opening hours in 24h format "HH:MM-HH:MM" (e.g. 11:00-23:00). Use "closed" for closed days. Empty values are simply skipped.', 'lafka-plugin' ),
+					'priority'        => 40,
+					'active_callback' => '__return_true',
+                )
             );
 
 			$days = array(
@@ -422,6 +432,7 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 					'title'    => esc_html__( 'Cuisine & Payment', 'lafka-plugin' ),
 					'panel'    => 'lafka_restaurant_info',
 					'priority' => 50,
+					'active_callback' => '__return_true',
                 ) 
             );
 
@@ -458,6 +469,7 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 					'description' => esc_html__( 'Authoritative URLs Google uses to corroborate your business identity. One URL per line. Invalid lines are silently dropped at render. Recommended: Facebook, Instagram, Yelp, TripAdvisor, Google Business Profile, YellowPages.', 'lafka-plugin' ),
 					'panel'       => 'lafka_restaurant_info',
 					'priority'    => 60,
+					'active_callback' => '__return_true',
                 ) 
             );
 
@@ -491,6 +503,7 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 					'description' => esc_html__( 'Image preloaded on the homepage for fastest Largest Contentful Paint. Used by the lafka_lcp_image_url filter in lafka-plugin (incl/perf/lcp-preload.php). Image emitted as a `<link rel="preload">` from the theme\'s header.php.', 'lafka-plugin' ),
 					'panel'       => 'lafka_restaurant_info',
 					'priority'    => 70,
+					'active_callback' => '__return_true',
                 ) 
             );
 
