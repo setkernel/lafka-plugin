@@ -79,6 +79,28 @@ if ( ! class_exists( 'Lafka_JSON_LD' ) ) {
 				return;
 			}
 
+			/*
+			 * v9.19.0: defer to SEO ecosystem plugins when active. Yoast SEO,
+			 * Rank Math, and SEOPress all emit Organization/LocalBusiness
+			 * JSON-LD on every page. Emitting our Restaurant graph alongside
+			 * theirs creates "two top-level entities" warnings in Google
+			 * Search Console. The convention is: if the operator has
+			 * installed a dedicated SEO plugin, defer the @graph to it.
+			 *
+			 * Operators who want our schema regardless can override via
+			 * the `lafka_schema_force_emit` filter (return true).
+			 */
+			$seo_plugin_active = (
+				defined( 'WPSEO_VERSION' )                      // Yoast SEO
+				|| class_exists( 'RankMath' )                   // Rank Math
+				|| defined( 'SEOPRESS_VERSION' )                // SEOPress
+				|| class_exists( '\\AIOSEO\\Plugin\\AIOSEO' )   // All in One SEO
+			);
+			$force = (bool) apply_filters( 'lafka_schema_force_emit', false );
+			if ( $seo_plugin_active && ! $force ) {
+				return;
+			}
+
 			$graph = array();
 
 			// Restaurant schema — emitted on every public page IF the operator has
