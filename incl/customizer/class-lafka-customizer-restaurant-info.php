@@ -520,5 +520,12 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 		}
 	}
 
-	Lafka_Customizer_Restaurant_Info::init();
+	// v9.18.0: Register the legacy Customizer panel ONLY when WooCommerce is
+	// not active. When WC is present (the typical case for Lafka installs),
+	// the canonical operator UI is the new "Restaurant" tab under
+	// WooCommerce → Settings (incl/admin/class-lafka-wc-settings-restaurant.php).
+	// The data layer is the same wp_options keys either way.
+	if ( ! class_exists( 'WooCommerce' ) ) {
+		Lafka_Customizer_Restaurant_Info::init();
+	}
 }

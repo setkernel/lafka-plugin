@@ -101,21 +101,30 @@ if ( ! function_exists( 'lafka_get_restaurant_info' ) ) {
 			'phone_display' => function_exists( 'get_option' ) ? (string) get_option( 'woocommerce_store_phone', '' ) : '',
 		);
 
-		// Helper: theme_mod → option → WC store fallback → default. Empty strings
-		// are treated as "not set" so the next resolver step takes over. This
-		// keeps Customizer values as overrides while WC settings are the
-		// canonical source for shared NAP fields.
+		// Helper: wp_options → theme_mod → WC store fallback → default.
+		//
+		// v9.18.0 flipped option/theme_mod precedence: as of this version
+		// the canonical write surface is the new "Restaurant" tab under
+		// WooCommerce → Settings (uses standard WC_Settings_Page API),
+		// which writes to wp_options. Legacy Customizer-stored theme_mods
+		// remain readable as fallback so existing operator data still
+		// flows through if WC Settings hasn't been touched yet.
+		//
+		// Empty strings are treated as "not set" so the next resolver
+		// step takes over. WC store options (woocommerce_store_address
+		// etc.) remain the third-priority canonical source for shared
+		// NAP fields that operators don't bother re-entering.
 		$get = function ( $key, $default = '' ) use ( $wc_fallbacks ) {
-			if ( function_exists( 'get_theme_mod' ) ) {
-				$theme_mod = get_theme_mod( 'lafka_business_' . $key, null );
-				if ( null !== $theme_mod && '' !== $theme_mod ) {
-					return $theme_mod;
-				}
-			}
 			if ( function_exists( 'get_option' ) ) {
 				$option = get_option( 'lafka_business_' . $key, null );
 				if ( null !== $option && '' !== $option ) {
 					return $option;
+				}
+			}
+			if ( function_exists( 'get_theme_mod' ) ) {
+				$theme_mod = get_theme_mod( 'lafka_business_' . $key, null );
+				if ( null !== $theme_mod && '' !== $theme_mod ) {
+					return $theme_mod;
 				}
 			}
 			if ( isset( $wc_fallbacks[ $key ] ) && '' !== $wc_fallbacks[ $key ] ) {
