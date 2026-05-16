@@ -45,12 +45,19 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
                 array(
 					'title'           => esc_html__( 'Lafka — Restaurant Information', 'lafka-plugin' ),
 					'description'     => esc_html__( 'Restaurant-specific extras for JSON-LD schema, the [lafka_nap] shortcode, and editorial templates: opening hours, cuisine, geo coordinates, social/citation URLs, and price range. Address, phone, and country are read from WooCommerce → Settings → General by default — only fill them in here if you want to override the WC values for schema/branding (e.g. multi-location).', 'lafka-plugin' ),
-					'priority'        => 150,
-					// v9.14.0: force-visible. Operator reported "panel
-					// flashes then hides" — WP Customizer's default JS
-					// Panel.active() auto-collapses panels whose sections
-					// it can't immediately resolve. Pinning active=true
-					// bypasses that heuristic.
+					// v9.15.0: priority dropped 150 → 32 so this panel sits
+					// with the other Lafka panels at the top of the sidebar
+					// (Announce Bar 28, Site Settings 30, Home Page 35).
+					// Was buried at 150 between WP-core "Homepage Settings"
+					// (120) and "Additional CSS" (200) — operator reported
+					// "Restaurant Information gets lost" which read as
+					// visibility-flash but is more likely the panel being
+					// far enough down the sidebar that the operator's
+					// browser-cached Customizer state collapsed it.
+					'priority'        => 32,
+					// v9.14.0: force-visible (Panel.active=true). Defensive
+					// against WP's JS auto-hide heuristic for panels whose
+					// sections it can't immediately resolve.
 					'active_callback' => '__return_true',
                 )
             );
