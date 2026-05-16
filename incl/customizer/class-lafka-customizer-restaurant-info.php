@@ -31,6 +31,26 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 		 */
 		public static function init(): void {
 			add_action( 'customize_register', array( __CLASS__, 'register' ) );
+			// v9.16.0: enqueue the JS that locks panel.active=true on the
+			// client side. The PHP active_callback gets overwritten by
+			// WP's contextual re-evaluator; this JS layer pins it.
+			add_action( 'customize_controls_enqueue_scripts', array( __CLASS__, 'enqueue_controls_js' ) );
+		}
+
+		/**
+		 * Enqueue the controls-side JS on the Customizer admin page.
+		 */
+		public static function enqueue_controls_js(): void {
+			$rel  = '/incl/customizer/js/lafka-customizer-force-active.js';
+			$path = plugin_dir_path( LAFKA_PLUGIN_FILE ) . ltrim( $rel, '/' );
+			$ver  = file_exists( $path ) ? (string) filemtime( $path ) : '9.16.0';
+			wp_enqueue_script(
+				'lafka-customizer-force-active',
+				plugin_dir_url( LAFKA_PLUGIN_FILE ) . ltrim( $rel, '/' ),
+				array( 'customize-controls' ),
+				$ver,
+				true
+			);
 		}
 
 		/**
