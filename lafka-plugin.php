@@ -3,7 +3,7 @@
 	Plugin Name: Lafka Plugin
 	Plugin URI: https://github.com/setkernel/lafka-plugin
 	Description: Companion plugin for the Lafka WooCommerce theme. Originally by theAlThemist, now community-maintained.
-	Version: 9.19.0
+	Version: 9.20.0
 	Author: theAlThemist, Contributors
 	Author URI: https://github.com/setkernel/lafka-plugin
 	Requires at least: 6.6
@@ -437,20 +437,18 @@ function lafka_plugin_after_plugins_loaded() {
 
 	/*
 	 * v9.18.0: Restaurant Info as WooCommerce Settings tab. Replaces the
-	 * legacy custom Customizer panel. Loaded only in admin and only after
-	 * WC bootstraps (which is when WC_Settings_Page exists). The require
-	 * itself runs immediately but the class file has a guard that returns
-	 * early if WC_Settings_Page isn't defined yet — the woocommerce_init
-	 * timing wraps that naturally.
+	 * legacy custom Customizer panel.
+	 *
+	 * v9.20.0: load at plugin init (not woocommerce_init). The class file
+	 * registers the woocommerce_get_settings_pages filter at load time —
+	 * the filter callback lazy-loads the class body when it fires, which
+	 * is on Settings page render when WC_Settings_Page is guaranteed
+	 * loaded. Loading on woocommerce_init was too early — WC admin
+	 * classes weren't available yet and the file returned without
+	 * registering the filter.
 	 */
 	if ( is_admin() ) {
-		add_action(
-			'woocommerce_init',
-			function () {
-				require_once plugin_dir_path( __FILE__ ) . 'incl/admin/class-lafka-wc-settings-restaurant.php';
-			},
-			5
-		);
+		require_once plugin_dir_path( __FILE__ ) . 'incl/admin/class-lafka-wc-settings-restaurant.php';
 	}
 
 	/**
