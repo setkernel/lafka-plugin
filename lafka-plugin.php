@@ -3,7 +3,7 @@
 	Plugin Name: Lafka Plugin
 	Plugin URI: https://github.com/setkernel/lafka-plugin
 	Description: Companion plugin for the Lafka WooCommerce theme. Originally by theAlThemist, now community-maintained.
-	Version: 9.22.0
+	Version: 9.22.1
 	Author: theAlThemist, Contributors
 	Author URI: https://github.com/setkernel/lafka-plugin
 	Requires at least: 6.6
@@ -1557,15 +1557,18 @@ if ( ! function_exists( 'lafka_resolve_meta_description' ) ) {
 			if ( ! empty( $info['name'] ) ) {
 				$bits[] = $info['name'];
 			}
+			// Read the flat keys that lafka_get_restaurant_info() actually
+			// returns (`cuisines`, `city`). The legacy code looked for
+			// `servedCuisine` and `address.addressLocality`, which never
+			// existed in the array — making the pitch always collapse to
+			// just `name`. Fixed in v9.22.1.
 			$cuisine = '';
-			if ( ! empty( $info['servedCuisine'] ) ) {
-				$cuisine = is_array( $info['servedCuisine'] )
-					? implode( ', ', array_map( 'strval', $info['servedCuisine'] ) )
-					: (string) $info['servedCuisine'];
+			if ( ! empty( $info['cuisines'] ) ) {
+				$cuisine = is_array( $info['cuisines'] )
+					? implode( ', ', array_map( 'strval', $info['cuisines'] ) )
+					: (string) $info['cuisines'];
 			}
-			$locality = ! empty( $info['address']['addressLocality'] )
-				? $info['address']['addressLocality']
-				: '';
+			$locality = ! empty( $info['city'] ) ? (string) $info['city'] : '';
 			if ( $cuisine && $locality ) {
 				$bits[] = sprintf(
 					/* translators: 1: cuisine list, 2: city/locality */

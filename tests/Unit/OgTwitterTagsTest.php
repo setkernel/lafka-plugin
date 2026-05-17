@@ -86,6 +86,53 @@ final class OgTwitterTagsTest extends TestCase {
         );
     }
 
+    public function test_resolve_constructed_pitch_reads_flat_cuisine_and_city_keys(): void {
+        // v9.22.1 regression lock: lafka_get_restaurant_info() returns flat
+        // `cuisines` + `city`. The constructed-pitch branch previously read
+        // `servedCuisine` and `address.addressLocality`, which never
+        // existed in the array — the pitch collapsed to just `name` on
+        // every install, leading to "Peppery Pizza & Poutine" on every
+        // page's meta description. Lock the correct keys.
+        $src = file_get_contents( dirname( __DIR__, 2 ) . '/lafka-plugin.php' );
+        $this->assertStringContainsString(
+            "\$info['cuisines']",
+            $src,
+            'Constructed-pitch branch must read $info[\'cuisines\'] (not servedCuisine).'
+        );
+        $this->assertStringContainsString(
+            "\$info['city']",
+            $src,
+            'Constructed-pitch branch must read $info[\'city\'] (not address.addressLocality).'
+        );
+        $this->assertStringNotContainsString(
+            "\$info['servedCuisine']",
+            $src,
+            'Stale servedCuisine key must not reappear.'
+        );
+        $this->assertStringNotContainsString(
+            "\$info['address']['addressLocality']",
+            $src,
+            'Stale address.addressLocality key must not reappear.'
+        );
+    }
+
+    public function test_resolve_tagline_guard_against_site_name_dup(): void {
+        // v9.22.0: when the tagline equals the site name (a common
+        // fresh-install state) it produces a useless meta description
+        // that competes with — and beats — the Restaurant Info fallback.
+        $src = file_get_contents( dirname( __DIR__, 2 ) . '/lafka-plugin.php' );
+        $this->assertStringContainsString(
+            'is_dupe_of_nam',
+            $src,
+            'Tagline guard for site-name duplicate must be present.'
+        );
+        $this->assertStringContainsString(
+            'Just another WordPress site',
+            $src,
+            'WP-default tagline guard must be present.'
+        );
+    }
+
     /**
      * Regression lock for the static-homepage og:type bug (v8.11.4).
      *
