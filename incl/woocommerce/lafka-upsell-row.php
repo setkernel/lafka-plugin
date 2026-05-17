@@ -104,8 +104,17 @@ if ( ! function_exists( 'lafka_pdp_render_upsell_row' ) ) {
                     <article class="lafka-pdp-upsell__card">
                         <a class="lafka-pdp-upsell__link" href="<?php echo esc_url( $url ); ?>">
                             <?php
-                            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- get_the_post_thumbnail() returns trusted WP-core HTML with attributes pre-escaped.
-                            echo $img;
+                            // v9.21.0: get_the_post_thumbnail() returns empty string when a product
+                            // has no featured image. Render an explicit placeholder div so the card's
+                            // layout box never collapses (CSS paints a soft-tinted square via ::before
+                            // when no <img> is present — but having an inline node also helps in case
+                            // the cascade strips the pseudo).
+                            if ( '' !== $img ) {
+                                // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- get_the_post_thumbnail() returns trusted WP-core HTML with attributes pre-escaped.
+                                echo $img;
+                            } else {
+                                echo '<span class="lafka-pdp-upsell__placeholder" aria-hidden="true"></span>';
+                            }
                             ?>
                             <span class="lafka-pdp-upsell__name"><?php echo esc_html( $product->get_name() ); ?></span>
                             <span class="lafka-pdp-upsell__price"><?php echo wp_kses_post( $price ); ?></span>
