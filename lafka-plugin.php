@@ -3,7 +3,7 @@
 	Plugin Name: Lafka Plugin
 	Plugin URI: https://github.com/setkernel/lafka-plugin
 	Description: Companion plugin for the Lafka WooCommerce theme. Originally by theAlThemist, now community-maintained.
-	Version: 9.21.0
+	Version: 9.22.0
 	Author: theAlThemist, Contributors
 	Author URI: https://github.com/setkernel/lafka-plugin
 	Requires at least: 6.6
@@ -236,6 +236,12 @@ if ( is_admin() ) {
  * canonical for shop/product-taxonomy archives and strips sort/filter params.
  */
 require_once plugin_dir_path( __FILE__ ) . 'incl/seo/lafka-shop-canonical.php';
+
+/**
+ * v9.22.0: suppress WooCommerce's default BreadcrumbList JSON-LD on product
+ * pages — Lafka already emits a cleaner one in the consolidated @graph.
+ */
+require_once plugin_dir_path( __FILE__ ) . 'incl/seo/lafka-suppress-wc-breadcrumb-jsonld.php';
 
 /**
  * P6-A11Y-9 (W2-T7): WP-CLI command to backfill missing/garbage image alt text.
@@ -1526,7 +1532,19 @@ if ( ! function_exists( 'lafka_resolve_meta_description' ) ) {
 		}
 		$tagline = get_bloginfo( 'description' );
 		if ( $tagline ) {
-			return $tagline;
+			// WP defaults the tagline to either "Just another WordPress site"
+			// or the site name on some installs. Either case produces a
+			// useless meta description that competes with — and loses to —
+			// the Restaurant Information description the operator can
+			// configure. Skip the tagline when it's the default WP boilerplate
+			// or a verbatim duplicate of the site name, so the next
+			// fallback gets a chance.
+			$site_name      = function_exists( 'get_bloginfo' ) ? (string) get_bloginfo( 'name' ) : '';
+			$is_wp_default  = 'Just another WordPress site' === $tagline;
+			$is_dupe_of_nam = '' !== $site_name && 0 === strcasecmp( trim( $tagline ), trim( $site_name ) );
+			if ( ! $is_wp_default && ! $is_dupe_of_nam ) {
+				return $tagline;
+			}
 		}
 		if ( function_exists( 'lafka_get_restaurant_info' ) ) {
 			$info = lafka_get_restaurant_info();

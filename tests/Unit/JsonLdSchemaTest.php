@@ -64,6 +64,11 @@ final class JsonLdSchemaTest extends TestCase {
 		'lafka_business_hours_fri'        => '11:00-23:00',
 		'lafka_business_hours_sat'        => '11:00-23:00',
 		'lafka_business_hours_sun'        => '11:00-23:00',
+		// Social-proof rating + count (theme_mods written by the Lafka theme's
+		// social-proof Customizer panel). v9.22.0 surfaces these in the
+		// Restaurant schema as aggregateRating.
+		'lafka_social_proof_rating'       => '4.8',
+		'lafka_social_proof_count'        => 1200,
 	);
 
 	protected function setUp(): void {
@@ -317,6 +322,55 @@ final class JsonLdSchemaTest extends TestCase {
 		$this->assertStringNotContainsString( '&amp;', $json );
 		$decoded = json_decode( $json, true );
 		$this->assertSame( 'Test & Co.', $decoded['name'] );
+	}
+
+	public function test_restaurant_emits_aggregate_rating_when_social_proof_configured(): void {
+		$this->stub_populated_install();
+		$schema = lafka_schema_restaurant();
+
+		$this->assertArrayHasKey( 'aggregateRating', $schema );
+		$this->assertSame( 'AggregateRating', $schema['aggregateRating']['@type'] );
+		$this->assertSame( '4.8', $schema['aggregateRating']['ratingValue'] );
+		$this->assertSame( 1200, $schema['aggregateRating']['reviewCount'] );
+		$this->assertSame( '5', $schema['aggregateRating']['bestRating'] );
+		$this->assertSame( '1', $schema['aggregateRating']['worstRating'] );
+	}
+
+	public function test_restaurant_omits_aggregate_rating_when_unconfigured(): void {
+		$this->stub_unconfigured_install();
+		$schema = lafka_schema_restaurant();
+
+		$this->assertArrayNotHasKey( 'aggregateRating', $schema, 'aggregateRating must be skipped when social-proof unconfigured.' );
+	}
+
+	public function test_restaurant_omits_aggregate_rating_when_only_rating_set(): void {
+		// Rating alone (no review count) is ambiguous — Google's rich-result
+		// validator requires both. Verify partial data triggers omission.
+		Functions\when( 'get_theme_mod' )->alias( function ( $key, $default = null ) {
+			$only_rating = self::FIXTURES;
+			$only_rating['lafka_social_proof_count'] = 0;
+			return $only_rating[ $key ] ?? $default;
+		} );
+		Functions\when( 'get_option' )->returnArg( 2 );
+		Functions\when( 'get_bloginfo' )->justReturn( '' );
+		Functions\when( 'get_site_icon_url' )->justReturn( '' );
+		Functions\when( 'home_url' )->justReturn( 'http://localhost:8891' );
+		Functions\when( 'trailingslashit' )->alias( fn( $url ) => rtrim( $url, '/' ) . '/' );
+		Functions\when( 'apply_filters' )->returnArg( 2 );
+
+		$schema = lafka_schema_restaurant();
+		$this->assertArrayNotHasKey( 'aggregateRating', $schema, 'aggregateRating requires both rating AND count to emit.' );
+	}
+
+	public function test_wc_breadcrumb_jsonld_suppression_registered(): void {
+		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/seo/lafka-suppress-wc-breadcrumb-jsonld.php' );
+		$this->assertNotFalse( $src, 'Suppression file must exist.' );
+		$this->assertStringContainsString( "add_filter( 'woocommerce_structured_data_breadcrumblist', '__return_empty_array' )", $src );
+	}
+
+	public function test_wc_breadcrumb_suppression_loaded_from_main_plugin_file(): void {
+		$src = file_get_contents( dirname( __DIR__, 2 ) . '/lafka-plugin.php' );
+		$this->assertStringContainsString( 'lafka-suppress-wc-breadcrumb-jsonld.php', $src );
 	}
 
 	// ────────────────────────────────────────────────────────────────────────

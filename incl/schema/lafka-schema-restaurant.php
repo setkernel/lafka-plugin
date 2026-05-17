@@ -104,6 +104,25 @@ function lafka_schema_restaurant(): ?array {
 		$schema['sameAs'] = $same_as;
 	}
 
+	// aggregateRating — surface the same data the on-page social-proof
+	// widget renders (4.8 / 1,200 reviews etc.). Pulled from the Customizer
+	// theme_mods written by the Lafka theme's social-proof panel. Only
+	// emitted when both rating and count are set; partial data confuses
+	// Google's rich-result validator.
+	if ( function_exists( 'get_theme_mod' ) ) {
+		$rating_raw = (float) get_theme_mod( 'lafka_social_proof_rating', 0 );
+		$count_raw  = (int) get_theme_mod( 'lafka_social_proof_count', 0 );
+		if ( $rating_raw > 0 && $count_raw > 0 ) {
+			$schema['aggregateRating'] = array(
+				'@type'       => 'AggregateRating',
+				'ratingValue' => number_format( $rating_raw, 1, '.', '' ),
+				'reviewCount' => $count_raw,
+				'bestRating'  => '5',
+				'worstRating' => '1',
+			);
+		}
+	}
+
 	if ( '' !== $logo_url ) {
 		$schema['image'] = $logo_url;
 	}
