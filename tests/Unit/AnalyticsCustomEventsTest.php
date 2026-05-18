@@ -82,13 +82,22 @@ final class AnalyticsCustomEventsTest extends TestCase {
 		$this->assertStringContainsString( 'incl/analytics/lafka-custom-events.php', $src );
 	}
 
-	public function test_plugin_version_bumped_to_9_25_0(): void {
+	public function test_plugin_version_at_least_9_25_0(): void {
 		$src = (string) file_get_contents( $this->plugin_root() . '/lafka-plugin.php' );
-		$this->assertMatchesRegularExpression(
-			'/Version:\s*9\.25\.0\b/',
-			$src,
-			'Plugin header must declare version 9.25.0 for Phase 1C.'
-		);
+		if ( ! preg_match( '/Version:\s*(\d+)\.(\d+)\.(\d+)/', $src, $m ) ) {
+			$this->fail( 'Plugin header must declare a SemVer version.' );
+		}
+		$major = (int) $m[1];
+		$minor = (int) $m[2];
+		$patch = (int) $m[3];
+		// Phase 1C added the custom-events module — every subsequent release
+		// (Phase 2 v9.26.0+, Phase 3 v9.27.0+, ...) must keep the version
+		// monotonically increasing. We assert ≥ 9.25.0, not exact equality,
+		// so each new phase's own version-bump test owns its exact lock.
+		$at_least = ( $major > 9 )
+			|| ( 9 === $major && $minor > 25 )
+			|| ( 9 === $major && 25 === $minor && $patch >= 0 );
+		$this->assertTrue( $at_least, "Plugin version {$m[0]} must be ≥ 9.25.0 (Phase 1C floor)." );
 	}
 
 	// ────────────────────────────────────────────────────────────────────

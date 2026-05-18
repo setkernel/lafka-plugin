@@ -45,6 +45,7 @@ require_once __DIR__ . '/lafka-schema-restaurant.php';
 require_once __DIR__ . '/lafka-schema-menu.php';
 require_once __DIR__ . '/lafka-schema-product.php';
 require_once __DIR__ . '/lafka-schema-breadcrumb.php';
+require_once __DIR__ . '/lafka-schema-faq.php';
 
 if ( ! class_exists( 'Lafka_JSON_LD' ) ) {
 
@@ -132,6 +133,12 @@ if ( ! class_exists( 'Lafka_JSON_LD' ) ) {
 			if ( ! is_front_page() ) {
 				$graph[] = lafka_schema_breadcrumb();
 			}
+
+			// FAQPage — only on the contact page (slug `contact` / `contact-us`
+			// or any page using the editorial template-contact.php template).
+			// Returns null when no FAQ items resolve, in which case array_filter
+			// below drops it from the @graph.
+			$graph[] = lafka_schema_faq();
 
 			/**
 			 * Filter the full @graph array before emission.

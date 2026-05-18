@@ -3,7 +3,7 @@
 	Plugin Name: Lafka Plugin
 	Plugin URI: https://github.com/setkernel/lafka-plugin
 	Description: Companion plugin for the Lafka WooCommerce theme. Originally by theAlThemist, now community-maintained.
-	Version: 9.25.0
+	Version: 9.26.0
 	Author: theAlThemist, Contributors
 	Author URI: https://github.com/setkernel/lafka-plugin
 	Requires at least: 6.6
@@ -242,6 +242,25 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/seo/lafka-shop-canonical.php';
  * pages — Lafka already emits a cleaner one in the consolidated @graph.
  */
 require_once plugin_dir_path( __FILE__ ) . 'incl/seo/lafka-suppress-wc-breadcrumb-jsonld.php';
+
+/**
+ * v9.26.0 (Phase 2 — Analytics + SEO + Conversion plan):
+ *
+ *   - incl/seo/lafka-sitemap.php hooks `wp_sitemaps_posts_query_args` to
+ *     exclude WooCommerce funnel pages (cart, checkout, my-account,
+ *     order-received, order-pay) from the WP-core sitemap. Operators can
+ *     extend the slug list via the `lafka_sitemap_excluded_slugs` filter.
+ *   - incl/seo/lafka-robots.php hooks `robots_txt` to append Disallow lines
+ *     for the same funnel paths plus WC's `?add-to-cart=`, `?wc-ajax=`,
+ *     and shop-archive sort/filter query-arg prefixes. Idempotent — won't
+ *     duplicate lines if another plugin already emitted them.
+ *
+ * Both modules are safe to load unconditionally — sitemap filter only acts
+ * on `page` sub-sitemaps, robots filter no-ops when the site is in
+ * "Discourage search engines" mode.
+ */
+require_once plugin_dir_path( __FILE__ ) . 'incl/seo/lafka-sitemap.php';
+require_once plugin_dir_path( __FILE__ ) . 'incl/seo/lafka-robots.php';
 
 /**
  * v9.23.0 (Phase 1A — Analytics + SEO + Conversion plan):
