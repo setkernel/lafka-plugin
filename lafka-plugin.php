@@ -3,7 +3,7 @@
 	Plugin Name: Lafka Plugin
 	Plugin URI: https://github.com/setkernel/lafka-plugin
 	Description: Companion plugin for the Lafka WooCommerce theme. Originally by theAlThemist, now community-maintained.
-	Version: 9.27.0
+	Version: 9.28.0
 	Author: theAlThemist, Contributors
 	Author URI: https://github.com/setkernel/lafka-plugin
 	Requires at least: 6.6
@@ -402,6 +402,35 @@ if ( function_exists( 'register_deactivation_hook' ) ) {
 }
 
 /**
+ * v9.28.0 (Phase 3D — Analytics + SEO + Conversion plan):
+ *
+ *   - incl/conversion/lafka-review-prompt-email.php  registers a WC_Email
+ *     subclass (`LAFKA_Review_Prompt_Email`) via woocommerce_email_classes,
+ *     schedules a one-shot WP-Cron event `lafka_send_review_email` N hours
+ *     after an order transitions to status `completed` (operator-configurable,
+ *     default 24h), and handles the unsubscribe link
+ *     (`?lafka_unsubscribe_reviews=…&u=…`) that flips a user-meta opt-out flag.
+ *   - incl/conversion/lafka-review-prompt-banner.php  server-side detects whether
+ *     the current logged-in user has a completed order within the configured
+ *     window (default 7 days) and sets the `lafka_review_prompt_show` cookie
+ *     accordingly. Registers two REST endpoints:
+ *         POST /wp-json/lafka/v1/review-banner-dismiss  (logged-in, `read` cap)
+ *         POST /wp-json/lafka/v1/review-banner-shown    (public, rate-limited)
+ *   - incl/customizer/class-lafka-customizer-reviews.php  registers the
+ *     `lafka_reviews` Customizer panel with three sections: email channel
+ *     toggle + delay + copy, shared review-target URL + label, banner channel
+ *     toggle + window-days + copy + CTA label.
+ *
+ * Email + banner are both default OFF — operator opt-in. Either can be enabled
+ * independently. The Phase 3D class supersedes the original P6-UX-8 simple
+ * review-prompt email; the legacy file in incl/emails/ is kept but is now a
+ * no-op shim that defers to the Phase 3D scheduler.
+ */
+require_once plugin_dir_path( __FILE__ ) . 'incl/conversion/lafka-review-prompt-email.php';
+require_once plugin_dir_path( __FILE__ ) . 'incl/conversion/lafka-review-prompt-banner.php';
+require_once plugin_dir_path( __FILE__ ) . 'incl/customizer/class-lafka-customizer-reviews.php';
+
+/**
  * P6-A11Y-9 (W2-T7): WP-CLI command to backfill missing/garbage image alt text.
  * Self-gates: the file returns early when WP_CLI is not defined, so it is safe
  * to require unconditionally here — it only attaches behaviour during WP-CLI runs.
@@ -430,9 +459,14 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/cli/lafka-reviews-cli.php';
 require_once plugin_dir_path( __FILE__ ) . 'incl/cli/lafka-webp-convert.php';
 
 /**
- * P6-UX-8 (W3-T6): Post-order review prompt email.
- * Schedules a WP-Cron event N days after order completion (default 7, filterable)
- * that sends the customer a personalised review-request email.
+ * P6-UX-8 (W3-T6) — deprecated as of v9.28.0 (Phase 3D).
+ *
+ * The original simple review-prompt email lived at incl/emails/lafka-review-prompt-email.php.
+ * It has been superseded by the richer Phase 3D pipeline registered above
+ * (incl/conversion/lafka-review-prompt-email.php + WC_Email subclass +
+ * Customizer panel). The legacy file is now a no-op shim retained only so
+ * any third-party that grep'd the include path doesn't fatal on a missing
+ * file. New installations only hook the Phase 3D scheduler.
  */
 require_once plugin_dir_path( __FILE__ ) . 'incl/emails/lafka-review-prompt-email.php';
 

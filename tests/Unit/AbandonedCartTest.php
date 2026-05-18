@@ -503,9 +503,13 @@ final class AbandonedCartTest extends TestCase {
 		$this->assertStringContainsString( 'lafka_ac_unschedule_events', $main );
 	}
 
-	public function test_main_plugin_version_bumped_to_9_27_0(): void {
+	public function test_main_plugin_version_bumped_to_at_least_9_27_0(): void {
+		// Phase 3B shipped at 9.27.0; subsequent phases bump the same plugin
+		// version forward (3D = 9.28.0). Assert presence of the Version: header
+		// in a major.minor.patch shape ≥ 9.27.0 rather than pinning to one
+		// release.
 		$main = file_get_contents( dirname( __DIR__, 2 ) . '/lafka-plugin.php' );
-		$this->assertMatchesRegularExpression( '/Version:\s*9\.27\.0/', $main );
+		$this->assertMatchesRegularExpression( '/Version:\s*9\.(2[7-9]|[3-9]\d|\d{3,})\.\d+/', $main );
 	}
 
 	public function test_uninstall_drops_abandoned_cart_table(): void {
