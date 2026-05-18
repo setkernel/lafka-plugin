@@ -3,7 +3,7 @@
 	Plugin Name: Lafka Plugin
 	Plugin URI: https://github.com/setkernel/lafka-plugin
 	Description: Companion plugin for the Lafka WooCommerce theme. Originally by theAlThemist, now community-maintained.
-	Version: 9.24.0
+	Version: 9.25.0
 	Author: theAlThemist, Contributors
 	Author URI: https://github.com/setkernel/lafka-plugin
 	Requires at least: 6.6
@@ -281,6 +281,29 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/analytics/lafka-analytics-emitt
  *   is set after the first emit; refreshing /order-received/ won't re-fire.
  */
 require_once plugin_dir_path( __FILE__ ) . 'incl/analytics/lafka-wc-events.php';
+
+/**
+ * v9.25.0 (Phase 1C — Analytics + SEO + Conversion plan):
+ *
+ *   - incl/analytics/lafka-custom-events.php enqueues lafka-custom-events.js
+ *     (gated on at least one configured analytics ID, identical pattern to
+ *     Phase 1B). The bundle binds eight selector-driven interaction events
+ *     to window.dataLayer:
+ *
+ *       phone_click             a[href^="tel:"]
+ *       email_click             a[href^="mailto:"]
+ *       get_directions_click    maps URLs + "directions" text
+ *       faq_open                details.lafka-contact__faq-item open toggle
+ *       filter_apply            .lafka-menu__chip / .lafka-menu__category-chip
+ *       scroll_milestone        25 / 50 / 75 / 100 % (once per page view)
+ *       outbound_link           absolute a[href] to a foreign host
+ *       sticky_cart_open        .lafka-sticky-cart enters viewport or .is-open
+ *
+ *   The bundle is theme-agnostic — it binds via stable class names / hrefs
+ *   that already exist in the front-end markup. No theme changes ship with
+ *   this version.
+ */
+require_once plugin_dir_path( __FILE__ ) . 'incl/analytics/lafka-custom-events.php';
 
 /**
  * P6-A11Y-9 (W2-T7): WP-CLI command to backfill missing/garbage image alt text.

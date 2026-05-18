@@ -600,12 +600,19 @@ namespace LafkaPlugin\Tests\Unit {
 			$this->assertStringContainsString( 'incl/analytics/lafka-wc-events.php', $src );
 		}
 
-		public function test_plugin_version_bumped_to_9_24_0(): void {
+		public function test_plugin_version_bumped_to_at_least_9_24_0(): void {
 			$src = file_get_contents( dirname( __DIR__, 2 ) . '/lafka-plugin.php' );
 			$this->assertMatchesRegularExpression(
-				'/Version:\s*9\.24\.0\b/',
+				'/Version:\s*(\d+)\.(\d+)\.(\d+)\b/',
 				$src,
-				'Plugin header must declare version 9.24.0 for Phase 1B.'
+				'Plugin header must declare a SemVer version string.'
+			);
+			preg_match( '/Version:\s*(\d+)\.(\d+)\.(\d+)\b/', $src, $m );
+			$major = (int) ( $m[1] ?? 0 );
+			$minor = (int) ( $m[2] ?? 0 );
+			$this->assertTrue(
+				$major > 9 || ( 9 === $major && $minor >= 24 ),
+				'Plugin must be ≥ 9.24.0 once Phase 1B (lafka-wc-events.php) ships.'
 			);
 		}
 
