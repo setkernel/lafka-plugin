@@ -18,3 +18,11 @@ $wpdb->query(
 		'text'
 	)
 );
+
+// v9.27.0 (Phase 3B): drop the abandoned-cart table on plugin uninstall.
+// Deactivation keeps the table so flip-off/on doesn't lose pending rows; only
+// a full uninstall removes the schema + option marker.
+$ac_table = $wpdb->prefix . 'lafka_abandoned_carts';
+// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is a code-controlled prefix concatenation.
+$wpdb->query( "DROP TABLE IF EXISTS {$ac_table}" );
+delete_option( 'lafka_abandoned_cart_db_version' );

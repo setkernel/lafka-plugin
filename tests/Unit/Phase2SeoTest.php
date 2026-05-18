@@ -58,10 +58,16 @@ final class Phase2SeoTest extends TestCase {
 
 	public function test_plugin_version_bumped_to_9_26_0(): void {
 		$src = (string) file_get_contents( $this->plugin_root() . '/lafka-plugin.php' );
-		$this->assertMatchesRegularExpression(
-			'/Version:\s*9\.26\.0\b/',
-			$src,
-			'Plugin header must declare version 9.26.0 for Phase 2.'
+		// Forward-compatible: Phase 2 landed at 9.26.0 and later phases bump
+		// past it (3B → 9.27.0, etc). Lock the floor, not the exact version.
+		if ( ! preg_match( '/Version:\s*(\d+)\.(\d+)\.(\d+)/', $src, $m ) ) {
+			$this->fail( 'Plugin header missing Version:.' );
+		}
+		$version = sprintf( '%03d.%03d.%03d', (int) $m[1], (int) $m[2], (int) $m[3] );
+		$this->assertGreaterThanOrEqual(
+			'009.026.000',
+			$version,
+			'Plugin header version must be >= 9.26.0 (Phase 2 floor).'
 		);
 	}
 

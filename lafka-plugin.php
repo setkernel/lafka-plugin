@@ -3,7 +3,7 @@
 	Plugin Name: Lafka Plugin
 	Plugin URI: https://github.com/setkernel/lafka-plugin
 	Description: Companion plugin for the Lafka WooCommerce theme. Originally by theAlThemist, now community-maintained.
-	Version: 9.26.0
+	Version: 9.27.0
 	Author: theAlThemist, Contributors
 	Author URI: https://github.com/setkernel/lafka-plugin
 	Requires at least: 6.6
@@ -323,6 +323,83 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/analytics/lafka-wc-events.php';
  *   this version.
  */
 require_once plugin_dir_path( __FILE__ ) . 'incl/analytics/lafka-custom-events.php';
+
+/**
+ * v9.27.0 (Phase 3B — Analytics + SEO + Conversion plan):
+ *
+ *   - incl/conversion/lafka-abandoned-cart-db.php   creates / migrates the
+ *     `wp_lafka_abandoned_carts` table via dbDelta. Self-heals on plugins_loaded
+ *     if the schema version drifted. Exposes save_cart / mark_recovered /
+ *     mark_recovery_sent / get_pending / get_row_by_token / cleanup /
+ *     delete_by_email helpers.
+ *   - incl/conversion/lafka-abandoned-cart-capture.php  hooks
+ *     `woocommerce_checkout_update_order_review` (saves email + cart whenever a
+ *     visitor edits the order-review block) and `woocommerce_checkout_order_processed`
+ *     (marks the row recovered so cron never sends to a completed customer).
+ *     Also cascades WC account deletions into the abandoned-cart table.
+ *   - incl/conversion/lafka-abandoned-cart-cron.php  registers
+ *     `every_fifteen_minutes` via cron_schedules, schedules the
+ *     `lafka_check_abandoned_carts` event + the daily
+ *     `lafka_cleanup_abandoned_carts` event. Both events self-heal on
+ *     plugins_loaded so a missing schedule re-registers automatically.
+ *   - incl/conversion/lafka-abandoned-cart-email.php  registers the
+ *     `LAFKA_Abandoned_Cart_Email` WC_Email subclass through the
+ *     `woocommerce_email_classes` filter so the recovery email inherits WC's
+ *     own header/footer/styling. The class body lives in the sibling
+ *     class-lafka-abandoned-cart-email-class.php file (lazy-loaded — WC_Email
+ *     isn't defined until WC has booted).
+ *   - incl/conversion/lafka-abandoned-cart-resume.php  hooks `init` priority 5
+ *     to inspect `$_GET['lafka_resume_cart']`, restore the visitor's cart, and
+ *     redirect to /cart/.
+ *   - incl/customizer/class-lafka-customizer-abandoned-cart.php  registers the
+ *     `lafka_abandoned_cart` Customizer panel — enable toggle (default OFF),
+ *     delay minutes, subject + heading + body + CTA label overrides, global
+ *     opt-out blocklist.
+ *
+ * The DB module loads first so its helpers are available to the capture / cron
+ * layers (which call lafka_ac_save_cart / lafka_ac_get_pending). All six files
+ * are safe to load on every request — each one self-gates on the
+ * `lafka_ac_enabled` Customizer toggle and no-ops when disabled.
+ */
+require_once plugin_dir_path( __FILE__ ) . 'incl/conversion/lafka-abandoned-cart-db.php';
+require_once plugin_dir_path( __FILE__ ) . 'incl/conversion/lafka-abandoned-cart-capture.php';
+require_once plugin_dir_path( __FILE__ ) . 'incl/conversion/lafka-abandoned-cart-cron.php';
+require_once plugin_dir_path( __FILE__ ) . 'incl/conversion/lafka-abandoned-cart-email.php';
+require_once plugin_dir_path( __FILE__ ) . 'incl/conversion/lafka-abandoned-cart-resume.php';
+require_once plugin_dir_path( __FILE__ ) . 'incl/customizer/class-lafka-customizer-abandoned-cart.php';
+
+/**
+ * v9.27.0: activation + deactivation hooks for the abandoned-cart module.
+ *
+ *   on activate   →  install the table + register the WP-Cron events
+ *   on deactivate →  unschedule the cron events (table is intentionally kept
+ *                    so flipping off/on doesn't lose pending recovery rows)
+ *
+ * The table itself is dropped only on plugin uninstall (uninstall.php).
+ */
+if ( function_exists( 'register_activation_hook' ) ) {
+	register_activation_hook(
+		__FILE__,
+		static function () {
+			if ( function_exists( 'lafka_ac_install_table' ) ) {
+				lafka_ac_install_table();
+			}
+			if ( function_exists( 'lafka_ac_schedule_events' ) ) {
+				lafka_ac_schedule_events();
+			}
+		}
+	);
+}
+if ( function_exists( 'register_deactivation_hook' ) ) {
+	register_deactivation_hook(
+		__FILE__,
+		static function () {
+			if ( function_exists( 'lafka_ac_unschedule_events' ) ) {
+				lafka_ac_unschedule_events();
+			}
+		}
+	);
+}
 
 /**
  * P6-A11Y-9 (W2-T7): WP-CLI command to backfill missing/garbage image alt text.

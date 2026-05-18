@@ -68,6 +68,10 @@ if ( ! class_exists( 'WC_Email' ) ) {
 			return method_exists( $this, 'get_default_additional_content' ) ? (string) $this->get_default_additional_content() : '';
 		}
 
+		public function get_blogname(): string {
+			return 'Test Site';
+		}
+
 		public function send( $to, $subject, $message, $headers = '', $attachments = array() ): bool { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
 			return true;
 		}
