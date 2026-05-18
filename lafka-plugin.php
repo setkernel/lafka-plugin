@@ -3,7 +3,7 @@
 	Plugin Name: Lafka Plugin
 	Plugin URI: https://github.com/setkernel/lafka-plugin
 	Description: Companion plugin for the Lafka WooCommerce theme. Originally by theAlThemist, now community-maintained.
-	Version: 9.22.3
+	Version: 9.23.0
 	Author: theAlThemist, Contributors
 	Author URI: https://github.com/setkernel/lafka-plugin
 	Requires at least: 6.6
@@ -242,6 +242,23 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/seo/lafka-shop-canonical.php';
  * pages — Lafka already emits a cleaner one in the consolidated @graph.
  */
 require_once plugin_dir_path( __FILE__ ) . 'incl/seo/lafka-suppress-wc-breadcrumb-jsonld.php';
+
+/**
+ * v9.23.0 (Phase 1A — Analytics + SEO + Conversion plan):
+ *
+ *   - incl/customizer/class-lafka-customizer-analytics.php registers the
+ *     `lafka_analytics` Customizer panel (GTM container, direct GA4/Clarity/
+ *     Pixel IDs, GSC verification, Consent Mode v2 defaults + banner copy).
+ *     The class self-gates inside customize_register, so it is safe to load
+ *     on both admin and front-end.
+ *   - incl/analytics/lafka-analytics-emitter.php hooks wp_head (priority 1
+ *     for consent default + GSC, priority 2 for the tag snippets),
+ *     wp_body_open (GTM noscript), and wp_footer (consent banner +
+ *     no-wp_body_open fallback). All emitters no-op when their respective
+ *     IDs are empty, so loading unconditionally is zero-cost.
+ */
+require_once plugin_dir_path( __FILE__ ) . 'incl/customizer/class-lafka-customizer-analytics.php';
+require_once plugin_dir_path( __FILE__ ) . 'incl/analytics/lafka-analytics-emitter.php';
 
 /**
  * P6-A11Y-9 (W2-T7): WP-CLI command to backfill missing/garbage image alt text.
