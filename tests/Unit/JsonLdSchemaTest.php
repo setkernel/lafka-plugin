@@ -152,6 +152,51 @@ final class JsonLdSchemaTest extends TestCase {
 		$this->assertStringContainsString( '$has_basics', $src );
 	}
 
+	// ────────────────────────────────────────────────────────────────────────
+	// v9.22.2 — Product schema description fallback (160-char cap)
+	// ────────────────────────────────────────────────────────────────────────
+
+	/**
+	 * Visual QA on 2026-05-18 found PDP Product entities had
+	 * description: null because operators left short_description empty.
+	 * Fallback to the first 160 chars of the long description prevents
+	 * null and keeps it inside Google's rich-results truncation window.
+	 */
+	public function test_product_schema_falls_back_to_full_description(): void {
+		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-product.php' );
+		$this->assertStringContainsString(
+			'get_description',
+			$src,
+			'Product schema must read $product->get_description() as a fallback when short_description is empty.'
+		);
+	}
+
+	/**
+	 * The 160-char cap mirrors the SERP-snippet upper bound used by Google
+	 * for Product.description in rich results.
+	 */
+	public function test_product_schema_caps_fallback_at_160_chars(): void {
+		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-product.php' );
+		$this->assertMatchesRegularExpression(
+			'/>\s*160|160\s*\)/',
+			$src,
+			'Product description fallback must cap at 160 chars.'
+		);
+	}
+
+	/**
+	 * Operator-set short_description must always win — never fall through
+	 * to the truncated long description when an actual short blurb exists.
+	 */
+	public function test_product_schema_prefers_short_description(): void {
+		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-product.php' );
+		$this->assertStringContainsString(
+			'get_short_description',
+			$src,
+			'Product schema must check short_description first.'
+		);
+	}
+
 	public function test_graph_wrapper_used(): void {
 		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/schema/class-lafka-json-ld.php' );
 		$this->assertStringContainsString( "'@graph'", $src );

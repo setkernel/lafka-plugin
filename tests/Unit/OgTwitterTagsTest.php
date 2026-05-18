@@ -15,12 +15,14 @@ final class OgTwitterTagsTest extends TestCase {
         // v9.7.24: lafka_insert_og_tags now declares an inner closure
         // (`$resolve_post_image`) for image-src lookup, which trips brace-
         // counting regexes that try to extract the function body. Switched
-        // to a fixed-size window slice anchored at the function name —
-        // 6,000 bytes covers the full body comfortably.
+        // to a fixed-size window slice anchored at the function name.
+        // v9.22.2: bumped 6,000 → 9,000 bytes — the fallback-chain
+        // tiers (per-post override + Customizer default) + filter-driven
+        // locale resolution pushed the function past 7.7 KB.
         $src = file_get_contents( dirname( __DIR__, 2 ) . '/lafka-plugin.php' );
         $fn_start = strpos( $src, 'function lafka_insert_og_tags' );
         $this->assertNotFalse( $fn_start, 'function lafka_insert_og_tags not found' );
-        $body = substr( $src, $fn_start, 6000 );
+        $body = substr( $src, $fn_start, 9000 );
 
         $required = [
             'og:title',
@@ -48,7 +50,7 @@ final class OgTwitterTagsTest extends TestCase {
         // wrong aspect ratios for any non-square thumbnail).
         $src = file_get_contents( dirname( __DIR__, 2 ) . '/lafka-plugin.php' );
         $fn_start = strpos( $src, 'function lafka_insert_og_tags' );
-        $body = substr( $src, $fn_start, 6000 );
+        $body = substr( $src, $fn_start, 9000 );
 
         $this->assertStringContainsString(
             'wp_get_attachment_image_src',
@@ -142,10 +144,16 @@ final class OgTwitterTagsTest extends TestCase {
      * and og:title=site-name, not the page's literal title.
      */
     public function test_front_page_branch_runs_before_singular_branch(): void {
+        // v9.22.2: switched from a greedy `\n}\s*}` regex to a fixed-size
+        // window slice. The fallback-chain refactor introduced nested
+        // closures whose own `}` blocks ended the original lazy match too
+        // early.
         $src = file_get_contents( dirname( __DIR__, 2 ) . '/lafka-plugin.php' );
-        preg_match( '/function\s+lafka_insert_og_tags\s*\([^)]*\)\s*\{(.*?)\n\s*\}\s*\}/s', $src, $m );
-        $this->assertNotEmpty( $m, 'function lafka_insert_og_tags not found' );
-        $body = $m[1];
+        $fn_start = strpos( $src, 'function lafka_insert_og_tags' );
+        $this->assertNotFalse( $fn_start, 'function lafka_insert_og_tags not found' );
+        // The slice must extend past the if/elseif chain (singular branch
+        // is the 2nd elseif arm). 9 KB covers the full function comfortably.
+        $body = substr( $src, $fn_start, 9000 );
 
         $front_pos    = strpos( $body, 'is_front_page()' );
         $singular_pos = strpos( $body, 'is_singular() && $post' );
@@ -171,5 +179,93 @@ final class OgTwitterTagsTest extends TestCase {
             $src,
             'og:type=restaurant.restaurant literal must remain in lafka_insert_og_tags'
         );
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // v9.22.2 — og:image fallback chain + locale Customizer/filter
+    // ────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Tier 1 of the v9.22.2 fallback chain: per-page _lafka_og_image post meta
+     * override. Operators can pin a specific OG image on any page.
+     */
+    public function test_og_image_reads_per_post_override_meta(): void {
+        $src = file_get_contents( dirname( __DIR__, 2 ) . '/lafka-plugin.php' );
+        $this->assertStringContainsString(
+            "'_lafka_og_image'",
+            $src,
+            'Per-post _lafka_og_image meta override (Tier 1) must be read in lafka_insert_og_tags.'
+        );
+    }
+
+    /**
+     * Tier 3 of the v9.22.2 fallback chain: Customizer-pinned default image.
+     * Without this, /menu/ and /contact-us/ emit no og:image at all
+     * (visual QA report O06-menu, O06-contact).
+     */
+    public function test_og_image_falls_back_to_customizer_default(): void {
+        $src = file_get_contents( dirname( __DIR__, 2 ) . '/lafka-plugin.php' );
+        $this->assertStringContainsString(
+            "'lafka_og_image_default'",
+            $src,
+            'Customizer lafka_og_image_default (Tier 3) must be read as a fallback.'
+        );
+    }
+
+    /**
+     * v9.22.2 locale override: `lafka_og_locale` filter lets a plugin/theme
+     * pin og:locale per-request without changing WP Settings.
+     */
+    public function test_og_locale_passes_through_filter(): void {
+        $src = file_get_contents( dirname( __DIR__, 2 ) . '/lafka-plugin.php' );
+        $this->assertMatchesRegularExpression(
+            "/apply_filters\(\s*['\"]lafka_og_locale['\"]/",
+            $src,
+            'og:locale must pass through `lafka_og_locale` filter for plugin/theme overrides.'
+        );
+    }
+
+    /**
+     * v9.22.2: Customizer setting `lafka_default_locale` takes precedence over
+     * Settings → General → Site Language so operators on `en_US` WP installs
+     * can pin `en_CA` for og:locale + <html lang> without WP wrangling.
+     */
+    public function test_og_locale_reads_customizer_default_locale(): void {
+        $src = file_get_contents( dirname( __DIR__, 2 ) . '/lafka-plugin.php' );
+        $this->assertStringContainsString(
+            "'lafka_default_locale'",
+            $src,
+            'Customizer lafka_default_locale must be read by lafka_insert_og_tags.'
+        );
+    }
+
+    /**
+     * <html lang> must also honour `lafka_default_locale` — otherwise og:locale
+     * and html-lang disagree, confusing crawlers.
+     */
+    public function test_language_attributes_filter_registered(): void {
+        $src = file_get_contents( dirname( __DIR__, 2 ) . '/lafka-plugin.php' );
+        $this->assertMatchesRegularExpression(
+            "/add_filter\(\s*['\"]language_attributes['\"]\s*,\s*['\"]lafka_filter_language_attributes['\"]/",
+            $src,
+            'language_attributes filter must be registered to drive <html lang> from Customizer.'
+        );
+        $this->assertStringContainsString(
+            'function lafka_filter_language_attributes',
+            $src,
+            'lafka_filter_language_attributes callback must exist.'
+        );
+    }
+
+    /**
+     * `lafka_filter_language_attributes` must skip admin so back-office i18n
+     * is unaffected.
+     */
+    public function test_language_attributes_filter_skips_admin(): void {
+        $src = file_get_contents( dirname( __DIR__, 2 ) . '/lafka-plugin.php' );
+        $fn_start = strpos( $src, 'function lafka_filter_language_attributes' );
+        $this->assertNotFalse( $fn_start, 'lafka_filter_language_attributes function not found' );
+        $body = substr( $src, $fn_start, 2000 );
+        $this->assertStringContainsString( 'is_admin()', $body );
     }
 }

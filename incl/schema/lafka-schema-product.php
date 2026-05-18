@@ -47,16 +47,29 @@ function lafka_schema_product(): ?array {
 		),
 	);
 
-	// Short description.
+	// Short description, with fallback to a 160-char excerpt of the full
+	// description so PDP schema never emits `description: null`. The QA
+	// pass on 2026-05-18 found Cheese Pizza's Product entity had a null
+	// description because the operator only filled in the long description.
 	$short_desc = wp_strip_all_tags( $product->get_short_description() );
 	if ( '' !== $short_desc ) {
 		$schema['description'] = $short_desc;
-	} elseif ( '' !== $product->get_description() ) {
-		$schema['description'] = wp_trim_words(
-			wp_strip_all_tags( $product->get_description() ),
-			30,
-			'...'
-		);
+	} else {
+		$full_desc = wp_strip_all_tags( (string) $product->get_description() );
+		if ( '' !== $full_desc ) {
+			// 160 chars is the practical SERP-snippet upper bound; Google
+			// truncates Product.description in rich results around 150-160.
+			// Collapse whitespace runs first so the cap doesn't fall in
+			// the middle of a long indent/newline block.
+			$full_desc = trim( (string) preg_replace( '/\s+/', ' ', $full_desc ) );
+			if ( function_exists( 'mb_strlen' ) && mb_strlen( $full_desc ) > 160 ) {
+				$schema['description'] = rtrim( mb_substr( $full_desc, 0, 157 ) ) . '...';
+			} elseif ( strlen( $full_desc ) > 160 ) {
+				$schema['description'] = rtrim( substr( $full_desc, 0, 157 ) ) . '...';
+			} else {
+				$schema['description'] = $full_desc;
+			}
+		}
 	}
 
 	// Featured image.

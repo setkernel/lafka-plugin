@@ -60,6 +60,7 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 			self::register_cuisine_payment_section( $wp_customize );
 			self::register_same_as_section( $wp_customize );
 			self::register_homepage_hero_section( $wp_customize );
+			self::register_social_sharing_section( $wp_customize );
 		}
 
 		/**
@@ -495,7 +496,7 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 					'description' => esc_html__( 'Image preloaded on the homepage for fastest Largest Contentful Paint. Used by the lafka_lcp_image_url filter in lafka-plugin (incl/perf/lcp-preload.php). Image emitted as a `<link rel="preload">` from the theme\'s header.php.', 'lafka-plugin' ),
 					'panel'       => 'lafka_restaurant_info',
 					'priority'    => 70,
-                ) 
+                )
             );
 
 			$wp_customize->add_setting(
@@ -504,7 +505,7 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 					'default'           => '',
 					'transport'         => 'refresh',
 					'sanitize_callback' => 'esc_url_raw',
-                ) 
+                )
             );
 			$wp_customize->add_control(
 				new WP_Customize_Image_Control(
@@ -515,6 +516,83 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 						'description' => esc_html__( 'Leave empty to disable LCP preloading.', 'lafka-plugin' ),
 						'section'     => 'lafka_homepage_hero',
 					)
+				)
+			);
+		}
+
+		// ====================================================================
+		// Section: Social Sharing (OG image + locale)
+		// ====================================================================
+
+		/**
+		 * Sanitize a locale code (e.g. en_CA, fr_FR, en-US).
+		 *
+		 * Accepts letters, digits, hyphens, and underscores; max 35 chars.
+		 * Empty input is allowed (signals "fall back to get_locale()").
+		 */
+		public static function sanitize_locale( $value ): string {
+			if ( ! is_scalar( $value ) ) {
+				return '';
+			}
+			$value = trim( (string) $value );
+			if ( '' === $value ) {
+				return '';
+			}
+			if ( ! preg_match( '/^[A-Za-z0-9_\-]{2,35}$/', $value ) ) {
+				return '';
+			}
+			return $value;
+		}
+
+		private static function register_social_sharing_section( $wp_customize ): void {
+			$wp_customize->add_section(
+				'lafka_social_sharing',
+				array(
+					'title'       => esc_html__( 'Social Sharing (OG / Twitter)', 'lafka-plugin' ),
+					'description' => esc_html__( 'Default image and locale for OpenGraph / Twitter Card previews. The image is used when a page has no featured image of its own (e.g. /menu/, /contact-us/) — pin a hero food photo here for great social-share previews everywhere.', 'lafka-plugin' ),
+					'panel'       => 'lafka_restaurant_info',
+					'priority'    => 80,
+				)
+			);
+
+			$wp_customize->add_setting(
+				'lafka_og_image_default',
+				array(
+					'default'           => '',
+					'transport'         => 'refresh',
+					'sanitize_callback' => 'esc_url_raw',
+				)
+			);
+			$wp_customize->add_control(
+				new WP_Customize_Image_Control(
+					$wp_customize,
+					'lafka_og_image_default',
+					array(
+						'label'       => esc_html__( 'Default OG / Twitter image', 'lafka-plugin' ),
+						'description' => esc_html__( 'Used when a page has no per-page override and no featured image. Falls back to the site icon when empty. Recommended: 1200×630 food hero photo.', 'lafka-plugin' ),
+						'section'     => 'lafka_social_sharing',
+					)
+				)
+			);
+
+			$wp_customize->add_setting(
+				'lafka_default_locale',
+				array(
+					'default'           => '',
+					'transport'         => 'refresh',
+					'sanitize_callback' => array( __CLASS__, 'sanitize_locale' ),
+				)
+			);
+			$wp_customize->add_control(
+				'lafka_default_locale',
+				array(
+					'label'       => esc_html__( 'Default locale (overrides Site Language)', 'lafka-plugin' ),
+					'description' => esc_html__( 'Locale code for <html lang> and og:locale. Use en_CA for Canadian English, en_US for US English, fr_FR, etc. Leave empty to inherit from Settings → General → Site Language. Recommended for Canadian restaurants whose WP install is on English (United States).', 'lafka-plugin' ),
+					'section'     => 'lafka_social_sharing',
+					'type'        => 'text',
+					'input_attrs' => array(
+						'placeholder' => 'en_CA',
+					),
 				)
 			);
 		}

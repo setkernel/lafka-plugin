@@ -3,7 +3,7 @@
 	Plugin Name: Lafka Plugin
 	Plugin URI: https://github.com/setkernel/lafka-plugin
 	Description: Companion plugin for the Lafka WooCommerce theme. Originally by theAlThemist, now community-maintained.
-	Version: 9.22.1
+	Version: 9.22.2
 	Author: theAlThemist, Contributors
 	Author URI: https://github.com/setkernel/lafka-plugin
 	Requires at least: 6.6
@@ -503,6 +503,14 @@ function lafka_plugin_after_plugins_loaded() {
 	 * archive dietary filter actually has terms to match against.
 	 */
 	require_once plugin_dir_path( __FILE__ ) . 'incl/woocommerce/lafka-dietary-tags.php';
+
+	/**
+	 * v9.22.2 (2026-05-18): Runtime product-image alt-text backfill. Fills in
+	 * `alt=""` from the parent product name when an operator forgot to set
+	 * the attachment alt during upload. Visual QA found 104/108 product
+	 * images missing alt on /menu/.
+	 */
+	require_once plugin_dir_path( __FILE__ ) . 'incl/woocommerce/lafka-product-image-alt.php';
 
 	// Removed because causes categories to appear twice in shop and category view.
 	// Functionality not lost, because "woocommerce_maybe_show_product_subcategories" is called
@@ -1366,6 +1374,20 @@ if ( ! function_exists( 'lafka_insert_og_tags' ) ) {
 	/**
 	 * Emit OpenGraph + Twitter Card tags on every public page.
 	 * P6-SEO-5: full coverage (was og:image only).
+	 *
+	 * v9.22.2 image fallback chain (first non-empty wins):
+	 *   1. Per-post `_lafka_og_image` post meta (manual override on any page).
+	 *   2. Featured image of the singular post/product.
+	 *   3. Customizer `lafka_og_image_default` (operator-pinned hero photo).
+	 *   4. Site icon (last-resort fallback).
+	 *
+	 * Without the Customizer default, archive pages like /menu/ and
+	 * /contact-us/ emitted no `og:image` at all — bad social-share previews.
+	 *
+	 * v9.22.2 locale: emit goes through `lafka_og_locale` filter; operator
+	 * can pin a non-WP-Settings locale (e.g. en_CA when Site Language is
+	 * still en_US) via Customizer `lafka_default_locale`. Same value drives
+	 * `<html lang>` via the language_attributes filter below.
 	 */
 	function lafka_insert_og_tags() {
 		if ( is_admin() || is_feed() || is_404() ) {
@@ -1397,6 +1419,25 @@ if ( ! function_exists( 'lafka_insert_og_tags' ) ) {
 		$image_height = 0;
 
 		$resolve_post_image = static function ( $post_id ) use ( &$image, &$image_width, &$image_height ) {
+			// Tier 1: per-post override via `_lafka_og_image` post meta.
+			// Stored as either a numeric attachment ID or a raw URL.
+			$override = get_post_meta( (int) $post_id, '_lafka_og_image', true );
+			if ( $override ) {
+				if ( is_numeric( $override ) ) {
+					$src = wp_get_attachment_image_src( (int) $override, 'large' );
+					if ( is_array( $src ) && ! empty( $src[0] ) ) {
+						$image        = (string) $src[0];
+						$image_width  = (int) ( $src[1] ?? 0 );
+						$image_height = (int) ( $src[2] ?? 0 );
+						return;
+					}
+				} else {
+					$image = (string) $override;
+					// Unknown dimensions — emitter will skip width/height tags.
+					return;
+				}
+			}
+			// Tier 2: featured image of the singular post/product.
 			$thumb_id = (int) get_post_thumbnail_id( $post_id );
 			if ( ! $thumb_id ) {
 				return;
@@ -1416,14 +1457,6 @@ if ( ! function_exists( 'lafka_insert_og_tags' ) ) {
 			$url         = home_url( '/' );
 			if ( is_singular() && $post ) {
 				$resolve_post_image( $post->ID );
-			}
-			if ( '' === $image && function_exists( 'get_site_icon_url' ) ) {
-				$icon = get_site_icon_url( 1200 );
-				if ( $icon ) {
-					$image        = $icon;
-					$image_width  = 1200; // site icons are always square at the requested size.
-					$image_height = 1200;
-				}
 			}
 			$og_type     = 'restaurant.restaurant';
 		} elseif ( is_singular() && $post ) {
@@ -1445,8 +1478,48 @@ if ( ! function_exists( 'lafka_insert_og_tags' ) ) {
 			$og_type     = 'website';
 		}
 
+		// Tier 3: Customizer-pinned default OG image. Applies on any page
+		// that fell through tiers 1+2 (archives, /menu/, /contact-us/,
+		// homepage without featured image, etc).
+		if ( '' === $image ) {
+			$og_default = get_theme_mod( 'lafka_og_image_default', '' );
+			if ( '' !== $og_default && null !== $og_default ) {
+				if ( is_numeric( $og_default ) ) {
+					$src = wp_get_attachment_image_src( (int) $og_default, 'large' );
+					if ( is_array( $src ) && ! empty( $src[0] ) ) {
+						$image        = (string) $src[0];
+						$image_width  = (int) ( $src[1] ?? 0 );
+						$image_height = (int) ( $src[2] ?? 0 );
+					}
+				} else {
+					$image = (string) $og_default;
+					// String URL — dimensions unknown, width/height tags skipped.
+				}
+			}
+		}
+
+		// Tier 4 (last resort): site icon. Square, low resolution — still
+		// better than no preview at all.
+		if ( '' === $image && function_exists( 'get_site_icon_url' ) ) {
+			$icon = get_site_icon_url( 1200 );
+			if ( $icon ) {
+				$image        = $icon;
+				$image_width  = 1200; // site icons are always square at the requested size.
+				$image_height = 1200;
+			}
+		}
+
 		$site_name = get_bloginfo( 'name' );
-		$locale    = str_replace( '-', '_', get_locale() ); // e.g. en_CA
+
+		// Locale: Customizer default (operator-pinned) takes precedence over
+		// WP Settings → General → Site Language. Output normalized to "xx_YY"
+		// (underscore, not hyphen). The `lafka_og_locale` filter lets a
+		// theme/plugin override per-request without touching settings.
+		$customizer_locale = (string) get_theme_mod( 'lafka_default_locale', '' );
+		$locale            = '' !== $customizer_locale
+			? str_replace( '-', '_', $customizer_locale )
+			: str_replace( '-', '_', get_locale() );
+		$locale            = (string) apply_filters( 'lafka_og_locale', $locale );
 
 		// ===== Emit =====
 		printf( '<meta property="og:title" content="%s">' . "\n", esc_attr( $title ) );
@@ -1473,6 +1546,49 @@ if ( ! function_exists( 'lafka_insert_og_tags' ) ) {
 		if ( $image ) {
 			printf( '<meta name="twitter:image" content="%s">' . "\n", esc_url( $image ) );
 		}
+	}
+}
+
+/**
+ * Drive <html lang="…"> from the Customizer `lafka_default_locale` setting
+ * (v9.22.2). Without this filter the WP core uses Settings → General →
+ * Site Language. Operators on `en_US` WP installs that serve a Canadian
+ * audience can pin `en_CA` (or any other locale) via the Customizer
+ * "Social Sharing" section without wrangling WP Settings.
+ *
+ * Frontend only — admin keeps the WP core locale for back-office i18n.
+ */
+add_filter( 'language_attributes', 'lafka_filter_language_attributes', 10, 2 );
+if ( ! function_exists( 'lafka_filter_language_attributes' ) ) {
+	/**
+	 * @param string $output Existing attribute string e.g. `lang="en-US"`.
+	 * @param string $doctype Either 'html' or 'xhtml'.
+	 */
+	function lafka_filter_language_attributes( $output, $doctype = 'html' ) {
+		if ( is_admin() ) {
+			return $output;
+		}
+		if ( ! function_exists( 'get_theme_mod' ) ) {
+			return $output;
+		}
+		$override = (string) get_theme_mod( 'lafka_default_locale', '' );
+		if ( '' === $override ) {
+			return $output;
+		}
+		// Allow plugins/themes to short-circuit. Mirror the OG filter name
+		// for discoverability — same setting drives both surfaces.
+		$override = (string) apply_filters( 'lafka_og_locale', str_replace( '-', '_', $override ) );
+		// `<html lang>` uses hyphen form per BCP-47 (e.g. en-CA), so flip
+		// the underscore the filter normalised on.
+		$lang_attr = str_replace( '_', '-', $override );
+		$replacement = sprintf( 'lang="%s"', esc_attr( $lang_attr ) );
+		// Replace any existing lang="…" attribute; append when absent.
+		if ( preg_match( '/\blang="[^"]*"/', $output ) ) {
+			$output = preg_replace( '/\blang="[^"]*"/', $replacement, $output, 1 );
+		} else {
+			$output = trim( $output . ' ' . $replacement );
+		}
+		return $output;
 	}
 }
 

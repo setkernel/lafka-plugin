@@ -195,4 +195,41 @@ final class CustomizerSanitizersTest extends TestCase {
 	public function test_sanitize_business_type_returns_empty_for_non_scalar(): void {
 		$this->assertSame( '', Lafka_Customizer_Restaurant_Info::sanitize_business_type( array() ) );
 	}
+
+	// ────────────────────────────────────────────────────────────────────────
+	// sanitize_locale — locale code allowlist (v9.22.2)
+	// ────────────────────────────────────────────────────────────────────────
+
+	/** @dataProvider localeValidProvider */
+	public function test_sanitize_locale_accepts_valid( $input, string $expected ): void {
+		$this->assertSame( $expected, Lafka_Customizer_Restaurant_Info::sanitize_locale( $input ) );
+	}
+
+	public function localeValidProvider(): array {
+		return array(
+			'underscore-form'    => array( 'en_CA', 'en_CA' ),
+			'hyphen-form'        => array( 'en-CA', 'en-CA' ),
+			'us-english'         => array( 'en_US', 'en_US' ),
+			'french-france'      => array( 'fr_FR', 'fr_FR' ),
+			'two-letter'         => array( 'fr', 'fr' ),
+			'whitespace-trimmed' => array( '  en_CA  ', 'en_CA' ),
+			'empty-allowed'      => array( '', '' ),
+		);
+	}
+
+	/** @dataProvider localeInvalidProvider */
+	public function test_sanitize_locale_rejects_invalid( $input ): void {
+		$this->assertSame( '', Lafka_Customizer_Restaurant_Info::sanitize_locale( $input ) );
+	}
+
+	public function localeInvalidProvider(): array {
+		return array(
+			'too-short'      => array( 'x' ),
+			'space-inside'   => array( 'en CA' ),
+			'special-chars'  => array( 'en@CA' ),
+			'array-input'    => array( array( 'en_CA' ) ),
+			'object-input'   => array( new \stdClass() ),
+			'sql-injection'  => array( "en'; DROP TABLE--" ),
+		);
+	}
 }
