@@ -176,9 +176,29 @@ if ( ! function_exists( 'lafka_get_restaurant_info' ) ) {
 			'menu_url'        => $menu_url,
 		);
 
-		// Phone display falls back to e164 (raw +15551234567) if no separate display set.
+		// Phone fallbacks — handle both directions so operators only need to fill one field.
+		//
+		// Forward: display falls back to e164 (raw +15551234567) if no separate display set.
 		if ( '' === $info['phone_display'] && '' !== $info['phone_e164'] ) {
 			$info['phone_display'] = $info['phone_e164'];
+		}
+		// Reverse (v9.22.3): when e164 is blank but display has digits, derive an E.164
+		// by stripping all non-digit characters and prepending "+". Without this, the
+		// tap-to-call tel: link silently fell back to woocommerce_store_phone — so an
+		// operator updating "Phone (display)" in WC Restaurant Settings got the visible
+		// text changed but the tel link kept calling the old WC store number.
+		if ( '' === $info['phone_e164'] && '' !== $info['phone_display'] ) {
+			$digits = preg_replace( '/[^0-9]/', '', (string) $info['phone_display'] );
+			if ( '' !== $digits ) {
+				// If the operator typed digits only (e.g. "9024042888") and the WC store
+				// country is CA or US, prepend "+1" so the link is a valid E.164.
+				// Otherwise just prepend "+" — caller is responsible for country code.
+				$country = isset( $wc_country ) ? strtoupper( (string) $wc_country ) : '';
+				if ( strlen( $digits ) === 10 && in_array( $country, array( 'CA', 'US' ), true ) ) {
+					$digits = '1' . $digits;
+				}
+				$info['phone_e164'] = '+' . $digits;
+			}
 		}
 
 		// Normalize cuisines/payment_methods: cast to string array regardless

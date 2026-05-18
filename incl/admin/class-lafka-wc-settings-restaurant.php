@@ -215,10 +215,25 @@ if ( ! function_exists( 'lafka_define_wc_settings_restaurant_class' ) ) {
 						'default'  => '$$',
 					),
 					array(
+						'title'       => __( 'Phone (tap-to-call / E.164)', 'lafka-plugin' ),
+						'desc_tip'    => __( 'Machine-readable phone in E.164 format used for the tap-to-call tel: link. Example: +19024042888 (no spaces or dashes, with country code). Leave blank to inherit from WooCommerce → Settings → General → Store phone. When this is empty but "Phone (display format)" is set, the resolver auto-derives an E.164 by stripping non-digits.', 'lafka-plugin' ),
+						'id'          => 'lafka_business_phone_e164',
+						'type'        => 'text',
+						'default'     => '',
+						'placeholder' => '+19024042888',
+					),
+					array(
 						'title'    => __( 'Phone (display format)', 'lafka-plugin' ),
-						'desc_tip' => __( 'Human-readable phone for UI. Leave blank to fall back to the WooCommerce store phone. The tap-to-call E.164 link is generated from your WC store phone automatically.', 'lafka-plugin' ),
+						'desc_tip' => __( 'Human-readable phone shown in the announce bar, contact page, footer, and JSON-LD. Example: (902) 404-2888. Leave blank to mirror the E.164 number above.', 'lafka-plugin' ),
 						'id'       => 'lafka_business_phone_display',
 						'type'     => 'text',
+						'default'  => '',
+					),
+					array(
+						'title'    => __( 'Business email (customer-facing)', 'lafka-plugin' ),
+						'desc_tip' => __( 'The address customers see and click — surfaces in the contact CTA, footer, and JSON-LD email field. Leave blank to fall back to the WordPress administration email at Settings → General.', 'lafka-plugin' ),
+						'id'       => 'lafka_business_email',
+						'type'     => 'email',
 						'default'  => '',
 					),
 					array(
@@ -301,17 +316,16 @@ if ( ! function_exists( 'lafka_define_wc_settings_restaurant_class' ) ) {
 			 * @return string Combined HTML safe for WC's settings 'desc'.
 			 */
 			private function intro_html( $body ) {
-				$wc_general  = admin_url( 'admin.php?page=wc-settings&tab=general' );
-				$wp_general  = admin_url( 'options-general.php' );
+				$wc_general    = admin_url( 'admin.php?page=wc-settings&tab=general' );
+				$wp_general    = admin_url( 'options-general.php' );
 				$site_identity = admin_url( 'customize.php?autofocus[section]=title_tagline' );
 
-				/* translators: 1: WP General Settings URL; 2: WC General Settings URL; 3: Customize → Site Identity URL */
 				$footer = sprintf(
 					'<div style="margin-top: 12px; padding: 10px 12px; background: #f6f7f7; border-left: 4px solid #007cba; font-size: 13px; line-height: 1.5;"><strong>%1$s</strong><br>%2$s</div>',
-					esc_html__( 'Lafka picks these up from their canonical homes — no need to duplicate them here:', 'lafka-plugin' ),
+					esc_html__( 'Canonical fallback locations — fill in fields below only to override:', 'lafka-plugin' ),
 					sprintf(
-						/* translators: 1: site title link; 2: WC address link; 3: WC phone link */
-						esc_html__( 'Site name → %1$s · Address → %2$s · Phone & email → %3$s', 'lafka-plugin' ),
+						/* translators: 1: site title link; 2: WC store address link; 3: WP admin email link */
+						esc_html__( 'Site name → %1$s · Store address & phone → %2$s · Administration email → %3$s', 'lafka-plugin' ),
 						'<a href="' . esc_url( $site_identity ) . '">' . esc_html__( 'Site Identity', 'lafka-plugin' ) . '</a>',
 						'<a href="' . esc_url( $wc_general ) . '">' . esc_html__( 'WooCommerce → Settings → General', 'lafka-plugin' ) . '</a>',
 						'<a href="' . esc_url( $wp_general ) . '">' . esc_html__( 'WordPress → Settings → General', 'lafka-plugin' ) . '</a>'
