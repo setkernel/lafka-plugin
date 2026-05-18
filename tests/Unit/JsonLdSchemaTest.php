@@ -84,6 +84,15 @@ final class JsonLdSchemaTest extends TestCase {
 	/**
 	 * Wire up Brain Monkey stubs that simulate a populated Customizer install.
 	 * Helper used by every functional test below.
+	 *
+	 * NOTE: get_woocommerce_currency is stubbed defensively here even though
+	 * the restaurant-schema generator gates its call behind function_exists().
+	 * Once any other test class (e.g. AnalyticsWcEventsTest) registers a
+	 * Brain Monkey stub on this name, the function is permanently defined
+	 * in PHP's symbol table — so function_exists() returns true and the
+	 * generator calls into it. Without a per-test expectation, it throws
+	 * MissingFunctionExpectations. Pre-stubbing here keeps the helper safe
+	 * regardless of class-execution order.
 	 */
 	private function stub_populated_install(): void {
 		Functions\when( 'get_theme_mod' )->alias( function ( $key, $default = null ) {
@@ -95,6 +104,7 @@ final class JsonLdSchemaTest extends TestCase {
 		Functions\when( 'home_url' )->justReturn( 'http://localhost:8891' );
 		Functions\when( 'trailingslashit' )->alias( fn( $url ) => rtrim( $url, '/' ) . '/' );
 		Functions\when( 'apply_filters' )->returnArg( 2 );
+		Functions\when( 'get_woocommerce_currency' )->justReturn( 'USD' );
 	}
 
 	/**
@@ -109,6 +119,7 @@ final class JsonLdSchemaTest extends TestCase {
 		Functions\when( 'home_url' )->justReturn( 'http://localhost:8891' );
 		Functions\when( 'trailingslashit' )->alias( fn( $url ) => rtrim( $url, '/' ) . '/' );
 		Functions\when( 'apply_filters' )->returnArg( 2 );
+		Functions\when( 'get_woocommerce_currency' )->justReturn( '' );
 	}
 
 	// ────────────────────────────────────────────────────────────────────────
@@ -358,6 +369,8 @@ final class JsonLdSchemaTest extends TestCase {
 		Functions\when( 'home_url' )->justReturn( 'http://localhost:8891' );
 		Functions\when( 'trailingslashit' )->alias( fn( $url ) => rtrim( $url, '/' ) . '/' );
 		Functions\when( 'apply_filters' )->returnArg( 2 );
+		// Defensive: see stub_populated_install() docstring for why.
+		Functions\when( 'get_woocommerce_currency' )->justReturn( 'USD' );
 
 		$schema = lafka_schema_restaurant();
 		$json   = json_encode( $schema, JSON_UNESCAPED_SLASHES );
@@ -402,6 +415,8 @@ final class JsonLdSchemaTest extends TestCase {
 		Functions\when( 'home_url' )->justReturn( 'http://localhost:8891' );
 		Functions\when( 'trailingslashit' )->alias( fn( $url ) => rtrim( $url, '/' ) . '/' );
 		Functions\when( 'apply_filters' )->returnArg( 2 );
+		// Defensive: see stub_populated_install() docstring for why.
+		Functions\when( 'get_woocommerce_currency' )->justReturn( 'USD' );
 
 		$schema = lafka_schema_restaurant();
 		$this->assertArrayNotHasKey( 'aggregateRating', $schema, 'aggregateRating requires both rating AND count to emit.' );

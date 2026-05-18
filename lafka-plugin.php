@@ -3,7 +3,7 @@
 	Plugin Name: Lafka Plugin
 	Plugin URI: https://github.com/setkernel/lafka-plugin
 	Description: Companion plugin for the Lafka WooCommerce theme. Originally by theAlThemist, now community-maintained.
-	Version: 9.23.0
+	Version: 9.24.0
 	Author: theAlThemist, Contributors
 	Author URI: https://github.com/setkernel/lafka-plugin
 	Requires at least: 6.6
@@ -259,6 +259,28 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/seo/lafka-suppress-wc-breadcrum
  */
 require_once plugin_dir_path( __FILE__ ) . 'incl/customizer/class-lafka-customizer-analytics.php';
 require_once plugin_dir_path( __FILE__ ) . 'incl/analytics/lafka-analytics-emitter.php';
+
+/**
+ * v9.24.0 (Phase 1B — Analytics + SEO + Conversion plan):
+ *
+ *   - incl/analytics/lafka-wc-events.php emits GA4-shape ecommerce events
+ *     (view_item, view_item_list, view_cart, begin_checkout, add_to_cart,
+ *     remove_from_cart, purchase) to window.dataLayer. View events are
+ *     synchronous server-rendered <script> tags hooked on the natural WC
+ *     template flow; interaction events queue to the WC session and flush
+ *     on the next page-load wp_footer pass. AJAX add-to-cart payloads ride
+ *     the wc-ajax fragment response so the client JS picks them up in the
+ *     same tick the cart fragment refreshes.
+ *   - assets/js/lafka-dl-client.js binds the JS-only events (select_item,
+ *     search, add_shipping_info, add_payment_info) and mirrors the AJAX
+ *     add_to_cart / remove_from_cart fragments into dataLayer. The script
+ *     is enqueued only when at least one analytics ID is configured, so
+ *     unconfigured sites pay zero request cost.
+ *
+ *   purchase is idempotent: the order's `_lafka_dl_purchase_fired` post-meta
+ *   is set after the first emit; refreshing /order-received/ won't re-fire.
+ */
+require_once plugin_dir_path( __FILE__ ) . 'incl/analytics/lafka-wc-events.php';
 
 /**
  * P6-A11Y-9 (W2-T7): WP-CLI command to backfill missing/garbage image alt text.

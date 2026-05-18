@@ -417,12 +417,19 @@ final class AnalyticsEmitterTest extends TestCase {
 		$this->assertStringContainsString( 'incl/analytics/lafka-analytics-emitter.php', $src );
 	}
 
-	public function test_plugin_version_bumped_to_9_23_0(): void {
+	public function test_plugin_version_at_or_above_9_23_0(): void {
+		// Phase 1A shipped at 9.23.0; subsequent analytics phases (1B, 1C, ...)
+		// bump the version forward. The assertion is "≥ 9.23.0" so phase
+		// shipping doesn't have to update this test on every bump.
 		$src = file_get_contents( dirname( __DIR__, 2 ) . '/lafka-plugin.php' );
-		$this->assertMatchesRegularExpression(
-			'/Version:\s*9\.23\.0\b/',
-			$src,
-			'Plugin header must declare version 9.23.0 for Phase 1A.'
+		preg_match( '/Version:\s*(\d+)\.(\d+)\.(\d+)\b/', $src, $m );
+		$this->assertNotEmpty( $m, 'Plugin header must declare a semver Version.' );
+		$major = (int) $m[1];
+		$minor = (int) $m[2];
+		$this->assertGreaterThanOrEqual( 9, $major );
+		$this->assertTrue(
+			$major > 9 || ( 9 === $major && $minor >= 23 ),
+			"Plugin version must be >= 9.23.0 (saw {$m[1]}.{$m[2]}.{$m[3]})."
 		);
 	}
 }
