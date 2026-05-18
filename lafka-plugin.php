@@ -3,7 +3,7 @@
 	Plugin Name: Lafka Plugin
 	Plugin URI: https://github.com/setkernel/lafka-plugin
 	Description: Companion plugin for the Lafka WooCommerce theme. Originally by theAlThemist, now community-maintained.
-	Version: 9.28.0
+	Version: 9.29.0
 	Author: theAlThemist, Contributors
 	Author URI: https://github.com/setkernel/lafka-plugin
 	Requires at least: 6.6
@@ -429,6 +429,79 @@ if ( function_exists( 'register_deactivation_hook' ) ) {
 require_once plugin_dir_path( __FILE__ ) . 'incl/conversion/lafka-review-prompt-email.php';
 require_once plugin_dir_path( __FILE__ ) . 'incl/conversion/lafka-review-prompt-banner.php';
 require_once plugin_dir_path( __FILE__ ) . 'incl/customizer/class-lafka-customizer-reviews.php';
+
+/**
+ * v9.29.0 (Phase 3E — Web Push notifications):
+ *
+ *   - incl/conversion/lafka-push-db.php  owns wp_lafka_push_subscriptions
+ *     (endpoint UNIQUE, p256dh, auth, user_agent, locale, timestamps,
+ *     unsubscribed_at). dbDelta migration self-heals on plugins_loaded.
+ *   - incl/conversion/lafka-push-rest.php  registers 3 REST routes under
+ *     lafka/v1:
+ *         POST /push/subscribe   (nonce — saves a subscription row)
+ *         POST /push/unsubscribe (nonce — soft-deletes a row)
+ *         GET  /push/vapid-key   (public — returns the operator's public key)
+ *   - incl/conversion/lafka-push-sender.php  raw-cURL Web Push protocol
+ *     (RFC 8030 + 8291 + 8292). Builds VAPID JWT (ES256), HKDF-derives the
+ *     content-encryption key, AES-128-GCM-encrypts the payload, POSTs to
+ *     the endpoint. Pure PHP — zero composer deps. Handles 410 Gone +
+ *     404 endpoint cleanup automatically.
+ *   - incl/conversion/lafka-push-reorder-cron.php  daily cron that finds
+ *     users whose last completed order was N days ago (default 14) and
+ *     sends "Your usual?" pushes. Per-user opt-out via user_meta.
+ *   - incl/admin/class-lafka-push-admin.php  adds a "Push notifications"
+ *     submenu under WooCommerce — audience picker (All / Recent customers /
+ *     Specific user IDs) + title/body/url/icon composer + Preview / Send +
+ *     activity log (last 20 sends in a single option).
+ *   - incl/customizer/class-lafka-customizer-push.php  registers the
+ *     `lafka_push` Customizer panel with three sections: VAPID + master
+ *     toggle, subscribe prompt (toggle + threshold + copy), reorder reminder
+ *     (toggle + days).
+ *
+ * Default OFF — operator opts in by pasting VAPID keys + flipping the
+ * master toggle. The REST routes refuse all writes when disabled. The
+ * theme's subscribe-prompt JS also gates on the master toggle (via
+ * wp_localize_script).
+ */
+require_once plugin_dir_path( __FILE__ ) . 'incl/conversion/lafka-push-db.php';
+require_once plugin_dir_path( __FILE__ ) . 'incl/conversion/lafka-push-rest.php';
+require_once plugin_dir_path( __FILE__ ) . 'incl/conversion/lafka-push-sender.php';
+require_once plugin_dir_path( __FILE__ ) . 'incl/conversion/lafka-push-reorder-cron.php';
+require_once plugin_dir_path( __FILE__ ) . 'incl/customizer/class-lafka-customizer-push.php';
+if ( is_admin() ) {
+	require_once plugin_dir_path( __FILE__ ) . 'incl/admin/class-lafka-push-admin.php';
+}
+
+/**
+ * v9.29.0: activation + deactivation hooks for the Web Push module.
+ *
+ *   on activate   → install the subscriptions table + schedule daily crons
+ *   on deactivate → unschedule cron events (table is kept so flip-off/on
+ *                   doesn't lose subscribers; uninstall.php drops the table)
+ */
+if ( function_exists( 'register_activation_hook' ) ) {
+	register_activation_hook(
+		__FILE__,
+		static function () {
+			if ( function_exists( 'lafka_push_install_table' ) ) {
+				lafka_push_install_table();
+			}
+			if ( function_exists( 'lafka_push_reorder_schedule_event' ) ) {
+				lafka_push_reorder_schedule_event();
+			}
+		}
+	);
+}
+if ( function_exists( 'register_deactivation_hook' ) ) {
+	register_deactivation_hook(
+		__FILE__,
+		static function () {
+			if ( function_exists( 'lafka_push_reorder_unschedule_event' ) ) {
+				lafka_push_reorder_unschedule_event();
+			}
+		}
+	);
+}
 
 /**
  * P6-A11Y-9 (W2-T7): WP-CLI command to backfill missing/garbage image alt text.

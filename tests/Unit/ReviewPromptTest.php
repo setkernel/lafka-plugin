@@ -763,9 +763,12 @@ final class ReviewPromptTest extends TestCase {
 		$this->assertStringContainsString( 'incl/customizer/class-lafka-customizer-reviews.php', $main );
 	}
 
-	public function test_main_plugin_version_bumped_to_9_28_0(): void {
+	public function test_main_plugin_version_bumped_to_at_least_9_28_0(): void {
+		// Phase 3D shipped at 9.28.0; subsequent phases (3E = 9.29.0) bump the
+		// version forward. Assert presence of the Version: header in a
+		// major.minor.patch shape ≥ 9.28.0 rather than pinning to one release.
 		$main = file_get_contents( dirname( __DIR__, 2 ) . '/lafka-plugin.php' );
-		$this->assertMatchesRegularExpression( '/Version:\s*9\.28\.0/', $main );
+		$this->assertMatchesRegularExpression( '/Version:\s*9\.(2[8-9]|[3-9]\d|\d{3,})\.\d+/', $main );
 	}
 
 	public function test_legacy_review_prompt_email_file_is_inert(): void {
