@@ -224,7 +224,7 @@ if ( ! class_exists( 'Lafka_Customizer_Push' ) ) {
 				'lafka_push_vapid_private_key',
 				array(
 					'label'       => esc_html__( 'VAPID private key', 'lafka-plugin' ),
-					'description' => esc_html__( 'base64url-encoded 32-byte private key (~43 chars). Treat as a secret - never share. Used to sign the VAPID JWT on every push.', 'lafka-plugin' ),
+					'description' => esc_html__( 'base64url-encoded 32-byte private key (~43 chars). Treat as a secret - never share. Used to sign the VAPID JWT on every push. SECURITY NOTE: anyone with the edit_theme_options capability can read this field. For stronger isolation on multi-admin sites, define LAFKA_PUSH_VAPID_PRIVATE_KEY (and optionally LAFKA_PUSH_VAPID_PUBLIC_KEY + LAFKA_PUSH_VAPID_SUBJECT) as constants in wp-config.php — the constant takes precedence over the theme_mod and keeps the key out of the database entirely.', 'lafka-plugin' ),
 					'section'     => 'lafka_push_main',
 					'type'        => 'password',
 				)

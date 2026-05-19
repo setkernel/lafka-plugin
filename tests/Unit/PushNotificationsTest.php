@@ -591,4 +591,51 @@ final class PushNotificationsTest extends TestCase {
 		$this->assertStringContainsString( 'lafka_push_db_version', $src );
 		$this->assertStringContainsString( 'lafka_push_activity_log', $src );
 	}
+
+	// ────────────────────────────────────────────────────────────────────────
+	// v9.29.1 — VAPID constants override (P0 hardening from operator audit)
+	// ────────────────────────────────────────────────────────────────────────
+
+	/**
+	 * The sender's vapid-config resolver must check wp-config.php-defined
+	 * constants BEFORE falling back to get_theme_mod(). Without this lock,
+	 * a multi-admin site has no way to keep the VAPID private key out of
+	 * wp_options.
+	 */
+	public function test_sender_reads_lafka_push_vapid_constants_before_theme_mod(): void {
+		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/conversion/lafka-push-sender.php' );
+		$this->assertStringContainsString(
+			"defined( 'LAFKA_PUSH_VAPID_PRIVATE_KEY' )",
+			$src,
+			'sender must check LAFKA_PUSH_VAPID_PRIVATE_KEY constant'
+		);
+		$this->assertStringContainsString(
+			"defined( 'LAFKA_PUSH_VAPID_PUBLIC_KEY' )",
+			$src,
+			'sender must check LAFKA_PUSH_VAPID_PUBLIC_KEY constant'
+		);
+		$this->assertStringContainsString(
+			"defined( 'LAFKA_PUSH_VAPID_SUBJECT' )",
+			$src,
+			'sender must check LAFKA_PUSH_VAPID_SUBJECT constant'
+		);
+	}
+
+	/**
+	 * Customizer description must document the constant override so operators
+	 * know the safer wp-config path exists.
+	 */
+	public function test_customizer_private_key_field_documents_constant_override(): void {
+		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/customizer/class-lafka-customizer-push.php' );
+		$this->assertStringContainsString(
+			'LAFKA_PUSH_VAPID_PRIVATE_KEY',
+			$src,
+			'private-key Customizer description must mention the wp-config constant'
+		);
+		$this->assertStringContainsString(
+			'wp-config.php',
+			$src,
+			'private-key Customizer description must point operators at wp-config.php'
+		);
+	}
 }

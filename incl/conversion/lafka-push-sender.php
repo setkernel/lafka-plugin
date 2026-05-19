@@ -61,21 +61,35 @@ if ( ! function_exists( 'lafka_push_b64url_decode' ) ) {
 
 if ( ! function_exists( 'lafka_push_get_vapid_config' ) ) {
 	/**
-	 * Read the operator's VAPID config from theme_mods.
+	 * Read the operator's VAPID config.
+	 *
+	 * Precedence for the private key (v9.29.1 hardening):
+	 *   1. `LAFKA_PUSH_VAPID_PRIVATE_KEY` constant defined in `wp-config.php`.
+	 *      This is the recommended path for multi-admin sites — the key never
+	 *      enters the database and is invisible to anyone with the
+	 *      `edit_theme_options` capability.
+	 *   2. `LAFKA_PUSH_VAPID_PUBLIC_KEY` + `LAFKA_PUSH_VAPID_SUBJECT` constants
+	 *      (same logic).
+	 *   3. `get_theme_mod()` fallback for sites where wp-config edits aren't
+	 *      practical. Documented in the Customizer description.
 	 */
 	function lafka_push_get_vapid_config(): array {
 		$enabled = function_exists( 'get_theme_mod' )
 			? '1' === (string) get_theme_mod( 'lafka_push_enabled', '0' )
 			: false;
-		$public  = function_exists( 'get_theme_mod' )
-			? (string) get_theme_mod( 'lafka_push_vapid_public_key', '' )
-			: '';
-		$private = function_exists( 'get_theme_mod' )
-			? (string) get_theme_mod( 'lafka_push_vapid_private_key', '' )
-			: '';
-		$subject = function_exists( 'get_theme_mod' )
-			? (string) get_theme_mod( 'lafka_push_vapid_subject', '' )
-			: '';
+
+		$public  = defined( 'LAFKA_PUSH_VAPID_PUBLIC_KEY' ) && '' !== (string) LAFKA_PUSH_VAPID_PUBLIC_KEY
+			? (string) LAFKA_PUSH_VAPID_PUBLIC_KEY
+			: ( function_exists( 'get_theme_mod' ) ? (string) get_theme_mod( 'lafka_push_vapid_public_key', '' ) : '' );
+
+		$private = defined( 'LAFKA_PUSH_VAPID_PRIVATE_KEY' ) && '' !== (string) LAFKA_PUSH_VAPID_PRIVATE_KEY
+			? (string) LAFKA_PUSH_VAPID_PRIVATE_KEY
+			: ( function_exists( 'get_theme_mod' ) ? (string) get_theme_mod( 'lafka_push_vapid_private_key', '' ) : '' );
+
+		$subject = defined( 'LAFKA_PUSH_VAPID_SUBJECT' ) && '' !== (string) LAFKA_PUSH_VAPID_SUBJECT
+			? (string) LAFKA_PUSH_VAPID_SUBJECT
+			: ( function_exists( 'get_theme_mod' ) ? (string) get_theme_mod( 'lafka_push_vapid_subject', '' ) : '' );
+
 		if ( '' === $subject ) {
 			$site    = function_exists( 'get_bloginfo' ) ? (string) get_bloginfo( 'admin_email' ) : 'operator@example.com';
 			$subject = 'mailto:' . $site;
