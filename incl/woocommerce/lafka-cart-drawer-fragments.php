@@ -22,6 +22,19 @@ if ( ! function_exists( 'lafka_pdp_cart_drawer_fragments' ) ) {
 
         ob_start();
         echo '<ul class="lafka-cart-drawer__items">';
+        // v9.32.0: render the empty state INSIDE the <ul> when the cart is empty
+        // so the fragment swaps empty⇄filled in place (matches the theme
+        // partial). Fixes the first-add / remove-last drawer body sync.
+        if ( WC()->cart->is_empty() ) {
+            ?>
+            <li class="lafka-cart-drawer__empty" data-lafka-cart-empty>
+                <span class="lafka-cart-drawer__empty-icon" aria-hidden="true">🛒</span>
+                <span class="lafka-cart-drawer__empty-title"><?php esc_html_e( 'Your cart is empty', 'lafka-plugin' ); ?></span>
+                <span class="lafka-cart-drawer__empty-hint"><?php esc_html_e( 'Add something delicious to get started.', 'lafka-plugin' ); ?></span>
+                <a class="lafka-cart-drawer__empty-cta" href="<?php echo esc_url( apply_filters( 'lafka_header_cta_url', home_url( '/menu/' ) ) ); ?>"><?php esc_html_e( 'Browse the menu', 'lafka-plugin' ); ?></a>
+            </li>
+            <?php
+        }
         foreach ( WC()->cart->get_cart() as $cart_item_key => $cart_item ) {
             $product = $cart_item['data'] ?? null;
             if ( ! $product ) {
