@@ -4,11 +4,16 @@
  *
  * Migrated from lafka-child v5.10.6 in lafka-plugin v9.7.25.
  *
- * Hero image URL comes from the Customizer setting `lafka_homepage_hero_image`
- * (registered in incl/customizer/class-lafka-customizer-restaurant-info.php).
- * Accepts either a full URL or a numeric attachment ID. When unset, no
- * preload is emitted — keeps the OSS plugin free of any restaurant-specific
- * media URL.
+ * Hero image comes from the theme Customizer setting `lafka_home_hero_image_id`
+ * (an attachment ID — the canonical key used by partials/home-hero.php and the
+ * Home Customizer panel). The legacy `lafka_homepage_hero_image` theme_mod and
+ * `lafka_homepage_hero_attachment_id` option are still honoured as fallbacks.
+ * When unset, no preload is emitted — keeps the OSS plugin free of any
+ * restaurant-specific media URL.
+ *
+ * Perf fix (v9.30.x): Hook 1 + Hook 2 previously read the legacy keys only, so
+ * a hero set via the canonical key never got <link rel=preload fetchpriority>
+ * → large mobile-LCP regression once an operator added a hero. (Baseline #perf.)
  *
  * @package LafkaPlugin
  * @since   9.7.25
@@ -22,8 +27,17 @@ add_filter(
 		if ( ! is_front_page() ) {
 			return $url;
 		}
-		// Tier 1: operator-configured hero (Customizer theme_mod). Wins
-		// because the operator knows which image is the LCP element.
+		// Tier 1: operator-configured hero. Canonical key first — the theme_mod
+		// `lafka_home_hero_image_id` (attachment ID) used by home-hero.php + the
+		// Home Customizer. Wins because the operator knows the LCP element.
+		$hero_id = (int) get_theme_mod( 'lafka_home_hero_image_id', 0 );
+		if ( $hero_id > 0 ) {
+			$resolved = wp_get_attachment_image_url( $hero_id, 'full' );
+			if ( $resolved ) {
+				return $resolved;
+			}
+		}
+		// Legacy fallback keys (older installs).
 		$hero = get_theme_mod( 'lafka_homepage_hero_image', '' );
 		if ( '' !== $hero && null !== $hero ) {
 			if ( is_numeric( $hero ) ) {
@@ -84,13 +98,10 @@ if ( ! function_exists( 'lafka_lcp_flush_auto_hero_cache' ) ) {
 /**
  * Apply fetchpriority="high" + loading="eager" to the homepage hero <img>.
  *
- * The hero attachment ID is stored in the `lafka_homepage_hero_attachment_id`
- * OPTION (not the `lafka_homepage_hero_image` theme_mod that Hook 1 reads).
- * The option is the canonical numeric ID; the theme_mod can also be a string
- * URL. Customizer code is expected to keep the two in sync when an attachment
- * (vs. raw URL) is selected. When the option is unset (default 0), this hook
- * no-ops — the parent theme can still load the hero <img>, just without the
- * priority hints.
+ * The hero attachment ID is the theme_mod `lafka_home_hero_image_id` (canonical),
+ * falling back to the legacy `lafka_homepage_hero_attachment_id` option. When
+ * neither is set (default 0), this hook no-ops — the parent theme can still load
+ * the hero <img>, just without the priority hints.
  */
 add_filter(
     'wp_get_attachment_image_attributes',
@@ -98,7 +109,10 @@ add_filter(
 		if ( ! is_front_page() ) {
 			return $attr;
 		}
-		$hero_attachment_id = (int) get_option( 'lafka_homepage_hero_attachment_id', 0 );
+		$hero_attachment_id = (int) get_theme_mod( 'lafka_home_hero_image_id', 0 );
+		if ( ! $hero_attachment_id ) {
+			$hero_attachment_id = (int) get_option( 'lafka_homepage_hero_attachment_id', 0 ); // legacy fallback
+		}
 		if ( $hero_attachment_id && $hero_attachment_id === (int) ( is_object( $attachment ) ? $attachment->ID : 0 ) ) {
 			$attr['fetchpriority'] = 'high';
 			$attr['loading']       = 'eager';

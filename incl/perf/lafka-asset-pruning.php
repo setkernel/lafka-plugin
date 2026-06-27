@@ -177,6 +177,14 @@ if ( ! function_exists( 'lafka_perf_dequeue_unused_font_awesome' ) ) {
 		if ( apply_filters( 'lafka_keep_font_awesome_css', false ) ) {
 			return;
 		}
+		// The active theme's header may render FA icons (search/account/cart) on
+		// EVERY page; the post_content scan below can't see that, so dequeuing FA
+		// there would tofu the header. Themes signal "my header needs FA
+		// site-wide" via this filter — keep FA when set. (Real win: move header
+		// icons to inline SVG, then the theme stops setting this.)
+		if ( apply_filters( 'lafka_header_renders_fa_icons', false ) ) {
+			return;
+		}
 		if ( ! is_singular() ) {
 			return;
 		}
