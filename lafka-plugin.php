@@ -343,6 +343,7 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/analytics/lafka-custom-events.p
 require_once plugin_dir_path( __FILE__ ) . 'incl/analytics/lafka-page-context.php';
 require_once plugin_dir_path( __FILE__ ) . 'incl/analytics/lafka-store-events.php';
 require_once plugin_dir_path( __FILE__ ) . 'incl/analytics/lafka-cf-analytics.php';
+require_once plugin_dir_path( __FILE__ ) . 'incl/analytics/lafka-clarity-tags.php';
 
 /**
  * v9.27.0 (Phase 3B — Analytics + SEO + Conversion plan):
