@@ -25,16 +25,21 @@ The "Latest tested" column was verified end-to-end in Session 5
 
 ## Package versions
 
-| Package         | Current release | Minimum sibling versions |
-|-----------------|-----------------|--------------------------|
-| lafka-plugin    | **9.35.0** | theme ≥ 6.13.0, child ≥ 6.0.6 |
-| lafka-theme     | **6.19.0** | plugin ≥ 9.30.0 (optional but expected) |
-| lafka-child     | **6.0.6**       | theme ≥ 6.13.0 (parent) |
+Each repo's **current** version is its git tag and its WordPress header
+(`lafka-plugin.php` / `style.css`) — the single source of truth, kept in lockstep
+with `package.json` + `package-lock.json` by `npm version` (see *Updating this
+document*). To avoid restating a number that drifts, this matrix records only the
+**compatibility floors**, which change rarely:
 
-_Versions verified 2026-06-27 against the latest git tags
-(v9.35.0 / v6.19.0 / v6.0.6)._ Each repo is tagged and released
-independently on its own cadence — the plugin and theme advance faster than
-the thin child, so their version numbers are not expected to move in lock-step.
+| Package         | Minimum sibling versions |
+|-----------------|--------------------------|
+| lafka-plugin    | theme ≥ 6.13.0, child ≥ 6.0.6 |
+| lafka-theme     | plugin ≥ 9.30.0 (optional but expected) |
+| lafka-child     | theme ≥ 6.13.0 (parent) |
+
+Each repo is tagged and released independently on its own cadence — the plugin
+and theme advance faster than the thin child, so their versions are not expected
+to move in lock-step.
 
 ## CI matrix (per-repo CI runs the full grid)
 
@@ -195,9 +200,18 @@ support in core 5.8. Mobile Safari ≥ 14, Chrome/Firefox/Edge ≥ 100.
 
 ## Updating this document
 
-This file is hand-maintained. After bumping any of the headers in
-`composer.json`, `style.css`, or `lafka-plugin.php`, update the matrix
-above to match. The CI workflow doesn't auto-generate it.
+Versions are single-source-of-truth. Bump with **one command** in the repo:
 
-For per-release verification, see the operator checklist at the end of
-`LAFKA_PROGRESS.md`.
+```bash
+npm version <patch|minor|major>   # or an explicit x.y.z
+```
+
+`npm version` bumps `package.json`, then the `version` lifecycle hook
+(`scripts/sync-version.mjs`) writes the WordPress header (`lafka-plugin.php` /
+`style.css`) and any versioned docs, npm syncs `package-lock.json`, and a
+`vX.Y.Z` git tag + release commit are created — then `git push --follow-tags`.
+**Never hand-edit a version.** `npm run check-version` is a CI gate (and a
+PHPUnit guard, `VersionConsistencyTest`) that fails the build on any drift.
+
+Only the compatibility **floors** in the matrix above are hand-maintained —
+update them when a real minimum-version requirement changes.
