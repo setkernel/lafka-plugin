@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace LafkaPlugin\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 final class WidgetsEscapingTest extends TestCase {
 
@@ -88,9 +89,7 @@ final class WidgetsEscapingTest extends TestCase {
 	// All 4 widgets — strip_tags → sanitize_text_field in update()
 	// ────────────────────────────────────────────────────────────────────────
 
-	/**
-	 * @dataProvider widgetsProvider
-	 */
+	#[DataProvider('widgetsProvider')]
 	public function test_widget_update_uses_sanitize_text_field_not_strip_tags( string $widget_filename ): void {
 		// strip_tags only removes HTML tags — sanitize_text_field also decodes
 		// entities, normalises whitespace, and strips line breaks. Same fix as
@@ -113,7 +112,7 @@ final class WidgetsEscapingTest extends TestCase {
 	/**
 	 * @return array<string, array{0:string}>
 	 */
-	public function widgetsProvider(): array {
+	public static function widgetsProvider(): array {
 		return array(
 			'about'      => array( 'LafkaAboutWidget.php' ),
 			'contacts'   => array( 'LafkaContactsWidget.php' ),

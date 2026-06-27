@@ -23,6 +23,7 @@ namespace Lafka\Tests\Unit;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use ReflectionClass;
 
 require_once __DIR__ . '/Stubs/wc-email-stub.php';
@@ -50,7 +51,7 @@ final class KDSEmailIdentityTest extends TestCase {
 	/**
 	 * @return array<string, array{0:string, 1:string, 2:string, 3:string}>
 	 */
-	public function emailIdentityProvider(): array {
+	public static function emailIdentityProvider(): array {
 		// [class, expected id, expected sent_flag_meta_key, expected template_html]
 		return array(
 			'accepted'  => array( \Lafka_KDS_Email_Accepted::class, 'lafka_kds_order_accepted', '_lafka_kds_accepted_email_sent', 'customer-order-accepted.php' ),
@@ -60,9 +61,7 @@ final class KDSEmailIdentityTest extends TestCase {
 		);
 	}
 
-	/**
-	 * @dataProvider emailIdentityProvider
-	 */
+	#[DataProvider('emailIdentityProvider')]
 	public function test_email_identity( string $class, string $expected_id, string $expected_flag, string $expected_template ): void {
 		$email = new $class();
 		$this->assertSame( $expected_id, $email->id, "id mismatch for {$class}" );
