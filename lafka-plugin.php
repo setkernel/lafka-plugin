@@ -803,6 +803,8 @@ function lafka_plugin_after_plugins_loaded() {
 	 */
 	require_once plugin_dir_path( __FILE__ ) . 'incl/woocommerce/lafka-cart-drawer-fragments.php';
 	require_once plugin_dir_path( __FILE__ ) . 'incl/woocommerce/lafka-cart-drawer-upsell.php';
+	// Free delivery over $X — standalone (NOT behind the promotions/BOGO gate).
+	require_once plugin_dir_path( __FILE__ ) . 'incl/woocommerce/lafka-free-delivery.php';
 
 	/**
 	 * P6-PDP (W4-T8, 2026-04-29): Checkout email-capture field.

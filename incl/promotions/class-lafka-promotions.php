@@ -25,30 +25,6 @@
 
 defined( 'ABSPATH' ) || exit;
 
-if ( ! function_exists( 'lafka_get_free_delivery_threshold' ) ) {
-	/**
-	 * SSOT free-delivery threshold (0 = off). Read by both the delivery rule
-	 * here and the storefront "free over $X" copy/progress in the theme, so the
-	 * promise and the rule never diverge. Canonical source: the promotions knob;
-	 * back-compat: the legacy theme_mods. Filter: `lafka_free_delivery_threshold`.
-	 *
-	 * @return float
-	 */
-	function lafka_get_free_delivery_threshold(): float {
-		$value = 0.0;
-		if ( class_exists( 'Lafka_Promotions' ) ) {
-			$value = (float) Lafka_Promotions::knob( 'free_delivery_threshold' );
-		}
-		if ( $value <= 0 && function_exists( 'get_theme_mod' ) ) {
-			$value = (float) get_theme_mod( 'lafka_pdp_free_delivery_threshold', 0 );
-			if ( $value <= 0 ) {
-				$value = (float) get_theme_mod( 'lafka_announce_bar_delivery_threshold', 0 );
-			}
-		}
-		return (float) apply_filters( 'lafka_free_delivery_threshold', max( 0.0, $value ) );
-	}
-}
-
 if ( ! class_exists( 'Lafka_Promotions' ) ) {
 
 	final class Lafka_Promotions {
@@ -72,13 +48,10 @@ if ( ! class_exists( 'Lafka_Promotions' ) ) {
 				}
 			}
 			$defaults = array(
-				'delivery_min'            => self::DELIVERY_MIN,
-				'bogo_discount'           => self::BOGO_DISCOUNT,
-				'promo_key'               => self::PROMO_KEY,
-				'dismiss_days'            => self::DISMISS_DAYS,
-				// 0 = off (honest default: no "free over $X" copy until the
-				// operator sets a real threshold; the rule below then backs it).
-				'free_delivery_threshold' => 0,
+				'delivery_min'  => self::DELIVERY_MIN,
+				'bogo_discount' => self::BOGO_DISCOUNT,
+				'promo_key'     => self::PROMO_KEY,
+				'dismiss_days'  => self::DISMISS_DAYS,
 			);
 			if ( isset( $opts[ $name ] ) && '' !== $opts[ $name ] ) {
 				return $opts[ $name ];
@@ -179,49 +152,15 @@ if ( ! class_exists( 'Lafka_Promotions' ) ) {
 			return (float) $contents_cost < (float) (float) self::knob( 'delivery_min' );
 		}
 
-		/**
-		 * Whether the cart qualifies for free delivery.
-		 *
-		 * Boundary: `>=` — exactly at the threshold qualifies. Threshold 0 = off.
-		 */
-		public static function is_free_delivery_eligible( $contents_cost ) {
-			$threshold = lafka_get_free_delivery_threshold();
-			return $threshold > 0 && (float) $contents_cost >= $threshold;
-		}
-
 		// ─── Delivery-minimum hooks ──────────────────────────────────────────
 
 		public function apply_delivery_minimum( $rates, $package ) {
-			$contents_cost = (float) ( $package['contents_cost'] ?? 0 );
-
-			// Below the delivery minimum → remove delivery options (pickup only).
-			if ( self::should_block_delivery( $contents_cost ) ) {
-				foreach ( $rates as $rate_id => $rate ) {
-					if ( 'local_pickup' !== $rate->method_id ) {
-						unset( $rates[ $rate_id ] );
-					}
-				}
+			if ( ! self::should_block_delivery( $package['contents_cost'] ) ) {
 				return $rates;
 			}
-
-			// At/over the free-delivery threshold → make delivery free. The
-			// threshold (0 = off) is the SSOT read by the storefront copy/bar via
-			// lafka_get_free_delivery_threshold(), so the promise and the rule
-			// always agree (honest free-delivery).
-			if ( self::is_free_delivery_eligible( $contents_cost ) ) {
-				foreach ( $rates as $rate ) {
-					if ( 'local_pickup' === $rate->method_id ) {
-						continue;
-					}
-					$rate->cost = 0;
-					if ( ! empty( $rate->taxes ) && is_array( $rate->taxes ) ) {
-						$rate->taxes = array_map(
-                            static function () {
-								return 0;
-							},
-                            $rate->taxes 
-                        );
-					}
+			foreach ( $rates as $rate_id => $rate ) {
+				if ( 'local_pickup' !== $rate->method_id ) {
+					unset( $rates[ $rate_id ] );
 				}
 			}
 			return $rates;

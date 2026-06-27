@@ -123,33 +123,4 @@ final class LafkaPromotionsTest extends TestCase {
 		self::assertSame( Lafka_Promotions::PROMO_KEY, Lafka_Promotions::knob( 'promo_key' ) );
 		self::assertSame( Lafka_Promotions::DISMISS_DAYS, Lafka_Promotions::knob( 'dismiss_days' ) );
 	}
-
-	// ─── Free-delivery threshold (SSOT resolver + eligibility) ───────────────
-
-	public function test_free_delivery_threshold_defaults_off(): void {
-		// Empty option (knob=0) + theme_mods return their default (0) => 0/off.
-		Functions\when( 'get_theme_mod' )->alias( static fn( $k, $d = false ) => $d );
-		self::assertSame( 0.0, lafka_get_free_delivery_threshold() );
-	}
-
-	public function test_free_delivery_threshold_from_theme_mod_back_compat(): void {
-		Functions\when( 'get_theme_mod' )->alias(
-			static fn( $k, $d = false ) => 'lafka_pdp_free_delivery_threshold' === $k ? 45 : $d
-		);
-		self::assertSame( 45.0, lafka_get_free_delivery_threshold() );
-	}
-
-	public function test_free_delivery_eligibility_boundary(): void {
-		Functions\when( 'get_theme_mod' )->alias(
-			static fn( $k, $d = false ) => 'lafka_pdp_free_delivery_threshold' === $k ? 45 : $d
-		);
-		self::assertFalse( Lafka_Promotions::is_free_delivery_eligible( 44.99 ) );
-		self::assertTrue( Lafka_Promotions::is_free_delivery_eligible( 45.0 ) ); // boundary qualifies
-		self::assertTrue( Lafka_Promotions::is_free_delivery_eligible( 80.0 ) );
-	}
-
-	public function test_free_delivery_off_never_eligible(): void {
-		Functions\when( 'get_theme_mod' )->alias( static fn( $k, $d = false ) => $d ); // threshold 0
-		self::assertFalse( Lafka_Promotions::is_free_delivery_eligible( 999.0 ) );
-	}
 }
