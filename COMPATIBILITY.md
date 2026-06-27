@@ -11,17 +11,17 @@ checklist passes in staging.
 
 | Component   | Minimum | Recommended | Latest tested |
 |-------------|---------|-------------|---------------|
-| **PHP**     | 8.1     | 8.3         | 8.3.30        |
-| **WordPress** | 6.6   | 6.9         | 6.9.4         |
-| **WooCommerce** | 9.5 | 10.7        | 10.7.0        |
+| **PHP**     | 8.1     | 8.4         | 8.4           |
+| **WordPress** | 6.6   | 7.0         | 7.0           |
+| **WooCommerce** | 9.5 | 10.9        | 10.9.1        |
 | **Node.js** (build only) | 20 | 24 | 24         |
 | **Apache** (recommended for security headers) | 2.4 | 2.4.66+ | 2.4.66 |
 
-The "Latest tested" column was verified end-to-end in Session 5
-(2026-04-27): fresh Docker stack (`wordpress:latest` 6.9.4 + WC 10.7.0
-+ MariaDB LTS + PHP 8.3.30) driven via Playwright, 18 fixes shipped,
-0 lines in `debug.log` and 0 console errors after. See
-`LAFKA_PROGRESS.md` Session 5 ledger entry.
+"Recommended" is what `.wp-env.json` pins and CI builds against (WP 7.0 /
+WC 10.9.1 / PHP 8.4); the PHPUnit suites additionally run on PHP 8.5 locally.
+The full Playwright end-to-end pass was last run on the WP 6.9.4 / WC 10.7.0 /
+PHP 8.3.30 stack (Session 5, 2026-04-27); re-run it against the bumped stack
+before the next release.
 
 ## Package versions
 
@@ -51,7 +51,7 @@ to move in lock-step.
 
 CI checks per matrix cell: PHPCS (WordPress-Extra ruleset, ~60 sniff
 exclusions documented in `.phpcs.xml.dist`) + PHPUnit (Brain Monkey).
-JS/CSS linted separately on Node 20 (ESLint + Stylelint).
+JS/CSS linted separately on Node 24 (ESLint + Stylelint).
 
 The security sniff families — `WordPress.Security.EscapeOutput.*`,
 `WordPress.Security.NonceVerification.*`, `WordPress.DB.PreparedSQL.*` —
