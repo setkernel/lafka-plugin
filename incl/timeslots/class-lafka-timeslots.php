@@ -89,6 +89,11 @@ class Lafka_Timeslots {
 		add_action( 'woocommerce_checkout_before_customer_details', array( $this, 'show_datetime_fields_in_checkout' ) );
 		add_action( 'wp_ajax_time_slots_for_date', array( $this, 'retrieve_time_slots_for_date' ) );
 		add_action( 'wp_ajax_nopriv_time_slots_for_date', array( $this, 'retrieve_time_slots_for_date' ) );
+		// Validate the mandatory datetime on `woocommerce_checkout_process`.
+		// This is the only hook where wc_add_notice( ..., 'error' ) aborts
+		// WC_Checkout::process_checkout(); the create_order hook below fires
+		// after validation, so an error there cannot block the order.
+		add_action( 'woocommerce_checkout_process', array( $this, 'validate_datetime_fields' ) );
 		// Save datetime to order. `woocommerce_checkout_update_order_meta`
 		// was deprecated in WC 9.0; `woocommerce_checkout_create_order`
 		// fires before the order is saved, receives WC_Order directly,
@@ -164,6 +169,29 @@ class Lafka_Timeslots {
 		}
 	}
 
+	/**
+	 * Hard server-side gate for the mandatory delivery/pickup time.
+	 *
+	 * Runs on `woocommerce_checkout_process` (inside
+	 * WC_Checkout::validate_checkout()), the only hook where
+	 * wc_add_notice( ..., 'error' ) actually aborts process_checkout().
+	 * The meta WRITE stays in checkout_datetime_update_order_meta(); this
+	 * method only validates so a mandatory order can never be placed without
+	 * a date + timeslot.
+	 */
+	public function validate_datetime_fields() {
+		if ( empty( $this->order_date_time_mandatory ) ) {
+			return;
+		}
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WC core verifies the checkout nonce in WC_Checkout::process_checkout() before this hook fires.
+		$has_date = ! empty( $_POST['lafka_checkout_date'] );
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WC core verifies the checkout nonce in WC_Checkout::process_checkout() before this hook fires.
+		$has_slot = ! empty( $_POST['lafka_checkout_timeslot'] );
+		if ( ! $has_date || ! $has_slot ) {
+			wc_add_notice( esc_html__( 'Please enter Delivery/Pickup time.', 'lafka-plugin' ), 'error' );
+		}
+	}
+
 	public function checkout_datetime_update_order_meta( $order, $data = null ) {
 		// Backward-compat: legacy hook passed an int order_id.
 		if ( is_numeric( $order ) ) {
@@ -172,18 +200,15 @@ class Lafka_Timeslots {
 		if ( ! $order instanceof WC_Order ) {
 			return;
 		}
-		// CSRF: hooked to woocommerce_checkout_order_processed / woocommerce_checkout_process;
-		// WC core verifies its own checkout nonce upstream before this hook fires.
+		// Pure meta writer: the mandatory gate lives in validate_datetime_fields()
+		// on woocommerce_checkout_process. WC core verifies its checkout nonce
+		// upstream before woocommerce_checkout_create_order fires.
 		// phpcs:disable WordPress.Security.NonceVerification.Missing -- WC core verifies checkout nonce upstream.
 		if ( ! empty( $_POST['lafka_checkout_date'] ) ) {
 			$order->update_meta_data( 'lafka_checkout_date', sanitize_text_field( wp_unslash( $_POST['lafka_checkout_date'] ) ) );
-		} elseif ( ! empty( $this->order_date_time_mandatory ) ) {
-			wc_add_notice( esc_html__( 'Please enter Delivery/Pickup time.', 'lafka-plugin' ), 'error' );
 		}
 		if ( ! empty( $_POST['lafka_checkout_timeslot'] ) ) {
 			$order->update_meta_data( 'lafka_checkout_timeslot', sanitize_text_field( wp_unslash( $_POST['lafka_checkout_timeslot'] ) ) );
-		} elseif ( ! empty( $this->order_date_time_mandatory ) ) {
-			wc_add_notice( esc_html__( 'Please enter Delivery/Pickup time.', 'lafka-plugin' ), 'error' );
 		}
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 	}
