@@ -46,4 +46,14 @@ final class AssetPruningTest extends TestCase {
 		$main = file_get_contents( dirname( __DIR__, 2 ) . '/lafka-plugin.php' );
 		$this->assertStringContainsString( 'lafka-asset-pruning.php', $main );
 	}
+
+	public function test_vc_dequeue_force_drops_on_native_template_pages(): void {
+		$module = file_get_contents( dirname( __DIR__, 2 ) . '/incl/perf/lafka-asset-pruning.php' );
+		// Native-template pages (front-page.php, page-menu.php) render no stored
+		// builder content, so VC CSS must be dropped there despite a [vc_ marker.
+		$this->assertStringContainsString( 'lafka_vc_native_template_page', $module );
+		$this->assertMatchesRegularExpression( "/is_front_page\(\)\s*\|\|\s*is_page\(\s*'menu'\s*\)/", $module );
+		// URL-based CSS fallback for the /js_composer/ asset path.
+		$this->assertStringContainsString( '/js_composer/', $module );
+	}
 }

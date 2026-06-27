@@ -143,13 +143,26 @@ if ( ! function_exists( 'lafka_perf_dequeue_unused_vc' ) ) {
 			return;
 		}
 		$content = (string) $post->post_content;
+		// Native-template pages (front-page.php, page-menu.php) never render this
+		// stored builder content, so a [vc_ marker is a false positive — WPBakery
+		// CSS is dead weight there. Force-drop VC on those pages.
+		$native_template = (bool) apply_filters( 'lafka_vc_native_template_page', ( is_front_page() || is_page( 'menu' ) ) );
 		// Cheap content marker: [vc_ shortcode is the canonical VC entry.
-		if ( false !== strpos( $content, '[vc_' ) ) {
+		if ( ! $native_template && false !== strpos( $content, '[vc_' ) ) {
 			return;
 		}
 		// VC handles vary slightly by version; dequeue the family.
 		foreach ( array( 'js_composer_front', 'vc_animate-css', 'vc_settings', 'vc_lightbox', 'vc_carousel', 'vc_carousel_skin', 'vc_pretty-photo', 'vc_tta_style', 'vc_font_awesome_5_shims', 'vc_font_awesome_5_brands', 'vc_font_awesome_5_solid', 'vc_font_awesome_5' ) as $h ) {
 			wp_dequeue_style( $h );
+		}
+		// URL-based fallback (handle names vary by version) — CSS only, so
+		// WPBakery's bundled JS is left intact and nothing functional breaks.
+		if ( wp_styles() ) {
+			foreach ( wp_styles()->registered as $lafka_vc_handle => $lafka_vc_obj ) {
+				if ( false !== strpos( (string) $lafka_vc_obj->src, '/js_composer/' ) ) {
+					wp_dequeue_style( $lafka_vc_handle );
+				}
+			}
 		}
 	}
 }
