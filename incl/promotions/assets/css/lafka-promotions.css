@@ -1,13 +1,18 @@
 /*
  * Lafka_Promotions — banner + cart-notice + savings-line styles.
  * Extracted from inline \3c style> in lafka-child/functions.php (P2-01).
+ *
+ * Theme-agnostic: colors consume the active theme's design tokens via var()
+ * and fall back to neutral generic values when no Lafka theme is present, so
+ * the plugin never bakes in a site's brand palette. (Audit 2026-06-27 #8 —
+ * removed the hardcoded #c62828 / #e94560 / #4ecca3 brand literals.)
  */
 
 /* ─── Cart delivery-min notice ─────────────────────────────────────────── */
 .lafka-delivery-min-notice {
-	background-color: #e94560;
-	color: #fff;
-	border-top-color: #c4374d;
+	background-color: var(--lafka-color-accent-500, #dc2626);
+	color: var(--lafka-color-text-on-accent, #fff);
+	border-top-color: var(--lafka-color-accent-600, #b91c1c);
 	padding: 12px 20px;
 	font-size: 15px;
 	font-weight: 600;
@@ -15,7 +20,7 @@
 
 /* ─── BOGO savings line under cart subtotal ────────────────────────────── */
 .lafka-bogo-savings {
-	color: #4ecca3;
+	color: var(--lafka-color-success-500, #047857);
 	font-weight: 600;
 }
 
@@ -25,8 +30,8 @@
 	top: 0;
 	left: 0;
 	width: 100%;
-	background: #c62828;
-	color: #fff;
+	background: var(--lafka-color-accent-600, #b91c1c);
+	color: var(--lafka-color-text-on-accent, #fff);
 	z-index: 10000;
 	transform: translateY(-100%);
 	opacity: 0;
