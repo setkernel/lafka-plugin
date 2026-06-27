@@ -104,6 +104,23 @@ function lafka_schema_restaurant(): ?array {
 		$schema['sameAs'] = $same_as;
 	}
 
+	// areaServed — the locality the business serves. Honest default: its own
+	// city/region (where it operates). Operators serving more areas can extend
+	// via the `lafka_schema_area_served` filter. Skipped when no city is set.
+	$area_served = array();
+	if ( ! empty( $info['city'] ) ) {
+		$area_served[] = array(
+			'@type' => 'City',
+			'name'  => (string) $info['city'] . ( ! empty( $info['region'] ) ? ', ' . (string) $info['region'] : '' ),
+		);
+	}
+	if ( function_exists( 'apply_filters' ) ) {
+		$area_served = (array) apply_filters( 'lafka_schema_area_served', $area_served, $info );
+	}
+	if ( ! empty( $area_served ) ) {
+		$schema['areaServed'] = $area_served;
+	}
+
 	// aggregateRating — surface the same data the on-page social-proof
 	// widget renders (4.8 / 1,200 reviews etc.). Pulled from the Customizer
 	// theme_mods written by the Lafka theme's social-proof panel. Only
