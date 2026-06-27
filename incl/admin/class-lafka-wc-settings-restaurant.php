@@ -83,11 +83,12 @@ if ( ! function_exists( 'lafka_define_wc_settings_restaurant_class' ) ) {
 				return apply_filters(
 					'woocommerce_get_sections_' . $this->id,
 					array(
-						''        => __( 'Hours', 'lafka-plugin' ),
-						'cuisine' => __( 'Cuisine & Payment', 'lafka-plugin' ),
-						'schema'  => __( 'Schema & Geo', 'lafka-plugin' ),
-						'social'  => __( 'Social Profiles', 'lafka-plugin' ),
-						'hero'    => __( 'Homepage Hero', 'lafka-plugin' ),
+						''           => __( 'Hours', 'lafka-plugin' ),
+						'cuisine'    => __( 'Cuisine & Payment', 'lafka-plugin' ),
+						'schema'     => __( 'Schema & Geo', 'lafka-plugin' ),
+						'social'     => __( 'Social Profiles', 'lafka-plugin' ),
+						'hero'       => __( 'Homepage Hero', 'lafka-plugin' ),
+						'promotions' => __( 'Promotions', 'lafka-plugin' ),
 					)
 				);
 			}
@@ -102,6 +103,8 @@ if ( ! function_exists( 'lafka_define_wc_settings_restaurant_class' ) ) {
 						return $this->get_social_settings();
 					case 'hero':
 						return $this->get_hero_settings();
+					case 'promotions':
+						return $this->get_promotions_settings();
 					default:
 						return $this->get_hours_settings();
 				}
@@ -302,6 +305,129 @@ if ( ! function_exists( 'lafka_define_wc_settings_restaurant_class' ) ) {
 					array(
 						'type' => 'sectionend',
 						'id'   => 'lafka_restaurant_hero_end',
+					),
+				);
+			}
+
+			/**
+			 * Product-category options for the combo-deal selects.
+			 *
+			 * @return array<int|string,string>
+			 */
+			private function product_cat_options() {
+				$options = array( '' => __( '— Select a category —', 'lafka-plugin' ) );
+				$terms   = get_terms(
+					array(
+						'taxonomy'   => 'product_cat',
+						'hide_empty' => false,
+						'number'     => 200,
+					)
+				);
+				if ( is_array( $terms ) ) {
+					foreach ( $terms as $term ) {
+						if ( $term instanceof \WP_Term ) {
+							$options[ (string) $term->term_id ] = $term->name;
+						}
+					}
+				}
+				return $options;
+			}
+
+			/**
+			 * Promotions — each lever is independent and OFF until you set a
+			 * value here. These ids are the SSOT read by the rules in
+			 * lafka-plugin/incl/woocommerce/lafka-{free-delivery,first-order,
+			 * slow-day,combo-deal}.php.
+			 *
+			 * @return array
+			 */
+			private function get_promotions_settings() {
+				return array(
+					array(
+						'title' => __( 'Promotions', 'lafka-plugin' ),
+						'type'  => 'title',
+						'desc'  => $this->intro_html(
+							__( 'Each promotion is independent and stays OFF until you give it a value (0 / none = off). These power the website-direct ordering incentives — they do not affect the delivery apps.', 'lafka-plugin' )
+						),
+						'id'    => 'lafka_promotions_section_title',
+					),
+					array(
+						'title'    => __( 'Free delivery over ($)', 'lafka-plugin' ),
+						'desc_tip' => __( 'Cart subtotal at/above which delivery becomes free. 0 = off. Shown to customers as a "free over $X" nudge.', 'lafka-plugin' ),
+						'id'       => 'lafka_free_delivery_threshold',
+						'type'     => 'number',
+						'default'  => '0',
+						'css'      => 'width: 90px;',
+					),
+					array(
+						'title'    => __( 'First-order discount (%)', 'lafka-plugin' ),
+						'desc_tip' => __( 'Automatic discount on a logged-in customer\'s first order. 0 = off. Encourages account creation (and repeat orders).', 'lafka-plugin' ),
+						'id'       => 'lafka_first_order_discount_percent',
+						'type'     => 'number',
+						'default'  => '0',
+						'css'      => 'width: 90px;',
+					),
+					array(
+						'title'    => __( 'Slow-day discount (%)', 'lafka-plugin' ),
+						'desc_tip' => __( 'Discount applied only on the days selected below. 0 = off.', 'lafka-plugin' ),
+						'id'       => 'lafka_slow_day_discount_percent',
+						'type'     => 'number',
+						'default'  => '0',
+						'css'      => 'width: 90px;',
+					),
+					array(
+						'title'    => __( 'Slow days', 'lafka-plugin' ),
+						'desc_tip' => __( 'Days the slow-day discount applies (store timezone).', 'lafka-plugin' ),
+						'id'       => 'lafka_slow_day_days',
+						'type'     => 'multiselect',
+						'class'    => 'wc-enhanced-select',
+						'options'  => array(
+							'1' => __( 'Monday', 'lafka-plugin' ),
+							'2' => __( 'Tuesday', 'lafka-plugin' ),
+							'3' => __( 'Wednesday', 'lafka-plugin' ),
+							'4' => __( 'Thursday', 'lafka-plugin' ),
+							'5' => __( 'Friday', 'lafka-plugin' ),
+							'6' => __( 'Saturday', 'lafka-plugin' ),
+							'0' => __( 'Sunday', 'lafka-plugin' ),
+						),
+					),
+					array(
+						'title'    => __( 'Combo: category A', 'lafka-plugin' ),
+						'desc_tip' => __( 'First category in the combo pair (e.g. Pizza).', 'lafka-plugin' ),
+						'id'       => 'lafka_combo_deal_cat_a',
+						'type'     => 'select',
+						'class'    => 'wc-enhanced-select',
+						'options'  => $this->product_cat_options(),
+					),
+					array(
+						'title'    => __( 'Combo: category B', 'lafka-plugin' ),
+						'desc_tip' => __( 'Second category (e.g. Poutine). A cart with one of each gets the combo discount.', 'lafka-plugin' ),
+						'id'       => 'lafka_combo_deal_cat_b',
+						'type'     => 'select',
+						'class'    => 'wc-enhanced-select',
+						'options'  => $this->product_cat_options(),
+					),
+					array(
+						'title'    => __( 'Combo: amount', 'lafka-plugin' ),
+						'desc_tip' => __( 'Discount value when the combo pair is in the cart. 0 = off.', 'lafka-plugin' ),
+						'id'       => 'lafka_combo_deal_amount',
+						'type'     => 'number',
+						'default'  => '0',
+						'css'      => 'width: 90px;',
+					),
+					array(
+						'title'   => __( 'Combo: amount type', 'lafka-plugin' ),
+						'id'      => 'lafka_combo_deal_type',
+						'type'    => 'select',
+						'default' => 'fixed',
+						'options' => array(
+							'fixed'   => __( 'Fixed ($)', 'lafka-plugin' ),
+							'percent' => __( 'Percent (%)', 'lafka-plugin' ),
+						),
+					),
+					array(
+						'type' => 'sectionend',
+						'id'   => 'lafka_promotions_section_end',
 					),
 				);
 			}
