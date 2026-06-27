@@ -214,6 +214,14 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/compat/lafka-address-autocomple
 require_once plugin_dir_path( __FILE__ ) . 'incl/compat/wp-importer-wc-attrs-bridge.php';
 
 /**
+ * WPBakery (js_composer) graceful-fallback shim — strips orphaned [vc_*] wrapper
+ * tags when the heavy WPBakery plugin is deactivated, so VC-built pages still
+ * render (content + first-party/WC shortcodes preserved). Makes WPBakery a
+ * non-dependency. No-ops when WPBakery is active.
+ */
+require_once plugin_dir_path( __FILE__ ) . 'incl/compat/lafka-wpbakery-fallback.php';
+
+/**
  * P6-SEO-1/2/3/6: JSON-LD structured data — Restaurant, Menu, Product,
  * BreadcrumbList. Loads on both frontend and admin (admin is gated inside the
  * class). The helpers file also provides lafka_schema_get_nap() which is the
