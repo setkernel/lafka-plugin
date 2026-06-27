@@ -802,6 +802,7 @@ function lafka_plugin_after_plugins_loaded() {
 	 * P6-PDP (W4-T7, 2026-04-29): Cart drawer fragments.
 	 */
 	require_once plugin_dir_path( __FILE__ ) . 'incl/woocommerce/lafka-cart-drawer-fragments.php';
+	require_once plugin_dir_path( __FILE__ ) . 'incl/woocommerce/lafka-cart-drawer-upsell.php';
 
 	/**
 	 * P6-PDP (W4-T8, 2026-04-29): Checkout email-capture field.
