@@ -610,6 +610,27 @@ if ( LAFKA_PLUGIN_IS_WOOCOMMERCE ) {
 add_action( 'plugins_loaded', 'lafka_plugin_after_plugins_loaded' );
 add_action( 'plugins_loaded', 'lafka_wc_variation_swatches_constructor' );
 
+if ( ! function_exists( 'lafka_load_wc_dependent_widgets' ) ) {
+	/**
+	 * Load WooCommerce-dependent widgets on widgets_init.
+	 *
+	 * These extend WC_Widget; requiring them before WooCommerce has loaded that
+	 * abstract (e.g. at plugins_loaded, or during CLI `wp plugin activate`) is a
+	 * fatal. By widgets_init WooCommerce has initialised, so WC_Widget exists;
+	 * the class_exists guard keeps a misconfigured stack from fataling anyway.
+	 * The widget file self-registers on widgets_init (priority 10), which still
+	 * runs in the same pass since this loader is priority 5.
+	 */
+	function lafka_load_wc_dependent_widgets() {
+		if ( ! class_exists( 'WC_Widget' ) ) {
+			return;
+		}
+		foreach ( array( 'LafkaProductFilterWidget' ) as $file ) {
+			require_once plugin_dir_path( __FILE__ ) . 'widgets/wc_widgets/' . $file . '.php';
+		}
+	}
+}
+
 function lafka_plugin_after_plugins_loaded() {
 	// Load Nutrition Config - it may be needed also for menu entries
 	require_once plugin_dir_path( __FILE__ ) . '/incl/nutrition/includes/class-lafka-nutrition-config.php';
@@ -626,10 +647,14 @@ function lafka_plugin_after_plugins_loaded() {
 	}
 
 	if ( LAFKA_PLUGIN_IS_WOOCOMMERCE ) {
-		/* WooCommerce dependent widgets */
-		foreach ( array( 'LafkaProductFilterWidget' ) as $file ) {
-			require_once plugin_dir_path( __FILE__ ) . 'widgets/wc_widgets/' . $file . '.php';
-		}
+		/*
+		 * WooCommerce-dependent widgets extend WC_Widget, which only exists once
+		 * WooCommerce has loaded its abstracts — not guaranteed at plugins_loaded,
+		 * and absent entirely during CLI `wp plugin activate`. Load them on
+		 * widgets_init (priority 5, before the widget self-registers at 10),
+		 * guarded by class_exists, so requiring the class can never fatal.
+		 */
+		add_action( 'widgets_init', 'lafka_load_wc_dependent_widgets', 5 );
 
 		// PERF-H09: woocommerce-metaboxes.php is admin-only (term edit fields + save hooks)
 		if ( is_admin() ) {
