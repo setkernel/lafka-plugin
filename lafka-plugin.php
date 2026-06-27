@@ -809,6 +809,8 @@ function lafka_plugin_after_plugins_loaded() {
 	require_once plugin_dir_path( __FILE__ ) . 'incl/woocommerce/lafka-first-order.php';
 	// Slow-day discount — standalone (operator-chosen weekdays, site timezone).
 	require_once plugin_dir_path( __FILE__ ) . 'incl/woocommerce/lafka-slow-day.php';
+	// Combo deal — standalone (category-pair, e.g. pizza + poutine → save $X).
+	require_once plugin_dir_path( __FILE__ ) . 'incl/woocommerce/lafka-combo-deal.php';
 
 	/**
 	 * P6-PDP (W4-T8, 2026-04-29): Checkout email-capture field.
