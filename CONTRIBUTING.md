@@ -1,6 +1,6 @@
 # Contributing to lafka-plugin
 
-This is the companion plugin for the Lafka theme. It owns business logic (CPTs, shop modules, KDS, shipping areas, promotions, importer) so it survives theme switches.
+This is the companion plugin for the Lafka theme. It owns business logic (CPTs, shop modules, addons engine, KDS, shipping areas, promotions, analytics, conversion) so it survives theme switches. (Demo-content import lives in the theme — `incl/LafkaTransferContent.class.php` — not here.)
 
 ## Local development
 
@@ -26,17 +26,19 @@ composer phpcbf
 
 - `lafka-plugin.php` — bootstrap, CPT/taxonomy registration, AJAX endpoints, asset enqueues, HPOS + Cart-Checkout-Blocks compat declaration.
 - `incl/` — feature modules. Each gated behind `is_lafka_<feature>()` reading from `Lafka_Options`:
-  - `addons/` — WooCommerce product addons
-  - `combos/` — bundle / composite products (heaviest module)
+  - `addons/` — WooCommerce product addons; the v2 **engine** lives in `addons/engine/` (resolver, pricing strategies, `cart/`, `display/`, `admin/`, REST `api/`, `cli/`, `compat/` WC Product Bundles bridge, `data/`, `sources/`, `migrations/`). Bundles/combos are now the official WC Product Bundles plugin bridged here — the old `combos/` fork was removed in v9.0.0.
   - `nutrition/` — nutrition labels for food-menu items
   - `order-hours/` — store-hours and holiday closures
   - `shipping-areas/` — delivery zones + branch picker
   - `swatches/` — variation swatches
   - `kitchen-display/` — KDS for staff
+  - `promotions/` — BOGO + delivery-minimum (migrated from lafka-child; `class-lafka-promotions.php` `@since` 8.7.0)
+  - `analytics/` — GA4/GTM, Consent Mode v2, WC `dataLayer` + custom events
+  - `conversion/` — abandoned-cart capture/cron/email/resume, web-push, review prompts
+  - `schema/` — JSON-LD + `lafka_get_restaurant_info()` resolver
   - `wpml/` — WPML/WCML translation glue
 - `shortcodes/` — 23 shortcodes + WPBakery/VC mappings.
 - `widgets/` — 6 widgets (5 standalone + 1 WC-dependent).
-- `importer/` — XML demo content importer.
 
 ## Where new code goes
 
@@ -44,7 +46,7 @@ composer phpcbf
 |---------------------|--------------|
 | A new CPT or taxonomy | `lafka-plugin.php` (registration) + a new `incl/<feature>/` module if it has logic |
 | A new shortcode | `shortcodes/` + add VC mapping in `shortcodes_to_vc_mapping.php` |
-| A WC product behavior | `incl/combos/` or `incl/addons/` if related; otherwise a new module |
+| A WC product behavior | `incl/addons/` (engine in `addons/engine/`) if related; otherwise a new module |
 | A new module entirely | New folder under `incl/`; gate with `is_lafka_<thing>()`; load conditionally from `lafka-plugin.php` |
 | Site-specific business logic | NOT here — put it in `lafka-child` |
 

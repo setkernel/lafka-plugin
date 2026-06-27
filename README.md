@@ -89,6 +89,8 @@ All shortcodes are also available as WPBakery/Visual Composer elements.
 - **Schema / JSON-LD** — Restaurant / LocalBusiness / Menu / MenuItem / Product / BreadcrumbList graph
 - **Security Headers** — X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Permissions-Policy + REST user-enum blocking
 - **Performance** — Image-dimension auto-injection (CLS), LCP preload, Revslider auto-dequeue
+- **Analytics** (`incl/analytics/`) — GA4 / GTM with Consent Mode v2 defaults, `dataLayer` WooCommerce ecommerce events, and custom event hooks
+- **Conversion** (`incl/conversion/`) — Abandoned-cart capture / cron / DB / email / resume, web-push (db / REST / sender / re-order cron), and review-prompt banner + email
 
 ### Icon Packs
 - Elegant Icons (etline) — 100+ icons
@@ -99,12 +101,14 @@ All shortcodes are also available as WPBakery/Visual Composer elements.
 ```
 lafka-plugin/
 ├── incl/
-│   ├── addons/          # Engine v2 (resolver, repository, pricing strategies, WC Bundles bridge)
-│   ├── admin/           # Per-post meta-description box
+│   ├── addons/          # Engine v2 under addons/engine/ (resolver, pricing strategies, REST api/, cli/, compat WC Bundles bridge)
+│   ├── admin/           # Meta-description box, WC Settings → Restaurant tab, push admin
+│   ├── analytics/       # GA4/GTM, Consent Mode v2, WC dataLayer + custom events
 │   ├── branches/        # Branch selection AJAX (split from shipping-areas v9.2.0)
 │   ├── cli/             # WP-CLI commands (image-alt backfill, reviews)
-│   ├── customizer/      # Restaurant Information / PDP / Upsell panels
+│   ├── customizer/      # Restaurant Info / PDP / Upsell / Abandoned-Cart / Analytics / Push / Reviews panels
 │   ├── compat/          # Block-cart shim, WP Importer ↔ WC attrs bridge
+│   ├── conversion/      # Abandoned-cart + web-push + review prompts
 │   ├── emails/          # Review prompt email
 │   ├── kitchen-display/ # KDS state machine + AJAX + emails
 │   ├── map-shortcode/   # [lafka_map] (split from shipping-areas v9.3.0)

@@ -27,12 +27,12 @@ The "Latest tested" column was verified end-to-end in Session 5
 
 | Package         | Current release | Minimum sibling versions |
 |-----------------|-----------------|--------------------------|
-| lafka-plugin    | **8.7.1** (next: 8.7.2) | theme ≥ 5.8.1, child ≥ 5.5.0 |
-| lafka-theme     | **5.8.1** (next: 5.8.2) | plugin ≥ 8.7.1 (optional but expected) |
-| lafka-child     | **5.5.0**       | theme ≥ 5.8.0 (parent) |
+| lafka-plugin    | **9.30.0** | theme ≥ 6.13.0, child ≥ 6.0.6 |
+| lafka-theme     | **6.13.0** | plugin ≥ 9.30.0 (optional but expected) |
+| lafka-child     | **6.0.6**       | theme ≥ 6.13.0 (parent) |
 
-Session 5 work is unreleased post v8.7.1 / v5.8.1 — nine commits each
-on `lafka-plugin` and `lafka-theme` ahead of those tags.
+_Versions verified 2026-06-27._ All three repos are tagged and released
+in lock-step; the previous "Session 5 unreleased" lag no longer applies.
 
 ## CI matrix (per-repo CI runs the full grid)
 
@@ -42,9 +42,14 @@ on `lafka-plugin` and `lafka-theme` ahead of those tags.
 | **lafka-theme**  | ✅ | ✅ | ✅ |
 | **lafka-child**  | ✅ | ✅ | ✅ |
 
-CI checks per matrix cell: PHPCS (WordPress-Extra ruleset, ~50 sniff
+CI checks per matrix cell: PHPCS (WordPress-Extra ruleset, ~60 sniff
 exclusions documented in `.phpcs.xml.dist`) + PHPUnit (Brain Monkey).
 JS/CSS linted separately on Node 20 (ESLint + Stylelint).
+
+The security sniff families — `WordPress.Security.EscapeOutput.*`,
+`WordPress.Security.NonceVerification.*`, `WordPress.DB.PreparedSQL.*` —
+are **enforced as errors** (re-enabled in the 2026-05-14 P5-Sec pass). Only
+the narrow `WordPress.Security.EscapeOutput.ExceptionNotEscaped` is excluded.
 
 WP × WC integration matrix is pending integration tests — tracked as P2-04a.
 
@@ -167,6 +172,13 @@ support in core 5.8. Mobile Safari ≥ 14, Chrome/Firefox/Edge ≥ 100.
 - **Unit tests** (this repo's `tests/Unit/` per package) — pure-helper
   math, options precedence, feature-flag wiring, style.css headers. No WP
   runtime; Brain Monkey mocks WP/WC functions.
+- **Analytics / conversion / web-push** (`tests/Unit/`) — GA4 `dataLayer`
+  emitter + Consent Mode v2 defaults (`AnalyticsEmitterTest`,
+  `AnalyticsWcEventsTest`, `AnalyticsCustomEventsTest`); abandoned-cart
+  capture/cron/email (`AbandonedCartTest`); review-prompt scheduling
+  (`ReviewPromptTest`); web-push subscribe/send (`PushNotificationsTest`).
+  Browser push *delivery* (VAPID round-trip to a live service worker) is
+  smoke-checked manually, not yet in the e2e grid.
 - **Integration tests** — not yet present. Tracked as P2-04a.
 - **Manual smoke** — `wp option patch update lafka promotions enabled`
   cutover for the BOGO module; KDS standalone-page rendering; cart with
