@@ -124,6 +124,27 @@ if ( ! function_exists( 'lafka_sitemap_filter_page_args' ) ) {
 	}
 }
 
+if ( ! function_exists( 'lafka_sitemap_drop_users_provider' ) ) {
+	/**
+	 * Drop the core "users" sitemap (wp-sitemap-users-N.xml).
+	 *
+	 * Author archives are thin/duplicate for a single-location restaurant and
+	 * the provider enumerates usernames — no SEO value, mild privacy win.
+	 * Filterable so a content-heavy install can opt back in.
+	 *
+	 * @param mixed  $provider The sitemap provider (or already-filtered value).
+	 * @param string $name     Provider name: posts | taxonomies | users.
+	 * @return mixed False to remove, otherwise the provider unchanged.
+	 */
+	function lafka_sitemap_drop_users_provider( $provider, $name ) {
+		if ( 'users' === $name && ! apply_filters( 'lafka_sitemap_keep_users', false ) ) {
+			return false;
+		}
+		return $provider;
+	}
+}
+
 if ( function_exists( 'add_filter' ) ) {
 	add_filter( 'wp_sitemaps_posts_query_args', 'lafka_sitemap_filter_page_args', 10, 2 );
+	add_filter( 'wp_sitemaps_add_provider', 'lafka_sitemap_drop_users_provider', 10, 2 );
 }

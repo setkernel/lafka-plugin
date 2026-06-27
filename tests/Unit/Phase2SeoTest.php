@@ -426,6 +426,27 @@ HTML;
 		);
 	}
 
+	public function test_sitemap_drops_users_provider(): void {
+		Functions\when( 'apply_filters' )->returnArg( 2 ); // lafka_sitemap_keep_users default false
+		$this->assertFalse(
+			\lafka_sitemap_drop_users_provider( 'fake-provider', 'users' ),
+			'Users sitemap provider must be removed (no thin author archives / enumeration).'
+		);
+		$this->assertSame(
+			'fake-provider',
+			\lafka_sitemap_drop_users_provider( 'fake-provider', 'posts' ),
+			'Posts/taxonomies providers must pass through unchanged.'
+		);
+	}
+
+	public function test_sitemap_users_provider_filter_registered(): void {
+		$src = (string) file_get_contents( $this->plugin_root() . '/incl/seo/lafka-sitemap.php' );
+		$this->assertMatchesRegularExpression(
+			"/add_filter\(\s*'wp_sitemaps_add_provider'/",
+			$src
+		);
+	}
+
 	// ────────────────────────────────────────────────────────────────────
 	// 6. robots.txt filter
 	// ────────────────────────────────────────────────────────────────────
