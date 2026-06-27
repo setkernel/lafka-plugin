@@ -8,10 +8,12 @@
  * Customizer panel "Lafka — Restaurant Information" and is read via
  * `lafka_get_restaurant_info()` (lafka-schema-helpers.php).
  *
- * This test scans every PHP file under incl/ and the main plugin file for
- * forbidden literals. Test fixtures (under tests/) and Markdown docs (*.md)
- * are exempt because they describe the historical / canonical Peppery values
- * for migration purposes.
+ * This test scans every PHP, CSS and JS file under incl/ plus the main plugin
+ * file for forbidden literals. Minified bundles (*.min.js), test fixtures
+ * (under tests/) and Markdown docs (*.md) are exempt — the first carry
+ * third-party library noise, the latter describe the historical / canonical
+ * Peppery values for migration purposes. (Audit 2026-06-27 #9: the scan used
+ * to cover .php only, so a brand literal in a CSS/JS asset slipped past CI.)
  *
  * @package Lafka\Plugin\Tests\Unit
  */
@@ -43,7 +45,7 @@ final class NoHardcodedSiteValuesTest extends TestCase {
 
 	public function test_no_hardcoded_site_values_in_plugin_source(): void {
 		$root  = dirname( __DIR__, 2 );
-		$files = $this->collect_php_files( $root );
+		$files = $this->collect_source_files( $root );
 
 		$violations = array();
 		foreach ( $files as $file ) {
@@ -64,12 +66,13 @@ final class NoHardcodedSiteValuesTest extends TestCase {
 	}
 
 	/**
-	 * Collect PHP files under lafka-plugin/incl/ and the main plugin file.
-	 * Excludes tests/ (fixtures), vendor/ (deps), and *.md files (docs).
+	 * Collect PHP/CSS/JS source files under lafka-plugin/incl/ plus the main
+	 * plugin file. Excludes minified bundles (*.min.js — third-party noise),
+	 * and (by virtue of only walking incl/) tests/ and vendor/.
 	 *
 	 * @return list<string>
 	 */
-	private function collect_php_files( string $root ): array {
+	private function collect_source_files( string $root ): array {
 		$out   = array();
 		$incl  = $root . '/incl';
 		$main  = $root . '/lafka-plugin.php';
@@ -85,7 +88,11 @@ final class NoHardcodedSiteValuesTest extends TestCase {
 					continue;
 				}
 				$path = $f->getPathname();
-				if ( '.php' !== substr( $path, -4 ) ) {
+				if ( '.min.js' === substr( $path, -7 ) ) {
+					continue;
+				}
+				$ext = strtolower( (string) pathinfo( $path, PATHINFO_EXTENSION ) );
+				if ( ! in_array( $ext, array( 'php', 'css', 'js' ), true ) ) {
 					continue;
 				}
 				$out[] = $path;
