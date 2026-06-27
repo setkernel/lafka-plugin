@@ -57,6 +57,12 @@ jobs:
           # `npm ci` install time from ~30s to ~5s on cache hit.
           cache: npm
 
+      # Version single-source-of-truth guard: fails if the WordPress header,
+      # versioned docs, or package-lock.json have drifted from package.json.
+      # Cheap and dependency-free, so it runs before `npm ci`.
+      - name: Version SSOT guard
+        run: node scripts/sync-version.mjs --check
+
       # `npm ci` is a reproducible install (fails on package-lock drift)
       # and is the right choice in CI; `npm install` would silently
       # mutate package-lock.json on lockfile/registry inconsistencies.
