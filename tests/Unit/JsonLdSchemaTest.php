@@ -31,6 +31,7 @@ use PHPUnit\Framework\TestCase;
  */
 require_once dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-helpers.php';
 require_once dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-restaurant.php';
+require_once dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-website.php';
 require_once dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-breadcrumb.php';
 // lafka-schema-menu.php and lafka-schema-product.php depend heavily on
 // WC_Product / wc_get_products — tested via source-grep and structural checks.
@@ -74,6 +75,37 @@ final class JsonLdSchemaTest extends TestCase {
 	protected function setUp(): void {
 		parent::setUp();
 		Monkey\setUp();
+	}
+
+	// ─── WebSite node (sitelinks search box + brand entity) ──────────────────
+
+	public function test_website_node_has_searchaction(): void {
+		$this->stub_populated_install();
+		Functions\when( 'get_bloginfo' )->alias(
+			static fn( $k = '' ) => 'name' === $k ? 'Peppery' : ( 'description' === $k ? 'Best pizza' : '' )
+		);
+		$node = lafka_schema_website();
+		self::assertSame( 'WebSite', $node['@type'] );
+		self::assertSame( 'Peppery', $node['name'] );
+		self::assertSame( 'SearchAction', $node['potentialAction']['@type'] );
+		self::assertStringContainsString( '{search_term_string}', $node['potentialAction']['target']['urlTemplate'] );
+		self::assertStringEndsWith( '#website', (string) $node['@id'] );
+	}
+
+	public function test_website_links_restaurant_as_publisher(): void {
+		$this->stub_populated_install(); // populated → restaurant basics exist
+		$node = lafka_schema_website();
+		self::assertArrayHasKey( 'publisher', $node );
+		self::assertStringEndsWith( '#restaurant', (string) $node['publisher']['@id'] );
+	}
+
+	public function test_website_no_publisher_when_unconfigured(): void {
+		$this->stub_unconfigured_install();
+		Functions\when( 'home_url' )->justReturn( 'http://x.test' );
+		Functions\when( 'trailingslashit' )->alias( fn( $u ) => rtrim( $u, '/' ) . '/' );
+		Functions\when( 'get_bloginfo' )->justReturn( '' );
+		$node = lafka_schema_website();
+		self::assertArrayNotHasKey( 'publisher', $node ); // no fabricated brand link
 	}
 
 	protected function tearDown(): void {

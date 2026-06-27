@@ -41,6 +41,7 @@ if ( ! function_exists( 'lafka_schema_suppress_wc_native_product' ) ) {
 }
 
 require_once __DIR__ . '/lafka-schema-helpers.php';
+require_once __DIR__ . '/lafka-schema-website.php';
 require_once __DIR__ . '/lafka-schema-restaurant.php';
 require_once __DIR__ . '/lafka-schema-menu.php';
 require_once __DIR__ . '/lafka-schema-product.php';
@@ -109,6 +110,9 @@ if ( ! class_exists( 'Lafka_JSON_LD' ) ) {
 			// We refuse to emit Restaurant JSON-LD when name/street/city/postal/phone
 			// are missing, otherwise an unconfigured install would advertise empty
 			// strings to Google and degrade the knowledge-panel signal.
+			// WebSite entity (site-wide) — canonical site name + sitelinks search.
+			$graph[] = lafka_schema_website();
+
 			$info       = function_exists( 'lafka_get_restaurant_info' ) ? lafka_get_restaurant_info() : array();
 			$has_basics = ! empty( $info['name'] )
 				&& ! empty( $info['street'] )
