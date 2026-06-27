@@ -27,12 +27,14 @@ The "Latest tested" column was verified end-to-end in Session 5
 
 | Package         | Current release | Minimum sibling versions |
 |-----------------|-----------------|--------------------------|
-| lafka-plugin    | **9.30.0** | theme ≥ 6.13.0, child ≥ 6.0.6 |
-| lafka-theme     | **6.13.0** | plugin ≥ 9.30.0 (optional but expected) |
+| lafka-plugin    | **9.35.0** | theme ≥ 6.13.0, child ≥ 6.0.6 |
+| lafka-theme     | **6.19.0** | plugin ≥ 9.30.0 (optional but expected) |
 | lafka-child     | **6.0.6**       | theme ≥ 6.13.0 (parent) |
 
-_Versions verified 2026-06-27._ All three repos are tagged and released
-in lock-step; the previous "Session 5 unreleased" lag no longer applies.
+_Versions verified 2026-06-27 against the latest git tags
+(v9.35.0 / v6.19.0 / v6.0.6)._ Each repo is tagged and released
+independently on its own cadence — the plugin and theme advance faster than
+the thin child, so their version numbers are not expected to move in lock-step.
 
 ## CI matrix (per-repo CI runs the full grid)
 
