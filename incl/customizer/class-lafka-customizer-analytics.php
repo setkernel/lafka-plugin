@@ -130,6 +130,22 @@ if ( ! class_exists( 'Lafka_Customizer_Analytics' ) ) {
 		}
 
 		/**
+		 * Sanitize a Cloudflare Web Analytics beacon token.
+		 *
+		 * Format: 32 lowercase hex characters.
+		 *
+		 * @param mixed $value
+		 * @return string
+		 */
+		public static function sanitize_cf_beacon_token( $value ): string {
+			if ( ! is_scalar( $value ) ) {
+				return '';
+			}
+			$value = strtolower( trim( (string) $value ) );
+			return preg_match( '/^[a-f0-9]{32}$/', $value ) ? $value : '';
+		}
+
+		/**
 		 * Sanitize a Meta (Facebook) Pixel ID.
 		 *
 		 * Format: 15-16 digit numeric string.
@@ -284,6 +300,27 @@ if ( ! class_exists( 'Lafka_Customizer_Analytics' ) ) {
 					'description' => esc_html__( 'Alphanumeric project ID from clarity.microsoft.com. Free, unlimited heatmaps + session replay — complements GA4. Only used when GTM is empty.', 'lafka-plugin' ),
 					'section'     => 'lafka_analytics_direct',
 					'type'        => 'text',
+				)
+			);
+
+			$wp_customize->add_setting(
+				'lafka_cf_beacon_token',
+				array(
+					'default'           => '',
+					'transport'         => 'refresh',
+					'sanitize_callback' => array( __CLASS__, 'sanitize_cf_beacon_token' ),
+				)
+			);
+			$wp_customize->add_control(
+				'lafka_cf_beacon_token',
+				array(
+					'label'       => esc_html__( 'Cloudflare Web Analytics token', 'lafka-plugin' ),
+					'description' => esc_html__( '32-character token from dash.cloudflare.com → Analytics & Logs → Web Analytics → your site → "JS snippet" (the data-cf-beacon token). Cookieless + privacy-first, so it emits independently of GTM and consent.', 'lafka-plugin' ),
+					'section'     => 'lafka_analytics_direct',
+					'type'        => 'text',
+					'input_attrs' => array(
+						'placeholder' => '0123456789abcdef0123456789abcdef',
+					),
 				)
 			);
 

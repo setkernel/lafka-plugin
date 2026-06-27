@@ -325,6 +325,26 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/analytics/lafka-wc-events.php';
 require_once plugin_dir_path( __FILE__ ) . 'incl/analytics/lafka-custom-events.php';
 
 /**
+ * v9.31.0 (Tracking foundation — Growth program):
+ *
+ *   - incl/analytics/lafka-page-context.php   emits one server-rendered
+ *     `page_context` dataLayer push on every page (page_type, fulfilment_method,
+ *     store_open, customer_logged_in, customer_is_repeat, cart_items_count,
+ *     cart_value_band, top_category) so GA4/Clarity segment without per-page wiring.
+ *   - incl/analytics/lafka-store-events.php   enqueues lafka-store-events.js
+ *     (order_channel_click [direct vs UberEats/Skip/DoorDash/phone],
+ *     select_fulfilment, select_addon, store_closed_view).
+ *   - incl/analytics/lafka-cf-analytics.php   emits the cookieless Cloudflare
+ *     Web Analytics beacon when a token is configured (independent of GTM/consent).
+ *
+ *   All gated on an analytics destination being configured (lafka_analytics_is_active()).
+ *   Event dictionary + data-attr contracts: incl/../docs/TRACKING.md.
+ */
+require_once plugin_dir_path( __FILE__ ) . 'incl/analytics/lafka-page-context.php';
+require_once plugin_dir_path( __FILE__ ) . 'incl/analytics/lafka-store-events.php';
+require_once plugin_dir_path( __FILE__ ) . 'incl/analytics/lafka-cf-analytics.php';
+
+/**
  * v9.27.0 (Phase 3B — Analytics + SEO + Conversion plan):
  *
  *   - incl/conversion/lafka-abandoned-cart-db.php   creates / migrates the
