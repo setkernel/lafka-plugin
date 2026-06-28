@@ -26,6 +26,7 @@ declare(strict_types=1);
 namespace LafkaPlugin\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 final class AddonLabelEscapingTest extends TestCase {
 
@@ -40,9 +41,7 @@ final class AddonLabelEscapingTest extends TestCase {
 		);
 	}
 
-	/**
-	 * @dataProvider templateProvider
-	 */
+	#[DataProvider('templateProvider')]
 	public function test_template_uses_esc_html_on_label_and_price( string $path ): void {
 		$this->assertFileExists( $path );
 		$src = file_get_contents( $path );
@@ -64,9 +63,7 @@ final class AddonLabelEscapingTest extends TestCase {
 		);
 	}
 
-	/**
-	 * @dataProvider templateProvider
-	 */
+	#[DataProvider('templateProvider')]
 	public function test_wptexturize_is_no_longer_outermost_call( string $path ): void {
 		$src = file_get_contents( $path );
 

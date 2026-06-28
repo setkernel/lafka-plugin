@@ -21,6 +21,7 @@ namespace LafkaPlugin\Tests\Unit;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 /**
  * Bring in the schema module files directly so we can call the generator
@@ -509,9 +510,7 @@ final class JsonLdSchemaTest extends TestCase {
 		$this->assertStringContainsString( 'delete_transient', $src );
 	}
 
-	/**
-	 * @dataProvider cacheBustHookProvider
-	 */
+	#[DataProvider('cacheBustHookProvider')]
 	public function test_menu_cache_busted_on_each_relevant_hook( string $hook ): void {
 		// Regression lock for v9.7.5 — before this version only save_post_product
 		// busted the cache, so a product going out of stock or a category rename
@@ -527,7 +526,7 @@ final class JsonLdSchemaTest extends TestCase {
 	/**
 	 * @return array<string, array{0:string}>
 	 */
-	public function cacheBustHookProvider(): array {
+	public static function cacheBustHookProvider(): array {
 		return array(
 			'product save'              => array( 'save_post_product' ),
 			'product delete'            => array( 'delete_post' ),

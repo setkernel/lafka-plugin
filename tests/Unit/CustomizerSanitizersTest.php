@@ -24,6 +24,7 @@ use Brain\Monkey;
 use Brain\Monkey\Functions;
 use Lafka_Customizer_Restaurant_Info;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 require_once dirname( __DIR__, 2 ) . '/incl/customizer/class-lafka-customizer-restaurant-info.php';
 
@@ -47,12 +48,12 @@ final class CustomizerSanitizersTest extends TestCase {
 	// sanitize_geo — decimal degrees, ±180.0 bounds
 	// ────────────────────────────────────────────────────────────────────────
 
-	/** @dataProvider geoValidProvider */
+	#[DataProvider('geoValidProvider')]
 	public function test_sanitize_geo_accepts_valid_values( $input, string $expected ): void {
 		$this->assertSame( $expected, Lafka_Customizer_Restaurant_Info::sanitize_geo( $input ) );
 	}
 
-	public function geoValidProvider(): array {
+	public static function geoValidProvider(): array {
 		return array(
 			'integer-string'        => array( '40', '40' ),
 			'positive-decimal'      => array( '40.7128', '40.7128' ),
@@ -64,12 +65,12 @@ final class CustomizerSanitizersTest extends TestCase {
 		);
 	}
 
-	/** @dataProvider geoInvalidProvider */
+	#[DataProvider('geoInvalidProvider')]
 	public function test_sanitize_geo_rejects_invalid_values( $input ): void {
 		$this->assertSame( '', Lafka_Customizer_Restaurant_Info::sanitize_geo( $input ) );
 	}
 
-	public function geoInvalidProvider(): array {
+	public static function geoInvalidProvider(): array {
 		return array(
 			'empty-string'      => array( '' ),
 			'non-numeric'       => array( 'abc' ),
@@ -84,12 +85,12 @@ final class CustomizerSanitizersTest extends TestCase {
 	// sanitize_price_range — $/$$/$$$/$$$$ with safe default of $$
 	// ────────────────────────────────────────────────────────────────────────
 
-	/** @dataProvider priceRangeProvider */
+	#[DataProvider('priceRangeProvider')]
 	public function test_sanitize_price_range( $input, string $expected ): void {
 		$this->assertSame( $expected, Lafka_Customizer_Restaurant_Info::sanitize_price_range( $input ) );
 	}
 
-	public function priceRangeProvider(): array {
+	public static function priceRangeProvider(): array {
 		return array(
 			'inexpensive'         => array( '$', '$' ),
 			'moderate'            => array( '$$', '$$' ),
@@ -134,12 +135,12 @@ final class CustomizerSanitizersTest extends TestCase {
 	// sanitize_hours — "HH:MM-HH:MM" or "closed" or empty
 	// ────────────────────────────────────────────────────────────────────────
 
-	/** @dataProvider hoursValidProvider */
+	#[DataProvider('hoursValidProvider')]
 	public function test_sanitize_hours_accepts_valid( $input, string $expected ): void {
 		$this->assertSame( $expected, Lafka_Customizer_Restaurant_Info::sanitize_hours( $input ) );
 	}
 
-	public function hoursValidProvider(): array {
+	public static function hoursValidProvider(): array {
 		return array(
 			'standard-day'        => array( '11:00-23:00', '11:00-23:00' ),
 			'with-spaces-around-dash' => array( '11:00 - 23:00', '11:00-23:00' ),
@@ -152,12 +153,12 @@ final class CustomizerSanitizersTest extends TestCase {
 		);
 	}
 
-	/** @dataProvider hoursInvalidProvider */
+	#[DataProvider('hoursInvalidProvider')]
 	public function test_sanitize_hours_rejects_invalid( $input ): void {
 		$this->assertSame( '', Lafka_Customizer_Restaurant_Info::sanitize_hours( $input ) );
 	}
 
-	public function hoursInvalidProvider(): array {
+	public static function hoursInvalidProvider(): array {
 		return array(
 			'no-dash'             => array( '11:00 23:00' ),
 			'invalid-hour'        => array( '25:00-23:00' ),
@@ -200,12 +201,12 @@ final class CustomizerSanitizersTest extends TestCase {
 	// sanitize_locale — locale code allowlist (v9.22.2)
 	// ────────────────────────────────────────────────────────────────────────
 
-	/** @dataProvider localeValidProvider */
+	#[DataProvider('localeValidProvider')]
 	public function test_sanitize_locale_accepts_valid( $input, string $expected ): void {
 		$this->assertSame( $expected, Lafka_Customizer_Restaurant_Info::sanitize_locale( $input ) );
 	}
 
-	public function localeValidProvider(): array {
+	public static function localeValidProvider(): array {
 		return array(
 			'underscore-form'    => array( 'en_CA', 'en_CA' ),
 			'hyphen-form'        => array( 'en-CA', 'en-CA' ),
@@ -217,12 +218,12 @@ final class CustomizerSanitizersTest extends TestCase {
 		);
 	}
 
-	/** @dataProvider localeInvalidProvider */
+	#[DataProvider('localeInvalidProvider')]
 	public function test_sanitize_locale_rejects_invalid( $input ): void {
 		$this->assertSame( '', Lafka_Customizer_Restaurant_Info::sanitize_locale( $input ) );
 	}
 
-	public function localeInvalidProvider(): array {
+	public static function localeInvalidProvider(): array {
 		return array(
 			'too-short'      => array( 'x' ),
 			'space-inside'   => array( 'en CA' ),

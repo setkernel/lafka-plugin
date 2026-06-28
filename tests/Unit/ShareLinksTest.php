@@ -16,6 +16,7 @@ declare(strict_types=1);
 namespace LafkaPlugin\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 final class ShareLinksTest extends TestCase {
 
@@ -123,9 +124,7 @@ final class ShareLinksTest extends TestCase {
 		);
 	}
 
-	/**
-	 * @dataProvider modernNetworksProvider
-	 */
+	#[DataProvider('modernNetworksProvider')]
 	public function test_default_network_list_includes_modern_network( string $key ): void {
 		// Defaults must include the modern essentials so operators don't
 		// have to write a filter just to enable WhatsApp / Telegram / email.
@@ -139,7 +138,7 @@ final class ShareLinksTest extends TestCase {
 		);
 	}
 
-	public function modernNetworksProvider(): array {
+	public static function modernNetworksProvider(): array {
 		return array(
 			'whatsapp' => array( 'whatsapp' ),
 			'telegram' => array( 'telegram' ),
