@@ -48,21 +48,26 @@ class Lafka_KDS_Frontend {
 			return;
 		}
 
-		$options = Lafka_Kitchen_Display::get_options();
-		if ( empty( $options['token'] ) || ! hash_equals( $options['token'], $token ) ) {
+		// token_matches() validates legacy plaintext OR hash-at-rest storage.
+		if ( ! Lafka_Kitchen_Display::token_matches( $token ) ) {
 			status_header( 403 );
 			echo 'Access denied.';
 			exit;
 		}
 
-		$this->render_page( $options );
+		// Authenticated standalone page open — record last-seen for anomaly detection.
+		Lafka_Kitchen_Display::record_token_activity();
+
+		// Pass the raw URL token (not the stored value, which may be a hash) so the
+		// page JS can authenticate its AJAX calls.
+		$this->render_page( Lafka_Kitchen_Display::get_options(), $token );
 		exit;
 	}
 
 	/**
 	 * Render the standalone KDS HTML page.
 	 */
-	private function render_page( $options ) {
+	private function render_page( $options, $token ) {
 		// Security headers — standalone page shows sensitive order data
 		header( 'X-Frame-Options: DENY' );
 		header( 'X-Content-Type-Options: nosniff' );
@@ -85,7 +90,7 @@ class Lafka_KDS_Frontend {
 		$config = array(
 			'ajaxUrl'       => $ajax_url,
 			'nonce'         => $nonce,
-			'token'         => $options['token'],
+			'token'         => $token,
 			'pollInterval'  => (int) $options['poll_interval'] * 1000,
 			'soundEnabled'  => $options['sound_enabled'] === '1',
 			'soundUrl'      => $sound_url,
