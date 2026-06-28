@@ -75,10 +75,6 @@ if ( ! class_exists( 'Lafka_Site_Health' ) ) {
 						'label' => esc_html__( 'Product addons', 'lafka-plugin' ),
 						'value' => $this->flag_label( 'product_addons' ),
 					),
-					'combos_enabled'  => array(
-						'label' => esc_html__( 'Product combos', 'lafka-plugin' ),
-						'value' => $this->flag_label( 'product_combos' ),
-					),
 					'shipping_enabled' => array(
 						'label' => esc_html__( 'Shipping areas', 'lafka-plugin' ),
 						'value' => $this->flag_label( 'shipping_areas' ),

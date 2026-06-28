@@ -221,6 +221,41 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/compat/wp-importer-wc-attrs-bri
  */
 require_once plugin_dir_path( __FILE__ ) . 'incl/compat/lafka-wpbakery-fallback.php';
 
+if ( ! function_exists( 'lafka_seo_plugin_active' ) ) {
+	/**
+	 * Whether a dedicated SEO plugin is managing head metadata.
+	 *
+	 * Single source of truth for the "an SEO plugin owns head metadata"
+	 * decision, shared by every Lafka head emitter: the JSON-LD @graph
+	 * (incl/schema/class-lafka-json-ld.php), the OpenGraph / Twitter Card
+	 * tags (lafka_insert_og_tags), and the meta description
+	 * (lafka_render_meta_description).
+	 *
+	 * When any of these plugins is active it emits its own
+	 * Organization/LocalBusiness JSON-LD, <meta name="description">, and
+	 * og:* / twitter:* tags — so Lafka must defer to avoid duplicate,
+	 * conflicting metadata being served to search engines and social
+	 * scrapers on every public page.
+	 *
+	 * Detects: Yoast SEO, Rank Math, SEOPress, All in One SEO.
+	 *
+	 * Defined before the schema require below so the JSON-LD module can
+	 * reuse it as its single source of truth rather than duplicating the
+	 * detection inline.
+	 *
+	 * @since 9.23.0
+	 * @return bool True when a dedicated SEO plugin is active.
+	 */
+	function lafka_seo_plugin_active() {
+		return (
+			defined( 'WPSEO_VERSION' )                      // Yoast SEO.
+			|| class_exists( 'RankMath' )                   // Rank Math.
+			|| defined( 'SEOPRESS_VERSION' )                // SEOPress.
+			|| class_exists( '\\AIOSEO\\Plugin\\AIOSEO' )   // All in One SEO.
+		);
+	}
+}
+
 /**
  * P6-SEO-1/2/3/6: JSON-LD structured data — Restaurant, Menu, Product,
  * BreadcrumbList. Loads on both frontend and admin (admin is gated inside the
@@ -282,7 +317,10 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/seo/lafka-robots.php';
  *     for consent default + GSC, priority 2 for the tag snippets),
  *     wp_body_open (GTM noscript), and wp_footer (consent banner +
  *     no-wp_body_open fallback). All emitters no-op when their respective
- *     IDs are empty, so loading unconditionally is zero-cost.
+ *     IDs are empty, so loading unconditionally is zero-cost. The consent
+ *     banner additionally gates on lafka_analytics_is_active() so a default
+ *     install with no tracking destination never shows a cookie banner for
+ *     cookies it does not set.
  */
 require_once plugin_dir_path( __FILE__ ) . 'incl/customizer/class-lafka-customizer-analytics.php';
 require_once plugin_dir_path( __FILE__ ) . 'incl/analytics/lafka-analytics-emitter.php';
@@ -533,6 +571,41 @@ if ( function_exists( 'register_deactivation_hook' ) ) {
 }
 
 /**
+ * Seed the framework's default option values on activation.
+ *
+ * The include-time feature-loader gates below (is_lafka_product_addons(), etc.)
+ * run at plugins_loaded — before `init`, and therefore before the theme's
+ * options framework registers its lazily-loaded defaults. On a fresh install
+ * whose 'lafka' option has not yet been persisted, that gate would read no value
+ * and switch default-ON features (e.g. product_addons, std='enabled') OFF until
+ * the theme's own admin_init seeder runs. Persisting the defaults here, at
+ * activation, closes that window so the gate reads the 'enabled' value directly
+ * and stays consistent with lafka_get_option() for the same key.
+ *
+ * Mirrors the theme's own create-only seeder (lafka_optionsframework_setdefaults):
+ * it only writes when 'lafka' is absent, so it never clobbers saved values nor
+ * defeats the theme's "seed when missing" sentinel. No-ops when the active theme
+ * does not expose lafka_get_default_values() (plugin-only / third-party theme),
+ * in which case the theme owns those defaults and both access paths agree on
+ * false. Activation runs in an admin request after `init` has fired, so calling
+ * lafka_get_default_values() here is safe (no "_load_textdomain_just_in_time").
+ */
+if ( function_exists( 'register_activation_hook' ) ) {
+	register_activation_hook(
+		__FILE__,
+		static function () {
+			if ( get_option( 'lafka' ) || ! function_exists( 'lafka_get_default_values' ) ) {
+				return;
+			}
+			$defaults = lafka_get_default_values();
+			if ( is_array( $defaults ) && ! empty( $defaults ) ) {
+				add_option( 'lafka', $defaults );
+			}
+		}
+	);
+}
+
+/**
  * P6-A11Y-9 (W2-T7): WP-CLI command to backfill missing/garbage image alt text.
  * Self-gates: the file returns early when WP_CLI is not defined, so it is safe
  * to require unconditionally here — it only attaches behaviour during WP-CLI runs.
@@ -637,7 +710,11 @@ if ( LAFKA_PLUGIN_IS_WOOCOMMERCE ) {
 }
 
 add_action( 'plugins_loaded', 'lafka_plugin_after_plugins_loaded' );
-add_action( 'plugins_loaded', 'lafka_wc_variation_swatches_constructor' );
+// The variation-swatches constructor is hooked to plugins_loaded by the
+// swatches file itself (incl/swatches/variation-swatches.php), which is
+// required from lafka_plugin_after_plugins_loaded() during this same
+// plugins_loaded dispatch; the add_action there registers it for the current
+// priority-10 pass, so no duplicate registration is needed here.
 
 if ( ! function_exists( 'lafka_load_wc_dependent_widgets' ) ) {
 	/**
@@ -1058,17 +1135,24 @@ if ( ! function_exists( 'lafka_register_plugin_scripts' ) ) {
 
 	function lafka_register_plugin_scripts() {
 
-		// PERF-C02: Theme already registers/enqueues these with proper conditional logic.
-		// Only register as fallback (in case plugin runs without the Lafka theme).
-		// Do NOT wp_enqueue — that would override the theme's conditional enqueue guards
-		// for cloud-zoom (product pages only), countdown (product pages only),
-		// magnific (product/singular only), etc.
+		// PERF-C02 / f105: The Lafka theme is the only supported runtime for the
+		// theme-owned vendor handles below — it already registers/enqueues them
+		// (see incl/system/core-functions.php) with matching src/version. The
+		// theme-active guard further down returns early when the Lafka theme is
+		// NOT the active stylesheet, so nothing here can act as a "plugin runs
+		// without the Lafka theme" fallback (the URLs point at the theme directory
+		// regardless). The pure flexslider/owl-carousel/cloud-zoom/countdown
+		// duplicates were dead code and have been removed. `magnific` is kept
+		// because the theme deliberately does NOT register it and relies on the
+		// plugin to (the branch-locations ordering modal depends on the handle);
+		// the remaining lafka-dialog/typed/nice-select/isotope registrations are
+		// still theme-owned duplicates kept only for the active-theme case.
+		// Do NOT wp_enqueue here — that would override the theme's conditional
+		// enqueue guards (magnific is pulled in only via branch-locations deps).
 		//
-		// `lafka_asset_version()` is defined by the Lafka theme; when the plugin runs
-		// without that theme, the function is missing and this whole hook fatals.
-		// Fall back to the plugin's own asset-version helper so the registrations
-		// still go through (the URLs point at the theme dir but registering with a
-		// stable version is harmless when the theme isn't there to actually serve them).
+		// `lafka_asset_version()` is defined by the Lafka theme; keep a thin shim
+		// onto the plugin's own helper so the guarded registrations below never
+		// fatal on a missing function.
 		if ( ! function_exists( 'lafka_asset_version' ) ) {
 			function lafka_asset_version( $relative_path = '' ) {
 				return lafka_plugin_asset_version( ltrim( $relative_path, '/' ) );
@@ -1076,37 +1160,15 @@ if ( ! function_exists( 'lafka_register_plugin_scripts' ) ) {
 		}
 
 		/**
-		 * v9.12.0: Theme-URL fallback registrations are guarded so they only
-		 * fire when the Lafka theme (parent or child) is the active stylesheet.
-		 *
-		 * Why: previously these `wp_register_*` calls used
-		 * `get_template_directory_uri()` unconditionally — when this plugin
-		 * is active alongside a NON-Lafka theme (operator switched themes,
-		 * plugin used standalone, etc.), the registered URLs pointed to
-		 * non-existent assets in the other theme's directory. If any
-		 * plugin/theme then tried to enqueue these handles, the browser
-		 * would 404 on owl-carousel, flexslider, etc.
-		 *
-		 * Guard: only register when the active theme template is 'lafka'.
+		 * Plugin-OWNED frontend assets are registered ABOVE the Lafka-theme
+		 * guard below. Their URLs come from `plugins_url()` / maps.googleapis —
+		 * they live in this plugin, not in any theme directory, so they never
+		 * 404 regardless of the active theme. Registering them unconditionally
+		 * honours the documented standalone-fallback contract so the checkout
+		 * delivery date/time picker (flatpickr / flatpickr-local, a submit-path
+		 * control) and the [lafka_map] shortcode (lafka-google-maps) keep
+		 * working even when a non-Lafka theme is active.
 		 */
-		$lafka_theme_active = function_exists( 'wp_get_theme' ) && 'lafka' === (string) wp_get_theme()->get_template();
-		if ( ! $lafka_theme_active ) {
-			return;
-		}
-
-		wp_register_script( 'flexslider', get_template_directory_uri() . '/js/flex/jquery.flexslider-min.js', array( 'jquery' ), lafka_asset_version( '/js/flex/jquery.flexslider-min.js' ), true );
-		wp_register_style( 'flexslider', get_template_directory_uri() . '/styles/flex/flexslider.css', array(), lafka_asset_version( '/styles/flex/flexslider.css' ) );
-
-		wp_register_script( 'owl-carousel', get_template_directory_uri() . '/js/owl-carousel2-dist/owl.carousel.min.js', array( 'jquery' ), lafka_asset_version( '/js/owl-carousel2-dist/owl.carousel.min.js' ), true );
-		wp_register_style( 'owl-carousel', get_template_directory_uri() . '/styles/owl-carousel2-dist/assets/owl.carousel.min.css', array(), lafka_asset_version( '/styles/owl-carousel2-dist/assets/owl.carousel.min.css' ) );
-		wp_register_style( 'owl-carousel-theme-default', get_template_directory_uri() . '/styles/owl-carousel2-dist/assets/owl.theme.default.min.css', array(), lafka_asset_version( '/styles/owl-carousel2-dist/assets/owl.theme.default.min.css' ) );
-		wp_register_style( 'owl-carousel-animate', get_template_directory_uri() . '/styles/owl-carousel2-dist/assets/animate.css', array(), lafka_asset_version( '/styles/owl-carousel2-dist/assets/animate.css' ) );
-
-		wp_register_script( 'cloud-zoom', get_template_directory_uri() . '/js/cloud-zoom/cloud-zoom.1.0.2.min.js', array( 'jquery' ), lafka_asset_version( '/js/cloud-zoom/cloud-zoom.1.0.2.min.js' ), true );
-		wp_register_style( 'cloud-zoom', get_template_directory_uri() . '/styles/cloud-zoom/cloud-zoom.css', array(), lafka_asset_version( '/styles/cloud-zoom/cloud-zoom.css' ) );
-
-		wp_register_script( 'jquery-plugin', get_template_directory_uri() . '/js/count/jquery.plugin.min.js', array( 'jquery' ), lafka_asset_version( '/js/count/jquery.plugin.min.js' ), true );
-		wp_register_script( 'countdown', get_template_directory_uri() . '/js/count/jquery.countdown.min.js', array( 'jquery', 'jquery-plugin' ), lafka_asset_version( '/js/count/jquery.countdown.min.js' ), true );
 
 		// Flatpickr (plugin-only asset — not in theme)
 		wp_register_script( 'flatpickr', plugins_url( 'assets/js/flatpickr/flatpickr.min.js', __FILE__ ), array( 'jquery' ), lafka_plugin_asset_version( 'assets/js/flatpickr/flatpickr.min.js' ), true );
@@ -1156,6 +1218,49 @@ if ( ! function_exists( 'lafka_register_plugin_scripts' ) ) {
 
 		wp_register_style( 'flatpickr', plugins_url( 'assets/js/flatpickr/flatpickr.min.css', __FILE__ ), array(), lafka_plugin_asset_version( 'assets/js/flatpickr/flatpickr.min.css' ) );
 
+		// google maps — only when an API key is configured. Without a key the
+		// loader returns 401 + a console error on every Geocoding/Places call.
+		// Skip the registration so dependent enqueues fail-closed via the
+		// `wp_script_is('lafka-google-maps','registered')` gate at each call
+		// site (`lafka_map` shortcode, shipping-areas shortcode, branch
+		// locations admin, etc.).
+		if ( function_exists( 'lafka_get_option' ) ) {
+			$lafka_maps_api_key = lafka_get_option( 'google_maps_api_key' );
+			if ( ! empty( $lafka_maps_api_key ) ) {
+				wp_register_script(
+					'lafka-google-maps',
+					'https://maps.googleapis.com/maps/api/js?key=' . rawurlencode( $lafka_maps_api_key ) . '&libraries=geometry,places&v=weekly&language=' . get_locale() . '&callback=Function.prototype',
+					array( 'jquery' ),
+					false,
+					true
+				);
+			}
+		}
+
+		/**
+		 * v9.12.0: Theme-URL fallback registrations are guarded so they only
+		 * fire when the Lafka theme (parent or child) is the active stylesheet.
+		 *
+		 * Why: previously these `wp_register_*` calls used
+		 * `get_template_directory_uri()` unconditionally — when this plugin
+		 * is active alongside a NON-Lafka theme (operator switched themes,
+		 * plugin used standalone, etc.), the registered URLs pointed to
+		 * non-existent assets in the other theme's directory. If any
+		 * plugin/theme then tried to enqueue these handles, the browser
+		 * would 404 on magnific, isotope, etc.
+		 *
+		 * Guard: only register when the active theme template is 'lafka'.
+		 */
+		$lafka_theme_active = function_exists( 'wp_get_theme' ) && 'lafka' === (string) wp_get_theme()->get_template();
+		if ( ! $lafka_theme_active ) {
+			return;
+		}
+
+		// f105: flexslider, owl-carousel (+ theme-default/animate), cloud-zoom,
+		// jquery-plugin and countdown were dead duplicate "fallback"
+		// re-registrations — the Lafka theme already owns those handles (see
+		// incl/system/core-functions.php). Removed.
+
 		// P3-04: lafka-dialog (native <dialog> wrapper) — replaces magnific
 		// for everything except the branch-locations modal (which still uses
 		// magnific because its minified vendor file calls $.magnificPopup.open
@@ -1182,24 +1287,6 @@ if ( ! function_exists( 'lafka_register_plugin_scripts' ) ) {
 
 		// Isotope
 		wp_register_script( 'isotope', get_template_directory_uri() . '/js/isotope/dist/isotope.pkgd.min.js', array( 'jquery', 'imagesloaded' ), lafka_asset_version( '/js/isotope/dist/isotope.pkgd.min.js' ), true );
-		// google maps — only when an API key is configured. Without a key the
-		// loader returns 401 + a console error on every Geocoding/Places call.
-		// Skip the registration so dependent enqueues fail-closed via the
-		// `wp_script_is('lafka-google-maps','registered')` gate at each call
-		// site (`lafka_map` shortcode, shipping-areas shortcode, branch
-		// locations admin, etc.).
-		if ( function_exists( 'lafka_get_option' ) ) {
-			$lafka_maps_api_key = lafka_get_option( 'google_maps_api_key' );
-			if ( ! empty( $lafka_maps_api_key ) ) {
-				wp_register_script(
-					'lafka-google-maps',
-					'https://maps.googleapis.com/maps/api/js?key=' . rawurlencode( $lafka_maps_api_key ) . '&libraries=geometry,places&v=weekly&language=' . get_locale() . '&callback=Function.prototype',
-					array( 'jquery' ),
-					false,
-					true
-				);
-			}
-		}
 	}
 
 }
@@ -1722,6 +1809,24 @@ if ( ! function_exists( 'lafka_insert_og_tags' ) ) {
 			return;
 		}
 
+		/*
+		 * Defer to a dedicated SEO plugin (Yoast / Rank Math / SEOPress /
+		 * AIOSEO) when one is active — it already emits a full set of
+		 * og:* / twitter:* tags. Emitting ours alongside theirs duplicates
+		 * the OpenGraph/Twitter Card metadata on every public page and
+		 * confuses social scrapers. Mirrors the JSON-LD @graph deferral in
+		 * incl/schema/class-lafka-json-ld.php so a single "an SEO plugin
+		 * owns head metadata" decision (lafka_seo_plugin_active()) governs
+		 * all head emitters.
+		 *
+		 * Operators who want Lafka's tags regardless can override via the
+		 * `lafka_head_meta_force_emit` filter (return true) — the head-meta
+		 * sibling of `lafka_schema_force_emit`.
+		 */
+		if ( lafka_seo_plugin_active() && ! (bool) apply_filters( 'lafka_head_meta_force_emit', false ) ) {
+			return;
+		}
+
 		global $post;
 
 		// ===== Resolve title / description / URL / image / type per context =====
@@ -1930,6 +2035,17 @@ if ( ! function_exists( 'lafka_render_meta_description' ) ) {
 		if ( is_admin() || is_feed() || is_404() ) {
 			return;
 		}
+
+		/*
+		 * Defer to a dedicated SEO plugin when active — it emits its own
+		 * <meta name="description">. See lafka_insert_og_tags() for the full
+		 * rationale; the same `lafka_head_meta_force_emit` override applies so
+		 * the deferral decision stays consistent across all head emitters.
+		 */
+		if ( lafka_seo_plugin_active() && ! (bool) apply_filters( 'lafka_head_meta_force_emit', false ) ) {
+			return;
+		}
+
 		global $post;
 		$desc = lafka_resolve_meta_description( is_singular() && $post ? $post : null );
 		if ( $desc ) {

@@ -32,20 +32,20 @@ if ( ! function_exists( 'lafka_dietary_tags_canonical' ) ) {
 	function lafka_dietary_tags_canonical(): array {
 		$tags = array(
 			'popular'    => array(
-				'name'        => __( 'Popular', 'lafka' ),
-				'description' => __( 'Customer favourites — bestselling items.', 'lafka' ),
+				'name'        => __( 'Popular', 'lafka-plugin' ),
+				'description' => __( 'Customer favourites — bestselling items.', 'lafka-plugin' ),
 			),
 			'vegetarian' => array(
-				'name'        => __( 'Vegetarian', 'lafka' ),
-				'description' => __( 'No meat or seafood. May contain dairy or eggs.', 'lafka' ),
+				'name'        => __( 'Vegetarian', 'lafka-plugin' ),
+				'description' => __( 'No meat or seafood. May contain dairy or eggs.', 'lafka-plugin' ),
 			),
 			'vegan'      => array(
-				'name'        => __( 'Vegan', 'lafka' ),
-				'description' => __( 'No animal products of any kind.', 'lafka' ),
+				'name'        => __( 'Vegan', 'lafka-plugin' ),
+				'description' => __( 'No animal products of any kind.', 'lafka-plugin' ),
 			),
 			'spicy'      => array(
-				'name'        => __( 'Spicy', 'lafka' ),
-				'description' => __( 'Contains chilli or other heat sources.', 'lafka' ),
+				'name'        => __( 'Spicy', 'lafka-plugin' ),
+				'description' => __( 'Contains chilli or other heat sources.', 'lafka-plugin' ),
 			),
 		);
 		return (array) apply_filters( 'lafka_dietary_tags_seed', $tags );

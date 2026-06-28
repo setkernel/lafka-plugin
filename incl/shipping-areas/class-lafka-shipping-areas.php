@@ -216,8 +216,11 @@ class Lafka_Shipping_Areas {
 		if ( is_cart() || is_checkout() ) {
 			// The handle-shipping JS uses Google Maps for geo-fencing the
 			// customer's address against zone polygons. With no key the JS
-			// has no way to validate, so skip it — server-side validation
-			// in `validate_checkout_field_process` still gates the order.
+			// has no way to validate, so skip it — server-side validation in
+			// `validate_checkout_field_process` independently enforces the
+			// pinpoint's presence, valid lat/lng, and a point-in-polygon test
+			// against the published delivery zones, so the order is still gated
+			// even when the client-side map never loads.
 			if ( wp_script_is( 'lafka-google-maps', 'registered' ) ) {
 				wp_enqueue_script(
 					'lafka-shipping-areas-handle-shipping',
@@ -311,6 +314,12 @@ class Lafka_Shipping_Areas {
 		}
 		// CSRF: hooked to woocommerce_checkout_order_processed; WC core verifies
 		// its own checkout nonce upstream before this hook fires.
+		// Malformed / out-of-zone input never reaches the persisted order:
+		// validate_checkout_field_process() runs on the earlier
+		// woocommerce_checkout_process hook and aborts the checkout (via
+		// wc_add_notice) before this create-order hook fires. We re-validate the
+		// lat/lng bounds here as a final guard and simply skip the meta write if
+		// the payload is unusable, rather than silently storing junk.
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WC core verifies checkout nonce upstream.
 		if ( ! empty( $_POST['lafka_picked_delivery_geocoded'] ) && ! empty( $_POST['lafka_is_location_clicked'] ) ) {
 			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WC core verifies checkout nonce upstream.
@@ -528,10 +537,188 @@ class Lafka_Shipping_Areas {
 	public function validate_checkout_field_process() {
 		$options = get_option( 'lafka_shipping_areas_general' );
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- woocommerce_checkout_process filter context; WC core verifies checkout nonce upstream.
-		if ( ! empty( $options['pick_delivery_address'] ) && ! empty( $options['mandatory_pickup_delivery'] ) && isset( $_POST['lafka_picked_delivery_geocoded'] ) && empty( $_POST['lafka_picked_delivery_geocoded'] ) ) {
-			wc_add_notice( esc_html__( 'Please precise your address on the map.', 'lafka-plugin' ), 'error' );
+		// Geo-fencing only applies when pinpoint delivery is on AND mandatory.
+		if ( empty( $options['pick_delivery_address'] ) || empty( $options['mandatory_pickup_delivery'] ) ) {
+			return;
 		}
+
+		// Pickup orders are collected from the branch, so they never carry a
+		// delivery pinpoint — skip the whole gate for them, otherwise a legit
+		// pickup checkout would be blocked for the missing field.
+		if ( isset( WC()->session ) ) {
+			$branch_location_session = WC()->session->get( 'lafka_branch_location' );
+			if ( ! empty( $branch_location_session['order_type'] ) && 'pickup' === $branch_location_session['order_type'] ) {
+				return;
+			}
+		}
+
+		// (a) Missing OR blank must both fail. Omitting the hidden field from the
+		// POST previously slipped through `isset() && empty()`; `empty()` alone
+		// closes that bypass.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- woocommerce_checkout_process context; WC core verifies the checkout nonce upstream.
+		if ( empty( $_POST['lafka_picked_delivery_geocoded'] ) ) {
+			wc_add_notice( esc_html__( 'Please precise your address on the map.', 'lafka-plugin' ), 'error' );
+
+			return;
+		}
+
+		// (c) The payload must decode to numeric lat/lng inside planet bounds.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WC core verifies the checkout nonce upstream.
+		$decoded = json_decode( sanitize_text_field( wp_unslash( $_POST['lafka_picked_delivery_geocoded'] ) ) );
+		if ( null === $decoded || ! isset( $decoded->lat, $decoded->lng ) || ! is_numeric( $decoded->lat ) || ! is_numeric( $decoded->lng ) ) {
+			wc_add_notice( esc_html__( 'Please precise your address on the map.', 'lafka-plugin' ), 'error' );
+
+			return;
+		}
+
+		$lat = (float) $decoded->lat;
+		$lng = (float) $decoded->lng;
+		if ( $lat < -90 || $lat > 90 || $lng < -180 || $lng > 180 ) {
+			wc_add_notice( esc_html__( 'Please precise your address on the map.', 'lafka-plugin' ), 'error' );
+
+			return;
+		}
+
+		// Server-side geo-fence: reproduce the client-side Google Maps check in
+		// lafka-shipping-areas-handle-shipping.min.js so a tampered or skipped JS
+		// run can't push an out-of-zone address through. The point must fall
+		// inside at least one published delivery-zone polygon.
+		$polygons = $this->get_published_area_polygons();
+		if ( empty( $polygons ) ) {
+			// No polygon zones are drawn, so there is nothing to fence against —
+			// a valid pinpoint is sufficient.
+			return;
+		}
+
+		foreach ( $polygons as $polygon ) {
+			if ( self::point_in_polygon( $lat, $lng, $polygon ) ) {
+				return;
+			}
+		}
+
+		wc_add_notice( esc_html__( 'The selected location is outside our delivery area. Please pinpoint an address inside the delivery zone.', 'lafka-plugin' ), 'error' );
+	}
+
+	/**
+	 * Build the list of delivery-zone polygons from every published
+	 * lafka_shipping_areas post. Each post stores its polygon as a Google Maps
+	 * "Encoded Polyline Algorithm Format" string in
+	 * `_lafka_shipping_area_polygon_coordinates` — the very value the frontend
+	 * feeds to google.maps.geometry.encoding.decodePath() (and that
+	 * get_branch_locations_json_data ships to the client). Decoding it here lets
+	 * the server reproduce the client geo-fence.
+	 *
+	 * @return array List of polygons, each an array of [ lat, lng ] float pairs.
+	 */
+	private function get_published_area_polygons(): array {
+		$polygons = array();
+
+		foreach ( $this->get_all_delivery_areas() as $area ) {
+			$encoded = get_post_meta( $area->ID, '_lafka_shipping_area_polygon_coordinates', true );
+			if ( ! is_string( $encoded ) || '' === $encoded ) {
+				continue;
+			}
+
+			$points = self::decode_polygon_coordinates( $encoded );
+			if ( count( $points ) >= 3 ) {
+				$polygons[] = $points;
+			}
+		}
+
+		return $polygons;
+	}
+
+	/**
+	 * Decode a Google Maps "Encoded Polyline Algorithm Format" string into a
+	 * list of [ lat, lng ] float pairs. Server-side mirror of
+	 * google.maps.geometry.encoding.decodePath() used on the client. Pure
+	 * function with no WordPress dependencies, so it is unit-testable.
+	 *
+	 * @param string $encoded Encoded polyline string.
+	 *
+	 * @return array List of [ lat, lng ] float pairs.
+	 */
+	public static function decode_polygon_coordinates( string $encoded ): array {
+		$points = array();
+		$length = strlen( $encoded );
+		$index  = 0;
+		$lat    = 0;
+		$lng    = 0;
+
+		while ( $index < $length ) {
+			// Decode the latitude delta.
+			$shift  = 0;
+			$result = 0;
+			do {
+				if ( $index >= $length ) {
+					return $points;
+				}
+				$byte    = ord( $encoded[ $index++ ] ) - 63;
+				$result |= ( $byte & 0x1f ) << $shift;
+				$shift  += 5;
+			} while ( $byte >= 0x20 );
+			$lat += ( $result & 1 ) ? ~( $result >> 1 ) : ( $result >> 1 );
+
+			// Decode the longitude delta.
+			$shift  = 0;
+			$result = 0;
+			do {
+				if ( $index >= $length ) {
+					return $points;
+				}
+				$byte    = ord( $encoded[ $index++ ] ) - 63;
+				$result |= ( $byte & 0x1f ) << $shift;
+				$shift  += 5;
+			} while ( $byte >= 0x20 );
+			$lng += ( $result & 1 ) ? ~( $result >> 1 ) : ( $result >> 1 );
+
+			$points[] = array( $lat / 100000, $lng / 100000 );
+		}
+
+		return $points;
+	}
+
+	/**
+	 * Ray-casting point-in-polygon test (even-odd rule). Shared helper backing
+	 * the server-side delivery geo-fence. Pure function with no WordPress
+	 * dependencies, so it is unit-testable.
+	 *
+	 * @param float $lat     Latitude of the point under test.
+	 * @param float $lng     Longitude of the point under test.
+	 * @param array $polygon List of [ lat, lng ] float pairs describing the ring.
+	 *
+	 * @return bool True when the point lies inside the polygon.
+	 */
+	public static function point_in_polygon( float $lat, float $lng, array $polygon ): bool {
+		$vertices = count( $polygon );
+		if ( $vertices < 3 ) {
+			return false;
+		}
+
+		$inside = false;
+		for ( $i = 0, $j = $vertices - 1; $i < $vertices; $j = $i++ ) {
+			if ( ! isset( $polygon[ $i ][0], $polygon[ $i ][1], $polygon[ $j ][0], $polygon[ $j ][1] ) ) {
+				continue;
+			}
+
+			$lat_i = (float) $polygon[ $i ][0];
+			$lng_i = (float) $polygon[ $i ][1];
+			$lat_j = (float) $polygon[ $j ][0];
+			$lng_j = (float) $polygon[ $j ][1];
+
+			// Treat latitude as the Y axis and longitude as the X axis. The
+			// `(lat_i > lat) !== (lat_j > lat)` guard short-circuits before the
+			// division whenever the edge is horizontal, so there is no divide by
+			// zero.
+			$intersects = ( ( $lat_i > $lat ) !== ( $lat_j > $lat ) )
+				&& ( $lng < ( $lng_j - $lng_i ) * ( $lat - $lat_i ) / ( $lat_j - $lat_i ) + $lng_i );
+
+			if ( $intersects ) {
+				$inside = ! $inside;
+			}
+		}
+
+		return $inside;
 	}
 
 	public function disable_address_fields( $fields ): array {

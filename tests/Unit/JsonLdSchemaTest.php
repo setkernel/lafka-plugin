@@ -67,8 +67,9 @@ final class JsonLdSchemaTest extends TestCase {
 		'lafka_business_hours_sat'        => '11:00-23:00',
 		'lafka_business_hours_sun'        => '11:00-23:00',
 		// Social-proof rating + count (theme_mods written by the Lafka theme's
-		// social-proof Customizer panel). v9.22.0 surfaces these in the
-		// Restaurant schema as aggregateRating.
+		// social-proof Customizer panel). These are decorative marketing figures
+		// with no backing Review entities, so (as of f016) they are intentionally
+		// NOT transcribed into the Restaurant schema as an aggregateRating.
 		'lafka_social_proof_rating'       => '4.8',
 		'lafka_social_proof_count'        => 1200,
 	);
@@ -101,10 +102,16 @@ final class JsonLdSchemaTest extends TestCase {
 	}
 
 	public function test_website_no_publisher_when_unconfigured(): void {
+		// Realistic fresh / OSS-default install: WordPress always has a site
+		// title, so lafka_get_restaurant_info()['name'] is non-empty (it falls
+		// back to get_bloginfo('name')) — but no NAP (street/city/postal/phone)
+		// has been configured. In this state the Restaurant #restaurant node is
+		// NOT added to the @graph, so WebSite.publisher must NOT link to a
+		// #restaurant @id that doesn't exist (a dangling reference).
 		$this->stub_unconfigured_install();
-		Functions\when( 'home_url' )->justReturn( 'http://x.test' );
-		Functions\when( 'trailingslashit' )->alias( fn( $u ) => rtrim( $u, '/' ) . '/' );
-		Functions\when( 'get_bloginfo' )->justReturn( '' );
+		Functions\when( 'get_bloginfo' )->alias(
+			static fn( $k = '' ) => 'name' === $k ? 'My Fresh Site' : ''
+		);
 		$node = lafka_schema_website();
 		self::assertArrayNotHasKey( 'publisher', $node ); // no fabricated brand link
 	}
@@ -191,8 +198,10 @@ final class JsonLdSchemaTest extends TestCase {
 
 	public function test_emit_skips_when_basics_unconfigured(): void {
 		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/schema/class-lafka-json-ld.php' );
-		// Orchestrator must guard Restaurant emission on resolver basics being populated.
-		$this->assertStringContainsString( 'lafka_get_restaurant_info', $src );
+		// Orchestrator must guard Restaurant emission on the shared basics
+		// predicate (lafka_schema_has_restaurant_basics) so the Restaurant node
+		// and WebSite.publisher gate on the exact same condition.
+		$this->assertStringContainsString( 'lafka_schema_has_restaurant_basics', $src );
 		$this->assertStringContainsString( '$has_basics', $src );
 	}
 
@@ -415,16 +424,25 @@ final class JsonLdSchemaTest extends TestCase {
 		$this->assertSame( 'Test & Co.', $decoded['name'] );
 	}
 
-	public function test_restaurant_emits_aggregate_rating_when_social_proof_configured(): void {
+	public function test_restaurant_never_emits_aggregate_rating_even_when_social_proof_configured(): void {
+		// Regression lock (f016): a fully-populated install WITH the decorative
+		// social-proof rating + count theme_mods set must still NOT surface an
+		// aggregateRating on the Restaurant / LocalBusiness / FoodEstablishment
+		// node. Self-serving LocalBusiness ratings with no backing Review
+		// entities are a Spammy Structured Markup policy violation; the only
+		// compliant rating surface is the Product node (real WooCommerce reviews).
 		$this->stub_populated_install();
 		$schema = lafka_schema_restaurant();
 
-		$this->assertArrayHasKey( 'aggregateRating', $schema );
-		$this->assertSame( 'AggregateRating', $schema['aggregateRating']['@type'] );
-		$this->assertSame( '4.8', $schema['aggregateRating']['ratingValue'] );
-		$this->assertSame( 1200, $schema['aggregateRating']['reviewCount'] );
-		$this->assertSame( '5', $schema['aggregateRating']['bestRating'] );
-		$this->assertSame( '1', $schema['aggregateRating']['worstRating'] );
+		// Sanity: confirm the social-proof fixtures ARE configured, so the
+		// absence below proves intentional suppression, not missing data.
+		$this->assertSame( '4.8', self::FIXTURES['lafka_social_proof_rating'] );
+		$this->assertSame( 1200, self::FIXTURES['lafka_social_proof_count'] );
+		$this->assertArrayNotHasKey(
+			'aggregateRating',
+			$schema,
+			'Restaurant node must never emit a self-serving aggregateRating built from the decorative social-proof theme_mods.'
+		);
 	}
 
 	public function test_restaurant_omits_aggregate_rating_when_unconfigured(): void {

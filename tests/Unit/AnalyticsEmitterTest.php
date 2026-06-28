@@ -27,6 +27,15 @@ use PHPUnit\Framework\TestCase;
 
 require_once dirname( __DIR__, 2 ) . '/incl/customizer/class-lafka-customizer-analytics.php';
 require_once dirname( __DIR__, 2 ) . '/incl/analytics/lafka-analytics-emitter.php';
+// The consent banner gates on lafka_analytics_is_active() (the destination gate,
+// audit f083 — verified separately by AnalyticsBannerDestinationGateTest). It is
+// defined in lafka-page-context.php and built on lafka_analytics_has_datalayer_destination()
+// (lafka-wc-events.php) + lafka_analytics_cf_beacon_token() (lafka-cf-analytics.php),
+// so the banner tests must bring those into scope and configure a destination to
+// satisfy the gate before asserting the banner's rendered markup.
+require_once dirname( __DIR__, 2 ) . '/incl/analytics/lafka-wc-events.php';
+require_once dirname( __DIR__, 2 ) . '/incl/analytics/lafka-cf-analytics.php';
+require_once dirname( __DIR__, 2 ) . '/incl/analytics/lafka-page-context.php';
 
 final class AnalyticsEmitterTest extends TestCase {
 
@@ -339,7 +348,13 @@ final class AnalyticsEmitterTest extends TestCase {
 	// ────────────────────────────────────────────────────────────────────────
 
 	public function test_consent_banner_emits_when_enabled(): void {
-		$this->stub_settings( array( 'lafka_consent_banner_enabled' => '1' ) );
+		// A configured destination satisfies the banner's lafka_analytics_is_active()
+		// gate; without it the banner correctly stays silent (see the dedicated
+		// AnalyticsBannerDestinationGateTest).
+		$this->stub_settings( array(
+			'lafka_consent_banner_enabled' => '1',
+			'lafka_gtm_container_id'       => 'GTM-XYZ987',
+		) );
 		$out = $this->capture( 'lafka_emit_consent_banner' );
 		$this->assertStringContainsString( 'id="lafka-consent-banner"', $out );
 		$this->assertStringContainsString( 'data-lafka-consent="accept"', $out );
@@ -363,6 +378,7 @@ final class AnalyticsEmitterTest extends TestCase {
 	public function test_consent_banner_respects_button_label_overrides(): void {
 		$this->stub_settings( array(
 			'lafka_consent_banner_enabled'        => '1',
+			'lafka_gtm_container_id'              => 'GTM-XYZ987',
 			'lafka_consent_banner_accept_label'   => 'Sounds good',
 			'lafka_consent_banner_reject_label'   => 'No thanks',
 			'lafka_consent_banner_settings_label' => 'Customize',
@@ -376,7 +392,10 @@ final class AnalyticsEmitterTest extends TestCase {
 	}
 
 	public function test_consent_banner_uses_localStorage_for_persistence(): void {
-		$this->stub_settings( array( 'lafka_consent_banner_enabled' => '1' ) );
+		$this->stub_settings( array(
+			'lafka_consent_banner_enabled' => '1',
+			'lafka_gtm_container_id'       => 'GTM-XYZ987',
+		) );
 		$out = $this->capture( 'lafka_emit_consent_banner' );
 		$this->assertStringContainsString( 'localStorage.setItem', $out );
 		$this->assertStringContainsString( 'localStorage.getItem', $out );
@@ -386,7 +405,10 @@ final class AnalyticsEmitterTest extends TestCase {
 		// The Accept button must call gtag('consent','update',...) — without
 		// this, the default 'denied' state stays put and tags never light up
 		// even after a user opts in.
-		$this->stub_settings( array( 'lafka_consent_banner_enabled' => '1' ) );
+		$this->stub_settings( array(
+			'lafka_consent_banner_enabled' => '1',
+			'lafka_gtm_container_id'       => 'GTM-XYZ987',
+		) );
 		$out = $this->capture( 'lafka_emit_consent_banner' );
 		$this->assertStringContainsString( "gtag('consent','update'", $out );
 	}

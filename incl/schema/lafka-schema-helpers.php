@@ -22,6 +22,46 @@
 
 defined( 'ABSPATH' ) || exit;
 
+if ( ! function_exists( 'lafka_get_menu_url' ) ) {
+	/**
+	 * Canonical "browse the menu" URL — single source of truth for every
+	 * Order / Browse / Start-your-order CTA AND for the "Menu" crumb + hasMenu
+	 * link emitted in JSON-LD.
+	 *
+	 * CANONICAL BROWSE TARGET (decision, f104): the menu lives at the /menu/
+	 * custom WP page, NOT the WooCommerce shop archive. Those are two distinct
+	 * URLs — the /menu/ page is the operator-facing browse experience that the
+	 * handoff layout renders (lafka-theme/page-menu.php), while the shop archive
+	 * (archive-product.php) only fires on the shop + product taxonomy URLs. All
+	 * "browse/order" CTAs therefore resolve here, to /menu/, rather than to
+	 * wc_get_page_permalink( 'shop' ).
+	 *
+	 * Routed through the long-standing `lafka_header_cta_url` filter so an
+	 * operator who repoints the header "Order now" button (a custom page slug,
+	 * or an external ordering platform) moves every menu CTA — and the
+	 * structured-data Menu links — in lockstep: the visible CTAs and the JSON-LD
+	 * can never diverge (the inconsistency this resolver exists to kill).
+	 *
+	 * Returns '' when home_url() is unavailable (e.g. running outside a booted
+	 * WP); callers that emit a link already gate on a non-empty value, and the
+	 * schema generators skip the field when it is empty.
+	 *
+	 * @since 9.34.0
+	 *
+	 * @return string Absolute, trailing-slashed menu URL, or '' when unresolvable.
+	 */
+	function lafka_get_menu_url(): string {
+		$menu_url = '';
+		if ( function_exists( 'home_url' ) && function_exists( 'trailingslashit' ) ) {
+			$menu_url = trailingslashit( home_url( '/menu/' ) );
+		}
+		if ( function_exists( 'apply_filters' ) ) {
+			$menu_url = (string) apply_filters( 'lafka_header_cta_url', $menu_url );
+		}
+		return (string) $menu_url;
+	}
+}
+
 if ( ! function_exists( 'lafka_get_restaurant_info' ) ) {
 	/**
 	 * Canonical restaurant-info resolver. Single source of truth for NAP, geo,
@@ -139,10 +179,10 @@ if ( ! function_exists( 'lafka_get_restaurant_info' ) ) {
 		if ( function_exists( 'get_site_icon_url' ) ) {
 			$logo_url = (string) get_site_icon_url( 1200 );
 		}
-		$menu_url = '';
-		if ( function_exists( 'home_url' ) && function_exists( 'trailingslashit' ) ) {
-			$menu_url = trailingslashit( home_url( '/menu/' ) );
-		}
+		// Canonical menu URL — the SAME resolver every visible "Order now" /
+		// "Browse the menu" CTA uses, so hasMenu (schema-restaurant.php) can
+		// never point somewhere the on-page buttons don't.
+		$menu_url = lafka_get_menu_url();
 
 		$info = array(
 			'name'            => $get( 'name', $name_default ),
@@ -163,7 +203,15 @@ if ( ! function_exists( 'lafka_get_restaurant_info' ) ) {
 			// "Array" inside servesCuisine — bad SEO signal to Google.
 			'cuisines'        => lafka_schema_normalize_csv_list( $get( 'cuisines' ) ),
 			'payment_methods' => lafka_schema_normalize_csv_list( $get( 'payment_methods' ) ),
-			'business_type'   => array( 'Restaurant', 'LocalBusiness', 'FoodEstablishment' ),
+			// v9.x: business_type is an editable control in BOTH the Customizer
+			// Restaurant-Information panel and the WooCommerce Restaurant Settings
+			// tab (stored as a CSV string of schema.org subtypes). Previously this
+			// was a hardcoded literal, so operator input from either surface was
+			// silently discarded and a non-restaurant could never correct its
+			// JSON-LD @type. Resolve the stored value via the shared CSV parser;
+			// fall back to the Restaurant default only when nothing is stored
+			// (normalize returns an empty — falsy — array for unset/empty input).
+			'business_type'   => lafka_schema_normalize_csv_list( $get( 'business_type' ) ) ?: array( 'Restaurant', 'LocalBusiness', 'FoodEstablishment' ),
 			'same_as'         => array_values(
 				array_filter(
 					array_map( 'trim', explode( "\n", (string) $get( 'same_as' ) ) ),
@@ -245,6 +293,42 @@ if ( ! function_exists( 'lafka_get_restaurant_info' ) ) {
 					'opens'     => $m[1],
 					'closes'    => $m[2],
 				);
+			}
+		}
+
+		// SSOT reconciliation: restaurant hours are otherwise captured twice —
+		// the dedicated display store above (lafka_business_hours_*) drives this
+		// badge + JSON-LD, while Lafka_Order_Hours' own JSON schedule gates
+		// whether an order is actually accepted. Nothing keeps the two in sync,
+		// so an operator who fills in only the order-hours schedule gets a
+		// storefront that emits NO hours (badge hidden / schema omitted) while
+		// ordering is gated, and one who edits only one of two populated stores
+		// can show "Open now" (telling Google the store is open) while ordering
+		// is blocked, or the reverse.
+		//
+		// When the display store is unset we therefore derive hours from the
+		// SAME schedule the order gate reads, so badge + schema + gate all read
+		// one store. An explicitly populated display store still wins (the
+		// emptiness check below), preserving any deliberate operator override.
+		// Scoped to the main-store schedule; per-branch order-gate overrides
+		// remain authoritative for the gate only (the display store is
+		// single-location). See Lafka_Order_Hours::get_schedule_display_hours_map().
+		if ( empty( $info['hours'] ) && class_exists( 'Lafka_Order_Hours' ) ) {
+			$schedule_map = Lafka_Order_Hours::get_schedule_display_hours_map();
+			foreach ( $schedule_map as $day_name => $range ) {
+				if ( 'Closed' === $range ) {
+					$info['hours'][ $day_name ] = 'Closed';
+					continue;
+				}
+				if ( preg_match( '/^(\d{2}:\d{2})-(\d{2}:\d{2})$/', $range, $m ) ) {
+					$info['hours'][ $day_name ] = $m[1] . '-' . $m[2];
+					$info['opening_hours'][]    = array(
+						'@type'     => 'OpeningHoursSpecification',
+						'dayOfWeek' => 'https://schema.org/' . $day_name,
+						'opens'     => $m[1],
+						'closes'    => $m[2],
+					);
+				}
 			}
 		}
 
