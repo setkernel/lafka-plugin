@@ -69,7 +69,9 @@ function lafka_schema_menu(): ?array {
 
 	$nap      = lafka_schema_get_nap();
 	$home_url = trailingslashit( home_url( '/' ) );
-	$menu_url = trailingslashit( home_url( '/menu/' ) );
+	// Canonical menu URL (f104) — shared with the BreadcrumbList "Menu" crumb
+	// and the on-page CTAs so the Menu node's @id/url can't drift from them.
+	$menu_url = lafka_get_menu_url();
 
 	// Fetch all published product categories (excluding hidden/empty).
 	$categories = get_terms(

@@ -26,30 +26,49 @@
 
 defined( 'ABSPATH' ) || exit;
 
-if ( ! function_exists( 'lafka_custom_events_has_analytics_id' ) ) {
+if ( ! function_exists( 'lafka_analytics_has_datalayer_destination' ) ) {
 	/**
-	 * True when at least one of GTM / GA4 / Clarity / Meta Pixel ID is set.
+	 * True when at least one dataLayer-consuming destination is configured:
+	 * GTM, GA4, Microsoft Clarity, or the Meta Pixel.
 	 *
-	 * Mirrors the gating rule established for the consent banner + Phase 1B
-	 * client JS so all three enqueue paths share one definition of "analytics
-	 * is configured for this site".
+	 * Canonical copy lives in lafka-wc-events.php (the earliest-loaded analytics
+	 * module); this guarded re-declaration keeps the gate available when this
+	 * module is loaded on its own (e.g. isolated unit tests). The body MUST stay
+	 * byte-identical to the wc-events copy — adding a destination means editing
+	 * the shared gate, not forking it.
 	 *
 	 * @return bool
 	 */
-	function lafka_custom_events_has_analytics_id(): bool {
+	function lafka_analytics_has_datalayer_destination(): bool {
 		if ( function_exists( 'lafka_analytics_gtm_id' ) && '' !== lafka_analytics_gtm_id() ) {
 			return true;
 		}
 		if ( function_exists( 'lafka_analytics_ga4_id' ) && '' !== lafka_analytics_ga4_id() ) {
 			return true;
 		}
-		if ( function_exists( 'lafka_analytics_meta_pixel_id' ) && '' !== lafka_analytics_meta_pixel_id() ) {
-			return true;
-		}
 		if ( function_exists( 'lafka_analytics_clarity_id' ) && '' !== lafka_analytics_clarity_id() ) {
 			return true;
 		}
+		if ( function_exists( 'lafka_analytics_meta_pixel_id' ) && '' !== lafka_analytics_meta_pixel_id() ) {
+			return true;
+		}
 		return false;
+	}
+}
+
+if ( ! function_exists( 'lafka_custom_events_has_analytics_id' ) ) {
+	/**
+	 * True when at least one of GTM / GA4 / Clarity / Meta Pixel ID is set.
+	 *
+	 * Thin wrapper over the shared lafka_analytics_has_datalayer_destination()
+	 * gate, kept for its established call site + name so all enqueue paths share
+	 * one definition of "analytics is configured for this site". The Cloudflare
+	 * beacon is intentionally excluded — it never consumes window.dataLayer.
+	 *
+	 * @return bool
+	 */
+	function lafka_custom_events_has_analytics_id(): bool {
+		return lafka_analytics_has_datalayer_destination();
 	}
 }
 

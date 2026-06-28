@@ -23,9 +23,9 @@ final class ClosedStoreMessageTest extends TestCase {
 	public function test_default_title_when_operator_message_unset(): void {
 		// Source-grep: must have an i18n-wrapped default title literal.
 		$this->assertMatchesRegularExpression(
-			"/__\(\s*['\"]Closed right now['\"]\s*,\s*['\"]lafka['\"]/",
+			"/__\(\s*['\"]Closed right now['\"]\s*,\s*['\"]lafka-plugin['\"]/",
 			$this->src,
-			'default title must be __("Closed right now", "lafka")'
+			'default title must be __("Closed right now", "lafka-plugin")'
 		);
 	}
 
@@ -37,7 +37,7 @@ final class ClosedStoreMessageTest extends TestCase {
 	public function test_subtitle_uses_opens_translatable_string(): void {
 		// "Opens %s" wrapped with sprintf + __() so translators can localize.
 		$this->assertMatchesRegularExpression(
-			"/__\(\s*['\"]Opens %s['\"]\s*,\s*['\"]lafka['\"]/",
+			"/__\(\s*['\"]Opens %s['\"]\s*,\s*['\"]lafka-plugin['\"]/",
 			$this->src
 		);
 	}

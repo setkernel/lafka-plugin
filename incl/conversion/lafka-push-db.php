@@ -20,9 +20,11 @@
  * Privacy: each row carries the customer's push endpoint + public keys (~1 KB
  * each). When a customer unsubscribes (browser settings, site profile, or the
  * push service returns 410 Gone), the row is marked `unsubscribed_at` rather
- * than deleted immediately so analytics can attribute past sends; rows older
- * than 60 days with `unsubscribed_at` set OR with no `last_seen_at` activity
- * are deleted by the cleanup helper.
+ * than deleted immediately so analytics can attribute past sends; rows that
+ * have been soft-deleted (`unsubscribed_at` set) for more than 60 days are
+ * deleted by the cleanup helper. Active rows are never pruned on inactivity
+ * alone — `last_seen_at` is a deliverability heartbeat (refreshed on every
+ * successful send), not a delete trigger.
  *
  * @package Lafka\Plugin\Conversion
  * @since   9.29.0
@@ -385,8 +387,19 @@ if ( ! function_exists( 'lafka_push_get_subscription_by_endpoint' ) ) {
 
 if ( ! function_exists( 'lafka_push_cleanup' ) ) {
 	/**
-	 * Delete rows older than $days_old that are either (a) already
-	 * unsubscribed or (b) have no `last_seen_at` activity in the window.
+	 * Delete subscription rows that have been soft-deleted (unsubscribed) for
+	 * longer than $days_old.
+	 *
+	 * Only rows whose `unsubscribed_at` is set AND older than the window are
+	 * pruned. Active rows are NEVER deleted on `last_seen_at` age alone: a
+	 * deliverable subscriber who keeps receiving pushes but never re-runs the
+	 * browser subscribe flow would otherwise be silently hard-deleted, quietly
+	 * shrinking the deliverable audience. `last_seen_at` is kept fresh by
+	 * lafka_push_send() on every successful (2xx) delivery — the documented
+	 * "or send" half of the heartbeat — so it is a deliverability signal, not a
+	 * delete trigger. Pruning on `last_seen_at` is reserved for a future signal
+	 * (rows that have also accumulated repeated 4xx/5xx send failures), which
+	 * needs a failure-count column the schema does not yet carry.
 	 *
 	 * Defaults to 60 days — matches industry practice for "stale subscription"
 	 * pruning. Run daily by cron.
@@ -404,8 +417,7 @@ if ( ! function_exists( 'lafka_push_cleanup' ) ) {
 		$result   = $wpdb->query(
 			$wpdb->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"DELETE FROM {$table} WHERE (unsubscribed_at IS NOT NULL AND unsubscribed_at < DATE_SUB(NOW(), INTERVAL %d DAY)) OR (last_seen_at < DATE_SUB(NOW(), INTERVAL %d DAY))",
-				$days_old,
+				"DELETE FROM {$table} WHERE unsubscribed_at IS NOT NULL AND unsubscribed_at < DATE_SUB(NOW(), INTERVAL %d DAY)",
 				$days_old
 			)
 		);

@@ -72,7 +72,7 @@ class Lafka_Order_Hours {
 		}
 	}
 
-	public static function get_order_hours_time( DateTimeZone $timezone = null ): DateTime {
+	public static function get_order_hours_time( ?DateTimeZone $timezone = null ): DateTime {
 		if ( empty( $timezone ) ) {
 			$temp_timezone = self::get_timezone();
 		} else {
@@ -163,6 +163,125 @@ class Lafka_Order_Hours {
 	}
 
 	/**
+	 * Build a per-day "HH:MM-HH:MM" display map from the order-hours schedule
+	 * JSON — the SAME store that gates ordering via is_shop_open().
+	 *
+	 * This is the single-source-of-truth bridge for the restaurant-info
+	 * resolver (lafka_get_restaurant_info()): when the dedicated display-hours
+	 * store (theme_mod / option `lafka_business_hours_*`) is unset, the
+	 * storefront "Open now" badge and the JSON-LD openingHoursSpecification can
+	 * be derived from this schedule so badge + schema + order gate all read one
+	 * store. Without it the two independent stores could disagree — e.g. the
+	 * badge says "Open now" (and Google is told the store is open) while
+	 * is_shop_open() is blocking the order, or the reverse.
+	 *
+	 * Multi-branch note: the order gate supports per-branch schedules/timezones
+	 * (term meta), but the display-hours store is single-location. This helper
+	 * therefore reads the MAIN-store schedule (the option value), NOT the
+	 * possibly branch-overridden self::$lafka_order_hours_schedule static, so
+	 * per-branch gate overrides stay authoritative for the gate only and are
+	 * never silently flattened into the single display map.
+	 *
+	 * The schedule JSON is an array indexed 0..6 == Monday..Sunday (matching
+	 * is_shop_open()'s `$schedule_array[ format('N') - 1 ]` lookup and the
+	 * scheduler widget's Monday-first export order). Each element exposes a
+	 * `periods` list of `{ start: "HH:MM", end: "HH:MM" }` objects.
+	 *
+	 * @param string|null $schedule_json Raw schedule JSON; defaults to the
+	 *                                   main-store option value.
+	 * @return array<string, string> e.g. [ 'Monday' => '11:00-23:00',
+	 *                               'Tuesday' => 'Closed', ... ]. Empty array
+	 *                               when no usable schedule is configured (so
+	 *                               callers keep their existing "no hours"
+	 *                               behaviour rather than advertising a closed
+	 *                               restaurant).
+	 */
+	public static function get_schedule_display_hours_map( $schedule_json = null ): array {
+		if ( null === $schedule_json ) {
+			$options = is_array( self::$lafka_order_hours_options )
+				? self::$lafka_order_hours_options
+				: ( function_exists( 'get_option' ) ? (array) get_option( 'lafka_order_hours_options' ) : array() );
+			$schedule_json = $options['lafka_order_hours_schedule'] ?? '';
+		}
+
+		$schedule_json = (string) $schedule_json;
+		if ( '' === $schedule_json ) {
+			return array();
+		}
+
+		$schedule_array = json_decode( $schedule_json, true );
+		if ( ! is_array( $schedule_array ) ) {
+			return array();
+		}
+
+		// Index 0..6 == Monday..Sunday — see method docblock.
+		$day_names = array( 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday' );
+
+		$map           = array();
+		$has_any_hours = false;
+
+		foreach ( $day_names as $index => $day_name ) {
+			$open_minutes  = null;
+			$close_minutes = null;
+
+			$periods = isset( $schedule_array[ $index ]['periods'] ) && is_array( $schedule_array[ $index ]['periods'] )
+				? $schedule_array[ $index ]['periods']
+				: array();
+
+			foreach ( $periods as $period ) {
+				$start = isset( $period['start'] ) ? trim( (string) $period['start'] ) : '';
+				$end   = isset( $period['end'] ) ? trim( (string) $period['end'] ) : '';
+				if ( ! preg_match( '/^(\d{1,2}):(\d{2})$/', $start, $sm ) || ! preg_match( '/^(\d{1,2}):(\d{2})$/', $end, $em ) ) {
+					continue;
+				}
+				$start_min = ( (int) $sm[1] * 60 ) + (int) $sm[2];
+				$end_min   = ( (int) $em[1] * 60 ) + (int) $em[2];
+				// The scheduler encodes an end-of-day close as "00:00"; treat it
+				// as midnight (1440) so it sorts after every same-day open time —
+				// mirrors is_shop_open()'s "00:00" => "24:00" handling.
+				if ( 0 === $end_min ) {
+					$end_min = 1440;
+				}
+				if ( null === $open_minutes || $start_min < $open_minutes ) {
+					$open_minutes = $start_min;
+				}
+				if ( null === $close_minutes || $end_min > $close_minutes ) {
+					$close_minutes = $end_min;
+				}
+			}
+
+			// A day with split periods (e.g. lunch + dinner) is summarised as the
+			// earliest open to the latest close — the single-range shape the
+			// display map / schema use. The order gate still enforces each period
+			// individually, so the rare in-between gap is the only residual
+			// divergence; the common single-period case is exact.
+			if ( null !== $open_minutes && null !== $close_minutes && $close_minutes > $open_minutes ) {
+				$map[ $day_name ] = self::minutes_to_hhmm( $open_minutes ) . '-' . self::minutes_to_hhmm( $close_minutes );
+				$has_any_hours    = true;
+			} else {
+				$map[ $day_name ] = 'Closed';
+			}
+		}
+
+		return $has_any_hours ? $map : array();
+	}
+
+	/**
+	 * Format minutes-since-midnight as a zero-padded "HH:MM" string. 1440 (the
+	 * scheduler's end-of-day close) renders as "24:00" — parser-compatible with
+	 * both the schema regex and open-status.php, and an unambiguous "closes at
+	 * midnight" marker consistent with is_shop_open()'s internal handling.
+	 *
+	 * @param int $minutes Minutes since midnight (0..1440).
+	 * @return string
+	 */
+	private static function minutes_to_hhmm( int $minutes ): string {
+		$minutes = max( 0, min( 1440, $minutes ) );
+
+		return sprintf( '%02d:%02d', intdiv( $minutes, 60 ), $minutes % 60 );
+	}
+
+	/**
 	 * @return bool|DateTime
 	 * @throws Exception
 	 */
@@ -212,16 +331,27 @@ class Lafka_Order_Hours {
 	 *
 	 * Uses wp_date() so it respects the operator's WP locale AND the
 	 * DateTime's own timezone (critical for multi-branch operators where a
-	 * branch can have its own timezone). Returns empty string for null
-	 * input. Operators can override the format via the
+	 * branch can have its own timezone). Returns empty string for any input
+	 * that is not a DateTime. Operators can override the format via the
 	 * `lafka_next_open_time_format` filter.
 	 *
-	 * @param DateTime|null $datetime The next-open DateTime from get_next_opening_time().
+	 * The parameter is intentionally untyped: the underlying next-open
+	 * resolvers (get_next_opening_time() / get_first_opening_branch_datetime())
+	 * follow a legacy bool|DateTime contract and can return false (e.g. a
+	 * force-closed branch or a schedule with no upcoming period). A strict
+	 * ?DateTime hint would fatal (TypeError) on that false while rendering the
+	 * customer-facing closed-store card, so we accept anything and guard.
+	 *
+	 * @param DateTime|bool|null $datetime The next-open DateTime, or false/null when none.
 	 * @return string Human-readable string like "Saturday at 11:00 AM", or empty.
 	 * @since  9.7.26
 	 */
-	public static function format_next_open_time_human( ?DateTime $datetime ): string {
-		if ( null === $datetime ) {
+	public static function format_next_open_time_human( $datetime ): string {
+		// null is the common "no info" case (callers initialise $opening_datetime
+		// to null); the instanceof check additionally absorbs the legacy false
+		// that the next-open resolvers return for force-closed / scheduleless
+		// branches, so neither can reach getTimestamp() and fatal.
+		if ( null === $datetime || ! $datetime instanceof DateTime ) {
 			return '';
 		}
 
@@ -233,7 +363,7 @@ class Lafka_Order_Hours {
 		 * @param DateTime $datetime The next-open DateTime.
 		 */
 		/* translators: WP date_i18n format for "next-open" rendering. Default 'l \a\t g:i A' produces "Saturday at 11:00 AM". Translators: provide a localized format like 'l \à H\hi' for "samedi à 11h00". */
-		$default_format = _x( 'l \a\t g:i A', 'next-open time format', 'lafka' );
+		$default_format = _x( 'l \a\t g:i A', 'next-open time format', 'lafka-plugin' );
 		$format         = apply_filters( 'lafka_next_open_time_format', $default_format, $datetime );
 
 		return wp_date( $format, $datetime->getTimestamp(), $datetime->getTimezone() );
@@ -269,17 +399,20 @@ class Lafka_Order_Hours {
 			self::$lafka_order_hours_holidays_calendar
 		);
 
-		if ( empty( $branches_open_times[0] ) ) {
-			unset( $branches_open_times[0] );
-		}
+		// Drop every falsy entry — get_next_opening_time_by_params() returns the
+		// literal false for force-closed branches or branches whose schedule has
+		// no upcoming period (including the main store at index 0). Leaving those
+		// in would make arsort() sort a mix of DateTime objects and booleans and
+		// array_pop() could then return false straight into the renderer.
+		$branches_open_times = array_filter( $branches_open_times );
 
 		if ( empty( $branches_open_times ) ) {
 			return null;
-		} else {
-			arsort( $branches_open_times );
-
-			return array_pop( $branches_open_times );
 		}
+
+		arsort( $branches_open_times );
+
+		return array_pop( $branches_open_times );
 	}
 
 	public static function get_branch_working_status( $branch_id ) {
@@ -309,6 +442,22 @@ class Lafka_Order_Hours {
 	}
 
 	public function handle_shop_status() {
+		// Canonical server-side ordering gate. The UI hooks inside the
+		// is_shop_open() branch below are cosmetic ONLY: they swap the proceed/
+		// place-order button HTML and print a "closed" card. A replayed or stale
+		// classic place-order POST (the form is still rendered, only the button
+		// markup is swapped) and the entire Cart/Checkout Blocks + Store API path
+		// (which ignores woocommerce_order_button_html) bypass that UI, so the
+		// server must enforce closure itself. These validation hooks are the real
+		// gate; each re-checks is_shop_open() (per active branch/session) at fire
+		// time, so a closed store can never accept an order — and, when the
+		// operator opts into lafka_order_hours_disable_add_to_cart, can never
+		// accept an add-to-cart either — no matter which checkout UI is used.
+		add_action( 'woocommerce_checkout_process', array( $this, 'gate_checkout_when_closed' ) );
+		add_filter( 'woocommerce_add_to_cart_validation', array( $this, 'gate_add_to_cart_when_closed' ) );
+		add_action( 'woocommerce_store_api_validate_add_to_cart', array( $this, 'gate_store_api_add_to_cart_when_closed' ) );
+		add_action( 'woocommerce_store_api_validate_cart', array( $this, 'gate_store_api_cart_when_closed' ) );
+
 		if ( ! self::is_shop_open() ) {
 
 			// Add classes to body
@@ -323,15 +472,141 @@ class Lafka_Order_Hours {
 			add_action( 'woocommerce_after_add_to_cart_button', array( $this, 'echo_closed_store_message' ), 99 );
 			add_filter( 'woocommerce_order_button_html', array( $this, 'get_closed_store_message' ) );
 
-			// v9.7.26: when operator opts into disable_add_to_cart, replace the
-			// PDP add-to-cart button entirely with the closed-store card.
-			// Without this gate, the option was a no-op (only added a body class).
+			// v9.7.26: when the operator opts into disable_add_to_cart, hard-block
+			// the add-to-cart and surface the closed-store card. Without this the
+			// option was a no-op (only added a body class). See the (A)/(B) notes.
 			if ( ! empty( self::$lafka_order_hours_options['lafka_order_hours_disable_add_to_cart'] ) ) {
+				// (A) Authoritative, template-agnostic server-side block: a
+				// non-purchasable product cannot be added by ANY path and WC stops
+				// rendering its add-to-cart form. Backs the add_to_cart_validation gate.
+				add_filter( 'woocommerce_is_purchasable', '__return_false' );
+
+				// (B) Card swap on WC's single-product hook (classic / quick-view).
+				// The redesigned PDP never fires woocommerce_single_product_summary;
+				// it gates its own form on is_shop_open() and renders the card inline
+				// via the now-static echo_closed_store_message(), so this is a no-op there.
 				remove_action( 'woocommerce_after_add_to_cart_button', array( $this, 'echo_closed_store_message' ), 99 );
 				remove_action( 'woocommerce_single_product_summary', 'woocommerce_template_single_add_to_cart', 30 );
 				add_action( 'woocommerce_single_product_summary', array( $this, 'echo_closed_store_message' ), 30 );
 			}
 		}
+	}
+
+	/**
+	 * Resolve the customer-facing "store closed" notice text. Prefers the
+	 * operator's configured message (same source the closed-store card uses);
+	 * falls back to a translatable default. Returned as plain text — callers
+	 * escape it for their own output context.
+	 *
+	 * @return string
+	 */
+	private function get_closed_notice_message(): string {
+		$operator_message = self::$lafka_order_hours_options['lafka_order_hours_message'] ?? '';
+
+		return '' !== $operator_message
+			? $operator_message
+			: __( 'Sorry, the store is currently closed and is not accepting orders.', 'lafka-plugin' );
+	}
+
+	/**
+	 * Whether add-to-cart must be blocked while the store is closed.
+	 *
+	 * Mirrors the UI contract: add-to-cart is only disabled when the operator
+	 * opts in via lafka_order_hours_disable_add_to_cart (otherwise customers may
+	 * still build a cart while closed). Checkout, by contrast, is always gated.
+	 *
+	 * @return bool
+	 */
+	private function is_add_to_cart_disabled_when_closed(): bool {
+		return ! empty( self::$lafka_order_hours_options['lafka_order_hours_disable_add_to_cart'] );
+	}
+
+	/**
+	 * Hard server-side checkout gate for the classic checkout.
+	 *
+	 * Runs on woocommerce_checkout_process inside WC_Checkout::process_checkout()
+	 * — the only classic hook where wc_add_notice( ..., 'error' ) actually aborts
+	 * the order. Backs up the cosmetic button removal so a replayed or stale
+	 * place-order POST cannot place an order while the store is closed.
+	 *
+	 * @return void
+	 */
+	public function gate_checkout_when_closed() {
+		if ( self::is_shop_open() ) {
+			return;
+		}
+		wc_add_notice( esc_html( $this->get_closed_notice_message() ), 'error' );
+	}
+
+	/**
+	 * Server-side add-to-cart gate for the classic / wc-ajax add-to-cart path.
+	 *
+	 * Enforces lafka_order_hours_disable_add_to_cart on the server: removing the
+	 * PDP button is not a gate (a replayed POST still adds the item), so when the
+	 * operator opts in and the store is closed the add is rejected with a notice.
+	 *
+	 * @param bool $passed Whether add-to-cart validation has passed so far.
+	 * @return bool
+	 */
+	public function gate_add_to_cart_when_closed( $passed ) {
+		if ( $passed && ! self::is_shop_open() && $this->is_add_to_cart_disabled_when_closed() ) {
+			wc_add_notice( esc_html( $this->get_closed_notice_message() ), 'error' );
+
+			return false;
+		}
+
+		return $passed;
+	}
+
+	/**
+	 * Store API / Cart-and-Checkout-Blocks add-to-cart gate.
+	 *
+	 * The blocks/Store API path ignores the classic add-to-cart validation
+	 * filter, so it needs its own gate. Fires on woocommerce_store_api_validate_add_to_cart
+	 * (only triggered by the Store API add-to-cart route). Throws RouteException,
+	 * which the Store API converts into a proper REST error response.
+	 *
+	 * @return void
+	 * @throws \Automattic\WooCommerce\StoreApi\Exceptions\RouteException When closed and add-to-cart is disabled.
+	 */
+	public function gate_store_api_add_to_cart_when_closed() {
+		if ( self::is_shop_open() || ! $this->is_add_to_cart_disabled_when_closed() ) {
+			return;
+		}
+		if ( ! class_exists( '\Automattic\WooCommerce\StoreApi\Exceptions\RouteException' ) ) {
+			return;
+		}
+		throw new \Automattic\WooCommerce\StoreApi\Exceptions\RouteException(
+			'lafka_store_closed',
+			esc_html( $this->get_closed_notice_message() ),
+			409
+		);
+	}
+
+	/**
+	 * Store API / Cart-and-Checkout-Blocks checkout gate.
+	 *
+	 * woocommerce_store_api_validate_cart is fired only from the Store API
+	 * Checkout route (CartController::validate_cart()), i.e. at blocks place-order
+	 * — not on cart reads/updates — so throwing here blocks the blocks-based order
+	 * exactly as gate_checkout_when_closed() blocks the classic one, without
+	 * breaking cart viewing while closed.
+	 *
+	 * @return void
+	 * @throws \Automattic\WooCommerce\StoreApi\Exceptions\RouteException When the store is closed.
+	 */
+	public function gate_store_api_cart_when_closed() {
+		if ( self::is_shop_open() ) {
+			return;
+		}
+		if ( ! class_exists( '\Automattic\WooCommerce\StoreApi\Exceptions\RouteException' ) ) {
+			return;
+		}
+		throw new \Automattic\WooCommerce\StoreApi\Exceptions\RouteException(
+			'lafka_store_closed',
+			esc_html( $this->get_closed_notice_message() ),
+			409
+		);
 	}
 
 	public function add_body_class( $classes ) {
@@ -344,9 +619,22 @@ class Lafka_Order_Hours {
 		return $classes;
 	}
 
-	public function echo_closed_store_message() {
+	/**
+	 * Render the customer-facing "store closed" card.
+	 *
+	 * Static so theme templates can render it directly — the redesigned PDP
+	 * (lafka-theme/partials/pdp-summary.php) gates its own add-to-cart form on
+	 * is_shop_open() and calls Lafka_Order_Hours::echo_closed_store_message()
+	 * inline, because it never fires the WC single-product hooks the plugin
+	 * attaches this card to. Also used as an instance-array action callback
+	 * ( array( $this, 'echo_closed_store_message' ) ), which PHP resolves to the
+	 * same static method. Uses only self:: references — no $this.
+	 *
+	 * @return void
+	 */
+	public static function echo_closed_store_message() {
 		$operator_message = self::$lafka_order_hours_options['lafka_order_hours_message'] ?? '';
-		$title            = '' !== $operator_message ? $operator_message : __( 'Closed right now', 'lafka' );
+		$title            = '' !== $operator_message ? $operator_message : __( 'Closed right now', 'lafka-plugin' );
 
 		$lafka_branch_location_id_in_session = null;
 		$opening_datetime                    = null;
@@ -367,7 +655,7 @@ class Lafka_Order_Hours {
 			<p class="lafka-store-closed-card__title"><?php echo esc_html( $title ); ?></p>
 			<?php if ( '' !== $subtitle_human ) : ?>
 				<p class="lafka-store-closed-card__subtitle">
-					<?php echo esc_html( sprintf( __( 'Opens %s', 'lafka' ), $subtitle_human ) ); ?>
+					<?php echo esc_html( sprintf( __( 'Opens %s', 'lafka-plugin' ), $subtitle_human ) ); ?>
 				</p>
 			<?php endif; ?>
 			<?php
@@ -397,7 +685,7 @@ class Lafka_Order_Hours {
 
 	public function get_closed_store_message() {
 		ob_start();
-		$this->echo_closed_store_message();
+		self::echo_closed_store_message();
 
 		return ob_get_clean();
 	}

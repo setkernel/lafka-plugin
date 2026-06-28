@@ -9,7 +9,8 @@
  *   - GSC verification meta (priority 1)
  *   - GTM container head snippet (priority 2) OR direct platform snippets
  *   - GTM noscript iframe via wp_body_open (with wp_footer fallback)
- *   - Consent banner HTML + JS when enabled
+ *   - Consent banner HTML + JS when enabled AND a tracking destination is
+ *     configured (lafka_analytics_is_active())
  *
  * Override-not-additive: when `lafka_gtm_container_id` is set, the direct
  * GA4 / Clarity / Meta Pixel emitters no-op so a single page never double-
@@ -154,6 +155,58 @@ if ( ! function_exists( 'lafka_emit_consent_mode_defaults' ) ) {
 	}
 }
 
+if ( ! function_exists( 'lafka_emit_consent_replay' ) ) {
+	/**
+	 * Replay a returning visitor's stored consent decision in <head>.
+	 *
+	 * Hooked on wp_head priority 1, immediately AFTER
+	 * lafka_emit_consent_mode_defaults so `gtag` and `dataLayer` already
+	 * exist when this runs.
+	 *
+	 * Why this is in the head and not only in the footer banner JS: the
+	 * defaults emit `wait_for_update: 500` (ms), and the footer banner JS
+	 * only renders on wp_footer:100 — typically well after that 500ms window
+	 * has closed. By then GA4/Ads may have already sent a cookieless ping in
+	 * the page-load 'denied' default. A returning visitor who previously
+	 * accepted would therefore be silently downgraded to denied on every
+	 * subsequent page. Replaying inside the head — before the window closes —
+	 * restores their persisted grants so the very first tag boot honours the
+	 * stored decision.
+	 *
+	 * Reads the same localStorage key the banner persists
+	 * (`lafka_consent_v1`). The footer banner JS keeps ownership of the
+	 * show/click UX (and re-applies defensively on load).
+	 *
+	 * The emitted script is entirely static (no PHP-interpolated values), so
+	 * there is nothing to escape; the localStorage payload is consumed
+	 * client-side and only handed to gtag()/dataLayer, never echoed to HTML.
+	 */
+	function lafka_emit_consent_replay(): void {
+		if ( ! lafka_analytics_banner_enabled() ) {
+			return;
+		}
+		echo "<script id=\"lafka-consent-replay\">\n";
+		echo "(function(){\n";
+		echo "\ttry {\n";
+		echo "\t\tvar raw = window.localStorage.getItem('lafka_consent_v1');\n";
+		echo "\t\tif (!raw) { return; }\n";
+		echo "\t\tvar state = JSON.parse(raw);\n";
+		echo "\t\tif (!state) { return; }\n";
+		echo "\t\twindow.dataLayer = window.dataLayer || [];\n";
+		echo "\t\tfunction gtag(){ window.dataLayer.push(arguments); }\n";
+		echo "\t\tgtag('consent','update', {\n";
+		echo "\t\t\tanalytics_storage:   state.analytics_storage   ? 'granted' : 'denied',\n";
+		echo "\t\t\tad_storage:          state.ad_storage          ? 'granted' : 'denied',\n";
+		echo "\t\t\tad_user_data:        state.ad_user_data        ? 'granted' : 'denied',\n";
+		echo "\t\t\tad_personalization:  state.ad_personalization  ? 'granted' : 'denied'\n";
+		echo "\t\t});\n";
+		echo "\t\twindow.dataLayer.push({ event: 'consent_update', consent_state: state });\n";
+		echo "\t} catch(e){ /* private mode / parse error — leave defaults in place */ }\n";
+		echo "})();\n";
+		echo "</script>\n";
+	}
+}
+
 if ( ! function_exists( 'lafka_emit_datalayer_init' ) ) {
 	/**
 	 * Ensure the dataLayer global exists before any tag pushes to it.
@@ -256,6 +309,19 @@ if ( ! function_exists( 'lafka_emit_direct_ga4' ) ) {
 	 *
 	 * Override-not-additive: if operator pasted a GTM container, they wire
 	 * GA4 inside GTM, so emitting both here would double-count every event.
+	 *
+	 * Direct-GA4 mode has NO GTM container to translate the GTM-format
+	 * `dataLayer.push({event, ecommerce})` messages (emitted by the WC events
+	 * module — both the server-rendered inline pushes from lafka_dl_emit_push()
+	 * AND the client pushes in lafka-dl-client.js) into GA4 events. gtag.js
+	 * ignores those raw dataLayer objects entirely — that translation is a
+	 * GTM-only feature — so without a forwarder an operator on the simplest
+	 * "paste a GA4 ID, no GTM" setup gets pageviews but ZERO funnel/ecommerce/
+	 * purchase tracking. We therefore monkeypatch dataLayer.push (once, in the
+	 * head, before any event fires) to mirror every {event, ecommerce} push
+	 * into gtag('event', name, params). The ecommerce object is SPREAD as the
+	 * event params (gtag ignores a nested `ecommerce` key); the
+	 * `{ecommerce:null}` clear pushes carry no `event` and are skipped.
 	 */
 	function lafka_emit_direct_ga4(): void {
 		if ( '' !== lafka_analytics_gtm_id() ) {
@@ -272,6 +338,20 @@ if ( ! function_exists( 'lafka_emit_direct_ga4' ) ) {
 		echo "function gtag(){dataLayer.push(arguments);}\n";
 		echo "gtag('js', new Date());\n";
 		echo "gtag('config','" . esc_js( $ga4_id ) . "');\n";
+		// dataLayer -> gtag forwarder for GTM-format ecommerce pushes. gtag()
+		// itself pushes an array-like `arguments` object (no `.event` own key),
+		// so mirrored events never re-enter this branch — no recursion.
+		echo "(function(){\n";
+		echo "\tvar dl = window.dataLayer;\n";
+		echo "\tvar op = dl.push.bind(dl);\n";
+		echo "\tdl.push = function(o){\n";
+		echo "\t\tvar r = op(o);\n";
+		echo "\t\tif (o && typeof o === 'object' && o.event && o.ecommerce && typeof gtag === 'function') {\n";
+		echo "\t\t\tgtag('event', o.event, Object.assign({ send_to: '" . esc_js( $ga4_id ) . "' }, o.ecommerce));\n";
+		echo "\t\t}\n";
+		echo "\t\treturn r;\n";
+		echo "\t};\n";
+		echo "})();\n";
 		echo "</script>\n";
 	}
 }
@@ -288,13 +368,31 @@ if ( ! function_exists( 'lafka_emit_direct_clarity' ) ) {
 		if ( '' === $clarity_id ) {
 			return;
 		}
+		// Microsoft Clarity does NOT honour Google Consent Mode, so it must be
+		// driven from the same lafka_consent_v1 decision the bundled banner
+		// persists. Injecting the external tag unconditionally drops cookies and
+		// sends a beacon before the visitor decides anything, so instead expose a
+		// one-shot lazy loader and only invoke it when a stored
+		// analytics_storage===true decision already exists at load. The banner JS
+		// calls window.lafkaLoadClarity() when analytics is granted later.
 		echo "<!-- Lafka — direct Microsoft Clarity -->\n";
 		echo "<script>\n";
-		echo "(function(c,l,a,r,i,t,y){\n";
-		echo "c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};\n";
-		echo 't=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;' . "\n";
-		echo "y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);\n";
-		echo '})(window, document, "clarity", "script", "' . esc_js( $clarity_id ) . '");' . "\n";
+		echo "(function(){\n";
+		echo "\tvar loaded = false;\n";
+		echo "\twindow.lafkaLoadClarity = function(){\n";
+		echo "\t\tif (loaded) { return; }\n";
+		echo "\t\tloaded = true;\n";
+		echo "\t\t(function(c,l,a,r,i,t,y){\n";
+		echo "\t\t\tc[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};\n";
+		echo "\t\t\tt=l.createElement(r);t.async=1;t.src=\"https://www.clarity.ms/tag/\"+i;\n";
+		echo "\t\t\ty=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);\n";
+		echo "\t\t})(window, document, \"clarity\", \"script\", \"" . esc_js( $clarity_id ) . "\");\n";
+		echo "\t};\n";
+		echo "\ttry {\n";
+		echo "\t\tvar d = JSON.parse(window.localStorage.getItem('lafka_consent_v1') || 'null');\n";
+		echo "\t\tif (d && d.analytics_storage) { window.lafkaLoadClarity(); }\n";
+		echo "\t} catch(e){ /* private mode / parse error — stay unloaded until consent */ }\n";
+		echo "})();\n";
 		echo "</script>\n";
 	}
 }
@@ -318,8 +416,23 @@ if ( ! function_exists( 'lafka_emit_direct_meta_pixel' ) ) {
 		echo "n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;\n";
 		echo "t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,\n";
 		echo "document,'script','https://connect.facebook.net/en_US/fbevents.js');\n";
+		// Meta Pixel ignores Google Consent Mode, so the bundled banner must drive
+		// it explicitly. Revoke BEFORE init so init drops no _fbp/_fbc cookie and
+		// sends no beacon; then only replay a PageView when a stored decision
+		// granting ad_storage already exists at load. The banner JS grants and
+		// fires the deferred PageView on an explicit accept (deduped via the flag).
+		echo "fbq('consent', 'revoke');\n";
 		echo "fbq('init', '" . esc_js( $pixel_id ) . "');\n";
-		echo "fbq('track', 'PageView');\n";
+		echo "(function(){\n";
+		echo "\ttry {\n";
+		echo "\t\tvar d = JSON.parse(window.localStorage.getItem('lafka_consent_v1') || 'null');\n";
+		echo "\t\tif (d && d.ad_storage) {\n";
+		echo "\t\t\tfbq('consent', 'grant');\n";
+		echo "\t\t\tfbq('track', 'PageView');\n";
+		echo "\t\t\twindow._lafkaFbPageView = true;\n";
+		echo "\t\t}\n";
+		echo "\t} catch(e){ /* private mode / parse error — stay revoked until consent */ }\n";
+		echo "})();\n";
 		echo "</script>\n";
 		echo '<noscript><img height="1" width="1" style="display:none" alt="" ';
 		echo 'src="https://www.facebook.com/tr?id=' . esc_attr( $pixel_id ) . '&ev=PageView&noscript=1" /></noscript>' . "\n";
@@ -343,35 +456,75 @@ if ( ! function_exists( 'lafka_emit_consent_banner' ) ) {
 		if ( ! lafka_analytics_banner_enabled() ) {
 			return;
 		}
+		// Destination gate — mirror the other analytics emitters (page-context,
+		// custom-events, dl-client, store-events all gate on
+		// lafka_analytics_is_active()). Without a configured tracking destination
+		// (GTM / GA4 / Clarity / Meta Pixel / CF beacon) no cookies are ever set,
+		// so rendering a "we use cookies" banner is pointless and arguably
+		// misleading — and a needless conversion drag on a default install. The
+		// function_exists guard is defensive: the gate lives in
+		// lafka-page-context.php, required at bootstrap well before this fires on
+		// wp_footer:100, so on a real request the function is always present.
+		if ( ! function_exists( 'lafka_analytics_is_active' ) || ! lafka_analytics_is_active() ) {
+			return;
+		}
 
 		$body_text      = lafka_analytics_get_setting( 'lafka_consent_banner_text', 'We use cookies to analyze site traffic and personalize content. By accepting, you consent to our use of cookies.' );
 		$accept_label   = lafka_analytics_get_setting( 'lafka_consent_banner_accept_label', 'Accept all' );
 		$reject_label   = lafka_analytics_get_setting( 'lafka_consent_banner_reject_label', 'Reject' );
 		$settings_label = lafka_analytics_get_setting( 'lafka_consent_banner_settings_label', 'Settings' );
 
-		?>
-<style id="lafka-consent-banner-style">
-.lafka-consent-banner{position:fixed;left:0;right:0;bottom:0;z-index:99998;background:#1f2937;color:#fff;font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding:16px 20px;box-shadow:0 -4px 16px rgba(0,0,0,.2);display:none}
+		// Palette is expressed as --lafka-consent-* CSS custom properties with
+		// the current brand values as fallbacks. This keeps the plugin's
+		// "markup only / theme owns appearance" contract: a theme can recolor
+		// the banner from its own stylesheet (just by setting the variables, no
+		// !important overrides) while the banner still renders correctly when
+		// the theme CSS fails to load — which is exactly when consent matters
+		// most (slow / bot / privacy-tool requests).
+		$styles = <<<'CSS'
+.lafka-consent-banner{position:fixed;left:0;right:0;bottom:0;z-index:99998;background:var(--lafka-consent-bg,#1f2937);color:var(--lafka-consent-fg,#fff);font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding:16px 20px;box-shadow:0 -4px 16px rgba(0,0,0,.2);display:none}
 .lafka-consent-banner.is-visible{display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between}
 .lafka-consent-banner__text{flex:1 1 320px;margin:0}
 .lafka-consent-banner__actions{display:flex;flex-wrap:wrap;gap:8px}
 .lafka-consent-banner__btn{appearance:none;border:0;border-radius:6px;padding:10px 18px;font:inherit;font-weight:600;cursor:pointer;line-height:1}
-.lafka-consent-banner__btn--accept{background:#10b981;color:#fff}
-.lafka-consent-banner__btn--reject{background:#374151;color:#fff}
-.lafka-consent-banner__btn--settings{background:transparent;color:#fff;text-decoration:underline}
-.lafka-consent-modal{position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:20px}
+.lafka-consent-banner__btn--accept{background:var(--lafka-consent-accept,#10b981);color:var(--lafka-consent-accept-fg,#fff)}
+.lafka-consent-banner__btn--reject{background:var(--lafka-consent-reject,#374151);color:var(--lafka-consent-reject-fg,#fff)}
+.lafka-consent-banner__btn--settings{background:transparent;color:var(--lafka-consent-fg,#fff);text-decoration:underline}
+.lafka-consent-modal{position:fixed;inset:0;z-index:99999;background:var(--lafka-consent-overlay,rgba(0,0,0,.55));display:none;align-items:center;justify-content:center;padding:20px}
 .lafka-consent-modal.is-visible{display:flex}
-.lafka-consent-modal__panel{background:#fff;color:#1f2937;border-radius:10px;max-width:520px;width:100%;padding:24px;box-shadow:0 20px 50px rgba(0,0,0,.35)}
+.lafka-consent-modal__panel{background:var(--lafka-consent-panel-bg,#fff);color:var(--lafka-consent-panel-fg,#1f2937);border-radius:10px;max-width:520px;width:100%;padding:24px;box-shadow:0 20px 50px rgba(0,0,0,.35)}
 .lafka-consent-modal__title{margin:0 0 12px;font-size:18px}
-.lafka-consent-modal__row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid #e5e7eb;font-size:14px}
+.lafka-consent-modal__row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid var(--lafka-consent-border,#e5e7eb);font-size:14px}
 .lafka-consent-modal__row:first-of-type{border-top:0}
 .lafka-consent-modal__actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
 .lafka-consent-modal__btn{appearance:none;border:0;border-radius:6px;padding:10px 18px;font:inherit;font-weight:600;cursor:pointer}
-.lafka-consent-modal__btn--save{background:#10b981;color:#fff}
-.lafka-consent-modal__btn--close{background:#e5e7eb;color:#1f2937}
+.lafka-consent-modal__btn--save{background:var(--lafka-consent-accept,#10b981);color:var(--lafka-consent-accept-fg,#fff)}
+.lafka-consent-modal__btn--close{background:var(--lafka-consent-close-bg,#e5e7eb);color:var(--lafka-consent-close-fg,#1f2937)}
 @media (prefers-reduced-motion:no-preference){.lafka-consent-banner.is-visible{animation:lafka-slide-up .25s ease-out}}
 @keyframes lafka-slide-up{from{transform:translateY(100%)}to{transform:translateY(0)}}
-</style>
+CSS;
+
+		/**
+		 * Filter the consent banner's inline CSS.
+		 *
+		 * Return an empty string to suppress the inline <style> block entirely
+		 * — e.g. when the theme enqueues its own consent styling and does not
+		 * want the bundled defaults. The default block exposes its palette via
+		 * --lafka-consent-* custom properties (current brand values kept as
+		 * fallbacks), so most themes can recolor the banner by setting those
+		 * variables without needing to replace the whole block here.
+		 *
+		 * @param string $styles Inline CSS, without the wrapping <style> tag.
+		 */
+		if ( function_exists( 'apply_filters' ) ) {
+			$styles = (string) apply_filters( 'lafka_consent_banner_styles', $styles );
+		}
+
+		if ( '' !== trim( $styles ) ) {
+			echo '<style id="lafka-consent-banner-style">' . "\n" . $styles . "\n</style>\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static (or theme-filtered) CSS; escaping would corrupt the stylesheet.
+		}
+
+		?>
 <div class="lafka-consent-banner" id="lafka-consent-banner" role="region" aria-label="<?php echo esc_attr__( 'Cookie consent', 'lafka-plugin' ); ?>" hidden>
 	<p class="lafka-consent-banner__text"><?php echo wp_kses_post( $body_text ); ?></p>
 	<div class="lafka-consent-banner__actions">
@@ -425,6 +578,20 @@ if ( ! function_exists( 'lafka_emit_consent_banner' ) ) {
 			ad_personalization:  state.ad_personalization  ? 'granted' : 'denied'
 		});
 		window.dataLayer.push({ event: 'consent_update', consent_state: state });
+		// Non-Google platforms ignore Consent Mode, so drive them from the same
+		// decision. Meta Pixel: grant/revoke, plus a one-time PageView once
+		// ad_storage is granted (deduped against the head emit via the flag).
+		// Clarity: lazy-load the external tag only after analytics_storage grants.
+		if (window.fbq){
+			window.fbq('consent', state.ad_storage ? 'grant' : 'revoke');
+			if (state.ad_storage && !window._lafkaFbPageView){
+				window.fbq('track','PageView');
+				window._lafkaFbPageView = true;
+			}
+		}
+		if (state.analytics_storage && typeof window.lafkaLoadClarity === 'function'){
+			window.lafkaLoadClarity();
+		}
 	}
 
 	function showBanner(){
@@ -456,8 +623,15 @@ if ( ! function_exists( 'lafka_emit_consent_banner' ) ) {
 		return out;
 	}
 
+	// Replay the persisted decision on load: a returning visitor who already
+	// accepted/rejected must have their grants re-applied to gtag, otherwise
+	// the page stays at the wp_head 'denied' default forever. The head replay
+	// (lafka_emit_consent_replay) handles the timing-critical update inside the
+	// wait_for_update window; this is the defensive re-apply + show/click UX.
 	var existing = readStored();
-	if (!existing){
+	if (existing){
+		applyConsent(existing);
+	} else {
 		showBanner();
 	}
 
@@ -506,8 +680,12 @@ if ( ! function_exists( 'lafka_emit_consent_banner' ) ) {
 // ============================================================================
 
 if ( function_exists( 'add_action' ) ) {
-	// Priority 1: must run before any tag. Consent default must be FIRST.
+	// Priority 1: must run before any tag. Consent default must be FIRST,
+	// then immediately replay any stored decision so returning visitors are
+	// restored to their granted/denied state inside the wait_for_update window
+	// (registered right after defaults so it fires after gtag is defined).
 	add_action( 'wp_head', 'lafka_emit_consent_mode_defaults', 1 );
+	add_action( 'wp_head', 'lafka_emit_consent_replay', 1 );
 	add_action( 'wp_head', 'lafka_emit_gsc_verification', 1 );
 
 	// Priority 2: tag emitters.

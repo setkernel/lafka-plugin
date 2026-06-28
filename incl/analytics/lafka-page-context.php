@@ -22,22 +22,26 @@ defined( 'ABSPATH' ) || exit;
 
 if ( ! function_exists( 'lafka_analytics_is_active' ) ) {
 	/**
-	 * True when any analytics destination is configured (GTM, GA4, Clarity,
-	 * Meta Pixel, or the Cloudflare beacon). Shared gate for all emitters.
+	 * True when ANY analytics destination is configured — the union of the
+	 * dataLayer-consuming destinations (GTM, GA4, Clarity, Meta Pixel) and the
+	 * independent Cloudflare Web Analytics beacon.
+	 *
+	 * Built on the shared lafka_analytics_has_datalayer_destination() gate
+	 * (defined in lafka-wc-events.php, loaded earlier) so the destination list
+	 * lives in exactly one place. The Cloudflare beacon is folded in here
+	 * because the server-rendered page_context push and the store-events bundle
+	 * are cheap enough to emit for a beacon-only site; the client JS bundles
+	 * (lafka-dl-client.js, lafka-custom-events.js) gate on the dataLayer set
+	 * alone, since the cookieless beacon never consumes window.dataLayer.
 	 *
 	 * @return bool
 	 */
 	function lafka_analytics_is_active(): bool {
-		foreach ( array(
-			'lafka_analytics_gtm_id',
-			'lafka_analytics_ga4_id',
-			'lafka_analytics_clarity_id',
-			'lafka_analytics_meta_pixel_id',
-			'lafka_analytics_cf_beacon_token',
-		) as $fn ) {
-			if ( function_exists( $fn ) && '' !== $fn() ) {
-				return true;
-			}
+		if ( function_exists( 'lafka_analytics_has_datalayer_destination' ) && lafka_analytics_has_datalayer_destination() ) {
+			return true;
+		}
+		if ( function_exists( 'lafka_analytics_cf_beacon_token' ) && '' !== lafka_analytics_cf_beacon_token() ) {
+			return true;
 		}
 		return false;
 	}

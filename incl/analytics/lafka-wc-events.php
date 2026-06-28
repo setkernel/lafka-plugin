@@ -37,6 +37,50 @@
 defined( 'ABSPATH' ) || exit;
 
 // ============================================================================
+// Shared analytics gate — single source of truth for "is a dataLayer-consuming
+// destination configured?". Lives here because this is the earliest-loaded
+// analytics module (see lafka-plugin.php require order); every other dataLayer
+// enqueue/emit path delegates to it through a function_exists guard so the
+// destination list can never drift across modules again.
+// ============================================================================
+
+if ( ! function_exists( 'lafka_analytics_has_datalayer_destination' ) ) {
+	/**
+	 * True when at least one dataLayer-consuming destination is configured:
+	 * GTM, GA4, Microsoft Clarity, or the Meta Pixel.
+	 *
+	 * This is the canonical gate for every piece of dataLayer machinery —
+	 * lafka-dl-client.js, lafka-custom-events.js, the server-rendered
+	 * page_context push, and the store-events bundle all consult it (directly,
+	 * or via lafka_analytics_is_active()). Adding a future dataLayer
+	 * destination is therefore a one-line edit here.
+	 *
+	 * The Cloudflare Web Analytics beacon is deliberately NOT part of this
+	 * gate: it is cookieless, never routes anything through window.dataLayer,
+	 * and is gated independently in lafka-cf-analytics.php via
+	 * lafka_analytics_cf_beacon_token(). The union of the two lives in
+	 * lafka_analytics_is_active() for the cheap server-rendered pushes.
+	 *
+	 * @return bool
+	 */
+	function lafka_analytics_has_datalayer_destination(): bool {
+		if ( function_exists( 'lafka_analytics_gtm_id' ) && '' !== lafka_analytics_gtm_id() ) {
+			return true;
+		}
+		if ( function_exists( 'lafka_analytics_ga4_id' ) && '' !== lafka_analytics_ga4_id() ) {
+			return true;
+		}
+		if ( function_exists( 'lafka_analytics_clarity_id' ) && '' !== lafka_analytics_clarity_id() ) {
+			return true;
+		}
+		if ( function_exists( 'lafka_analytics_meta_pixel_id' ) && '' !== lafka_analytics_meta_pixel_id() ) {
+			return true;
+		}
+		return false;
+	}
+}
+
+// ============================================================================
 // Payload helpers — single source of truth for GA4 ecommerce shape.
 // ============================================================================
 
@@ -670,19 +714,12 @@ if ( ! function_exists( 'lafka_dl_enqueue_client' ) ) {
 	 * configured. Unconfigured sites pay zero request cost.
 	 */
 	function lafka_dl_enqueue_client(): void {
-		// Skip enqueue when no analytics is wired.
+		// Skip enqueue when no dataLayer-consuming destination is wired.
+		// Delegates to the shared gate so this path can never drift from the
+		// custom-events / page_context / store-events enqueue rules.
 		$has_id = false;
-		if ( function_exists( 'lafka_analytics_gtm_id' ) && '' !== lafka_analytics_gtm_id() ) {
-			$has_id = true;
-		}
-		if ( ! $has_id && function_exists( 'lafka_analytics_ga4_id' ) && '' !== lafka_analytics_ga4_id() ) {
-			$has_id = true;
-		}
-		if ( ! $has_id && function_exists( 'lafka_analytics_meta_pixel_id' ) && '' !== lafka_analytics_meta_pixel_id() ) {
-			$has_id = true;
-		}
-		if ( ! $has_id && function_exists( 'lafka_analytics_clarity_id' ) && '' !== lafka_analytics_clarity_id() ) {
-			$has_id = true;
+		if ( function_exists( 'lafka_analytics_has_datalayer_destination' ) ) {
+			$has_id = lafka_analytics_has_datalayer_destination();
 		}
 		if ( ! $has_id ) {
 			return;

@@ -25,6 +25,8 @@ namespace LafkaPlugin\Tests\Unit;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 use Lafka_Customizer_Push;
+use PHPUnit\Framework\Attributes\PreserveGlobalState;
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\TestCase;
 
 if ( ! defined( 'LAFKA_TESTING' ) ) {
@@ -309,6 +311,8 @@ final class PushNotificationsTest extends TestCase {
 		$this->assertStringContainsString( "'lafka/v1'", $src );
 	}
 
+	#[RunInSeparateProcess]
+	#[PreserveGlobalState( false )]
 	public function test_rest_subscribe_rejects_non_https_endpoint(): void {
 		Functions\when( 'get_theme_mod' )->alias(
 			static function ( $key, $default = null ) {
@@ -335,6 +339,8 @@ final class PushNotificationsTest extends TestCase {
 		$this->assertSame( 'invalid_payload', $response['code'] );
 	}
 
+	#[RunInSeparateProcess]
+	#[PreserveGlobalState( false )]
 	public function test_rest_subscribe_persists_when_payload_valid(): void {
 		Functions\when( 'get_theme_mod' )->alias(
 			static function ( $key, $default = null ) {
@@ -367,10 +373,16 @@ final class PushNotificationsTest extends TestCase {
 			}
 		);
 		global $wpdb;
+		// Save with auth secret 'auth' — the unsubscribe route requires the caller
+		// to echo this per-subscription secret back as proof of ownership (IDOR
+		// fix), so the legitimate-owner request must carry keys.auth.
 		\lafka_push_save_subscription( 'https://example.com/ep', 'pub', 'auth', 42 );
 		$req      = new class() {
 			public function get_json_params() {
-				return array( 'endpoint' => 'https://example.com/ep' );
+				return array(
+					'endpoint' => 'https://example.com/ep',
+					'keys'     => array( 'auth' => 'auth' ),
+				);
 			}
 			public function get_params() {
 				return array(); }

@@ -109,11 +109,24 @@ class Lafka_Options {
 	 * @return bool
 	 */
 	public static function is_enabled( $name ) {
-		// Pass an explicit empty-string default so feature-flag checks short-
-		// circuit before triggering the framework defaults load (which calls
-		// translators / esc_html_x in lafka-options.php and would fire the
-		// "_load_textdomain_just_in_time" notice on pre-init paths).
-		return 'enabled' === self::get( $name, '' );
+		// After `init` we delegate to the defaults-aware lookup (no explicit
+		// default) so the is_lafka_*() helpers resolve a feature flag through the
+		// exact same path as lafka_get_option() — including the registered theme
+		// defaults layer. This keeps the two documented access paths to the same
+		// option in agreement (e.g. a default-ON flag such as product_addons,
+		// std='enabled', reads 'enabled' both ways once the theme has registered
+		// its defaults).
+		//
+		// Before `init` we keep the explicit empty-string default so feature-flag
+		// checks short-circuit before reaching the framework-defaults layer, which
+		// calls translators / esc_html_x in lafka-options.php and would fire the
+		// "_load_textdomain_just_in_time" notice on pre-init paths (e.g. the
+		// include-time loader gate in lafka-plugin.php). Default-ON features are
+		// loaded on a fresh install by seeding the 'lafka' option on activation
+		// (see register_activation_hook in lafka-plugin.php), so the pre-init gate
+		// reads the persisted 'enabled' value rather than relying on the
+		// not-yet-available registered defaults.
+		return 'enabled' === ( did_action( 'init' ) ? self::get( $name ) : self::get( $name, '' ) );
 	}
 
 	/**
