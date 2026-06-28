@@ -13,7 +13,9 @@
  *
  * Two buttons:
  *   - "Preview" - renders the notification shape without sending
- *   - "Send now" - calls lafka_push_broadcast()
+ *   - "Send now" - queues the broadcast via lafka_push_enqueue_broadcast() so
+ *     the actual per-row sends run off the request thread (WP-Cron batches),
+ *     and the admin request returns immediately with a "queued" status.
  *
  * Activity log shows the last 20 sends (audience, title, count, timestamp).
  *
@@ -78,7 +80,11 @@ if ( ! class_exists( 'Lafka_Push_Admin' ) ) {
 					$action = sanitize_text_field( wp_unslash( $_POST['lafka_push_action'] ) );
 					if ( 'send' === $action ) {
 						$result = self::handle_send( $_POST ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
-						$status = is_array( $result ) ? 'sent' : 'error';
+						if ( is_array( $result ) ) {
+							$status = empty( $result['queued'] ) ? 'sent' : 'queued';
+						} else {
+							$status = 'error';
+						}
 					} elseif ( 'preview' === $action ) {
 						$result = self::handle_preview( $_POST ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
 						$status = 'preview';
@@ -115,6 +121,27 @@ if ( ! class_exists( 'Lafka_Push_Admin' ) ) {
 
 				<?php if ( 'nonce_failed' === $status ) : ?>
 					<div class="notice notice-error"><p><?php echo esc_html__( 'Security check failed. Please reload and try again.', 'lafka-plugin' ); ?></p></div>
+				<?php elseif ( 'error' === $status ) : ?>
+					<div class="notice notice-error"><p><?php echo esc_html__( 'Could not queue the broadcast. Check that a title and body are set and that push is enabled.', 'lafka-plugin' ); ?></p></div>
+				<?php elseif ( 'queued' === $status && is_array( $result ) ) : ?>
+					<div class="notice notice-success">
+						<p>
+							<?php
+							echo esc_html(
+								sprintf(
+									// translators: %d is the number of subscribers the broadcast was queued for.
+									_n(
+										'Broadcast queued for %d subscriber. Sending runs in the background — refresh this page to watch progress in the activity log below.',
+										'Broadcast queued for %d subscribers. Sending runs in the background — refresh this page to watch progress in the activity log below.',
+										(int) $result['audience_size'],
+										'lafka-plugin'
+									),
+									(int) $result['audience_size']
+								)
+							);
+							?>
+						</p>
+					</div>
 				<?php elseif ( 'sent' === $status && is_array( $result ) ) : ?>
 					<div class="notice notice-success">
 						<p>
@@ -175,7 +202,7 @@ if ( ! class_exists( 'Lafka_Push_Admin' ) ) {
 						</tr>
 						<tr>
 							<th scope="row"><label for="lafka_push_url"><?php echo esc_html__( 'Click URL', 'lafka-plugin' ); ?></label></th>
-							<td><input name="url" id="lafka_push_url" type="url" class="regular-text" value="<?php echo esc_attr( home_url( '/menu/' ) ); ?>" /></td>
+							<td><input name="url" id="lafka_push_url" type="url" class="regular-text" value="<?php echo esc_attr( function_exists( 'lafka_get_menu_url' ) ? lafka_get_menu_url() : home_url( '/menu/' ) ); ?>" /></td>
 						</tr>
 						<tr>
 							<th scope="row"><label for="lafka_push_icon"><?php echo esc_html__( 'Icon URL (optional)', 'lafka-plugin' ); ?></label></th>
@@ -201,6 +228,7 @@ if ( ! class_exists( 'Lafka_Push_Admin' ) ) {
 								<th><?php echo esc_html__( 'Sent', 'lafka-plugin' ); ?></th>
 								<th><?php echo esc_html__( 'Failed', 'lafka-plugin' ); ?></th>
 								<th><?php echo esc_html__( 'Size', 'lafka-plugin' ); ?></th>
+								<th><?php echo esc_html__( 'Status', 'lafka-plugin' ); ?></th>
 							</tr>
 						</thead>
 						<tbody>
@@ -212,6 +240,7 @@ if ( ! class_exists( 'Lafka_Push_Admin' ) ) {
 									<td><?php echo esc_html( (string) ( $entry['sent'] ?? 0 ) ); ?></td>
 									<td><?php echo esc_html( (string) ( $entry['failed'] ?? 0 ) ); ?></td>
 									<td><?php echo esc_html( (string) ( $entry['size'] ?? 0 ) ); ?></td>
+									<td><?php echo esc_html( self::format_status_label( (string) ( $entry['status'] ?? 'done' ) ) ); ?></td>
 								</tr>
 							<?php endforeach; ?>
 						</tbody>
@@ -222,11 +251,12 @@ if ( ! class_exists( 'Lafka_Push_Admin' ) ) {
 		}
 
 		/**
-		 * Handle the Send button. Sanitizes input, resolves audience, calls
-		 * lafka_push_broadcast().
+		 * Handle the Send button. Sanitizes input, resolves audience, and queues
+		 * the broadcast for background delivery via lafka_push_enqueue_broadcast()
+		 * so the admin request never blocks on the per-row send loop.
 		 *
 		 * @param array $post Raw POST.
-		 * @return array|null Broadcast summary.
+		 * @return array|null Queue descriptor (queued/job_id/audience_size), or null on failure.
 		 */
 		public static function handle_send( array $post ): ?array {
 			$payload = self::build_payload_from_post( $post );
@@ -234,10 +264,10 @@ if ( ! class_exists( 'Lafka_Push_Admin' ) ) {
 				return null;
 			}
 			$audience = self::resolve_audience_from_post( $post );
-			if ( ! function_exists( 'lafka_push_broadcast' ) ) {
+			if ( ! function_exists( 'lafka_push_enqueue_broadcast' ) ) {
 				return null;
 			}
-			return lafka_push_broadcast( $audience, $payload );
+			return lafka_push_enqueue_broadcast( $audience, $payload );
 		}
 
 		/**
@@ -301,6 +331,23 @@ if ( ! class_exists( 'Lafka_Push_Admin' ) ) {
 				return 'recent_customers';
 			}
 			return 'all';
+		}
+
+		/**
+		 * Map a stored activity-log status key to a translated, human label.
+		 * Older entries (and the legacy synchronous path) carry no status and
+		 * are treated as completed.
+		 */
+		private static function format_status_label( string $status ): string {
+			switch ( $status ) {
+				case 'queued':
+					return esc_html__( 'Queued', 'lafka-plugin' );
+				case 'sending':
+					return esc_html__( 'Sending…', 'lafka-plugin' );
+				case 'done':
+				default:
+					return esc_html__( 'Done', 'lafka-plugin' );
+			}
 		}
 
 		/**

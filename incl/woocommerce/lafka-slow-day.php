@@ -100,36 +100,38 @@ if ( ! function_exists( 'lafka_slow_day_eligible' ) ) {
 	}
 }
 
-if ( ! function_exists( 'lafka_slow_day_apply_discount' ) ) {
-	add_action( 'woocommerce_cart_calculate_fees', 'lafka_slow_day_apply_discount' );
+if ( ! function_exists( 'lafka_slow_day_discount_component' ) ) {
+	add_filter( 'lafka_order_discount_components', 'lafka_slow_day_discount_component', 10, 2 );
 	/**
-	 * Apply the slow-day discount as a negative cart fee.
+	 * Feed the slow-day discount into the shared order-discount coordinator
+	 * (lafka_order_discount_apply) instead of adding its own cart fee, so it stacks
+	 * sequentially with the other promos under ONE combined, capped fee rather than
+	 * additively off the raw subtotal.
 	 *
-	 * @param \WC_Cart $cart
-	 * @return void
+	 * @param array         $components Discount components collected so far.
+	 * @param \WC_Cart|null $cart      Current cart (unused; eligibility is contextual).
+	 * @return array
 	 */
-	function lafka_slow_day_apply_discount( $cart ) {
-		if ( is_admin() && ! ( defined( 'DOING_AJAX' ) && DOING_AJAX ) ) {
-			return;
+	function lafka_slow_day_discount_component( $components, $cart = null ) {
+		if ( ! is_array( $components ) ) {
+			$components = array();
 		}
-		if ( ! is_object( $cart ) || ! lafka_slow_day_eligible() ) {
-			return;
+		if ( ! lafka_slow_day_eligible() ) {
+			return $components;
 		}
 		$percent = lafka_slow_day_percent();
-		// Reuse the first-order pure math when available (same operation).
-		$amount = function_exists( 'lafka_first_order_discount_amount' )
-			? lafka_first_order_discount_amount( (float) $cart->get_subtotal(), $percent )
-			: round( (float) $cart->get_subtotal() * ( $percent / 100 ), 2 );
-		if ( $amount > 0 ) {
-			$cart->add_fee(
-				sprintf(
+		if ( $percent > 0 ) {
+			$components[] = array(
+				'source' => 'slow_day',
+				'type'   => 'percent',
+				'value'  => $percent,
+				'label'  => sprintf(
 					/* translators: %s = discount percent */
 					__( 'Slow-day special (%s%% off)', 'lafka-plugin' ),
 					(string) ( (float) $percent )
 				),
-				-$amount,
-				false
 			);
 		}
+		return $components;
 	}
 }

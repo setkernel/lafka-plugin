@@ -151,6 +151,12 @@ class Lafka_Addons_REST_Groups_Controller extends WP_REST_Controller {
 				'default'     => array(),
 				'description' => 'Array of group dicts in the editor POST shape (lafka_addon_groups[]).',
 			),
+			'exclude_global' => array(
+				'description'       => 'Product posts only: opt this product out of all global addon groups. Ignored for global addon CPT posts.',
+				'type'              => 'boolean',
+				'required'          => false,
+				'sanitize_callback' => 'rest_sanitize_boolean',
+			),
 		);
 	}
 
@@ -315,19 +321,50 @@ class Lafka_Addons_REST_Groups_Controller extends WP_REST_Controller {
 	 * @return array|WP_Error  REST payload on success, error on failure.
 	 */
 	private function persist_via_engine( int $post_id, $request ) {
-		$priority      = isset( $request['priority'] ) ? (int) $request['priority'] : 10;
-		$all_products  = (bool) ( $request['all_products'] ?? true );
-		$category_ids  = isset( $request['category_ids'] ) ? array_map( 'absint', (array) $request['category_ids'] ) : array();
-		$groups_input  = isset( $request['groups'] ) ? (array) $request['groups'] : array();
-
-		// Mutual exclusion: when all_products is true, drop categories.
-		if ( $all_products ) {
-			$category_ids = array();
+		$post = get_post( $post_id );
+		if ( ! $post instanceof WP_Post ) {
+			return new WP_Error(
+				'lafka_addons_not_found',
+				__( 'Post not found.', 'lafka-plugin' ),
+				array( 'status' => 404 )
+			);
 		}
 
-		update_post_meta( $post_id, '_priority', max( 0, $priority ) );
-		update_post_meta( $post_id, '_all_products', $all_products ? 1 : 0 );
-		wp_set_post_terms( $post_id, $category_ids, 'product_cat', false );
+		$groups_input = isset( $request['groups'] ) ? (array) $request['groups'] : array();
+
+		if ( 'lafka_glb_addon' === $post->post_type ) {
+			// Global addon CPT: _priority / _all_products / product_cat scoping
+			// describe which products the group attaches to, so they belong on
+			// this post type.
+			$priority     = isset( $request['priority'] ) ? (int) $request['priority'] : 10;
+			$all_products = (bool) ( $request['all_products'] ?? true );
+
+			update_post_meta( $post_id, '_priority', max( 0, $priority ) );
+			update_post_meta( $post_id, '_all_products', $all_products ? 1 : 0 );
+
+			// Only touch product_cat terms when category_ids was explicitly
+			// supplied. WP merges arg defaults into the request, so a partial
+			// PATCH that omits category_ids must NOT wipe existing scoping via
+			// the empty default.
+			if ( $this->param_was_sent( $request, 'category_ids' ) ) {
+				$category_ids = array_map( 'absint', (array) $request['category_ids'] );
+				// Mutual exclusion: when all_products is true, drop categories.
+				if ( $all_products ) {
+					$category_ids = array();
+				}
+				wp_set_post_terms( $post_id, $category_ids, 'product_cat', false );
+			}
+		} elseif ( 'product' === $post->post_type ) {
+			// Product post: _priority / _all_products are group-assignment keys
+			// that are meaningless on a product, and product_cat terms are owned
+			// by WooCommerce — writing either here is destructive (the original
+			// unconditional wp_set_post_terms() wiped the product's categories).
+			// Only the per-product groups and the explicit opt-out flag belong
+			// to this controller.
+			if ( $this->param_was_sent( $request, 'exclude_global' ) ) {
+				update_post_meta( $post_id, '_product_addons_exclude_global', $request['exclude_global'] ? 1 : 0 );
+			}
+		}
 
 		// Reuse the editor's parser + expand pipeline so REST + admin form
 		// produce identical stored shapes.
@@ -339,6 +376,26 @@ class Lafka_Addons_REST_Groups_Controller extends WP_REST_Controller {
 
 		$post = get_post( $post_id );
 		return $this->build_post_item( $post, Lafka_Addons_Engine::instance()->repository()->get_groups( $post_id ) );
+	}
+
+	/**
+	 * Whether a parameter was explicitly supplied by the client, as opposed
+	 * to being filled in from an arg `default`. WP merges arg defaults into
+	 * the request before dispatch, so isset()/offsetExists() cannot tell the
+	 * two apart — and a defaulted value must never drive a destructive write
+	 * (e.g. replacing product_cat terms) on a partial PATCH.
+	 *
+	 * @param WP_REST_Request $request
+	 * @param string          $key
+	 * @return bool
+	 */
+	private function param_was_sent( $request, string $key ): bool {
+		foreach ( array( $request->get_json_params(), $request->get_body_params(), $request->get_query_params() ) as $params ) {
+			if ( is_array( $params ) && array_key_exists( $key, $params ) ) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

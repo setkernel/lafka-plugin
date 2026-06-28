@@ -140,7 +140,11 @@ if ( ! class_exists( 'Lafka_Promotions' ) ) {
 			}
 
 			$full_units = $qty - $disc_qty;
-			return ( $full_units * $orig + $disc_qty * $orig * (float) self::knob( 'bogo_discount' ) ) / $qty;
+			// `bogo_discount` is the fraction taken OFF (0.5 = 50% off, 1 = free),
+			// so each discounted unit is CHARGED its complement ( 1 - discount ).
+			// This keeps the blended charge reconciled with the cart's displayed
+			// subtotal/savings, which also key off the same fraction-off knob.
+			return ( $full_units * $orig + $disc_qty * $orig * ( 1 - (float) self::knob( 'bogo_discount' ) ) ) / $qty;
 		}
 
 		/**
@@ -154,7 +158,29 @@ if ( ! class_exists( 'Lafka_Promotions' ) ) {
 
 		// ─── Delivery-minimum hooks ──────────────────────────────────────────
 
+		/**
+		 * The single comparison base for the delivery minimum: the cart's
+		 * post-coupon, ex-tax contents total.
+		 *
+		 * This equals the $package['contents_cost'] that apply_delivery_minimum()
+		 * gates on for the typical single-package cart, so routing every
+		 * delivery-minimum decision through one helper guarantees the customer
+		 * notice can never disagree with whether the delivery rates were actually
+		 * removed — even with WC coupons / BOGO discounts active.
+		 *
+		 * @return float
+		 */
+		private function get_delivery_base() {
+			if ( ! function_exists( 'WC' ) || ! WC()->cart ) {
+				return 0.0;
+			}
+			return (float) WC()->cart->get_cart_contents_total();
+		}
+
 		public function apply_delivery_minimum( $rates, $package ) {
+			// $package['contents_cost'] is the post-coupon, ex-tax line-total sum
+			// for this package — the same value get_delivery_base() reports for a
+			// single-package cart, which is what render_delivery_notice() keys off.
 			if ( ! self::should_block_delivery( $package['contents_cost'] ) ) {
 				return $rates;
 			}
@@ -171,16 +197,17 @@ if ( ! class_exists( 'Lafka_Promotions' ) ) {
 				return;
 			}
 
-			$subtotal = 0;
-			foreach ( WC()->cart->get_cart() as $item ) {
-				$subtotal += $item['line_subtotal'];
-			}
+			// Use the same post-coupon base the rate-hiding gate uses, via the
+			// shared helper, so the show/hide decision and the $remaining figure
+			// can never drift from apply_delivery_minimum()'s rate-stripping
+			// decision — even when WC coupons / BOGO discounts are active.
+			$base = $this->get_delivery_base();
 
-			if ( $subtotal >= (float) self::knob( 'delivery_min' ) ) {
+			if ( ! self::should_block_delivery( $base ) ) {
 				return;
 			}
 
-			$remaining = (float) self::knob( 'delivery_min' ) - $subtotal;
+			$remaining = (float) self::knob( 'delivery_min' ) - $base;
 			printf(
 				'<div class="woocommerce-info lafka-delivery-min-notice">%s</div>',
 				sprintf(

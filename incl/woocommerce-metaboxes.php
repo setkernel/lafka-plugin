@@ -53,9 +53,9 @@ if ( ! function_exists( 'lafka_woocommerce_custom_cat_fields_add' ) ) {
 
 					// Create the media frame.
 					lafka_term_header_img_file_frame = wp.media.frames.downloadable_file = wp.media({
-						title: '<?php echo esc_html__( 'Choose an image', 'lafka' ); ?>',
+						title: '<?php echo esc_html__( 'Choose an image', 'lafka-plugin' ); ?>',
 						button: {
-							text: '<?php echo esc_html__( 'Use image', 'lafka' ); ?>'
+							text: '<?php echo esc_html__( 'Use image', 'lafka-plugin' ); ?>'
 						},
 						multiple: false
 					});
@@ -190,9 +190,9 @@ if ( ! function_exists( 'lafka_woocommerce_custom_cat_fields_edit' ) ) {
 
 						// Create the media frame.
 						lafka_term_header_img_file_frame = wp.media.frames.downloadable_file = wp.media({
-							title: '<?php echo esc_html__( 'Choose an image', 'lafka' ); ?>',
+							title: '<?php echo esc_html__( 'Choose an image', 'lafka-plugin' ); ?>',
 							button: {
-								text: '<?php echo esc_html__( 'Use image', 'lafka' ); ?>'
+								text: '<?php echo esc_html__( 'Use image', 'lafka-plugin' ); ?>'
 							},
 							multiple: false
 						});

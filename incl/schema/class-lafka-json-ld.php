@@ -89,15 +89,23 @@ if ( ! class_exists( 'Lafka_JSON_LD' ) ) {
 			 * Search Console. The convention is: if the operator has
 			 * installed a dedicated SEO plugin, defer the @graph to it.
 			 *
+			 * Detection lives in lafka_seo_plugin_active() (lafka-plugin.php),
+			 * the single source of truth shared with the OpenGraph and meta
+			 * description head emitters. A function_exists() guard keeps this
+			 * module safe if it is ever loaded without the main plugin file
+			 * (e.g. in isolated unit tests).
+			 *
 			 * Operators who want our schema regardless can override via
 			 * the `lafka_schema_force_emit` filter (return true).
 			 */
-			$seo_plugin_active = (
-				defined( 'WPSEO_VERSION' )                      // Yoast SEO
-				|| class_exists( 'RankMath' )                   // Rank Math
-				|| defined( 'SEOPRESS_VERSION' )                // SEOPress
-				|| class_exists( '\\AIOSEO\\Plugin\\AIOSEO' )   // All in One SEO
-			);
+			$seo_plugin_active = function_exists( 'lafka_seo_plugin_active' )
+				? lafka_seo_plugin_active()
+				: (
+					defined( 'WPSEO_VERSION' )                      // Yoast SEO.
+					|| class_exists( 'RankMath' )                   // Rank Math.
+					|| defined( 'SEOPRESS_VERSION' )                // SEOPress.
+					|| class_exists( '\\AIOSEO\\Plugin\\AIOSEO' )   // All in One SEO.
+				);
 			$force = (bool) apply_filters( 'lafka_schema_force_emit', false );
 			if ( $seo_plugin_active && ! $force ) {
 				return;
@@ -113,12 +121,10 @@ if ( ! class_exists( 'Lafka_JSON_LD' ) ) {
 			// WebSite entity (site-wide) — canonical site name + sitelinks search.
 			$graph[] = lafka_schema_website();
 
-			$info       = function_exists( 'lafka_get_restaurant_info' ) ? lafka_get_restaurant_info() : array();
-			$has_basics = ! empty( $info['name'] )
-				&& ! empty( $info['street'] )
-				&& ! empty( $info['city'] )
-				&& ! empty( $info['postal'] )
-				&& ! empty( $info['phone_e164'] );
+			// Shared predicate (defined in lafka-schema-website.php) — also gates
+			// WebSite.publisher's link to #restaurant, so the publisher reference
+			// can never point at a Restaurant node we didn't add to the @graph.
+			$has_basics = lafka_schema_has_restaurant_basics();
 			if ( $has_basics ) {
 				$graph[] = lafka_schema_restaurant();
 			}

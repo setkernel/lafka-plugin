@@ -43,7 +43,7 @@ function lafka_schema_breadcrumb(): ?array {
 
 	if ( function_exists( 'is_product' ) && is_product() && $obj instanceof WP_Post ) {
 		// Single product: Home → Menu → [Primary Category] → Product.
-		$menu_url = trailingslashit( home_url( '/menu/' ) );
+		$menu_url = lafka_get_menu_url();
 		$items[]  = lafka_schema_breadcrumb_item( $position++, __( 'Menu', 'lafka-plugin' ), $menu_url );
 
 		// Primary category (first term).
@@ -62,17 +62,18 @@ function lafka_schema_breadcrumb(): ?array {
 
 	} elseif ( function_exists( 'is_product_category' ) && is_product_category() && $obj instanceof WP_Term ) {
 		// Product category archive: Home → Menu → Category.
-		$menu_url = trailingslashit( home_url( '/menu/' ) );
+		$menu_url = lafka_get_menu_url();
 		$items[]  = lafka_schema_breadcrumb_item( $position++, __( 'Menu', 'lafka-plugin' ), $menu_url );
 		$cat_url  = get_term_link( $obj );
 		if ( ! is_wp_error( $cat_url ) ) {
 			$items[] = lafka_schema_breadcrumb_item( $position++, $obj->name, $cat_url );
 		}   
 	} elseif ( function_exists( 'is_shop' ) && is_shop() ) {
-		// Shop / menu page: Home → Menu.
-		$shop_url = function_exists( 'wc_get_page_permalink' ) ? wc_get_page_permalink( 'shop' ) : home_url( '/menu/' );
-		$shop_url = $shop_url ?: home_url( '/menu/' );
-		$items[]  = lafka_schema_breadcrumb_item( $position++, __( 'Menu', 'lafka-plugin' ), $shop_url );
+		// Shop archive: Home → Menu. The "Menu" crumb resolves to the canonical
+		// /menu/ browse page (f104) — the SAME target as the product/category
+		// crumbs above and the visible breadcrumb in archive-product.php — rather
+		// than wc_get_page_permalink( 'shop' ), so structured + visible can't diverge.
+		$items[] = lafka_schema_breadcrumb_item( $position++, __( 'Menu', 'lafka-plugin' ), lafka_get_menu_url() );
 
 	} elseif ( is_singular() && $obj instanceof WP_Post ) {
 		// Standard pages and posts.

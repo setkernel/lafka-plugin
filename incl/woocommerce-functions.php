@@ -3,6 +3,23 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
 }
 
+if ( ! function_exists( 'lafka_meta_variable_in_catalog' ) ) {
+	/**
+	 * Canonical meta key for the per-variation "show in catalog" flag.
+	 *
+	 * This is the single source of truth for the persisted post-meta key that
+	 * the plugin writes and the theme reads across the repo boundary. The value
+	 * is a frozen DB key — it MUST stay '_lafka_variable_in_catalog' so existing
+	 * stored meta keeps resolving. The accessor exists for documentation/SSOT so
+	 * consumers do not duplicate the bare string; it is not a rename hook.
+	 *
+	 * @return string
+	 */
+	function lafka_meta_variable_in_catalog() {
+		return '_lafka_variable_in_catalog';
+	}
+}
+
 add_action( 'wp', 'lafka_hide_single_product_price_when_eligible' );
 if ( ! function_exists( 'lafka_hide_single_product_price_when_eligible' ) ) {
 	/**
@@ -68,7 +85,7 @@ if ( ! function_exists( 'lafka_save_variable_in_catalog_option' ) ) {
 			return;
 		}
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing
-		update_post_meta( $variation_id, '_lafka_variable_in_catalog', isset( $_POST['_lafka_variable_in_catalog'][ $i ] ) );
+		update_post_meta( $variation_id, lafka_meta_variable_in_catalog(), isset( $_POST['_lafka_variable_in_catalog'][ $i ] ) );
 	}
 }
 
@@ -89,9 +106,9 @@ if ( ! function_exists( 'lafka_save_bulk_update_variable_in_catalog_option' ) ) 
 	function lafka_save_bulk_update_variable_in_catalog_option( $bulk_action, $data, $product_id, $variations ) {
 		foreach ( $variations as $variation_id ) {
 			if ( $bulk_action === 'lafka_variable_in_catalog_show' ) {
-				update_post_meta( $variation_id, '_lafka_variable_in_catalog', true );
+				update_post_meta( $variation_id, lafka_meta_variable_in_catalog(), true );
 			} elseif ( $bulk_action === 'lafka_variable_in_catalog_hide' ) {
-				update_post_meta( $variation_id, '_lafka_variable_in_catalog', false );
+				update_post_meta( $variation_id, lafka_meta_variable_in_catalog(), false );
 			}
 		}
 	}

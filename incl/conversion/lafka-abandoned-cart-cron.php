@@ -191,10 +191,18 @@ if ( ! function_exists( 'lafka_ac_run_check' ) ) {
 	 * Skipped when the Customizer toggle is off — we leave the event registered
 	 * for cheap flip-on UX, but the body short-circuits.
 	 *
+	 * Also short-circuits when WooCommerce isn't active: the recovery email is a
+	 * WC_Email subclass dispatched through WC()->mailer(), so without WC the loop
+	 * could only stamp rows it never actually emailed. Bailing here leaves those
+	 * rows pending until WooCommerce is back.
+	 *
 	 * @return void
 	 */
 	function lafka_ac_run_check(): void {
 		if ( ! lafka_ac_capture_is_enabled() ) {
+			return;
+		}
+		if ( ! class_exists( 'WooCommerce' ) ) {
 			return;
 		}
 		$delay = lafka_ac_get_delay_minutes();
@@ -216,9 +224,14 @@ if ( ! function_exists( 'lafka_ac_dispatch_recovery_email' ) ) {
 	/**
 	 * Trigger the WC email class for this row, then flip recovery_sent_at.
 	 *
-	 * Marks the row as sent regardless of mailer return value — repeated send
-	 * failures should NOT spam the customer. Operator can manually wipe
-	 * recovery_sent_at via SQL if they want to retry.
+	 * The row is stamped recovery_sent ONLY after the email trigger has actually
+	 * fired. We deliberately do NOT gate the stamp on WC_Email::send()'s return
+	 * value — a send that returned false was still a genuine attempt, and we must
+	 * not retry it into customer spam (operators can manually wipe
+	 * recovery_sent_at via SQL if they want a deliberate re-send). But when
+	 * WooCommerce or its mailer is unavailable the trigger never fires, so we
+	 * bail and leave the row pending for the next cron pass to retry — we never
+	 * burn a row that was never attempted.
 	 *
 	 * @param object $row
 	 * @return void
@@ -242,11 +255,14 @@ if ( ! function_exists( 'lafka_ac_dispatch_recovery_email' ) ) {
 					if ( function_exists( 'do_action' ) ) {
 						do_action( 'lafka_abandoned_cart_email_trigger', $row );
 					}
+
+					// Stamp recovery_sent only once the trigger has genuinely
+					// fired above. A row reached here means WC + mailer were
+					// available and the email was dispatched.
+					lafka_ac_mark_recovery_sent( $row_id );
 				}
 			}
 		}
-
-		lafka_ac_mark_recovery_sent( $row_id );
 	}
 }
 

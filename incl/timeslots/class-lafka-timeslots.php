@@ -132,7 +132,7 @@ class Lafka_Timeslots {
 	}
 
 	public function get_timeslot_duration(): int {
-		return (int) ( $this->order_date_time_timeslot_duration ?? 60 );
+		return max( 1, (int) $this->order_date_time_timeslot_duration );
 	}
 
 	/**
@@ -152,43 +152,172 @@ class Lafka_Timeslots {
 	public function init_order_date_time_options() {
 		$datetime_options = get_option( 'lafka_shipping_areas_datetime' );
 
-		$this->order_date_time_mandatory         = $datetime_options['datetime_mandatory'] ?? false;
-		$this->order_date_time_days_ahead        = $datetime_options['days_ahead'] ?? 30;
-		$this->order_date_time_timeslot_duration = $datetime_options['timeslot_duration'] ?? 60;
+		$this->order_date_time_mandatory  = $datetime_options['datetime_mandatory'] ?? false;
+		$this->order_date_time_days_ahead = $datetime_options['days_ahead'] ?? 30;
+		// Floor the slot duration to a sane minimum at the source. A 0 / ''
+		// value (the register_setting min/max is HTML-only, trivially bypassed
+		// by a crafted POST or a programmatic update_option) would make the
+		// public time-slots AJAX endpoint spin forever or fatal — see
+		// get_timeslots_for_date(). Never let it fall below 1 minute.
+		$this->order_date_time_timeslot_duration = max( 1, (int) ( $datetime_options['timeslot_duration'] ?? 60 ) );
 
 		if ( isset( WC()->session ) ) {
 			$lafka_branch_location_id_in_session = WC()->session->get( 'lafka_branch_location' )['branch_id'] ?? null;
 			if ( ! empty( $lafka_branch_location_id_in_session ) ) {
 				$override_global_date_time = get_term_meta( $lafka_branch_location_id_in_session, 'lafka_branch_override_datetime_global', true );
 				if ( ! empty( $override_global_date_time ) ) {
-					$this->order_date_time_mandatory         = get_term_meta( $lafka_branch_location_id_in_session, 'lafka_branch_datetime_mandatory', true );
-					$this->order_date_time_days_ahead        = get_term_meta( $lafka_branch_location_id_in_session, 'lafka_branch_datetime_days_ahead', true );
-					$this->order_date_time_timeslot_duration = get_term_meta( $lafka_branch_location_id_in_session, 'lafka_branch_datetime_timeslot_duration', true );
+					$this->order_date_time_mandatory  = get_term_meta( $lafka_branch_location_id_in_session, 'lafka_branch_datetime_mandatory', true );
+					$this->order_date_time_days_ahead = get_term_meta( $lafka_branch_location_id_in_session, 'lafka_branch_datetime_days_ahead', true );
+					// Per-branch meta has no floor either; apply the same minimum.
+					$this->order_date_time_timeslot_duration = max( 1, (int) get_term_meta( $lafka_branch_location_id_in_session, 'lafka_branch_datetime_timeslot_duration', true ) );
 				}
 			}
 		}
 	}
 
 	/**
-	 * Hard server-side gate for the mandatory delivery/pickup time.
+	 * Hard server-side gate for the delivery/pickup time.
 	 *
 	 * Runs on `woocommerce_checkout_process` (inside
 	 * WC_Checkout::validate_checkout()), the only hook where
 	 * wc_add_notice( ..., 'error' ) actually aborts process_checkout().
 	 * The meta WRITE stays in checkout_datetime_update_order_meta(); this
-	 * method only validates so a mandatory order can never be placed without
-	 * a date + timeslot.
+	 * method only validates.
+	 *
+	 * Three concerns are enforced here, all server-side, because the AJAX
+	 * dropdown's availability/capacity state is only advisory client state and
+	 * a crafted (or stale) POST can submit any `lafka_checkout_timeslot` string:
+	 *
+	 *   1. Presence — when the operator made the datetime mandatory, both a
+	 *      date and a timeslot must be supplied.
+	 *   2. Validity — the submitted date must be in the server-derived enabled
+	 *      set (which already excludes past dates, closed days and vacations)
+	 *      and the submitted slot must be one of the `{start} - {end}` ids the
+	 *      server would actually render for that date (this drops past slots
+	 *      for "today" too). This closes the crafted-POST overbooking path.
+	 *   3. Capacity — the slot must still be under its per-slot order cap. This
+	 *      runs the authoritative count (get_number_of_orders_per_timeslot vs
+	 *      get_max_orders_per_slot) at submit time. Because this hook fires
+	 *      before checkout_datetime_update_order_meta on
+	 *      woocommerce_checkout_create_order, a full/invalid slot blocks order
+	 *      creation. A small residual TOCTOU window remains without a DB-level
+	 *      lock (the KDS code uses GET_LOCK for the same shape), but the
+	 *      submit-time check turns an always-broken cap into a rare-race cap.
+	 *
+	 * Validity + capacity run whenever a date/slot pair was submitted, even on
+	 * an optional store, so a hand-crafted POST can never book a full or
+	 * non-existent slot.
 	 */
 	public function validate_datetime_fields() {
-		if ( empty( $this->order_date_time_mandatory ) ) {
+		$mandatory = ! empty( $this->order_date_time_mandatory );
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WC core verifies the checkout nonce in WC_Checkout::process_checkout() before this hook fires.
+		$raw_date = isset( $_POST['lafka_checkout_date'] ) ? sanitize_text_field( wp_unslash( $_POST['lafka_checkout_date'] ) ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WC core verifies the checkout nonce in WC_Checkout::process_checkout() before this hook fires.
+		$raw_slot = isset( $_POST['lafka_checkout_timeslot'] ) ? sanitize_text_field( wp_unslash( $_POST['lafka_checkout_timeslot'] ) ) : '';
+
+		$has_date = '' !== $raw_date;
+		$has_slot = '' !== $raw_slot;
+
+		// Presence gate — enforced only when the operator made datetime mandatory.
+		if ( $mandatory && ( ! $has_date || ! $has_slot ) ) {
+			wc_add_notice( esc_html__( 'Please enter Delivery/Pickup time.', 'lafka-plugin' ), 'error' );
 			return;
 		}
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WC core verifies the checkout nonce in WC_Checkout::process_checkout() before this hook fires.
-		$has_date = ! empty( $_POST['lafka_checkout_date'] );
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WC core verifies the checkout nonce in WC_Checkout::process_checkout() before this hook fires.
-		$has_slot = ! empty( $_POST['lafka_checkout_timeslot'] );
-		if ( ! $has_date || ! $has_slot ) {
-			wc_add_notice( esc_html__( 'Please enter Delivery/Pickup time.', 'lafka-plugin' ), 'error' );
+
+		// Optional store, nothing chosen — nothing further to validate.
+		if ( ! $has_date && ! $has_slot ) {
+			return;
+		}
+
+		// A submitted slot is meaningless without its anchoring date; reject the
+		// partial/crafted pair rather than save an un-countable slot to meta.
+		if ( $has_slot && ! $has_date ) {
+			wc_add_notice( esc_html__( 'Please select a Delivery/Pickup date.', 'lafka-plugin' ), 'error' );
+			return;
+		}
+
+		$days_ahead        = $this->get_days_ahead();
+		$timeslot_duration = $this->get_timeslot_duration();
+
+		// Re-derive the authoritative enabled-date set exactly as the date
+		// picker was localised (same Order-Hours-schedule branch as the script
+		// enqueue), so the server agrees with what the customer was offered.
+		// Past dates, closed days and vacation days never appear in this set.
+		if ( class_exists( 'Lafka_Order_Hours' ) && ! empty( Lafka_Order_Hours::$lafka_order_hours_schedule ) ) {
+			$enabled_dates = self::get_enabled_dates_for_days_ahead( $days_ahead, $timeslot_duration );
+		} else {
+			$enabled_dates = self::get_all_days_ahead_public( $days_ahead );
+		}
+
+		if ( ! in_array( $raw_date, $enabled_dates, true ) ) {
+			wc_add_notice( esc_html__( 'The selected Delivery/Pickup date is no longer available. Please choose another.', 'lafka-plugin' ), 'error' );
+			return;
+		}
+
+		$timezone = class_exists( 'Lafka_Order_Hours' ) ? Lafka_Order_Hours::get_timezone() : wp_timezone();
+
+		// Belt-and-braces explicit past-date guard. The enabled set is already
+		// today-forward, but guard the raw string against tz/DST edge cases.
+		$today = class_exists( 'Lafka_Order_Hours' )
+			? Lafka_Order_Hours::get_order_hours_time( $timezone )->format( 'Y-m-d' )
+			: ( new DateTime( 'now', $timezone ) )->format( 'Y-m-d' );
+		if ( $raw_date < $today ) {
+			wc_add_notice( esc_html__( 'The selected Delivery/Pickup date is in the past. Please choose another.', 'lafka-plugin' ), 'error' );
+			return;
+		}
+
+		// raw_date is now a known-good 'Y-m-d' from the enabled set; parse is safe.
+		$date = DateTime::createFromFormat( 'Y-m-d', $raw_date, $timezone );
+		if ( ! $date instanceof DateTime ) {
+			wc_add_notice( esc_html__( 'The selected Delivery/Pickup date is invalid. Please choose another.', 'lafka-plugin' ), 'error' );
+			return;
+		}
+
+		// Optional store, date-only selection — no slot to validate further.
+		if ( ! $has_slot ) {
+			return;
+		}
+
+		// The submitted slot must be one of the slots the server would render
+		// for this date — same '{start} - {end}' ids the AJAX dropdown built.
+		$rendered_slots = self::get_timeslots_for_date( $date, $timeslot_duration );
+		$matched_slot   = null;
+		foreach ( $rendered_slots as $slot ) {
+			if ( isset( $slot['id'] ) && $slot['id'] === $raw_slot ) {
+				$matched_slot = $slot;
+				break;
+			}
+		}
+		if ( null === $matched_slot ) {
+			wc_add_notice( esc_html__( 'The selected Delivery/Pickup time is no longer available. Please choose another.', 'lafka-plugin' ), 'error' );
+			return;
+		}
+
+		// Capacity gate — re-run the authoritative count against the per-slot
+		// cap. The dropdown's disabled flag is advisory; this is the check that
+		// actually blocks order creation (validation runs before create_order).
+		$branch_id = null;
+		if ( isset( WC()->session ) ) {
+			$branch_id = WC()->session->get( 'lafka_branch_location' )['branch_id'] ?? null;
+		}
+		$max_orders_per_slot = self::get_max_orders_per_slot( $branch_id );
+		if ( $max_orders_per_slot ) {
+			$slot_parts = array_map( 'trim', explode( ' - ', $raw_slot ) );
+			if ( count( $slot_parts ) === 2 ) {
+				$orders_made = self::get_number_of_orders_per_timeslot(
+					$branch_id,
+					$date,
+					array(
+						'start' => $slot_parts[0],
+						'end'   => $slot_parts[1],
+					)
+				);
+				if ( $orders_made >= (int) $max_orders_per_slot ) {
+					wc_add_notice( esc_html__( 'The selected Delivery/Pickup time is fully booked. Please choose another.', 'lafka-plugin' ), 'error' );
+					return;
+				}
+			}
 		}
 	}
 
@@ -270,6 +399,20 @@ class Lafka_Timeslots {
 	}
 
 	public static function get_timeslots_for_date( DateTime $date, $timeslot_duration ): array {
+		// Floor the slot duration before it reaches the while(1) loop below.
+		// A 0 / '' duration would make $start_plus_timeslot == $period->start
+		// every iteration (start + 0 min stays < end forever) → the loop never
+		// advances and exhausts CPU/memory, or DateInterval::createFromDateString(
+		// ' minutes' ) fails outright. This method backs the wp_ajax_nopriv
+		// time-slots endpoint, so an anonymous visitor could otherwise hang a
+		// PHP worker on any misconfigured store. Cast then guard on the raw
+		// value: a sub-1 duration yields no slots rather than a flood of
+		// 1-minute slots, and the loop below can never stall.
+		$timeslot_duration = (int) $timeslot_duration;
+		if ( $timeslot_duration < 1 ) {
+			return array();
+		}
+
 		$time_periods = array();
 
 		if ( class_exists( 'Lafka_Order_Hours' ) && ! empty( Lafka_Order_Hours::$lafka_order_hours_schedule ) ) {
@@ -367,6 +510,15 @@ class Lafka_Timeslots {
 	}
 
 	private static function has_future_slots_for_today( DateTime $date, $timeslot_duration ): bool {
+		// Same floor as get_timeslots_for_date(): a 0 / '' duration would build
+		// an empty DateInterval string and fatal. Treat an unusable duration as
+		// "no future slots" so a misconfigured store hides the date instead of
+		// crashing the enabled-date derivation.
+		$timeslot_duration = (int) $timeslot_duration;
+		if ( $timeslot_duration < 1 ) {
+			return false;
+		}
+
 		if ( ! empty( Lafka_Order_Hours::$lafka_order_hours_schedule ) ) {
 			$schedule_json            = Lafka_Order_Hours::$lafka_order_hours_schedule;
 			$schedule_array           = json_decode( $schedule_json );
@@ -447,7 +599,18 @@ class Lafka_Timeslots {
 	public function retrieve_time_slots_for_date() {
 		check_ajax_referer( 'time_slots_for_date' );
 
-		$date      = DateTime::createFromFormat( 'Y-m-d', sanitize_text_field( $_POST['date'] ), class_exists( 'Lafka_Order_Hours' ) ? Lafka_Order_Hours::get_timezone() : wp_timezone() );
+		if ( empty( $_POST['date'] ) ) {
+			wp_send_json_error( array( 'message' => __( 'Missing date.', 'lafka-plugin' ) ), 400 );
+		}
+
+		$tz   = class_exists( 'Lafka_Order_Hours' ) ? Lafka_Order_Hours::get_timezone() : wp_timezone();
+		$raw  = sanitize_text_field( wp_unslash( $_POST['date'] ) );
+		$date = DateTime::createFromFormat( 'Y-m-d', $raw, $tz );
+
+		if ( ! $date instanceof DateTime || $date->format( 'Y-m-d' ) !== $raw ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid date.', 'lafka-plugin' ) ), 400 );
+		}
+
 		$timeslots = self::get_timeslots_for_date( $date, $this->order_date_time_timeslot_duration );
 		wp_send_json_success( $timeslots );
 	}
@@ -465,6 +628,14 @@ class Lafka_Timeslots {
 	}
 
 	private static function get_all_timeslots_static( DateTime $date, $timeslot_duration ): array {
+		// Same floor as get_timeslots_for_date(): a 0 / '' duration makes the
+		// while loop below never advance (interval of 0 minutes) → infinite
+		// loop, or an empty DateInterval string → fatal. Bail with no slots.
+		$timeslot_duration = (int) $timeslot_duration;
+		if ( $timeslot_duration < 1 ) {
+			return array();
+		}
+
 		$timeslots = array();
 
 		$curr_time = new DateTime( 'now', $date->getTimezone() );
@@ -522,12 +693,33 @@ class Lafka_Timeslots {
 			),
 		);
 
+		// Count every status that still OCCUPIES the slot, not just processing.
+		// Filtering on `wc-processing` alone undercounted: the moment the KDS
+		// accepts an order it moves to wc-accepted/wc-preparing/wc-ready
+		// (Lafka_KDS_Order_Statuses), and on-hold/pending/completed orders were
+		// excluded too — so booked slots silently reopened and overbooked.
+		// Include every booked status; exclude only cancelled/refunded/failed/
+		// rejected, which genuinely free the slot. Filterable so a child plugin
+		// that adds custom workflow statuses can keep the count accurate.
+		$booked_statuses = apply_filters(
+			'lafka_timeslot_booked_statuses',
+			array(
+				'wc-pending',
+				'wc-on-hold',
+				'wc-processing',
+				'wc-accepted',
+				'wc-preparing',
+				'wc-ready',
+				'wc-completed',
+			)
+		);
+
 		// `wc_get_orders()` supports meta_query natively in both HPOS (WC 8.x+
 		// OrdersTableQuery) and the CPT data store. `'return' => 'ids'` skips
 		// hydrating WC_Order objects we never use.
 		$ids = wc_get_orders(
 			array(
-				'status'     => 'wc-processing',
+				'status'     => $booked_statuses,
 				'limit'      => -1,
 				'return'     => 'ids',
 				'meta_query' => $meta_query,

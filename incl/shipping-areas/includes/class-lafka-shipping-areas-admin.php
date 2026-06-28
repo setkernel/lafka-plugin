@@ -687,10 +687,56 @@ class Lafka_Shipping_Areas_Admin {
 		);
 	}
 
+	/**
+	 * Sanitize the delivery/pickup datetime settings on save.
+	 *
+	 * register_setting() previously had no sanitize_callback, so the
+	 * `min`/`max` on the number inputs were HTML-only — trivially bypassed by
+	 * a crafted POST or a programmatic update_option(). A `timeslot_duration`
+	 * of 0 or '' hangs the public wp_ajax_nopriv time-slots endpoint
+	 * (Lafka_Timeslots::get_timeslots_for_date()'s while(1) never advances) or
+	 * fatals on an empty DateInterval string, so it must be clamped
+	 * server-side. This is defense-in-depth: the consuming code in
+	 * Lafka_Timeslots floors the value too.
+	 *
+	 * @param mixed $input Raw option array submitted by the Settings API.
+	 * @return array Sanitized option array.
+	 */
+	public static function sanitize_datetime_settings( $input ): array {
+		$output = is_array( $input ) ? $input : array();
+
+		// Days ahead: floor at 0, cap at 365 (mirrors the field's min/max). A
+		// cleared field falls back to the 30 default rather than 0.
+		$output['days_ahead'] = ( isset( $output['days_ahead'] ) && '' !== trim( (string) $output['days_ahead'] ) )
+			? min( 365, max( 0, (int) $output['days_ahead'] ) )
+			: 30;
+
+		// Timeslot duration: clamp to 1..720 (mirrors the field's min/max).
+		// Load-bearing — a value below 1 hangs/fatals the public AJAX endpoint.
+		// A cleared field falls back to the 60 default rather than 1.
+		$output['timeslot_duration'] = ( isset( $output['timeslot_duration'] ) && '' !== trim( (string) $output['timeslot_duration'] ) )
+			? min( 720, max( 1, (int) $output['timeslot_duration'] ) )
+			: 60;
+
+		// Orders per timeslot: an empty value means "no cap" — keep it empty.
+		// When set, floor at 1 and cap at 1000 (mirrors the field's min/max).
+		if ( isset( $output['orders_per_timeslot'] ) && '' !== trim( (string) $output['orders_per_timeslot'] ) ) {
+			$output['orders_per_timeslot'] = min( 1000, max( 1, (int) $output['orders_per_timeslot'] ) );
+		}
+
+		return $output;
+	}
+
 	private static function create_main_settings() {
 		register_setting( 'lafka_shipping_areas_general', 'lafka_shipping_areas_general' );
 		register_setting( 'lafka_shipping_areas_advanced', 'lafka_shipping_areas_advanced' );
-		register_setting( 'lafka_shipping_areas_datetime', 'lafka_shipping_areas_datetime' );
+		register_setting(
+			'lafka_shipping_areas_datetime',
+			'lafka_shipping_areas_datetime',
+			array(
+				'sanitize_callback' => array( __CLASS__, 'sanitize_datetime_settings' ),
+			)
+		);
 		register_setting( 'lafka_shipping_areas_branches', 'lafka_shipping_areas_branches' );
 
 		add_settings_section( 'general_section', '', null, 'lafka_shipping_areas_general' );

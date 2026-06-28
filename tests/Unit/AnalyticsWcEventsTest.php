@@ -55,6 +55,8 @@ namespace LafkaPlugin\Tests\Unit {
 
 	use Brain\Monkey;
 	use Brain\Monkey\Functions;
+	use PHPUnit\Framework\Attributes\PreserveGlobalState;
+	use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 	use PHPUnit\Framework\TestCase;
 
 	// Bring the customizer accessor functions into scope before the events file
@@ -165,8 +167,19 @@ namespace LafkaPlugin\Tests\Unit {
 		// 2. Cart items helper
 		// ────────────────────────────────────────────────────────────────────
 
+		// Runs in a clean process (PreserveGlobalState disabled): Brain Monkey
+		// defines mocked functions at the PHP symbol level, and PHP cannot
+		// undefine a function once created — so any earlier test in the shared
+		// suite that mocks WC() (e.g. AbandonedCartDispatchRetryTest) leaves
+		// function_exists('WC') permanently true, which would push this test down
+		// the WC()-call path instead of the intended "WooCommerce absent" early
+		// return. A separate process guarantees WC is genuinely undefined so the
+		// !function_exists('WC') guard is the branch under test.
+		#[RunInSeparateProcess]
+		#[PreserveGlobalState( false )]
 		public function test_items_from_cart_returns_empty_without_wc(): void {
 			// WC() is not defined in tests, so the function returns empty.
+			$this->assertFalse( function_exists( 'WC' ), 'Precondition: WC() must be undefined for this branch.' );
 			$this->assertSame( array(), \lafka_dl_items_from_cart() );
 		}
 

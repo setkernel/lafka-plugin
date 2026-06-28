@@ -311,9 +311,35 @@ class Lafka_Branch_Locations {
 			wp_send_json_error( new WP_Error( 'empty_request', esc_html__( 'Please type your address and select suggested address or click on "Use current location".', 'lafka-plugin' ) ) );
 		}
 
-		$branch_location = get_term( $selected_branch_id );
+		// Constrain the posted id to the branch-location taxonomy. Without the
+		// taxonomy argument get_term() resolves a term id from ANY taxonomy
+		// (product_cat, post_tag, etc.), so a tampered POST could store a
+		// non-branch term as the session branch_id and silently degrade every
+		// downstream branch-scoped read. get_term() returns null for an id that
+		// is not in the given taxonomy, which the empty() check below rejects.
+		$branch_location = get_term( $selected_branch_id, 'lafka_branch_location' );
 
-		if ( empty( $branch_location ) || is_wp_error( $branch_location ) ) {
+		if ( empty( $branch_location ) || is_wp_error( $branch_location ) || ! is_object( $branch_location ) || $branch_location->taxonomy !== 'lafka_branch_location' ) {
+			wp_send_json_error( new WP_Error( 'no_branch', esc_html__( 'Something is wrong. No such branch location.', 'lafka-plugin' ) ) );
+		}
+
+		// SECURITY (audit f012): the requested order type must be permitted by
+		// BOTH the branch's configured capability (lafka_branch_order_type) and
+		// the site-wide enabled modes. The order-type menu is constrained only
+		// client-side, so a tampered POST could otherwise force a delivery order
+		// onto a pickup-only branch (or vice-versa), or force a globally-disabled
+		// mode. Reject anything outside the allow-list here.
+		if ( ! self::is_order_type_allowed_for_branch( $fields['lafka_branch_order_type'], $selected_branch_id ) ) {
+			wp_send_json_error( new WP_Error( 'invalid_order_type', esc_html__( 'The selected order type is not available for this branch.', 'lafka-plugin' ) ) );
+		}
+
+		// SECURITY (audit f078) defense in depth: even a valid lafka_branch_location
+		// term must be an actually orderable branch. The render/show paths only ever
+		// expose ids from get_all_legit_branch_locations() (terms that carry a
+		// geocoded address), so reject any id outside that allow-list before it is
+		// written to the session and later persisted to order meta at checkout.
+		$legit_branch_locations = Lafka_Shipping_Areas::get_all_legit_branch_locations();
+		if ( ! array_key_exists( $selected_branch_id, $legit_branch_locations ) ) {
 			wp_send_json_error( new WP_Error( 'no_branch', esc_html__( 'Something is wrong. No such branch location.', 'lafka-plugin' ) ) );
 		}
 
@@ -601,8 +627,72 @@ class Lafka_Branch_Locations {
 		// on the in-memory WC_Order is enough; HPOS and CPT paths converge.
 		$order->update_meta_data( 'lafka_selected_branch_id', sanitize_text_field( $branch_location_session['branch_id'] ?? null ) );
 		if ( ! empty( $branch_location_session['order_type'] ) ) {
-			$order->update_meta_data( 'lafka_order_type', sanitize_text_field( $branch_location_session['order_type'] ) );
+			$order_type = $branch_location_session['order_type'];
+			$branch_id  = isset( $branch_location_session['branch_id'] ) ? (int) $branch_location_session['branch_id'] : 0;
+			// Defense-in-depth (audit f012): mirror the select_branch() allow-list
+			// before persisting lafka_order_type so a tampered session cannot
+			// write an order type the branch can't fulfil onto the order.
+			if ( $branch_id > 0 && self::is_order_type_allowed_for_branch( $order_type, $branch_id ) ) {
+				$order->update_meta_data( 'lafka_order_type', sanitize_text_field( $order_type ) );
+			}
 		}
+	}
+
+	/**
+	 * Whether the requested order type is permitted for the given branch.
+	 *
+	 * Intersects the branch's configured capability meta
+	 * (lafka_branch_order_type: delivery_pickup | delivery | pickup) with the
+	 * site-wide enabled order types (self::get_order_type()).
+	 *
+	 * @param string $order_type Requested order type.
+	 * @param int    $branch_id  Branch term ID.
+	 *
+	 * @return bool
+	 */
+	private static function is_order_type_allowed_for_branch( string $order_type, int $branch_id ): bool {
+		$branch_cap = get_term_meta( $branch_id, 'lafka_branch_order_type', true ) ?: 'delivery_pickup';
+
+		return self::is_order_type_permitted_by_caps( $order_type, (string) $branch_cap, self::get_order_type() );
+	}
+
+	/**
+	 * Pure allow-list decision for an order type given a branch capability and
+	 * the site-wide enabled order types. No WordPress calls — unit-testable in
+	 * isolation.
+	 *
+	 * @param string   $order_type         Requested order type.
+	 * @param string   $branch_cap         Branch capability (delivery|pickup|delivery_pickup).
+	 * @param string[] $site_allowed_types Order types enabled site-wide.
+	 *
+	 * @return bool True only when permitted by BOTH the branch and the site.
+	 */
+	public static function is_order_type_permitted_by_caps( string $order_type, string $branch_cap, array $site_allowed_types ): bool {
+		// Whitelist: only 'delivery' and 'pickup' are valid order types.
+		if ( ! in_array( $order_type, array( 'delivery', 'pickup' ), true ) ) {
+			return false;
+		}
+
+		// Must be enabled site-wide (respects the global order_type option).
+		if ( ! in_array( $order_type, $site_allowed_types, true ) ) {
+			return false;
+		}
+
+		// Must be supported by the branch's configured capability.
+		switch ( $branch_cap ) {
+			case 'delivery':
+				$branch_allowed = array( 'delivery' );
+				break;
+			case 'pickup':
+				$branch_allowed = array( 'pickup' );
+				break;
+			case 'delivery_pickup':
+			default:
+				$branch_allowed = array( 'delivery', 'pickup' );
+				break;
+		}
+
+		return in_array( $order_type, $branch_allowed, true );
 	}
 
 	public static function get_user_branches( $user_id ): array {
