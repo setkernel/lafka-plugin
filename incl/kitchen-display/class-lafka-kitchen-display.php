@@ -3,6 +3,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+// Pure token-verification helpers (P2-02a). Loaded at file scope so the static
+// token methods below work whenever this class is loaded, independent of instance().
+require_once __DIR__ . '/includes/class-lafka-kds-token.php';
+
 class Lafka_Kitchen_Display {
 	/**
 	 * The single instance of the class.
@@ -141,6 +145,52 @@ class Lafka_Kitchen_Display {
 	}
 
 	/**
+	 * HMAC of a raw access token (P2-02a hash-at-rest). See Lafka_KDS_Token::hash().
+	 */
+	public static function hash_token( $raw ) {
+		return Lafka_KDS_Token::hash( $raw );
+	}
+
+	/**
+	 * Whether the stored value is a hash-at-rest digest. See Lafka_KDS_Token::is_hashed().
+	 */
+	public static function is_hashed_token( $value ) {
+		return Lafka_KDS_Token::is_hashed( $value );
+	}
+
+	/**
+	 * Verify a candidate raw token against the stored token (legacy plaintext OR
+	 * hash-at-rest). Single source of truth for KDS auth — used by the standalone
+	 * page and every AJAX endpoint. See Lafka_KDS_Token::matches().
+	 */
+	public static function token_matches( $candidate ) {
+		$options = self::get_options();
+		return Lafka_KDS_Token::matches( isset( $options['token'] ) ? $options['token'] : '', $candidate );
+	}
+
+	/**
+	 * Record last-seen IP + time for the KDS token (anomaly detection), throttled to
+	 * once per 5 minutes and stored non-autoloaded to avoid churn on the polling hot path.
+	 */
+	public static function record_token_activity() {
+		$now  = time();
+		$last = get_option( 'lafka_kds_token_activity', array() );
+		if ( is_array( $last ) && isset( $last['time'] ) && ( $now - (int) $last['time'] ) < 300 ) {
+			return;
+		}
+
+		$ip = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
+		update_option(
+			'lafka_kds_token_activity',
+			array(
+				'time' => $now,
+				'ip'   => $ip,
+			),
+			false
+		);
+	}
+
+	/**
 	 * Detect order type (pickup or delivery).
 	 */
 	public static function get_order_type( $order ) {
@@ -168,4 +218,9 @@ class Lafka_Kitchen_Display {
 	}
 }
 
-Lafka_Kitchen_Display::instance();
+// Guarded so unit tests can load the class for its static token helpers without
+// booting the full subsystem (which calls is_admin() etc.). Matches the repo's
+// LAFKA_TESTING auto-init convention.
+if ( ! defined( 'LAFKA_TESTING' ) ) {
+	Lafka_Kitchen_Display::instance();
+}

@@ -20,9 +20,11 @@
  *      caps brute-force / DOS attempts at 5/min.
  *
  * GOTCHAS:
- *   - Token is stored plaintext in `lafka_kds_options['token']` because it
- *     is also embedded in the visible page URL. Hashing storage is tracked
- *     as P2-02a (would require token-id + secret split).
+ *   - Storage supports BOTH legacy plaintext AND hash-at-rest (P2-02a). The raw
+ *     token still appears in the visible page URL, but the DB may store only its
+ *     HMAC (keyed on wp_salt, so a DB/backup leak is non-usable). ALWAYS verify
+ *     via `Lafka_Kitchen_Display::token_matches()`, never a direct hash_equals on
+ *     the stored value — it transparently handles both storage forms.
  *   - Both `wp_ajax_` and `wp_ajax_nopriv_` versions are registered. The
  *     `_nopriv_` variant is essential — the standalone page has no WP login.
  *     Token + nonce + rate-limit are the gate, not user authentication.
@@ -72,8 +74,8 @@ class Lafka_KDS_Ajax {
 		$valid_nonce = (bool) check_ajax_referer( 'lafka_kds_nonce', 'nonce', false );
 
 		$token       = isset( $_POST['kds_token'] ) ? sanitize_text_field( $_POST['kds_token'] ) : '';
-		$options     = Lafka_Kitchen_Display::get_options();
-		$valid_token = ! empty( $options['token'] ) && hash_equals( $options['token'], $token );
+		// token_matches() is backward-compatible: validates legacy plaintext OR a hash-at-rest digest.
+		$valid_token = Lafka_Kitchen_Display::token_matches( $token );
 
 		if ( $valid_nonce && $valid_token ) {
 			return;
@@ -402,15 +404,17 @@ class Lafka_KDS_Ajax {
 	 * caps brute-force at 5/min per IP. Legit operators hit this 2×/hour at most.
 	 */
 	public function refresh_nonce() {
-		$token   = isset( $_POST['kds_token'] ) ? sanitize_text_field( $_POST['kds_token'] ) : '';
-		$options = Lafka_Kitchen_Display::get_options();
+		$token = isset( $_POST['kds_token'] ) ? sanitize_text_field( $_POST['kds_token'] ) : '';
 
-		if ( empty( $options['token'] ) || ! hash_equals( $options['token'], $token ) ) {
+		if ( ! Lafka_Kitchen_Display::token_matches( $token ) ) {
 			if ( $this->track_auth_failure( 'refresh_nonce' ) ) {
 				wp_send_json_error( array( 'message' => 'Too many failed attempts' ), 429 );
 			}
 			wp_send_json_error( array( 'message' => 'Invalid token' ), 403 );
 		}
+
+		// Successful token-only auth on a long-lived display — record last-seen for anomaly detection.
+		Lafka_Kitchen_Display::record_token_activity();
 
 		wp_send_json_success(
 			array(

@@ -159,10 +159,17 @@ class Lafka_KDS_Admin {
 	}
 
 	/**
-	 * Handle token regeneration.
+	 * Handle token regeneration — legacy (plaintext) or secure (hash-at-rest).
+	 *
+	 * Secure mode stores only the HMAC of a freshly generated token and surfaces the
+	 * raw URL exactly once (a 15-minute transient), since it cannot be reconstructed
+	 * from the stored hash. The existing token/URL are untouched until the operator
+	 * regenerates, so this never disrupts a live kitchen display mid-service.
 	 */
 	public function handle_regenerate_token() {
-		if ( ! isset( $_POST['lafka_kds_regenerate_token'] ) ) {
+		$secure = isset( $_POST['lafka_kds_regenerate_token_secure'] );
+		$legacy = isset( $_POST['lafka_kds_regenerate_token'] );
+		if ( ! $secure && ! $legacy ) {
 			return;
 		}
 
@@ -172,26 +179,80 @@ class Lafka_KDS_Admin {
 
 		check_admin_referer( 'lafka_kds_regenerate_token' );
 
-		$options          = Lafka_Kitchen_Display::get_options();
-		$options['token'] = wp_generate_password( 32, false );
-		update_option( 'lafka_kds_options', $options );
+		$raw     = wp_generate_password( 32, false );
+		$options = Lafka_Kitchen_Display::get_options();
+		delete_option( 'lafka_kds_token_activity' );
 
+		if ( $secure ) {
+			$options['token'] = Lafka_Kitchen_Display::hash_token( $raw );
+			update_option( 'lafka_kds_options', $options );
+			set_transient( 'lafka_kds_url_once', home_url( '/kitchen-display/' . $raw . '/' ), 15 * MINUTE_IN_SECONDS );
+			add_settings_error( 'lafka_kds', 'token_regenerated', __( 'Secure access token regenerated (hash-stored). Copy the URL below now — for security it is shown only once.', 'lafka-plugin' ), 'updated' );
+			return;
+		}
+
+		$options['token'] = $raw;
+		update_option( 'lafka_kds_options', $options );
 		add_settings_error( 'lafka_kds', 'token_regenerated', __( 'Access token regenerated.', 'lafka-plugin' ), 'updated' );
 	}
 
 	public function render_url_field() {
+		// One-time reveal right after a secure (hashed) regeneration.
+		$once = get_transient( 'lafka_kds_url_once' );
+		if ( $once ) {
+			?>
+			<code style="display:inline-block;padding:6px 10px;background:#f0f0f1;font-size:13px;word-break:break-all;"><?php echo esc_url( $once ); ?></code>
+			<p class="description" style="color:#b32d2e;"><strong><?php esc_html_e( 'Copy this URL now — for security it is shown only once and cannot be recovered. Open it on your kitchen tablet (no login required).', 'lafka-plugin' ); ?></strong></p>
+			<?php
+			$this->render_token_activity();
+			return;
+		}
+
 		$options = Lafka_Kitchen_Display::get_options();
-		if ( ! empty( $options['token'] ) ) {
+
+		if ( empty( $options['token'] ) ) {
+			?>
+			<p><em><?php esc_html_e( 'Click "Save Changes" to generate the KDS access URL.', 'lafka-plugin' ); ?></em></p>
+			<?php
+			return;
+		}
+
+		if ( Lafka_Kitchen_Display::is_hashed_token( $options['token'] ) ) {
+			// Hash-at-rest: the URL is not stored and cannot be displayed.
+			?>
+			<p><span class="dashicons dashicons-lock" style="color:#46b450;vertical-align:text-bottom;"></span> <?php esc_html_e( 'The access URL is stored securely (hashed) and is not displayed. Use "Regenerate Token (secure)" below to issue a new URL.', 'lafka-plugin' ); ?></p>
+			<?php
+		} else {
+			// Legacy plaintext token — URL still reconstructable.
 			$url = home_url( '/kitchen-display/' . $options['token'] . '/' );
 			?>
 			<code style="display:inline-block;padding:6px 10px;background:#f0f0f1;font-size:13px;word-break:break-all;"><?php echo esc_url( $url ); ?></code>
 			<p class="description"><?php esc_html_e( 'Open this URL on your kitchen tablet or counter screen. No login required.', 'lafka-plugin' ); ?></p>
-			<?php
-		} else {
-			?>
-			<p><em><?php esc_html_e( 'Click "Save Changes" to generate the KDS access URL.', 'lafka-plugin' ); ?></em></p>
+			<p class="description"><?php esc_html_e( 'For better security, use "Regenerate Token (secure)" below to switch to hash-at-rest storage (the URL is then shown only once).', 'lafka-plugin' ); ?></p>
 			<?php
 		}
+
+		$this->render_token_activity();
+	}
+
+	/**
+	 * Surface the last-seen IP + time for the access token (anomaly detection).
+	 */
+	private function render_token_activity() {
+		$activity = get_option( 'lafka_kds_token_activity', array() );
+		if ( ! is_array( $activity ) || empty( $activity['time'] ) ) {
+			return;
+		}
+		$when = wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), (int) $activity['time'] );
+		$ip   = ! empty( $activity['ip'] ) ? $activity['ip'] : __( 'unknown IP', 'lafka-plugin' );
+		?>
+		<p class="description">
+			<?php
+			/* translators: 1: date/time of last access, 2: IP address. */
+			printf( esc_html__( 'Last accessed: %1$s from %2$s', 'lafka-plugin' ), esc_html( $when ), esc_html( $ip ) );
+			?>
+		</p>
+		<?php
 	}
 
 	public function render_pickup_times_field() {
@@ -264,10 +325,16 @@ class Lafka_KDS_Admin {
 			<form method="post">
 				<?php wp_nonce_field( 'lafka_kds_regenerate_token' ); ?>
 				<p>
-					<button type="submit" name="lafka_kds_regenerate_token" value="1" class="button button-secondary" onclick="return confirm('<?php esc_attr_e( 'This will invalidate the current URL. Continue?', 'lafka-plugin' ); ?>');">
-						<?php esc_html_e( 'Regenerate Token', 'lafka-plugin' ); ?>
+					<button type="submit" name="lafka_kds_regenerate_token_secure" value="1" class="button button-primary" onclick="return confirm('<?php esc_attr_e( 'This will invalidate the current URL and show the new one only once. Continue?', 'lafka-plugin' ); ?>');">
+						<?php esc_html_e( 'Regenerate Token (secure)', 'lafka-plugin' ); ?>
 					</button>
-					<span class="description"><?php esc_html_e( 'Generates a new secret URL and invalidates the old one.', 'lafka-plugin' ); ?></span>
+					<span class="description"><?php esc_html_e( 'Recommended. Stores only a hash of the token, so a database/backup leak cannot reuse it; the new URL is shown once. Invalidates the old URL.', 'lafka-plugin' ); ?></span>
+				</p>
+				<p>
+					<button type="submit" name="lafka_kds_regenerate_token" value="1" class="button button-secondary" onclick="return confirm('<?php esc_attr_e( 'This will invalidate the current URL. Continue?', 'lafka-plugin' ); ?>');">
+						<?php esc_html_e( 'Regenerate Token (legacy)', 'lafka-plugin' ); ?>
+					</button>
+					<span class="description"><?php esc_html_e( 'Generates a new plaintext token whose URL stays visible on this page. Invalidates the old one.', 'lafka-plugin' ); ?></span>
 				</p>
 			</form>
 		</div>
