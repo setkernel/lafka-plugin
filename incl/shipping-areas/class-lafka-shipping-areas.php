@@ -582,21 +582,39 @@ class Lafka_Shipping_Areas {
 		// Server-side geo-fence: reproduce the client-side Google Maps check in
 		// lafka-shipping-areas-handle-shipping.min.js so a tampered or skipped JS
 		// run can't push an out-of-zone address through. The point must fall
-		// inside at least one published delivery-zone polygon.
+		// inside at least one published delivery-zone polygon. The SAME
+		// is_point_in_delivery_zone() test is the authority on the Store API /
+		// block-checkout path (Lafka_Store_Api::validate_geo_fence()), so the two
+		// checkout paths can never disagree on the delivery area.
+		if ( ! $this->is_point_in_delivery_zone( $lat, $lng ) ) {
+			wc_add_notice( esc_html__( 'The selected location is outside our delivery area. Please pinpoint an address inside the delivery zone.', 'lafka-plugin' ), 'error' );
+		}
+	}
+
+	/**
+	 * Whether a lat/lng falls inside the published delivery area — the shared
+	 * server-side geo-fence membership test used by BOTH the classic checkout
+	 * gate (validate_checkout_field_process) and the Store API checkout gate
+	 * (Lafka_Store_Api). When no polygon zones are drawn there is nothing to
+	 * fence against, so any valid pinpoint is accepted.
+	 *
+	 * @param float $lat Latitude.
+	 * @param float $lng Longitude.
+	 * @return bool True when inside a zone (or no zones exist).
+	 */
+	public function is_point_in_delivery_zone( float $lat, float $lng ): bool {
 		$polygons = $this->get_published_area_polygons();
 		if ( empty( $polygons ) ) {
-			// No polygon zones are drawn, so there is nothing to fence against —
-			// a valid pinpoint is sufficient.
-			return;
+			return true;
 		}
 
 		foreach ( $polygons as $polygon ) {
 			if ( self::point_in_polygon( $lat, $lng, $polygon ) ) {
-				return;
+				return true;
 			}
 		}
 
-		wc_add_notice( esc_html__( 'The selected location is outside our delivery area. Please pinpoint an address inside the delivery zone.', 'lafka-plugin' ), 'error' );
+		return false;
 	}
 
 	/**

@@ -456,7 +456,12 @@ class Lafka_Order_Hours {
 		add_action( 'woocommerce_checkout_process', array( $this, 'gate_checkout_when_closed' ) );
 		add_filter( 'woocommerce_add_to_cart_validation', array( $this, 'gate_add_to_cart_when_closed' ) );
 		add_action( 'woocommerce_store_api_validate_add_to_cart', array( $this, 'gate_store_api_add_to_cart_when_closed' ) );
-		add_action( 'woocommerce_store_api_validate_cart', array( $this, 'gate_store_api_cart_when_closed' ) );
+		// NOTE: the Store API CHECKOUT gate (store-closed) is registered by
+		// Lafka_Store_Api on woocommerce_store_api_cart_errors — the hook Store
+		// API actually fires from CartController::validate_cart(). It reuses
+		// is_shop_open() + get_closed_notice_message() here, so both checkout
+		// paths share one decision. (woocommerce_store_api_validate_cart is NOT a
+		// real WC hook — it never fires — so it is deliberately not registered.)
 
 		if ( ! self::is_shop_open() ) {
 
@@ -500,7 +505,7 @@ class Lafka_Order_Hours {
 	 *
 	 * @return string
 	 */
-	private function get_closed_notice_message(): string {
+	public static function get_closed_notice_message(): string {
 		$operator_message = self::$lafka_order_hours_options['lafka_order_hours_message'] ?? '';
 
 		return '' !== $operator_message
@@ -535,7 +540,7 @@ class Lafka_Order_Hours {
 		if ( self::is_shop_open() ) {
 			return;
 		}
-		wc_add_notice( esc_html( $this->get_closed_notice_message() ), 'error' );
+		wc_add_notice( esc_html( self::get_closed_notice_message() ), 'error' );
 	}
 
 	/**
@@ -550,7 +555,7 @@ class Lafka_Order_Hours {
 	 */
 	public function gate_add_to_cart_when_closed( $passed ) {
 		if ( $passed && ! self::is_shop_open() && $this->is_add_to_cart_disabled_when_closed() ) {
-			wc_add_notice( esc_html( $this->get_closed_notice_message() ), 'error' );
+			wc_add_notice( esc_html( self::get_closed_notice_message() ), 'error' );
 
 			return false;
 		}
@@ -578,33 +583,7 @@ class Lafka_Order_Hours {
 		}
 		throw new \Automattic\WooCommerce\StoreApi\Exceptions\RouteException(
 			'lafka_store_closed',
-			esc_html( $this->get_closed_notice_message() ),
-			409
-		);
-	}
-
-	/**
-	 * Store API / Cart-and-Checkout-Blocks checkout gate.
-	 *
-	 * woocommerce_store_api_validate_cart is fired only from the Store API
-	 * Checkout route (CartController::validate_cart()), i.e. at blocks place-order
-	 * — not on cart reads/updates — so throwing here blocks the blocks-based order
-	 * exactly as gate_checkout_when_closed() blocks the classic one, without
-	 * breaking cart viewing while closed.
-	 *
-	 * @return void
-	 * @throws \Automattic\WooCommerce\StoreApi\Exceptions\RouteException When the store is closed.
-	 */
-	public function gate_store_api_cart_when_closed() {
-		if ( self::is_shop_open() ) {
-			return;
-		}
-		if ( ! class_exists( '\Automattic\WooCommerce\StoreApi\Exceptions\RouteException' ) ) {
-			return;
-		}
-		throw new \Automattic\WooCommerce\StoreApi\Exceptions\RouteException(
-			'lafka_store_closed',
-			esc_html( $this->get_closed_notice_message() ),
+			esc_html( self::get_closed_notice_message() ),
 			409
 		);
 	}

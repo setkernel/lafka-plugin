@@ -745,6 +745,15 @@ if ( LAFKA_PLUGIN_IS_WOOCOMMERCE ) {
 	/* Load nutrition and allergens */
 	require_once plugin_dir_path( __FILE__ ) . '/incl/nutrition/lafka-nutrition.php';
 
+	/*
+	 * Store API (block cart/checkout, headless) server-truth parity (NX1-04a).
+	 * Loaded unconditionally when WooCommerce is active; every adapter guards on
+	 * class_exists() so a disabled feature module simply no-ops. Registers its
+	 * hooks/schema on woocommerce_init once the Store API container is ready.
+	 */
+	require_once plugin_dir_path( __FILE__ ) . 'incl/store-api/class-lafka-store-api.php';
+	Lafka_Store_Api::init();
+
 	if ( is_lafka_product_addons( get_option( 'lafka' ) ) ) {
 		/* Load addons */
 		require_once plugin_dir_path( __FILE__ ) . '/incl/addons/lafka-product-addons.php';

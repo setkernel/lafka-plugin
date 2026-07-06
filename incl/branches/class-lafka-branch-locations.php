@@ -645,12 +645,16 @@ class Lafka_Branch_Locations {
 	 * (lafka_branch_order_type: delivery_pickup | delivery | pickup) with the
 	 * site-wide enabled order types (self::get_order_type()).
 	 *
+	 * Public so the Store API checkout gate (Lafka_Store_Api) can re-run the
+	 * exact same branch/site capability allow-list the classic select_branch()
+	 * path enforces, keeping both checkout paths on one decision.
+	 *
 	 * @param string $order_type Requested order type.
 	 * @param int    $branch_id  Branch term ID.
 	 *
 	 * @return bool
 	 */
-	private static function is_order_type_allowed_for_branch( string $order_type, int $branch_id ): bool {
+	public static function is_order_type_allowed_for_branch( string $order_type, int $branch_id ): bool {
 		$branch_cap = get_term_meta( $branch_id, 'lafka_branch_order_type', true ) ?: 'delivery_pickup';
 
 		return self::is_order_type_permitted_by_caps( $order_type, (string) $branch_cap, self::get_order_type() );
