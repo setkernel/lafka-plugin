@@ -203,6 +203,18 @@ if ( is_admin() ) {
 }
 
 /**
+ * Settings export / import (NX1-05) — "Lafka → Tools". Export/import a versioned
+ * config bundle (flags, business, order-hours, shipping areas, branches, zones,
+ * add-on groups, lafka_ theme_mods) to move a configured install between sites.
+ * Secrets + KDS + personal-data tables are excluded by design. Self-gates to
+ * is_admin() inside the class file; the WP-CLI surface is registered separately.
+ */
+if ( is_admin() ) {
+	require_once plugin_dir_path( __FILE__ ) . 'incl/tools/class-lafka-config-bundle.php';
+	require_once plugin_dir_path( __FILE__ ) . 'incl/admin/class-lafka-tools-page.php';
+}
+
+/**
  * Admin new-order notification poller (NX1-08b) — MOVED from the parent theme.
  * Registers the wp_ajax_lafka_new_orders_notification handler, the admin poller
  * JS + its service worker, and the browser-permission dialog. Self-gates to
@@ -666,6 +678,15 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/cli/lafka-reviews-cli.php';
  *   wp lafka images convert-webp --path=2026/01 --dry-run
  */
 require_once plugin_dir_path( __FILE__ ) . 'incl/cli/lafka-webp-convert.php';
+
+/**
+ * WP-CLI: export/import a Lafka configuration bundle (NX1-05).
+ * Self-gates: returns when WP_CLI is not defined.
+ *
+ *   wp lafka config export --file=lafka-config.json
+ *   wp lafka config import --file=lafka-config.json --dry-run
+ */
+require_once plugin_dir_path( __FILE__ ) . 'incl/cli/lafka-config-cli.php';
 
 /**
  * P6-UX-8 (W3-T6) — deprecated as of v9.28.0 (Phase 3D).
