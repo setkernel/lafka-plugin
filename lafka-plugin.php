@@ -1227,7 +1227,12 @@ if ( ! function_exists( 'lafka_theme_options_link' ) ) {
 }
 
 /**
- * Add Theme Options menu item to Admin Bar.
+ * Add a Theme Settings shortcut to the Admin Bar.
+ *
+ * NX1-02 (theme 7.0) retired the legacy "Appearance -> Theme Options" panel
+ * (and the redirect that used to catch its URL); theme settings now live in the
+ * Customizer's "Lafka" panel, so this shortcut points there instead of the
+ * removed themes.php?page=lafka-optionsframework page.
  */
 if ( ! function_exists( 'lafka_optionsframework_adminbar' ) ) {
 	function lafka_optionsframework_adminbar() {
@@ -1243,7 +1248,7 @@ if ( ! function_exists( 'lafka_optionsframework_adminbar' ) ) {
 				'parent' => false,
 				'id'     => 'lafka_of_theme_options',
 				'title'  => esc_html__( 'Theme Options', 'lafka-plugin' ),
-				'href'   => esc_url( admin_url( 'themes.php?page=lafka-optionsframework' ) ),
+				'href'   => esc_url( admin_url( 'customize.php?autofocus[panel]=lafka_settings' ) ),
 				'meta'   => array( 'class' => 'althemist-admin-opitons' ),
 			)
 		);
