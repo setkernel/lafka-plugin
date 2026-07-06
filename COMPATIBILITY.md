@@ -5,7 +5,8 @@ Each row is **known-good** — runs the test suite green and the smoke
 checklist passes in staging.
 
 > The "minimum" floor is what `composer.json` / plugin headers enforce.
-> The "recommended" column is what the maintainers run in CI today.
+> The "recommended" column is the maintainer-recommended production target;
+> what CI actually runs is described in the *CI* section below.
 
 ## Stack versions
 
@@ -17,11 +18,12 @@ checklist passes in staging.
 | **Node.js** (build only) | 20 | 24 | 24         |
 | **Apache** (recommended for security headers) | 2.4 | 2.4.66+ | 2.4.66 |
 
-"Recommended" is what `.wp-env.json` pins and CI builds against (WP 7.0 /
-WC 10.9.1 / PHP 8.4); the PHPUnit suites additionally run on PHP 8.5 locally.
-The full Playwright end-to-end pass was last run on the WP 6.9.4 / WC 10.7.0 /
-PHP 8.3.30 stack (Session 5, 2026-04-27); re-run it against the bumped stack
-before the next release.
+`.wp-env.json` pins the local integration stack at WP 6.9.4 / WC 10.7.0 /
+PHP 8.2; CI's PHP job runs PHPUnit + PHPCS on the runner's single
+pre-installed PHP (currently 8.3, matching prod), not on wp-env. The PHPUnit
+suites additionally run on PHP 8.5 locally. The full Playwright end-to-end
+pass was last run on the WP 6.9.4 / WC 10.7.0 / PHP 8.3.30 stack (Session 5,
+2026-04-27); re-run it against the bumped stack before the next release.
 
 ## Package versions
 
@@ -41,22 +43,37 @@ Each repo is tagged and released independently on its own cadence — the plugin
 and theme advance faster than the thin child, so their versions are not expected
 to move in lock-step.
 
-## CI matrix (per-repo CI runs the full grid)
+## CI (single-runner PHPUnit; PHP floor enforced statically)
 
-| | PHP 8.1 | PHP 8.2 | PHP 8.3 |
-|----|----|----|----|
-| **lafka-plugin** | ✅ | ✅ | ✅ |
-| **lafka-theme**  | ✅ | ✅ | ✅ |
-| **lafka-child**  | ✅ | ✅ | ✅ |
+CI does **not** run a multi-PHP test matrix. Under the first-party-actions-only
+policy (see the header comment in `.github/workflows/ci.yml`), each repo's PHP
+job runs PHPUnit + PHPCS on the runner's **single** pre-installed PHP (currently
+8.3, matching prod); the multi-PHP matrix was deliberately traded away for that
+constraint. The **PHP 8.1 floor is enforced statically, not by running PHPUnit
+on 8.1**: PHPCompatibility sniffs (`phpcompatibility/phpcompatibility-wp`, wired
+as `testVersion 8.1-` + `PHPCompatibilityWP` in `.phpcs.xml.dist`) flag any
+8.2+-only construct during PHPCS, and the `Requires PHP: 8.1` plugin header
+gates activation at runtime.
 
-CI checks per matrix cell: PHPCS (WordPress-Extra ruleset, ~60 sniff
-exclusions documented in `.phpcs.xml.dist`) + PHPUnit (Brain Monkey).
-JS/CSS linted separately on Node 24 (ESLint + Stylelint).
+| Repo | PHPUnit + PHPCS | PHP-floor check |
+|----|----|----|
+| **lafka-plugin** | runner PHP (8.3) | PHPCompatibility `8.1-` |
+| **lafka-theme**  | runner PHP (8.3) | PHPCompatibility `8.1-` |
+| **lafka-child**  | runner PHP (8.3) | PHPCompatibility `8.1-` |
+
+CI checks: PHPCS (WordPress-Extra ruleset, ~60 sniff exclusions documented in
+`.phpcs.xml.dist`) + PHPUnit (Brain Monkey), both on the runner PHP. JS/CSS
+linted separately on Node 24 (ESLint + Stylelint).
 
 The security sniff families — `WordPress.Security.EscapeOutput.*`,
 `WordPress.Security.NonceVerification.*`, `WordPress.DB.PreparedSQL.*` —
 are **enforced as errors** (re-enabled in the 2026-05-14 P5-Sec pass). Only
 the narrow `WordPress.Security.EscapeOutput.ExceptionNotEscaped` is excluded.
+
+A container-based PHP 8.1 / 8.3 test matrix (first-party `container:` images,
+no community actions) is a tracked follow-up — roadmap item **NX1-08c** in
+`ROADMAP_2026-07-05.md`. Until it lands, cross-version coverage is
+static-analysis-only via PHPCompatibility.
 
 WP × WC integration matrix is pending integration tests — tracked as P2-04a.
 
