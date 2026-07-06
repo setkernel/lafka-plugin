@@ -51,6 +51,11 @@ if ( ! function_exists( 'lafka_plugin_asset_version' ) ) {
 // Load shared options helper — available to both plugin and theme.
 require_once plugin_dir_path( __FILE__ ) . 'incl/class-lafka-options.php';
 
+// Typed feature-module registry (NX1-01) — the single list of gated modules
+// the Modules dashboard, Site Health and (later) the setup wizard read from.
+// Foundational: required before Site Health / the Modules page below.
+require_once plugin_dir_path( __FILE__ ) . 'incl/class-lafka-module-registry.php';
+
 if ( ! function_exists( 'lafka_write_log' ) ) {
 	function lafka_write_log( $log ) {
 		if ( is_array( $log ) || is_object( $log ) ) {
@@ -188,6 +193,14 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/security/class-lafka-security-a
  * Site Health diagnostics (P5-02). Self-gates to is_admin().
  */
 require_once plugin_dir_path( __FILE__ ) . 'incl/site-health/class-lafka-site-health.php';
+
+/**
+ * Feature Modules dashboard (NX1-01) — top-level "Lafka" menu → "Modules".
+ * One screen to see/flip every gated module. Self-gates to is_admin().
+ */
+if ( is_admin() ) {
+	require_once plugin_dir_path( __FILE__ ) . 'incl/admin/class-lafka-modules-page.php';
+}
 
 /**
  * Block Cart/Checkout compat shim. Detects WC's default Block-based cart and
