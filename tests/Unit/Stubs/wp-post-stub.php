@@ -17,6 +17,7 @@ if ( ! class_exists( 'WP_Post' ) ) {
 		public int $ID = 0;
 		public string $post_name = '';
 		public string $post_content = '';
+		public string $post_type = '';
 		public function __construct( $row = null ) {
 			if ( is_object( $row ) ) {
 				foreach ( (array) $row as $k => $v ) {

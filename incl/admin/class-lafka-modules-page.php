@@ -43,6 +43,10 @@ if ( ! class_exists( 'Lafka_Modules_Page' ) ) {
 		const DATA_REMOVAL_NONCE  = 'lafka_data_removal_toggle';
 		const DATA_REMOVAL_OPTION = 'lafka_delete_data_on_uninstall';
 
+		// NX1-04b: the checkout-experience (blocks vs classic) chooser.
+		const CHECKOUT_MODE_ACTION = 'lafka_checkout_mode_save';
+		const CHECKOUT_MODE_NONCE  = 'lafka_checkout_mode_save';
+
 		/** @var Lafka_Modules_Page|null */
 		private static $instance = null;
 
@@ -57,6 +61,7 @@ if ( ! class_exists( 'Lafka_Modules_Page' ) ) {
 			add_action( 'admin_menu', array( $this, 'register_menu' ) );
 			add_action( 'admin_post_' . self::TOGGLE_ACTION, array( $this, 'handle_toggle' ) );
 			add_action( 'admin_post_' . self::DATA_REMOVAL_ACTION, array( $this, 'handle_data_removal_toggle' ) );
+			add_action( 'admin_post_' . self::CHECKOUT_MODE_ACTION, array( $this, 'handle_checkout_mode_save' ) );
 		}
 
 		/**
@@ -146,6 +151,42 @@ if ( ! class_exists( 'Lafka_Modules_Page' ) ) {
 		}
 
 		/**
+		 * admin-post handler: persist the chosen checkout experience (NX1-04b).
+		 * Clears the block-cart shim's done-flag so the cart/checkout pages are
+		 * re-reconciled for the new mode on the next admin request.
+		 */
+		public function handle_checkout_mode_save() {
+			if ( ! current_user_can( self::CAPABILITY ) ) {
+				wp_die( esc_html__( 'You do not have permission to change the Lafka checkout mode.', 'lafka-plugin' ), 403 );
+			}
+			check_admin_referer( self::CHECKOUT_MODE_NONCE );
+
+			$requested = isset( $_POST['lafka_checkout_mode'] )
+				? sanitize_key( wp_unslash( $_POST['lafka_checkout_mode'] ) )
+				: '';
+
+			$saved = false;
+			if ( class_exists( 'Lafka_Checkout_Mode' ) && Lafka_Checkout_Mode::set_mode( $requested ) ) {
+				$saved = true;
+				if ( class_exists( 'Lafka_Block_Cart_Shim' ) ) {
+					// Re-reconcile the cart/checkout pages against the new mode.
+					Lafka_Block_Cart_Shim::reset();
+				}
+			}
+
+			wp_safe_redirect(
+				add_query_arg(
+					array(
+						'page'                => self::MENU_SLUG,
+						'lafka_checkout_mode' => $saved ? $requested : 'invalid',
+					),
+					admin_url( 'admin.php' )
+				)
+			);
+			exit;
+		}
+
+		/**
 		 * Render the Modules dashboard.
 		 */
 		public function render_page() {
@@ -177,9 +218,85 @@ if ( ! class_exists( 'Lafka_Modules_Page' ) ) {
 				echo '</div>';
 			}
 
+			$this->render_checkout_mode_section();
 			$this->render_data_removal_section();
 
 			echo '</div>';
+		}
+
+		/**
+		 * The checkout-experience chooser (NX1-04b): blocks vs classic, with a
+		 * plain-language description of each and a warning that switching changes the
+		 * checkout customers see.
+		 */
+		private function render_checkout_mode_section() {
+			if ( ! class_exists( 'Lafka_Checkout_Mode' ) ) {
+				return;
+			}
+			$current = Lafka_Checkout_Mode::get_mode();
+
+			$this->render_checkout_mode_notice();
+
+			echo '<h2 class="lafka-modules__category">' . esc_html__( 'Checkout experience', 'lafka-plugin' ) . '</h2>';
+			echo '<div class="lafka-checkout-mode">';
+			echo '<p class="lafka-checkout-mode__desc">' . esc_html__( 'Choose which Cart & Checkout your customers see. Lafka fully supports both — ordering rules, add-ons, branch/order-type and time-slots all work either way.', 'lafka-plugin' ) . '</p>';
+			echo '<p class="lafka-checkout-mode__warning">' . esc_html__( 'Warning: switching changes the Cart & Checkout pages your customers use. Test a real order after changing this.', 'lafka-plugin' ) . '</p>';
+
+			echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+			echo '<input type="hidden" name="action" value="' . esc_attr( self::CHECKOUT_MODE_ACTION ) . '">';
+			wp_nonce_field( self::CHECKOUT_MODE_NONCE );
+
+			$this->render_checkout_mode_choice(
+				Lafka_Checkout_Mode::MODE_BLOCKS,
+				$current,
+				esc_html__( 'Block Cart & Checkout (recommended for new stores)', 'lafka-plugin' ),
+				esc_html__( 'The modern WooCommerce block checkout. This is the default WooCommerce gives new stores.', 'lafka-plugin' )
+			);
+			$this->render_checkout_mode_choice(
+				Lafka_Checkout_Mode::MODE_CLASSIC,
+				$current,
+				esc_html__( 'Classic Cart & Checkout (shortcodes)', 'lafka-plugin' ),
+				esc_html__( 'The classic shortcode checkout. Existing Lafka stores keep this on update so nothing changes.', 'lafka-plugin' )
+			);
+
+			echo '<p><button type="submit" class="button button-primary">' . esc_html__( 'Save checkout experience', 'lafka-plugin' ) . '</button></p>';
+			echo '</form>';
+			echo '</div>';
+		}
+
+		/**
+		 * One radio choice row for the checkout-mode chooser.
+		 *
+		 * @param string $mode    The mode this choice sets.
+		 * @param string $current The currently active mode.
+		 * @param string $title   Escaped choice title.
+		 * @param string $desc    Escaped choice description.
+		 */
+		private function render_checkout_mode_choice( $mode, $current, $title, $desc ) {
+			echo '<label class="lafka-checkout-mode__choice">';
+			echo '<input type="radio" name="lafka_checkout_mode" value="' . esc_attr( $mode ) . '"';
+			checked( $current, $mode );
+			echo '> <span class="lafka-checkout-mode__choice-title">' . $title . '</span>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped by caller.
+			echo '<span class="lafka-checkout-mode__choice-desc">' . $desc . '</span>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped by caller.
+			echo '</label>';
+		}
+
+		/**
+		 * Success/failure notice after saving the checkout mode.
+		 */
+		private function render_checkout_mode_notice() {
+			$mode = isset( $_GET['lafka_checkout_mode'] ) ? sanitize_key( wp_unslash( $_GET['lafka_checkout_mode'] ) ) : '';
+			if ( '' === $mode ) {
+				return;
+			}
+			if ( 'blocks' !== $mode && 'classic' !== $mode ) {
+				echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'That checkout experience is not available.', 'lafka-plugin' ) . '</p></div>';
+				return;
+			}
+			$message = 'blocks' === $mode
+				? esc_html__( 'Customers now use the block Cart & Checkout. Place a test order to confirm.', 'lafka-plugin' )
+				: esc_html__( 'Customers now use the classic Cart & Checkout. Place a test order to confirm.', 'lafka-plugin' );
+			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( $message ) . '</p></div>';
 		}
 
 		/**
@@ -364,6 +481,12 @@ if ( ! class_exists( 'Lafka_Modules_Page' ) ) {
 				.lafka-danger-zone__desc{color:#50575e;margin:0 0 8px;}
 				.lafka-danger-zone__warning{color:#8a2424;font-weight:600;margin:0 0 14px;}
 				.lafka-danger-zone__toggle{display:inline-block;margin-right:8px;}
+				.lafka-checkout-mode{background:#fff;border:1px solid #dcdcde;border-radius:8px;padding:16px 18px;max-width:720px;}
+				.lafka-checkout-mode__desc{color:#50575e;margin:0 0 8px;}
+				.lafka-checkout-mode__warning{color:#8a5700;font-weight:600;margin:0 0 14px;}
+				.lafka-checkout-mode__choice{display:block;margin:0 0 12px;padding:10px 12px;border:1px solid #e0e0e0;border-radius:6px;}
+				.lafka-checkout-mode__choice-title{font-weight:600;}
+				.lafka-checkout-mode__choice-desc{display:block;color:#50575e;margin:2px 0 0 24px;}
 			</style>';
 		}
 	}

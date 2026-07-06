@@ -56,6 +56,22 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/class-lafka-options.php';
 // Foundational: required before Site Health / the Modules page below.
 require_once plugin_dir_path( __FILE__ ) . 'incl/class-lafka-module-registry.php';
 
+/**
+ * Checkout-experience SSOT (NX1-04b): the `lafka_checkout_mode` option and its
+ * fresh/existing migration. Required EARLY and its activation hook registered
+ * FIRST (before the defaults seeder below) so a genuinely fresh install is seen
+ * as fresh (no pre-existing `lafka` option) and defaults to 'blocks', while every
+ * existing install is migrated to an explicit 'classic' — byte-identical to its
+ * pre-update behaviour. The on-load migration covers in-place updates that never
+ * fire the activation hook. The block-cart shim and the block integration below
+ * both read this SSOT.
+ */
+require_once plugin_dir_path( __FILE__ ) . 'incl/checkout/class-lafka-checkout-mode.php';
+Lafka_Checkout_Mode::init();
+if ( function_exists( 'register_activation_hook' ) ) {
+	register_activation_hook( __FILE__, array( 'Lafka_Checkout_Mode', 'on_activation' ) );
+}
+
 if ( ! function_exists( 'lafka_write_log' ) ) {
 	function lafka_write_log( $log ) {
 		if ( is_array( $log ) || is_object( $log ) ) {
@@ -730,6 +746,12 @@ add_action(
 	function () {
 		if ( class_exists( \Automattic\WooCommerce\Utilities\FeaturesUtil::class ) ) {
 			\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', __FILE__, true );
+			// NX1-04b: the block Cart/Checkout path now holds every ordering gate
+			// (NX1-04a), addon line items + totals (NX1-04c) and Lafka's order_type/
+			// branch/timeslot fields, so declare full compatibility. Declared
+			// unconditionally: an operator on classic mode is still compatible with
+			// blocks — the declaration only removes WC's incompatibility warning.
+			\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'cart_checkout_blocks', __FILE__, true );
 		}
 	}
 );
@@ -753,6 +775,31 @@ if ( LAFKA_PLUGIN_IS_WOOCOMMERCE ) {
 	 */
 	require_once plugin_dir_path( __FILE__ ) . 'incl/store-api/class-lafka-store-api.php';
 	Lafka_Store_Api::init();
+
+	/*
+	 * Block Cart/Checkout UI (NX1-04b). Builds on the NX1-04a Store API contract:
+	 *   · Lafka_Checkout_Fields — order_type + branch selects via WooCommerce's
+	 *     Additional Checkout Fields API, wired back into the classic session/order
+	 *     meta so KDS/branch-routing/analytics see identical order meta.
+	 *   · Lafka_Blocks_Integration — a build-free IntegrationInterface enqueuing the
+	 *     timeslot picker (block checkout) + free-delivery progress (block cart).
+	 * Both self-gate to blocks checkout mode; the classic path is untouched.
+	 */
+	require_once plugin_dir_path( __FILE__ ) . 'incl/checkout/class-lafka-checkout-fields.php';
+	Lafka_Checkout_Fields::init();
+	// The block integration `implements IntegrationInterface`, which WooCommerce
+	// Blocks defines only once it loads (after this plugin file is included). Defer
+	// requiring it to `woocommerce_blocks_loaded` so the interface exists at class
+	// declaration time; the block-registration hooks it wires fire later still.
+	add_action(
+		'woocommerce_blocks_loaded',
+		static function () {
+			require_once plugin_dir_path( LAFKA_PLUGIN_FILE ) . 'incl/checkout/class-lafka-blocks-integration.php';
+			if ( class_exists( 'Lafka_Blocks_Integration' ) ) {
+				Lafka_Blocks_Integration::init();
+			}
+		}
+	);
 
 	if ( is_lafka_product_addons( get_option( 'lafka' ) ) ) {
 		/* Load addons */

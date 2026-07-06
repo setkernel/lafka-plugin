@@ -51,6 +51,8 @@ final class ModulesPageTest extends TestCase {
 		Functions\when( 'do_action' )->justReturn( null );
 		Functions\when( 'did_action' )->justReturn( 1 );
 		Functions\when( 'wp_nonce_field' )->justReturn( '' );
+		// NX1-04b: the render adds a checkout-experience chooser (radio inputs).
+		Functions\when( 'checked' )->justReturn( '' );
 	}
 
 	protected function tearDown(): void {

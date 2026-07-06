@@ -120,6 +120,22 @@ order hours, kitchen display, promotions, abandoned cart, push, reviews,
 analytics) is a toggle with its own Customizer settings and filter hooks.
 Modules are off by default so you only run what you use.
 
+= Block Cart/Checkout or classic — which does Lafka use? =
+
+Both are fully supported. Choose under **Lafka → Modules → Checkout experience**:
+
+* **Block Cart & Checkout** — the modern WooCommerce block checkout. New stores
+  start here (it is what WooCommerce gives new stores by default). Lafka's order
+  type / branch selects, time-slot picker, add-on line items, free-delivery
+  progress and every ordering rule all work on it.
+* **Classic Cart & Checkout** — the classic shortcode checkout. Stores that were
+  already running Lafka keep this automatically when they update, so nothing
+  about their checkout changes.
+
+Switching is one click, but it changes the pages your customers use, so place a
+test order afterwards. Developers can force classic everywhere with the
+`lafka_force_classic_checkout` filter.
+
 = What personal data does Lafka store, and how long? =
 
 Two optional modules store customer personal data in their own tables:
