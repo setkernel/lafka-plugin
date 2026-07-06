@@ -39,8 +39,8 @@ far-future cache headers via the build; confirm the host isn't stripping them.
 
 ## Images (operator)
 - [ ] Upload product photos sized ~1200px max; let WP generate the responsive set.
-- [ ] ~27% of products currently have **no image** — add photos (missing images
-  hurt both conversion and the merchant feed). Priorities: top sellers first.
+- [ ] Any product with **no image** hurts both conversion and the merchant feed —
+  audit your catalogue and add photos. Priorities: top sellers first.
 - [ ] Consider Cloudflare **Polish** (WebP/AVIF auto-conversion) = ON, lossy — a
   zero-code way to serve modern formats without a WP WebP pipeline.
 
