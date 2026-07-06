@@ -1130,21 +1130,18 @@ if ( ! class_exists( 'Lafka_Config_Bundle' ) ) {
 		// ─── Secret handling ─────────────────────────────────────────────────
 
 		/**
-		 * Option keys that are secrets even inside an otherwise-portable array
-		 * option (the 'lafka' flags array + the shipping "general" group both
-		 * carry the Google Maps API key).
+		 * Strip every secret / analytics key out of an otherwise-portable array
+		 * option (the 'lafka' flags array + the shipping option groups). Uses the
+		 * shared is_secret_key() predicate so a secret smuggled in under ANY of
+		 * the recognised names — not just Google-Maps-style *api_key* keys — is
+		 * shed on export and never re-applied on import.
 		 *
 		 * @param array<string,mixed> $data Array to strip.
 		 * @return array<string,mixed>
 		 */
 		private static function strip_secret_keys( array $data ): array {
 			foreach ( array_keys( $data ) as $key ) {
-				$k = (string) $key;
-				if (
-					'google_maps_api_key' === $k
-					|| false !== strpos( $k, 'api_key' )
-					|| false !== strpos( $k, 'api_secret' )
-				) {
+				if ( self::is_secret_key( (string) $key ) ) {
 					unset( $data[ $key ] );
 				}
 			}
@@ -1152,14 +1149,17 @@ if ( ! class_exists( 'Lafka_Config_Bundle' ) ) {
 		}
 
 		/**
-		 * Whether a theme_mod key is a secret / analytics identifier that must
-		 * never travel in a config bundle. Deliberately aggressive: the whole
-		 * analytics namespace is destination-specific and excluded by design.
+		 * Single source of truth for "this key names a secret / analytics
+		 * identifier that must never travel in a config bundle". Shared by
+		 * strip_secret_keys() (array-typed flags + shipping options) and
+		 * is_secret_theme_mod() (the theme_mods section) so both shed the same
+		 * union of patterns. Deliberately aggressive: the whole analytics /
+		 * tracking namespace is destination-specific and excluded by design.
 		 *
-		 * @param string $key Theme mod key.
+		 * @param string $key Option, array, or theme-mod key.
 		 * @return bool
 		 */
-		private static function is_secret_theme_mod( string $key ): bool {
+		private static function is_secret_key( string $key ): bool {
 			$secret_prefixes = array(
 				'lafka_analytics_',
 				'lafka_push_vapid',
@@ -1181,6 +1181,17 @@ if ( ! class_exists( 'Lafka_Config_Bundle' ) ) {
 				}
 			}
 			return false;
+		}
+
+		/**
+		 * Whether a theme_mod key is a secret / analytics identifier. Thin
+		 * wrapper over the shared is_secret_key() predicate.
+		 *
+		 * @param string $key Theme mod key.
+		 * @return bool
+		 */
+		private static function is_secret_theme_mod( string $key ): bool {
+			return self::is_secret_key( $key );
 		}
 
 		/**

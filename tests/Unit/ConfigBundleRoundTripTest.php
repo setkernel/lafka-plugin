@@ -129,6 +129,55 @@ final class ConfigBundleRoundTripTest extends TestCase {
 		self::assertArrayNotHasKey( 'lafka_cf_beacon_token', $mods );
 	}
 
+	public function test_flags_and_shipping_arrays_shed_smuggled_secret_keys(): void {
+		// Secrets can be smuggled into the array-typed 'lafka' flags option and
+		// the shipping option groups under key names that do NOT contain
+		// "api_key"/"api_secret". The shared secret-key predicate must still
+		// shed vapid_* / _token / _secret / pixel_id / measurement_id keys.
+		$this->stores = array(
+			'options' => array(
+				'lafka'                        => array(
+					'kitchen_display'        => 'enabled',
+					'push_vapid_private_key' => 'FLAG_VAPID_LEAK',
+					'kitchen_access_token'   => 'FLAG_TOKEN_LEAK',
+					'twilio_auth_secret'     => 'FLAG_SECRET_LEAK',
+					'meta_pixel_id'          => 'FLAG_PIXEL_LEAK',
+					'ga_measurement_id'      => 'FLAG_MEASUREMENT_LEAK',
+				),
+				'lafka_shipping_areas_general' => array(
+					'default_radius'           => '5',
+					'mapbox_vapid_key'         => 'SHIP_VAPID_LEAK',
+					'courier_webhook_token'    => 'SHIP_TOKEN_LEAK',
+					'signing_secret'           => 'SHIP_SECRET_LEAK',
+					'fb_pixel_id'              => 'SHIP_PIXEL_LEAK',
+					'analytics_measurement_id' => 'SHIP_MEASUREMENT_LEAK',
+				),
+			),
+		);
+		$this->wire_wp();
+
+		$flags   = Lafka_Config_Bundle::export_flags();
+		$general = Lafka_Config_Bundle::export_shipping_areas()['lafka_shipping_areas_general'];
+
+		// Benign settings survive in both groups.
+		self::assertSame( 'enabled', $flags['kitchen_display'] );
+		self::assertSame( '5', $general['default_radius'] );
+
+		// Every smuggled secret is shed from the flags array.
+		foreach (
+			array( 'push_vapid_private_key', 'kitchen_access_token', 'twilio_auth_secret', 'meta_pixel_id', 'ga_measurement_id' ) as $leak
+		) {
+			self::assertArrayNotHasKey( $leak, $flags, "flags leaked secret key '$leak'" );
+		}
+
+		// …and from the shipping option group.
+		foreach (
+			array( 'mapbox_vapid_key', 'courier_webhook_token', 'signing_secret', 'fb_pixel_id', 'analytics_measurement_id' ) as $leak
+		) {
+			self::assertArrayNotHasKey( $leak, $general, "shipping general leaked secret key '$leak'" );
+		}
+	}
+
 	// ─── Round-trip: export → wipe → import → identical ─────────────────────
 
 	public function test_round_trip_restores_every_section(): void {
