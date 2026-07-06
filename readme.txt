@@ -120,6 +120,37 @@ order hours, kitchen display, promotions, abandoned cart, push, reviews,
 analytics) is a toggle with its own Customizer settings and filter hooks.
 Modules are off by default so you only run what you use.
 
+= What personal data does Lafka store, and how long? =
+
+Two optional modules store customer personal data in their own tables:
+
+* **Abandoned cart recovery** keeps the customer's email and a snapshot of their
+  cart when they enter an email at checkout but do not finish. Rows are deleted
+  automatically 30 days after they are created (or once the customer completes an
+  order), whichever comes first.
+* **Web push notifications** keep the browser push endpoint, user-agent and
+  locale for each subscriber. When a customer unsubscribes the row is
+  soft-deleted and then removed 60 days later; invalid endpoints are removed
+  immediately.
+
+Both stores are wired into WordPress's built-in privacy tools: **Tools →
+Export/Erase Personal Data** returns and removes a customer's push subscriptions
+(matched to their account) and abandoned carts (matched by email). Everything
+else the plugin stores is your own business configuration, not personal data.
+
+= What happens to my data when I uninstall the plugin? =
+
+By default, uninstalling removes only the two conversion tables above and reverts
+custom attribute types — all your menu configuration, branches, zones, hours and
+settings are kept, so re-installing resumes where you left off.
+
+If you want a clean slate, enable **Remove all data on uninstall** under **Lafka →
+Modules**. With that on, deleting the plugin also erases every Lafka option, the
+menu / delivery-zone / add-on-group posts, delivery branches and their per-branch
+settings, lafka-prefixed transients, and Lafka product/customer meta. Your
+WooCommerce **orders and their history are always retained** — a plugin uninstall
+never rewrites your sales records.
+
 = Is it ready for High-Performance Order Storage (HPOS)? =
 
 Yes. The WooCommerce integration is HPOS-compatible and does not rely on legacy

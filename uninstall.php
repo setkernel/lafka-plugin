@@ -1,37 +1,28 @@
 <?php
 /**
- * Uninstall plugin
+ * Uninstall Lafka Plugin.
+ *
+ * Thin bootstrap only. WordPress includes this file when the operator deletes
+ * the plugin. All cleanup logic lives in Lafka_Uninstall
+ * (incl/tools/class-lafka-uninstall.php) so it is unit-testable without booting
+ * WordPress. Behaviour:
+ *
+ *   - Toggle OFF (default): minimal cleanup — revert custom product-attribute
+ *     types to 'select', DROP the abandoned-cart + push-subscription tables, and
+ *     delete their version/marker options (lafka_abandoned_cart_db_version,
+ *     lafka_push_db_version, lafka_push_activity_log). Everything else is kept.
+ *   - Toggle ON ('Remove all data on uninstall', set on Lafka → Modules): full
+ *     inventory-driven cleanup on top of the minimal pass — every lafka* option,
+ *     the three Lafka CPTs' posts, lafka_branch_location + lafka_foodmenu_category
+ *     terms (term meta cascades), lafka-prefixed transients, and plugin-owned
+ *     product/user meta. Orders and order-item meta are intentionally retained.
  */
 
-// If uninstall not called from WordPress exit
+// If uninstall not called from WordPress exit.
 if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	exit;
 }
 
-global $wpdb;
+require_once plugin_dir_path( __FILE__ ) . 'incl/tools/class-lafka-uninstall.php';
 
-//change to standard select type custom attributes
-$wpdb->query(
-	$wpdb->prepare(
-		"UPDATE {$wpdb->prefix}woocommerce_attribute_taxonomies SET attribute_type = %s WHERE attribute_type != %s",
-		'select',
-		'text'
-	)
-);
-
-// v9.27.0 (Phase 3B): drop the abandoned-cart table on plugin uninstall.
-// Deactivation keeps the table so flip-off/on doesn't lose pending rows; only
-// a full uninstall removes the schema + option marker.
-$ac_table = $wpdb->prefix . 'lafka_abandoned_carts';
-// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is a code-controlled prefix concatenation.
-$wpdb->query( "DROP TABLE IF EXISTS {$ac_table}" );
-delete_option( 'lafka_abandoned_cart_db_version' );
-
-// v9.29.0 (Phase 3E): drop the push-subscriptions table + activity log option.
-// Same retention policy as Phase 3B - deactivation keeps the table, uninstall
-// wipes everything.
-$push_table = $wpdb->prefix . 'lafka_push_subscriptions';
-// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is a code-controlled prefix concatenation.
-$wpdb->query( "DROP TABLE IF EXISTS {$push_table}" );
-delete_option( 'lafka_push_db_version' );
-delete_option( 'lafka_push_activity_log' );
+Lafka_Uninstall::run();

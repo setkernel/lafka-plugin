@@ -37,6 +37,12 @@ if ( ! class_exists( 'Lafka_Modules_Page' ) ) {
 		const NONCE_ACTION = 'lafka_module_toggle';
 		const TOGGLE_ACTION = 'lafka_module_toggle';
 
+		// NX1-06: opt-in "Remove all data on uninstall" toggle. The option name
+		// MUST match Lafka_Uninstall::DATA_TOGGLE_OPTION (uninstall.php reads it).
+		const DATA_REMOVAL_ACTION = 'lafka_data_removal_toggle';
+		const DATA_REMOVAL_NONCE  = 'lafka_data_removal_toggle';
+		const DATA_REMOVAL_OPTION = 'lafka_delete_data_on_uninstall';
+
 		/** @var Lafka_Modules_Page|null */
 		private static $instance = null;
 
@@ -50,6 +56,7 @@ if ( ! class_exists( 'Lafka_Modules_Page' ) ) {
 		private function __construct() {
 			add_action( 'admin_menu', array( $this, 'register_menu' ) );
 			add_action( 'admin_post_' . self::TOGGLE_ACTION, array( $this, 'handle_toggle' ) );
+			add_action( 'admin_post_' . self::DATA_REMOVAL_ACTION, array( $this, 'handle_data_removal_toggle' ) );
 		}
 
 		/**
@@ -111,6 +118,34 @@ if ( ! class_exists( 'Lafka_Modules_Page' ) ) {
 		}
 
 		/**
+		 * admin-post handler: flip the opt-in "Remove all data on uninstall"
+		 * option (NX1-06). Unchecked box → option set to '0' (default behaviour:
+		 * keep data). Checked → '1' (uninstall.php then runs the full wipe).
+		 */
+		public function handle_data_removal_toggle() {
+			if ( ! current_user_can( self::CAPABILITY ) ) {
+				wp_die( esc_html__( 'You do not have permission to change Lafka data-removal settings.', 'lafka-plugin' ), 403 );
+			}
+			check_admin_referer( self::DATA_REMOVAL_NONCE );
+
+			$enabled = isset( $_POST['lafka_delete_data_on_uninstall'] )
+				&& '1' === sanitize_text_field( wp_unslash( $_POST['lafka_delete_data_on_uninstall'] ) );
+
+			update_option( self::DATA_REMOVAL_OPTION, $enabled ? '1' : '0' );
+
+			wp_safe_redirect(
+				add_query_arg(
+					array(
+						'page'               => self::MENU_SLUG,
+						'lafka_data_removal' => $enabled ? 'on' : 'off',
+					),
+					admin_url( 'admin.php' )
+				)
+			);
+			exit;
+		}
+
+		/**
 		 * Render the Modules dashboard.
 		 */
 		public function render_page() {
@@ -142,7 +177,52 @@ if ( ! class_exists( 'Lafka_Modules_Page' ) ) {
 				echo '</div>';
 			}
 
+			$this->render_data_removal_section();
+
 			echo '</div>';
+		}
+
+		/**
+		 * The opt-in "Remove all data on uninstall" control (NX1-06), rendered
+		 * as a clearly-warned danger zone below the module grid.
+		 */
+		private function render_data_removal_section() {
+			$stored  = get_option( self::DATA_REMOVAL_OPTION, '0' );
+			$enabled = '1' === ( is_scalar( $stored ) ? (string) $stored : '0' );
+
+			$this->render_data_removal_notice();
+
+			echo '<h2 class="lafka-modules__category">' . esc_html__( 'Data removal', 'lafka-plugin' ) . '</h2>';
+			echo '<div class="lafka-danger-zone">';
+			echo '<h3 class="lafka-danger-zone__title">' . esc_html__( 'Remove all Lafka data on uninstall', 'lafka-plugin' ) . '</h3>';
+			echo '<p class="lafka-danger-zone__desc">' . esc_html__( 'By default, deleting the plugin keeps your data so a re-install resumes where you left off. Turn this on to make uninstalling the plugin erase every trace of Lafka.', 'lafka-plugin' ) . '</p>';
+			echo '<p class="lafka-danger-zone__warning">' . esc_html__( 'Warning: with this enabled, uninstalling permanently deletes your menu products\' Lafka details (dietary tags, allergens, nutrition), delivery branches and zones, order hours, add-on groups, and all Lafka settings and transients. Your WooCommerce orders and their history are always kept.', 'lafka-plugin' ) . '</p>';
+
+			echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+			echo '<input type="hidden" name="action" value="' . esc_attr( self::DATA_REMOVAL_ACTION ) . '">';
+			wp_nonce_field( self::DATA_REMOVAL_NONCE );
+			echo '<label class="lafka-danger-zone__toggle"><input type="checkbox" name="lafka_delete_data_on_uninstall" value="1"';
+			if ( $enabled ) {
+				echo ' checked="checked"';
+			}
+			echo '> ' . esc_html__( 'Erase all Lafka data when the plugin is uninstalled', 'lafka-plugin' ) . '</label> ';
+			echo '<button type="submit" class="button button-secondary">' . esc_html__( 'Save', 'lafka-plugin' ) . '</button>';
+			echo '</form>';
+			echo '</div>';
+		}
+
+		/**
+		 * Success notice after saving the data-removal toggle.
+		 */
+		private function render_data_removal_notice() {
+			$state = isset( $_GET['lafka_data_removal'] ) ? sanitize_text_field( wp_unslash( $_GET['lafka_data_removal'] ) ) : '';
+			if ( 'on' !== $state && 'off' !== $state ) {
+				return;
+			}
+			$message = 'on' === $state
+				? esc_html__( 'Lafka will remove all its data when the plugin is uninstalled.', 'lafka-plugin' )
+				: esc_html__( 'Lafka will keep your data when the plugin is uninstalled.', 'lafka-plugin' );
+			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( $message ) . '</p></div>';
 		}
 
 		/**
@@ -279,6 +359,11 @@ if ( ! class_exists( 'Lafka_Modules_Page' ) ) {
 				.lafka-badge--active{background:#edfaef;color:#00694e;}
 				.lafka-badge--warning{background:#fcf3e6;color:#8a5700;}
 				.lafka-badge--inactive{background:#f0f0f1;color:#646970;}
+				.lafka-danger-zone{background:#fff;border:1px solid #d63638;border-left-width:4px;border-radius:8px;padding:16px 18px;max-width:720px;}
+				.lafka-danger-zone__title{margin:0 0 6px;font-size:1.05em;color:#8a2424;}
+				.lafka-danger-zone__desc{color:#50575e;margin:0 0 8px;}
+				.lafka-danger-zone__warning{color:#8a2424;font-weight:600;margin:0 0 14px;}
+				.lafka-danger-zone__toggle{display:inline-block;margin-right:8px;}
 			</style>';
 		}
 	}

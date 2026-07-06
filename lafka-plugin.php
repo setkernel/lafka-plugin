@@ -564,6 +564,16 @@ if ( is_admin() ) {
 }
 
 /**
+ * NX1-06: WP privacy exporter + eraser for the conversion tables that hold
+ * personal data — push subscriptions (endpoint / user-agent / locale, matched
+ * to the requesting email's WP user) and abandoned carts (email + cart
+ * snapshot, matched on the email column). Registered on the core privacy
+ * filters so GDPR export/erase requests reach the Lafka data stores.
+ */
+require_once plugin_dir_path( __FILE__ ) . 'incl/conversion/class-lafka-conversion-privacy.php';
+( new Lafka_Conversion_Privacy() )->register();
+
+/**
  * v9.29.0: activation + deactivation hooks for the Web Push module.
  *
  *   on activate   → install the subscriptions table + schedule daily crons

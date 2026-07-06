@@ -601,11 +601,14 @@ final class PushNotificationsTest extends TestCase {
 	}
 
 	public function test_uninstall_drops_push_table(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/uninstall.php' );
+		// NX1-06: uninstall.php is now a thin bootstrap; the DROP + marker-delete
+		// logic lives in the testable Lafka_Uninstall class.
+		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/tools/class-lafka-uninstall.php' );
 		$this->assertStringContainsString( 'lafka_push_subscriptions', $src );
 		$this->assertStringContainsString( 'DROP TABLE IF EXISTS', $src );
 		$this->assertStringContainsString( 'lafka_push_db_version', $src );
 		$this->assertStringContainsString( 'lafka_push_activity_log', $src );
+		$this->assertStringContainsString( 'Lafka_Uninstall::run', file_get_contents( dirname( __DIR__, 2 ) . '/uninstall.php' ) );
 	}
 
 	// ────────────────────────────────────────────────────────────────────────
