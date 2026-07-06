@@ -224,7 +224,7 @@ class Lafka_Branch_Locations_Admin {
 				<select class="lafka-select2" name="lafka_branch_timezone" id="lafka_branch_timezone">
 					<?php foreach ( $timezones_options as $key => $value ) : ?>
 						<option value="<?php echo esc_attr( $key ); ?>">
-							<?php esc_html_e( $value ); ?>
+							<?php echo esc_html( $value ); ?>
 						</option>
 					<?php endforeach; ?>
 				</select>
@@ -341,7 +341,7 @@ class Lafka_Branch_Locations_Admin {
 				<label for="lafka_branch_delivery_time"><?php esc_html_e( 'Estimated Delivery/Prep Time', 'lafka-plugin' ); ?></label>
 			</th>
 			<td>
-				<input name="lafka_branch_delivery_time" id="lafka_branch_delivery_time" type="text" value="<?php esc_attr_e( $branch_delivery_time ); ?>"/>
+				<input name="lafka_branch_delivery_time" id="lafka_branch_delivery_time" type="text" value="<?php echo esc_attr( $branch_delivery_time ); ?>"/>
 				<p><?php esc_html_e( 'Enter the average delivery/prep time for this branch. Will be displayed in the branch info box.', 'lafka-plugin' ); ?></p>
 			</td>
 		</tr>
@@ -385,7 +385,7 @@ class Lafka_Branch_Locations_Admin {
 				<label for="lafka_branch_distance_restriction"><?php esc_html_e( 'Radius Restriction', 'lafka-plugin' ); ?></label>
 			</th>
 			<td>
-				<input name="lafka_branch_distance_restriction" id="lafka_branch_distance_restriction" type="number" value="<?php esc_attr_e( $distance_restriction ); ?>"/>
+				<input name="lafka_branch_distance_restriction" id="lafka_branch_distance_restriction" type="number" value="<?php echo esc_attr( $distance_restriction ); ?>"/>
 				<p class="description"><?php esc_html_e( 'Suitable for radius based delivery restrictions. This option is only used for the initial check (popup) of the delivery availability based on the user address.', 'lafka-plugin' ); ?></p>
 			</td>
 		</tr>
@@ -406,8 +406,8 @@ class Lafka_Branch_Locations_Admin {
 			</th>
 			<td>
 				<input name="lafka_branch_address" id="lafka_branch_address" placeholder="<?php esc_html_e( 'Enter a location', 'lafka-plugin' ); ?>" type="text"
-						value="<?php esc_attr_e( $address ); ?>"/>
-				<input name="lafka_branch_address_geocoded" id="lafka_branch_address_geocoded" type="hidden" value="<?php esc_attr_e( $address_geocoded ); ?>"/>
+						value="<?php echo esc_attr( $address ); ?>"/>
+				<input name="lafka_branch_address_geocoded" id="lafka_branch_address_geocoded" type="hidden" value="<?php echo esc_attr( $address_geocoded ); ?>"/>
 				<p class="description">
 					<?php esc_html_e( 'The full address for the branch to calculate distance shipping and apply radius restrictions.', 'lafka-plugin' ); ?>
 					<?php esc_html_e( 'Note: Branch Location will be active only if it is properly geocoded.', 'lafka-plugin' ); ?><br>
@@ -448,7 +448,7 @@ class Lafka_Branch_Locations_Admin {
 					<label for="lafka_branch_datetime_days_ahead"><?php esc_html_e( 'Number of days ahead to order', 'lafka-plugin' ); ?></label>
 				</th>
 				<td>
-					<input name="lafka_branch_datetime_days_ahead" id="lafka_branch_datetime_days_ahead" type="number" value="<?php esc_attr_e( $datetime_days_ahead ); ?>"/>
+					<input name="lafka_branch_datetime_days_ahead" id="lafka_branch_datetime_days_ahead" type="number" value="<?php echo esc_attr( $datetime_days_ahead ); ?>"/>
 					<p><?php esc_html_e( 'Enter for how many days ahead user can make an order. The following days will be disabled in the calendar on the checkout page.', 'lafka-plugin' ); ?></p>
 				</td>
 			</tr>
@@ -457,7 +457,7 @@ class Lafka_Branch_Locations_Admin {
 					<label for="lafka_branch_datetime_timeslot_duration"><?php esc_html_e( 'Time Slot Duration (Minutes)', 'lafka-plugin' ); ?></label>
 				</th>
 				<td>
-					<input name="lafka_branch_datetime_timeslot_duration" id="lafka_branch_datetime_timeslot_duration" type="number" value="<?php esc_attr_e( $datetime_timeslot_duration ); ?>"/>
+					<input name="lafka_branch_datetime_timeslot_duration" id="lafka_branch_datetime_timeslot_duration" type="number" value="<?php echo esc_attr( $datetime_timeslot_duration ); ?>"/>
 					<p><?php esc_html_e( 'Enter the time in minutes for the slots in which the user can request the order to be completed.', 'lafka-plugin' ); ?></p>
 				</td>
 			</tr>
@@ -466,7 +466,7 @@ class Lafka_Branch_Locations_Admin {
 					<label for="lafka_branch_datetime_orders_per_timeslot"><?php esc_html_e( 'Orders Per Time Slot', 'lafka-plugin' ); ?></label>
 				</th>
 				<td>
-					<input name="lafka_branch_datetime_orders_per_timeslot" id="lafka_branch_datetime_orders_per_timeslot" type="number" value="<?php esc_attr_e( $datetime_orders_per_timeslot ); ?>"/>
+					<input name="lafka_branch_datetime_orders_per_timeslot" id="lafka_branch_datetime_orders_per_timeslot" type="number" value="<?php echo esc_attr( $datetime_orders_per_timeslot ); ?>"/>
 					<p><?php esc_html_e( 'Enter the number of orders which can be made in one time slot. If the number is reached for particular time slot, the users will still be able to see it, but it will be disabled.', 'lafka-plugin' ); ?></p>
 				</td>
 			</tr>
@@ -499,7 +499,7 @@ class Lafka_Branch_Locations_Admin {
 					<select class="lafka-select2" name="lafka_branch_timezone" id="lafka_branch_timezone">
 						<?php foreach ( $timezones_options as $key => $value ) : ?>
 							<option value="<?php echo esc_attr( $key ); ?>"<?php echo ( (string) $key === (string) $branch_timezone ) ? ' selected' : ''; ?>>
-								<?php esc_html_e( $value ); ?>
+								<?php echo esc_html( $value ); ?>
 							</option>
 						<?php endforeach; ?>
 					</select>
