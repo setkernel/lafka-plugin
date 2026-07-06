@@ -52,6 +52,7 @@ final class ModuleRegistryTest extends TestCase {
 		'order_hours',
 		'kitchen_display',
 		'promotions',
+		'order_notifications',
 		'abandoned_cart',
 		'push',
 		'review_prompt',
@@ -119,6 +120,7 @@ final class ModuleRegistryTest extends TestCase {
 			'order_hours'     => false,  // std => ''
 			'kitchen_display' => false,  // std => ''
 			'promotions'      => false,  // gated module, default OFF
+			'order_notifications' => false,  // checkbox std => 0
 			'abandoned_cart'  => false,  // lafka_ac_enabled default '0'
 			'push'            => false,  // lafka_push_enabled default '0'
 			'review_prompt'   => false,  // lafka_review_email_enabled default '0'
@@ -169,6 +171,32 @@ final class ModuleRegistryTest extends TestCase {
 		self::assertTrue( $module->set_enabled( false ) );
 		self::assertSame( 'disabled', $store['lafka']['promotions'] );
 		self::assertFalse( $module->is_enabled() );
+	}
+
+	public function test_order_notifications_round_trips_as_a_checkbox_flag(): void {
+		// order_notifications is a '1'/'0' checkbox (not the sentinel), so it must
+		// write '1'/'0' to the shared 'lafka' array and read back truthy/falsy.
+		$store = array( 'lafka' => array() );
+		$this->wire_option_store( $store );
+
+		$module = Lafka_Module_Registry::get( 'order_notifications' );
+
+		self::assertFalse( $module->is_enabled() );
+
+		self::assertTrue( $module->set_enabled( true ) );
+		self::assertSame( '1', $store['lafka']['order_notifications'] );
+		self::assertTrue( $module->is_enabled() );
+
+		self::assertTrue( $module->set_enabled( false ) );
+		self::assertSame( '0', $store['lafka']['order_notifications'] );
+		self::assertFalse( $module->is_enabled() );
+	}
+
+	public function test_order_notifications_reads_existing_truthy_checkbox_value(): void {
+		// An install that enabled the feature via the legacy theme-options checkbox
+		// stored '1'; the registry must read that as enabled (no migration needed).
+		Functions\when( 'get_option' )->justReturn( array( 'order_notifications' => '1' ) );
+		self::assertTrue( Lafka_Module_Registry::get( 'order_notifications' )->is_enabled() );
 	}
 
 	public function test_set_enabled_does_not_disturb_sibling_flags(): void {
@@ -302,11 +330,13 @@ final class ModuleRegistryTest extends TestCase {
 
 	// ─── Storage classification (used by Site Health rewire) ────────────────
 
-	public function test_option_flag_modules_are_exactly_the_five_flags(): void {
+	public function test_option_flag_modules_are_exactly_the_lafka_option_flags(): void {
 		$flags = array_keys( Lafka_Module_Registry::modules_by_storage( 'lafka_option' ) );
 		sort( $flags );
 
-		$expected = array( 'kitchen_display', 'order_hours', 'product_addons', 'promotions', 'shipping_areas' );
+		// The five 'enabled'/'disabled' sentinel flags plus the '1'/'0'
+		// order-notifications checkbox — all persisted in the 'lafka' option array.
+		$expected = array( 'kitchen_display', 'order_hours', 'order_notifications', 'product_addons', 'promotions', 'shipping_areas' );
 
 		self::assertSame( $expected, $flags );
 	}

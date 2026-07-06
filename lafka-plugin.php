@@ -203,6 +203,17 @@ if ( is_admin() ) {
 }
 
 /**
+ * Admin new-order notification poller (NX1-08b) — MOVED from the parent theme.
+ * Registers the wp_ajax_lafka_new_orders_notification handler, the admin poller
+ * JS + its service worker, and the browser-permission dialog. Self-gates to
+ * is_admin() (admin-ajax is admin context) and internally to WooCommerce + the
+ * shared `order_notifications` flag + the shop-manager capability.
+ */
+if ( is_admin() ) {
+	require_once plugin_dir_path( __FILE__ ) . 'incl/admin/class-lafka-order-notifications.php';
+}
+
+/**
  * Block Cart/Checkout compat shim. Detects WC's default Block-based cart and
  * checkout pages (which silently disable Lafka's classic-cart notices and
  * branch selector) and rewrites them to the supported shortcodes. Self-gates

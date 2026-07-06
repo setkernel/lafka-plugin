@@ -187,10 +187,12 @@ if ( ! class_exists( 'Lafka_Site_Health' ) ) {
 			} else {
 				$value = \Lafka_Options::get( $key, '' );
 			}
-			if ( 'enabled' === $value ) {
+			// Most flags use the 'enabled'/'disabled' sentinel; `order_notifications`
+			// is a '1'/'0' checkbox in the same 'lafka' array (NX1-08b). Handle both.
+			if ( 'enabled' === $value || '1' === (string) $value ) {
 				return esc_html__( 'Enabled', 'lafka-plugin' );
 			}
-			if ( 'disabled' === $value ) {
+			if ( 'disabled' === $value || '0' === (string) $value ) {
 				return esc_html__( 'Disabled (explicit)', 'lafka-plugin' );
 			}
 			return esc_html__( 'Disabled (default)', 'lafka-plugin' );

@@ -386,6 +386,41 @@ if ( ! class_exists( 'Lafka_Module_Registry' ) ) {
 				)
 			);
 
+			// ---- New-order alerts (a checkbox flag in the 'lafka' option array) ----
+			// Stored as a '1'/'0' checkbox (NOT the 'enabled'/'disabled' sentinel the
+			// five flags above use), so it gets bespoke truthy getter/setter rather
+			// than the flag_getter/flag_setter factories. Business logic lives in
+			// incl/admin/class-lafka-order-notifications.php (moved from the theme,
+			// NX1-08b); the runtime gate additionally honours the
+			// `lafka_order_notifications_enabled` filter.
+			self::register(
+				new Lafka_Module(
+					array(
+						'id'              => 'order_notifications',
+						'label'           => esc_html__( 'New-order alerts', 'lafka-plugin' ),
+						'description'     => esc_html__( 'Browser notification + sound for shop managers each time a new order is ready to process, routed to the assigned branch operator.', 'lafka-plugin' ),
+						'category'        => 'operations',
+						'storage'         => 'lafka_option',
+						'default_enabled' => false,
+						'get_enabled'     => static function () {
+							return (bool) Lafka_Options::get( 'order_notifications' );
+						},
+						'set_enabled'     => static function ( bool $enabled ) {
+							$opts = get_option( 'lafka', array() );
+							if ( ! is_array( $opts ) ) {
+								$opts = array();
+							}
+							$opts['order_notifications'] = $enabled ? '1' : '0';
+							update_option( 'lafka', $opts );
+							if ( class_exists( 'Lafka_Options' ) ) {
+								Lafka_Options::flush();
+							}
+						},
+						'docs_slug'       => 'order-notifications',
+					)
+				)
+			);
+
 			// ---- Conversion modules (Customizer theme_mods) ----
 			self::register(
 				new Lafka_Module(

@@ -565,7 +565,11 @@ final class PushNotificationsTest extends TestCase {
 	}
 
 	public function test_resolve_audience_recent_customers_returns_array(): void {
-		// Without WC functions mocked, the helper returns an empty array (not null).
+		// Mock wc_get_orders explicitly so this assertion is order-independent: once
+		// any other suite test (e.g. OrderNotificationsTest) has Brain-Monkey-defined
+		// wc_get_orders, function_exists() is true process-wide, so relying on it
+		// being undefined here is fragile. An empty result still yields an array.
+		Functions\when( 'wc_get_orders' )->justReturn( array() );
 		$out = \lafka_push_resolve_audience( 'recent_customers' );
 		$this->assertIsArray( $out );
 	}
