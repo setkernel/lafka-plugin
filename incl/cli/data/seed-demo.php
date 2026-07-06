@@ -369,12 +369,16 @@ return array(
 					'required'                 => 0,
 					'variations'               => 0,
 					'attribute'                => 0,
+					// flat_group stores the group_flat_price on every option (what
+					// Lafka_Flat_Group_Pricing::expand() writes at admin save-time);
+					// the cart reads per-option price, so leaving these empty makes
+					// the combo silently free. Seed the expanded shape directly.
 					'options'                  => array(
 						array(
 							'id'       => 'demo-combo-fries-drink',
 							'label'    => 'Add Fries & a Drink',
 							'image'    => '',
-							'price'    => '',
+							'price'    => '2.50',
 							'default'  => '',
 							'min'      => '',
 							'max'      => '',
@@ -384,7 +388,7 @@ return array(
 							'id'       => 'demo-combo-salad-drink',
 							'label'    => 'Add a Salad & a Drink',
 							'image'    => '',
-							'price'    => '',
+							'price'    => '2.50',
 							'default'  => '',
 							'min'      => '',
 							'max'      => '',

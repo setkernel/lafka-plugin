@@ -39,6 +39,11 @@ class Lafka_Product_Addons {
 		$GLOBALS['Lafka_Engine_Cart']    = new Lafka_Engine_Cart();
 		$GLOBALS['Lafka_Engine_Display'] = new Lafka_Engine_Display();
 
+		// NX1-04c: carry addon selections through the Store API add-to-cart path
+		// (block cart / headless). Reuses the engine cart instance above so its
+		// cart-lifecycle hooks are never double-registered.
+		$GLOBALS['Lafka_Engine_Store_Api'] = new Lafka_Engine_Store_Api( $GLOBALS['Lafka_Engine_Cart'] );
+
 		// Bridge: addon engine ↔ WooCommerce Product Bundles. Loads only when
 		// WC PB is active. Restores the toppings-on-bundled-pizzas capability
 		// that the deleted Lafka Combos fork (v9.0.0) used to provide.
