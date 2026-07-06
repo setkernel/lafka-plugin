@@ -689,6 +689,16 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/cli/lafka-webp-convert.php';
 require_once plugin_dir_path( __FILE__ ) . 'incl/cli/lafka-config-cli.php';
 
 /**
+ * WP-CLI: provision a deterministic demo restaurant for e2e/CI + preset QA (NX1-09a).
+ * The class is always defined (pure helpers are unit-tested); only the command
+ * registration self-gates on WP_CLI.
+ *
+ *   wp lafka seed-demo
+ *   wp lafka seed-demo --reset
+ */
+require_once plugin_dir_path( __FILE__ ) . 'incl/cli/class-lafka-cli-seed-demo.php';
+
+/**
  * P6-UX-8 (W3-T6) — deprecated as of v9.28.0 (Phase 3D).
  *
  * The original simple review-prompt email lived at incl/emails/lafka-review-prompt-email.php.
