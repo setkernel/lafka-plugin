@@ -585,11 +585,40 @@ if ( ! class_exists( 'Lafka_CLI_Seed_Demo' ) ) {
 		}
 
 		/**
+		 * Register the branch taxonomy when the shipping_areas module has not.
+		 *
+		 * On a fresh install the module is gated OFF until enable_flags() runs,
+		 * and module loading happens at plugins_loaded — so within the first
+		 * seed run wp_insert_term() would reject the branch with "Invalid
+		 * taxonomy". Seeding-time registration is minimal and non-public; the
+		 * real registration in Lafka_Shipping_Areas::register_branch_locations_taxonomy()
+		 * takes over on the next request once the flag is enabled.
+		 *
+		 * @return void
+		 */
+		public static function ensure_branch_taxonomy(): void {
+			if ( taxonomy_exists( self::BRANCH_TAXONOMY ) ) {
+				return;
+			}
+			register_taxonomy(
+				self::BRANCH_TAXONOMY,
+				'product',
+				array(
+					'publicly_queryable' => false,
+					'hierarchical'       => false,
+					'show_ui'            => false,
+				)
+			);
+		}
+
+		/**
 		 * @param array<string,mixed> $fixtures Fixture data.
 		 * @param array<string,mixed> $manifest Manifest (by reference).
 		 * @return void
 		 */
 		private function seed_branch( array $fixtures, array &$manifest ): void {
+			self::ensure_branch_taxonomy();
+
 			$branch   = $fixtures['branch'];
 			$existing = get_term_by( 'slug', $branch['slug'], self::BRANCH_TAXONOMY );
 

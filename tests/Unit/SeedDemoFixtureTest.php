@@ -67,6 +67,30 @@ final class SeedDemoFixtureTest extends TestCase {
 		parent::tearDown();
 	}
 
+	// ─── First-run taxonomy self-registration ──────────────────────────────
+	// The shipping_areas module (which owns lafka_branch_location) is gated
+	// OFF on a fresh install and only loads at plugins_loaded, so the first
+	// seed run must register the taxonomy itself or wp_insert_term() rejects
+	// the branch with "Invalid taxonomy" (caught live on wp-env, 2026-07-06).
+
+	public function test_ensure_branch_taxonomy_registers_when_absent(): void {
+		Functions\when( 'taxonomy_exists' )->justReturn( false );
+		Functions\expect( 'register_taxonomy' )
+			->once()
+			->with( 'lafka_branch_location', 'product', \Mockery::type( 'array' ) );
+
+		Lafka_CLI_Seed_Demo::ensure_branch_taxonomy();
+		$this->addToAssertionCount( 1 ); // Mockery verifies the expectation in tearDown.
+	}
+
+	public function test_ensure_branch_taxonomy_noops_when_present(): void {
+		Functions\when( 'taxonomy_exists' )->justReturn( true );
+		Functions\expect( 'register_taxonomy' )->never();
+
+		Lafka_CLI_Seed_Demo::ensure_branch_taxonomy();
+		$this->addToAssertionCount( 1 ); // Mockery verifies the expectation in tearDown.
+	}
+
 	// ─── Fixture integrity ──────────────────────────────────────────────────
 
 	public function test_fixtures_expose_all_top_level_sections(): void {
