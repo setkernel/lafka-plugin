@@ -37,9 +37,17 @@ jobs:
       - name: Build zip
         run: |
           mkdir lafka-plugin
+          # NX1-10d: dev-only files must never ship in the installable zip.
+          # Excluded: VCS/CI metadata, dependencies, package manifests, lint +
+          # phpunit + wp-env tooling, the test suite, ops/build scripts, and the
+          # internal planning docs. Runtime files STAY — readme.txt,
+          # COMPATIBILITY.md, the operator guides under docs/, languages/.
           rsync -a --exclude='.git' \
                    --exclude='.github' \
                    --exclude='.gitignore' \
+                   --exclude='.githooks' \
+                   --exclude='.npmrc' \
+                   --exclude='.wp-env*.json' \
                    --exclude='node_modules' \
                    --exclude='vendor' \
                    --exclude='package.json' \
@@ -49,6 +57,12 @@ jobs:
                    --exclude='.phpcs.xml.dist' \
                    --exclude='.stylelintrc.json' \
                    --exclude='eslint.config.mjs' \
+                   --exclude='phpunit.xml.dist' \
+                   --exclude='.phpunit.result.cache' \
+                   --exclude='tests' \
+                   --exclude='scripts' \
+                   --exclude='docs/superpowers' \
+                   --exclude='CONTRIBUTING.md' \
                    --exclude='README.md' \
                    --exclude='LICENSE' \
                    ./ lafka-plugin/
