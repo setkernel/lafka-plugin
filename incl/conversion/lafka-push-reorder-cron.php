@@ -149,7 +149,7 @@ if ( ! function_exists( 'lafka_push_reorder_build_payload' ) ) {
 		$site_name = function_exists( 'get_bloginfo' ) ? (string) get_bloginfo( 'name' ) : '';
 		$title     = function_exists( '__' ) ? __( 'Your usual?', 'lafka-plugin' ) : 'Your usual?';
 		$body      = function_exists( '__' ) ? __( 'Tap to reorder from your favourites.', 'lafka-plugin' ) : 'Tap to reorder from your favourites.';
-		$url       = function_exists( 'lafka_get_menu_url' ) ? lafka_get_menu_url() : ( function_exists( 'home_url' ) ? home_url( '/menu/' ) : '/menu/' );
+		$url       = lafka_get_menu_url();
 		$icon      = function_exists( 'get_site_icon_url' ) ? (string) get_site_icon_url() : '';
 		if ( '' === $icon && function_exists( 'home_url' ) ) {
 			$icon = home_url( '/favicon.ico' );
