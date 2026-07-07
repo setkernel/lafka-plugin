@@ -174,6 +174,7 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 				'lafka_homepage_hero_',  // hero attachment id
 				'lafka_github_updates_', // self-updater bookkeeping (defensive)
 				'lafka_contact_',        // contact-block options
+				'lafka_promotions_',     // promo knobs + migration-notice dismissal
 			);
 		}
 

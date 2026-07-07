@@ -823,10 +823,17 @@ if ( LAFKA_PLUGIN_IS_WOOCOMMERCE ) {
 	if ( is_lafka_promotions() ) {
 		/* Load BOGO + delivery-min + banner (P2-01). Child code self-gates off. */
 		require_once plugin_dir_path( __FILE__ ) . '/incl/promotions/class-lafka-promotions.php';
-		if ( is_admin() ) {
-			/* Admin UI for the 4 promo knobs (P2-01a). */
-			require_once plugin_dir_path( __FILE__ ) . '/incl/promotions/class-lafka-promotions-admin.php';
-		}
+	}
+
+	if ( is_admin() ) {
+		/* Admin UI for the 4 promo knobs (P2-01a) — loaded regardless of the
+		 * module gate (same pattern as Lafka_Push_Admin) so the settings page
+		 * exists, shows its "Module is OFF" notice, and lets operators
+		 * pre-configure the knobs BEFORE flipping the module on. The main
+		 * class is required for knob() reads; its boot self-gates, so no
+		 * front/cart hooks are wired while the module is off. */
+		require_once plugin_dir_path( __FILE__ ) . '/incl/promotions/class-lafka-promotions.php';
+		require_once plugin_dir_path( __FILE__ ) . '/incl/promotions/class-lafka-promotions-admin.php';
 	}
 }
 

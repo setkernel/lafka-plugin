@@ -25,6 +25,10 @@ if ( ! class_exists( 'Lafka_Promotions_Admin' ) ) {
 		const PAGE_SLUG    = 'lafka-promotions';
 		const NONCE_ACTION = 'lafka_promotions_save';
 
+		/** One-time child-theme→plugin migration notice: dismissal flag + action. */
+		const MIGRATION_DISMISS_OPTION = 'lafka_promotions_migration_notice_dismissed';
+		const MIGRATION_DISMISS_ACTION = 'lafka_promotions_dismiss_migration';
+
 		/** @var Lafka_Promotions_Admin|null */
 		private static $instance = null;
 
@@ -38,6 +42,66 @@ if ( ! class_exists( 'Lafka_Promotions_Admin' ) ) {
 		private function __construct() {
 			add_action( 'admin_menu', array( $this, 'register_menu' ) );
 			add_action( 'admin_post_lafka_promotions_save', array( $this, 'handle_save' ) );
+			add_action( 'admin_notices', array( $this, 'maybe_render_migration_notice' ) );
+			add_action( 'admin_post_' . self::MIGRATION_DISMISS_ACTION, array( $this, 'handle_dismiss_migration' ) );
+		}
+
+		/**
+		 * One-time migration warning for the lafka-child cohort.
+		 *
+		 * Promotions moved from lafka-child into this plugin and the child went
+		 * thin (6.x) — its implementation is GONE. The module ships default-OFF
+		 * with no auto-enable, so a site that updates the child theme without
+		 * flipping the module silently loses BOGO and the delivery-minimum gate.
+		 * Shown only when: current user manages options, the active stylesheet
+		 * is lafka-child, the module is off, and the notice wasn't dismissed.
+		 */
+		public function maybe_render_migration_notice() {
+			if ( ! current_user_can( 'manage_options' ) ) {
+				return;
+			}
+			if ( get_option( self::MIGRATION_DISMISS_OPTION ) ) {
+				return;
+			}
+			if ( function_exists( 'is_lafka_promotions' ) && is_lafka_promotions() ) {
+				return;
+			}
+			if ( ! function_exists( 'get_stylesheet' ) || 'lafka-child' !== get_stylesheet() ) {
+				return;
+			}
+			$settings_url = add_query_arg(
+				array( 'page' => self::PAGE_SLUG ),
+				admin_url( class_exists( 'WooCommerce' ) ? 'admin.php' : 'tools.php' )
+			);
+			$dismiss_url  = wp_nonce_url(
+				add_query_arg( 'action', self::MIGRATION_DISMISS_ACTION, admin_url( 'admin-post.php' ) ),
+				self::MIGRATION_DISMISS_ACTION
+			);
+			?>
+			<div class="notice notice-warning">
+				<p>
+					<strong><?php esc_html_e( 'Lafka promotions are OFF.', 'lafka-plugin' ); ?></strong>
+					<?php esc_html_e( 'BOGO and the delivery-minimum gate moved from the child theme into this plugin and are disabled by default. If this site used them before the child-theme update, enable the Promotions module and verify cart math.', 'lafka-plugin' ); ?>
+					<a href="<?php echo esc_url( $settings_url ); ?>"><?php esc_html_e( 'Open Promotions settings', 'lafka-plugin' ); ?></a>
+					&nbsp;|&nbsp;
+					<a href="<?php echo esc_url( $dismiss_url ); ?>"><?php esc_html_e( 'Dismiss', 'lafka-plugin' ); ?></a>
+				</p>
+			</div>
+			<?php
+		}
+
+		/**
+		 * Persist the migration-notice dismissal (admin-post, nonce-checked).
+		 */
+		public function handle_dismiss_migration() {
+			if ( ! current_user_can( 'manage_options' ) ) {
+				wp_die( esc_html__( 'You do not have permission to do this.', 'lafka-plugin' ), 403 );
+			}
+			check_admin_referer( self::MIGRATION_DISMISS_ACTION );
+			update_option( self::MIGRATION_DISMISS_OPTION, 1, false );
+			$referer = wp_get_referer();
+			wp_safe_redirect( $referer ? $referer : admin_url() );
+			exit;
 		}
 
 		public function register_menu() {

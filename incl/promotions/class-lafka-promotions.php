@@ -7,10 +7,12 @@
  * back-compat during rollout — the child file gates itself off when this
  * plugin module is enabled).
  *
- * GATING: load is conditional on `is_lafka_promotions()` (set in
- * lafka-plugin.php), which reads `Lafka_Options::is_enabled('promotions')`.
- * Default OFF: existing sites keep the child's implementation until an admin
- * explicitly opts into the plugin version.
+ * GATING: hook wiring is conditional on `is_lafka_promotions()` (reads
+ * `Lafka_Options::is_enabled('promotions')`). Default OFF. NOTE: the child
+ * theme's implementation was REMOVED in lafka-child 6.x (thin layer) — there
+ * is no fallback. A site that previously used BOGO/delivery-minimum must
+ * enable this module explicitly; Lafka_Promotions_Admin surfaces a migration
+ * notice for the lafka-child cohort when the module is off.
  *
  * KNOBS (currently hardcoded — admin UI tracked as P2-01a):
  *   - DELIVERY_MIN     = 30      cart subtotal threshold below which delivery
@@ -361,8 +363,12 @@ if ( ! class_exists( 'Lafka_Promotions' ) ) {
 	}
 
 	// Auto-instantiate when WP runtime is present (skipped in tests so the
-	// class can be loaded standalone for static-method assertions).
-	if ( function_exists( 'add_action' ) ) {
+	// class can be loaded standalone for static-method assertions) AND the
+	// module gate is on. The admin settings screen requires this file for
+	// knob() reads even while the module is OFF — that load must not wire
+	// any front/cart hooks.
+	if ( function_exists( 'add_action' )
+		&& ( ! function_exists( 'is_lafka_promotions' ) || is_lafka_promotions() ) ) {
 		Lafka_Promotions::instance();
 	}
 }
