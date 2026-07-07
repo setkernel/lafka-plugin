@@ -200,6 +200,62 @@ final class CheckoutFieldsTest extends TestCase {
 		$this->assertSame( 20, $stored['branch_id'], 'Existing branch_id must survive an order_type update.' );
 	}
 
+	public function test_sync_defaults_order_type_on_single_type_site(): void {
+		$session = new FakeWcSession();
+		$this->stub_wc_with_session( $session );
+		Functions\when( 'get_terms' )->justReturn( array( 10 => 'A', 20 => 'B' ) ); // multi-branch: branch field shown.
+		$this->set_site_order_type( 'delivery' ); // single type: order-type field hidden.
+
+		Lafka_Checkout_Fields::sync_field_to_session( Lafka_Checkout_Fields::FIELD_BRANCH, '20' );
+
+		$stored = $session->get( Lafka_Checkout_Fields::BRANCH_SESSION_KEY );
+		$this->assertSame( 20, $stored['branch_id'] );
+		$this->assertSame(
+			'delivery',
+			$stored['order_type'],
+			'Single-type site must default order_type — the geo-fence and the order-meta writer key on it.'
+		);
+	}
+
+	/* ----------------------------------------------------------------- *
+	 *  Implicit selections (hidden fields can never submit)
+	 * ----------------------------------------------------------------- */
+
+	public function test_fill_implicit_selections_completes_both_hidden_fields(): void {
+		Functions\when( 'get_terms' )->justReturn( array( 42 => 'Only' ) );
+		$this->set_site_order_type( 'pickup' );
+
+		$filled = Lafka_Checkout_Fields::fill_implicit_selections( array() );
+
+		$this->assertSame( 42, $filled['branch_id'] );
+		$this->assertSame( 'pickup', $filled['order_type'] );
+	}
+
+	public function test_fill_implicit_selections_never_overwrites_explicit_values(): void {
+		Functions\when( 'get_terms' )->justReturn( array( 42 => 'Only' ) );
+		$this->set_site_order_type( 'delivery' );
+
+		$filled = Lafka_Checkout_Fields::fill_implicit_selections(
+			array(
+				'branch_id'  => 7,
+				'order_type' => 'pickup',
+			)
+		);
+
+		$this->assertSame( 7, $filled['branch_id'] );
+		$this->assertSame( 'pickup', $filled['order_type'] );
+	}
+
+	public function test_fill_implicit_selections_leaves_real_choices_empty(): void {
+		Functions\when( 'get_terms' )->justReturn( array( 10 => 'A', 20 => 'B' ) );
+		$this->set_site_order_type( 'delivery_pickup' );
+
+		$filled = Lafka_Checkout_Fields::fill_implicit_selections( array() );
+
+		$this->assertArrayNotHasKey( 'branch_id', $filled, 'Multi-branch: the customer must choose.' );
+		$this->assertArrayNotHasKey( 'order_type', $filled, 'Multi-type: the customer must choose.' );
+	}
+
 	public function test_single_branch_id_helper(): void {
 		Functions\when( 'get_terms' )->justReturn( array( 7 => 'Only' ) );
 		$this->assertSame( 7, Lafka_Checkout_Fields::single_branch_id() );

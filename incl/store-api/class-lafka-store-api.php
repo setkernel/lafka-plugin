@@ -220,8 +220,32 @@ if ( ! class_exists( 'Lafka_Store_Api' ) ) {
 		 * @return void
 		 */
 		public static function on_checkout_update_order_from_request( $order, $request ) {
+			self::apply_implicit_branch_defaults();
 			self::validate_geo_fence( $request );
 			self::persist_order_meta( $order );
+		}
+
+		/**
+		 * Resolve hidden-field implicit selections (single branch / single order
+		 * type) into the session BEFORE the geo-fence and the order-meta writer
+		 * read it. A block field only renders when there is a real choice, so on
+		 * a single-branch and/or single-order-type site the session slot arrives
+		 * empty at checkout: without this fill the delivery geo-fence would
+		 * silently skip (it keys on order_type === 'delivery') and
+		 * lafka_order_type would never persist onto the order.
+		 *
+		 * @return void
+		 */
+		private static function apply_implicit_branch_defaults(): void {
+			if ( ! class_exists( 'Lafka_Checkout_Fields' )
+				|| ! Lafka_Checkout_Fields::is_branch_selection_active() ) {
+				return;
+			}
+			$before = self::get_branch_session();
+			$after  = Lafka_Checkout_Fields::fill_implicit_selections( $before );
+			if ( $after !== $before ) {
+				self::set_session( 'lafka_branch_location', $after );
+			}
 		}
 
 		/**
