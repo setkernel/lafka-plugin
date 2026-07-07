@@ -51,7 +51,7 @@ class Lafka_KDS_Customer_View {
 		if ( 'rejected' === $status ) {
 			?>
 			<div class="lafka-kds-progress lafka-kds-rejected">
-				<p style="text-align:center;color:#e94560;font-weight:bold;margin:0;">
+				<p class="lafka-kds-rejected-msg">
 					<?php esc_html_e( 'This order has been cancelled. Please contact us for more information.', 'lafka-plugin' ); ?>
 				</p>
 			</div>
