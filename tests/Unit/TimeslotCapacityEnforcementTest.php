@@ -27,6 +27,12 @@ use PHPUnit\Framework\TestCase;
  * These are source-structure locks (the method leans on WC()/order-hours
  * statics/session that aren't bootstrapped in unit tests), matching the
  * existing TimeslotsDatetimeValidationTest convention for this file.
+ *
+ * NX1-04a: the decision was extracted from validate_datetime_fields() into the
+ * transport-agnostic evaluate_datetime_selection( $date, $slot, $mandatory )
+ * so the Store API / block-checkout gate (Lafka_Store_Api) enforces the SAME
+ * validity + capacity. The behaviour locks below therefore target the extracted
+ * method; validate_datetime_fields() is now the thin classic ($_POST) wrapper.
  */
 final class TimeslotCapacityEnforcementTest extends TestCase {
 
@@ -39,8 +45,8 @@ final class TimeslotCapacityEnforcementTest extends TestCase {
 	}
 
 	public function test_validation_rederives_enabled_dates(): void {
-		$body = $this->method_body( 'validate_datetime_fields' );
-		$this->assertNotSame( '', $body, 'validate_datetime_fields body not found.' );
+		$body = $this->method_body( 'evaluate_datetime_selection' );
+		$this->assertNotSame( '', $body, 'evaluate_datetime_selection body not found.' );
 		$this->assertStringContainsString(
 			'get_enabled_dates_for_days_ahead',
 			$body,
@@ -59,7 +65,7 @@ final class TimeslotCapacityEnforcementTest extends TestCase {
 	}
 
 	public function test_validation_checks_past_date(): void {
-		$body = $this->method_body( 'validate_datetime_fields' );
+		$body = $this->method_body( 'evaluate_datetime_selection' );
 		$this->assertStringContainsString(
 			'$raw_date < $today',
 			$body,
@@ -68,7 +74,7 @@ final class TimeslotCapacityEnforcementTest extends TestCase {
 	}
 
 	public function test_validation_matches_slot_against_rendered_ids(): void {
-		$body = $this->method_body( 'validate_datetime_fields' );
+		$body = $this->method_body( 'evaluate_datetime_selection' );
 		$this->assertStringContainsString(
 			'get_timeslots_for_date',
 			$body,
@@ -82,7 +88,7 @@ final class TimeslotCapacityEnforcementTest extends TestCase {
 	}
 
 	public function test_validation_enforces_capacity_at_submit(): void {
-		$body = $this->method_body( 'validate_datetime_fields' );
+		$body = $this->method_body( 'evaluate_datetime_selection' );
 		$this->assertStringContainsString(
 			'get_number_of_orders_per_timeslot',
 			$body,
@@ -100,13 +106,33 @@ final class TimeslotCapacityEnforcementTest extends TestCase {
 		);
 	}
 
-	public function test_validation_emits_blocking_error_notices(): void {
-		$body  = $this->method_body( 'validate_datetime_fields' );
-		$count = preg_match_all( "/wc_add_notice\(.*?,\s*['\"]error['\"]\s*\)/s", $body );
+	public function test_validation_returns_blocking_error_messages(): void {
+		// The shared decision returns a customer-facing message per rejection
+		// path (presence, validity, past-date, parse, slot, capacity) instead of
+		// raising notices — so BOTH checkout paths can surface the same reasons.
+		$body  = $this->method_body( 'evaluate_datetime_selection' );
+		$count = preg_match_all( "/return __\(\s*['\"][^'\"]+['\"]\s*,\s*['\"]lafka-plugin['\"]\s*\)/", $body );
 		$this->assertGreaterThanOrEqual(
 			4,
 			$count,
-			'Validation must raise blocking error notices for the presence, validity, and capacity failures.'
+			'The shared decision must return blocking messages for the presence, validity, and capacity failures.'
+		);
+	}
+
+	public function test_classic_wrapper_routes_decision_through_blocking_notice(): void {
+		// The classic checkout wrapper reads $_POST, delegates to the shared
+		// decision, and raises the returned message as a blocking error notice —
+		// the only classic hook context where the notice aborts process_checkout().
+		$body = $this->method_body( 'validate_datetime_fields' );
+		$this->assertStringContainsString(
+			'evaluate_datetime_selection',
+			$body,
+			'validate_datetime_fields must delegate to the shared evaluate_datetime_selection decision.'
+		);
+		$this->assertMatchesRegularExpression(
+			"/wc_add_notice\(\s*esc_html\(\s*\\\$error\s*\)\s*,\s*['\"]error['\"]\s*\)/",
+			$body,
+			'The classic wrapper must surface the shared decision as a blocking error notice.'
 		);
 	}
 

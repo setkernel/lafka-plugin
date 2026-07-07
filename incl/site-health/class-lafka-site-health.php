@@ -52,66 +52,58 @@ if ( ! class_exists( 'Lafka_Site_Health' ) ) {
 
 			$lafka_options = get_option( 'lafka', array() );
 
+			$fields = array(
+				'plugin_version' => array(
+					'label' => esc_html__( 'Plugin version', 'lafka-plugin' ),
+					'value' => isset( $plugin_data['Version'] ) ? $plugin_data['Version'] : 'unknown',
+				),
+				'theme_version'  => array(
+					'label' => esc_html__( 'Parent theme', 'lafka-plugin' ),
+					'value' => $parent
+						? sprintf( '%s %s', $parent->get( 'Name' ), $parent->get( 'Version' ) )
+						: esc_html__( 'Not active', 'lafka-plugin' ),
+				),
+				'child_version'  => array(
+					'label' => esc_html__( 'Child theme', 'lafka-plugin' ),
+					'value' => $child
+						? sprintf( '%s %s', $child->get( 'Name' ), $child->get( 'Version' ) )
+						: esc_html__( 'Not active', 'lafka-plugin' ),
+				),
+			);
+
+			// Feature-flag rows are driven by the module registry (NX1-01) so
+			// this diagnostic panel and the Lafka → Modules dashboard can never
+			// drift. Only the 'lafka'-option flags are listed here (the same
+			// five flags shown before); each keeps its exact value formatting
+			// (Enabled / Disabled (explicit) / Disabled (default)).
+			foreach ( $this->registry_flag_fields() as $key => $field ) {
+				$fields[ $key ] = $field;
+			}
+
+			$fields['security_headers'] = array(
+				'label' => esc_html__( 'Security headers', 'lafka-plugin' ),
+				'value' => $this->flag_label( 'enable_security_headers' ),
+			);
+			$fields['wc_active']        = array(
+				'label' => esc_html__( 'WooCommerce', 'lafka-plugin' ),
+				'value' => defined( 'LAFKA_PLUGIN_IS_WOOCOMMERCE' ) && LAFKA_PLUGIN_IS_WOOCOMMERCE
+					? esc_html__( 'Active', 'lafka-plugin' )
+					: esc_html__( 'Inactive', 'lafka-plugin' ),
+			);
+			$fields['options_count']    = array(
+				'label' => esc_html__( 'Stored options', 'lafka-plugin' ),
+				'value' => is_array( $lafka_options ) ? (string) count( $lafka_options ) : '0',
+			);
+			$fields['object_cache']     = array(
+				'label' => esc_html__( 'Persistent object cache', 'lafka-plugin' ),
+				'value' => wp_using_ext_object_cache()
+					? esc_html__( 'Yes (transients used for short-TTL caches)', 'lafka-plugin' )
+					: esc_html__( 'No (using DB transients only)', 'lafka-plugin' ),
+			);
+
 			$info['lafka'] = array(
 				'label'  => esc_html__( 'Lafka', 'lafka-plugin' ),
-				'fields' => array(
-					'plugin_version'  => array(
-						'label' => esc_html__( 'Plugin version', 'lafka-plugin' ),
-						'value' => isset( $plugin_data['Version'] ) ? $plugin_data['Version'] : 'unknown',
-					),
-					'theme_version'   => array(
-						'label' => esc_html__( 'Parent theme', 'lafka-plugin' ),
-						'value' => $parent
-							? sprintf( '%s %s', $parent->get( 'Name' ), $parent->get( 'Version' ) )
-							: esc_html__( 'Not active', 'lafka-plugin' ),
-					),
-					'child_version'   => array(
-						'label' => esc_html__( 'Child theme', 'lafka-plugin' ),
-						'value' => $child
-							? sprintf( '%s %s', $child->get( 'Name' ), $child->get( 'Version' ) )
-							: esc_html__( 'Not active', 'lafka-plugin' ),
-					),
-					'addons_enabled'  => array(
-						'label' => esc_html__( 'Product addons', 'lafka-plugin' ),
-						'value' => $this->flag_label( 'product_addons' ),
-					),
-					'shipping_enabled' => array(
-						'label' => esc_html__( 'Shipping areas', 'lafka-plugin' ),
-						'value' => $this->flag_label( 'shipping_areas' ),
-					),
-					'order_hours'     => array(
-						'label' => esc_html__( 'Order hours', 'lafka-plugin' ),
-						'value' => $this->flag_label( 'order_hours' ),
-					),
-					'kds_enabled'     => array(
-						'label' => esc_html__( 'Kitchen display', 'lafka-plugin' ),
-						'value' => $this->flag_label( 'kitchen_display' ),
-					),
-					'promotions_enabled' => array(
-						'label' => esc_html__( 'Promotions (BOGO + delivery-min)', 'lafka-plugin' ),
-						'value' => $this->flag_label( 'promotions' ),
-					),
-					'security_headers' => array(
-						'label' => esc_html__( 'Security headers', 'lafka-plugin' ),
-						'value' => $this->flag_label( 'enable_security_headers' ),
-					),
-					'wc_active'       => array(
-						'label' => esc_html__( 'WooCommerce', 'lafka-plugin' ),
-						'value' => defined( 'LAFKA_PLUGIN_IS_WOOCOMMERCE' ) && LAFKA_PLUGIN_IS_WOOCOMMERCE
-							? esc_html__( 'Active', 'lafka-plugin' )
-							: esc_html__( 'Inactive', 'lafka-plugin' ),
-					),
-					'options_count'   => array(
-						'label' => esc_html__( 'Stored options', 'lafka-plugin' ),
-						'value' => is_array( $lafka_options ) ? (string) count( $lafka_options ) : '0',
-					),
-					'object_cache'    => array(
-						'label' => esc_html__( 'Persistent object cache', 'lafka-plugin' ),
-						'value' => wp_using_ext_object_cache()
-							? esc_html__( 'Yes (transients used for short-TTL caches)', 'lafka-plugin' )
-							: esc_html__( 'No (using DB transients only)', 'lafka-plugin' ),
-					),
-				),
+				'fields' => $fields,
 			);
 
 			return $info;
@@ -195,17 +187,42 @@ if ( ! class_exists( 'Lafka_Site_Health' ) ) {
 			} else {
 				$value = \Lafka_Options::get( $key, '' );
 			}
-			if ( 'enabled' === $value ) {
+			// Most flags use the 'enabled'/'disabled' sentinel; `order_notifications`
+			// is a '1'/'0' checkbox in the same 'lafka' array (NX1-08b). Handle both.
+			if ( 'enabled' === $value || '1' === (string) $value ) {
 				return esc_html__( 'Enabled', 'lafka-plugin' );
 			}
-			if ( 'disabled' === $value ) {
+			if ( 'disabled' === $value || '0' === (string) $value ) {
 				return esc_html__( 'Disabled (explicit)', 'lafka-plugin' );
 			}
 			return esc_html__( 'Disabled (default)', 'lafka-plugin' );
 		}
+
+		/**
+		 * Build the feature-flag debug rows from the module registry (NX1-01).
+		 *
+		 * Enumerates exactly the modules whose enable flag lives in the 'lafka'
+		 * option array — the same five gates this panel used to hand-list —
+		 * keeping each row's value formatting identical via flag_label().
+		 *
+		 * @return array<string,array{label:string,value:string}>
+		 */
+		private function registry_flag_fields() {
+			if ( ! class_exists( 'Lafka_Module_Registry' ) ) {
+				return array();
+			}
+			$fields = array();
+			foreach ( \Lafka_Module_Registry::modules_by_storage( 'lafka_option' ) as $id => $module ) {
+				$fields[ $id ] = array(
+					'label' => $module->get_label(),
+					'value' => $this->flag_label( $id ),
+				);
+			}
+			return $fields;
+		}
 	}
 
-	if ( is_admin() ) {
+	if ( function_exists( 'is_admin' ) && is_admin() ) {
 		Lafka_Site_Health::instance();
 	}
 }

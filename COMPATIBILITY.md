@@ -5,7 +5,8 @@ Each row is **known-good** — runs the test suite green and the smoke
 checklist passes in staging.
 
 > The "minimum" floor is what `composer.json` / plugin headers enforce.
-> The "recommended" column is what the maintainers run in CI today.
+> The "recommended" column is the maintainer-recommended production target;
+> what CI actually runs is described in the *CI* section below.
 
 ## Stack versions
 
@@ -17,11 +18,12 @@ checklist passes in staging.
 | **Node.js** (build only) | 20 | 24 | 24         |
 | **Apache** (recommended for security headers) | 2.4 | 2.4.66+ | 2.4.66 |
 
-"Recommended" is what `.wp-env.json` pins and CI builds against (WP 7.0 /
-WC 10.9.1 / PHP 8.4); the PHPUnit suites additionally run on PHP 8.5 locally.
-The full Playwright end-to-end pass was last run on the WP 6.9.4 / WC 10.7.0 /
-PHP 8.3.30 stack (Session 5, 2026-04-27); re-run it against the bumped stack
-before the next release.
+`.wp-env.json` pins the local integration stack at WP 6.9.4 / WC 10.7.0 /
+PHP 8.2; CI's PHP job runs PHPUnit + PHPCS on the runner's single
+pre-installed PHP (currently 8.3, matching prod), not on wp-env. The PHPUnit
+suites additionally run on PHP 8.5 locally. The full Playwright end-to-end
+pass was last run on the WP 6.9.4 / WC 10.7.0 / PHP 8.3.30 stack (Session 5,
+2026-04-27); re-run it against the bumped stack before the next release.
 
 ## Package versions
 
@@ -41,22 +43,37 @@ Each repo is tagged and released independently on its own cadence — the plugin
 and theme advance faster than the thin child, so their versions are not expected
 to move in lock-step.
 
-## CI matrix (per-repo CI runs the full grid)
+## CI (single-runner PHPUnit; PHP floor enforced statically)
 
-| | PHP 8.1 | PHP 8.2 | PHP 8.3 |
-|----|----|----|----|
-| **lafka-plugin** | ✅ | ✅ | ✅ |
-| **lafka-theme**  | ✅ | ✅ | ✅ |
-| **lafka-child**  | ✅ | ✅ | ✅ |
+CI does **not** run a multi-PHP test matrix. Under the first-party-actions-only
+policy (see the header comment in `.github/workflows/ci.yml`), each repo's PHP
+job runs PHPUnit + PHPCS on the runner's **single** pre-installed PHP (currently
+8.3, matching prod); the multi-PHP matrix was deliberately traded away for that
+constraint. The **PHP 8.1 floor is enforced statically, not by running PHPUnit
+on 8.1**: PHPCompatibility sniffs (`phpcompatibility/phpcompatibility-wp`, wired
+as `testVersion 8.1-` + `PHPCompatibilityWP` in `.phpcs.xml.dist`) flag any
+8.2+-only construct during PHPCS, and the `Requires PHP: 8.1` plugin header
+gates activation at runtime.
 
-CI checks per matrix cell: PHPCS (WordPress-Extra ruleset, ~60 sniff
-exclusions documented in `.phpcs.xml.dist`) + PHPUnit (Brain Monkey).
-JS/CSS linted separately on Node 24 (ESLint + Stylelint).
+| Repo | PHPUnit + PHPCS | PHP-floor check |
+|----|----|----|
+| **lafka-plugin** | runner PHP (8.3) | PHPCompatibility `8.1-` |
+| **lafka-theme**  | runner PHP (8.3) | PHPCompatibility `8.1-` |
+| **lafka-child**  | runner PHP (8.3) | PHPCompatibility `8.1-` |
+
+CI checks: PHPCS (WordPress-Extra ruleset, ~60 sniff exclusions documented in
+`.phpcs.xml.dist`) + PHPUnit (Brain Monkey), both on the runner PHP. JS/CSS
+linted separately on Node 24 (ESLint + Stylelint).
 
 The security sniff families — `WordPress.Security.EscapeOutput.*`,
 `WordPress.Security.NonceVerification.*`, `WordPress.DB.PreparedSQL.*` —
 are **enforced as errors** (re-enabled in the 2026-05-14 P5-Sec pass). Only
 the narrow `WordPress.Security.EscapeOutput.ExceptionNotEscaped` is excluded.
+
+A container-based PHP 8.1 / 8.3 test matrix (first-party `container:` images,
+no community actions) is a tracked follow-up — roadmap item **NX1-08c** in
+`ROADMAP_2026-07-05.md`. Until it lands, cross-version coverage is
+static-analysis-only via PHPCompatibility.
 
 WP × WC integration matrix is pending integration tests — tracked as P2-04a.
 
@@ -147,27 +164,71 @@ Verified clean under HPOS in Session 5:
 - Branch-scoped admin order count uses `meta_query` form so HPOS and
   CPT both honor the filter.
 
-## Block-based Cart/Checkout (WC 10.6+ default)
+## Block-based Cart/Checkout (WC 10.6+ default) — SUPPORTED
 
-The plugin does **not** yet declare `cart_checkout_blocks` compatibility
-(intentional — full Store API extensions for BOGO / branch selector /
-order-hours / delivery-min are tracked as **P3-01**, blocked).
+**The plugin declares `cart_checkout_blocks` compatibility** (NX1-04b —
+closes **P3-01**). Both the modern block Cart/Checkout and the classic
+shortcode Cart/Checkout are fully supported; the operator picks which one
+customers see via **Lafka → Modules → Checkout experience**.
 
-Until P3-01 ships, the plugin includes a **transitional shim**
-(`incl/compat/class-lafka-block-cart-shim.php`, added Session 5):
-on first `admin_init` after activation, if the Cart and/or Checkout
-pages contain unedited WC default Block content
-(`<!-- wp:woocommerce/cart -->` / `<!-- wp:woocommerce/checkout -->`),
-the shim rewrites them to `[woocommerce_cart]` / `[woocommerce_checkout]`
-classic shortcodes — the path Lafka's classic-cart hooks (BOGO label,
-delivery-min notice, branch selector, order-hours notice) actually fire
-on. Self-disabling: gated by `lafka_block_cart_shim_done` option, only
-swaps unedited Block content (any merchant customization is left alone),
-shows a one-time admin notice on swap.
+### Checkout mode (`lafka_checkout_mode`)
 
-Operators who prefer the Block-based flow can re-enable it after
-restoring the page content + deleting the option; the shim won't undo
-that decision.
+A single option governs the experience, with a production-preserving
+migration (`Lafka_Checkout_Mode`):
+
+- **`blocks`** — the modern WooCommerce block Cart/Checkout. **Fresh
+  activations default to this** (it is the default WooCommerce gives new
+  stores).
+- **`classic`** — the classic shortcode Cart/Checkout. **Existing installs
+  are migrated to this on update** so their behaviour is byte-identical to
+  before — nothing changes on a plugin update for a live store.
+- The `lafka_force_classic_checkout` filter forces classic at runtime,
+  overriding the option (for hosts/child plugins that need to pin it).
+- An unset option resolves to `classic` at runtime (the safe,
+  production-preserving default).
+
+### What is supported on the block path
+
+Everything the classic path enforces holds on the Store API / block path:
+
+- **Server gates (NX1-04a)** — order-hours (store closed), delivery
+  geo-fence, timeslot validity + capacity, and branch/order-type
+  capability are all re-validated on `woocommerce_store_api_cart_errors`
+  / `…_checkout_update_order_from_request`. A block order can never
+  violate a gate the classic checkout enforces.
+- **Add-ons (NX1-04c)** — addon selections ride the Store API into cart
+  line items, totals and order-item meta identically to the classic path.
+- **Order type + branch fields (NX1-04b)** — registered on the block
+  checkout via WooCommerce's Additional Checkout Fields API (shown
+  conditionally: order-type when the site offers more than one type;
+  branch when more than one branch exists). Their values round into the
+  same `lafka_branch_location` session and the same `lafka_order_type` /
+  `lafka_selected_branch_id` order meta the classic path writes, so KDS,
+  branch routing and analytics see identical order meta.
+- **Time-slot picker + free-delivery progress (NX1-04b)** — build-free JS
+  components (`incl/checkout/assets/js/lafka-blocks-checkout.js`, no build
+  step): a date/time-slot picker on the block checkout (driven by the
+  existing `time_slots_for_date` AJAX endpoint, pushed through the `lafka`
+  cart/extensions update callback) and a free-delivery progress bar on the
+  block cart (reading the `lafka` cart extension). Both degrade safely — if
+  the script fails to load, checkout still submits and the server gates
+  remain the authority.
+
+### The shim's new role
+
+`incl/compat/class-lafka-block-cart-shim.php` no longer forces classic. It
+now **honours the mode**:
+
+- In **classic** mode it rewrites unedited default block Cart/Checkout
+  pages to `[woocommerce_cart]` / `[woocommerce_checkout]` (as before),
+  and **saves the original block markup** so the switch is reversible.
+- In **blocks** mode it leaves native block pages alone, and restores the
+  original block markup on any page it previously rewrote.
+
+It only ever touches unedited default block markup or its own shortcode
+output — operator-customised Cart/Checkout pages are always left alone.
+Switching modes on the Modules screen re-reconciles the pages on the next
+admin request.
 
 ## Browser support (frontend)
 

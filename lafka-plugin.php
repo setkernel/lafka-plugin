@@ -51,6 +51,27 @@ if ( ! function_exists( 'lafka_plugin_asset_version' ) ) {
 // Load shared options helper — available to both plugin and theme.
 require_once plugin_dir_path( __FILE__ ) . 'incl/class-lafka-options.php';
 
+// Typed feature-module registry (NX1-01) — the single list of gated modules
+// the Modules dashboard, Site Health and (later) the setup wizard read from.
+// Foundational: required before Site Health / the Modules page below.
+require_once plugin_dir_path( __FILE__ ) . 'incl/class-lafka-module-registry.php';
+
+/**
+ * Checkout-experience SSOT (NX1-04b): the `lafka_checkout_mode` option and its
+ * fresh/existing migration. Required EARLY and its activation hook registered
+ * FIRST (before the defaults seeder below) so a genuinely fresh install is seen
+ * as fresh (no pre-existing `lafka` option) and defaults to 'blocks', while every
+ * existing install is migrated to an explicit 'classic' — byte-identical to its
+ * pre-update behaviour. The on-load migration covers in-place updates that never
+ * fire the activation hook. The block-cart shim and the block integration below
+ * both read this SSOT.
+ */
+require_once plugin_dir_path( __FILE__ ) . 'incl/checkout/class-lafka-checkout-mode.php';
+Lafka_Checkout_Mode::init();
+if ( function_exists( 'register_activation_hook' ) ) {
+	register_activation_hook( __FILE__, array( 'Lafka_Checkout_Mode', 'on_activation' ) );
+}
+
 if ( ! function_exists( 'lafka_write_log' ) ) {
 	function lafka_write_log( $log ) {
 		if ( is_array( $log ) || is_object( $log ) ) {
@@ -188,6 +209,37 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/security/class-lafka-security-a
  * Site Health diagnostics (P5-02). Self-gates to is_admin().
  */
 require_once plugin_dir_path( __FILE__ ) . 'incl/site-health/class-lafka-site-health.php';
+
+/**
+ * Feature Modules dashboard (NX1-01) — top-level "Lafka" menu → "Modules".
+ * One screen to see/flip every gated module. Self-gates to is_admin().
+ */
+if ( is_admin() ) {
+	require_once plugin_dir_path( __FILE__ ) . 'incl/admin/class-lafka-modules-page.php';
+}
+
+/**
+ * Settings export / import (NX1-05) — "Lafka → Tools". Export/import a versioned
+ * config bundle (flags, business, order-hours, shipping areas, branches, zones,
+ * add-on groups, lafka_ theme_mods) to move a configured install between sites.
+ * Secrets + KDS + personal-data tables are excluded by design. Self-gates to
+ * is_admin() inside the class file; the WP-CLI surface is registered separately.
+ */
+if ( is_admin() ) {
+	require_once plugin_dir_path( __FILE__ ) . 'incl/tools/class-lafka-config-bundle.php';
+	require_once plugin_dir_path( __FILE__ ) . 'incl/admin/class-lafka-tools-page.php';
+}
+
+/**
+ * Admin new-order notification poller (NX1-08b) — MOVED from the parent theme.
+ * Registers the wp_ajax_lafka_new_orders_notification handler, the admin poller
+ * JS + its service worker, and the browser-permission dialog. Self-gates to
+ * is_admin() (admin-ajax is admin context) and internally to WooCommerce + the
+ * shared `order_notifications` flag + the shop-manager capability.
+ */
+if ( is_admin() ) {
+	require_once plugin_dir_path( __FILE__ ) . 'incl/admin/class-lafka-order-notifications.php';
+}
 
 /**
  * Block Cart/Checkout compat shim. Detects WC's default Block-based cart and
@@ -540,6 +592,16 @@ if ( is_admin() ) {
 }
 
 /**
+ * NX1-06: WP privacy exporter + eraser for the conversion tables that hold
+ * personal data — push subscriptions (endpoint / user-agent / locale, matched
+ * to the requesting email's WP user) and abandoned carts (email + cart
+ * snapshot, matched on the email column). Registered on the core privacy
+ * filters so GDPR export/erase requests reach the Lafka data stores.
+ */
+require_once plugin_dir_path( __FILE__ ) . 'incl/conversion/class-lafka-conversion-privacy.php';
+( new Lafka_Conversion_Privacy() )->register();
+
+/**
  * v9.29.0: activation + deactivation hooks for the Web Push module.
  *
  *   on activate   → install the subscriptions table + schedule daily crons
@@ -634,6 +696,25 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/cli/lafka-reviews-cli.php';
 require_once plugin_dir_path( __FILE__ ) . 'incl/cli/lafka-webp-convert.php';
 
 /**
+ * WP-CLI: export/import a Lafka configuration bundle (NX1-05).
+ * Self-gates: returns when WP_CLI is not defined.
+ *
+ *   wp lafka config export --file=lafka-config.json
+ *   wp lafka config import --file=lafka-config.json --dry-run
+ */
+require_once plugin_dir_path( __FILE__ ) . 'incl/cli/lafka-config-cli.php';
+
+/**
+ * WP-CLI: provision a deterministic demo restaurant for e2e/CI + preset QA (NX1-09a).
+ * The class is always defined (pure helpers are unit-tested); only the command
+ * registration self-gates on WP_CLI.
+ *
+ *   wp lafka seed-demo
+ *   wp lafka seed-demo --reset
+ */
+require_once plugin_dir_path( __FILE__ ) . 'incl/cli/class-lafka-cli-seed-demo.php';
+
+/**
  * P6-UX-8 (W3-T6) — deprecated as of v9.28.0 (Phase 3D).
  *
  * The original simple review-prompt email lived at incl/emails/lafka-review-prompt-email.php.
@@ -665,6 +746,12 @@ add_action(
 	function () {
 		if ( class_exists( \Automattic\WooCommerce\Utilities\FeaturesUtil::class ) ) {
 			\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', __FILE__, true );
+			// NX1-04b: the block Cart/Checkout path now holds every ordering gate
+			// (NX1-04a), addon line items + totals (NX1-04c) and Lafka's order_type/
+			// branch/timeslot fields, so declare full compatibility. Declared
+			// unconditionally: an operator on classic mode is still compatible with
+			// blocks — the declaration only removes WC's incompatibility warning.
+			\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'cart_checkout_blocks', __FILE__, true );
 		}
 	}
 );
@@ -679,6 +766,40 @@ if ( LAFKA_PLUGIN_IS_WOOCOMMERCE ) {
 
 	/* Load nutrition and allergens */
 	require_once plugin_dir_path( __FILE__ ) . '/incl/nutrition/lafka-nutrition.php';
+
+	/*
+	 * Store API (block cart/checkout, headless) server-truth parity (NX1-04a).
+	 * Loaded unconditionally when WooCommerce is active; every adapter guards on
+	 * class_exists() so a disabled feature module simply no-ops. Registers its
+	 * hooks/schema on woocommerce_init once the Store API container is ready.
+	 */
+	require_once plugin_dir_path( __FILE__ ) . 'incl/store-api/class-lafka-store-api.php';
+	Lafka_Store_Api::init();
+
+	/*
+	 * Block Cart/Checkout UI (NX1-04b). Builds on the NX1-04a Store API contract:
+	 *   · Lafka_Checkout_Fields — order_type + branch selects via WooCommerce's
+	 *     Additional Checkout Fields API, wired back into the classic session/order
+	 *     meta so KDS/branch-routing/analytics see identical order meta.
+	 *   · Lafka_Blocks_Integration — a build-free IntegrationInterface enqueuing the
+	 *     timeslot picker (block checkout) + free-delivery progress (block cart).
+	 * Both self-gate to blocks checkout mode; the classic path is untouched.
+	 */
+	require_once plugin_dir_path( __FILE__ ) . 'incl/checkout/class-lafka-checkout-fields.php';
+	Lafka_Checkout_Fields::init();
+	// The block integration `implements IntegrationInterface`, which WooCommerce
+	// Blocks defines only once it loads (after this plugin file is included). Defer
+	// requiring it to `woocommerce_blocks_loaded` so the interface exists at class
+	// declaration time; the block-registration hooks it wires fire later still.
+	add_action(
+		'woocommerce_blocks_loaded',
+		static function () {
+			require_once plugin_dir_path( LAFKA_PLUGIN_FILE ) . 'incl/checkout/class-lafka-blocks-integration.php';
+			if ( class_exists( 'Lafka_Blocks_Integration' ) ) {
+				Lafka_Blocks_Integration::init();
+			}
+		}
+	);
 
 	if ( is_lafka_product_addons( get_option( 'lafka' ) ) ) {
 		/* Load addons */
@@ -1106,7 +1227,12 @@ if ( ! function_exists( 'lafka_theme_options_link' ) ) {
 }
 
 /**
- * Add Theme Options menu item to Admin Bar.
+ * Add a Theme Settings shortcut to the Admin Bar.
+ *
+ * NX1-02 (theme 7.0) retired the legacy "Appearance -> Theme Options" panel
+ * (and the redirect that used to catch its URL); theme settings now live in the
+ * Customizer's "Lafka" panel, so this shortcut points there instead of the
+ * removed themes.php?page=lafka-optionsframework page.
  */
 if ( ! function_exists( 'lafka_optionsframework_adminbar' ) ) {
 	function lafka_optionsframework_adminbar() {
@@ -1122,7 +1248,7 @@ if ( ! function_exists( 'lafka_optionsframework_adminbar' ) ) {
 				'parent' => false,
 				'id'     => 'lafka_of_theme_options',
 				'title'  => esc_html__( 'Theme Options', 'lafka-plugin' ),
-				'href'   => esc_url( admin_url( 'themes.php?page=lafka-optionsframework' ) ),
+				'href'   => esc_url( admin_url( 'customize.php?autofocus[panel]=lafka_settings' ) ),
 				'meta'   => array( 'class' => 'althemist-admin-opitons' ),
 			)
 		);

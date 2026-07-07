@@ -216,25 +216,57 @@ class Lafka_Timeslots {
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WC core verifies the checkout nonce in WC_Checkout::process_checkout() before this hook fires.
 		$raw_slot = isset( $_POST['lafka_checkout_timeslot'] ) ? sanitize_text_field( wp_unslash( $_POST['lafka_checkout_timeslot'] ) ) : '';
 
+		// The classic checkout reads the pair from POST; the decision itself lives
+		// in evaluate_datetime_selection() so the Store API / block-checkout gate
+		// (Lafka_Store_Api) enforces byte-identical validity + capacity from the
+		// session-supplied pair. wc_add_notice( ..., 'error' ) is the only classic
+		// hook where the notice actually aborts process_checkout().
+		$error = $this->evaluate_datetime_selection( $raw_date, $raw_slot, $mandatory );
+		if ( null !== $error ) {
+			wc_add_notice( esc_html( $error ), 'error' );
+		}
+	}
+
+	/**
+	 * Authoritative delivery/pickup date-time decision, shared by the classic
+	 * checkout gate (validate_datetime_fields) and the Store API checkout gate
+	 * (Lafka_Store_Api::add_cart_errors). Pure of any request transport: it takes
+	 * the raw date + slot strings and returns a customer-facing error message, or
+	 * null when the selection is acceptable.
+	 *
+	 * Three concerns, all re-derived server-side because a crafted or stale
+	 * submission can carry any string:
+	 *   1. Presence — when the operator made the datetime mandatory, both a date
+	 *      and a timeslot must be supplied.
+	 *   2. Validity — the date must be in the server-derived enabled set (which
+	 *      already excludes past dates, closed days and vacations) and the slot
+	 *      must be one of the '{start} - {end}' ids the server would render.
+	 *   3. Capacity — the slot must still be under its per-slot cap (authoritative
+	 *      count vs get_max_orders_per_slot), re-run at submit time.
+	 *
+	 * @param string $raw_date  Submitted date (Y-m-d) or ''.
+	 * @param string $raw_slot  Submitted timeslot id ('{start} - {end}') or ''.
+	 * @param bool   $mandatory Whether a datetime is required for this store/branch.
+	 * @return string|null Error message when invalid/full, else null.
+	 */
+	public function evaluate_datetime_selection( string $raw_date, string $raw_slot, bool $mandatory ): ?string {
 		$has_date = '' !== $raw_date;
 		$has_slot = '' !== $raw_slot;
 
 		// Presence gate — enforced only when the operator made datetime mandatory.
 		if ( $mandatory && ( ! $has_date || ! $has_slot ) ) {
-			wc_add_notice( esc_html__( 'Please enter Delivery/Pickup time.', 'lafka-plugin' ), 'error' );
-			return;
+			return __( 'Please enter Delivery/Pickup time.', 'lafka-plugin' );
 		}
 
 		// Optional store, nothing chosen — nothing further to validate.
 		if ( ! $has_date && ! $has_slot ) {
-			return;
+			return null;
 		}
 
 		// A submitted slot is meaningless without its anchoring date; reject the
 		// partial/crafted pair rather than save an un-countable slot to meta.
 		if ( $has_slot && ! $has_date ) {
-			wc_add_notice( esc_html__( 'Please select a Delivery/Pickup date.', 'lafka-plugin' ), 'error' );
-			return;
+			return __( 'Please select a Delivery/Pickup date.', 'lafka-plugin' );
 		}
 
 		$days_ahead        = $this->get_days_ahead();
@@ -251,8 +283,7 @@ class Lafka_Timeslots {
 		}
 
 		if ( ! in_array( $raw_date, $enabled_dates, true ) ) {
-			wc_add_notice( esc_html__( 'The selected Delivery/Pickup date is no longer available. Please choose another.', 'lafka-plugin' ), 'error' );
-			return;
+			return __( 'The selected Delivery/Pickup date is no longer available. Please choose another.', 'lafka-plugin' );
 		}
 
 		$timezone = class_exists( 'Lafka_Order_Hours' ) ? Lafka_Order_Hours::get_timezone() : wp_timezone();
@@ -263,20 +294,18 @@ class Lafka_Timeslots {
 			? Lafka_Order_Hours::get_order_hours_time( $timezone )->format( 'Y-m-d' )
 			: ( new DateTime( 'now', $timezone ) )->format( 'Y-m-d' );
 		if ( $raw_date < $today ) {
-			wc_add_notice( esc_html__( 'The selected Delivery/Pickup date is in the past. Please choose another.', 'lafka-plugin' ), 'error' );
-			return;
+			return __( 'The selected Delivery/Pickup date is in the past. Please choose another.', 'lafka-plugin' );
 		}
 
 		// raw_date is now a known-good 'Y-m-d' from the enabled set; parse is safe.
 		$date = DateTime::createFromFormat( 'Y-m-d', $raw_date, $timezone );
 		if ( ! $date instanceof DateTime ) {
-			wc_add_notice( esc_html__( 'The selected Delivery/Pickup date is invalid. Please choose another.', 'lafka-plugin' ), 'error' );
-			return;
+			return __( 'The selected Delivery/Pickup date is invalid. Please choose another.', 'lafka-plugin' );
 		}
 
 		// Optional store, date-only selection — no slot to validate further.
 		if ( ! $has_slot ) {
-			return;
+			return null;
 		}
 
 		// The submitted slot must be one of the slots the server would render
@@ -290,8 +319,7 @@ class Lafka_Timeslots {
 			}
 		}
 		if ( null === $matched_slot ) {
-			wc_add_notice( esc_html__( 'The selected Delivery/Pickup time is no longer available. Please choose another.', 'lafka-plugin' ), 'error' );
-			return;
+			return __( 'The selected Delivery/Pickup time is no longer available. Please choose another.', 'lafka-plugin' );
 		}
 
 		// Capacity gate — re-run the authoritative count against the per-slot
@@ -314,11 +342,12 @@ class Lafka_Timeslots {
 					)
 				);
 				if ( $orders_made >= (int) $max_orders_per_slot ) {
-					wc_add_notice( esc_html__( 'The selected Delivery/Pickup time is fully booked. Please choose another.', 'lafka-plugin' ), 'error' );
-					return;
+					return __( 'The selected Delivery/Pickup time is fully booked. Please choose another.', 'lafka-plugin' );
 				}
 			}
 		}
+
+		return null;
 	}
 
 	public function checkout_datetime_update_order_meta( $order, $data = null ) {

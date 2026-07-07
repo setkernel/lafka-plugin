@@ -16,12 +16,18 @@ use PHPUnit\Framework\TestCase;
  * add-to-cart path, or the Cart/Checkout Blocks + Store API path (which ignores
  * woocommerce_order_button_html entirely).
  *
- * The fix registers four validation gates that re-check is_shop_open() at fire
- * time:
+ * The fix registers validation gates that re-check is_shop_open() at fire time:
  *   - woocommerce_checkout_process                 (classic checkout abort)
  *   - woocommerce_add_to_cart_validation           (classic add-to-cart reject)
  *   - woocommerce_store_api_validate_add_to_cart    (blocks add-to-cart)
- *   - woocommerce_store_api_validate_cart           (blocks checkout)
+ *
+ * NX1-04a correction: the blocks CHECKOUT gate was originally registered on
+ * `woocommerce_store_api_validate_cart` — a hook name that WooCommerce never
+ * fires (the real hook is `woocommerce_store_api_cart_errors`, from
+ * CartController::validate_cart()). That dead registration is removed here and
+ * the store-closed checkout gate now lives in Lafka_Store_Api::add_cart_errors(),
+ * which reuses this class's is_shop_open() + get_closed_notice_message(). This
+ * test therefore also pins that the dead hook is NOT re-introduced.
  *
  * These assertions are structural source-greps (no WP runtime), matching the
  * TimeslotsDatetimeValidationTest approach.
@@ -54,10 +60,25 @@ final class OrderHoursServerGateTest extends TestCase {
 				"/add_action\(\s*['\"]woocommerce_store_api_validate_add_to_cart['\"]\s*,\s*array\(\s*\\\$this\s*,\s*['\"]gate_store_api_add_to_cart_when_closed['\"]/",
 				'blocks/Store API add-to-cart must be gated on woocommerce_store_api_validate_add_to_cart',
 			),
-			'store api checkout gate'      => array(
-				"/add_action\(\s*['\"]woocommerce_store_api_validate_cart['\"]\s*,\s*array\(\s*\\\$this\s*,\s*['\"]gate_store_api_cart_when_closed['\"]/",
-				'blocks/Store API checkout must be gated on woocommerce_store_api_validate_cart',
-			),
+		);
+	}
+
+	public function test_dead_validate_cart_hook_is_not_registered(): void {
+		// woocommerce_store_api_validate_cart is not a real WC hook — it never
+		// fires — so registering the store-closed checkout gate on it was a
+		// silent no-op (a closed store could accept a block-checkout order). The
+		// working gate now lives in Lafka_Store_Api on
+		// woocommerce_store_api_cart_errors. Guard against re-introducing the dead
+		// hook here.
+		$this->assertDoesNotMatchRegularExpression(
+			"/add_action\(\s*['\"]woocommerce_store_api_validate_cart['\"]/",
+			$this->src,
+			'The store-closed checkout gate must not be registered on the non-firing woocommerce_store_api_validate_cart hook.'
+		);
+		$this->assertStringNotContainsString(
+			'function gate_store_api_cart_when_closed',
+			$this->src,
+			'The dead gate_store_api_cart_when_closed method must be removed — the checkout gate lives in Lafka_Store_Api::add_cart_errors().'
 		);
 	}
 
@@ -79,7 +100,6 @@ final class OrderHoursServerGateTest extends TestCase {
 			"add_action( 'woocommerce_checkout_process'",
 			"add_filter( 'woocommerce_add_to_cart_validation'",
 			"add_action( 'woocommerce_store_api_validate_add_to_cart'",
-			"add_action( 'woocommerce_store_api_validate_cart'",
 		) as $registration ) {
 			$pos = strpos( $this->src, $registration );
 			$this->assertNotFalse( $pos, "gate registration not found: {$registration}" );
@@ -118,17 +138,16 @@ final class OrderHoursServerGateTest extends TestCase {
 		);
 	}
 
-	public function test_store_api_gates_throw_route_exception_when_closed(): void {
-		foreach ( array( 'gate_store_api_add_to_cart_when_closed', 'gate_store_api_cart_when_closed' ) as $method ) {
-			$body = $this->method_body( $method );
-			$this->assertNotSame( '', $body, "{$method} body not found" );
-			$this->assertStringContainsString( 'is_shop_open()', $body, "{$method} must consult is_shop_open()" );
-			$this->assertMatchesRegularExpression(
-				'/throw\s+new\s+\\\\Automattic\\\\WooCommerce\\\\StoreApi\\\\Exceptions\\\\RouteException/',
-				$body,
-				"{$method} must throw \\Automattic\\WooCommerce\\StoreApi\\Exceptions\\RouteException so the Store API aborts the request"
-			);
-		}
+	public function test_store_api_add_to_cart_gate_throws_route_exception_when_closed(): void {
+		$method = 'gate_store_api_add_to_cart_when_closed';
+		$body   = $this->method_body( $method );
+		$this->assertNotSame( '', $body, "{$method} body not found" );
+		$this->assertStringContainsString( 'is_shop_open()', $body, "{$method} must consult is_shop_open()" );
+		$this->assertMatchesRegularExpression(
+			'/throw\s+new\s+\\\\Automattic\\\\WooCommerce\\\\StoreApi\\\\Exceptions\\\\RouteException/',
+			$body,
+			"{$method} must throw \\Automattic\\WooCommerce\\StoreApi\\Exceptions\\RouteException so the Store API aborts the request"
+		);
 	}
 
 	public function test_add_to_cart_gates_respect_disable_option_but_checkout_gates_do_not(): void {
@@ -149,11 +168,6 @@ final class OrderHoursServerGateTest extends TestCase {
 			'is_add_to_cart_disabled_when_closed',
 			$this->method_body( 'gate_checkout_when_closed' ),
 			'classic checkout must be blocked whenever closed, regardless of the add-to-cart option'
-		);
-		$this->assertStringNotContainsString(
-			'is_add_to_cart_disabled_when_closed',
-			$this->method_body( 'gate_store_api_cart_when_closed' ),
-			'blocks checkout must be blocked whenever closed, regardless of the add-to-cart option'
 		);
 	}
 

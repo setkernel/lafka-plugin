@@ -49,6 +49,18 @@ export default [
 			"no-shadow-restricted-names": "off",
 		},
 	},
+	// Service worker file has its own global scope (NX1-08b order-notification worker).
+	{
+		files: ["incl/admin/assets/js/lafka-order-notifications-sw.js"],
+		languageOptions: {
+			globals: {
+				self: "readonly",
+				caches: "readonly",
+				clients: "readonly",
+				skipWaiting: "readonly",
+			},
+		},
+	},
 	// Node.js build scripts (ES modules) — e.g. scripts/sync-version.mjs.
 	{
 		files: ["scripts/**/*.mjs"],

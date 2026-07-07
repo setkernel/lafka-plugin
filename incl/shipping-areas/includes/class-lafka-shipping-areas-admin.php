@@ -626,7 +626,7 @@ class Lafka_Shipping_Areas_Admin {
 		wp_nonce_field( 'lafka_shipping_area_save', 'lafka_shipping_area_polygon_nonce' );
 		?>
 		<div id="lafka-shipping-areas-admin-define-area-map"></div>
-		<input type="hidden" name="lafka_shipping_area_polygon_coordinates" id="lafka_shipping_area_polygon_coordinates" value="<?php esc_attr_e( $value ); ?>"
+		<input type="hidden" name="lafka_shipping_area_polygon_coordinates" id="lafka_shipping_area_polygon_coordinates" value="<?php echo esc_attr( $value ); ?>"
 		<?php
 	}
 

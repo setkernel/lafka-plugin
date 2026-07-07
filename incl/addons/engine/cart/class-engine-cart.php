@@ -187,6 +187,13 @@ class Lafka_Engine_Cart {
 	 * @return bool
 	 */
 	public function validate_add_cart_item( $passed, $product_id, $qty, $post_data = null ): bool {
+		if ( null === $post_data ) {
+			// Store API (block/headless) requests carry addon selections in the
+			// request body, not $_POST; the NX1-04c adapter injects them here so
+			// the SAME required/limit checks run on both paths. Returns null for a
+			// classic request → $_POST fallback below (byte-identical classic path).
+			$post_data = apply_filters( 'lafka_addons_request_post_data', null );
+		}
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- woocommerce_add_to_cart_validation filter context; WC core verifies its add-to-cart nonce upstream before this hook fires.
 		if ( null === $post_data && isset( $_POST ) ) {
 			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WC core verifies add-to-cart nonce upstream.

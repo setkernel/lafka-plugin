@@ -202,7 +202,7 @@ if ( ! class_exists( 'Lafka_Push_Admin' ) ) {
 						</tr>
 						<tr>
 							<th scope="row"><label for="lafka_push_url"><?php echo esc_html__( 'Click URL', 'lafka-plugin' ); ?></label></th>
-							<td><input name="url" id="lafka_push_url" type="url" class="regular-text" value="<?php echo esc_attr( function_exists( 'lafka_get_menu_url' ) ? lafka_get_menu_url() : home_url( '/menu/' ) ); ?>" /></td>
+							<td><input name="url" id="lafka_push_url" type="url" class="regular-text" value="<?php echo esc_attr( lafka_get_menu_url() ); ?>" /></td>
 						</tr>
 						<tr>
 							<th scope="row"><label for="lafka_push_icon"><?php echo esc_html__( 'Icon URL (optional)', 'lafka-plugin' ); ?></label></th>

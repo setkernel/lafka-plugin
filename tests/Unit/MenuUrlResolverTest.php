@@ -19,6 +19,8 @@ namespace LafkaPlugin\Tests\Unit;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 use PHPUnit\Framework\TestCase;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
 
 require_once dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-helpers.php';
 
@@ -96,5 +98,77 @@ final class MenuUrlResolverTest extends TestCase {
 		$info = \lafka_get_restaurant_info();
 
 		$this->assertSame( 'https://order.example.test/now/', $info['menu_url'] );
+	}
+
+	/**
+	 * SSOT regression lock (audit #97): the /menu/ browse route has exactly ONE
+	 * source of truth — lafka_get_menu_url(). Every plugin call site must route
+	 * through it, so the only place a bare home_url('/menu/') literal may appear
+	 * is the resolver's own definition. Any other occurrence means a call site
+	 * drifted back to hardcoding the route and can silently diverge from the
+	 * filter-repointed CTA.
+	 */
+	public function test_no_bare_menu_url_literal_outside_the_resolver(): void {
+		$root     = dirname( __DIR__, 2 );
+		$resolver = 'incl/schema/lafka-schema-helpers.php';
+		// Matches home_url('/menu/'), home_url( "/menu/" ) and spacing variants.
+		$pattern  = '#home_url\(\s*[\'"]/menu/[\'"]\s*\)#';
+
+		$violations   = array();
+		$resolver_hit = 0;
+		foreach ( $this->collect_php_files( $root ) as $file ) {
+			$rel      = substr( $file, strlen( $root ) + 1 );
+			$contents = (string) file_get_contents( $file );
+			$count    = preg_match_all( $pattern, $contents );
+			if ( $resolver === $rel ) {
+				$resolver_hit = (int) $count;
+				continue; // The resolver's own definition is the ONE allowed literal.
+			}
+			if ( $count > 0 ) {
+				$violations[] = $rel;
+			}
+		}
+
+		$this->assertSame(
+			array(),
+			$violations,
+			"Bare home_url('/menu/') literal(s) must be replaced with lafka_get_menu_url():\n  " . implode( "\n  ", $violations )
+		);
+		$this->assertSame(
+			1,
+			$resolver_hit,
+			'The canonical home_url( \'/menu/\' ) literal must live exactly once, in lafka_get_menu_url().'
+		);
+	}
+
+	/**
+	 * Collect PHP source files under lafka-plugin/incl/ plus the main plugin
+	 * file. Excludes tests/ and vendor/ (by only walking incl/) and the main
+	 * plugin bootstrap only.
+	 *
+	 * @return list<string>
+	 */
+	private function collect_php_files( string $root ): array {
+		$out  = array();
+		$incl = $root . '/incl';
+		$main = $root . '/lafka-plugin.php';
+
+		if ( file_exists( $main ) ) {
+			$out[] = $main;
+		}
+
+		if ( is_dir( $incl ) ) {
+			$it = new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $incl, RecursiveDirectoryIterator::SKIP_DOTS ) );
+			foreach ( $it as $f ) {
+				if ( ! $f->isFile() ) {
+					continue;
+				}
+				$path = $f->getPathname();
+				if ( 'php' === strtolower( (string) pathinfo( $path, PATHINFO_EXTENSION ) ) ) {
+					$out[] = $path;
+				}
+			}
+		}
+		return $out;
 	}
 }
