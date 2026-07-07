@@ -10,8 +10,10 @@
  *     accessor (WC_Order fallback here; delegation to the plugin canonical reader
  *     is locked by OrderNotificationHposMetaTest), and branch routing skips orders
  *     assigned to a different operator.
- *   - State round-trip: the `lafka_last_processed_order_ids` option is read,
- *     stale IDs pruned, the freshly-notified ID appended and written back.
+ *   - State round-trip: notified-order state is PER USER (`_lafka_notified_order_ids`
+ *     user meta) so concurrent managers each get their own alert; stale IDs are
+ *     pruned, the freshly-notified ID appended and written back. The legacy shared
+ *     `lafka_last_processed_order_ids` option seeds a user's first poll.
  *
  * Brain Monkey stubs the WP/WC functions the handler calls; no WordPress boot.
  *
@@ -61,12 +63,16 @@ final class OrderNotificationsTest extends TestCase {
 	/** @var array<int,array<string,mixed>> [term_id => [meta_key => value]]. */
 	private array $term_meta = array();
 
+	/** @var array<int,array<string,mixed>> [user_id => [meta_key => value]]. */
+	private array $user_meta = array();
+
 	protected function setUp(): void {
 		parent::setUp();
 		Monkey\setUp();
 		$this->options    = array();
 		$this->order_meta = array();
 		$this->term_meta  = array();
+		$this->user_meta  = array();
 
 		Functions\when( '__' )->returnArg( 1 );
 		Functions\when( 'esc_html__' )->returnArg( 1 );
@@ -117,6 +123,18 @@ final class OrderNotificationsTest extends TestCase {
 			}
 		);
 		Functions\when( 'wp_get_attachment_thumb_url' )->justReturn( 'https://lafka.test/branch.png' );
+		Functions\when( 'get_user_meta' )->alias(
+			function ( $user_id, $key, $single = true ) {
+				unset( $single );
+				return $this->user_meta[ $user_id ][ $key ] ?? '';
+			}
+		);
+		Functions\when( 'update_user_meta' )->alias(
+			function ( $user_id, $key, $value ) {
+				$this->user_meta[ $user_id ][ $key ] = $value;
+				return true;
+			}
+		);
 	}
 
 	protected function tearDown(): void {
@@ -201,11 +219,10 @@ final class OrderNotificationsTest extends TestCase {
 		$result = Lafka_Order_Notifications::compute_notification();
 
 		$this->assertSame( '', $result );
-		$this->assertSame( '[]', $this->options[ Lafka_Order_Notifications::STATE_OPTION ] );
+		$this->assertSame( array(), $this->user_meta[0][ Lafka_Order_Notifications::STATE_META ] );
 	}
 
 	public function test_first_new_order_is_notified_and_appended_to_state(): void {
-		$this->options[ Lafka_Order_Notifications::STATE_OPTION ] = '';
 		Functions\when( 'wc_get_orders' )->justReturn( array( 101 ) );
 
 		$result = Lafka_Order_Notifications::compute_notification();
@@ -214,31 +231,63 @@ final class OrderNotificationsTest extends TestCase {
 		$this->assertStringContainsString( '#101', $result['body'] );
 		$this->assertStringContainsString( 'post=101', $result['url'] );
 
-		$state = json_decode( $this->options[ Lafka_Order_Notifications::STATE_OPTION ], true );
-		$this->assertContains( 101, $state );
+		$this->assertContains( 101, $this->user_meta[0][ Lafka_Order_Notifications::STATE_META ] );
 	}
 
 	public function test_already_notified_order_is_skipped(): void {
-		$this->options[ Lafka_Order_Notifications::STATE_OPTION ] = json_encode( array( 101 ) );
+		$this->user_meta[0][ Lafka_Order_Notifications::STATE_META ] = array( 101 );
 		Functions\when( 'wc_get_orders' )->justReturn( array( 101 ) );
 
 		$result = Lafka_Order_Notifications::compute_notification();
 
 		$this->assertSame( '', $result, 'An already-notified order must not re-fire.' );
-		$state = json_decode( $this->options[ Lafka_Order_Notifications::STATE_OPTION ], true );
-		$this->assertContains( 101, $state, 'Still-processing notified IDs are retained.' );
+		$this->assertContains(
+			101,
+			$this->user_meta[0][ Lafka_Order_Notifications::STATE_META ],
+			'Still-processing notified IDs are retained.'
+		);
 	}
 
 	public function test_stale_notified_ids_are_pruned(): void {
 		// 999 was notified but is no longer processing; 101 is new.
-		$this->options[ Lafka_Order_Notifications::STATE_OPTION ] = json_encode( array( 999 ) );
+		$this->user_meta[0][ Lafka_Order_Notifications::STATE_META ] = array( 999 );
 		Functions\when( 'wc_get_orders' )->justReturn( array( 101 ) );
 
 		Lafka_Order_Notifications::compute_notification();
 
-		$state = json_decode( $this->options[ Lafka_Order_Notifications::STATE_OPTION ], true );
+		$state = $this->user_meta[0][ Lafka_Order_Notifications::STATE_META ];
 		$this->assertNotContains( 999, $state, 'IDs no longer processing must be pruned.' );
 		$this->assertContains( 101, $state );
+	}
+
+	public function test_each_manager_gets_their_own_notification(): void {
+		// The theme-era SHARED option meant the first manager's poll consumed
+		// the alert for everyone. Per-user state must alert both managers.
+		Functions\when( 'wc_get_orders' )->justReturn( array( 101 ) );
+
+		Functions\when( 'get_current_user_id' )->justReturn( 7 );
+		$first = Lafka_Order_Notifications::compute_notification();
+		$this->assertIsArray( $first, 'Manager #7 must be alerted.' );
+
+		Functions\when( 'get_current_user_id' )->justReturn( 8 );
+		$second = Lafka_Order_Notifications::compute_notification();
+		$this->assertIsArray( $second, 'Manager #8 must ALSO be alerted — state is per user.' );
+
+		Functions\when( 'get_current_user_id' )->justReturn( 7 );
+		$repeat = Lafka_Order_Notifications::compute_notification();
+		$this->assertSame( '', $repeat, 'Manager #7 must not be re-alerted for the same order.' );
+	}
+
+	public function test_legacy_shared_state_seeds_the_first_per_user_poll(): void {
+		// Upgrade path: user meta absent, legacy option says 101 was announced —
+		// the first per-user poll must not re-alert it.
+		$this->options[ Lafka_Order_Notifications::STATE_OPTION ] = json_encode( array( 101 ) );
+		Functions\when( 'wc_get_orders' )->justReturn( array( 101 ) );
+
+		$result = Lafka_Order_Notifications::compute_notification();
+
+		$this->assertSame( '', $result, 'Legacy-announced orders must not re-fire after the upgrade.' );
+		$this->assertContains( 101, $this->user_meta[0][ Lafka_Order_Notifications::STATE_META ] );
 	}
 
 	// ─── Branch routing (HPOS-safe meta reads) ─────────────────────────────────
@@ -320,6 +369,7 @@ final class OrderNotificationsTest extends TestCase {
 	public function test_constants_preserve_theme_contract(): void {
 		$this->assertSame( 'lafka_new_orders_notification', Lafka_Order_Notifications::AJAX_ACTION );
 		$this->assertSame( 'lafka_last_processed_order_ids', Lafka_Order_Notifications::STATE_OPTION );
+		$this->assertSame( '_lafka_notified_order_ids', Lafka_Order_Notifications::STATE_META );
 		$this->assertSame( 'lafka_ajax_nonce', Lafka_Order_Notifications::NONCE_ACTION );
 	}
 

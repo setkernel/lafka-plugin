@@ -244,6 +244,7 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 				'_lafka_review_banner_dismissed',
 				'_lafka_review_email_optout',
 				'_lafka_push_reorder_opt_out',
+				'_lafka_notified_order_ids', // per-user new-order alert bookkeeping
 			);
 		}
 
