@@ -27,6 +27,6 @@
 		"@eslint/js": "^10.0.1",
 		"globals": "^17.7.0",
 		"stylelint": "^16.26.1",
-		"@wordpress/stylelint-config": "^23.41.0"
+		"@wordpress/stylelint-config": "^23.42.0"
 	}
 }
