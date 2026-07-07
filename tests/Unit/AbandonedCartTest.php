@@ -504,12 +504,12 @@ final class AbandonedCartTest extends TestCase {
 	}
 
 	public function test_main_plugin_version_bumped_to_at_least_9_27_0(): void {
-		// Phase 3B shipped at 9.27.0; subsequent phases bump the same plugin
-		// version forward (3D = 9.28.0). Assert presence of the Version: header
-		// in a major.minor.patch shape ≥ 9.27.0 rather than pinning to one
-		// release.
+		// Phase 3B shipped at 9.27.0; later releases only move forward. Use
+		// version_compare, not a regex — a major-pinned pattern broke on the
+		// 9.x -> 10.0.0 rollover (caught by the v10.0.0 release pre-push gate).
 		$main = file_get_contents( dirname( __DIR__, 2 ) . '/lafka-plugin.php' );
-		$this->assertMatchesRegularExpression( '/Version:\s*9\.(2[7-9]|[3-9]\d|\d{3,})\.\d+/', $main );
+		$this->assertSame( 1, preg_match( '/Version:\s*([0-9]+\.[0-9]+\.[0-9]+)/', $main, $m ), 'Version header missing' );
+		$this->assertTrue( version_compare( $m[1], '9.27.0', '>=' ), "Version {$m[1]} regressed below 9.27.0" );
 	}
 
 	public function test_uninstall_drops_abandoned_cart_table(): void {

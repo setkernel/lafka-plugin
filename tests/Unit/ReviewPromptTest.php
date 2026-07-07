@@ -764,11 +764,12 @@ final class ReviewPromptTest extends TestCase {
 	}
 
 	public function test_main_plugin_version_bumped_to_at_least_9_28_0(): void {
-		// Phase 3D shipped at 9.28.0; subsequent phases (3E = 9.29.0) bump the
-		// version forward. Assert presence of the Version: header in a
-		// major.minor.patch shape ≥ 9.28.0 rather than pinning to one release.
+		// Phase 3D shipped at 9.28.0; later releases only move forward. Use
+		// version_compare, not a regex — a major-pinned pattern broke on the
+		// 9.x -> 10.0.0 rollover (caught by the v10.0.0 release pre-push gate).
 		$main = file_get_contents( dirname( __DIR__, 2 ) . '/lafka-plugin.php' );
-		$this->assertMatchesRegularExpression( '/Version:\s*9\.(2[8-9]|[3-9]\d|\d{3,})\.\d+/', $main );
+		$this->assertSame( 1, preg_match( '/Version:\s*([0-9]+\.[0-9]+\.[0-9]+)/', $main, $m ), 'Version header missing' );
+		$this->assertTrue( version_compare( $m[1], '9.28.0', '>=' ), "Version {$m[1]} regressed below 9.28.0" );
 	}
 
 	public function test_legacy_review_prompt_email_file_is_inert(): void {
