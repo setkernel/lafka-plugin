@@ -20,6 +20,12 @@
 			"pattern": "^\\s*Version:\\s*(\\d+\\.\\d+\\.\\d+[^\\s]*)",
 			"flags": "m",
 			"required": true
+		},
+		{
+			"file": "readme.txt",
+			"pattern": "^Stable tag:\\s*(\\d+\\.\\d+\\.\\d+[^\\s]*)",
+			"flags": "m",
+			"required": true
 		}
 	],
 	"devDependencies": {

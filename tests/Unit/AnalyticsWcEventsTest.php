@@ -7,7 +7,7 @@
  *   - lafka_dl_items_from_cart() pulls items from WC()->cart correctly
  *   - View events emit only on their respective WP conditional pages
  *   - view_item_list distinguishes /menu/ vs category vs shop vs related
- *   - purchase fires exactly once per order (post_meta gate)
+ *   - purchase fires exactly once per order (HPOS-safe order-meta gate)
  *   - add_to_cart server-side payload structurally matches AJAX-fragment payload
  *   - All GA4 event names are snake_case ≤40 chars
  *   - Currency is pulled from get_woocommerce_currency()
@@ -333,10 +333,11 @@ namespace LafkaPlugin\Tests\Unit {
 				public function get_total() { return 42.50; }
 				public function get_total_tax() { return 3.50; }
 				public function get_shipping_total() { return 5.00; }
+				public function get_meta( $key, $single = true ) { return ''; }
+				public function update_meta_data( $key, $value ) {}
+				public function save() {}
 			};
 			Functions\when( 'wc_get_order' )->justReturn( $order );
-			Functions\when( 'get_post_meta' )->justReturn( '' );
-			Functions\when( 'update_post_meta' )->justReturn( true );
 			$out = $this->capture( static fn() => \lafka_dl_emit_purchase( 1001 ) );
 			$this->assertStringContainsString( '"event":"purchase"', $out );
 			$this->assertStringContainsString( '"transaction_id":"1001"', $out );
@@ -346,31 +347,40 @@ namespace LafkaPlugin\Tests\Unit {
 		}
 
 		public function test_purchase_suppressed_when_flag_set(): void {
-			Functions\when( 'wc_get_order' )->justReturn( new \stdClass() );
-			Functions\when( 'get_post_meta' )->justReturn( '1' );
+			// The gate MUST read order meta via the CRUD API (HPOS-safe), never
+			// get_post_meta on an order id — under HPOS-only stores that id can
+			// belong to an unrelated post.
+			$order = new class {
+				public function get_meta( $key, $single = true ) {
+					return '_lafka_dl_purchase_fired' === $key ? '1' : '';
+				}
+			};
+			Functions\when( 'wc_get_order' )->justReturn( $order );
 			$out = $this->capture( static fn() => \lafka_dl_emit_purchase( 1001 ) );
 			$this->assertSame( '', $out, 'purchase must not re-emit once the order is flagged' );
 		}
 
-		public function test_purchase_calls_update_post_meta_to_lock_after_emit(): void {
+		public function test_purchase_locks_via_order_crud_after_emit(): void {
 			$order = new class {
+				public array $meta_writes = array();
+				public int $saves         = 0;
 				public function get_items() { return array(); }
 				public function get_currency() { return 'USD'; }
 				public function get_total() { return 10; }
 				public function get_total_tax() { return 0; }
 				public function get_shipping_total() { return 0; }
+				public function get_meta( $key, $single = true ) { return ''; }
+				public function update_meta_data( $key, $value ) {
+					$this->meta_writes[ $key ] = $value;
+				}
+				public function save() {
+					++$this->saves;
+				}
 			};
 			Functions\when( 'wc_get_order' )->justReturn( $order );
-			Functions\when( 'get_post_meta' )->justReturn( '' );
-			$called = false;
-			Functions\when( 'update_post_meta' )->alias( static function ( $order_id, $key, $value ) use ( &$called ) {
-				if ( 2002 === $order_id && '_lafka_dl_purchase_fired' === $key && 1 === $value ) {
-					$called = true;
-				}
-				return true;
-			} );
 			$this->capture( static fn() => \lafka_dl_emit_purchase( 2002 ) );
-			$this->assertTrue( $called, 'purchase emit must lock the order via update_post_meta' );
+			$this->assertSame( 1, $order->meta_writes['_lafka_dl_purchase_fired'] ?? null, 'purchase emit must lock the order via update_meta_data' );
+			$this->assertSame( 1, $order->saves, 'the CRUD lock must be persisted with save()' );
 		}
 
 		public function test_purchase_ignores_invalid_order_id(): void {

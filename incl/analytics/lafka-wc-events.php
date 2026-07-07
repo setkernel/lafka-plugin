@@ -450,17 +450,20 @@ if ( ! function_exists( 'lafka_dl_emit_purchase' ) ) {
 			return;
 		}
 
-		// Idempotency gate.
-		if ( function_exists( 'get_post_meta' ) ) {
-			$fired = get_post_meta( $order_id, '_lafka_dl_purchase_fired', true );
-			if ( '1' === (string) $fired ) {
-				return;
-			}
-		}
-
 		$order = wc_get_order( $order_id );
 		if ( ! $order ) {
 			return;
+		}
+
+		// Idempotency gate — via the order CRUD API, never get_post_meta on an
+		// order id: under HPOS-only stores order ids come from wc_orders'
+		// own auto-increment, so a raw post-meta read/write would hit whatever
+		// unrelated post happens to share the id.
+		if ( method_exists( $order, 'get_meta' ) ) {
+			$fired = $order->get_meta( '_lafka_dl_purchase_fired', true );
+			if ( '1' === (string) $fired ) {
+				return;
+			}
 		}
 
 		$items    = array();
@@ -491,9 +494,11 @@ if ( ! function_exists( 'lafka_dl_emit_purchase' ) ) {
 
 		lafka_dl_emit_push( 'purchase', $payload );
 
-		// Lock so this order can't double-fire across page refreshes.
-		if ( function_exists( 'update_post_meta' ) ) {
-			update_post_meta( $order_id, '_lafka_dl_purchase_fired', 1 );
+		// Lock so this order can't double-fire across page refreshes (order CRUD,
+		// HPOS-safe — see the read above).
+		if ( method_exists( $order, 'update_meta_data' ) && method_exists( $order, 'save' ) ) {
+			$order->update_meta_data( '_lafka_dl_purchase_fired', 1 );
+			$order->save();
 		}
 	}
 }

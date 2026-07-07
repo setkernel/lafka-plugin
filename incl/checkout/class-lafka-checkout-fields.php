@@ -286,9 +286,31 @@ if ( ! class_exists( 'Lafka_Checkout_Fields' ) ) {
 				$session['branch_id'] = (int) $value;
 			}
 
-			// Default the branch on a single-branch site (its field is hidden) so the
-			// order-meta writer, which only persists order_type when branch_id > 0,
-			// still records both. Uses the resolved single branch id.
+			// Fill anything a hidden field could not have submitted (single branch
+			// and/or single order type are implicit — see fill_implicit_selections()).
+			$session = self::fill_implicit_selections( $session );
+
+			self::set_branch_session( $session );
+		}
+
+		/**
+		 * Fill the implicit selections a hidden field can never submit.
+		 *
+		 * Each block field only renders when there is a real choice (>1 option);
+		 * with a single option the value is implied by configuration, so the
+		 * checkout-time consumers (the delivery geo-fence, the order-meta writer)
+		 * must see it as if it had been chosen. Explicit session values are never
+		 * overwritten. Without this, a single-order-type site would reach checkout
+		 * with an empty order_type: lafka_order_type meta would never persist and
+		 * the geo-fence would silently skip (it only runs when order_type is
+		 * 'delivery') — and with a single branch AND a single type, neither field
+		 * fires sync_field_to_session at all, so the Store API place-order hook
+		 * must apply this fill as well.
+		 *
+		 * @param array $session Branch session array ({ branch_id, order_type }).
+		 * @return array
+		 */
+		public static function fill_implicit_selections( array $session ): array {
 			if ( empty( $session['branch_id'] ) ) {
 				$single = self::single_branch_id();
 				if ( $single > 0 ) {
@@ -296,7 +318,14 @@ if ( ! class_exists( 'Lafka_Checkout_Fields' ) ) {
 				}
 			}
 
-			self::set_branch_session( $session );
+			if ( empty( $session['order_type'] ) ) {
+				$types = self::get_site_order_types();
+				if ( 1 === count( $types ) ) {
+					$session['order_type'] = sanitize_text_field( (string) reset( $types ) );
+				}
+			}
+
+			return $session;
 		}
 
 		/**

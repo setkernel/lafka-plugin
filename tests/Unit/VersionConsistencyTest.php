@@ -34,6 +34,15 @@ final class VersionConsistencyTest extends TestCase {
 		self::assertSame( $this->canonical_version(), $m[1], 'plugin header Version drifted from package.json — run `npm version`' );
 	}
 
+	public function test_readme_stable_tag_matches_package_json(): void {
+		// wp.org shows Stable tag as THE installable version. It drifted 65
+		// releases (9.35.0 vs 10.0.0) because versionSync never covered it —
+		// this guard + the package.json versionSync entry close that hole.
+		$readme = (string) file_get_contents( self::ROOT . '/readme.txt' );
+		self::assertSame( 1, preg_match( '/^Stable tag:\s*(\d+\.\d+\.\d+[^\s]*)/m', $readme, $m ), 'no Stable tag in readme.txt' );
+		self::assertSame( $this->canonical_version(), $m[1], 'readme.txt Stable tag drifted from package.json — run `npm version`' );
+	}
+
 	public function test_package_lock_matches_package_json(): void {
 		$lock = json_decode( (string) file_get_contents( self::ROOT . '/package-lock.json' ), true );
 		self::assertIsArray( $lock, 'package-lock.json unreadable' );

@@ -82,6 +82,34 @@ if ( ! class_exists( 'LafkaMobileGroupedWalker' ) ) {
 			$this->groups = apply_filters( 'lafka_mobile_menu_groups', self::default_groups() );
 		}
 
+		/**
+		 * Group a flat list of product-category terms into the heuristic
+		 * clusters — the same resolve_group() mapping the nav walker uses.
+		 *
+		 * This is THE consumer path for the bundled lafka-theme mobile drawer:
+		 * its "Categories" section builds from get_terms(), not wp_nav_menu(),
+		 * so the Walker hooks below never fire for it. The drawer calls this
+		 * when the `lafka_mobile_menu_grouping` toggle is on.
+		 *
+		 * @param array $terms WP_Term[] (any objects exposing ->slug).
+		 * @return array<string, array> Ordered label => terms. Groups with no
+		 *                              terms are omitted; unmatched terms land
+		 *                              in a final "Everything else" bucket.
+		 */
+		public static function group_terms( array $terms ): array {
+			$resolver = new self();
+			$order    = array_keys( $resolver->groups );
+			$order[]  = 'Everything else';
+
+			$grouped = array_fill_keys( $order, array() );
+			foreach ( $terms as $term ) {
+				$slug = isset( $term->slug ) ? strtolower( (string) $term->slug ) : '';
+				$grouped[ $resolver->resolve_group( $slug ) ][] = $term;
+			}
+
+			return array_filter( $grouped );
+		}
+
 		public function start_lvl( &$output, $depth = 0, $args = null ) {
 			// Top-level groups don't have a sub-level <ul> wrapper here; we
 			// emit our own group markers instead. Defer to default for child
@@ -255,8 +283,13 @@ if ( ! function_exists( 'lafka_mobile_menu_sort_by_group' ) ) {
 
 /**
  * Override the mobile menu walker when the grouping toggle is on.
- * Hooks lafka_nav_menu_walker which lafka-theme/header.php:63 already
- * passes the mobile menu through.
+ *
+ * Fires for any theme that renders a nav menu with theme_location 'mobile'
+ * AND applies the `lafka_nav_menu_walker` filter (theme-agnostic contract).
+ * NOTE: the bundled lafka-theme drawer (v5.55+ handoff header) does NOT
+ * render a 'mobile' location — it consumes group_terms() directly for its
+ * Categories section — so for that theme this filter is back-compat surface,
+ * not the active path.
  */
 if ( ! function_exists( 'lafka_mobile_menu_grouped_walker_filter' ) ) {
 	add_filter( 'lafka_nav_menu_walker', 'lafka_mobile_menu_grouped_walker_filter', 10, 2 );

@@ -42,8 +42,19 @@ if ( ! class_exists( 'Lafka_Order_Notifications' ) ) {
 		/** Nonce action — preserved from the theme. */
 		const NONCE_ACTION = 'lafka_ajax_nonce';
 
-		/** Option key storing the JSON array of already-notified order IDs. Preserved from the theme. */
+		/**
+		 * LEGACY shared option (JSON array of notified order IDs) — the theme-era
+		 * storage. One site-wide list meant the first manager whose poll landed
+		 * consumed the alert for every other logged-in manager. Kept only as a
+		 * one-time seed for the per-user state and for uninstall cleanup.
+		 */
 		const STATE_OPTION = 'lafka_last_processed_order_ids';
+
+		/**
+		 * Per-user meta key holding the order IDs this user was already alerted
+		 * about — each concurrent shop manager gets their own notification.
+		 */
+		const STATE_META = '_lafka_notified_order_ids';
 
 		/** Capability required to receive/serve order notifications. */
 		const CAPABILITY = 'manage_woocommerce';
@@ -176,9 +187,14 @@ if ( ! class_exists( 'Lafka_Order_Notifications' ) ) {
 		 */
 		public static function compute_notification() {
 			$order_id_to_notify       = 0;
-			$notified_order_ids_array = json_decode( (string) get_option( self::STATE_OPTION, '' ), true );
+			$user_id                  = (int) get_current_user_id();
+			$notified_order_ids_array = get_user_meta( $user_id, self::STATE_META, true );
 			if ( ! is_array( $notified_order_ids_array ) ) {
-				$notified_order_ids_array = array();
+				// First per-user poll (fresh user, or the pre-per-user upgrade):
+				// seed from the legacy shared option so still-processing orders
+				// that were already announced don't re-alert after the upgrade.
+				$legacy                   = json_decode( (string) get_option( self::STATE_OPTION, '' ), true );
+				$notified_order_ids_array = is_array( $legacy ) ? $legacy : array();
 			}
 
 			$order_ids_to_be_processed_array = wc_get_orders(
@@ -229,7 +245,7 @@ if ( ! class_exists( 'Lafka_Order_Notifications' ) ) {
 				$notified_order_ids_array[] = $order_id_to_notify;
 			}
 
-			update_option( self::STATE_OPTION, wp_json_encode( array_values( $notified_order_ids_array ) ), false );
+			update_user_meta( $user_id, self::STATE_META, array_values( $notified_order_ids_array ) );
 
 			return $notification;
 		}

@@ -67,6 +67,14 @@ if ( ! function_exists( 'lafka_ac_schedule_events' ) ) {
 		if ( ! function_exists( 'wp_next_scheduled' ) || ! function_exists( 'wp_schedule_event' ) ) {
 			return;
 		}
+		if ( function_exists( 'lafka_ac_capture_is_enabled' ) && ! lafka_ac_capture_is_enabled() ) {
+			// Default-OFF module must stay fully inert: no cron for sites that
+			// never opted in, and drop events left behind by a former opt-in.
+			if ( function_exists( 'lafka_ac_unschedule_events' ) && wp_next_scheduled( 'lafka_check_abandoned_carts' ) ) {
+				lafka_ac_unschedule_events();
+			}
+			return;
+		}
 		if ( ! wp_next_scheduled( 'lafka_check_abandoned_carts' ) ) {
 			wp_schedule_event( time() + 60, 'every_fifteen_minutes', 'lafka_check_abandoned_carts' );
 		}

@@ -174,6 +174,7 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 				'lafka_homepage_hero_',  // hero attachment id
 				'lafka_github_updates_', // self-updater bookkeeping (defensive)
 				'lafka_contact_',        // contact-block options
+				'lafka_promotions_',     // promo knobs + migration-notice dismissal
 			);
 		}
 
@@ -244,6 +245,7 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 				'_lafka_review_banner_dismissed',
 				'_lafka_review_email_optout',
 				'_lafka_push_reorder_opt_out',
+				'_lafka_notified_order_ids', // per-user new-order alert bookkeeping
 			);
 		}
 
@@ -272,6 +274,11 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 		 * Revert custom (Lafka swatch) attribute types back to the WooCommerce
 		 * default 'select' so removing the plugin doesn't leave orphaned types.
 		 *
+		 * Scoped to the three types Lafka itself registers (color/image/label —
+		 * see incl/swatches/variation-swatches.php): a blanket "everything but
+		 * text" reset would also clobber attribute types owned by unrelated
+		 * plugins the moment Lafka is uninstalled.
+		 *
 		 * @return void
 		 */
 		public static function revert_attribute_types(): void {
@@ -283,9 +290,11 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 			$wpdb->query(
 				$wpdb->prepare(
 					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is a code-controlled prefix concatenation.
-					"UPDATE {$table} SET attribute_type = %s WHERE attribute_type != %s",
+					"UPDATE {$table} SET attribute_type = %s WHERE attribute_type IN ( %s, %s, %s )",
 					'select',
-					'text'
+					'color',
+					'image',
+					'label'
 				)
 			);
 		}

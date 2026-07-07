@@ -146,6 +146,9 @@ if ( ! function_exists( 'lafka_push_maybe_install_table' ) ) {
 		if ( ! function_exists( 'get_option' ) ) {
 			return;
 		}
+		if ( function_exists( 'lafka_push_rest_is_enabled' ) && ! lafka_push_rest_is_enabled() ) {
+			return; // Default-OFF module: don't create the table until the operator opts in.
+		}
 		$installed = (string) get_option( 'lafka_push_db_version', '' );
 		if ( $installed === LAFKA_PUSH_DB_VERSION ) {
 			return;

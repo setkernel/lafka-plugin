@@ -11,7 +11,7 @@ Originally developed by [theAlThemist](https://www.althemist.com). Continued as 
 - PHP 8.1+
 - [Lafka Theme](https://github.com/setkernel/lafka-theme)
 
-These match the floor declared in `lafka-plugin.php` (`Requires at least:` / `Requires PHP:` / `WC requires at least:`). The plugin will fatal-error or behave unexpectedly on older versions. WC tested up to: 10.7.
+These match the floor declared in `lafka-plugin.php` (`Requires at least:` / `Requires PHP:` / `WC requires at least:`). The plugin will fatal-error or behave unexpectedly on older versions. WC tested up to: 10.9.
 
 ## Installation
 
@@ -105,6 +105,7 @@ lafka-plugin/
 │   ├── admin/           # Meta-description box, WC Settings → Restaurant tab, push admin
 │   ├── analytics/       # GA4/GTM, Consent Mode v2, WC dataLayer + custom events
 │   ├── branches/        # Branch selection AJAX (split from shipping-areas v9.2.0)
+│   ├── checkout/        # Block checkout: mode migration, additional fields, blocks integration (v10.0.0)
 │   ├── cli/             # WP-CLI commands (image-alt backfill, reviews)
 │   ├── customizer/      # Restaurant Info / PDP / Upsell / Abandoned-Cart / Analytics / Push / Reviews panels
 │   ├── compat/          # Block-cart shim, WP Importer ↔ WC attrs bridge
@@ -122,8 +123,10 @@ lafka-plugin/
 │   ├── seo/             # Shop archive canonical
 │   ├── shipping-areas/  # Coordinator (delivery zones + CPT)
 │   ├── site-health/     # WP Site Health integration
+│   ├── store-api/       # Store API parity: cart validation + order-meta persistence (v10.0.0)
 │   ├── swatches/        # Variation swatches
 │   ├── timeslots/       # Date-picker + capacity (split from shipping-areas v9.4.0)
+│   ├── tools/           # Config export/import bundle + uninstall cleanup
 │   ├── woocommerce/     # W4 PDP redesign modules (bestseller, prep-time, last-order, upsell, drawer, etc.)
 │   └── wpml/            # WPML/WCML addon compat
 ├── shortcodes/          # All shortcode definitions

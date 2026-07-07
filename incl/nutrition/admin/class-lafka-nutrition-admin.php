@@ -13,9 +13,16 @@ class Lafka_Nutrition_Admin {
 	}
 
 	/**
-	 * Enqueue styles.
+	 * Enqueue styles — product-edit screen only (the panel this styles lives
+	 * there; mirrors the screen-scoped enqueues in Lafka_Order_Hours_Admin).
 	 */
 	public function styles() {
+		if ( function_exists( 'get_current_screen' ) ) {
+			$screen = get_current_screen();
+			if ( ! $screen || 'product' !== $screen->id ) {
+				return;
+			}
+		}
 		wp_enqueue_style( 'lafka_nutrition_admin_css', plugins_url( '../assets/css/admin.css', __FILE__ ), array( 'woocommerce_admin_styles' ), lafka_plugin_asset_version( 'incl/nutrition/assets/css/admin.css' ) );
 	}
 

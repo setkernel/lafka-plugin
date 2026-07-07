@@ -61,7 +61,7 @@ composer phpcbf
 
 ## HPOS / Blocks
 
-The plugin declares HPOS compat in `lafka-plugin.php`. Cart/Checkout Blocks compatibility is a roadmap item (see `LAFKA_AUDIT.md` §4 M-HIGH-1) — don't declare compat until the integration ships.
+The plugin declares both HPOS and `cart_checkout_blocks` compatibility in `lafka-plugin.php`. Block Cart/Checkout shipped in 10.0.0: Store API parity lives in `incl/store-api/`, checkout-mode migration + additional checkout fields + blocks integration in `incl/checkout/`. New order/cart code must work on BOTH the classic (shortcode) and block paths — parity is asserted, not assumed.
 
 ## Releases
 
