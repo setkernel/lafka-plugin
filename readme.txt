@@ -5,7 +5,7 @@ Requires at least: 6.6
 Tested up to: 7.0
 Requires PHP: 8.1
 Requires Plugins: woocommerce
-Stable tag: 9.35.0
+Stable tag: 10.0.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -193,12 +193,12 @@ complete, authoritative changelog and downloadable releases, see:
 
 https://github.com/setkernel/lafka-plugin/releases
 
-= 9.35.0 =
+= 10.0.0 =
 * Current stable release. See the GitHub releases page for the full history of
   changes across all versions.
 
 == Upgrade Notice ==
 
-= 9.35.0 =
+= 10.0.0 =
 Requires WordPress 6.6+, WooCommerce 9.5+ and PHP 8.1+. Review the GitHub
 release notes before upgrading a production store.
