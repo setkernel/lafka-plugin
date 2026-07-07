@@ -228,6 +228,19 @@ final class UninstallCleanupTest extends TestCase {
 		$this->assertSame( array(), $deleted_posts, 'Toggle OFF must not delete any posts.' );
 	}
 
+	public function test_revert_attribute_types_scopes_to_lafka_swatch_types_only(): void {
+		$wpdb            = new FakeUninstallWpdb();
+		$GLOBALS['wpdb'] = $wpdb;
+
+		Lafka_Uninstall::revert_attribute_types();
+
+		$this->assertCount( 1, $wpdb->queries );
+		$sql = $wpdb->queries[0];
+		$this->assertStringContainsString( "SET attribute_type = 'select'", $sql );
+		$this->assertStringContainsString( "IN ( 'color', 'image', 'label' )", $sql );
+		$this->assertStringNotContainsString( '!=', $sql, 'A blanket != reset would clobber attribute types owned by other plugins.' );
+	}
+
 	// ─── Toggle ON: full cleanup ──────────────────────────────────────────────
 
 	public function test_run_toggle_on_deletes_options_via_prefix_like(): void {
