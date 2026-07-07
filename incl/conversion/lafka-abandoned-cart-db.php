@@ -142,6 +142,9 @@ if ( ! function_exists( 'lafka_ac_maybe_install_table' ) ) {
 		if ( ! function_exists( 'get_option' ) ) {
 			return;
 		}
+		if ( function_exists( 'lafka_ac_capture_is_enabled' ) && ! lafka_ac_capture_is_enabled() ) {
+			return; // Default-OFF module: don't create the table until the operator opts in.
+		}
 		$installed = (string) get_option( 'lafka_abandoned_cart_db_version', '' );
 		if ( $installed === LAFKA_ABANDONED_CART_DB_VERSION ) {
 			return;

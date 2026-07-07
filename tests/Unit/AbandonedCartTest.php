@@ -37,6 +37,9 @@ use PHPUnit\Framework\TestCase;
 require_once dirname( __DIR__ ) . '/Unit/Stubs/wc-email-stub.php';
 
 require_once dirname( __DIR__, 2 ) . '/incl/conversion/lafka-abandoned-cart-db.php';
+// Capture defines lafka_ac_capture_is_enabled() — the gate the db/cron
+// self-heals consult (bootstrap loads it in the same require block).
+require_once dirname( __DIR__, 2 ) . '/incl/conversion/lafka-abandoned-cart-capture.php';
 require_once dirname( __DIR__, 2 ) . '/incl/conversion/lafka-abandoned-cart-cron.php';
 require_once dirname( __DIR__, 2 ) . '/incl/conversion/lafka-abandoned-cart-email.php';
 require_once dirname( __DIR__, 2 ) . '/incl/customizer/class-lafka-customizer-abandoned-cart.php';
@@ -166,6 +169,63 @@ final class AbandonedCartTest extends TestCase {
 		$schedules = \lafka_ac_register_cron_schedule( $existing );
 		$this->assertArrayHasKey( 'hourly', $schedules );
 		$this->assertArrayHasKey( 'every_fifteen_minutes', $schedules );
+	}
+
+	public function test_schedule_events_stays_inert_when_capture_disabled(): void {
+		// get_theme_mod default stub returns '0' → module OFF (its default).
+		Functions\when( 'wp_next_scheduled' )->justReturn( false );
+		Functions\expect( 'wp_schedule_event' )->never();
+
+		\lafka_ac_schedule_events();
+		$this->assertTrue( true ); // Mockery's never() above is the real assertion.
+	}
+
+	public function test_schedule_events_drops_stale_events_when_disabled(): void {
+		Functions\when( 'wp_next_scheduled' )->justReturn( 1234567890 );
+		Functions\expect( 'wp_schedule_event' )->never();
+		$cleared = array();
+		Functions\when( 'wp_clear_scheduled_hook' )->alias(
+			static function ( $hook ) use ( &$cleared ) {
+				$cleared[] = $hook;
+			}
+		);
+
+		\lafka_ac_schedule_events();
+
+		$this->assertContains( 'lafka_check_abandoned_carts', $cleared, 'A former opt-in must be unscheduled once the module is off.' );
+	}
+
+	public function test_schedule_events_schedules_when_capture_enabled(): void {
+		Functions\when( 'get_theme_mod' )->alias(
+			static fn( $key, $default = '' ) => 'lafka_ac_enabled' === $key ? '1' : $default
+		);
+		Functions\when( 'wp_next_scheduled' )->justReturn( false );
+		$scheduled = array();
+		Functions\when( 'wp_schedule_event' )->alias(
+			static function ( $ts, $recurrence, $hook ) use ( &$scheduled ) {
+				$scheduled[] = $hook;
+				return true;
+			}
+		);
+
+		\lafka_ac_schedule_events();
+
+		$this->assertContains( 'lafka_check_abandoned_carts', $scheduled );
+		$this->assertContains( 'lafka_cleanup_abandoned_carts', $scheduled );
+	}
+
+	public function test_maybe_install_table_inert_when_capture_disabled(): void {
+		$read = array();
+		Functions\when( 'get_option' )->alias(
+			static function ( $key, $default = false ) use ( &$read ) {
+				$read[] = $key;
+				return $default;
+			}
+		);
+
+		\lafka_ac_maybe_install_table();
+
+		$this->assertNotContains( 'lafka_abandoned_cart_db_version', $read, 'Disabled module must not probe/install its table.' );
 	}
 
 	public function test_cron_module_references_check_event_hook(): void {

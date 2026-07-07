@@ -540,6 +540,63 @@ final class PushNotificationsTest extends TestCase {
 		$this->assertStringContainsString( "add_action( 'lafka_push_reorder_reminder'", $src );
 	}
 
+	public function test_reorder_schedule_stays_inert_when_push_disabled(): void {
+		// get_theme_mod default stub returns '0' → push OFF (its default).
+		Functions\when( 'wp_next_scheduled' )->justReturn( false );
+		Functions\expect( 'wp_schedule_event' )->never();
+
+		\lafka_push_reorder_schedule_event();
+		$this->assertTrue( true ); // Mockery's never() above is the real assertion.
+	}
+
+	public function test_reorder_schedule_drops_stale_events_when_disabled(): void {
+		Functions\when( 'wp_next_scheduled' )->justReturn( 1234567890 );
+		Functions\expect( 'wp_schedule_event' )->never();
+		$cleared = array();
+		Functions\when( 'wp_clear_scheduled_hook' )->alias(
+			static function ( $hook ) use ( &$cleared ) {
+				$cleared[] = $hook;
+			}
+		);
+
+		\lafka_push_reorder_schedule_event();
+
+		$this->assertContains( 'lafka_push_reorder_reminder', $cleared, 'A former opt-in must be unscheduled once push is off.' );
+	}
+
+	public function test_reorder_schedule_schedules_when_push_enabled(): void {
+		Functions\when( 'get_theme_mod' )->alias(
+			static fn( $key, $default = '' ) => 'lafka_push_enabled' === $key ? '1' : $default
+		);
+		Functions\when( 'wp_next_scheduled' )->justReturn( false );
+		$scheduled = array();
+		Functions\when( 'wp_schedule_event' )->alias(
+			static function ( $ts, $recurrence, $hook ) use ( &$scheduled ) {
+				$scheduled[] = $hook;
+				return true;
+			}
+		);
+
+		\lafka_push_reorder_schedule_event();
+
+		$this->assertContains( 'lafka_push_reorder_reminder', $scheduled );
+		$this->assertContains( 'lafka_push_cleanup_subscriptions', $scheduled );
+	}
+
+	public function test_push_maybe_install_table_inert_when_disabled(): void {
+		$read = array();
+		Functions\when( 'get_option' )->alias(
+			static function ( $key, $default = false ) use ( &$read ) {
+				$read[] = $key;
+				return $default;
+			}
+		);
+
+		\lafka_push_maybe_install_table();
+
+		$this->assertNotContains( 'lafka_push_db_version', $read, 'Disabled module must not probe/install its table.' );
+	}
+
 	public function test_reorder_days_helper_clamps(): void {
 		Functions\when( 'get_theme_mod' )->alias(
 			static function ( $key, $default = null ) {
