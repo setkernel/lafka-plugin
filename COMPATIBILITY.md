@@ -111,7 +111,7 @@ correctly set.
 
 The plugin and theme conditionally register the Google Maps loader
 script under handle `lafka-google-maps` only when an API key is set in
-Theme Options → General. With no key, the script is **not registered**
+the Customizer (`lafka[google_maps_api_key]`, Lafka settings bridge). With no key, the script is **not registered**
 and dependent enqueues across the codebase fail-closed via
 `wp_script_is( 'lafka-google-maps', 'registered' )` guards:
 
