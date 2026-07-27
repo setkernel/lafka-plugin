@@ -29,9 +29,9 @@
 		}
 	],
 	"devDependencies": {
-		"eslint": "^10.6.0",
+		"eslint": "^10.8.0",
 		"@eslint/js": "^10.0.1",
-		"globals": "^17.7.0",
+		"globals": "^17.8.0",
 		"stylelint": "^16.26.1",
 		"@wordpress/stylelint-config": "^23.41.0"
 	}
