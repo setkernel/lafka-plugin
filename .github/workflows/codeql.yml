@@ -37,7 +37,7 @@ concurrency:
 jobs:
   analyze:
     name: Analyze ${{ matrix.language }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.CI_RUNNER || 'setkernel-linux' }}
     # JS-only analysis ~5 min on a codebase this size; cap at 30 to catch
     # a hung scanner. PHP is NOT a CodeQL-supported language
     # (https://codeql.github.com/docs/codeql-overview/supported-languages-and-frameworks/),
