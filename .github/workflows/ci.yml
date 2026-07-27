@@ -36,8 +36,8 @@ concurrency:
 
 # POLICY: This workflow uses ONLY first-party GitHub-org actions
 # (actions/*, github/*). No community actions. Multi-PHP matrix testing
-# was traded for this constraint — we test against ubuntu-latest's
-# pre-installed PHP (currently 8.3) which matches prod. Plugin's PHP
+# was traded for this constraint — we test against the setkernel-linux
+# runner image's pre-installed PHP (8.3) which matches prod. Plugin's PHP
 # floor (8.1) is documented in the lafka-plugin.php header and enforced
 # by Requires PHP — runtime will surface syntax issues if anyone ships
 # 8.4-only constructs.
@@ -45,7 +45,7 @@ concurrency:
 jobs:
   lint-js-css:
     name: ESLint & Stylelint
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.CI_RUNNER || 'setkernel-linux' }}
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
@@ -76,7 +76,7 @@ jobs:
 
   php:
     name: PHP
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.CI_RUNNER || 'setkernel-linux' }}
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
@@ -117,7 +117,7 @@ jobs:
   dependency-review:
     name: Dependency review
     if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.CI_RUNNER || 'setkernel-linux' }}
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v7
@@ -130,7 +130,7 @@ jobs:
   ci-passed:
     name: CI passed
     needs: [lint-js-css, php]
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.CI_RUNNER || 'setkernel-linux' }}
     if: always()
     steps:
       - name: Verify all required jobs succeeded
