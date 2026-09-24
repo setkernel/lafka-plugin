@@ -115,25 +115,29 @@ namespace LafkaPlugin\Tests\Unit {
 		}
 
 		public function test_next_opening_is_computed_on_the_store_clock(): void {
-			// Opens for one minute at midnight every day, so "now" is closed and the
-			// next opening is tomorrow 00:00 — on the store's clock, not UTC's.
-			$period   = array(
+			// Every day "opens" (a zero-length period, so the store is never open)
+			// at the store-clock time two hours from now; the next opening must be
+			// exactly that instant — on the store's clock, not UTC's.
+			$tz    = new DateTimeZone( 'Pacific/Kiritimati' ); // UTC+14.
+			$at    = ( new DateTime( 'now', $tz ) )->modify( '+2 hours' );
+			$at->setTime( (int) $at->format( 'H' ), (int) $at->format( 'i' ) );
+			$slot  = $at->format( 'H:i' );
+			$day   = array(
 				'periods' => array(
 					array(
-						'start' => '00:00',
-						'end'   => '00:01',
+						'start' => $slot,
+						'end'   => $slot,
 					),
 				),
 			);
-			$schedule = (string) json_encode( array_fill( 0, 7, $period ) );
-			$tz       = new DateTimeZone( 'Pacific/Kiritimati' ); // UTC+14.
+			$schedule = (string) json_encode( array_fill( 0, 7, $day ) );
 			Functions\when( 'wp_timezone' )->justReturn( $tz );
 			Lafka_Order_Hours::$lafka_order_hours_schedule = $schedule;
 
 			$next = Lafka_Order_Hours::get_next_opening_time_by_params( null, $schedule, null, null, null );
 
 			$this->assertInstanceOf( DateTime::class, $next );
-			$this->assertSame( ( new DateTime( 'tomorrow', $tz ) )->getTimestamp(), $next->getTimestamp() );
+			$this->assertSame( $at->getTimestamp(), $next->getTimestamp() );
 		}
 
 		/* -------------------------------------------------------------- *
