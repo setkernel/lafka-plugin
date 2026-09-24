@@ -145,14 +145,30 @@ class Lafka_Timeslots {
 	}
 
 	/**
+	 * Whether the operator turned the delivery/pickup date-time feature on
+	 * (Shipping Areas → Date/Time → enable). Every date/time requirement —
+	 * global or per-branch — is inert while this is off.
+	 */
+	public static function is_feature_enabled(): bool {
+		$datetime_options = get_option( 'lafka_shipping_areas_datetime' );
+
+		return is_array( $datetime_options ) && ! empty( $datetime_options['enable_datetime_option'] );
+	}
+
+	/**
 	 * Hydrate datetime config: read globals, optionally override from
 	 * the in-session branch's term meta if the branch opts out of the
 	 * global config.
 	 */
 	public function init_order_date_time_options() {
 		$datetime_options = get_option( 'lafka_shipping_areas_datetime' );
+		$enabled          = self::is_feature_enabled();
 
-		$this->order_date_time_mandatory  = $datetime_options['datetime_mandatory'] ?? false;
+		// "Mandatory" only means something while the date/time feature is on. A
+		// store that saved mandatory=1 and later switched the feature off must
+		// not keep demanding a date/time no UI collects (block checkout would be
+		// unplaceable).
+		$this->order_date_time_mandatory  = $enabled && ! empty( $datetime_options['datetime_mandatory'] );
 		$this->order_date_time_days_ahead = $datetime_options['days_ahead'] ?? 30;
 		// Floor the slot duration to a sane minimum at the source. A 0 / ''
 		// value (the register_setting min/max is HTML-only, trivially bypassed
@@ -161,12 +177,12 @@ class Lafka_Timeslots {
 		// get_timeslots_for_date(). Never let it fall below 1 minute.
 		$this->order_date_time_timeslot_duration = max( 1, (int) ( $datetime_options['timeslot_duration'] ?? 60 ) );
 
-		if ( isset( WC()->session ) ) {
+		if ( $enabled && function_exists( 'WC' ) && isset( WC()->session ) ) {
 			$lafka_branch_location_id_in_session = WC()->session->get( 'lafka_branch_location' )['branch_id'] ?? null;
 			if ( ! empty( $lafka_branch_location_id_in_session ) ) {
 				$override_global_date_time = get_term_meta( $lafka_branch_location_id_in_session, 'lafka_branch_override_datetime_global', true );
 				if ( ! empty( $override_global_date_time ) ) {
-					$this->order_date_time_mandatory  = get_term_meta( $lafka_branch_location_id_in_session, 'lafka_branch_datetime_mandatory', true );
+					$this->order_date_time_mandatory  = ! empty( get_term_meta( $lafka_branch_location_id_in_session, 'lafka_branch_datetime_mandatory', true ) );
 					$this->order_date_time_days_ahead = get_term_meta( $lafka_branch_location_id_in_session, 'lafka_branch_datetime_days_ahead', true );
 					// Per-branch meta has no floor either; apply the same minimum.
 					$this->order_date_time_timeslot_duration = max( 1, (int) get_term_meta( $lafka_branch_location_id_in_session, 'lafka_branch_datetime_timeslot_duration', true ) );

@@ -194,7 +194,9 @@ if ( ! class_exists( 'Lafka_Store_Api' ) ) {
 		 * @return string|null Error message when the selection is invalid/full.
 		 */
 		private static function timeslot_error( array $datetime_session ): ?string {
-			if ( ! class_exists( 'Lafka_Timeslots' ) ) {
+			// Feature off → no date/time gate at all, exactly like the classic
+			// path (which never hooks its validator unless the feature is on).
+			if ( ! class_exists( 'Lafka_Timeslots' ) || ! Lafka_Timeslots::is_feature_enabled() ) {
 				return null;
 			}
 			$timeslots = Lafka_Timeslots::instance();
