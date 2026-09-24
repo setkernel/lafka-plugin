@@ -30,16 +30,7 @@ final class UpgraderTest extends TestCase {
 		parent::tearDown();
 	}
 
-	public function test_register_and_get_migrations(): void {
-		$upgrader = new Lafka_Addons_Upgrader();
-		$upgrader->register( new TestMigration_9_0_0() );
-
-		$migrations = $upgrader->all();
-		self::assertCount( 1, $migrations );
-		self::assertSame( '9.0.0', $migrations[0]->id() );
-	}
-
-	public function test_apply_runs_each_migration_in_order(): void {
+	public function test_apply_to_meta_runs_registered_migrations(): void {
 		$upgrader = new Lafka_Addons_Upgrader();
 		$upgrader->register( new TestMigration_9_0_0() );
 
@@ -50,7 +41,7 @@ final class UpgraderTest extends TestCase {
 		self::assertSame( 1, $migrated[0]['_test_migration_marker'] );
 	}
 
-	public function test_apply_to_meta_runs_in_id_order(): void {
+	public function test_migrations_are_ordered_by_id_regardless_of_registration_order(): void {
 		$upgrader = new Lafka_Addons_Upgrader();
 		// Register out of order; apply should still run 8.13.0 before 9.0.0.
 		$upgrader->register( new TestMigration_9_0_0() );

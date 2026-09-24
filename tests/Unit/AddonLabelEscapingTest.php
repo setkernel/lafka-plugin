@@ -1,22 +1,9 @@
 <?php
 /**
- * C-6 Site 1: Privileged stored XSS via addon option labels.
- *
- * Source-grep lock that enforces:
- *   - the 3 addon templates (textarea / checkbox / radiobutton) use
- *     `esc_html()` on the label output (label is plain text from a
- *     stored field), and
- *   - the price output uses `wp_kses_post()` (price is wc_price() HTML
- *     containing <span>, <bdi>, <sup> tags that must survive — escaping
- *     it via esc_html() displays raw HTML entities to customers, which
- *     is the v8.17.0 production bug fixed in v8.17.2), and
- *   - `wptexturize()` is no longer the OUTERMOST call (so HTML in a
- *     stored label can no longer reach the browser).
- *
- * Stored labels come from privileged users, but the audit treats the
- * shop manager → public-page surface as XSS-relevant because shop
- * managers can be lower-trust than admins, and the labels render on
- * checkout / product pages to all visitors.
+ * Add-on option templates (checkbox / radiobutton / textarea) escape the
+ * stored option label (stored XSS from a shop-manager-editable field reaches
+ * every product page) while keeping the wc_price() markup of the price intact
+ * (escaping it rendered raw <span> tags to customers in v8.17.0).
  *
  * @package Lafka\Plugin\Tests\Unit
  */
@@ -25,59 +12,95 @@ declare(strict_types=1);
 
 namespace LafkaPlugin\Tests\Unit;
 
-use PHPUnit\Framework\TestCase;
+use Brain\Monkey;
+use Brain\Monkey\Functions;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\TestCase;
+
+require_once dirname( __DIR__, 2 ) . '/incl/addons/engine/lafka-addons-engine-bootstrap.php';
+require_once dirname( __DIR__, 2 ) . '/incl/addons/lafka-product-addons.php';
 
 final class AddonLabelEscapingTest extends TestCase {
 
-	/** @return array<string, array<int, string>> */
-	public static function templateProvider(): array {
-		$base = dirname( __DIR__, 2 ) . '/incl/addons/templates/';
+	private const HOSTILE_LABEL = 'Cheese <img src=x onerror=alert(1)>';
+	private const PRICE_HTML    = '<span class="lafka-addon-price">(<span class="woocommerce-Price-amount amount"><bdi>$1.50</bdi></span>)</span>';
 
+	protected function setUp(): void {
+		parent::setUp();
+		Monkey\setUp();
+		$escape = static fn( $v ) => htmlspecialchars( (string) $v, ENT_QUOTES );
+		Functions\when( 'esc_html' )->alias( $escape );
+		Functions\when( 'esc_attr' )->alias( $escape );
+		Functions\when( 'esc_textarea' )->alias( $escape );
+		Functions\when( 'wptexturize' )->returnArg();
+		Functions\when( 'wp_kses_post' )->returnArg();
+		Functions\when( 'wc_clean' )->returnArg();
+		Functions\when( 'checked' )->justReturn( '' );
+		Functions\when( 'sanitize_title' )->alias( static fn( $s ) => strtolower( (string) preg_replace( '/[^a-z0-9]+/i', '-', (string) $s ) ) );
+		// The rendered price as WooCommerce's wc_price() (via the option-price filter) builds it.
+		Functions\when( 'apply_filters' )->alias(
+			static fn( $hook, $value = null ) => 'lafka_product_addons_option_price' === $hook ? self::PRICE_HTML : $value
+		);
+	}
+
+	protected function tearDown(): void {
+		Monkey\tearDown();
+		parent::tearDown();
+	}
+
+	/** @return array<string, array{0: string}> */
+	public static function templates(): array {
 		return array(
-			'textarea'    => array( $base . 'textarea.php' ),
-			'checkbox'    => array( $base . 'checkbox.php' ),
-			'radiobutton' => array( $base . 'radiobutton.php' ),
+			'checkbox'    => array( 'checkbox' ),
+			'radiobutton' => array( 'radiobutton' ),
+			'textarea'    => array( 'textarea' ),
 		);
 	}
 
-	#[DataProvider('templateProvider')]
-	public function test_template_uses_esc_html_on_label_and_price( string $path ): void {
-		$this->assertFileExists( $path );
-		$src = file_get_contents( $path );
+	#[DataProvider( 'templates' )]
+	public function test_label_is_escaped_and_price_markup_survives( string $template ): void {
+		$html = $this->render(
+			$template,
+			array(
+				'field-name' => '94-extras-0',
+				'options'    => array(
+					array(
+						'id'    => 'cheese',
+						'label' => self::HOSTILE_LABEL,
+						'price' => '',
+					),
+				),
+			)
+		);
 
-		$this->assertStringContainsString(
-			"esc_html( wptexturize( \$option['label'] ) )",
-			$src,
-			"Template {$path} must escape the label via esc_html() (after wptexturize())"
-		);
-		$this->assertStringContainsString(
-			'wp_kses_post( $price )',
-			$src,
-			"Template {$path} must sanitize the price via wp_kses_post() — esc_html() escapes the wc_price() HTML to entities and renders raw <span> markup to customers"
-		);
-		$this->assertStringNotContainsString(
-			'esc_html( $price )',
-			$src,
-			"Template {$path} must NOT use esc_html(\$price) — that's the v8.17.0 production bug. Use wp_kses_post(\$price) which preserves wc_price() HTML"
-		);
+		self::assertStringNotContainsString( '<img', $html, 'A stored label must never reach the page as markup.' );
+		self::assertStringContainsString( 'Cheese &lt;img src=x onerror=alert(1)&gt;', $html );
+		self::assertStringContainsString( self::PRICE_HTML, $html, 'The wc_price() markup must render as HTML, not as escaped text.' );
 	}
 
-	#[DataProvider('templateProvider')]
-	public function test_wptexturize_is_no_longer_outermost_call( string $path ): void {
-		$src = file_get_contents( $path );
+	private function render( string $template, array $addon ): string {
+		$previous_product                = $GLOBALS['product'] ?? null;
+		$previous_display                = $GLOBALS['Lafka_Engine_Display'] ?? null;
+		$GLOBALS['product']              = null;
+		$GLOBALS['Lafka_Engine_Display'] = new class() {
+			public function get_addon_option_custom_image_id( $option ) {
+				return 0;
+			}
+			public function get_addon_option_image_classes( $image_id ) {
+				return array();
+			}
+		};
 
-		// The dangerous pattern: `echo wptexturize( $option['label'] . ...`
-		// or `echo wptexturize( $option['label'] ) . ...` with no escaping.
-		$this->assertDoesNotMatchRegularExpression(
-			'/echo\s+wptexturize\(\s*\$option\[\x27label\x27\]\s*\.\s*\x27 \x27\s*\.\s*\$price\s*\)/',
-			$src,
-			"Template {$path} must not use bare wptexturize() as outermost call (no HTML escape)"
-		);
-		$this->assertDoesNotMatchRegularExpression(
-			'/echo\s+wptexturize\(\s*\$option\[\x27label\x27\]\s*\)\s*\.\s*\x27 \x27\s*\.\s*\$price\s*;/',
-			$src,
-			"Template {$path} must not concatenate raw \$price after wptexturize()"
-		);
+		$path = dirname( __DIR__, 2 ) . '/incl/addons/templates/' . $template . '.php';
+		ob_start();
+		( static function () use ( $path, $addon ) {
+			include $path;
+		} )();
+		$html = (string) ob_get_clean();
+
+		$GLOBALS['product']              = $previous_product;
+		$GLOBALS['Lafka_Engine_Display'] = $previous_display;
+
+		return $html;
 	}
 }

@@ -1,13 +1,8 @@
 <?php
 /**
- * Plugin-side behavior lock for BOGO + delivery-min math (P2-01b).
- *
- * Mirrors the child-side LafkaPromotionsTest. Asserts against the static
- * methods on Lafka_Promotions so any drift between the plugin's copy of
- * the math and the child's pure helpers is caught in CI.
- *
- * Class skips its WP-runtime hook registration when add_action() isn't
- * defined — so we can require the file standalone and call statics.
+ * BOGO + delivery-minimum math on Lafka_Promotions' static helpers, at the
+ * default knob values (get_option empty → constants). Non-default BOGO
+ * discounts are covered by BogoBlendedPriceReconciliationTest.
  */
 
 declare(strict_types=1);

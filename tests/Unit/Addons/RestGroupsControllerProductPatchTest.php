@@ -27,10 +27,7 @@ namespace {
 			protected $rest_base;
 		}
 	}
-	if ( ! class_exists( 'WP_Error' ) ) {
-		// phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound
-		class WP_Error {} // phpcs:ignore
-	}
+	require_once dirname( __DIR__, 1 ) . '/Stubs/wp-error-class.php';
 
 	require_once dirname( __DIR__, 1 ) . '/Stubs/wp-post-stub.php';
 	require_once dirname( __DIR__, 3 ) . '/incl/addons/engine/lafka-addons-engine-bootstrap.php';

@@ -1,33 +1,18 @@
 <?php
 /**
- * v8.12.6: required-field validation in Lafka_Product_Addon_Field_List.
+ * Required-field validation for checkbox / radio add-on groups.
  *
- * Locks the operator-precedence fix: the original
- *   `if ( ! $this->value || ( is_array(...) && sizeof(...) ) == 0 )`
- * had a misplaced parenthesis. The `== 0` was OUTSIDE the inner parens,
- * so the expression evaluated to `bool == 0` — always false on a non-empty
- * array. Required-field validation was bypassable by submitting `[""]` or
- * `[0]` from a crafted POST.
+ * Regression: an operator-precedence bug let a crafted POST of `[""]` (or
+ * whitespace) satisfy a required group. A required group passes only when at
+ * least one real selection is present.
  *
  * @package Lafka\Plugin\Tests\Unit
  */
 
 declare(strict_types=1);
 
-// Stub WP_Error in the GLOBAL namespace — referenced as `\WP_Error` from the
-// (un-namespaced) plugin source. Bracketed namespace syntax is the only way
-// to mix global + namespaced declarations in the same file.
 namespace {
-	if ( ! class_exists( '\WP_Error' ) ) {
-		class WP_Error { // phpcs:ignore
-			public string $code;
-			public string $message;
-			public function __construct( $code = '', $message = '' ) {
-				$this->code    = (string) $code;
-				$this->message = (string) $message;
-			}
-		}
-	}
+	require_once __DIR__ . '/Stubs/wp-error-class.php';
 }
 
 namespace LafkaPlugin\Tests\Unit {
@@ -35,93 +20,62 @@ namespace LafkaPlugin\Tests\Unit {
 	use Brain\Monkey;
 	use Brain\Monkey\Functions;
 	use Lafka_Engine_Field_List;
+	use PHPUnit\Framework\Attributes\DataProvider;
 	use PHPUnit\Framework\TestCase;
 	use WP_Error;
 
 	require_once dirname( __DIR__, 2 ) . '/incl/addons/engine/lafka-addons-engine-bootstrap.php';
 
-final class AddonFieldListRequiredValidationTest extends TestCase {
+	final class AddonFieldListRequiredValidationTest extends TestCase {
 
-	protected function setUp(): void {
-		parent::setUp();
-		Monkey\setUp();
-		Functions\when( 'esc_html__' )->returnArg();
-		Functions\when( 'sanitize_title' )->alias( static fn( $s ) => strtolower( str_replace( ' ', '-', (string) $s ) ) );
-	}
+		protected function setUp(): void {
+			parent::setUp();
+			Monkey\setUp();
+			Functions\when( 'esc_html__' )->returnArg();
+			Functions\when( 'sanitize_title' )->alias( static fn( $s ) => strtolower( str_replace( ' ', '-', (string) $s ) ) );
+		}
 
-	protected function tearDown(): void {
-		Monkey\tearDown();
-		parent::tearDown();
-	}
+		protected function tearDown(): void {
+			Monkey\tearDown();
+			parent::tearDown();
+		}
 
-	private function make_field( $value, bool $required = true ): Lafka_Engine_Field_List {
-		$addon = array(
-			'name'     => 'Toppings',
-			'required' => $required ? 1 : 0,
-			'options'  => array( array( 'id' => 'extra-cheese', 'label' => 'Extra Cheese' ) ),
-		);
-		return new Lafka_Engine_Field_List( $addon, $value );
-	}
+		/**
+		 * @return array<string, array{0: mixed, 1: bool, 2: bool}> [ submitted value, required, passes ]
+		 */
+		public static function submissions(): array {
+			return array(
+				'one selection'                 => array( array( 'extra-cheese' ), true, true ),
+				'radio string value'            => array( 'extra-cheese', true, true ),
+				'one real value among empties'  => array( array( '', 'extra-cheese', '' ), true, true ),
+				'array of only empty strings'   => array( array( '' ), true, false ),
+				'array of only whitespace'      => array( array( '   ', "\t" ), true, false ),
+				'empty array'                   => array( array(), true, false ),
+				'empty string'                  => array( '', true, false ),
+				'null'                          => array( null, true, false ),
+				'optional group left empty'     => array( array(), false, true ),
+			);
+		}
 
-	public function test_required_passes_with_one_selection(): void {
-		$field  = $this->make_field( array( 'extra-cheese' ) );
-		$result = $field->validate();
-		self::assertTrue( $result );
-	}
+		#[DataProvider( 'submissions' )]
+		public function test_required_group_needs_a_real_selection( $value, bool $required, bool $passes ): void {
+			$field = new Lafka_Engine_Field_List(
+				array(
+					'name'     => 'Toppings',
+					'required' => $required ? 1 : 0,
+					'options'  => array( array( 'id' => 'extra-cheese', 'label' => 'Extra Cheese' ) ),
+				),
+				$value
+			);
 
-	public function test_required_passes_with_string_value(): void {
-		$field  = $this->make_field( 'extra-cheese' );
-		$result = $field->validate();
-		self::assertTrue( $result );
-	}
+			$result = $field->validate();
 
-	/**
-	 * THE BUG. Submitting `[""]` (empty string in array) used to pass the
-	 * required check because the operator-precedence error short-circuited
-	 * the array-empty branch. Fix must reject this.
-	 */
-	public function test_required_rejects_array_with_only_empty_strings(): void {
-		$field  = $this->make_field( array( '' ) );
-		$result = $field->validate();
-		self::assertInstanceOf( 'WP_Error', $result, 'Array of empties must fail required validation.' );
-	}
-
-	public function test_required_rejects_array_with_only_whitespace(): void {
-		$field  = $this->make_field( array( '   ', "\t" ) );
-		$result = $field->validate();
-		self::assertInstanceOf( 'WP_Error', $result );
-	}
-
-	public function test_required_rejects_truly_empty_array(): void {
-		$field  = $this->make_field( array() );
-		$result = $field->validate();
-		self::assertInstanceOf( 'WP_Error', $result );
-	}
-
-	public function test_required_rejects_empty_string(): void {
-		$field  = $this->make_field( '' );
-		$result = $field->validate();
-		self::assertInstanceOf( 'WP_Error', $result );
-	}
-
-	public function test_required_rejects_null(): void {
-		$field  = $this->make_field( null );
-		$result = $field->validate();
-		self::assertInstanceOf( 'WP_Error', $result );
-	}
-
-	public function test_not_required_passes_on_empty(): void {
-		$field  = $this->make_field( array(), false );
-		$result = $field->validate();
-		self::assertTrue( $result );
-	}
-
-	public function test_required_with_mixed_array_of_one_real_and_empties_passes(): void {
-		// As long as ONE real value is present, required is satisfied.
-		$field  = $this->make_field( array( '', 'extra-cheese', '' ) );
-		$result = $field->validate();
-		self::assertTrue( $result );
+			if ( $passes ) {
+				self::assertTrue( $result );
+			} else {
+				self::assertInstanceOf( WP_Error::class, $result );
+				self::assertSame( 'lafka_addon_required', $result->code );
+			}
+		}
 	}
 }
-
-} // end namespace LafkaPlugin\Tests\Unit

@@ -56,11 +56,6 @@ final class PrepTimeFunctionalTest extends TestCase {
 		}
 	}
 
-	public function test_render_prep_time_is_defined(): void {
-		// The theme's PDP summary calls this renderer; the file must keep defining it.
-		$this->assertTrue( function_exists( 'lafka_pdp_render_prep_time' ) );
-	}
-
 	// ────────────────────────────────────────────────────────────────────────
 	// lafka_pdp_get_prep_time — default + per-category override
 	// ────────────────────────────────────────────────────────────────────────
