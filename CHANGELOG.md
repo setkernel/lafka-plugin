@@ -107,6 +107,16 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
   term-level API (the walker hooks were dead).
 - **Modules**: Lafka → Modules no longer links every card to a 404 docs page.
 - Docs fact-check: shipped-state claims corrected; planning docs retired.
+- **Push**: the VAPID contact defaults to `mailto:` plus the site admin email
+  (filter `lafka_push_default_vapid_subject`) instead of a placeholder
+  address; sites still on the old placeholder get the new default. If cURL
+  rejects any transfer-hardening option, the send now fails closed.
+- **Widgets**: newly added About, Payment Options and Popular Posts widgets
+  no longer log undefined-index warnings; Popular Posts saves unslashed input
+  with a post count of at least 1; About omits "Read more" until a page is
+  chosen; Contacts reads the restaurant info once per render.
+- **Security headers**: a filtered header name or value containing a line
+  break is dropped instead of reaching `header()`.
 
 ### Removed
 - `lafka_mobile_menu_sort_by_group()`, `lafka_mobile_menu_grouped_walker_filter()`
@@ -145,12 +155,23 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
 - The email unsubscribe helpers live once in
   `incl/conversion/lafka-email-unsubscribe.php`.
 - New filters: `lafka_pickup_shipping_method_ids`,
-  `lafka_branch_order_count_statuses`.
+  `lafka_branch_order_count_statuses`, `lafka_push_default_vapid_subject`,
+  `lafka_ac_resume_redirect_exit` (whether the cart-resume redirect exits;
+  default true).
+- The OpenGraph/Twitter tags, meta description and `<html lang>` filter
+  (`incl/seo/lafka-head-meta.php`), share links (`incl/lafka-share-links.php`),
+  `[lafka_nap]` (`incl/schema/lafka-nap-shortcode.php`) and
+  `lafka_seo_plugin_active()` (`incl/seo/lafka-seo-plugin-detect.php`) moved
+  out of `lafka-plugin.php`; function names, hooks and priorities are
+  unchanged. `lafka_push_curl_options()` and
+  `Lafka_Security_Headers::build_headers()` split the pure parts out of the
+  push sender and the header sender.
 - Test suite rationalised: tests execute the code and assert behaviour instead
   of grepping source for implementation strings, comments or existence (1518
-  tests / 4319 assertions → 1126 / 2735, 154 → 143 files, plus node:test JS
-  tests); the operator-literal guard stores only hashes; the bootstrap records
-  hook registrations so wiring is asserted by running registration code.
+  tests / 4319 assertions → 1159 / 2838, 154 → 146 files, plus 15 node:test
+  JS tests); the operator-literal guard stores only hashes; the bootstrap
+  records hook registrations so wiring is asserted by running registration
+  code.
 
 ### Performance
 - Shipping-area front CSS loads only on cart/checkout (or sitewide while branch
