@@ -46,15 +46,9 @@ Client-side (`lafka-dl-client.js`):
 | Event | Trigger | Params |
 |---|---|---|
 | `select_item` | click `a[data-lafka-item-id]` | item from the `data-lafka-item-*` attrs + `data-lafka-list-name` |
-| `search` | typing in the menu search (debounced 350 ms, ≥ 2 chars) | `search_term`, `results_count` (count of `[data-lafka-item-id]` inside `[data-lafka-menu-results]`) |
-| `add_shipping_info` | change of a `shipping_method*` radio | `shipping_tier`, `items` from `[data-lafka-checkout-item]` |
-| `add_payment_info` | change of the `payment_method` radio | `payment_type`, `items` from `[data-lafka-checkout-item]` |
-
-> **Known issue — `search` never fires.** The client binds
-> `[data-lafka-menu-search]` and reads its `.value`, but the theme puts that
-> attribute on the search `<form>`; the text field is
-> `[data-lafka-menu-search-input]`. The intended contract is the input
-> attribute below; the JS fix is tracked separately.
+| `search` | typing in the menu search field `[data-lafka-menu-search-input]` (debounced 350 ms, ≥ 2 chars) | `search_term`, `results_count` (the `[data-lafka-item-id]` inside `[data-lafka-menu-results]` when the theme marks one, else every one not inside a `[hidden]` element) |
+| `add_shipping_info` | change of a `shipping_method*` radio | `shipping_tier`, `currency`, `value`, `items` (from `[data-lafka-checkout-item]` rows, else the cart items localized as `lafkaDlCheckout`) |
+| `add_payment_info` | change of the `payment_method` radio | `payment_type`, `currency`, `value`, `items` (same source) |
 
 ### Custom interactions — `incl/analytics/lafka-custom-events.php`
 `phone_click` · `email_click` · `get_directions_click` · `faq_open` ·

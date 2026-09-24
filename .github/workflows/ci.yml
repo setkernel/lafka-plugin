@@ -69,6 +69,10 @@ jobs:
       - name: Stylelint
         run: npm run lint:css
 
+      # Behavioural tests for the front-end JS (node:test, no dependencies).
+      - name: JS tests
+        run: npm test
+
   php:
     name: PHP
     runs-on: ubuntu-latest

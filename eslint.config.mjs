@@ -51,9 +51,9 @@ export default [
 			},
 		},
 	},
-	// Node.js build scripts (ES modules) — e.g. scripts/sync-version.mjs.
+	// Node.js build scripts + node:test suites (ES modules).
 	{
-		files: ["scripts/**/*.mjs"],
+		files: ["scripts/**/*.mjs", "tests/js/**/*.mjs"],
 		languageOptions: {
 			sourceType: "module",
 			globals: {

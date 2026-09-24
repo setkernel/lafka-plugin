@@ -7,7 +7,7 @@
  *   - added_to_cart   (WC core jQuery event) -> add_to_cart
  *   - removed_from_cart                       -> remove_from_cart
  *   - product link click (a[data-lafka-item-id]) -> select_item
- *   - /menu/ search input (debounced 350ms)   -> search
+ *   - menu search input [data-lafka-menu-search-input] (debounced 350ms) -> search
  *   - checkout shipping radio change          -> add_shipping_info
  *   - checkout payment radio change           -> add_payment_info
  *
@@ -83,32 +83,49 @@
 	});
 
 	// ------------------------------------------------------------------
-	// search — /menu/ search input, debounced.
+	// search — the menu search text field ([data-lafka-menu-search-input]),
+	// debounced. Delegated so it works whenever the field is rendered.
 	// ------------------------------------------------------------------
-	var searchInput = document.querySelector('[data-lafka-menu-search]');
-	if (searchInput) {
-		var debounceTimer = null;
-		searchInput.addEventListener('input', function () {
-			var term = (searchInput.value || '').trim();
-			if (debounceTimer) {
-				clearTimeout(debounceTimer);
+	var searchTimer = null;
+	document.addEventListener('input', function (ev) {
+		var input = ev.target && ev.target.closest ? ev.target.closest('[data-lafka-menu-search-input]') : null;
+		if (!input) {
+			return;
+		}
+		var term = (input.value || '').trim();
+		if (searchTimer) {
+			clearTimeout(searchTimer);
+		}
+		searchTimer = setTimeout(function () {
+			if (term.length < 2) {
+				return;
 			}
-			debounceTimer = setTimeout(function () {
-				if (term.length < 2) {
-					return;
-				}
-				var resultsContainer = document.querySelector('[data-lafka-menu-results]');
-				var count = 0;
-				if (resultsContainer) {
-					count = resultsContainer.querySelectorAll('[data-lafka-item-id]').length;
-				}
-				window.dataLayer.push({
-					event: 'search',
-					search_term: term,
-					results_count: count
-				});
-			}, 350);
+			window.dataLayer.push({
+				event: 'search',
+				search_term: term,
+				results_count: countSearchResults()
+			});
+		}, 350);
+	});
+
+	/**
+	 * Products left showing after the search filtered the menu: every item
+	 * inside [data-lafka-menu-results] when the theme marks a results region,
+	 * else every rendered (not hidden) [data-lafka-item-id] on the page.
+	 */
+	function countSearchResults() {
+		var container = document.querySelector('[data-lafka-menu-results]');
+		var nodes = (container || document).querySelectorAll('[data-lafka-item-id]');
+		if (container) {
+			return nodes.length;
+		}
+		var count = 0;
+		nodes.forEach(function (el) {
+			if (!el.closest('[hidden]')) {
+				count++;
+			}
 		});
+		return count;
 	}
 
 	// ------------------------------------------------------------------
@@ -122,27 +139,38 @@
 		// Shipping method radio
 		if (/^shipping_method/.test(target.name)) {
 			var tier = (target.value || '').toString();
-			push('add_shipping_info', {
+			push('add_shipping_info', withCheckoutTotals({
 				shipping_tier: tier,
 				items: collectCheckoutItemsFromDom()
-			});
+			}));
 			return;
 		}
 		// Payment method radio
 		if (target.name === 'payment_method') {
 			var ptype = (target.value || '').toString();
-			push('add_payment_info', {
+			push('add_payment_info', withCheckoutTotals({
 				payment_type: ptype,
 				items: collectCheckoutItemsFromDom()
-			});
+			}));
 		}
 	});
 
 	/**
-	 * Best-effort collect of items on the checkout page DOM.
-	 * Falls back to an empty array — GA4 accepts add_shipping_info /
-	 * add_payment_info with an empty items array; ideally the data-attrs
-	 * are present in the checkout summary partial.
+	 * Add GA4's currency + value from the server-localized checkout totals.
+	 */
+	function withCheckoutTotals(payload) {
+		var ctx = window.lafkaDlCheckout;
+		if (ctx && ctx.currency) {
+			payload.currency = ctx.currency;
+			payload.value = Number(ctx.value) || 0;
+		}
+		return payload;
+	}
+
+	/**
+	 * The checkout's cart items: [data-lafka-checkout-item] rows when the
+	 * theme renders them, else the items the server localized for this
+	 * checkout page (window.lafkaDlCheckout, same shape as begin_checkout).
 	 */
 	function collectCheckoutItemsFromDom() {
 		var nodes = document.querySelectorAll('[data-lafka-checkout-item]');
@@ -156,6 +184,9 @@
 				quantity: parseInt(el.getAttribute('data-lafka-item-quantity') || '1', 10) || 1
 			});
 		});
+		if (!out.length && window.lafkaDlCheckout && Array.isArray(window.lafkaDlCheckout.items)) {
+			out = window.lafkaDlCheckout.items.slice();
+		}
 		return out;
 	}
 })();

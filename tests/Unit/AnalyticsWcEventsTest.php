@@ -580,38 +580,42 @@ namespace LafkaPlugin\Tests\Unit {
 			$this->assertSame( 'lafka-dl-client', $handle );
 		}
 
-		public function test_client_js_binds_added_to_cart_event(): void {
-			$src = file_get_contents( dirname( __DIR__, 2 ) . '/assets/js/lafka-dl-client.js' );
-			$this->assertStringContainsString( "'added_to_cart'", $src );
-			$this->assertStringContainsString( "'removed_from_cart'", $src );
-		}
+		public function test_checkout_page_hands_the_client_the_cart_items(): void {
+			Functions\when( 'get_theme_mod' )->alias( static function ( $key, $default = null ) {
+				return 'lafka_gtm_container_id' === $key ? 'GTM-ABC123' : ( null === $default ? '' : $default );
+			} );
+			Functions\when( 'wp_enqueue_script' )->justReturn( true );
+			Functions\when( 'plugins_url' )->returnArg();
+			Functions\when( 'lafka_plugin_asset_version' )->justReturn( '1' );
+			Functions\when( 'is_checkout' )->justReturn( true );
+			Functions\when( 'is_wc_endpoint_url' )->justReturn( false );
+			Functions\when( 'get_woocommerce_currency' )->justReturn( 'EUR' );
+			$cart = new class() {
+				public function get_cart() {
+					return array( 'k' => array( 'data' => new \Lafka_Test_WC_Product( 10, 'Margherita', 12.5 ), 'quantity' => 2 ) );
+				}
+				public function get_subtotal() {
+					return 25.0;
+				}
+			};
+			Functions\when( 'WC' )->justReturn( (object) array( 'cart' => $cart ) );
+			Functions\when( 'wc_get_product_category_list' )->justReturn( '' );
+			$items = array( array( 'item_id' => '10', 'item_name' => 'Margherita', 'item_category' => '', 'price' => 12.5, 'quantity' => 2 ) );
+			$localized = array();
+			Functions\when( 'wp_localize_script' )->alias( static function ( $handle, $name, $data ) use ( &$localized ) {
+				$localized[ $handle ][ $name ] = $data;
+			} );
 
-		public function test_client_js_handles_search_event(): void {
-			$src = file_get_contents( dirname( __DIR__, 2 ) . '/assets/js/lafka-dl-client.js' );
-			$this->assertStringContainsString( "event: 'search'", $src );
-			$this->assertStringContainsString( 'data-lafka-menu-search', $src );
-		}
+			\lafka_dl_enqueue_client();
 
-		public function test_client_js_handles_select_item_click(): void {
-			$src = file_get_contents( dirname( __DIR__, 2 ) . '/assets/js/lafka-dl-client.js' );
-			$this->assertStringContainsString( 'data-lafka-item-id', $src );
-			$this->assertStringContainsString( "'select_item'", $src );
-		}
-
-		public function test_client_js_handles_shipping_and_payment_radios(): void {
-			$src = file_get_contents( dirname( __DIR__, 2 ) . '/assets/js/lafka-dl-client.js' );
-			$this->assertStringContainsString( "'add_shipping_info'", $src );
-			$this->assertStringContainsString( "'add_payment_info'", $src );
-			$this->assertStringContainsString( 'shipping_method', $src );
-			$this->assertStringContainsString( 'payment_method', $src );
-		}
-
-		public function test_client_js_never_calls_gtag_directly(): void {
-			$src = file_get_contents( dirname( __DIR__, 2 ) . '/assets/js/lafka-dl-client.js' );
-			// Strip JS comments so the doc-comment "never gtag()" isn't a false positive.
-			$code = preg_replace( '#/\*.*?\*/#s', '', $src );
-			$code = preg_replace( '#//.*#', '', (string) $code );
-			$this->assertStringNotContainsString( 'gtag(', (string) $code, 'client JS must push only to dataLayer — GTM owns routing' );
+			$this->assertSame(
+				array(
+					'currency' => 'EUR',
+					'value'    => 25.0,
+					'items'    => $items,
+				),
+				$localized['lafka-dl-client']['lafkaDlCheckout'] ?? null
+			);
 		}
 
 		// ────────────────────────────────────────────────────────────────────
