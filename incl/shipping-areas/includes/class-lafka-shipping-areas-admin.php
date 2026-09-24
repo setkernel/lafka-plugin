@@ -103,11 +103,38 @@ class Lafka_Shipping_Areas_Admin {
 		<?php
 	}
 
+	/**
+	 * Admin screens that render shipping-areas / branch / order-hours markup
+	 * styled by lafka-shipping-areas-admin.css (settings pages, the delivery
+	 * area CPT, branch terms, and the orders list's branch/type/time columns).
+	 *
+	 * @return string[]
+	 */
+	public static function styled_screen_ids(): array {
+		return array(
+			'woocommerce_page_lafka_shipping_areas_admin',
+			'woocommerce_page_lafka_order_hours',
+			'lafka_shipping_areas',
+			'edit-lafka_shipping_areas',
+			'edit-lafka_branch_location',
+			'edit-shop_order',
+			'woocommerce_page_wc-orders',
+		);
+	}
+
 	public static function enqueue_scripts() {
-		wp_enqueue_script( 'lafka-shipping-areas-admin', plugins_url( '../assets/js/backend/lafka-shipping-areas-admin.min.js', __FILE__ ), array( 'jquery' ), lafka_plugin_asset_version( 'incl/shipping-areas/assets/js/backend/lafka-shipping-areas-admin.min.js' ), true );
+		$screen    = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+		$screen_id = is_object( $screen ) ? (string) $screen->id : '';
+		if ( ! in_array( $screen_id, self::styled_screen_ids(), true ) ) {
+			return;
+		}
+
 		wp_enqueue_style( 'lafka-shipping-areas-admin', plugins_url( '../assets/css/backend/lafka-shipping-areas-admin.css', __FILE__ ), array(), lafka_plugin_asset_version( 'incl/shipping-areas/assets/css/backend/lafka-shipping-areas-admin.css' ) );
-		$screen = get_current_screen();
-		if ( is_object( $screen ) && wp_script_is( 'lafka-google-maps', 'registered' ) ) {
+		if ( 'woocommerce_page_lafka_shipping_areas_admin' === $screen_id ) {
+			// Show/hide dependent settings rows on the settings form.
+			wp_enqueue_script( 'lafka-shipping-areas-admin', plugins_url( '../assets/js/backend/lafka-shipping-areas-admin.min.js', __FILE__ ), array( 'jquery' ), lafka_plugin_asset_version( 'incl/shipping-areas/assets/js/backend/lafka-shipping-areas-admin.min.js' ), true );
+		}
+		if ( wp_script_is( 'lafka-google-maps', 'registered' ) ) {
 			// These two map-pick UIs require Google Maps. Skip when no key
 			// is set — the rest of the shipping-areas admin still works.
 			if ( $screen->id === 'woocommerce_page_lafka_shipping_areas_admin' ) {

@@ -88,6 +88,42 @@ final class BranchAdminTest extends TestCase {
 		$this->assertStringContainsString( 'Downtown', $html );
 	}
 
+	/**
+	 * @param string $screen_id Current admin screen id.
+	 * @return string[] Handles enqueued by both admin enqueue callbacks.
+	 */
+	private function admin_assets_on( string $screen_id ): array {
+		$enqueued = array();
+		$record   = static function ( $handle ) use ( &$enqueued ) {
+			$enqueued[] = $handle;
+		};
+		Functions\when( 'get_current_screen' )->justReturn( (object) array( 'id' => $screen_id ) );
+		Functions\when( 'wp_enqueue_style' )->alias( $record );
+		Functions\when( 'wp_enqueue_script' )->alias( $record );
+		Functions\when( 'wp_enqueue_media' )->alias( static fn() => $record( 'media' ) );
+		Functions\when( 'wp_localize_script' )->justReturn( true );
+		Functions\when( 'wp_script_is' )->justReturn( false );
+		Functions\when( 'plugins_url' )->returnArg();
+		Functions\when( 'lafka_plugin_asset_version' )->justReturn( '1' );
+		Functions\when( 'wc_placeholder_img_src' )->justReturn( '' );
+		Functions\when( 'esc_url' )->returnArg();
+		Functions\when( 'esc_html__' )->returnArg();
+
+		Lafka_Shipping_Areas_Admin::enqueue_scripts();
+		Lafka_Branch_Locations_Admin::admin_enqueue_scripts();
+		return $enqueued;
+	}
+
+	public function test_admin_assets_stay_off_unrelated_screens(): void {
+		$this->assertSame( array(), $this->admin_assets_on( 'dashboard' ) );
+		$this->assertSame( array(), $this->admin_assets_on( 'edit-post' ) );
+	}
+
+	public function test_admin_assets_load_where_their_markup_is(): void {
+		$this->assertContains( 'lafka-shipping-areas-admin', $this->admin_assets_on( 'edit-shop_order' ), 'Orders-list columns are styled.' );
+		$this->assertContains( 'media', $this->admin_assets_on( 'edit-lafka_branch_location' ), 'Branch image picker needs the media modal.' );
+	}
+
 	public function test_delivery_area_polygon_field_is_a_complete_element(): void {
 		Functions\when( 'get_post_meta' )->justReturn( 'abc' );
 		Functions\when( 'wp_nonce_field' )->justReturn( '' );

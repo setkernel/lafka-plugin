@@ -214,7 +214,13 @@ class Lafka_Shipping_Areas {
 	}
 
 	public function enqueue_scripts() {
-		wp_enqueue_style( 'lafka-shipping-areas-front', plugins_url( 'assets/css/frontend/lafka-shipping-areas-front.css', __FILE__ ), array(), lafka_plugin_asset_version( 'incl/shipping-areas/assets/css/frontend/lafka-shipping-areas-front.css' ) );
+		// Front styles cover the cart/checkout delivery UI (map, shipping
+		// methods, date/time) and, when branch selection is on, the branch
+		// modal + "change branch" bar shown sitewide (mini-cart).
+		$branches = get_option( 'lafka_shipping_areas_branches' );
+		if ( is_cart() || is_checkout() || ! empty( $branches['enable_branch_selection_modal'] ) ) {
+			wp_enqueue_style( 'lafka-shipping-areas-front', plugins_url( 'assets/css/frontend/lafka-shipping-areas-front.css', __FILE__ ), array(), lafka_plugin_asset_version( 'incl/shipping-areas/assets/css/frontend/lafka-shipping-areas-front.css' ) );
+		}
 
 		if ( is_cart() || is_checkout() ) {
 			// The handle-shipping JS uses Google Maps for geo-fencing the

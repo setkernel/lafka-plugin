@@ -48,6 +48,13 @@ class Lafka_Branch_Locations_Admin {
 	}
 
 	public static function admin_enqueue_scripts() {
+		// Branch term screens (the branch fields) and the product editor (the
+		// "Branch Locations" taxonomy box the script toggles).
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+		if ( ! is_object( $screen ) || ! in_array( (string) $screen->id, array( 'edit-lafka_branch_location', 'product', 'woocommerce_page_lafka_shipping_areas_admin' ), true ) ) {
+			return;
+		}
+
 		wp_enqueue_media();
 		wp_enqueue_style( 'lafka-schedule' );
 		wp_enqueue_style( 'flatpickr' );
