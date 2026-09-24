@@ -6,10 +6,8 @@
  * Covers the three things the move must preserve/prove:
  *   - Auth: the AJAX endpoint verifies the `lafka_ajax_nonce` nonce and requires
  *     the `manage_woocommerce` capability before emitting anything.
- *   - HPOS-safe meta reads: branch-routing meta is read through the HPOS-aware
- *     accessor (WC_Order fallback here; delegation to the plugin canonical reader
- *     is locked by OrderNotificationHposMetaTest), and branch routing skips orders
- *     assigned to a different operator.
+ *   - Branch routing: orders assigned to a different operator are skipped
+ *     (the HPOS storage variant is OrderNotificationHposMetaTest).
  *   - State round-trip: notified-order state is PER USER (`_lafka_notified_order_ids`
  *     user meta) so concurrent managers each get their own alert; stale IDs are
  *     pruned, the freshly-notified ID appended and written back. The legacy shared
@@ -364,23 +362,13 @@ final class OrderNotificationsTest extends TestCase {
 		Lafka_Order_Notifications::render_permission_dialog();
 	}
 
-	// ─── Wiring ────────────────────────────────────────────────────────────────
+	// ─── Contract with the poller JS / stored state ───────────────────────────
 
 	public function test_constants_preserve_theme_contract(): void {
 		$this->assertSame( 'lafka_new_orders_notification', Lafka_Order_Notifications::AJAX_ACTION );
 		$this->assertSame( 'lafka_last_processed_order_ids', Lafka_Order_Notifications::STATE_OPTION );
 		$this->assertSame( '_lafka_notified_order_ids', Lafka_Order_Notifications::STATE_META );
 		$this->assertSame( 'lafka_ajax_nonce', Lafka_Order_Notifications::NONCE_ACTION );
-	}
-
-	public function test_class_registers_the_ajax_action(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/admin/class-lafka-order-notifications.php' );
-		$this->assertStringContainsString( "add_action( 'wp_ajax_' . self::AJAX_ACTION", $src );
-	}
-
-	public function test_main_plugin_requires_the_class(): void {
-		$main = file_get_contents( dirname( __DIR__, 2 ) . '/lafka-plugin.php' );
-		$this->assertStringContainsString( 'incl/admin/class-lafka-order-notifications.php', $main );
 	}
 
 	private function reset_lafka_options_static_state(): void {

@@ -54,29 +54,6 @@ final class KDSAllowedTransitionsTest extends TestCase {
 		$this->assertSame( $expected, Lafka_KDS_Order_Statuses::get_allowed_transitions() );
 	}
 
-	public function test_reject_path_reachable_from_processing_and_accepted(): void {
-		$map = Lafka_KDS_Order_Statuses::get_allowed_transitions();
-		$this->assertContains( 'rejected', $map['processing'] );
-		$this->assertContains( 'rejected', $map['accepted'] );
-	}
-
-	public function test_undo_paths_present(): void {
-		// "Undo" = step back to previous state. Operators rely on these to
-		// recover from misclicks during a busy service.
-		$map = Lafka_KDS_Order_Statuses::get_allowed_transitions();
-		$this->assertContains( 'processing', $map['accepted'], 'accepted → processing (undo accept) missing' );
-		$this->assertContains( 'accepted', $map['preparing'], 'preparing → accepted (undo start prep) missing' );
-		$this->assertContains( 'preparing', $map['ready'], 'ready → preparing (undo mark ready) missing' );
-	}
-
-	public function test_completed_is_terminal(): void {
-		// completed is the workflow exit; nothing should transition out of it
-		// via this map (refunds etc. are a separate WC concern).
-		$map = Lafka_KDS_Order_Statuses::get_allowed_transitions();
-		$this->assertArrayNotHasKey( 'completed', $map );
-		$this->assertArrayNotHasKey( 'rejected', $map );
-	}
-
 	public function test_filter_can_extend_map(): void {
 		Functions\when( 'apply_filters' )->alias(
 			static function ( $hook, $value ) {

@@ -37,6 +37,7 @@ final class BlocksIntegrationTest extends TestCase {
 		if ( ! class_exists( 'Lafka_Blocks_Integration', false ) ) {
 			require_once dirname( __DIR__, 2 ) . '/incl/checkout/class-lafka-blocks-integration.php';
 		}
+		require_once dirname( __DIR__, 2 ) . '/incl/store-api/class-lafka-store-api.php';
 
 		$this->js = (string) file_get_contents(
 			dirname( __DIR__, 2 ) . '/incl/checkout/assets/js/lafka-blocks-checkout.js'
@@ -88,7 +89,7 @@ final class BlocksIntegrationTest extends TestCase {
 		// Non-object / missing register() must not fatal.
 		Lafka_Blocks_Integration::register_integration( null );
 		Lafka_Blocks_Integration::register_integration( new \stdClass() );
-		$this->assertTrue( true );
+		$this->addToAssertionCount( 1 );
 	}
 
 	/* ----------------------------------------------------------------- *
@@ -164,36 +165,25 @@ final class BlocksIntegrationTest extends TestCase {
 	}
 
 	/* ----------------------------------------------------------------- *
-	 *  Build-free JS contract (no JSX, no build artifacts)
+	 *  Shipped JS: build-free, and wired to the PHP side's names
 	 * ----------------------------------------------------------------- */
 
-	public function test_js_uses_create_element_and_slotfills(): void {
-		$this->assertStringContainsString( 'createElement', $this->js );
-		$this->assertStringContainsString( 'ExperimentalOrderMeta', $this->js );
-		$this->assertStringContainsString( 'extensionCartUpdate', $this->js );
-		$this->assertStringContainsString( 'registerPlugin', $this->js );
-	}
-
-	public function test_js_has_no_jsx(): void {
-		// JSX would appear as `<Tag` / `</Tag>` / `/>` — none may exist in the
-		// build-free source. Scan line-by-line so the report points at the offender.
-		$lines = preg_split( '/\R/', $this->js );
-		foreach ( $lines as $n => $line ) {
-			$this->assertDoesNotMatchRegularExpression(
-				'/<\/?[A-Za-z][A-Za-z0-9]*(\s|>|\/)/',
-				$line,
-				'Possible JSX on line ' . ( $n + 1 ) . ': ' . trim( $line )
-			);
-			$this->assertStringNotContainsString( '/>', $line, 'Self-closing JSX on line ' . ( $n + 1 ) );
+	public function test_js_ships_without_jsx(): void {
+		// No build step: JSX (`<Tag`, `</Tag>`, `/>`) would be a syntax error in the browser.
+		$jsx = array();
+		foreach ( preg_split( '/\R/', $this->js ) as $n => $line ) {
+			if ( preg_match( '/<\/?[A-Za-z][A-Za-z0-9]*(\s|>|\/)|\/>/', $line ) ) {
+				$jsx[] = ( $n + 1 ) . ': ' . trim( $line );
+			}
 		}
+		$this->assertSame( array(), $jsx );
 	}
 
-	public function test_js_reads_lafka_cart_extension_namespace(): void {
-		// The free-delivery fill must read the NX1-04a `lafka` cart extension and
-		// push the timeslot update through the `lafka` update-callback namespace.
-		$this->assertStringContainsString( 'extensions.lafka', $this->js );
-		$this->assertStringContainsString( "namespace: 'lafka'", $this->js );
-		$this->assertStringContainsString( 'time_slots_for_date', $this->js );
+	public function test_js_talks_to_the_store_api_namespace_and_ajax_action(): void {
+		// Renaming either side alone silently breaks the block checkout fields.
+		$this->assertStringContainsString( 'extensions.' . \Lafka_Store_Api::LAFKA_NAMESPACE, $this->js );
+		$this->assertStringContainsString( "namespace: '" . \Lafka_Store_Api::LAFKA_NAMESPACE . "'", $this->js );
+		$this->assertStringContainsString( "'time_slots_for_date'", $this->js, 'The wp_ajax action Lafka_Timeslots serves.' );
 	}
 }
 

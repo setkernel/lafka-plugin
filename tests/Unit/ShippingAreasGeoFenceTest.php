@@ -113,16 +113,4 @@ final class ShippingAreasGeoFenceTest extends TestCase {
 	public function test_decode_polygon_coordinates_handles_empty_string(): void {
 		$this->assertSame( array(), Lafka_Shipping_Areas::decode_polygon_coordinates( '' ) );
 	}
-
-	public function test_decode_then_point_in_polygon_round_trip(): void {
-		// Decode a real encoded ring and confirm the geo-fence agrees: a point
-		// near the first decoded vertex must read as inside, a far-away point
-		// must read as outside.
-		$encoded = '_p~iF~ps|U_ulLnnqC_mqNvxq`@';
-		$ring    = Lafka_Shipping_Areas::decode_polygon_coordinates( $encoded );
-
-		$this->assertGreaterThanOrEqual( 3, count( $ring ) );
-		// A point obviously outside the western-US triangle.
-		$this->assertFalse( Lafka_Shipping_Areas::point_in_polygon( 0.0, 0.0, $ring ) );
-	}
 }

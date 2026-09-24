@@ -3,119 +3,72 @@ declare(strict_types=1);
 
 namespace LafkaPlugin\Tests\Unit;
 
+use Brain\Monkey;
+use Brain\Monkey\Functions;
+use Lafka_Order_Notifications;
+use PHPUnit\Framework\Attributes\PreserveGlobalState;
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\TestCase;
 
 /**
- * f075 regression lock — MIGRATED from lafka-theme (NX1-08b) alongside the
- * business logic it guards.
+ * f075: under HPOS the new-order poller must route by the branch meta stored on
+ * the order (wc_orders_meta), not by wp_postmeta — which is empty there, so a
+ * raw get_post_meta() read notified every operator of every branch's orders.
  *
- * The new-order poller decides which branch operator to alert by reading the
- * PLUGIN-owned order meta `lafka_selected_branch_id`. Under WooCommerce
- * High-Performance Order Storage (HPOS) that meta lives in `wc_orders_meta`, NOT
- * `wp_postmeta`, so a raw get_post_meta() returns empty and every branch operator
- * is notified for every order (or none) — silent multi-branch misrouting.
- *
- * The fix (now in incl/admin/class-lafka-order-notifications.php):
- *   - Reads branch meta through Lafka_Order_Notifications::get_order_meta(), which
- *     prefers the plugin's canonical
- *     Lafka_Shipping_Areas::get_order_meta_backward_compatible() accessor and falls
- *     back to the WC_Order object (HPOS + legacy safe).
- *   - Gates the bulk update_meta_cache( 'post', ... ) priming behind the HPOS check
- *     (OrderUtil::custom_orders_table_usage_is_enabled()), because under HPOS the
- *     order meta is already loaded onto the WC_Order objects and the 'post' cache
- *     prime is unnecessary (and wrong for orders with no wp_posts row).
- *
- * These source-grep locks fail if either accessor regresses back to raw post-meta.
- *
- * @package Lafka\Plugin\Tests\Unit
+ * Runs in its own process so WooCommerce's OrderUtil can report HPOS as on;
+ * the shared unit-test stub hard-codes it off for the rest of the suite.
  */
 final class OrderNotificationHposMetaTest extends TestCase {
 
-	private function source(): string {
-		$path = dirname( __DIR__, 2 ) . '/incl/admin/class-lafka-order-notifications.php';
-		$this->assertFileExists( $path );
+	#[RunInSeparateProcess]
+	#[PreserveGlobalState( false )]
+	public function test_under_hpos_branch_orders_only_alert_their_operator(): void {
+		class_alias( HposEnabledOrderUtil::class, 'Automattic\WooCommerce\Utilities\OrderUtil' );
+		Monkey\setUp();
+		try {
+			Functions\when( '__' )->returnArg();
+			Functions\when( 'esc_html__' )->returnArg();
+			Functions\when( 'esc_html' )->returnArg();
+			Functions\when( 'esc_url_raw' )->returnArg();
+			Functions\when( 'apply_filters' )->returnArg( 2 );
+			Functions\when( 'plugins_url' )->justReturn( 'https://example.test/icon.png' );
+			Functions\when( 'admin_url' )->alias( static fn( $path = '' ) => 'https://example.test/wp-admin/' . $path );
+			Functions\when( 'get_option' )->justReturn( '' );
+			Functions\when( 'get_user_meta' )->justReturn( array() );
+			Functions\when( 'update_user_meta' )->justReturn( true );
+			Functions\when( 'get_term' )->justReturn( null );
+			Functions\when( 'wc_get_orders' )->justReturn( array( 201 ) );
+			// wp_postmeta holds nothing for an HPOS order; the order object has it.
+			Functions\when( 'get_post_meta' )->justReturn( '' );
+			Functions\when( 'wc_get_order' )->justReturn(
+				new class() {
+					public function get_meta( $key ) {
+						return 'lafka_selected_branch_id' === $key ? '55' : '';
+					}
+				}
+			);
+			Functions\when( 'get_term_meta' )->alias(
+				static fn( $term_id, $key ) => 55 === (int) $term_id && 'lafka_branch_user' === $key ? '99' : ''
+			);
+			Functions\expect( 'update_meta_cache' )->never();
+			require_once dirname( __DIR__, 2 ) . '/incl/shipping-areas/class-lafka-shipping-areas.php';
+			require_once dirname( __DIR__, 2 ) . '/incl/class-lafka-options.php';
+			require_once dirname( __DIR__, 2 ) . '/incl/admin/class-lafka-order-notifications.php';
 
-		return (string) file_get_contents( $path );
+			Functions\when( 'get_current_user_id' )->justReturn( 42 );
+			$this->assertSame( '', Lafka_Order_Notifications::compute_notification(), 'Another branch operator is not alerted.' );
+
+			Functions\when( 'get_current_user_id' )->justReturn( 99 );
+			$this->assertStringContainsString( '#201', Lafka_Order_Notifications::compute_notification()['body'] ?? '' );
+		} finally {
+			Monkey\tearDown();
+		}
 	}
+}
 
-	/**
-	 * Isolate the body of the core notifier method so assertions don't
-	 * accidentally match unrelated calls elsewhere in the file.
-	 */
-	private function notifier_body(): string {
-		$src   = $this->source();
-		$start = strpos( $src, 'public static function compute_notification(' );
-		$this->assertNotFalse( $start, 'compute_notification() must exist.' );
-
-		// Slice up to the next method declaration that follows the notifier.
-		$end = strpos( $src, 'private static function build_payload(', $start );
-		$this->assertNotFalse( $end, 'Could not locate the method following the notifier.' );
-
-		return substr( $src, $start, $end - $start );
-	}
-
-	public function test_hpos_aware_accessor_exists(): void {
-		$src = $this->source();
-
-		$this->assertStringContainsString(
-			'private static function get_order_meta(',
-			$src,
-			'An HPOS-safe order-meta accessor must be defined.'
-		);
-	}
-
-	public function test_helper_prefers_plugin_backward_compatible_accessor(): void {
-		$src = $this->source();
-
-		$this->assertStringContainsString(
-			'Lafka_Shipping_Areas::get_order_meta_backward_compatible(',
-			$src,
-			'The HPOS-safe accessor must delegate to the plugin canonical reader when available.'
-		);
-	}
-
-	public function test_branch_meta_no_longer_read_via_raw_post_meta(): void {
-		$body = $this->notifier_body();
-
-		$this->assertDoesNotMatchRegularExpression(
-			'/get_post_meta\s*\([^;]*lafka_selected_branch_id/',
-			$body,
-			'Branch routing meta must not be read via raw get_post_meta() (breaks under HPOS).'
-		);
-	}
-
-	public function test_branch_meta_read_via_hpos_aware_helper(): void {
-		$body = $this->notifier_body();
-
-		$this->assertGreaterThanOrEqual(
-			1,
-			substr_count( $body, "self::get_order_meta( \$order_id, 'lafka_selected_branch_id' )" ),
-			'The notifier must read branch-routing meta through the HPOS-aware helper.'
-		);
-	}
-
-	public function test_post_meta_cache_prime_is_gated_behind_hpos_check(): void {
-		$body = $this->notifier_body();
-
-		$guard_pos = strpos( $body, 'self::hpos_enabled()' );
-		$prime_pos = strpos( $body, "update_meta_cache( 'post'" );
-
-		$this->assertNotFalse( $guard_pos, 'The notifier must consult the HPOS check before priming the post-meta cache.' );
-		$this->assertNotFalse( $prime_pos, 'The notifier still primes the post-meta cache for legacy CPT storage.' );
-		$this->assertLessThan(
-			$prime_pos,
-			$guard_pos,
-			"update_meta_cache( 'post', ... ) must be guarded by the HPOS check, not run unconditionally."
-		);
-	}
-
-	public function test_hpos_check_uses_order_util(): void {
-		$src = $this->source();
-
-		$this->assertStringContainsString(
-			'custom_orders_table_usage_is_enabled',
-			$src,
-			'The HPOS gate must consult OrderUtil::custom_orders_table_usage_is_enabled().'
-		);
+/** OrderUtil reporting High-Performance Order Storage as enabled. */
+final class HposEnabledOrderUtil {
+	public static function custom_orders_table_usage_is_enabled(): bool {
+		return true;
 	}
 }

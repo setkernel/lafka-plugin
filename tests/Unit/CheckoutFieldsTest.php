@@ -291,12 +291,6 @@ final class CheckoutFieldsTest extends TestCase {
 	 *  Registration guards
 	 * ----------------------------------------------------------------- */
 
-	public function test_register_noops_without_the_api(): void {
-		// woocommerce_register_additional_checkout_field undefined → must not fatal.
-		Lafka_Checkout_Fields::register();
-		$this->assertTrue( true );
-	}
-
 	public function test_register_only_wires_fields_in_blocks_mode(): void {
 		$registered = array();
 		Functions\when( 'woocommerce_register_additional_checkout_field' )->alias(
