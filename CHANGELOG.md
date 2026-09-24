@@ -2,18 +2,51 @@
 
 All notable changes to lafka-plugin are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow the repo's
-semver (see `npm version` SSOT in CONTRIBUTING.md). Older history lives in
-git tags + GitHub Releases.
+semver (`npm version` is the single source of truth — see the Releases section
+of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
+
+## [Unreleased]
+
+### Fixed
+- **Checkout**: implicit (hidden) branch / order-type values are filled into
+  the session before the Store API gates run, so the delivery geo-fence and
+  order-type meta work on single-branch / single-order-type block checkouts.
+- **Analytics**: the once-per-order purchase gate uses the order CRUD API, so
+  it is correct on HPOS-only stores instead of touching unrelated posts.
+- **Uninstall**: only Lafka's own swatch attribute types (color, image, label)
+  are reverted; other plugins' types are left alone.
+- **New-order alerts**: notified-order state is per shop manager, so one
+  manager's poll no longer consumes the alert for everyone else.
+- **Conversion**: default-OFF abandoned-cart and web-push modules no longer
+  create tables or schedule cron events until enabled.
+- **Promotions**: the settings page is reachable while the module is OFF, and
+  a one-time notice tells lafka-child upgraders to enable it.
+- **Admin / KDS**: no inline storefront styling on the KDS rejected state;
+  nutrition admin CSS is scoped to the product-edit screen.
+- **Release**: readme.txt `Stable tag` joins the version SSOT; the GPL
+  `LICENSE` now ships in the release zip.
+- **Menu**: `group_terms()` exposes the grouped-mobile-menu contract as a
+  term-level API (the walker hooks were dead).
+- **Modules**: Lafka → Modules no longer links every card to a 404 docs page.
+- Docs fact-check: shipped-state claims corrected; planning docs retired.
+
+### Removed (lean pass)
+- The retired Options-Framework import/export (`lafka_options_upload` /
+  `lafka_options_export` and the `lafka-plugin-admin.js` + plupload enqueue
+  on every admin page). Use `wp lafka config` or Lafka → Tools.
+- `scripts/migrate-restaurant-info.php` (superseded by `wp lafka config`).
+- Dead assets, the inert `incl/emails/` review-prompt shim, and uncalled
+  helpers; obsolete per-feature version-floor tests.
 
 ## [10.0.0] — 2026-07-07
 
-Phase NX1 ("Platform & Configurability Foundation") release. See
-`ROADMAP_2026-07-05.md` at the umbrella repo for the full program.
+Phase NX1 ("Platform & Configurability Foundation") release.
 
 ### Added
 - **Feature Modules dashboard** (Lafka → Modules): every gated module —
-  addons, shipping areas, order hours, KDS, promotions, abandoned cart, web
-  push, review prompts, analytics — visible and toggleable from one screen,
+  addons, shipping areas, order hours, KDS, promotions, order notifications,
+  abandoned cart, web push, review prompts, analytics — visible and toggleable
+  from one screen,
   backed by a typed module registry that Site Health also reads.
 - **Store API parity for every ordering gate**: store-closed, branch
   order-type capability, timeslot validity + capacity, and delivery geo-fence
@@ -71,3 +104,9 @@ Phase NX1 ("Platform & Configurability Foundation") release. See
 - Requires WP 6.6+ / PHP 8.1+ / WooCommerce 9.5+ (tested to WP 7.0 / WC 10.9).
 - Best experienced with lafka-theme ≥ 7.0.0 (block-checkout skin); the plugin
   remains theme-agnostic.
+
+### Upgrade notes
+- **Promotions** (BOGO + delivery minimum) is a default-OFF plugin module; the
+  lafka-child 6.x implementation is gone. Sites upgrading from lafka-child
+  ≤ 5.x must enable **Lafka → Modules → Promotions** and click-test BOGO and
+  the delivery minimum on the cart.
