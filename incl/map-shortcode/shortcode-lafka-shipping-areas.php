@@ -57,7 +57,7 @@ function lafka_shipping_areas_shortcode( $atts = [], $content = null, $tag = '' 
 	if ( ! wp_script_is( 'lafka-google-maps', 'registered' ) ) {
 		return current_user_can( 'manage_options' )
 			? '<div class="lafka-shipping-areas-shortcode lafka-shipping-areas-shortcode--no-key" style="padding:1rem;border:1px dashed #ccc;color:#666;">'
-			  . esc_html__( 'Lafka shipping-areas shortcode: configure a Google Maps API key in Theme Options → General to render the delivery-zone map.', 'lafka-plugin' )
+			  . esc_html__( 'Lafka shipping-areas shortcode: set a Google Maps API key under WooCommerce → Lafka Shipping Settings to render the delivery-zone map.', 'lafka-plugin' )
 			  . '</div>'
 			: '';
 	}

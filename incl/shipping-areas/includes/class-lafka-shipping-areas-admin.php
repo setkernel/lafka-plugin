@@ -132,9 +132,9 @@ class Lafka_Shipping_Areas_Admin {
 				value="<?php echo ! empty( $options[ $args['label_for'] ] ) ? esc_attr( $options[ $args['label_for'] ] ) : esc_attr( $google_maps_api_key ); ?>"
 		>
 		<p class="description">
-			<?php esc_html_e( 'Note: Google Maps API Key may already be set in', 'lafka-plugin' ); ?>
-			<a href="<?php echo esc_url( admin_url( 'admin.php?page=lafka-optionsframework#of-option-general' ) ); ?>" target="_blank"><?php esc_html_e( 'Theme Options', 'lafka-plugin' ); ?></a>.
-			<?php esc_html_e( 'In this case it will be pre-filled.', 'lafka-plugin' ); ?>
+			<?php esc_html_e( 'This is the same key as the Google Maps API key in', 'lafka-plugin' ); ?>
+			<a href="<?php echo esc_url( admin_url( 'customize.php?autofocus[section]=lafka_settings_general' ) ); ?>"><?php esc_html_e( 'Customizer → Lafka — Site Settings → General', 'lafka-plugin' ); ?></a>
+			<?php esc_html_e( '(Lafka theme); a key saved in either place is used by both.', 'lafka-plugin' ); ?>
 			<br>
 			<?php esc_html_e( 'If you don\'t have API key, see how to ', 'lafka-plugin' ); ?>
 			<a href="https://developers.google.com/maps/documentation/javascript/get-api-key" target="_blank"><?php esc_html_e( 'Generate Google Maps JavaScript API key', 'lafka-plugin' ); ?></a>

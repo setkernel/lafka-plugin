@@ -1231,13 +1231,13 @@ if ( ! function_exists( 'lafka_map_shortcode' ) ) {
 		if ( $map_latitude && $map_longitude && ! is_search() ) {
 
 			// `lafka-google-maps` is only registered when a Google Maps API
-			// key is configured (Theme Options → General). Without it, the
+			// key is configured (lafka_google_maps_script_url()). Without it, the
 			// shortcode renders a polite admin notice instead of a
 			// nonfunctional map iframe + a console "API key required" error.
 			if ( ! wp_script_is( 'lafka-google-maps', 'registered' ) ) {
 				return current_user_can( 'manage_options' )
 					? '<div class="lafka-google-maps lafka-map-shortcode lafka-map-shortcode--no-key" style="padding:1rem;border:1px dashed #ccc;color:#666;">'
-					  . esc_html__( 'Google Maps shortcode: configure a Google Maps API key in Theme Options → General to render this map.', 'lafka-plugin' )
+					  . esc_html__( 'Google Maps shortcode: set a Google Maps API key (Customizer → Lafka — Site Settings → General, or WooCommerce → Lafka Shipping Settings) to render this map.', 'lafka-plugin' )
 					  . '</div>'
 					: '';
 			}
