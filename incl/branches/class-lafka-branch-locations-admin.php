@@ -949,19 +949,20 @@ class Lafka_Branch_Locations_Admin {
 				}
 			}
 
+			// No branches → no branch filter to offer.
 			if ( ! empty( $branches_for_select ) ) {
+				$filtered_branch_id = $_GET['branch_location_filter'] ?? '';
+				?>
+				<select id="branch_location_filter" name="branch_location_filter">
+					<option value=""><?php esc_html_e( 'All Branches', 'lafka-plugin' ); ?></option>
+					<?php foreach ( $branches_for_select as $id => $name ) : ?>
+						<option value="<?php echo esc_attr( $id ); ?>" <?php selected( $id, (int) $filtered_branch_id ); ?> >
+							<?php echo esc_html( $name ); ?>
+						</option>
+					<?php endforeach; ?>
+				</select>
+				<?php
 			}
-			$filtered_branch_id = $_GET['branch_location_filter'] ?? '';
-			?>
-			<select id="branch_location_filter" name="branch_location_filter">
-				<option value=""><?php esc_html_e( 'All Branches', 'lafka-plugin' ); ?></option>
-				<?php foreach ( $branches_for_select as $id => $name ) : ?>
-					<option value="<?php echo esc_attr( $id ); ?>" <?php selected( $id, (int) $filtered_branch_id ); ?> >
-						<?php echo esc_html( $name ); ?>
-					</option>
-				<?php endforeach; ?>
-			</select>
-			<?php
 		}
 		$filtered_order_type = $_GET['order_type_filter'] ?? '';
 		?>
@@ -986,10 +987,15 @@ class Lafka_Branch_Locations_Admin {
 			// managers saw the global pending count instead of their branch
 			// scope. Use the documented `meta_query` form, which works in both
 			// stores in WC 8.x+.
-			$ids = wc_get_orders(
+			// Same meaning as WooCommerce's own badge (orders waiting on the
+			// store: processing) plus the kitchen-display in-progress states —
+			// not every order the branch ever had.
+			$statuses = (array) apply_filters( 'lafka_branch_order_count_statuses', array( 'wc-processing', 'wc-accepted', 'wc-preparing', 'wc-ready' ) );
+			$ids      = wc_get_orders(
 				array(
 					'limit'      => -1,
 					'return'     => 'ids',
+					'status'     => $statuses,
 					'meta_query' => array(
 						array(
 							'key'     => 'lafka_selected_branch_id',
