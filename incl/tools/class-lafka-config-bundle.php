@@ -314,7 +314,6 @@ if ( ! class_exists( 'Lafka_Config_Bundle' ) ) {
 				'lafka_business_hours_fri',
 				'lafka_business_hours_sat',
 				'lafka_business_hours_sun',
-				'lafka_homepage_hero_image',
 				'lafka_homepage_hero_attachment_id',
 				'lafka_contact_phone',
 				'lafka_share_on_posts',
