@@ -328,6 +328,15 @@ final class ModuleRegistryTest extends TestCase {
 		);
 	}
 
+	public function test_docs_url_is_empty_until_module_docs_exist(): void {
+		// No docs/modules/<slug>.md pages exist, so a guessed URL would render a
+		// 404 "Docs" link on every Modules card. Empty unless filtered.
+		Functions\when( 'apply_filters' )->returnArg( 2 );
+		foreach ( Lafka_Module_Registry::all() as $id => $module ) {
+			self::assertSame( '', Lafka_Module_Registry::docs_url( $module ), "Module '{$id}' must not link to non-existent docs." );
+		}
+	}
+
 	// ─── Storage classification (used by Site Health rewire) ────────────────
 
 	public function test_option_flag_modules_are_exactly_the_lafka_option_flags(): void {

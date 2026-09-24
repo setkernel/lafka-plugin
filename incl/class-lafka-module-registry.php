@@ -273,16 +273,17 @@ if ( ! class_exists( 'Lafka_Module_Registry' ) ) {
 		/**
 		 * Resolve a module's docs slug to a documentation URL.
 		 *
-		 * Points at the plugin's own public repository by default (not operator
-		 * content — safe for the OSS build) and is filterable so the NX5 docs
-		 * site can repoint it.
+		 * Returns '' by default: per-module docs pages do not exist yet, and a
+		 * guessed URL would render a 404 "Docs" link on every Modules card (the
+		 * page hides the link when this is empty). The `lafka_module_docs_url`
+		 * filter lets a docs site (NX5) supply real URLs per slug.
 		 */
 		public static function docs_url( Lafka_Module $module ): string {
 			$slug = $module->get_docs_slug();
 			if ( '' === $slug ) {
 				return '';
 			}
-			$url = 'https://github.com/setkernel/lafka-plugin/blob/main/docs/modules/' . $slug . '.md';
+			$url = '';
 			if ( function_exists( 'apply_filters' ) ) {
 				$url = apply_filters( 'lafka_module_docs_url', $url, $module->get_id(), $slug );
 			}
@@ -427,7 +428,7 @@ if ( ! class_exists( 'Lafka_Module_Registry' ) ) {
 					array(
 						'id'              => 'abandoned_cart',
 						'label'           => esc_html__( 'Abandoned cart recovery', 'lafka-plugin' ),
-						'description'     => esc_html__( 'Email a one-click resume link when a customer enters their address at checkout but does not finish.', 'lafka-plugin' ),
+						'description'     => esc_html__( 'Email a one-click resume link when a customer enters their email at checkout but does not finish.', 'lafka-plugin' ),
 						'category'        => 'conversion',
 						'storage'         => 'theme_mod',
 						'default_enabled' => false,
