@@ -196,13 +196,17 @@ complete, authoritative changelog and downloadable releases, see:
 
 https://github.com/setkernel/lafka-plugin/releases
 
-= 10.0.0 =
-* Current stable release. See the GitHub releases page for the full history of
-  changes across all versions.
+= 10.1.0 =
+* Checkout/cart fixes (block + classic): date/time "mandatory" only when enabled,
+  add-on "Include" honored, delivery geo-fence on block checkout, pickup never
+  asked for a delivery pin, timeslot capacity, store-clock dates, blocks pickup
+  recognized, guest abandoned-cart resume restores the cart.
+* Readable sources for every script, CREDITS.md, LICENSE in the zip, faster assets.
+* See the GitHub releases page for the full history.
 
 == Upgrade Notice ==
 
-= 10.0.0 =
+= 10.1.0 =
 Requires WordPress 6.6+, WooCommerce 9.5+ and PHP 8.1+. Review the GitHub
 release notes before upgrading a production store. Upgrading from lafka-child
 5.x or earlier: enable Lafka → Modules → Promotions and click-test BOGO +

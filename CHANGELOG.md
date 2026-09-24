@@ -5,7 +5,7 @@ All notable changes to lafka-plugin are documented here. The format follows
 semver (`npm version` is the single source of truth — see the Releases section
 of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
 
-## [Unreleased]
+## [10.1.0] — 2026-09-24
 
 ### Fixed
 - **Checkout (block)**: a saved "mandatory" date/time no longer blocks block
