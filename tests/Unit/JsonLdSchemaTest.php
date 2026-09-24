@@ -8,7 +8,7 @@
  *
  * After W2-T1 the schema generators read from `lafka_get_restaurant_info()`
  * (Customizer-driven). Tests assert STRUCTURE + Customizer-override behavior,
- * not literal Peppery values.
+ * not literal operator values.
  *
  * @package Lafka\Plugin\Tests\Unit
  * @since   8.8.1
@@ -84,11 +84,11 @@ final class JsonLdSchemaTest extends TestCase {
 	public function test_website_node_has_searchaction(): void {
 		$this->stub_populated_install();
 		Functions\when( 'get_bloginfo' )->alias(
-			static fn( $k = '' ) => 'name' === $k ? 'Peppery' : ( 'description' === $k ? 'Best pizza' : '' )
+			static fn( $k = '' ) => 'name' === $k ? 'Example Restaurant' : ( 'description' === $k ? 'Best pizza' : '' )
 		);
 		$node = lafka_schema_website();
 		self::assertSame( 'WebSite', $node['@type'] );
-		self::assertSame( 'Peppery', $node['name'] );
+		self::assertSame( 'Example Restaurant', $node['name'] );
 		self::assertSame( 'SearchAction', $node['potentialAction']['@type'] );
 		self::assertStringContainsString( '{search_term_string}', $node['potentialAction']['target']['urlTemplate'] );
 		self::assertStringEndsWith( '#website', (string) $node['@id'] );

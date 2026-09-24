@@ -358,7 +358,7 @@ final class AbandonedCartTest extends TestCase {
 	}
 
 	public function test_email_subject_default_substitutes_site_token(): void {
-		Functions\when( 'get_bloginfo' )->justReturn( 'Peppery Pizza' );
+		Functions\when( 'get_bloginfo' )->justReturn( 'Example Restaurant' );
 		Functions\when( 'get_theme_mod' )->alias(
 			static function ( $key, $default = null ) {
 				return 'lafka_ac_subject' === $key
@@ -367,7 +367,7 @@ final class AbandonedCartTest extends TestCase {
 			}
 		);
 		$out = \lafka_ac_email_subject_default();
-		$this->assertStringContainsString( 'Peppery Pizza', $out );
+		$this->assertStringContainsString( 'Example Restaurant', $out );
 		$this->assertStringNotContainsString( '{site}', $out );
 	}
 

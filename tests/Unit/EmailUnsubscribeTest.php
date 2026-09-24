@@ -265,7 +265,7 @@ final class EmailUnsubscribeTest extends TestCase {
 		// renders those operator-entered values verbatim — proving the address is
 		// sourced, never a hardcoded literal.
 		$store = array(
-			'lafka_business_name'    => 'Peppery Pizza',
+			'lafka_business_name'    => 'Example Restaurant',
 			'lafka_business_street'  => '742 Evergreen Terrace',
 			'lafka_business_city'    => 'Springfield',
 			'lafka_business_region'  => 'IL',
@@ -284,7 +284,7 @@ final class EmailUnsubscribeTest extends TestCase {
 		Functions\when( 'apply_filters' )->returnArg( 2 );
 
 		$addr = \lafka_unsub_postal_address();
-		$this->assertStringContainsString( 'Peppery Pizza', $addr );
+		$this->assertStringContainsString( 'Example Restaurant', $addr );
 		$this->assertStringContainsString( '742 Evergreen Terrace', $addr );
 		$this->assertStringContainsString( '62704', $addr );
 	}
