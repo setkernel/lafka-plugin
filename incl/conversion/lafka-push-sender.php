@@ -535,6 +535,39 @@ if ( ! function_exists( 'lafka_push_is_safe_remote_host' ) ) {
 	}
 }
 
+if ( ! function_exists( 'lafka_push_curl_options' ) ) {
+	/**
+	 * cURL options for one push delivery (a POST to the provider endpoint).
+	 *
+	 * The transfer is confined to HTTPS and never follows redirects — an open
+	 * redirect on a provider must not be able to bounce us to http:// or to an
+	 * internal host lafka_push_http_post() just refused. The redirect rule
+	 * comes first, so it is applied even if a later option is rejected.
+	 *
+	 * Requires the cURL extension (callers check curl_init first).
+	 *
+	 * @param string[] $headers Request headers ("Name: value").
+	 * @param string   $body    Encrypted payload.
+	 * @return array<int, mixed> For curl_setopt_array().
+	 */
+	function lafka_push_curl_options( array $headers, string $body ): array {
+		$options = array(
+			CURLOPT_FOLLOWLOCATION => false,
+			CURLOPT_POST           => true,
+			CURLOPT_POSTFIELDS     => $body,
+			CURLOPT_HTTPHEADER     => $headers,
+			CURLOPT_RETURNTRANSFER => true,
+			CURLOPT_TIMEOUT        => 15,
+			CURLOPT_CONNECTTIMEOUT => 5,
+		);
+		if ( defined( 'CURLPROTO_HTTPS' ) ) {
+			$options[ CURLOPT_PROTOCOLS ]       = CURLPROTO_HTTPS;
+			$options[ CURLOPT_REDIR_PROTOCOLS ] = CURLPROTO_HTTPS;
+		}
+		return $options;
+	}
+}
+
 if ( ! function_exists( 'lafka_push_http_post' ) ) {
 	/**
 	 * Tiny cURL wrapper used by lafka_push_send().
@@ -570,20 +603,13 @@ if ( ! function_exists( 'lafka_push_http_post' ) ) {
 			);
 		}
 		$ch = curl_init( $url );
-		curl_setopt( $ch, CURLOPT_POST, true );
-		curl_setopt( $ch, CURLOPT_POSTFIELDS, $body );
-		curl_setopt( $ch, CURLOPT_HTTPHEADER, $headers );
-		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
-		curl_setopt( $ch, CURLOPT_TIMEOUT, 15 );
-		curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 5 );
-		// Confine the transfer to HTTPS and never follow redirects — an open
-		// redirect on a provider must not be able to bounce us to http:// or to
-		// an internal host we just refused above.
-		if ( defined( 'CURLPROTO_HTTPS' ) ) {
-			curl_setopt( $ch, CURLOPT_PROTOCOLS, CURLPROTO_HTTPS );
-			curl_setopt( $ch, CURLOPT_REDIR_PROTOCOLS, CURLPROTO_HTTPS );
+		// Fail closed: never send with only part of the hardening applied.
+		if ( ! curl_setopt_array( $ch, lafka_push_curl_options( $headers, $body ) ) ) {
+			return array(
+				'http_code' => 0,
+				'body'      => 'curl_setopt_failed',
+			);
 		}
-		curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, false );
 		$resp_body = (string) curl_exec( $ch );
 		$http_code = (int) curl_getinfo( $ch, CURLINFO_HTTP_CODE );
 		return array(

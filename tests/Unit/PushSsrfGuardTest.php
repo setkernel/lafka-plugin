@@ -241,13 +241,23 @@ final class PushSsrfGuardTest extends TestCase {
 		$this->assertSame( 201, $res['http_code'] );
 	}
 
-	public function test_sender_source_pins_curl_transfer_hardening(): void {
-		// The IP-range checks above are behavioral; the cURL options can only be
-		// pinned by source until they are extracted into a testable helper.
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/conversion/lafka-push-sender.php' );
-		$this->assertStringContainsString( 'CURLOPT_PROTOCOLS', $src );
-		$this->assertStringContainsString( 'CURLOPT_REDIR_PROTOCOLS', $src );
-		$this->assertStringContainsString( 'CURLOPT_FOLLOWLOCATION, false', $src );
+	public function test_curl_transfer_is_https_only_with_no_redirects(): void {
+		$options = \lafka_push_curl_options( array( 'TTL: 60' ), 'ciphertext' );
+
+		$this->assertFalse( $options[ CURLOPT_FOLLOWLOCATION ] );
+		$this->assertSame( CURLPROTO_HTTPS, $options[ CURLOPT_PROTOCOLS ] );
+		$this->assertSame( CURLPROTO_HTTPS, $options[ CURLOPT_REDIR_PROTOCOLS ] );
+		$this->assertSame( array_key_first( $options ), CURLOPT_FOLLOWLOCATION, 'The redirect rule is applied first.' );
+		$this->assertTrue( $options[ CURLOPT_POST ] );
+		$this->assertSame( 'ciphertext', $options[ CURLOPT_POSTFIELDS ] );
+		$this->assertSame( array( 'TTL: 60' ), $options[ CURLOPT_HTTPHEADER ] );
+		$this->assertTrue( $options[ CURLOPT_RETURNTRANSFER ] );
+		$this->assertSame( 15, $options[ CURLOPT_TIMEOUT ] );
+		$this->assertSame( 5, $options[ CURLOPT_CONNECTTIMEOUT ] );
+
+		// Every option is one this cURL build accepts, so curl_setopt_array()
+		// applies them all.
+		$this->assertTrue( curl_setopt_array( curl_init(), $options ) );
 	}
 
 	// ─────────────────────────────────────────────────────────────────────────
