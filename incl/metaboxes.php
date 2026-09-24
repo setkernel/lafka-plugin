@@ -940,8 +940,11 @@ if ( ! function_exists( 'lafka_save_foodmenu_postdata' ) ) {
 		}
 
 		update_post_meta( $post_id, 'lafka_item_single_price', sanitize_text_field( $_POST['lafka_item_single_price'] ) );
-		update_post_meta( $post_id, 'lafka_item_weight', sanitize_text_field( $_POST['lafka_item_weight'] ) );
-		update_post_meta( $post_id, 'lafka_item_weight_unit', sanitize_text_field( $_POST['lafka_item_weight_unit'] ) );
+		foreach ( array( 'lafka_item_weight', 'lafka_item_weight_unit' ) as $weight_field ) {
+			if ( isset( $_POST[ $weight_field ] ) ) {
+				update_post_meta( $post_id, $weight_field, sanitize_text_field( wp_unslash( $_POST[ $weight_field ] ) ) );
+			}
+		}
 		for ( $i = 1; $i <= 3; $i++ ) {
 			update_post_meta( $post_id, 'lafka_item_size' . $i, sanitize_text_field( $_POST[ 'lafka_item_size' . $i ] ) );
 			update_post_meta( $post_id, 'lafka_item_price' . $i, sanitize_text_field( $_POST[ 'lafka_item_price' . $i ] ) );
@@ -950,8 +953,11 @@ if ( ! function_exists( 'lafka_save_foodmenu_postdata' ) ) {
 		update_post_meta( $post_id, 'lafka_allergens', sanitize_text_field( $_POST['lafka_allergens'] ) );
 		if ( class_exists( 'Lafka_Nutrition_Config' ) ) {
 			foreach ( Lafka_Nutrition_Config::$nutrition_meta_fields as $field_name => $field_data ) {
+				if ( ! isset( $_POST[ $field_name ] ) ) {
+					continue; // Field not on this form: leave the stored value alone.
+				}
 				if ( is_numeric( $_POST[ $field_name ] ) ) {
-					update_post_meta( $post_id, $field_name, sanitize_text_field( $_POST[ $field_name ] ) );
+					update_post_meta( $post_id, $field_name, sanitize_text_field( wp_unslash( $_POST[ $field_name ] ) ) );
 				} else {
 					update_post_meta( $post_id, $field_name, '' );
 				}

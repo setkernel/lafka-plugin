@@ -90,6 +90,34 @@ final class MetaboxNonceGuardTest extends TestCase {
 		$this->assertNotSame( array(), $this->writes, "{$handler}: a valid request must save (proves the rejections above were the guard, not a dead path)." );
 	}
 
+	public function test_foodmenu_save_leaves_fields_the_form_did_not_send_alone(): void {
+		// A request carrying only the core fields (older form, another editor)
+		// must neither warn about the missing weight/nutrition keys nor blank them.
+		$_POST          = array(
+			'lafka_foodmenu_nonce'        => 'nonce:lafka_save_foodmenu_postdata',
+			'lafka_item_single_price'     => '9',
+			'lafka_item_size1'            => '',
+			'lafka_item_price1'           => '',
+			'lafka_item_size2'            => '',
+			'lafka_item_price2'           => '',
+			'lafka_item_size3'            => '',
+			'lafka_item_price3'           => '',
+			'lafka_ingredients'           => '',
+			'lafka_allergens'             => '',
+			'lafka_ext_link_button_title' => '',
+			'lafka_ext_link_url'          => '',
+			'lafka_add_description'       => '',
+		);
+		$this->can_edit = true;
+
+		lafka_save_foodmenu_postdata( 42 );
+
+		$keys = array_column( $this->writes, 1 );
+		$this->assertContains( 'lafka_item_single_price', $keys );
+		$this->assertNotContains( 'lafka_item_weight', $keys );
+		$this->assertNotContains( 'lafka_item_weight_unit', $keys );
+	}
+
 	/**
 	 * @return array<string, array{0: string, 1: string, 2: array<string, mixed>}>
 	 */
