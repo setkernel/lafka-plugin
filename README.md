@@ -153,9 +153,10 @@ npm ci                  # ESLint + Stylelint
 composer phpcs          # full WordPress-Extra ruleset (security sniffs enforced)
 composer test           # PHPUnit (Brain Monkey)
 npm run lint            # ESLint + Stylelint
+npm run check-version   # version SSOT drift guard
 ```
 
-A pre-push git hook is shipped under `.githooks/` that runs all four gates before any push — install once per clone:
+A pre-push git hook is shipped under `.githooks/` that runs these gates (check-version, PHPCS, PHPUnit, ESLint, Stylelint) before any push — install once per clone:
 
 ```bash
 git config core.hooksPath .githooks
