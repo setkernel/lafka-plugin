@@ -16,6 +16,9 @@ vendor/
 # Test artefacts
 .phpunit.result.cache
 
+# wp-env uploads mapping (.wp-env.json)
+.wp-env-uploads/
+
 # Misc
 *.log
 *.bak
