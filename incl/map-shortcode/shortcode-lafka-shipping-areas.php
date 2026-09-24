@@ -24,7 +24,12 @@ function lafka_shipping_areas_shortcode( $atts = [], $content = null, $tag = '' 
 		$tag
 	);
 
-	$css_class = apply_filters( VC_SHORTCODE_CUSTOM_CSS_FILTER_TAG, vc_shortcode_custom_css_class( $shortcode_atts['css'], ' ' ), 'lafka_shipping_areas', $shortcode_atts );
+	// The `css` attribute is WPBakery design-options output; only resolve it
+	// when WPBakery is present (the shortcode must work without it).
+	$css_class = '';
+	if ( defined( 'VC_SHORTCODE_CUSTOM_CSS_FILTER_TAG' ) && function_exists( 'vc_shortcode_custom_css_class' ) ) {
+		$css_class = apply_filters( VC_SHORTCODE_CUSTOM_CSS_FILTER_TAG, vc_shortcode_custom_css_class( $shortcode_atts['css'], ' ' ), 'lafka_shipping_areas', $shortcode_atts );
+	}
 
 	$area_params = json_decode( urldecode( $shortcode_atts['areas'] ), true );
 
@@ -56,7 +61,7 @@ function lafka_shipping_areas_shortcode( $atts = [], $content = null, $tag = '' 
 			  . '</div>'
 			: '';
 	}
-	wp_enqueue_script( 'lafka-shipping-areas-shortcode-' . $shortcode_id, plugins_url( 'assets/js/frontend/lafka-shipping-areas-shortcode.min.js', __DIR__ ), array( 'lafka-google-maps' ), false, true );
+	wp_enqueue_script( 'lafka-shipping-areas-shortcode-' . $shortcode_id, plugins_url( 'incl/shipping-areas/assets/js/frontend/lafka-shipping-areas-shortcode.min.js', LAFKA_PLUGIN_FILE ), array( 'lafka-google-maps' ), lafka_plugin_asset_version( 'incl/shipping-areas/assets/js/frontend/lafka-shipping-areas-shortcode.min.js' ), true );
 	wp_localize_script(
 		'lafka-shipping-areas-shortcode-' . $shortcode_id,
 		'lafka_shipping_areas_shortcode_php_variables',
