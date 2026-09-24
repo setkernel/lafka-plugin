@@ -542,8 +542,8 @@ if ( function_exists( 'register_deactivation_hook' ) ) {
  *
  * Email + banner are both default OFF — operator opt-in. Either can be enabled
  * independently. The Phase 3D class supersedes the original P6-UX-8 simple
- * review-prompt email; the legacy file in incl/emails/ is kept but is now a
- * no-op shim that defers to the Phase 3D scheduler.
+ * review-prompt email (its inert incl/emails/ shim was removed in the
+ * lean pass).
  */
 require_once plugin_dir_path( __FILE__ ) . 'incl/conversion/lafka-review-prompt-email.php';
 require_once plugin_dir_path( __FILE__ ) . 'incl/conversion/lafka-review-prompt-banner.php';
@@ -713,18 +713,6 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/cli/lafka-config-cli.php';
  *   wp lafka seed-demo --reset
  */
 require_once plugin_dir_path( __FILE__ ) . 'incl/cli/class-lafka-cli-seed-demo.php';
-
-/**
- * P6-UX-8 (W3-T6) — deprecated as of v9.28.0 (Phase 3D).
- *
- * The original simple review-prompt email lived at incl/emails/lafka-review-prompt-email.php.
- * It has been superseded by the richer Phase 3D pipeline registered above
- * (incl/conversion/lafka-review-prompt-email.php + WC_Email subclass +
- * Customizer panel). The legacy file is now a no-op shim retained only so
- * any third-party that grep'd the include path doesn't fatal on a missing
- * file. New installations only hook the Phase 3D scheduler.
- */
-require_once plugin_dir_path( __FILE__ ) . 'incl/emails/lafka-review-prompt-email.php';
 
 /**
  * P6-PERF-4 (W3-T2, 2026-04-28): Asset pruning — dequeue heavy third-party assets

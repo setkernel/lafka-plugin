@@ -772,14 +772,6 @@ final class ReviewPromptTest extends TestCase {
 		$this->assertTrue( version_compare( $m[1], '9.28.0', '>=' ), "Version {$m[1]} regressed below 9.28.0" );
 	}
 
-	public function test_legacy_review_prompt_email_file_is_inert(): void {
-		// The original P6-UX-8 file is deprecated as of 9.28.0 — confirm it no
-		// longer registers any hooks that would collide with the new pipeline.
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/emails/lafka-review-prompt-email.php' );
-		$this->assertStringNotContainsString( "add_action( 'woocommerce_order_status_completed'", $src );
-		$this->assertStringNotContainsString( "add_action( 'lafka_review_prompt_send'", $src );
-	}
-
 	public function test_cli_module_still_present(): void {
 		// CLI helpers are independent of the Phase 3D email pipeline and remain
 		// available for the operator (wp lafka reviews status / enable / disable).
