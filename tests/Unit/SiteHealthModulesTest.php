@@ -48,6 +48,18 @@ final class SiteHealthModulesTest extends TestCase {
 		parent::tearDown();
 	}
 
+	public function test_security_recommendation_points_at_the_option_the_toggle_uses(): void {
+		Functions\when( 'get_option' )->justReturn( array() );
+		Functions\when( 'esc_html' )->returnArg( 1 );
+		require_once dirname( __DIR__, 2 ) . '/incl/security/class-lafka-security-headers.php';
+
+		$result = Lafka_Site_Health::instance()->test_security_headers();
+
+		self::assertSame( 'recommended', $result['status'] );
+		self::assertStringContainsString( 'Tools → Lafka Security', $result['description'] );
+		self::assertStringContainsString( 'wp option patch insert lafka_security_options enable_security_headers enabled', $result['description'] );
+	}
+
 	public function test_debug_info_lists_the_five_flags(): void {
 		Functions\when( 'get_option' )->justReturn( array() );
 
