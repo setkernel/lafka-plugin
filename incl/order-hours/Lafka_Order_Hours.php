@@ -58,7 +58,9 @@ class Lafka_Order_Hours {
 		}
 		try {
 			return new DateTimeZone( $timezone_string );
-		} catch ( Exception $e ) {
+		} catch ( Throwable $e ) {
+			// Throwable, not Exception: under Xdebug on PHP 8.3+, decorating the
+			// DateInvalidTimeZoneException fails and surfaces as an Error.
 			return wp_timezone();
 		}
 	}
