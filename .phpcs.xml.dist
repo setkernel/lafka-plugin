@@ -93,9 +93,8 @@
 		</properties>
 	</rule>
 
-	<!-- Check for cross-version PHP compatibility. NOTE: the installed
-	     PHPCompatibility 9.3.5 has no PHP 8.x sniffs, so this does not verify
-	     the 8.1 floor (see COMPATIBILITY.md). -->
+	<!-- Cross-version PHP compatibility against the 8.1 floor. PHPCompatibility
+	     10 (alpha) is required: 9.3.5 has no PHP 8.x sniffs. -->
 	<config name="testVersion" value="8.1-"/>
 	<rule ref="PHPCompatibilityWP"/>
 

@@ -763,7 +763,6 @@ if ( ! class_exists( 'Lafka_CLI_Seed_Demo' ) ) {
 			ob_start();
 			imagepng( $image );
 			$data = (string) ob_get_clean();
-			imagedestroy( $image );
 			return $data;
 		}
 

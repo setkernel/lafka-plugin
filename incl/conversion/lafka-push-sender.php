@@ -282,7 +282,9 @@ if ( ! function_exists( 'lafka_push_encrypt_payload' ) ) {
 		if ( false === $ua_key ) {
 			return null;
 		}
-		$shared = @openssl_pkey_derive( $ua_key, $ec, 32 );
+		// P-256 ECDH yields the 32-byte shared secret on its own; the
+		// key_length argument is deprecated as of PHP 8.5.
+		$shared = @openssl_pkey_derive( $ua_key, $ec );
 		if ( false === $shared || '' === $shared ) {
 			return null;
 		}
@@ -569,7 +571,6 @@ if ( ! function_exists( 'lafka_push_http_post' ) ) {
 		curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, false );
 		$resp_body = (string) curl_exec( $ch );
 		$http_code = (int) curl_getinfo( $ch, CURLINFO_HTTP_CODE );
-		curl_close( $ch );
 		return array(
 			'http_code' => $http_code,
 			'body'      => $resp_body,

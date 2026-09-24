@@ -43,25 +43,28 @@ Each repo is tagged and released independently on its own cadence — the plugin
 and theme advance faster than the thin child, so their versions are not expected
 to move in lock-step.
 
-## CI (single-runner PHPUnit; PHP floor NOT statically enforced)
+## CI (single-runner PHPUnit; PHP 8.1 floor checked statically)
 
 CI does **not** run a multi-PHP test matrix. Under the first-party-actions-only
 policy (see the header comment in `.github/workflows/ci.yml`), the PHP job runs
 PHPUnit + PHPCS on the runner's **single** pre-installed PHP (currently 8.3,
 matching prod).
 
-The **PHP 8.1 floor is not verified by CI.** `.phpcs.xml.dist` wires
-`PHPCompatibilityWP` with `testVersion 8.1-`, but the installed
-`phpcompatibility/php-compatibility` 9.3.5 has no PHP 8.x sniffs, so an
-8.2+-only construct would pass PHPCS. The `Requires PHP: 8.1` plugin header
-still blocks activation on older PHP at runtime; code review is the only guard
-against 8.2+ syntax until a PHPCompatibility 10.x release or a PHP 8.1 test run
-is added.
+The **PHP 8.1 floor is checked by PHPCS**: `.phpcs.xml.dist` runs
+`PHPCompatibilityWP` with `testVersion 8.1-` on PHPCompatibility **10**
+(`10.0.0-alpha2`, via `phpcompatibility-wp 3.0.0-alpha2` — the 9.x line has
+no PHP 8.x sniffs). A PHP 8.2+-only construct (readonly classes, DNF types,
+`json_validate()`, …) fails CI. The check is static: it catches syntax and
+known new functions/constants, not every behavioural difference between PHP
+versions, and the unit tests themselves run on the runner PHP only. The
+`Requires PHP: 8.1` plugin header still blocks activation on older PHP.
 
-CI checks: PHPCS (WordPress-Extra ruleset; exclusions documented in
-`.phpcs.xml.dist`) + PHPUnit (Brain Monkey), both on the runner PHP, plus
-`npm run check-version`. JS/CSS linted separately on Node 24 (ESLint +
-Stylelint).
+CI checks: PHPCS (WordPress-Extra ruleset + PHPCompatibility; exclusions
+documented in `.phpcs.xml.dist`) + PHPUnit (Brain Monkey), both on the runner
+PHP, plus `npm run check-version`. JS is linted (ESLint), CSS linted
+(Stylelint), front-end JS behaviour-tested (`npm test`, node:test) and the
+committed `.min.js` builds are checked against their sources (`npm run build`)
+on Node 24.
 
 The security sniff families — `WordPress.Security.EscapeOutput.*`,
 `WordPress.Security.NonceVerification.*`, `WordPress.DB.PreparedSQL.*` —
