@@ -1,6 +1,8 @@
 <?php
 defined( 'ABSPATH' ) || exit;
 
+require_once __DIR__ . '/../admin/lafka-term-form-nonce.php';
+
 // $_GET reads across this admin class are for filter state on the
 // order-list / branch-list / shop-order screens (branch_location_filter,
 // order_type_filter, etc.). All are read-only display logic; no state
@@ -580,10 +582,7 @@ class Lafka_Branch_Locations_Admin {
 		if ( ! is_admin() ) {
 			return;
 		}
-		$lafka_nonce_action = ! empty( $_POST['action'] ) && 'editedtag' === $_POST['action']
-			? 'update-tag_' . (int) $term_id
-			: 'add-tag';
-		if ( ! isset( $_POST['_wpnonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ), $lafka_nonce_action ) ) {
+		if ( ! lafka_verify_term_form_nonce( $term_id ) ) {
 			return;
 		}
 

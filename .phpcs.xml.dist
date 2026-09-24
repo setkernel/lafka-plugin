@@ -84,6 +84,15 @@
 		<exclude name="WordPress.WP.DeprecatedParameters.Get_termsParam2Found"/>
 	</rule>
 
+	<!-- Plugin nonce verifiers: calls to these count as nonce verification. -->
+	<rule ref="WordPress.Security.NonceVerification">
+		<properties>
+			<property name="customNonceVerificationFunctions" type="array">
+				<element value="lafka_verify_term_form_nonce"/>
+			</property>
+		</properties>
+	</rule>
+
 	<!-- Check for cross-version PHP compatibility. NOTE: the installed
 	     PHPCompatibility 9.3.5 has no PHP 8.x sniffs, so this does not verify
 	     the 8.1 floor (see COMPATIBILITY.md). -->
