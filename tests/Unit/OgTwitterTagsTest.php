@@ -93,8 +93,8 @@ final class OgTwitterTagsTest extends TestCase {
         // `cuisines` + `city`. The constructed-pitch branch previously read
         // `servedCuisine` and `address.addressLocality`, which never
         // existed in the array — the pitch collapsed to just `name` on
-        // every install, leading to "Peppery Pizza & Poutine" on every
-        // page's meta description. Lock the correct keys.
+        // every install, leaving the bare site name as every page's meta
+        // description. Lock the correct keys.
         $src = file_get_contents( dirname( __DIR__, 2 ) . '/lafka-plugin.php' );
         $this->assertStringContainsString(
             "\$info['cuisines']",

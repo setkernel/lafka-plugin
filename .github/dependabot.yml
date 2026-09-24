@@ -20,7 +20,7 @@ updates:
       interval: weekly
       day: monday
       time: '06:00'
-      timezone: 'America/Halifax'
+      timezone: 'UTC'
     open-pull-requests-limit: 5
     labels:
       - dependencies
@@ -43,7 +43,7 @@ updates:
       interval: weekly
       day: monday
       time: '06:00'
-      timezone: 'America/Halifax'
+      timezone: 'UTC'
     open-pull-requests-limit: 5
     labels:
       - dependencies
@@ -67,7 +67,7 @@ updates:
       interval: weekly
       day: monday
       time: '06:00'
-      timezone: 'America/Halifax'
+      timezone: 'UTC'
     open-pull-requests-limit: 5
     labels:
       - dependencies

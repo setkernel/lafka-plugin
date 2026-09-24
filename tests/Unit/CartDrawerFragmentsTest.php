@@ -48,7 +48,7 @@ final class CartDrawerFragmentsTest extends TestCase {
 
     public function test_free_delivery_threshold_fallback_defaults_to_zero(): void {
         // Regression lock for v9.7.8. Pre-fix the threshold defaulted to 40
-        // (Peppery's value) — every other operator running this OSS plugin got
+        // (the launch operator's value) — every other operator running this OSS plugin got
         // "Add $X more for free delivery" copy with a wrong number. The
         // plugin-absent fallback must still default to 0 (feature off) and the
         // hardcoded 40 must never return.
@@ -56,7 +56,7 @@ final class CartDrawerFragmentsTest extends TestCase {
         $this->assertMatchesRegularExpression(
             "/get_theme_mod\(\s*'lafka_pdp_free_delivery_threshold'\s*,\s*0\s*\)/",
             $src,
-            'Plugin-absent fallback must default to 0 (disabled), not a Peppery-specific value.'
+            'Plugin-absent fallback must default to 0 (disabled), not an operator-specific value.'
         );
         $this->assertDoesNotMatchRegularExpression(
             "/apply_filters\(\s*'lafka_pdp_free_delivery_threshold'\s*,\s*40\s*\)/",

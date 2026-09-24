@@ -406,7 +406,7 @@ final class ConfigBundleRoundTripTest extends TestCase {
 				11 => array(
 					'lafka_branch_order_type'   => 'delivery',
 					'lafka_branch_address'      => '123 Main St',
-					'lafka_branch_timezone'     => 'America/Halifax',
+					'lafka_branch_timezone'     => 'America/Toronto',
 					'branch_id'                 => '11',
 				),
 			),

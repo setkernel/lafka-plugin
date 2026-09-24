@@ -17,9 +17,8 @@ use PHPUnit\Framework\TestCase;
  *   - The [lafka_nap] shortcode in lafka-plugin.php delegates to
  *     lafka_schema_get_nap().
  *
- * No restaurant-specific literals must appear in OSS source. Tests assert
- * STRUCTURE (presence + types) and resolver behavior (Customizer override),
- * not literal Peppery values.
+ * Tests assert STRUCTURE (presence + types) and resolver behavior
+ * (Customizer override); NoOperatorLiteralsTest keeps operator values out.
  */
 require_once dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-helpers.php';
 
@@ -33,22 +32,6 @@ final class NapShortcodeTest extends TestCase {
 	protected function tearDown(): void {
 		Monkey\tearDown();
 		parent::tearDown();
-	}
-
-	/**
-	 * The schema helpers file MUST NOT contain restaurant-specific literals.
-	 * Operator content flows through Customizer, not source code.
-	 */
-	public function test_helpers_file_contains_no_hardcoded_site_values(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-helpers.php' );
-		$forbidden = array( 'Peppery', 'Sackville Drive', 'B4C 2R8', '19022525353', '902-252-5353', '44.7720', '-63.6789', 'three.ppps' );
-		foreach ( $forbidden as $needle ) {
-			$this->assertStringNotContainsString(
-				$needle,
-				$src,
-				"OSS-safety: {$needle} must not appear in lafka-schema-helpers.php — Customizer is the source-of-truth."
-			);
-		}
 	}
 
 	/**

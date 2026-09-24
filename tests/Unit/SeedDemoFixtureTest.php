@@ -9,9 +9,6 @@
  *
  *   - the fixture data file is deterministic + structurally valid (12 products
  *     across 4 neutral categories, unique slugs, both simple + variable types),
- *   - the fixture text carries ZERO operator-specific literals (a public,
- *     sellable demo store must never leak the launch operator's brand) — reuses
- *     the exact DocsNoOperatorLiteralsTest literal list,
  *   - both required addon pricing strategies are exercised (flat_per_option +
  *     flat_group) and assigned to a real category,
  *   - business info is fake-but-schema-valid (E.164 phone, numeric geo, email),
@@ -36,24 +33,6 @@ require_once dirname( __DIR__, 2 ) . '/incl/cli/class-lafka-cli-seed-demo.php';
 require_once dirname( __DIR__, 2 ) . '/incl/shipping-areas/class-lafka-shipping-areas.php';
 
 final class SeedDemoFixtureTest extends TestCase {
-
-	/**
-	 * The exact operator-literal list guarded in DocsNoOperatorLiteralsTest —
-	 * the seeded demo store is public + sellable and must read as a generic
-	 * restaurant, never as the launch operator's site.
-	 *
-	 * @var array<int, string>
-	 */
-	private const OPERATOR_LITERALS = array(
-		'Peppery',
-		'pepperypizzapoutine',
-		'poutine',
-		'Sackville',
-		'Halifax',
-		'\bHRM\b',
-		'Garlic Fingers',
-		'Meat Lovers',
-	);
 
 	protected function setUp(): void {
 		parent::setUp();
@@ -150,17 +129,6 @@ final class SeedDemoFixtureTest extends TestCase {
 			}
 			self::assertIsNumeric( $product['price'], "price for {$product['slug']} must be numeric" );
 		}
-	}
-
-	public function test_fixture_text_is_free_of_operator_literals(): void {
-		$blob = $this->flatten_strings( Lafka_CLI_Seed_Demo::fixtures() );
-		$hits = array();
-		foreach ( self::OPERATOR_LITERALS as $literal ) {
-			if ( 1 === preg_match( '/' . $literal . '/i', $blob ) ) {
-				$hits[] = $literal;
-			}
-		}
-		self::assertSame( array(), $hits, 'seed fixtures must not contain any operator-specific literal: ' . implode( ', ', $hits ) );
 	}
 
 	// ─── Addon groups ───────────────────────────────────────────────────────
@@ -325,26 +293,4 @@ final class SeedDemoFixtureTest extends TestCase {
 		self::assertStringContainsString( 'incl/cli/class-lafka-cli-seed-demo.php', $main, 'the plugin must require the seeder' );
 	}
 
-	// ─── Helpers ────────────────────────────────────────────────────────────
-
-	/**
-	 * Recursively concatenate every string key and value in an array so a
-	 * single regex sweep can prove no operator literal hides anywhere.
-	 *
-	 * @param mixed $data Fixture value.
-	 * @return string
-	 */
-	private function flatten_strings( $data ): string {
-		$out = '';
-		if ( is_array( $data ) ) {
-			foreach ( $data as $key => $value ) {
-				$out .= ' ' . ( is_string( $key ) ? $key : '' ) . ' ' . $this->flatten_strings( $value );
-			}
-			return $out;
-		}
-		if ( is_scalar( $data ) ) {
-			return ' ' . (string) $data;
-		}
-		return $out;
-	}
 }
