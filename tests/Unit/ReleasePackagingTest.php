@@ -8,7 +8,7 @@
  * step. This test parses the workflow's `--exclude=` patterns and asserts the
  * known dev-file classes are excluded — and, symmetrically, that runtime files
  * an installed plugin needs (readme.txt, COMPATIBILITY.md, the operator guides
- * under docs/, languages/) are NOT excluded. Scans the workflow as text; it runs
+ * under docs/, languages/, the GPL LICENSE) are NOT excluded. Scans the workflow as text; it runs
  * no rsync and needs no node_modules, so it fires in `composer test` + pre-push.
  *
  * NX1-10d.
@@ -99,6 +99,8 @@ final class ReleasePackagingTest extends TestCase {
 			'wpml-config.xml',
 			'lafka-plugin.php',
 			'docs',
+			// GPLv2 §1 requires giving recipients a copy of the licence.
+			'LICENSE',
 		);
 
 		foreach ( $runtime as $needle ) {

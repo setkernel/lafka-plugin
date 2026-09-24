@@ -41,7 +41,8 @@ jobs:
           # Excluded: VCS/CI metadata, dependencies, package manifests, lint +
           # phpunit + wp-env tooling, the test suite, ops/build scripts, and the
           # internal planning docs. Runtime files STAY — readme.txt,
-          # COMPATIBILITY.md, the operator guides under docs/, languages/.
+          # COMPATIBILITY.md, the operator guides under docs/, languages/,
+          # and LICENSE (GPLv2 requires shipping the licence text).
           rsync -a --exclude='.git' \
                    --exclude='.github' \
                    --exclude='.gitignore' \
@@ -64,7 +65,6 @@ jobs:
                    --exclude='docs/superpowers' \
                    --exclude='CONTRIBUTING.md' \
                    --exclude='README.md' \
-                   --exclude='LICENSE' \
                    ./ lafka-plugin/
           zip -r lafka-plugin.zip lafka-plugin/
 
