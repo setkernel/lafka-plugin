@@ -1,9 +1,16 @@
 <?php
+/**
+ * The add-ons module coexists with the official WooCommerce Product Add-Ons
+ * extension: it must not claim that vendor's constants.
+ *
+ * @package Lafka_Plugin
+ */
+
 declare(strict_types=1);
+
 namespace LafkaPlugin\Tests\Unit\Addons;
 
 use Brain\Monkey;
-use Brain\Monkey\Functions;
 use PHPUnit\Framework\TestCase;
 
 require_once dirname( __DIR__, 3 ) . '/incl/addons/lafka-product-addons.php';
@@ -13,8 +20,6 @@ final class EngineLoadedTest extends TestCase {
 	protected function setUp(): void {
 		parent::setUp();
 		Monkey\setUp();
-		Functions\when( '__' )->returnArg( 1 );
-		Functions\when( 'wp_generate_uuid4' )->justReturn( 'test-uuid-0000' );
 	}
 
 	protected function tearDown(): void {
@@ -22,15 +27,14 @@ final class EngineLoadedTest extends TestCase {
 		parent::tearDown();
 	}
 
-	public function test_engine_constants_loaded_via_main_plugin(): void {
-		self::assertTrue( defined( 'LAFKA_ADDONS_ENGINE_VERSION' ) );
-	}
+	public function test_booting_alongside_woocommerce_product_addons_leaves_its_version_alone(): void {
+		if ( ! defined( 'WC_PRODUCT_ADDONS_VERSION' ) ) {
+			define( 'WC_PRODUCT_ADDONS_VERSION', '7.0.0' ); // As the real extension would.
+		}
+		$vendor_version = WC_PRODUCT_ADDONS_VERSION;
 
-	public function test_engine_classes_available(): void {
-		self::assertTrue( class_exists( 'Lafka_Addon_Schema' ) );
-		self::assertTrue( class_exists( 'Lafka_Addon_Group' ) );
-		self::assertTrue( class_exists( 'Lafka_Addon_Option' ) );
-		self::assertTrue( class_exists( 'Lafka_Pricing_Resolver' ) );
-		self::assertTrue( class_exists( 'Lafka_Addon_Repository' ) );
+		new \Lafka_Product_Addons(); // A redefinition would raise a warning (failOnWarning).
+
+		$this->assertSame( $vendor_version, WC_PRODUCT_ADDONS_VERSION );
 	}
 }

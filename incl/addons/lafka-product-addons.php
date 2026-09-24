@@ -14,7 +14,6 @@ class Lafka_Product_Addons {
 	 * Constructor.
 	 */
 	public function __construct() {
-		define( 'WC_PRODUCT_ADDONS_VERSION', '3.1.0' ); // WRCS: DEFINED_VERSION.
 		add_action( 'plugins_loaded', array( $this, 'init_classes' ) );
 		add_action( 'init', array( $this, 'init_post_types' ), 20 );
 	}
