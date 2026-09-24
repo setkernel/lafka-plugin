@@ -350,9 +350,12 @@ class Lafka_Shipping_Areas {
 	}
 
 	public static function add_recipient_to_order_emails( $recipient, $object, $wc_email_object ): string {
-		if ( $object instanceof \Automattic\WooCommerce\Admin\Overrides\Order ) {
-			$recipients      = array_map( 'trim', explode( ',', $recipient ) );
-			$order_branch_id = self::get_order_meta_backward_compatible( $object->get_id(), 'lafka_selected_branch_id' );
+		// Any order object — the WC Analytics Order override class only exists
+		// when WC Admin is loaded, so matching it silently skipped branch
+		// managers on stores without Analytics.
+		if ( $object instanceof WC_Order ) {
+			$recipients      = array_filter( array_map( 'trim', explode( ',', (string) $recipient ) ) );
+			$order_branch_id = $object->get_meta( 'lafka_selected_branch_id' );
 			if ( ! empty( $order_branch_id ) ) {
 				$branch_user_id   = get_term_meta( $order_branch_id, 'lafka_branch_user', true );
 				$branch_user_data = get_userdata( $branch_user_id );
