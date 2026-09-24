@@ -130,7 +130,21 @@ if ( ! function_exists( 'lafka_ac_redirect_to_cart' ) ) {
 		} else {
 			header( 'Location: ' . $target, true, 302 );
 		}
-		exit;
+
+		/**
+		 * Filters whether the request ends right after the resume redirect.
+		 *
+		 * Defaults to true (the redirect is final). Return false to keep
+		 * running — for tests, or an integration that needs code after the
+		 * cart restore; lafka_ac_handle_resume_request() returns straight
+		 * after every redirect either way.
+		 *
+		 * @param bool   $exit   Whether to exit. Default true.
+		 * @param string $target The redirect URL.
+		 */
+		if ( ! function_exists( 'apply_filters' ) || (bool) apply_filters( 'lafka_ac_resume_redirect_exit', true, $target ) ) {
+			exit;
+		}
 	}
 }
 

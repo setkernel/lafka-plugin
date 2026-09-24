@@ -598,4 +598,67 @@ final class AbandonedCartTest extends TestCase {
 		\lafka_ac_handle_resume_request(); // get_row returns null → no restore, no redirect.
 		$this->assertCount( 1, $wpdb->calls['get_row'] );
 	}
+
+	/**
+	 * A valid token restores the saved cart and redirects to it; a converted
+	 * row or an empty payload redirects without touching the cart. The
+	 * `lafka_ac_resume_redirect_exit` seam keeps the request alive here.
+	 */
+	public function test_resume_request_restores_the_cart_then_redirects(): void {
+		$wpdb = $this->install_fake_wpdb();
+		$cart = new class() {
+			/** @var array<int,array<int,int>> */
+			public array $added = array();
+			public int $emptied = 0;
+			public function empty_cart(): void {
+				++$this->emptied;
+			}
+			public function add_to_cart( $product_id, $qty, $variation_id ) {
+				$this->added[] = array( $product_id, $qty, $variation_id );
+				return 'key';
+			}
+		};
+		Functions\when( 'WC' )->justReturn( (object) array( 'cart' => $cart ) );
+		Functions\when( 'wc_get_cart_url' )->justReturn( 'https://example.test/cart/' );
+		Functions\when( 'apply_filters' )->alias(
+			static fn( $hook, $value ) => 'lafka_ac_resume_redirect_exit' === $hook ? false : $value
+		);
+		$redirects = array();
+		Functions\when( 'wp_safe_redirect' )->alias(
+			static function ( $url, $status ) use ( &$redirects ) {
+				$redirects[] = array( $url, $status );
+			}
+		);
+		$_GET = array( 'lafka_resume_cart' => str_repeat( 'a', 32 ) );
+
+		$wpdb->get_row_return = (object) array(
+			'order_id'      => 0,
+			'cart_contents' => json_encode(
+				array(
+					'items' => array(
+						array(
+							'product_id' => 10,
+							'quantity'   => 2,
+						),
+					),
+				)
+			),
+		);
+		\lafka_ac_handle_resume_request();
+		$this->assertSame( array( array( 10, 2, 0 ) ), $cart->added );
+		$this->assertSame( array( array( 'https://example.test/cart/', 302 ) ), $redirects );
+
+		// Already converted: onward to the cart, nothing restored.
+		$wpdb->get_row_return->order_id = 55;
+		\lafka_ac_handle_resume_request();
+		// Empty payload: the same.
+		$wpdb->get_row_return = (object) array(
+			'order_id'      => 0,
+			'cart_contents' => '{"items":[]}',
+		);
+		\lafka_ac_handle_resume_request();
+
+		$this->assertSame( 1, $cart->emptied );
+		$this->assertCount( 3, $redirects );
+	}
 }
