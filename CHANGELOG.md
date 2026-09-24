@@ -79,6 +79,13 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
   weight / nutrition fields a request didn't send; swatch colour terms without
   a colour no longer render invalid CSS.
 - **CLI**: `wp lafka image-alts … --post-type=X` skips unattached images.
+- **Admin**: the SEO meta-description character counter no longer throws a JS
+  error on every post/page/product edit screen (its textarea shared the
+  metabox's id).
+- **i18n**: the product-popup and promo-tooltip copy (`lafka` option) is
+  registered in the plugin's `wpml-config.xml`.
+- **Assets**: the `lafka-dialog` fallback uses the theme's `.min` build only
+  when it exists.
 - **Checkout**: implicit (hidden) branch / order-type values are filled into
   the session before the Store API gates run, so the delivery geo-fence and
   order-type meta work on single-branch / single-order-type block checkouts.
