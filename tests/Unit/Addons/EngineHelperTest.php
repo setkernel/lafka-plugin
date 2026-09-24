@@ -85,6 +85,48 @@ final class EngineHelperTest extends TestCase {
 		);
 	}
 
+	public function test_excluded_options_are_not_offered_and_empty_groups_are_dropped(): void {
+		$stored = array(
+			array(
+				'name'    => 'Toppings',
+				'type'    => 'checkbox',
+				'options' => array(
+					array( 'id' => 'cheese', 'label' => 'Cheese', 'price' => '1.00', 'included' => true ),
+					array( 'id' => 'truffle', 'label' => 'Truffle', 'price' => '9.00', 'included' => false ),
+				),
+			),
+			array(
+				'name'     => 'Sauce',
+				'type'     => 'radiobutton',
+				'required' => 1,
+				'options'  => array(
+					array( 'id' => 'bbq', 'label' => 'BBQ', 'price' => '', 'included' => false ),
+				),
+			),
+		);
+		$product = new class() {
+			public function get_meta( $key ) {
+				return '';
+			}
+			public function get_attributes() {
+				return array();
+			}
+		};
+		Functions\when( 'wc_get_product' )->justReturn( $product );
+		Functions\when( 'wp_get_post_parent_id' )->justReturn( 0 );
+		Functions\when( 'get_posts' )->justReturn( array() );
+		Functions\when( 'wc_get_object_terms' )->justReturn( array() );
+		Functions\when( 'get_post_meta' )->alias(
+			static fn( $id, $key ) => '_product_addons' === $key && 7 === $id ? $stored : ''
+		);
+
+		$addons = Lafka_Engine_Helper::get_product_addons( 7 );
+
+		self::assertCount( 1, $addons, 'A group with every option excluded must not be offered at all.' );
+		self::assertSame( 'Toppings', $addons[0]['name'] );
+		self::assertSame( array( 'Cheese' ), array_column( $addons[0]['options'], 'label' ) );
+	}
+
 	public function test_is_addon_required_with_empty(): void {
 		self::assertFalse( Lafka_Engine_Helper::is_addon_required( array() ) );
 	}

@@ -55,7 +55,14 @@ class Lafka_Engine_Helper {
 
 		$addons = array();
 		foreach ( $groups as $group ) {
-			$addons[] = self::group_to_legacy_array( $group );
+			$addon = self::group_to_legacy_array( $group );
+			// A group whose every option the operator un-included has nothing
+			// to offer — rendering it would show an empty (possibly required,
+			// hence unsatisfiable) field.
+			if ( empty( $addon['options'] ) ) {
+				continue;
+			}
+			$addons[] = $addon;
 		}
 
 		$addons = self::assign_field_names( $addons, (int) $post_id, $prefix );
@@ -78,10 +85,19 @@ class Lafka_Engine_Helper {
 	/**
 	 * Convert a Lafka_Addon_Group VO to the legacy associative array shape
 	 * that templates and field classes expect.
+	 *
+	 * Options the operator un-ticked ("Include" in the group editor) are
+	 * dropped here — the one place the storefront, the classic cart, the
+	 * Store API cart and addon pricing all read options from — so an
+	 * excluded option is never rendered, never matched from a posted value,
+	 * and never priced.
 	 */
 	public static function group_to_legacy_array( Lafka_Addon_Group $group ): array {
 		$options = array();
 		foreach ( $group->options as $opt ) {
+			if ( ! $opt->included ) {
+				continue;
+			}
 			$options[] = array(
 				'id'       => $opt->id,
 				'label'    => $opt->label,

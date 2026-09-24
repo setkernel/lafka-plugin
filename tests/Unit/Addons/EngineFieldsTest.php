@@ -105,7 +105,7 @@ namespace LafkaPlugin\Tests\Unit\Addons {
 
 		public function test_list_required_with_value_passes(): void {
 			$field = new Lafka_Engine_Field_List(
-				array( 'type' => 'checkbox', 'name' => 'Toppings', 'required' => 1, 'options' => array() ),
+				array( 'type' => 'checkbox', 'name' => 'Toppings', 'required' => 1, 'options' => array( array( 'id' => 'cheese', 'label' => 'Cheese' ) ) ),
 				array( 'cheese' )
 			);
 			self::assertTrue( $field->validate() );
@@ -159,6 +159,39 @@ namespace LafkaPlugin\Tests\Unit\Addons {
 			$data = $field->get_cart_item_data();
 			self::assertCount( 1, $data );
 			self::assertSame( 'Cheese', $data[0]['value'] );
+		}
+
+		public function test_list_rejects_a_value_that_is_not_on_offer(): void {
+			// 'truffle' was excluded by the operator, so it is absent from the
+			// legacy-shape options the helper hands the field.
+			$field = new Lafka_Engine_Field_List(
+				array(
+					'type'    => 'checkbox',
+					'name'    => 'Toppings',
+					'options' => array(
+						array( 'id' => 'cheese', 'label' => 'Cheese', 'price' => '1.00' ),
+					),
+				),
+				array( 'cheese', 'truffle' )
+			);
+
+			self::assertInstanceOf( WP_Error::class, $field->validate() );
+			self::assertSame( array( '1.00' ), array_column( $field->get_cart_item_data(), 'price' ), 'An option not on offer must never be charged.' );
+		}
+
+		public function test_list_accepts_offered_values_by_id_and_label_slug(): void {
+			$field = new Lafka_Engine_Field_List(
+				array(
+					'type'    => 'radiobutton',
+					'name'    => 'Sauce',
+					'options' => array(
+						array( 'id' => 'opt-1', 'label' => 'BBQ Smoke', 'price' => '' ),
+					),
+				),
+				array( array( 'bbq-smoke' ) )
+			);
+
+			self::assertTrue( $field->validate() );
 		}
 
 		public function test_list_cart_item_data_returns_false_on_empty(): void {

@@ -46,6 +46,7 @@ final class AddonFieldListRequiredValidationTest extends TestCase {
 		parent::setUp();
 		Monkey\setUp();
 		Functions\when( 'esc_html__' )->returnArg();
+		Functions\when( 'sanitize_title' )->alias( static fn( $s ) => strtolower( str_replace( ' ', '-', (string) $s ) ) );
 	}
 
 	protected function tearDown(): void {
@@ -57,7 +58,7 @@ final class AddonFieldListRequiredValidationTest extends TestCase {
 		$addon = array(
 			'name'     => 'Toppings',
 			'required' => $required ? 1 : 0,
-			'options'  => array(),
+			'options'  => array( array( 'id' => 'extra-cheese', 'label' => 'Extra Cheese' ) ),
 		);
 		return new Lafka_Engine_Field_List( $addon, $value );
 	}

@@ -45,6 +45,22 @@ class Lafka_Engine_Field_List extends Lafka_Engine_Field {
 			}
 		}
 
+		// Every submitted value must be one of the options on offer. A crafted
+		// post naming an option the operator excluded (or that never existed)
+		// is rejected rather than silently dropped.
+		foreach ( $this->submitted_values() as $submitted ) {
+			if ( null === $this->find_option( $submitted ) ) {
+				return new WP_Error(
+					'lafka_addon_invalid_option',
+					sprintf(
+						/* translators: %s: addon name */
+						esc_html__( 'Please choose a valid option for "%s".', 'lafka-plugin' ),
+						$this->addon['name']
+					)
+				);
+			}
+		}
+
 		if ( ! empty( $this->addon['limit'] ) && is_array( $this->value ) && count( $this->value ) > (int) $this->addon['limit'] ) {
 			return new WP_Error(
 				'lafka_addon_over_limit',
@@ -65,30 +81,16 @@ class Lafka_Engine_Field_List extends Lafka_Engine_Field {
 	 */
 	public function get_cart_item_data() {
 		$cart_item_data = array();
-		$value          = $this->value;
+		$value          = $this->submitted_values();
 
 		if ( empty( $value ) ) {
 			return false;
 		}
 
-		if ( ! is_array( $value ) ) {
-			$value = array( $value );
-		}
-
-		// Deeply nested submission shape (form arrays as arrays-of-arrays).
-		if ( is_array( current( $value ) ) ) {
-			$value = current( $value );
-		}
-
-		$value_lower = array_map( 'strtolower', array_map( 'strval', $value ) );
+		$value_lower = array_map( 'strtolower', $value );
 
 		foreach ( $this->addon['options'] as $option ) {
-			$option_id = ! empty( $option['id'] ) ? $option['id'] : sanitize_title( $option['label'] ?? '' );
-
-			$matched = in_array( strtolower( (string) $option_id ), $value_lower, true )
-				|| in_array( strtolower( sanitize_title( $option['label'] ?? '' ) ), $value_lower, true );
-
-			if ( $matched ) {
+			if ( $this->option_matches( $option, $value_lower ) ) {
 				$cart_item_data[] = array(
 					'name'  => $this->addon['name'],
 					'image' => $option['image'] ?? '',
@@ -99,5 +101,55 @@ class Lafka_Engine_Field_List extends Lafka_Engine_Field {
 		}
 
 		return $cart_item_data;
+	}
+
+	/**
+	 * The submitted value normalised to a flat list of non-empty strings.
+	 * Accepts a scalar (radio), a list (checkbox) or the nested
+	 * arrays-of-arrays shape some form serialisers produce.
+	 *
+	 * @return string[]
+	 */
+	private function submitted_values(): array {
+		$value = $this->value;
+		if ( ! is_array( $value ) ) {
+			$value = array( $value );
+		}
+		if ( is_array( current( $value ) ) ) {
+			$value = current( $value );
+		}
+
+		$out = array();
+		foreach ( $value as $entry ) {
+			if ( is_scalar( $entry ) && '' !== trim( (string) $entry ) ) {
+				$out[] = (string) $entry;
+			}
+		}
+		return $out;
+	}
+
+	/**
+	 * The offered option a submitted value refers to (by stable id, or the
+	 * legacy label slug), or null when none matches.
+	 */
+	private function find_option( string $submitted ): ?array {
+		$needle = array( strtolower( $submitted ) );
+		foreach ( $this->addon['options'] as $option ) {
+			if ( $this->option_matches( $option, $needle ) ) {
+				return $option;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * @param array    $option      Legacy-shape option.
+	 * @param string[] $value_lower Lower-cased submitted values.
+	 */
+	private function option_matches( array $option, array $value_lower ): bool {
+		$option_id = ! empty( $option['id'] ) ? $option['id'] : sanitize_title( $option['label'] ?? '' );
+
+		return in_array( strtolower( (string) $option_id ), $value_lower, true )
+			|| in_array( strtolower( sanitize_title( $option['label'] ?? '' ) ), $value_lower, true );
 	}
 }
