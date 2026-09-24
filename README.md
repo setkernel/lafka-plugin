@@ -150,13 +150,19 @@ Standard local checks:
 composer install        # PHPCS + WPCS + PHPUnit + Brain Monkey
 npm ci                  # ESLint + Stylelint
 
-composer phpcs          # full WordPress-Extra ruleset (security sniffs enforced)
+composer phpcs          # WordPress-Extra + PHPCompatibility (8.1 floor); parallel + cached
 composer test           # PHPUnit (Brain Monkey)
-npm run lint            # ESLint + Stylelint
+npm run lint            # ESLint + Stylelint (cached)
+npm test                # front-end JS behaviour tests (node:test)
+npm run build           # regenerate every .min.js from its readable source (esbuild)
 npm run check-version   # version SSOT drift guard
 ```
 
-A pre-push git hook is shipped under `.githooks/` that runs these gates (check-version, PHPCS, PHPUnit, ESLint, Stylelint) before any push — install once per clone:
+Minified scripts are build output: edit the `.js` source next to each `.min.js`,
+run `npm run build`, and commit both (CI fails on a stale build). With
+`SCRIPT_DEBUG` on, WordPress loads the sources.
+
+A pre-push git hook is shipped under `.githooks/` that runs the gates the pushed commits can affect (check-version, then PHPCS + PHPUnit and/or ESLint, Stylelint, JS tests and the build check, in parallel) — install once per clone:
 
 ```bash
 git config core.hooksPath .githooks

@@ -8,6 +8,65 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
 ## [Unreleased]
 
 ### Fixed
+- **Checkout (block)**: a saved "mandatory" date/time no longer blocks block
+  checkout while the date/time feature is off (global and per-branch).
+- **Checkout (block)**: with pinpoint delivery mandatory, a delivery order
+  without a valid in-zone pinpoint is now rejected on the Store API path as
+  on classic checkout (it used to skip the geo-fence entirely).
+- **Checkout**: pickup orders — Lafka order type *pickup*, WC Local Pickup
+  (`local_pickup`) or the blocks pickup method (`pickup_location`) — are never
+  asked to pinpoint a delivery location; carts that ship nothing neither.
+- **Checkout (block)**: the branch field only offers and accepts orderable
+  branches; a crafted checkout naming any other branch is rejected.
+- **Branches**: WooCommerce pages no longer fatal once a branch has a geocoded
+  address (`update_term_meta_cache()` → `update_termmeta_cache()`).
+- **Branches**: the branch-selector and branch-admin scripts load again —
+  their URLs had 404'd since the module moved to `incl/branches/`.
+- **Branches**: branch product filters (shop, widgets, related products) match
+  by the branch term id instead of misusing it as a term_taxonomy_id.
+- **Branches**: branch managers get their order emails without WC Analytics;
+  the Orders badge counts only orders awaiting the branch; the orders-list
+  branch filter renders only when there are branches.
+- **Add-ons**: the per-option "Include" flag is honoured everywhere — excluded
+  options are not rendered, not accepted when posted (classic or Store API) and
+  never priced; a group with nothing left is not shown.
+- **Add-ons**: stopped defining `WC_PRODUCT_ADDONS_VERSION` (another vendor's
+  constant; clashed with WooCommerce Product Add-Ons).
+- **Timeslots**: orders without a branch count against slot capacity (no empty
+  `lafka_selected_branch_id` is written, and legacy empty values are counted).
+- **Timeslots / Order hours**: the offered dates and the closed-store
+  "Opens …" time use the store timezone, not UTC.
+- **Promotions / free delivery / KDS**: the blocks `pickup_location` method is
+  treated as pickup (delivery minimum, free delivery, KDS order type).
+- **Privacy**: add-on selections are found by the personal-data exporter and
+  eraser (they are stored under display-name keys, now indexed in
+  `_lafka_addon_keys`); older orders are matched by the product's add-on names.
+- **Uninstall**: the full-cleanup inventory covers every option the plugin
+  writes (`lafka_checkout_mode`, `lafka_email_unsub_list`,
+  `lafka_security_options`, combo-deal settings, …); theme options are kept.
+- **Analytics**: the menu `search` event fires (it bound the search `<form>`),
+  and `add_shipping_info` / `add_payment_info` carry the cart items.
+- **SEO**: no second shop-archive canonical when an SEO plugin is active; WC's
+  Product schema is kept when Lafka yields structured data to an SEO plugin.
+- **Assets**: the plugin no longer overrides theme-registered script handles
+  (the theme's `defer` strategy wins); wp-admin no longer loads Google Maps
+  without an API key; swatch assets are cache-busted by their real paths.
+- **Shortcodes**: `[lafka_shipping_areas]` works without WPBakery and loads its
+  map script from the right URL.
+- **Admin**: Lafka fields entered on the "Add New" term form (categories, tags,
+  branches) are saved; "Show in Catalog" can be unticked on the last variation;
+  the delivery-area polygon input is a complete element; stale "Theme Options"
+  pointers name the real Google Maps key settings; Site Health names the right
+  security option and WP-CLI command.
+- **Last order card**: the signed cookie is set before output
+  (`template_redirect` on the order-received page, key-checked).
+- **Menu**: removed the mobile nav-walker sort filter that fataled (it called
+  protected methods) on themes rendering a `mobile` menu location.
+- **i18n**: remaining hard-coded English (abandoned-cart email table headers,
+  best-seller badge, metabox Yes/No/Show/Hide) is translatable; the POT is
+  regenerated (1661 strings) and versioned with the SSOT.
+- **Copy**: the checkout win-back field no longer promises an email that is
+  never sent.
 - **Checkout**: implicit (hidden) branch / order-type values are filled into
   the session before the Store API gates run, so the delivery geo-fence and
   order-type meta work on single-branch / single-order-type block checkouts.
@@ -30,6 +89,21 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
 - **Modules**: Lafka → Modules no longer links every card to a 404 docs page.
 - Docs fact-check: shipped-state claims corrected; planning docs retired.
 
+### Removed
+- `lafka_mobile_menu_sort_by_group()`, `lafka_mobile_menu_grouped_walker_filter()`
+  and the `LafkaMobileGroupedWalker` nav-walker methods (the class keeps
+  `group_terms()`); `lafka_combo_cart_has_pair()`; `Lafka_Options::get_all()`;
+  `Lafka_Engine_Display::prevent_purchase_at_grouped_level()`.
+- The WC settings "Homepage Hero" section (its option was never read — the
+  Customizer's Homepage Hero is the setting), the "Secondary Google Maps API
+  Key" setting, and the page/post metabox inputs nothing read (Top Menu Bar,
+  Social Share, Footer Sidebar, video-background timing/loop/mute; stored
+  values are kept). Matching `wpml-config.xml` entries are dropped.
+- Dead WCML add-on compat for the WooCommerce Product Add-Ons v1 panels, the
+  handler-less `wc_product_addons_calculate_tax` request in `addons.js`, and
+  unreachable branches in abandoned-cart email capture.
+- The `WC_PRODUCT_ADDONS_VERSION` constant (see Fixed).
+
 ### Removed (lean pass)
 - The retired Options-Framework import/export (`lafka_options_upload` /
   `lafka_options_export` and the `lafka-plugin-admin.js` + plupload enqueue
@@ -37,6 +111,30 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
 - `scripts/migrate-restaurant-info.php` (superseded by `wp lafka config`).
 - Dead assets, the inert `incl/emails/` review-prompt shim, and uncalled
   helpers; obsolete per-feature version-floor tests.
+
+### Changed
+- Every first-party minified script ships next to a readable source (the eight
+  shipping-areas / branch scripts' sources are new); `npm run build`
+  regenerates the `.min.js` files (esbuild, minify only), release.yml runs it
+  and CI fails if a committed build is stale. `SCRIPT_DEBUG` loads the sources.
+- A bundled Font Awesome Free 6.7.2 backs `font_awesome_6` when the active
+  theme does not register it; `CREDITS.md` lists the bundled libraries.
+- PHPCS checks the PHP 8.1 floor with PHPCompatibility 10 (alpha); PHP 8.5
+  deprecations fixed (`imagedestroy()`, `curl_close()`, `openssl_pkey_derive()`
+  key length).
+- Script/style handle registration moved to `incl/lafka-asset-registration.php`.
+- The email unsubscribe helpers live once in
+  `incl/conversion/lafka-email-unsubscribe.php`.
+- New filters: `lafka_pickup_shipping_method_ids`,
+  `lafka_branch_order_count_statuses`.
+
+### Performance
+- Shipping-area front CSS loads only on cart/checkout (or sitewide while branch
+  selection is on); shipping-area and branch admin assets only on their
+  screens.
+- Development: PHPCS runs in parallel with a result cache (51.6 s cold → 9.9 s,
+  0.8 s unchanged), ESLint/Stylelint cache, PHPUnit result cache, and the
+  pre-push hook runs only the affected gates in parallel.
 
 ## [10.0.0] — 2026-07-07
 

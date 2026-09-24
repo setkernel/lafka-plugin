@@ -21,12 +21,21 @@ npx @wordpress/env run cli wp lafka seed-demo          # add --reset to rebuild
 
 ```bash
 npm run lint           # ESLint + Stylelint
+npm test               # front-end JS behaviour tests (node:test)
+npm run build          # regenerate .min.js from sources — commit both
 npm run check-version  # version SSOT drift guard
 composer phpcs         # (composer phpcbf auto-fixes what it can)
 composer test          # PHPUnit (Brain Monkey)
 ```
 
-The `.githooks/pre-push` hook runs the same gates (`git config core.hooksPath .githooks`).
+The `.githooks/pre-push` hook runs the affected gates in parallel (`git config core.hooksPath .githooks`).
+
+Tests assert behaviour: execute the code (Brain Monkey stubs for WordPress,
+`require_once` the module inside `setUp()`, never define WP functions as plain
+globals) and check what it returns, renders or writes. Don't grep source for
+implementation strings, comments or "function exists"; a source scan is only
+for a genuine repo-wide invariant (text domain, operator literals, versioned
+asset paths, uninstall inventory, release packaging).
 
 ## Architecture (short version)
 
@@ -73,9 +82,12 @@ The plugin declares both HPOS and `cart_checkout_blocks` compatibility in `lafka
 
 `package.json` is the single source of truth for the version.
 
-1. `npm version <major|minor|patch>` — bumps `package.json`, rewrites the derived copies (`lafka-plugin.php` header, `readme.txt` Stable tag) via `scripts/sync-version.mjs`, commits and creates the `vX.Y.Z` tag. `npm run check-version` (CI + `VersionConsistencyTest`) catches drift.
+0. When translatable strings changed, regenerate the POT:
+   `npx @wordpress/env run cli wp i18n make-pot /var/www/html/wp-content/plugins/lafka-plugin /var/www/html/wp-content/plugins/lafka-plugin/languages/lafka-plugin.pot --domain=lafka-plugin --exclude=tests,scripts,node_modules,vendor,assets/vendor,.wp-env-uploads --skip-audit`
+
+1. `npm version <major|minor|patch>` — bumps `package.json`, rewrites the derived copies (`lafka-plugin.php` header, `readme.txt` Stable tag, `languages/lafka-plugin.pot`) via `scripts/sync-version.mjs`, commits and creates the `vX.Y.Z` tag. `npm run check-version` (CI + `VersionConsistencyTest`) catches drift.
 2. `git push --follow-tags` — pushing the tag triggers `.github/workflows/release.yml`.
-3. `release.yml` builds the zip (dev-only files — `.git`, `node_modules`, `vendor`, `tests`, `scripts`, lint configs, `README.md`, `CONTRIBUTING.md` — are excluded; `ReleasePackagingTest` guards the list), then creates/updates the GitHub Release with the zip + SHA256.
+3. `release.yml` runs `npm run build`, then builds the zip (dev-only files — `.git`, `node_modules`, `vendor`, `tests`, `scripts`, lint configs and caches, `README.md`, `CONTRIBUTING.md` — are excluded; `ReleasePackagingTest` dry-runs the same rsync), then creates/updates the GitHub Release with the zip + SHA256.
 
 ## Security
 
