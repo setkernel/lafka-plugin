@@ -68,7 +68,6 @@ final class ReleasePackagingTest extends TestCase {
 			'.phpunit.result.cache',
 			'tests',
 			'scripts',
-			'docs/superpowers',
 			'CONTRIBUTING.md',
 		);
 
@@ -85,8 +84,8 @@ final class ReleasePackagingTest extends TestCase {
 		$excludes = $this->release_excludes();
 
 		// Files an installed plugin needs at runtime, plus operator docs we ship.
-		// `docs` must stay: only the docs/superpowers planning tree is excluded,
-		// the operator guides (LOCAL_SEO.md, PERFORMANCE.md, TRACKING.md) ship.
+		// `docs` must stay: the operator guides (LOCAL_SEO.md, PERFORMANCE.md,
+		// TRACKING.md) ship.
 		$runtime = array(
 			'readme.txt',
 			'COMPATIBILITY.md',
