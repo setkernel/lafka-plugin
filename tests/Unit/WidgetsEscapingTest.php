@@ -168,6 +168,48 @@ final class WidgetsEscapingTest extends TestCase {
 	}
 
 	/**
+	 * A freshly added widget has an empty instance: rendering and saving it
+	 * must not raise undefined-index warnings (failOnWarning is on).
+	 */
+	public function test_widgets_tolerate_an_empty_instance(): void {
+		ob_start();
+		( new \LafkaAboutWidget() )->widget( self::WIDGET_ARGS, array() );
+		( new \LafkaPaymentOptionsWidget() )->widget( self::WIDGET_ARGS, array() );
+		$html = (string) ob_get_clean();
+		$this->assertStringNotContainsString( 'r_more', $html, 'No page chosen: no "Read more" link.' );
+
+		$saved = ( new \LafkaPopularPostsWidget() )->update( array(), array() );
+		$this->assertSame(
+			array(
+				'title'  => '',
+				'number' => 5,
+			),
+			$saved
+		);
+	}
+
+	public function test_contacts_widget_reads_the_restaurant_info_once_per_render(): void {
+		require_once dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-helpers.php';
+		// Each lafka_get_restaurant_info() call ends in the lafka_restaurant_info filter.
+		$calls = 0;
+		Functions\when( 'apply_filters' )->alias(
+			static function ( $tag, $value ) use ( &$calls ) {
+				if ( 'lafka_restaurant_info' === $tag ) {
+					++$calls;
+					$value['phone_display'] = '555 0100';
+				}
+				return $value;
+			}
+		);
+
+		ob_start();
+		( new \LafkaContactsWidget() )->widget( self::WIDGET_ARGS, array() );
+		ob_end_clean();
+
+		$this->assertSame( 1, $calls );
+	}
+
+	/**
 	 * @param array<string, string> $expected Saved value per field.
 	 */
 	#[DataProvider( 'update_provider' )]

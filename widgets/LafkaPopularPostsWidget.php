@@ -105,8 +105,8 @@ class LafkaPopularPostsWidget extends WP_Widget {
 
 	function update( $new_instance, $old_instance ) {
 		$instance           = $old_instance;
-		$instance['title']  = sanitize_text_field( $new_instance['title'] );
-		$instance['number'] = (int) $new_instance['number'];
+		$instance['title']  = isset( $new_instance['title'] ) ? sanitize_text_field( wp_unslash( $new_instance['title'] ) ) : '';
+		$instance['number'] = isset( $new_instance['number'] ) ? max( 1, (int) $new_instance['number'] ) : 5;
 
 		return $instance;
 	}
