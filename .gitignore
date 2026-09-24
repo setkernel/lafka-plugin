@@ -16,8 +16,9 @@ vendor/
 # Test artefacts
 .phpunit.result.cache
 
-# wp-env uploads mapping (.wp-env.json)
+# wp-env uploads mapping (.wp-env.json) + per-developer override
 .wp-env-uploads/
+.wp-env.override.json
 
 # Misc
 *.log
