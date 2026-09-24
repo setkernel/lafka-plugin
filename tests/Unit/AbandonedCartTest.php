@@ -600,6 +600,17 @@ final class AbandonedCartTest extends TestCase {
 	}
 
 	/**
+	 * The resume handler runs after WooCommerce loads the session cart
+	 * (`wp_loaded` 10). On `init` a guest's restored cart was never persisted:
+	 * WC sets its session/cart cookies only once `wp_loaded` has fired.
+	 */
+	public function test_resume_handler_runs_after_wc_loads_the_session_cart(): void {
+		$GLOBALS['lafka_test_hooks'] = array();
+		include dirname( __DIR__, 2 ) . '/incl/conversion/lafka-abandoned-cart-resume.php'; // Functions are guarded; re-runs the add_action().
+		$this->assertSame( array( array( 'wp_loaded', 'lafka_ac_handle_resume_request', 20, 1 ) ), $GLOBALS['lafka_test_hooks'] );
+	}
+
+	/**
 	 * A valid token restores the saved cart and redirects to it; a converted
 	 * row or an empty payload redirects without touching the cart. The
 	 * `lafka_ac_resume_redirect_exit` seam keeps the request alive here.

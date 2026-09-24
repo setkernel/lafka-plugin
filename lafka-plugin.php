@@ -443,8 +443,8 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/analytics/lafka-clarity-tags.ph
  *     own header/footer/styling. The class body lives in the sibling
  *     class-lafka-abandoned-cart-email-class.php file (lazy-loaded — WC_Email
  *     isn't defined until WC has booted).
- *   - incl/conversion/lafka-abandoned-cart-resume.php  hooks `init` priority 5
- *     to inspect `$_GET['lafka_resume_cart']`, restore the visitor's cart, and
+ *   - incl/conversion/lafka-abandoned-cart-resume.php  hooks `wp_loaded`
+ *     priority 20 (after WC loads the session cart) to inspect `$_GET['lafka_resume_cart']`, restore the visitor's cart, and
  *     redirect to /cart/.
  *   - incl/customizer/class-lafka-customizer-abandoned-cart.php  registers the
  *     `lafka_abandoned_cart` Customizer panel — enable toggle (default OFF),

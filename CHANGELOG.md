@@ -107,6 +107,11 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
   term-level API (the walker hooks were dead).
 - **Modules**: Lafka → Modules no longer links every card to a 404 docs page.
 - Docs fact-check: shipped-state claims corrected; planning docs retired.
+- **Abandoned cart**: the recovery email's resume link restores the cart for
+  guests again. The handler ran on `init`, before WooCommerce sets its
+  session and cart cookies (and before it loads the session cart on
+  `wp_loaded`), so the restored items were never saved and the visitor
+  landed on an empty cart; it now runs on `wp_loaded` priority 20.
 - **Push**: the VAPID contact defaults to `mailto:` plus the site admin email
   (filter `lafka_push_default_vapid_subject`) instead of a placeholder
   address; sites still on the old placeholder get the new default. If cURL
@@ -168,7 +173,7 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
   push sender and the header sender.
 - Test suite rationalised: tests execute the code and assert behaviour instead
   of grepping source for implementation strings, comments or existence (1518
-  tests / 4319 assertions → 1159 / 2838, 154 → 146 files, plus 15 node:test
+  tests / 4319 assertions → 1160 / 2839, 154 → 146 files, plus 15 node:test
   JS tests); the operator-literal guard stores only hashes; the bootstrap
   records hook registrations so wiring is asserted by running registration
   code.

@@ -2,10 +2,10 @@
 /**
  * Phase 3B (v9.27.0): Abandoned-cart recovery — resume handler.
  *
- * Hook on `init` (priority 5 — before WC's own session loader on priority 10)
- * inspects `$_GET['lafka_resume_cart']`. If it matches a row's `resume_token`,
- * the cart contents are decoded back into a fresh WC()->cart and the visitor
- * is redirected to /cart/.
+ * Hook on `wp_loaded` (priority 20 — after WooCommerce restores the session
+ * cart on `wp_loaded` 10) inspects `$_GET['lafka_resume_cart']`. If it
+ * matches a row's `resume_token`, the cart contents are decoded back into a
+ * fresh WC()->cart and the visitor is redirected to /cart/.
  *
  * Failure modes:
  *   - missing/empty token → no-op (let WP route normally)
@@ -28,7 +28,10 @@ if ( ! function_exists( 'lafka_ac_handle_resume_request' ) ) {
 	/**
 	 * Inspect $_GET, restore cart, redirect to /cart/.
 	 *
-	 * Hooked on `init` priority 5 so it fires before any WC session decisions.
+	 * Hooked on `wp_loaded` priority 20. Earlier (it used to run on `init` 5)
+	 * the restore was lost for guests: WC only sets the session and cart
+	 * cookies once `wp_loaded` has fired, so nothing was persisted, and its
+	 * `wp_loaded` session load would have replaced the restored cart anyway.
 	 *
 	 * @return void
 	 */
@@ -149,5 +152,5 @@ if ( ! function_exists( 'lafka_ac_redirect_to_cart' ) ) {
 }
 
 if ( function_exists( 'add_action' ) ) {
-	add_action( 'init', 'lafka_ac_handle_resume_request', 5 );
+	add_action( 'wp_loaded', 'lafka_ac_handle_resume_request', 20 );
 }
