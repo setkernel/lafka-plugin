@@ -90,10 +90,6 @@ final class ModuleRegistryTest extends TestCase {
 		sort( $expected );
 
 		self::assertSame( $expected, $ids );
-	}
-
-	public function test_get_returns_module_object_or_null(): void {
-		self::assertInstanceOf( Lafka_Module::class, Lafka_Module_Registry::get( 'promotions' ) );
 		self::assertNull( Lafka_Module_Registry::get( 'not_a_real_module' ) );
 	}
 

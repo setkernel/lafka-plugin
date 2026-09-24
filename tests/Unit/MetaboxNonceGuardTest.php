@@ -1,25 +1,11 @@
 <?php
 /**
- * C-8: CSRF bypass via inverted nonce guard in metaboxes.
+ * C-8: every save_post metabox handler in incl/metaboxes.php refuses to write
+ * post meta unless its own nonce is present and valid and the user may edit.
  *
- * The pre-fix pattern was:
- *
- *     if ( isset( $_POST['nonce'] ) && ! wp_verify_nonce( ... ) ) {
- *         return;
- *     }
- *
- * This only returns when the nonce IS present BUT invalid — which means an
- * attacker who simply omits `_POST['nonce']` skips the guard entirely and the
- * save proceeds unauthenticated.
- *
- * The fix inverts the guard:
- *
- *     if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( ... ) ) {
- *         return;
- *     }
- *
- * This source-grep test enforces that metaboxes.php contains zero matches of
- * the dangerous pattern, and that the negated form is used at every site.
+ * The pre-fix guard was `isset( $_POST[nonce] ) && ! wp_verify_nonce(...)`,
+ * which only bailed when a nonce was present but wrong — omitting the field
+ * skipped the check entirely and the save went through (CSRF).
  *
  * @package Lafka\Plugin\Tests\Unit
  */
@@ -28,73 +14,115 @@ declare(strict_types=1);
 
 namespace LafkaPlugin\Tests\Unit;
 
+use Brain\Monkey;
+use Brain\Monkey\Functions;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class MetaboxNonceGuardTest extends TestCase {
 
-	private function source(): string {
-		$path = dirname( __DIR__, 2 ) . '/incl/metaboxes.php';
-		$this->assertFileExists( $path );
+	/** @var array<int, array{0: int, 1: string, 2: mixed}> */
+	private array $writes = array();
 
-		return file_get_contents( $path );
-	}
+	private bool $can_edit = true;
 
-	public function test_no_dangerous_isset_AND_not_verify_pattern_remains(): void {
-		$src = $this->source();
+	protected function setUp(): void {
+		parent::setUp();
+		Monkey\setUp();
+		$_POST              = array();
+		$GLOBALS['pagenow'] = 'post.php';
+		$this->writes       = array();
+		$this->can_edit     = true;
 
-		// The bad shape: `isset( $_POST['…'] ) && ! wp_verify_nonce(`
-		// (positive isset, conjunction, negative verify) → returns only when
-		// the nonce is present AND invalid, allowing missing-nonce bypass.
-		$matches = array();
-		preg_match_all(
-			'/isset\(\s*\$_POST\[[^\]]+\]\s*\)\s*&&\s*!\s*wp_verify_nonce\(/',
-			$src,
-			$matches
+		Functions\when( 'wp_unslash' )->returnArg();
+		Functions\when( 'sanitize_text_field' )->returnArg();
+		Functions\when( 'sanitize_key' )->returnArg();
+		Functions\when( 'esc_url' )->returnArg();
+		Functions\when( 'wp_kses_post' )->returnArg();
+		// A nonce is valid only for the action it was minted for.
+		Functions\when( 'wp_verify_nonce' )->alias( static fn( $nonce, $action ) => 'nonce:' . $action === $nonce ? 1 : false );
+		Functions\when( 'current_user_can' )->alias( fn() => $this->can_edit );
+		Functions\when( 'update_post_meta' )->alias(
+			function ( $post_id, $key, $value ) {
+				$this->writes[] = array( $post_id, $key, $value );
+				return true;
+			}
 		);
 
-		$this->assertSame(
-			0,
-			count( $matches[0] ),
-			'metaboxes.php must not contain "isset(...) && ! wp_verify_nonce(...)" — that pattern lets attackers bypass nonce checks by omitting the field'
-		);
-	}
-
-	public function test_all_negated_guards_are_in_place(): void {
-		$src = $this->source();
-
-		// Every nonce field below must be guarded with the negated form:
-		// `! isset( $_POST['<field>'] ) || ! wp_verify_nonce(...)`.
-		$expected_fields = array(
-			'layout_nonce',
-			'page_options_nonce',
-			'lafka_revolution_slider',
-			'video_bckgr_nonce',
-			'lafka_foodmenu_nonce',
-			'lafka_featuredmeta',
-			'foodmenu_cz_nonce',
-			'product_video_nonce',
-			'product_gallery_type_nonce',
-		);
-
-		foreach ( $expected_fields as $field ) {
-			$pattern = '/!\s*isset\(\s*\$_POST\[\s*\x27' . preg_quote( $field, '/' ) . '\x27\s*\]\s*\)\s*\|\|\s*!\s*wp_verify_nonce\(/';
-			$this->assertMatchesRegularExpression(
-				$pattern,
-				$src,
-				"Negated nonce guard missing for \$_POST['{$field}']"
-			);
+		if ( ! defined( 'LAFKA_PLUGIN_IS_REVOLUTION' ) ) {
+			define( 'LAFKA_PLUGIN_IS_REVOLUTION', false );
 		}
+		require_once dirname( __DIR__, 2 ) . '/incl/metaboxes.php';
 	}
 
-	public function test_wp_unslash_used_on_each_nonce_value(): void {
-		$src = $this->source();
+	protected function tearDown(): void {
+		$_POST = array();
+		unset( $GLOBALS['pagenow'] );
+		Monkey\tearDown();
+		parent::tearDown();
+	}
 
-		// Defense-in-depth: nonce values from $_POST must be wp_unslash()'d
-		// before sanitization.
-		$this->assertGreaterThanOrEqual(
-			9,
-			substr_count( $src, 'wp_unslash( $_POST[' ),
-			'Each metabox nonce read should use wp_unslash() on $_POST'
+	/**
+	 * @param array<string, mixed> $fields The metabox's form fields.
+	 */
+	#[DataProvider( 'save_handler_provider' )]
+	public function test_meta_is_written_only_with_own_valid_nonce_and_edit_capability( string $handler, string $nonce_field, array $fields ): void {
+		if ( 'lafka_save_foodmenu_postdata' === $handler && class_exists( 'Lafka_Nutrition_Config' ) ) {
+			$fields += array_fill_keys( array_keys( \Lafka_Nutrition_Config::$nutrition_meta_fields ), '' );
+		}
+		$valid_nonce = 'nonce:' . $handler;
+
+		$rejected = array(
+			'nonce omitted'            => array( $fields, true ),
+			'nonce for another action' => array( $fields + array( $nonce_field => 'nonce:some_other_action' ), true ),
+			'user cannot edit'         => array( $fields + array( $nonce_field => $valid_nonce ), false ),
+		);
+		foreach ( $rejected as $case => $scenario ) {
+			$_POST          = $scenario[0];
+			$this->can_edit = $scenario[1];
+			$handler( 42 );
+			$this->assertSame( array(), $this->writes, "{$handler}: {$case} must not write post meta." );
+		}
+
+		$_POST          = $fields + array( $nonce_field => $valid_nonce );
+		$this->can_edit = true;
+		$handler( 42 );
+		$this->assertNotSame( array(), $this->writes, "{$handler}: a valid request must save (proves the rejections above were the guard, not a dead path)." );
+	}
+
+	/**
+	 * @return array<string, array{0: string, 1: string, 2: array<string, mixed>}>
+	 */
+	public static function save_handler_provider(): array {
+		return array(
+			'layout'               => array( 'lafka_save_layout_postdata', 'layout_nonce', array( 'lafka_layout' => 'full' ) ),
+			'page options'         => array( 'lafka_save_page_options_postdata', 'page_options_nonce', array( 'lafka_top_menu' => 'main' ) ),
+			'revolution slider'    => array( 'lafka_save_revolution_slider_postdata', 'lafka_revolution_slider', array( 'lafka_rev_slider' => 'home' ) ),
+			'video background'     => array( 'lafka_save_video_bckgr_postdata', 'video_bckgr_nonce', array( 'lafka_video_bckgr_url' => 'https://example.test/v.mp4' ) ),
+			'foodmenu'             => array(
+				'lafka_save_foodmenu_postdata',
+				'lafka_foodmenu_nonce',
+				array(
+					'lafka_item_single_price'     => '9',
+					'lafka_item_weight'           => '',
+					'lafka_item_weight_unit'      => '',
+					'lafka_item_size1'            => '',
+					'lafka_item_price1'           => '',
+					'lafka_item_size2'            => '',
+					'lafka_item_price2'           => '',
+					'lafka_item_size3'            => '',
+					'lafka_item_price3'           => '',
+					'lafka_ingredients'           => '',
+					'lafka_allergens'             => '',
+					'lafka_ext_link_button_title' => '',
+					'lafka_ext_link_url'          => '',
+					'lafka_add_description'       => '',
+				),
+			),
+			'featured images'      => array( 'lafka_save_additonal_featured_meta_postdata', 'lafka_featuredmeta', array( 'lafka_featured_imgid_1' => '7' ) ),
+			'foodmenu cloud zoom'  => array( 'lafka_save_foodmenu_cz_postdata', 'foodmenu_cz_nonce', array( 'lafka_prtfl_gallery' => '1' ) ),
+			'product video'        => array( 'lafka_save_product_video_postdata', 'product_video_nonce', array( 'lafka_product_video_url' => 'https://example.test/v.mp4' ) ),
+			'product gallery type' => array( 'lafka_save_product_gallery_type_postdata', 'product_gallery_type_nonce', array( 'lafka_single_product_gallery_type' => 'slider' ) ),
 		);
 	}
 }

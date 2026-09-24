@@ -16,12 +16,13 @@ use PHPUnit\Framework\TestCase;
 
 final class AssetRegistrationTest extends TestCase {
 
-	/** @var array<string, array{src: string, args: mixed}> */
+	/** @var array<string, array{src: string, deps: mixed, args: mixed}> */
 	private array $scripts = array();
 	/** @var array<string, string> */
 	private array $styles = array();
 	private string $template = 'twentytwentyfive';
 	private string $maps_key = '';
+	private string $locale   = 'en_US';
 
 	protected function setUp(): void {
 		parent::setUp();
@@ -29,7 +30,7 @@ final class AssetRegistrationTest extends TestCase {
 		Functions\when( 'plugins_url' )->alias( static fn( $path ) => 'https://example.test/plugin/' . $path );
 		Functions\when( 'plugin_dir_path' )->justReturn( dirname( __DIR__, 2 ) . '/' );
 		Functions\when( 'lafka_plugin_asset_version' )->justReturn( '1' );
-		Functions\when( 'get_locale' )->justReturn( 'en_US' );
+		Functions\when( 'get_locale' )->alias( fn() => $this->locale );
 		Functions\when( 'get_stylesheet_directory' )->justReturn( '/nonexistent' );
 		Functions\when( 'get_stylesheet_directory_uri' )->justReturn( 'https://example.test/theme' );
 		Functions\when( 'get_template_directory_uri' )->justReturn( 'https://example.test/theme' );
@@ -53,6 +54,7 @@ final class AssetRegistrationTest extends TestCase {
 				}
 				$this->scripts[ $handle ] = array(
 					'src'  => $src,
+					'deps' => $deps,
 					'args' => $args,
 				);
 				return true;
@@ -67,6 +69,18 @@ final class AssetRegistrationTest extends TestCase {
 			}
 		);
 		Functions\when( 'wp_script_is' )->alias( fn( $handle ) => isset( $this->scripts[ $handle ] ) );
+		Functions\when( 'wp_scripts' )->alias(
+			fn() => new class( $this->scripts ) {
+				public function __construct( private array $scripts ) {}
+				public function query( $handle ) {
+					return (object) array(
+						'src'  => $this->scripts[ $handle ]['src'],
+						'deps' => $this->scripts[ $handle ]['deps'],
+						'ver'  => '1',
+					);
+				}
+			}
+		);
 		Functions\when( 'wp_style_is' )->alias( fn( $handle ) => isset( $this->styles[ $handle ] ) );
 		require_once dirname( __DIR__, 2 ) . '/incl/lafka-asset-registration.php';
 	}
@@ -95,6 +109,7 @@ final class AssetRegistrationTest extends TestCase {
 		// The theme registered at priority 10 with its defer strategy.
 		$this->scripts['typed'] = array(
 			'src'  => 'https://example.test/theme/js/typed.min.js',
+			'deps' => array(),
 			'args' => array( 'strategy' => 'defer' ),
 		);
 		$this->styles['font_awesome_6'] = 'https://example.test/theme/styles/font-awesome/css/all.min.css';
@@ -104,6 +119,30 @@ final class AssetRegistrationTest extends TestCase {
 		$this->assertSame( array( 'strategy' => 'defer' ), $this->scripts['typed']['args'] );
 		$this->assertSame( 'https://example.test/theme/styles/font-awesome/css/all.min.css', $this->styles['font_awesome_6'] );
 		$this->assertArrayHasKey( 'magnific', $this->scripts, 'Handles the theme leaves to the plugin are filled in.' );
+	}
+
+	/**
+	 * Only the site locale's flatpickr l10n file is registered (never the whole
+	 * directory), picked full-locale first then by language code; English needs
+	 * none. 'flatpickr-local' stays as a back-compat alias of the same file.
+	 */
+	public function test_flatpickr_registers_only_the_site_locales_l10n_file(): void {
+		$this->locale = 'fr_CA'; // No fr-ca.js / fr_ca.js ships, so the language file is used.
+		lafka_register_plugin_scripts();
+
+		$l10n = array_filter( $this->scripts, static fn( $s ) => str_contains( (string) $s['src'], '/flatpickr/l10n/' ) );
+		$this->assertSame( array( 'flatpickr-l10n', 'flatpickr-local' ), array_keys( $l10n ) );
+		$this->assertSame( 'https://example.test/plugin/assets/js/flatpickr/l10n/fr.js', $this->scripts['flatpickr-l10n']['src'] );
+		$this->assertSame( $this->scripts['flatpickr-l10n']['src'], $this->scripts['flatpickr-local']['src'] );
+		$this->assertSame( array( 'flatpickr' ), $this->scripts['flatpickr-l10n']['deps'] );
+	}
+
+	public function test_flatpickr_registers_no_l10n_file_for_english(): void {
+		lafka_register_plugin_scripts();
+
+		$this->assertArrayHasKey( 'flatpickr', $this->scripts );
+		$this->assertArrayNotHasKey( 'flatpickr-l10n', $this->scripts );
+		$this->assertArrayNotHasKey( 'flatpickr-local', $this->scripts );
 	}
 
 	public function test_google_maps_is_registered_only_with_a_key(): void {

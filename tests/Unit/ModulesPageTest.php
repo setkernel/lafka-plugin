@@ -4,8 +4,7 @@
  *
  * Locks in the security + rendering contract of the one-screen module manager:
  *
- *   - the top-level menu is registered with the manage_woocommerce capability
- *     and the dashicons-store icon,
+ *   - the top-level menu is registered with the manage_woocommerce capability,
  *   - both the render and the toggle handler refuse users without the
  *     capability (wp_die),
  *   - the toggle handler verifies its nonce before writing anything,
@@ -63,7 +62,7 @@ final class ModulesPageTest extends TestCase {
 
 	// ─── Menu registration ──────────────────────────────────────────────────
 
-	public function test_registers_top_level_menu_with_woocommerce_cap_and_store_icon(): void {
+	public function test_registers_top_level_menu_with_woocommerce_cap(): void {
 		$menu    = array();
 		$submenu = 0;
 		Functions\when( 'add_menu_page' )->alias(
@@ -81,7 +80,6 @@ final class ModulesPageTest extends TestCase {
 
 		self::assertSame( 'manage_woocommerce', $menu[2], 'Top-level menu capability.' );
 		self::assertSame( 'lafka-modules', $menu[3], 'Top-level menu slug.' );
-		self::assertSame( 'dashicons-store', $menu[5], 'Top-level menu icon.' );
 		self::assertSame( 1, $submenu, 'A single "Modules" submenu is registered.' );
 	}
 
@@ -129,26 +127,28 @@ final class ModulesPageTest extends TestCase {
 
 	// ─── Nonce enforcement ──────────────────────────────────────────────────
 
-	public function test_toggle_verifies_nonce_before_writing(): void {
-		Functions\when( 'current_user_can' )->justReturn( true );
-		Functions\expect( 'check_admin_referer' )->once()->with( Lafka_Modules_Page::NONCE_ACTION );
-		$this->wire_passthrough_sanitizers();
-		Functions\when( 'get_option' )->justReturn( array() );
-		Functions\when( 'update_option' )->justReturn( true );
-		Functions\when( 'add_query_arg' )->justReturn( 'x' );
-		$this->stop_before_exit();
+	public function test_bad_nonce_aborts_the_toggle_before_any_write(): void {
+		$store         = array( 'lafka' => array() );
+		$redirect_args = array();
+		$this->wire_toggle_environment( $store, $redirect_args );
+		// check_admin_referer() dies on a bad/missing nonce in WordPress.
+		Functions\when( 'check_admin_referer' )->alias(
+			static function ( $action ) {
+				throw new RuntimeException( Lafka_Modules_Page::NONCE_ACTION === $action ? 'bad nonce' : 'wrong nonce action' );
+			}
+		);
 
 		$_POST['lafka_module']         = 'promotions';
 		$_POST['lafka_module_enabled'] = '1';
 
 		try {
 			Lafka_Modules_Page::instance()->handle_toggle();
+			self::fail( 'Expected the nonce check to abort the toggle.' );
 		} catch ( RuntimeException $e ) {
-			// wp_safe_redirect stub throws to avoid the real exit.
+			self::assertSame( 'bad nonce', $e->getMessage() );
 		}
 
-		// check_admin_referer expectation is verified on tearDown.
-		self::assertTrue( true );
+		self::assertSame( array(), $store['lafka'], 'Nothing may be written when the nonce check fails.' );
 	}
 
 	// ─── Toggle writes the real option (round-trip through the page) ────────

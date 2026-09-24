@@ -1,133 +1,208 @@
 <?php
 /**
- * WidgetsEscapingTest — locks down v9.7.21 widget hardening.
+ * Classic widgets escape hostile post data and operator input on output, and
+ * run every saved text field through a sanitizer.
  *
- * Source-grep based since the widgets render inside the WP widget API which
- * needs a full bootstrap. Each test pins one regression target.
+ * Regressions this guards (v9.7.21 hardening): Popular Posts echoed titles raw
+ * and used the_permalink() (raw echo) in href; Latest Menu Entries built its
+ * href as esc_url( the_permalink() ), which printed the raw permalink; the About
+ * widget's admin form printed page titles raw; update() used strip_tags().
+ *
+ * esc_* stubs escape for real (htmlspecialchars) and the_permalink() echoes the
+ * raw URL as WordPress does, so an unescaped path leaks the payload.
  *
  * @package Lafka\Plugin\Tests\Unit
- * @since   9.7.21
  */
 
 declare(strict_types=1);
 
 namespace LafkaPlugin\Tests\Unit;
 
-use PHPUnit\Framework\TestCase;
+use Brain\Monkey;
+use Brain\Monkey\Functions;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\TestCase;
+
+require_once __DIR__ . '/Stubs/wp-widget-stub.php';
 
 final class WidgetsEscapingTest extends TestCase {
 
-	private function widget_src( string $name ): string {
-		return file_get_contents( dirname( __DIR__, 2 ) . '/widgets/' . $name );
+	private const URL_PAYLOAD   = 'https://example.test/"><script>url()</script>';
+	private const TITLE_PAYLOAD = '<script>title()</script>';
+
+	private const WIDGET_ARGS = array(
+		'before_widget' => '',
+		'after_widget'  => '',
+		'before_title'  => '',
+		'after_title'   => '',
+		'widget_id'     => 'w-1',
+	);
+
+	protected function setUp(): void {
+		parent::setUp();
+		Monkey\setUp();
+
+		$escape = static fn( $s ) => htmlspecialchars( (string) $s, ENT_QUOTES );
+		Functions\when( 'esc_html' )->alias( $escape );
+		Functions\when( 'esc_attr' )->alias( $escape );
+		Functions\when( 'esc_url' )->alias( $escape );
+		Functions\when( 'esc_html__' )->returnArg( 1 );
+		Functions\when( 'esc_html_e' )->echoArg( 1 );
+		Functions\when( 'wp_kses_post' )->returnArg( 1 );
+		Functions\when( 'apply_filters' )->returnArg( 2 );
+		Functions\when( 'absint' )->alias( static fn( $v ) => abs( (int) $v ) );
+		Functions\when( 'wp_unslash' )->returnArg( 1 );
+		Functions\when( 'sanitize_text_field' )->alias( static fn( $s ) => 'text(' . $s . ')' );
+		Functions\when( 'sanitize_email' )->alias( static fn( $s ) => 'email(' . $s . ')' );
+		Functions\when( 'wp_parse_args' )->alias( static fn( $args, $defaults = array() ) => array_merge( $defaults, (array) $args ) );
+		Functions\when( 'selected' )->justReturn( '' );
+		Functions\when( 'checked' )->justReturn( '' );
+		Functions\when( 'is_email' )->justReturn( false );
+		// Post-data sources return hostile values.
+		Functions\when( 'get_permalink' )->justReturn( self::URL_PAYLOAD );
+		Functions\when( 'the_permalink' )->alias(
+			static function () {
+				echo self::URL_PAYLOAD; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- models WP's raw echo.
+			}
+		);
+		Functions\when( 'get_the_title' )->justReturn( self::TITLE_PAYLOAD );
+		// Inputs of lafka_get_restaurant_info(), reached for the tel: link.
+		Functions\when( 'get_option' )->alias( static fn( $key, $default = '' ) => $default );
+		Functions\when( 'get_theme_mod' )->alias( static fn( $key, $default = false ) => $default );
+		Functions\when( 'get_bloginfo' )->justReturn( '' );
+		Functions\when( 'get_site_icon_url' )->justReturn( '' );
+		Functions\when( 'home_url' )->alias( static fn( $path = '' ) => 'https://example.test' . $path );
+		Functions\when( 'trailingslashit' )->alias( static fn( $url ) => rtrim( $url, '/' ) . '/' );
+		// Cache + query plumbing.
+		Functions\when( 'wp_cache_get' )->justReturn( false );
+		Functions\when( 'wp_cache_set' )->justReturn( true );
+		Functions\when( 'wp_cache_delete' )->justReturn( true );
+		Functions\when( 'delete_option' )->justReturn( true );
+		Functions\when( 'wp_reset_postdata' )->justReturn( null );
+
+		foreach ( array( 'LafkaAboutWidget', 'LafkaContactsWidget', 'LafkaPaymentOptionsWidget', 'LafkaPopularPostsWidget', 'LafkaLatestMenuEntriesWidget' ) as $widget ) {
+			require_once dirname( __DIR__, 2 ) . '/widgets/' . $widget . '.php';
+		}
 	}
 
-	// ────────────────────────────────────────────────────────────────────────
-	// LafkaPopularPostsWidget — unescaped permalink + title (XSS-class polish)
-	// ────────────────────────────────────────────────────────────────────────
-
-	public function test_popular_posts_widget_uses_esc_url_get_permalink(): void {
-		// Pre-fix the <a href="..."> emitted `the_permalink( $id )` raw.
-		// `the_permalink()` outputs without escaping. Switch to
-		// `echo esc_url( get_permalink( $id ) )` for defense.
-		$src = $this->widget_src( 'LafkaPopularPostsWidget.php' );
-		$this->assertMatchesRegularExpression(
-			"/echo\s+esc_url\(\s*get_permalink\(\s*\\\$popular_post->ID\s*\)\s*\)/",
-			$src,
-			'Popular Posts widget must use echo esc_url( get_permalink( \$id ) ) for the link href.'
-		);
-		$this->assertDoesNotMatchRegularExpression(
-			"/the_permalink\(\s*\\\$popular_post->ID\s*\)\s*;\s*\?>\"/",
-			$src,
-			'Popular Posts widget must not regress to raw the_permalink() in href.'
-		);
+	protected function tearDown(): void {
+		Monkey\tearDown();
+		parent::tearDown();
 	}
 
-	public function test_popular_posts_widget_escapes_post_title(): void {
-		// Pre-fix `echo get_the_title( $id )` emitted titles raw — operators
-		// with unfiltered_html cap could inject HTML/script. Must wrap in
-		// esc_html().
-		$src = $this->widget_src( 'LafkaPopularPostsWidget.php' );
-		$this->assertMatchesRegularExpression(
-			"/echo\s+esc_html\(\s*'' !== \\\$lafka_pp_title/",
-			$src,
-			'Popular Posts widget must wrap post-title output in esc_html().'
-		);
+	private function assert_no_payload( string $html ): void {
+		$this->assertStringNotContainsString( '<script>', $html, 'Hostile data reached the page unescaped.' );
 	}
 
-	// ────────────────────────────────────────────────────────────────────────
-	// LafkaLatestMenuEntriesWidget — broken esc_url(the_permalink()) call
-	// ────────────────────────────────────────────────────────────────────────
+	public function test_popular_posts_escapes_titles_and_links(): void {
+		Functions\when( 'wp_cache_get' )->alias( static fn( $key ) => 'lafka_popular_widget_ver' === $key ? 0 : array( 7 ) );
+		Functions\when( '_prime_post_caches' )->justReturn( null );
+		Functions\when( 'get_post' )->alias( static fn( $id ) => (object) array( 'ID' => $id ) );
+		Functions\when( 'get_queried_object_id' )->justReturn( 0 );
+		Functions\when( 'has_post_thumbnail' )->justReturn( false );
+		Functions\when( 'get_the_date' )->justReturn( '' );
 
-	public function test_latest_menu_widget_uses_echo_esc_url_get_permalink(): void {
-		// Pre-fix the href was built as esc_url(the_permalink()) — the_permalink
-		// echoes (returning null), so esc_url() received null and emitted ''.
-		// The actual rendered href was the raw permalink output by the_permalink
-		// before esc_url got called. Fix: switch to echo esc_url(get_permalink()).
-		$src = $this->widget_src( 'LafkaLatestMenuEntriesWidget.php' );
-		$this->assertMatchesRegularExpression(
-			"/echo\s+esc_url\(\s*get_permalink\(\s*\)\s*\)/",
-			$src,
-			'Latest Menu widget must use echo esc_url(get_permalink()) for the link href.'
-		);
+		ob_start();
+		( new \LafkaPopularPostsWidget() )->widget( self::WIDGET_ARGS, array( 'number' => 1 ) );
+		$html = (string) ob_get_clean();
+
+		$this->assertStringContainsString( htmlspecialchars( self::TITLE_PAYLOAD, ENT_QUOTES ), $html, 'The post is rendered.' );
+		$this->assert_no_payload( $html );
 	}
 
-	// ────────────────────────────────────────────────────────────────────────
-	// LafkaAboutWidget — escape post_title in admin form
-	// ────────────────────────────────────────────────────────────────────────
+	public function test_latest_menu_entries_escapes_links(): void {
+		if ( ! class_exists( 'WP_Query' ) ) {
+			// One-post query: have_posts() is true until the_post() runs once.
+			class_alias(
+				get_class(
+					new class() {
+						private bool $done = false;
 
-	public function test_about_widget_form_escapes_page_title(): void {
-		$src = $this->widget_src( 'LafkaAboutWidget.php' );
-		$this->assertMatchesRegularExpression(
-			"/esc_html\(\s*\\\$page->post_title\s*\)/",
-			$src,
-			'About widget admin form must esc_html() $page->post_title.'
-		);
+						public function __construct( $args = array() ) {}
+
+						public function have_posts(): bool {
+							return ! $this->done;
+						}
+
+						public function the_post(): void {
+							$this->done = true;
+						}
+					}
+				),
+				'WP_Query'
+			);
+		}
+		Functions\when( 'wp_cache_get' )->justReturn( false );
+		Functions\when( 'has_post_thumbnail' )->justReturn( true );
+		Functions\when( 'get_the_ID' )->justReturn( 7 );
+		Functions\when( 'the_post_thumbnail' )->justReturn( null );
+
+		ob_start();
+		( new \LafkaLatestMenuEntriesWidget() )->widget( self::WIDGET_ARGS, array( 'number' => 1 ) );
+		$html = (string) ob_get_clean();
+
+		$this->assertStringContainsString( 'href="' . htmlspecialchars( self::URL_PAYLOAD, ENT_QUOTES ) . '"', $html );
+		$this->assert_no_payload( $html );
 	}
 
-	// ────────────────────────────────────────────────────────────────────────
-	// All 4 widgets — strip_tags → sanitize_text_field in update()
-	// ────────────────────────────────────────────────────────────────────────
+	public function test_about_widget_form_escapes_page_titles(): void {
+		Functions\when( 'get_pages' )->justReturn( array( (object) array( 'ID' => 3, 'post_title' => self::TITLE_PAYLOAD ) ) );
 
-	#[DataProvider('widgetsProvider')]
-	public function test_widget_update_uses_sanitize_text_field_not_strip_tags( string $widget_filename ): void {
-		// strip_tags only removes HTML tags — sanitize_text_field also decodes
-		// entities, normalises whitespace, and strips line breaks. Same fix as
-		// reasonable WP-coding-standards baseline.
-		$src = $this->widget_src( $widget_filename );
+		ob_start();
+		( new \LafkaAboutWidget() )->form( array() );
+		$html = (string) ob_get_clean();
 
-		// Find the update() function body and assert no strip_tags inside it.
-		$update_pos = strpos( $src, 'function update' );
-		$this->assertNotFalse( $update_pos, "{$widget_filename} must define an update() method." );
+		$this->assertStringContainsString( '<option value="3">' . htmlspecialchars( self::TITLE_PAYLOAD, ENT_QUOTES ) . '</option>', $html );
+		$this->assert_no_payload( $html );
+	}
 
-		$slice = substr( $src, $update_pos, 2000 );
+	public function test_contacts_widget_escapes_operator_values(): void {
+		$fields = array_fill_keys( array( 'worktime', 'address', 'phone', 'fax', 'email' ), self::TITLE_PAYLOAD );
 
-		$this->assertDoesNotMatchRegularExpression(
-			"/strip_tags\(\s*\\\$new_instance/",
-			$slice,
-			"{$widget_filename}::update() must use sanitize_text_field (not strip_tags) on \$new_instance fields."
-		);
+		ob_start();
+		( new \LafkaContactsWidget() )->widget( self::WIDGET_ARGS, $fields );
+		$html = (string) ob_get_clean();
+
+		$this->assertSame( 5, substr_count( $html, htmlspecialchars( self::TITLE_PAYLOAD, ENT_QUOTES ) ) );
+		$this->assert_no_payload( $html );
 	}
 
 	/**
-	 * @return array<string, array{0:string}>
+	 * @param array<string, string> $expected Saved value per field.
 	 */
-	public static function widgetsProvider(): array {
-		return array(
-			'about'      => array( 'LafkaAboutWidget.php' ),
-			'contacts'   => array( 'LafkaContactsWidget.php' ),
-			'payment'    => array( 'LafkaPaymentOptionsWidget.php' ),
-			'latestmenu' => array( 'LafkaLatestMenuEntriesWidget.php' ),
+	#[DataProvider( 'update_provider' )]
+	public function test_update_sanitizes_every_text_field( string $widget, array $expected ): void {
+		$new_instance = array_fill_keys( array_keys( $expected ), '<b>v</b>' ) + array(
+			'number' => '1',
+			'seal'   => '',
 		);
+
+		$saved = ( new $widget() )->update( $new_instance, array() );
+
+		$this->assertSame( $expected, array_intersect_key( $saved, $expected ) );
 	}
 
-	public function test_contacts_widget_email_uses_sanitize_email(): void {
-		// Email field needs the address-shape check, not just sanitize_text_field.
-		$src = $this->widget_src( 'LafkaContactsWidget.php' );
-		$this->assertMatchesRegularExpression(
-			"/sanitize_email\(\s*wp_unslash\(\s*\\\$new_instance\['email'\]\s*\)\s*\)/",
-			$src,
-			'Contacts widget update() must use sanitize_email on the email field.'
+	/**
+	 * @return array<string, array{0: string, 1: array<string, string>}>
+	 */
+	public static function update_provider(): array {
+		$text = 'text(<b>v</b>)';
+		return array(
+			'about'       => array( 'LafkaAboutWidget', array( 'title' => $text ) ),
+			'contacts'    => array(
+				'LafkaContactsWidget',
+				array(
+					'title'    => $text,
+					'worktime' => $text,
+					'address'  => $text,
+					'phone'    => $text,
+					'fax'      => $text,
+					'email'    => 'email(<b>v</b>)',
+				),
+			),
+			'payment'     => array( 'LafkaPaymentOptionsWidget', array( 'title' => $text ) ),
+			'popular'     => array( 'LafkaPopularPostsWidget', array( 'title' => $text ) ),
+			'latest menu' => array( 'LafkaLatestMenuEntriesWidget', array( 'title' => $text ) ),
 		);
 	}
 }

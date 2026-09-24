@@ -1,9 +1,7 @@
 <?php
 /**
- * Smoke test for Lafka_Options::get() precedence + cache.
- *
- * Demonstrates the harness wiring (PHPUnit + Brain Monkey) and locks in the
- * lookup order specified at class-lafka-options.php:33–45.
+ * Lafka_Options::get() precedence (saved > explicit default > registered
+ * default > false) and its once-per-request option read.
  */
 
 declare(strict_types=1);
