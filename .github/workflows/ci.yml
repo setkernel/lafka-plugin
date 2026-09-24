@@ -5,24 +5,19 @@ on:
   workflow_dispatch:
   push:
     branches: [main, master]
-    # Skip CI when only docs / config-only changes land — saves runner minutes
-    # and keeps the green-build signal meaningful.
+    # Skip CI only for changes nothing checks. Markdown / docs changes still
+    # run: PHPUnit carries doc-guard tests (TRACKING.md contract, no operator
+    # literals in docs, release packaging) that must see them.
     paths-ignore:
-      - '**.md'
-      - 'docs/**'
       - 'languages/**'
       - 'LICENSE'
       - '.gitignore'
-      - '.editorconfig'
   pull_request:
     branches: [main, master]
     paths-ignore:
-      - '**.md'
-      - 'docs/**'
       - 'languages/**'
       - 'LICENSE'
       - '.gitignore'
-      - '.editorconfig'
 
 # Default to read-only at the workflow level; jobs that need to write
 # (none here) must opt in explicitly. Defense in depth against
