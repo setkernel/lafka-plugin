@@ -9,10 +9,8 @@
  * charged a different amount than the cart showed (worst case "1 = free"
  * charged full price).
  *
- * Lafka_Promotions::knob() caches the option in a function-local static for
- * the life of the process, so each knob value needs its own process. The
- * charge is linear in the knob, so two values off 0.5 (a partial discount and
- * "free") pin it; 0.5 itself is covered in-process by LafkaPromotionsTest.
+ * The charge is linear in the knob, so two values off 0.5 (a partial discount
+ * and "free") pin it; 0.5 itself is covered by LafkaPromotionsTest.
  */
 
 declare(strict_types=1);
@@ -23,8 +21,6 @@ use Brain\Monkey;
 use Brain\Monkey\Functions;
 use Lafka_Promotions;
 use PHPUnit\Framework\Attributes\DataProvider;
-use PHPUnit\Framework\Attributes\PreserveGlobalState;
-use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\TestCase;
 
 require_once dirname( __DIR__, 2 ) . '/incl/promotions/class-lafka-promotions.php';
@@ -37,6 +33,7 @@ final class BogoBlendedPriceReconciliationTest extends TestCase {
 	}
 
 	protected function tearDown(): void {
+		Lafka_Promotions::flush_knobs();
 		Monkey\tearDown();
 		parent::tearDown();
 	}
@@ -52,10 +49,9 @@ final class BogoBlendedPriceReconciliationTest extends TestCase {
 	}
 
 	#[DataProvider( 'discounts' )]
-	#[RunInSeparateProcess]
-	#[PreserveGlobalState( false )]
 	public function test_charged_total_equals_displayed_subtotal( float $discount, float $pair_unit_price ): void {
 		Functions\when( 'get_option' )->justReturn( array( 'bogo_discount' => $discount ) );
+		Lafka_Promotions::flush_knobs();
 		Functions\when( 'is_admin' )->justReturn( false );
 		Functions\when( 'did_action' )->justReturn( 1 );
 		Functions\when( 'esc_html__' )->returnArg();

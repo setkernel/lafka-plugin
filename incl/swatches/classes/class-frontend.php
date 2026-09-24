@@ -116,7 +116,10 @@ class Lafka_WC_Variation_Swatches_Frontend {
 
 		switch ( $attr->attribute_type ) {
 			case 'color':
-				$color             = get_term_meta( $term->term_id, 'color', true );
+				$color = (string) get_term_meta( $term->term_id, 'color', true );
+				if ( 1 !== preg_match( '/^#[0-9a-f]{6}$/i', $color ) ) {
+					$color = '#ffffff'; // No / malformed color: keep the CSS valid.
+				}
 				list( $r, $g, $b ) = sscanf( $color, '#%02x%02x%02x' );
 				$html              = sprintf(
 					'<span class="swatch swatch-color swatch-%s %s" style="background-color:%s;color:%s;" title="%s" data-value="%s">%s</span>',

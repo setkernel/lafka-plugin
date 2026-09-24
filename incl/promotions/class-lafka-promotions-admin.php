@@ -135,6 +135,7 @@ if ( ! class_exists( 'Lafka_Promotions_Admin' ) ) {
 			);
 
 			update_option( Lafka_Promotions::OPTION_KEY, $opts );
+			Lafka_Promotions::flush_knobs();
 
 			wp_safe_redirect(
 				add_query_arg(
