@@ -66,6 +66,24 @@ final class BranchProductFilterTest extends TestCase {
 		$this->assertSame( 7, $args['tax_query'][0]['terms'] );
 	}
 
+	public function test_branch_map_data_builds_for_geocoded_branches(): void {
+		// Regression: the term-meta cache priming called a WordPress function
+		// that does not exist (update_term_meta_cache), fataling every shop
+		// page once a branch had a geocoded address.
+		Functions\when( 'get_terms' )->justReturn( array( 7 => 'Downtown' ) );
+		Functions\when( 'update_termmeta_cache' )->justReturn( array() );
+		Functions\when( 'get_term_meta' )->justReturn( array() );
+		Functions\when( 'get_posts' )->justReturn( array() );
+		if ( ! class_exists( 'Lafka_Shipping_Areas', false ) ) {
+			require_once dirname( __DIR__, 2 ) . '/incl/shipping-areas/class-lafka-shipping-areas.php';
+		}
+
+		$method = ( new \ReflectionClass( Lafka_Branch_Locations::class ) )->getMethod( 'get_branch_locations_json_data' );
+		$json   = $method->invoke( null );
+
+		$this->assertIsArray( json_decode( (string) $json, true ) );
+	}
+
 	public function test_related_products_join_uses_the_term_taxonomy_id(): void {
 		$previous        = $GLOBALS['wpdb'] ?? null;
 		$GLOBALS['wpdb'] = (object) array( 'prefix' => 'wp_' );

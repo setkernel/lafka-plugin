@@ -755,7 +755,7 @@ class Lafka_Branch_Locations {
 		// PERF-H26: Prime term meta cache for ALL branches in a single query
 		// instead of N individual get_term_meta() calls (one per branch).
 		$branch_ids = array_keys( $branch_locations );
-		update_term_meta_cache( $branch_ids );
+		update_termmeta_cache( $branch_ids );
 
 		// First pass: collect all shipping area IDs from all branches
 		$all_shipping_area_ids     = array();
