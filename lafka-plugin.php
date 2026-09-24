@@ -1434,23 +1434,6 @@ if ( ! function_exists( 'lafka_register_admin_plugin_scripts' ) ) {
 		);
 		wp_register_style( 'lafka-schedule', plugins_url( 'assets/css/schedule/jquery.schedule.min.css', __FILE__ ), array(), lafka_plugin_asset_version( 'assets/css/schedule/jquery.schedule.min.css' ) );
 
-		// ajax upload files
-		wp_enqueue_script( 'plupload' );
-		$suffix = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
-		wp_enqueue_script( 'lafka-plugin-admin', plugins_url( 'assets/js/lafka-plugin-admin' . $suffix . '.js', __FILE__ ), array( 'plupload' ), lafka_plugin_asset_version( 'assets/js/lafka-plugin-admin' . $suffix . '.js' ), true );
-		wp_localize_script(
-			'lafka-plugin-admin',
-			'localise',
-			array(
-				'confirm_import_1'     => esc_html__( 'Confirm importing settings from', 'lafka-plugin' ),
-				'confirm_import_2'     => esc_html__( '. Current Theme Options will be overwritten. Continue?', 'lafka-plugin' ),
-				'import_success'       => esc_html__( 'Options successfully imported. Reloading.', 'lafka-plugin' ),
-				'upload_error'         => esc_html__( 'There was a problem with the upload. Error', 'lafka-plugin' ),
-				'export_url'           => esc_url( wp_nonce_url( add_query_arg( 'action', 'lafka_options_export', admin_url( 'admin-post.php' ) ), 'lafka_options_export' ) ),
-				'options_upload_nonce' => wp_create_nonce( 'lafka_options_upload_nonce' ),
-			)
-		);
-
 		$screen    = get_current_screen();
 		$screen_id = $screen ? $screen->id : '';
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- admin taxonomy screen detection from $_GET['taxonomy']; read-only display gating, no state mutation.
@@ -2394,96 +2377,6 @@ if ( ! function_exists( 'lafka_output_info_tooltips' ) ) {
 				<?php
 			}
 		}
-	}
-}
-
-// Import theme options
-add_action( 'wp_ajax_lafka_options_upload', 'lafka_options_upload' );
-if ( ! function_exists( 'lafka_options_upload' ) ) {
-	function lafka_options_upload() {
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'lafka-plugin' ) ), 403 );
-		}
-
-		check_ajax_referer( 'lafka_options_upload_nonce', 'security' );
-
-		if ( ! isset( $_FILES['file'] ) || ! is_array( $_FILES['file'] ) || empty( $_FILES['file']['tmp_name'] ) ) {
-			wp_send_json_error( array( 'message' => __( 'No file provided', 'lafka-plugin' ) ), 400 );
-		}
-
-		$file = $_FILES['file'];
-
-		if ( ! empty( $file['error'] ) ) {
-			wp_send_json_error( array( 'message' => __( 'Upload failed', 'lafka-plugin' ) ), 400 );
-		}
-
-		// Size cap — settings exports are small text/JSON files; 5MB is far more than enough.
-		$max_size = 5 * MB_IN_BYTES;
-		if ( ! empty( $file['size'] ) && (int) $file['size'] > $max_size ) {
-			wp_send_json_error( array( 'message' => __( 'File too large (5 MB max)', 'lafka-plugin' ) ), 400 );
-		}
-
-		// Server-side MIME sniff (do not trust client-supplied $_FILES['file']['type']).
-		$allowed_types = array( 'application/json', 'text/plain', 'application/xml', 'text/xml' );
-		$detected_type = '';
-		if ( function_exists( 'finfo_open' ) ) {
-			$finfo = finfo_open( FILEINFO_MIME_TYPE );
-			if ( $finfo ) {
-				$detected_type = (string) finfo_file( $finfo, $file['tmp_name'] );
-				finfo_close( $finfo );
-			}
-		}
-		if ( $detected_type && ! in_array( $detected_type, $allowed_types, true ) ) {
-			wp_send_json_error(
-				array( 'message' => sprintf( /* translators: %s: detected MIME type */ __( 'Invalid file type (%s). Only JSON/XML/plain text are allowed.', 'lafka-plugin' ), $detected_type ) ),
-				400
-			);
-		}
-
-		// Confirm the uploaded file is in fact an uploaded file (not a path-traversal attempt).
-		if ( ! is_uploaded_file( $file['tmp_name'] ) ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid upload', 'lafka-plugin' ) ), 400 );
-		}
-
-		$lafka_transfer_content = Lafka_Transfer_Content::getInstance();
-		$result                 = $lafka_transfer_content->importSettings( $file['tmp_name'], false, false, false, true );
-		wp_send_json_success( $result );
-	}
-}
-
-// Export theme options
-add_action( 'admin_post_lafka_options_export', 'lafka_options_export' );
-if ( ! function_exists( 'lafka_options_export' ) ) {
-	function lafka_options_export() {
-		// Capability + CSRF check before doing any work.
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( esc_html__( 'You do not have permission to export theme options.', 'lafka-plugin' ), 403 );
-		}
-		check_admin_referer( 'lafka_options_export' );
-
-		$lafka_transfer_content = Lafka_Transfer_Content::getInstance();
-		$export_file_path       = $lafka_transfer_content->exportThemeOptions();
-
-		// Defense in depth: require export to live inside the expected directory so a
-		// compromised exportThemeOptions() can't be used to readfile() arbitrary paths.
-		$export_dir   = realpath( get_template_directory() . '/store/settings' );
-		$resolved     = $export_file_path ? realpath( $export_file_path ) : false;
-		$path_is_safe = $resolved && $export_dir && str_starts_with( $resolved, $export_dir . DIRECTORY_SEPARATOR );
-
-		if ( $path_is_safe && file_exists( $resolved ) ) {
-			nocache_headers();
-			header( 'Content-Description: File Transfer' );
-			header( 'Content-Type: application/octet-stream' );
-			header( 'Content-Disposition: attachment; filename="' . basename( $resolved ) . '"' );
-			header( 'Content-Length: ' . filesize( $resolved ) );
-			readfile( $resolved );
-			// Best-effort cleanup so /store/settings/ doesn't fill up.
-			@unlink( $resolved );
-			exit;
-		}
-
-		wp_safe_redirect( admin_url( 'admin.php?page=lafka-optionsframework' ) );
-		exit;
 	}
 }
 
