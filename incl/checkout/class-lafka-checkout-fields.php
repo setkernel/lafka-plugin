@@ -112,6 +112,7 @@ if ( ! class_exists( 'Lafka_Checkout_Fields' ) ) {
 						'required'                   => true,
 						'options'                    => self::get_branch_options(),
 						'show_in_order_confirmation' => false,
+						'validate_callback'          => array( __CLASS__, 'validate_branch_value' ),
 					)
 				);
 			}
@@ -240,13 +241,44 @@ if ( ! class_exists( 'Lafka_Checkout_Fields' ) ) {
 		}
 
 		/**
+		 * Branches a customer may order from: the orderable ("legit") branches the
+		 * classic selector and the Store API update callback allow, or every
+		 * branch term when the shipping-areas module is not loaded.
+		 *
+		 * @return array<int,string> id => name
+		 */
+		public static function get_allowed_branches(): array {
+			if ( class_exists( 'Lafka_Shipping_Areas' ) ) {
+				$legit = Lafka_Shipping_Areas::get_all_legit_branch_locations();
+				return is_array( $legit ) ? $legit : array();
+			}
+
+			return self::get_branch_terms();
+		}
+
+		/**
+		 * validate_callback for the branch field: the submitted id must be one of
+		 * the allowed branches (a crafted Store API checkout can post any value).
+		 *
+		 * @param mixed $value Submitted branch id.
+		 * @return true|WP_Error
+		 */
+		public static function validate_branch_value( $value ) {
+			if ( array_key_exists( (int) $value, self::get_allowed_branches() ) ) {
+				return true;
+			}
+
+			return new WP_Error( 'lafka_invalid_branch', __( 'Please choose one of the listed branches.', 'lafka-plugin' ) );
+		}
+
+		/**
 		 * Branch select options in the Additional Checkout Fields shape.
 		 *
 		 * @return array<int,array{value:string,label:string}>
 		 */
 		public static function get_branch_options(): array {
 			$options = array();
-			foreach ( self::get_branch_terms() as $id => $name ) {
+			foreach ( self::get_allowed_branches() as $id => $name ) {
 				$options[] = array(
 					'value' => (string) (int) $id,
 					'label' => (string) $name,
@@ -282,7 +314,7 @@ if ( ! class_exists( 'Lafka_Checkout_Fields' ) ) {
 
 			if ( self::FIELD_ORDER_TYPE === $key ) {
 				$session['order_type'] = sanitize_text_field( (string) $value );
-			} else {
+			} elseif ( true === self::validate_branch_value( $value ) ) {
 				$session['branch_id'] = (int) $value;
 			}
 

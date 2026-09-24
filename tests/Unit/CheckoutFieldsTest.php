@@ -187,6 +187,26 @@ final class CheckoutFieldsTest extends TestCase {
 		$this->assertSame( 20, $stored['branch_id'] );
 	}
 
+	public function test_branch_value_must_be_an_offered_branch(): void {
+		require_once __DIR__ . '/Stubs/wp-error-class.php';
+		Functions\when( 'get_terms' )->justReturn( array( 10 => 'A', 20 => 'B' ) );
+
+		$this->assertTrue( Lafka_Checkout_Fields::validate_branch_value( '20' ) );
+		$this->assertInstanceOf( \WP_Error::class, Lafka_Checkout_Fields::validate_branch_value( '999' ) );
+	}
+
+	public function test_sync_ignores_a_branch_that_is_not_offered(): void {
+		require_once __DIR__ . '/Stubs/wp-error-class.php';
+		$session = new FakeWcSession();
+		$session->set( Lafka_Checkout_Fields::BRANCH_SESSION_KEY, array( 'branch_id' => 20 ) );
+		$this->stub_wc_with_session( $session );
+		Functions\when( 'get_terms' )->justReturn( array( 10 => 'A', 20 => 'B' ) );
+
+		Lafka_Checkout_Fields::sync_field_to_session( Lafka_Checkout_Fields::FIELD_BRANCH, '999' );
+
+		$this->assertSame( 20, $session->get( Lafka_Checkout_Fields::BRANCH_SESSION_KEY )['branch_id'] );
+	}
+
 	public function test_sync_preserves_the_other_key(): void {
 		$session = new FakeWcSession();
 		$session->set( Lafka_Checkout_Fields::BRANCH_SESSION_KEY, array( 'branch_id' => 20 ) );
