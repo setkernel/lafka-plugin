@@ -265,7 +265,7 @@ final class PushSsrfGuardTest extends TestCase {
 				return $map[ $key ] ?? $default;
 			}
 		);
-		Functions\when( 'get_bloginfo' )->justReturn( 'op@example.com' );
+		Functions\when( 'get_option' )->alias( static fn( $key, $default = false ) => 'admin_email' === $key ? 'op@example.com' : $default );
 
 		$row = (object) array(
 			'endpoint' => 'https://attacker.example.com/collect',

@@ -394,6 +394,22 @@ final class PushNotificationsTest extends TestCase {
 		);
 	}
 
+	public function test_vapid_subject_defaults_to_the_site_admin_email(): void {
+		Functions\when( 'get_option' )->alias( static fn( $key, $default = false ) => 'admin_email' === $key ? 'owner@example.test' : $default );
+		Functions\when( 'apply_filters' )->returnArg( 2 );
+
+		// Unset, and the placeholder older Customizer builds pre-filled.
+		foreach ( array( '', 'mailto:operator@site.com' ) as $stored ) {
+			Functions\when( 'get_theme_mod' )->alias(
+				static fn( $key, $default = null ) => 'lafka_push_vapid_subject' === $key ? $stored : $default
+			);
+			$this->assertSame( 'mailto:owner@example.test', \lafka_push_get_vapid_config()['subject'], "Stored: '{$stored}'" );
+		}
+
+		Functions\when( 'apply_filters' )->alias( static fn( $tag, $value ) => 'lafka_push_default_vapid_subject' === $tag ? 'https://example.test/contact' : $value );
+		$this->assertSame( 'https://example.test/contact', \lafka_push_get_vapid_config()['subject'] );
+	}
+
 	// ─────────────────────────────────────────────────────────────────────────
 	// 3. Customizer sanitizers
 	// ─────────────────────────────────────────────────────────────────────────

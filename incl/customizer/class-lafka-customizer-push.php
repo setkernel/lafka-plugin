@@ -235,7 +235,7 @@ if ( ! class_exists( 'Lafka_Customizer_Push' ) ) {
 			$wp_customize->add_setting(
 				'lafka_push_vapid_subject',
 				array(
-					'default'           => 'mailto:operator@site.com',
+					'default'           => '', // Empty = the site admin email (lafka_push_default_vapid_subject()).
 					'transport'         => 'refresh',
 					'sanitize_callback' => array( __CLASS__, 'sanitize_vapid_subject' ),
 				)

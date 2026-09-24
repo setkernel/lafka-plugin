@@ -90,9 +90,9 @@ if ( ! function_exists( 'lafka_push_get_vapid_config' ) ) {
 			? (string) LAFKA_PUSH_VAPID_SUBJECT
 			: ( function_exists( 'get_theme_mod' ) ? (string) get_theme_mod( 'lafka_push_vapid_subject', '' ) : '' );
 
-		if ( '' === $subject ) {
-			$site    = function_exists( 'get_bloginfo' ) ? (string) get_bloginfo( 'admin_email' ) : 'operator@example.com';
-			$subject = 'mailto:' . $site;
+		// Older Customizer builds pre-filled a placeholder address; never send it.
+		if ( '' === $subject || 'mailto:operator@site.com' === strtolower( $subject ) ) {
+			$subject = lafka_push_default_vapid_subject();
 		}
 		return array(
 			'enabled' => $enabled,
@@ -100,6 +100,21 @@ if ( ! function_exists( 'lafka_push_get_vapid_config' ) ) {
 			'private' => $private,
 			'subject' => $subject,
 		);
+	}
+}
+
+if ( ! function_exists( 'lafka_push_default_vapid_subject' ) ) {
+	/**
+	 * The VAPID contact used when none is configured: the site admin email
+	 * (Settings → General), filterable via `lafka_push_default_vapid_subject`.
+	 *
+	 * @return string mailto: URI, or '' when no admin email is set.
+	 */
+	function lafka_push_default_vapid_subject(): string {
+		$email   = function_exists( 'get_option' ) ? trim( (string) get_option( 'admin_email', '' ) ) : '';
+		$subject = '' !== $email ? 'mailto:' . $email : '';
+
+		return (string) apply_filters( 'lafka_push_default_vapid_subject', $subject );
 	}
 }
 
