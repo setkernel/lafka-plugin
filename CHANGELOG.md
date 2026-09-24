@@ -124,6 +124,8 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
   break is dropped instead of reaching `header()`.
 
 ### Removed
+- The per-page "Header size" / "Footer size" layout options (the theme no longer
+  reads them since its pre-handoff header/footer CSS was removed); stored meta is kept.
 - `lafka_mobile_menu_sort_by_group()`, `lafka_mobile_menu_grouped_walker_filter()`
   and the `LafkaMobileGroupedWalker` nav-walker methods (the class keeps
   `group_terms()`); `lafka_combo_cart_has_pair()`; `Lafka_Options::get_all()`;

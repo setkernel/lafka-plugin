@@ -27,8 +27,6 @@
         <custom-field action="translate">lafka_page_subtitle</custom-field>
         <custom-field action="copy">lafka_title_background_imgid</custom-field>
         <custom-field action="copy">lafka_title_alignment</custom-field>
-        <custom-field action="copy">lafka_footer_size</custom-field>
-        <custom-field action="copy">lafka_header_size</custom-field>
         <custom-field action="copy">lafka_show_offcanvas_sidebar</custom-field>
         <custom-field action="copy">lafka_custom_offcanvas_sidebar</custom-field>
         <custom-field action="copy">lafka_header_syle</custom-field>

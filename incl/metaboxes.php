@@ -63,8 +63,6 @@ if ( ! function_exists( 'lafka_layout_callback' ) ) {
 		$values = array(
 			'lafka_layout'                 => 'default',
 			'lafka_footer_style'           => 'default',
-			'lafka_footer_size'            => 'default',
-			'lafka_header_size'            => 'default',
 			'lafka_header_syle'            => '',
 			'lafka_page_subtitle'          => '',
 			'lafka_title_background_imgid' => '',
@@ -76,12 +74,6 @@ if ( ! function_exists( 'lafka_layout_callback' ) ) {
 		}
 		if ( isset( $custom['lafka_footer_style'] ) && $custom['lafka_footer_style'][0] != '' ) {
 			$values['lafka_footer_style'] = esc_attr( $custom['lafka_footer_style'][0] );
-		}
-		if ( isset( $custom['lafka_footer_size'] ) && $custom['lafka_footer_size'][0] != '' ) {
-			$values['lafka_footer_size'] = esc_attr( $custom['lafka_footer_size'][0] );
-		}
-		if ( isset( $custom['lafka_header_size'] ) && $custom['lafka_header_size'][0] != '' ) {
-			$values['lafka_header_size'] = esc_attr( $custom['lafka_header_size'][0] );
 		}
 		if ( isset( $custom['lafka_header_syle'] ) && $custom['lafka_header_syle'][0] != '' ) {
 			$values['lafka_header_syle'] = esc_attr( $custom['lafka_header_syle'][0] );
@@ -108,15 +100,6 @@ if ( ! function_exists( 'lafka_layout_callback' ) ) {
 		$output .= '<input id="lafka_layout_boxed" ' . checked( $values['lafka_layout'], 'lafka_boxed', false ) . ' type="radio" value="lafka_boxed" name="lafka_layout">';
 		$output .= '<label for="lafka_layout_boxed">' . esc_html__( 'Boxed', 'lafka-plugin' ) . '</label><br>';
 
-		// Footer Size
-		$output .= '<p><b>' . esc_html__( 'Footer size', 'lafka-plugin' ) . '</b></p>';
-		$output .= '<input id="lafka_footer_size_default" ' . checked( $values['lafka_footer_size'], 'default', false ) . ' type="radio" value="default" name="lafka_footer_size">';
-		$output .= '<label for="lafka_footer_size_default">' . esc_html__( 'Default', 'lafka-plugin' ) . '</label>&nbsp;';
-		$output .= '<input id="lafka_footer_size_standard" ' . checked( $values['lafka_footer_size'], 'standard', false ) . ' type="radio" value="standard" name="lafka_footer_size">';
-		$output .= '<label for="lafka_footer_size_standard">' . esc_html__( 'Standard', 'lafka-plugin' ) . '</label>&nbsp;';
-		$output .= '<input id="lafka_footer_size_hide" ' . checked( $values['lafka_footer_size'], 'lafka-stretched-footer', false ) . ' type="radio" value="lafka-stretched-footer" name="lafka_footer_size">';
-		$output .= '<label for="lafka_footer_size_hide">' . esc_html__( 'Fullwidth', 'lafka-plugin' ) . '</label>';
-
 		// Footer Style
 		$output .= '<p><b>' . esc_html__( 'Footer style', 'lafka-plugin' ) . '</b></p>';
 		$output .= '<input id="lafka_footer_style_default" ' . checked( $values['lafka_footer_style'], 'default', false ) . ' type="radio" value="default" name="lafka_footer_style">';
@@ -125,15 +108,6 @@ if ( ! function_exists( 'lafka_layout_callback' ) ) {
 		$output .= '<label for="lafka_footer_style_show">' . esc_html__( 'Standard', 'lafka-plugin' ) . '</label>&nbsp;';
 		$output .= '<input id="lafka_footer_style_hide" ' . checked( $values['lafka_footer_style'], 'lafka-reveal-footer', false ) . ' type="radio" value="lafka-reveal-footer" name="lafka_footer_style">';
 		$output .= '<label for="lafka_footer_style_hide">' . esc_html__( 'Reveal', 'lafka-plugin' ) . '</label>';
-
-		// Header Size
-		$output .= '<p><b>' . esc_html__( 'Header size', 'lafka-plugin' ) . '</b></p>';
-		$output .= '<input id="lafka_header_size_default" ' . checked( $values['lafka_header_size'], 'default', false ) . ' type="radio" value="default" name="lafka_header_size">';
-		$output .= '<label for="lafka_header_size_default">' . esc_html__( 'Default', 'lafka-plugin' ) . '</label>&nbsp;';
-		$output .= '<input id="lafka_header_size_standard" ' . checked( $values['lafka_header_size'], 'standard', false ) . ' type="radio" value="standard" name="lafka_header_size">';
-		$output .= '<label for="lafka_header_size_standard">' . esc_html__( 'Standard', 'lafka-plugin' ) . '</label>&nbsp;';
-		$output .= '<input id="lafka_header_size_hide" ' . checked( $values['lafka_header_size'], 'lafka-stretched-header', false ) . ' type="radio" value="lafka-stretched-header" name="lafka_header_size">';
-		$output .= '<label for="lafka_header_size_hide">' . esc_html__( 'Fullwidth', 'lafka-plugin' ) . '</label>';
 
 		// Transparent header and Title with Image Background (only on posts, pages, forum, foodmenu and topic)
 		$screen = get_current_screen();
@@ -244,14 +218,6 @@ if ( ! function_exists( 'lafka_save_layout_postdata' ) ) {
 
 		if ( isset( $_POST['lafka_footer_style'] ) ) {
 			update_post_meta( $post_id, 'lafka_footer_style', sanitize_text_field( $_POST['lafka_footer_style'] ) );
-		}
-
-		if ( isset( $_POST['lafka_footer_size'] ) ) {
-			update_post_meta( $post_id, 'lafka_footer_size', sanitize_text_field( $_POST['lafka_footer_size'] ) );
-		}
-
-		if ( isset( $_POST['lafka_header_size'] ) ) {
-			update_post_meta( $post_id, 'lafka_header_size', sanitize_text_field( $_POST['lafka_header_size'] ) );
 		}
 
 		if ( isset( $_POST['lafka_page_subtitle'] ) ) {
