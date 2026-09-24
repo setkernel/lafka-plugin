@@ -98,4 +98,31 @@ final class MetaDescriptionBoxTest extends TestCase {
 		lafka_meta_description_register_box();
 		$this->assertSame( array( 'post', 'page', 'product' ), $screens );
 	}
+
+	public function test_counter_script_targets_the_textarea_not_the_metabox_wrapper(): void {
+		// The postbox wrapper WordPress renders carries the metabox id; the
+		// field must not reuse it, or the counter reads the wrapper's .value.
+		$metabox_id = null;
+		Functions\when( '__' )->returnArg();
+		Functions\when( 'post_type_exists' )->justReturn( false );
+		Functions\when( 'add_meta_box' )->alias(
+			static function ( $id ) use ( &$metabox_id ) {
+				$metabox_id = $id;
+			}
+		);
+		lafka_meta_description_register_box();
+
+		Functions\when( 'wp_nonce_field' )->justReturn( '' );
+		Functions\when( 'get_post_meta' )->justReturn( '' );
+		Functions\when( 'esc_attr' )->returnArg();
+		Functions\when( 'esc_textarea' )->returnArg();
+		Functions\when( 'esc_html_e' )->justReturn( null );
+		ob_start();
+		lafka_meta_description_render_box( (object) array( 'ID' => 42 ) );
+		$html = (string) ob_get_clean();
+
+		$this->assertSame( 1, preg_match( '/<textarea\s+id="([^"]+)"/', $html, $field ) );
+		$this->assertNotSame( $metabox_id, $field[1] );
+		$this->assertStringContainsString( "getElementById( '{$field[1]}' )", $html );
+	}
 }
