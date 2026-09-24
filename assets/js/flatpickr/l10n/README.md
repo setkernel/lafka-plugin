@@ -1,13 +1,16 @@
 # Flatpickr locale files
 
-Only the most-used locales ship with the plugin (P3-06): `ar`, `de`, `es`, `fr`,
-`he`, `it`, `ja`, `ko`, `nl`, `pl`, `pt`, `ru`, `sv`, `tr`, `zh` — plus the
-required `index.js` + `default.js`.
+Only the most-used locales ship with the plugin: `ar`, `de`, `es`, `fr`,
+`he`, `it`, `ja`, `ko`, `nl`, `pl`, `pt`, `ru`, `sv`, `tr`, `zh`. Each file is a
+standalone UMD bundle — no `index.js` / `default.js` is needed, and English is
+flatpickr's built-in default.
 
-The PHP enqueue at `lafka-plugin.php` resolves the right file via
-`get_locale()` → 2-letter code → `file_exists()` check. If the user's locale
-isn't in this directory, no localized calendar JS loads — the date picker
-falls back to its built-in English text. Functional, just not localized.
+The PHP enqueue at `lafka-plugin.php` resolves the right file from
+`get_locale()`, trying `<ll-cc>.js`, then `<ll_cc>.js`, then the 2-letter
+`<ll>.js`, with a `file_exists()` check. If the user's locale isn't in this
+directory (or a child-theme override), no localized calendar JS loads — the
+date picker falls back to its built-in English text. Functional, just not
+localized.
 
 ## Add another locale
 
@@ -17,7 +20,7 @@ Two ways:
 
     /wp-content/themes/<your-child>/lafka_plugin_templates/flatpickr_l10n/<locale>.js
 
-The plugin's enqueue logic already prefers child-theme overrides when the
+The plugin's enqueue logic falls back to child-theme overrides when the
 plugin's own copy is missing.
 
 **2. Pull the file from upstream** and commit to the plugin:
