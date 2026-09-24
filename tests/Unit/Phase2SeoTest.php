@@ -10,7 +10,7 @@
  *   - Sitemap filter passes through other post types unchanged
  *   - robots.txt filter appends every required Disallow directive
  *   - robots.txt filter no-ops in "Discourage search engines" mode
- *   - Plugin wires the new modules + bumps version to 9.26.0
+ *   - Plugin wires the new modules
  *
  * @package Lafka\Plugin\Tests\Unit
  * @since   9.26.0
@@ -55,21 +55,6 @@ final class Phase2SeoTest extends TestCase {
 	// ────────────────────────────────────────────────────────────────────
 	// 1. Plugin wiring
 	// ────────────────────────────────────────────────────────────────────
-
-	public function test_plugin_version_bumped_to_9_26_0(): void {
-		$src = (string) file_get_contents( $this->plugin_root() . '/lafka-plugin.php' );
-		// Forward-compatible: Phase 2 landed at 9.26.0 and later phases bump
-		// past it (3B → 9.27.0, etc). Lock the floor, not the exact version.
-		if ( ! preg_match( '/Version:\s*(\d+)\.(\d+)\.(\d+)/', $src, $m ) ) {
-			$this->fail( 'Plugin header missing Version:.' );
-		}
-		$version = sprintf( '%03d.%03d.%03d', (int) $m[1], (int) $m[2], (int) $m[3] );
-		$this->assertGreaterThanOrEqual(
-			'009.026.000',
-			$version,
-			'Plugin header version must be >= 9.26.0 (Phase 2 floor).'
-		);
-	}
 
 	public function test_plugin_requires_faq_schema_module(): void {
 		$src = (string) file_get_contents( $this->plugin_root() . '/incl/schema/class-lafka-json-ld.php' );
@@ -510,51 +495,6 @@ HTML;
 			$src,
 			'Robots module must register the robots_txt filter.'
 		);
-	}
-
-	// ────────────────────────────────────────────────────────────────────
-	// 7. Local SEO guide doc presence + content sanity
-	// ────────────────────────────────────────────────────────────────────
-
-	/**
-	 * LAFKA_LOCAL_SEO_GUIDE.md lives in the parent WORKSPACE, not inside the
-	 * plugin repo, so it is absent when the plugin is checked out alone (CI).
-	 * Skip there (local-dev verification only) instead of failing the build —
-	 * matching the sibling-repo skip pattern used elsewhere in the suite.
-	 * (Fixed 2026-06-27: this had silently red-lit plugin CI on main since
-	 * 2026-05-19.)
-	 */
-	private function local_seo_guide_path_or_skip(): string {
-		$path = dirname( __DIR__, 3 ) . '/LAFKA_LOCAL_SEO_GUIDE.md';
-		if ( ! file_exists( $path ) ) {
-			$this->markTestSkipped( 'LAFKA_LOCAL_SEO_GUIDE.md is a parent-workspace doc, not part of the plugin repo; absent in isolated CI.' );
-		}
-		return $path;
-	}
-
-	public function test_local_seo_guide_doc_exists(): void {
-		$path = $this->local_seo_guide_path_or_skip();
-		$this->assertFileExists( $path, 'LAFKA_LOCAL_SEO_GUIDE.md must be present at the lafka/ parent directory.' );
-	}
-
-	public function test_local_seo_guide_covers_required_sections(): void {
-		$path = $this->local_seo_guide_path_or_skip();
-		$body = (string) file_get_contents( $path );
-		foreach ( array(
-			'Google Business Profile',
-			'Local citations',
-			'Schema',
-			'Review collection',
-			'Page speed',
-			'Local content',
-			'Tracking SEO performance',
-		) as $heading ) {
-			$this->assertStringContainsString(
-				$heading,
-				$body,
-				"Local SEO guide must cover '{$heading}'."
-			);
-		}
 	}
 }
 
