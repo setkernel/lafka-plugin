@@ -1,6 +1,6 @@
 # Lafka Plugin
 
-Companion plugin for the [Lafka WordPress Theme](https://github.com/setkernel/lafka-theme). Adds restaurant menu management, product addons, combos, delivery zones, store hours, and 20+ shortcodes.
+Restaurant-ordering plugin for WooCommerce, built as the companion to the [Lafka WordPress Theme](https://github.com/setkernel/lafka-theme). Adds restaurant menu management, product add-ons, delivery zones, store hours, a kitchen display, local-SEO schema and 25+ shortcodes. The plugin is theme-agnostic: it emits default markup and works on any WooCommerce-ready theme.
 
 Originally developed by [theAlThemist](https://www.althemist.com). Continued as open-source under GPL v2+.
 
@@ -9,7 +9,7 @@ Originally developed by [theAlThemist](https://www.althemist.com). Continued as 
 - WordPress 6.6+
 - WooCommerce 9.5+
 - PHP 8.1+
-- [Lafka Theme](https://github.com/setkernel/lafka-theme)
+- Recommended (not required): the [Lafka Theme](https://github.com/setkernel/lafka-theme), which ships the matching styling
 
 These match the floor declared in `lafka-plugin.php` (`Requires at least:` / `Requires PHP:` / `WC requires at least:`). The plugin will fatal-error or behave unexpectedly on older versions. WC tested up to: 10.9.
 
@@ -53,8 +53,8 @@ The plugin ships with **zero hardcoded restaurant data** — every public NAP / 
 
 For bundled / composite products, install the official **[WooCommerce Product Bundles](https://woocommerce.com/products/product-bundles/)** plugin. Lafka's addons engine bridges into it via `incl/addons/engine/compat/class-bundles-addons-compatibility.php` (since v9.6.0). The legacy `wc_combined_product` fork was removed in v9.0.0.
 
-### Shortcodes (20+)
-All shortcodes are also available as WPBakery/Visual Composer elements.
+### Shortcodes (26)
+Most shortcodes are also mapped as WPBakery elements; WPBakery itself is optional (see `incl/compat/lafka-wpbakery-fallback.php`).
 
 | Shortcode | Description |
 |---|---|
@@ -68,19 +68,28 @@ All shortcodes are also available as WPBakery/Visual Composer elements.
 | `[lafka_map]` | Google Maps with directions |
 | `[lafka_contact_form]` | Ajax contact form |
 | `[lafka_latest_posts]` / `[lafkablogposts]` | Blog grids/carousels |
-| `[lafka_woo_*_carousel]` | 8 WooCommerce product carousels |
+| `[lafka_woo_*]` | 9 WooCommerce product carousels / sliders (top-rated, recent, featured, sale, best-selling, category, categories, recently viewed, products slider) |
 | `[lafka_cloudzoom_gallery]` | Product image gallery |
-| `[lafka_content_slider]` | Tabbed content slider |
+| `[lafka_content_slider]` | Tabbed content slider — WPBakery only (registered by WPBakery's Tabs class) |
+| `[lafka_nap]` | Canonical name / address / phone block with Restaurant schema |
+| `[lafka_shipping_areas]` | Delivery-area map (Delivery areas module) |
+| `[lafka_wcmp_vendorslist]` | Vendor list — only when WC Marketplace (WCMp) is active |
 
 ### Widgets
 - About, Contacts, Latest Menu Entries, Payment Options, Popular Posts, Product Filter
 
-### Modules (conditionally loaded via theme options)
-- **Product Addons** (engine v2 since v8.13.0) — Text, textarea, checkbox, radio fields per product; 4 pricing strategies; WPML-aware; bridges into WC Product Bundles
-- **Order Hours** — Store open/close scheduling, holidays, branch-specific with timezone overrides
-- **Shipping Areas** (decomposed v9.2-9.4) — Delivery zones + dedicated `branches/`, `timeslots/`, `map-shortcode/` sub-modules
-- **Promotions** (migrated from child v6.0.0) — BOGO 50% math + delivery-minimum gate
-- **Kitchen Display System (KDS)** — Order state machine, rate-limited AJAX, customer-view, email triggers
+### Modules (toggled at Lafka → Modules)
+Gated features are declared in `Lafka_Module_Registry` (`incl/class-lafka-module-registry.php`) and switched on or off from the **Lafka → Modules** admin page. Everything is off by default except Product add-ons.
+- **Product add-ons** (default ON; engine v2 since v8.13.0) — Text, textarea, checkbox, radio fields per product; 4 pricing strategies; WPML-aware; bridges into WC Product Bundles
+- **Delivery areas & branches** (decomposed v9.2-9.4) — Delivery zones + dedicated `branches/`, `timeslots/`, `map-shortcode/` sub-modules
+- **Order hours** — Store open/close scheduling, holidays, branch-specific with timezone overrides
+- **Kitchen display (KDS)** — Order state machine, rate-limited AJAX, customer-view, email triggers
+- **Promotions** (default OFF; moved from lafka-child in child 6.0.0) — BOGO 50% math + delivery-minimum gate. **Upgrading from lafka-child ≤ 5.x:** the child no longer ships promotions, so enable Lafka → Modules → Promotions and click-test BOGO + the delivery minimum.
+- **New-order alerts** (order notifications) — Browser notification + sound for shop managers on each new order, routed to the branch operator
+- **Abandoned cart recovery**, **Web push**, **Review requests** — see Conversion below
+- **Analytics & tracking** — read-only in the Modules page; active whenever a destination is configured
+
+### Always-on subsystems
 - **Nutrition & Allergens** — Per-product nutrition facts, filterable daily-intake refs
 - **Variation Swatches** — Color and image swatches per attribute term
 - **Schema / JSON-LD** — Restaurant / LocalBusiness / Menu / MenuItem / Product / BreadcrumbList graph
@@ -99,15 +108,14 @@ All shortcodes are also available as WPBakery/Visual Composer elements.
 lafka-plugin/
 ├── incl/
 │   ├── addons/          # Engine v2 under addons/engine/ (resolver, pricing strategies, REST api/, cli/, compat WC Bundles bridge)
-│   ├── admin/           # Meta-description box, WC Settings → Restaurant tab, push admin
+│   ├── admin/           # Lafka → Modules + Tools pages, WC Settings → Restaurant tab, new-order alerts, push admin, meta-description box
 │   ├── analytics/       # GA4/GTM, Consent Mode v2, WC dataLayer + custom events
 │   ├── branches/        # Branch selection AJAX (split from shipping-areas v9.2.0)
 │   ├── checkout/        # Block checkout: mode migration, additional fields, blocks integration (v10.0.0)
-│   ├── cli/             # WP-CLI commands (image-alt backfill, reviews)
+│   ├── cli/             # WP-CLI: `wp lafka config`, `seed-demo`, image-alt backfill, WebP convert, reviews
 │   ├── customizer/      # Restaurant Info / PDP / Upsell / Abandoned-Cart / Analytics / Push / Reviews panels
-│   ├── compat/          # Block-cart shim, WP Importer ↔ WC attrs bridge
+│   ├── compat/          # Block-cart shim, WPBakery/Revslider fallbacks, address-autocomplete compat, WP Importer ↔ WC attrs bridge
 │   ├── conversion/      # Abandoned-cart + web-push + review prompts
-│   ├── emails/          # Review prompt email
 │   ├── kitchen-display/ # KDS state machine + AJAX + emails
 │   ├── map-shortcode/   # [lafka_map] (split from shipping-areas v9.3.0)
 │   ├── menu/            # Mobile grouped walker

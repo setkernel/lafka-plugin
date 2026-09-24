@@ -19,12 +19,12 @@ ordering platform that you own end to end, with **no per-order commission** and
 no third-party middleman between you and your customers.
 
 Every operator-facing detail (name, address, phone, opening hours, geo, social
-profiles, accepted payments) is configured from the Customizer or WP-CLI — the
-plugin ships with **zero hardcoded restaurant data**, so it is safe to
-distribute and clone. Functionality is split into gated modules you switch on
-from **WooCommerce → Feature Modules**, each with sensible defaults, Customizer
-controls, filter hooks, and `--lafka-*` CSS custom properties for the theme to
-style.
+profiles, accepted payments) is configured from **WooCommerce → Settings →
+Restaurant**, the Customizer or WP-CLI — the plugin ships with **zero hardcoded
+restaurant data**, so it is safe to distribute and clone. Functionality is split
+into gated modules you switch on from **Lafka → Modules**, each with sensible
+defaults, its own settings, filter hooks, and `--lafka-*` CSS custom properties
+for the theme to style.
 
 The plugin is deliberately **theme-agnostic**: it emits default markup and its
 own feature CSS only. Appearance decisions live in the theme, so Lafka Plugin
@@ -43,7 +43,7 @@ drops into any WooCommerce site without fighting your design.
 * **Promotions** — a BOGO, delivery-minimum and promo-banner engine that
   coordinates order discounts.
 * **Abandoned cart recovery** — email a one-click resume link when a customer
-  enters their address at checkout but does not finish.
+  enters their email at checkout but does not finish.
 * **Web push notifications** — browser-native alerts for order updates and
   reorder reminders, sent even when the site is closed.
 * **Review requests** — ask happy customers for a review after a completed order
@@ -58,8 +58,8 @@ drops into any WooCommerce site without fighting your design.
 * **Local SEO** — Restaurant / Menu / Breadcrumb JSON-LD schema wired to your
   operator configuration.
 * **Timeslots** for scheduled pickup and delivery.
-* **20+ shortcodes** (also exposed as page-builder elements) for menus, contact
-  blocks, maps, teasers and more.
+* **25+ shortcodes** (most also exposed as WPBakery elements; WPBakery is
+  optional) for menus, contact blocks, maps, teasers and more.
 * **HPOS-ready** WooCommerce integration and a **Site Health** panel that
   surfaces misconfiguration before customers hit it.
 
@@ -72,8 +72,8 @@ plugin stores.
 
 == Installation ==
 
-1. Install and activate **WooCommerce** first (Lafka Plugin lists it as a
-   required plugin).
+1. Install and activate **WooCommerce** first — it is required for the
+   ordering features.
 2. Upload the `lafka-plugin` folder to `/wp-content/plugins/`, or install the
    ZIP from **Plugins → Add New → Upload Plugin**.
 3. Activate the plugin through the **Plugins** menu in WordPress.
@@ -81,8 +81,8 @@ plugin stores.
    Restaurant** (or the **Appearance → Customize → Lafka — Restaurant
    Information** panel), or copy them between sites with
    `wp lafka config export` / `wp lafka config import`.
-5. Enable the modules you need under **WooCommerce → Feature Modules**. Every
-   module is off by default until you opt in.
+5. Enable the modules you need under **Lafka → Modules**. Most modules are off
+   by default until you opt in (Product add-ons starts on).
 
 For a design that matches, pair the plugin with the free **Lafka theme**, though
 any WooCommerce-compatible theme will work.
@@ -97,9 +97,9 @@ commission paid to us or anyone else.
 
 = Do I need WooCommerce? =
 
-Yes. Lafka Plugin extends WooCommerce for products, cart, checkout and orders,
-and declares WooCommerce as a required plugin. Install and activate WooCommerce
-before activating Lafka Plugin.
+Yes — WooCommerce is required for the ordering features. Lafka Plugin extends
+WooCommerce for products, cart, checkout and orders. Install and activate
+WooCommerce before activating Lafka Plugin.
 
 = Do I have to use the Lafka theme? =
 
@@ -117,10 +117,11 @@ filterable, so nothing about your business is baked into the code.
 
 = How do I turn features on or off? =
 
-Open **WooCommerce → Feature Modules**. Each module (add-ons, delivery areas,
-order hours, kitchen display, promotions, abandoned cart, push, reviews,
-analytics) is a toggle with its own Customizer settings and filter hooks.
-Modules are off by default so you only run what you use.
+Open **Lafka → Modules**. Each module (add-ons, delivery areas, order hours,
+kitchen display, promotions, new-order alerts, abandoned cart, push, reviews) is
+a toggle with its own settings and filter hooks; analytics switches on by itself
+once a destination is configured. Most modules are off by default (Product
+add-ons starts on) so you only run what you use.
 
 = Block Cart/Checkout or classic — which does Lafka use? =
 
@@ -203,4 +204,6 @@ https://github.com/setkernel/lafka-plugin/releases
 
 = 10.0.0 =
 Requires WordPress 6.6+, WooCommerce 9.5+ and PHP 8.1+. Review the GitHub
-release notes before upgrading a production store.
+release notes before upgrading a production store. Upgrading from lafka-child
+5.x or earlier: enable Lafka → Modules → Promotions and click-test BOGO +
+delivery minimum.
