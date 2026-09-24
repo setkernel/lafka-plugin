@@ -463,9 +463,9 @@ if ( ! function_exists( 'lafka_ac_render_email_body' ) ) {
 		<table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:24px 0;border-collapse:collapse;">
 			<thead>
 				<tr>
-					<th align="left" style="padding:8px;border-bottom:1px solid #e5e5e5;font-size:13px;color:#666;">Item</th>
-					<th align="center" style="padding:8px;border-bottom:1px solid #e5e5e5;font-size:13px;color:#666;">Qty</th>
-					<th align="right" style="padding:8px;border-bottom:1px solid #e5e5e5;font-size:13px;color:#666;">Price</th>
+					<th align="left" style="padding:8px;border-bottom:1px solid #e5e5e5;font-size:13px;color:#666;"><?php esc_html_e( 'Item', 'lafka-plugin' ); ?></th>
+					<th align="center" style="padding:8px;border-bottom:1px solid #e5e5e5;font-size:13px;color:#666;"><?php esc_html_e( 'Qty', 'lafka-plugin' ); ?></th>
+					<th align="right" style="padding:8px;border-bottom:1px solid #e5e5e5;font-size:13px;color:#666;"><?php esc_html_e( 'Price', 'lafka-plugin' ); ?></th>
 				</tr>
 			</thead>
 			<tbody>

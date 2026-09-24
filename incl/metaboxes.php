@@ -414,25 +414,25 @@ if ( ! function_exists( 'lafka_page_options_callback' ) ) {
 		// Show title
 		$output .= '<p><label for="lafka_show_title_page"><b>' . esc_html__( 'Show Title', 'lafka-plugin' ) . '</b></label></p>';
 		$output .= '<input id="lafka_show_title_page_yes" ' . checked( $values['lafka_show_title_page'], 'yes', false ) . ' type="radio" value="yes" name="lafka_show_title_page">';
-		$output .= '<label for="lafka_show_title_page_yes">Yes </label>&nbsp;';
+		$output .= '<label for="lafka_show_title_page_yes">' . esc_html__( 'Yes', 'lafka-plugin' ) . ' </label>&nbsp;';
 		$output .= '<input id="lafka_show_title_page_no" ' . checked( $values['lafka_show_title_page'], 'no', false ) . ' type="radio" value="no" name="lafka_show_title_page">';
-		$output .= '<label for="lafka_show_title_page_no">No</label>';
+		$output .= '<label for="lafka_show_title_page_no">' . esc_html__( 'No', 'lafka-plugin' ) . '</label>';
 
 		// Show breadcrumb
 		$output .= '<p><label for="lafka_show_breadcrumb"><b>' . esc_html__( 'Show Breadcrumb', 'lafka-plugin' ) . '</b></label></p>';
 		$output .= "<input id='lafka_show_breadcrumb_yes' " . checked( $values['lafka_show_breadcrumb'], 'yes', false ) . " type='radio' value='yes' name='lafka_show_breadcrumb'>";
-		$output .= '<label for="lafka_show_breadcrumb_yes">Yes </label>&nbsp;';
+		$output .= '<label for="lafka_show_breadcrumb_yes">' . esc_html__( 'Yes', 'lafka-plugin' ) . ' </label>&nbsp;';
 		$output .= '<input id="lafka_show_breadcrumb_no" ' . checked( $values['lafka_show_breadcrumb'], 'no', false ) . ' type="radio" value="no" name="lafka_show_breadcrumb">';
-		$output .= '<label for="lafka_show_breadcrumb_no">No</label>';
+		$output .= '<label for="lafka_show_breadcrumb_no">' . esc_html__( 'No', 'lafka-plugin' ) . '</label>';
 
 		// Show featured image inside post in single post view
 		$screen = get_current_screen();
 		if ( $screen && in_array( $screen->post_type, array( 'post' ), true ) ) {
 			$output .= '<p><label for="lafka_show_feat_image_in_post"><b>' . esc_html__( 'Featured Image in Single Post View', 'lafka-plugin' ) . '</b></label></p>';
 			$output .= '<input id="lafka_show_feat_image_in_post_yes" ' . checked( $values['lafka_show_feat_image_in_post'], 'yes', false ) . ' type="radio" value="yes" name="lafka_show_feat_image_in_post">';
-			$output .= '<label for="lafka_show_feat_image_in_post_yes">Yes </label>&nbsp;';
+			$output .= '<label for="lafka_show_feat_image_in_post_yes">' . esc_html__( 'Yes', 'lafka-plugin' ) . ' </label>&nbsp;';
 			$output .= '<input id="lafka_show_feat_image_in_post_no" ' . checked( $values['lafka_show_feat_image_in_post'], 'no', false ) . ' type="radio" value="no" name="lafka_show_feat_image_in_post">';
-			$output .= '<label for="lafka_show_feat_image_in_post_no">No</label>';
+			$output .= '<label for="lafka_show_feat_image_in_post_no">' . esc_html__( 'No', 'lafka-plugin' ) . '</label>';
 		}
 
 		// Show share
@@ -440,16 +440,16 @@ if ( ! function_exists( 'lafka_page_options_callback' ) ) {
 		$output .= '<input id="lafka_show_share_default" ' . checked( $values['lafka_show_share'], 'default', false ) . ' type="radio" value="default" name="lafka_show_share">';
 		$output .= '<label for="lafka_show_share_default">' . esc_html__( 'Default', 'lafka-plugin' ) . '</label>&nbsp;';
 		$output .= '<input id="lafka_show_share_yes" ' . checked( $values['lafka_show_share'], 'yes', false ) . ' type="radio" value="yes" name="lafka_show_share">';
-		$output .= '<label for="lafka_show_share_yes">Yes </label>&nbsp;';
+		$output .= '<label for="lafka_show_share_yes">' . esc_html__( 'Yes', 'lafka-plugin' ) . ' </label>&nbsp;';
 		$output .= '<input id="lafka_show_share_no" ' . checked( $values['lafka_show_share'], 'no', false ) . ' type="radio" value="no" name="lafka_show_share">';
-		$output .= '<label for="lafka_show_share_no">No</label>';
+		$output .= '<label for="lafka_show_share_no">' . esc_html__( 'No', 'lafka-plugin' ) . '</label>';
 
 		// Show Main sidebar
 		$output .= '<p><label for="lafka_show_sidebar"><b>' . esc_html__( 'Main Sidebar', 'lafka-plugin' ) . '</b></label></p>';
 		$output .= '<input id="lafka_show_sidebar_yes" ' . checked( $values['lafka_show_sidebar'], 'yes', false ) . ' type="radio" value="yes" name="lafka_show_sidebar">';
-		$output .= '<label for="lafka_show_sidebar_yes">Show </label>&nbsp;';
+		$output .= '<label for="lafka_show_sidebar_yes">' . esc_html__( 'Show', 'lafka-plugin' ) . ' </label>&nbsp;';
 		$output .= '<input id="lafka_show_sidebar_no" ' . checked( $values['lafka_show_sidebar'], 'no', false ) . ' type="radio" value="no" name="lafka_show_sidebar">';
-		$output .= '<label for="lafka_show_sidebar_no">Hide </label>';
+		$output .= '<label for="lafka_show_sidebar_no">' . esc_html__( 'Hide', 'lafka-plugin' ) . ' </label>';
 
 		// Select Main sidebar
 		$output .= "<select name='lafka_custom_sidebar'>";
@@ -484,9 +484,9 @@ if ( ! function_exists( 'lafka_page_options_callback' ) ) {
 		// Show offcanvas sidebar
 		$output .= '<p><label for="lafka_show_offcanvas_sidebar"><b>' . esc_html__( 'Off Canvas Sidebar', 'lafka-plugin' ) . '</b></label></p>';
 		$output .= '<input id="lafka_show_offcanvas_sidebar_yes" ' . checked( $values['lafka_show_offcanvas_sidebar'], 'yes', false ) . ' type="radio" value="yes" name="lafka_show_offcanvas_sidebar">';
-		$output .= '<label for="lafka_show_offcanvas_sidebar_yes">Show </label>&nbsp;';
+		$output .= '<label for="lafka_show_offcanvas_sidebar_yes">' . esc_html__( 'Show', 'lafka-plugin' ) . ' </label>&nbsp;';
 		$output .= '<input id="lafka_show_offcanvas_sidebar_no" ' . checked( $values['lafka_show_offcanvas_sidebar'], 'no', false ) . ' type="radio" value="no" name="lafka_show_offcanvas_sidebar">';
-		$output .= '<label for="lafka_show_offcanvas_sidebar_no">Hide </label>';
+		$output .= '<label for="lafka_show_offcanvas_sidebar_no">' . esc_html__( 'Hide', 'lafka-plugin' ) . ' </label>';
 
 		// Select offcanvas sidebar
 		$output .= "<select name='lafka_custom_offcanvas_sidebar'>";
@@ -514,9 +514,9 @@ if ( ! function_exists( 'lafka_page_options_callback' ) ) {
 		// Show footer sidebar
 		$output .= '<p><label for="lafka_show_footer_sidebar"><b>' . esc_html__( 'Footer Sidebar', 'lafka-plugin' ) . '</b></label></p>';
 		$output .= '<input id="lafka_show_footer_sidebar_yes" ' . checked( $values['lafka_show_footer_sidebar'], 'yes', false ) . ' type="radio" value="yes" name="lafka_show_footer_sidebar">';
-		$output .= '<label for="lafka_show_footer_sidebar_yes">Show </label>&nbsp;';
+		$output .= '<label for="lafka_show_footer_sidebar_yes">' . esc_html__( 'Show', 'lafka-plugin' ) . ' </label>&nbsp;';
 		$output .= '<input id="lafka_show_footer_sidebar_no" ' . checked( $values['lafka_show_footer_sidebar'], 'no', false ) . ' type="radio" value="no" name="lafka_show_footer_sidebar">';
-		$output .= '<label for="lafka_show_footer_sidebar_no">Hide </label>';
+		$output .= '<label for="lafka_show_footer_sidebar_no">' . esc_html__( 'Hide', 'lafka-plugin' ) . ' </label>';
 
 		// Select footer sidebar
 		$output .= "<select name='lafka_custom_footer_sidebar'>";

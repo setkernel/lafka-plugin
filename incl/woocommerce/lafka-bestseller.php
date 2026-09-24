@@ -113,7 +113,8 @@ if ( ! function_exists( 'lafka_pdp_render_bestseller_eyebrow' ) ) {
 		$rank = (int) $rank + 1;
 		printf(
 			'<span class="lafka-pdp-eyebrow lafka-pdp-eyebrow--bestseller">%s</span>',
-			esc_html( '★ #' . $rank . ' BEST SELLER' )
+			/* translators: %d: best-seller rank (1-3). */
+			esc_html( sprintf( __( '★ #%d BEST SELLER', 'lafka-plugin' ), $rank ) )
 		);
 	}
 }
