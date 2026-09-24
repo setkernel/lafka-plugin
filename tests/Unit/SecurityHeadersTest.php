@@ -88,17 +88,45 @@ final class SecurityHeadersTest extends TestCase {
 		}
 	}
 
-	public function test_emission_source_pins_filter_and_x_powered_by_strip(): void {
-		// send_security_headers() bails on headers_sent(), which is always true
-		// under PHPUnit (and CLI keeps no header list), so the extension filter
-		// child plugins use for CSP/HSTS and the X-Powered-By strip are pinned by
-		// source until the header-map building is split from emission.
-		$src = $this->module_src();
-		$this->assertMatchesRegularExpression(
-			'/apply_filters\(\s*\'lafka_security_headers\'\s*,\s*\$headers\s*\)/',
-			$src
+	public function test_built_headers_are_the_filtered_map_as_header_lines(): void {
+		Functions\when( 'apply_filters' )->returnArg( 2 );
+		$lines = Lafka_Security_Headers::build_headers();
+		$this->assertContains( 'X-Content-Type-Options: nosniff', $lines );
+		$this->assertContains( 'X-Frame-Options: SAMEORIGIN', $lines );
+		$this->assertCount( count( Lafka_Security_Headers::get_default_headers() ), $lines );
+	}
+
+	public function test_the_filter_adds_removes_and_cannot_smuggle_headers(): void {
+		// Child plugins add CSP/HSTS and drop headers through this filter.
+		Functions\when( 'apply_filters' )->alias(
+			static function ( $hook, $headers ) {
+				if ( 'lafka_security_headers' !== $hook ) {
+					return $headers;
+				}
+				unset( $headers['X-Frame-Options'] );
+				$headers['Strict-Transport-Security'] = 'max-age=31536000';
+				$headers['Referrer-Policy']           = '';
+				$headers['X-Injected']                = "1\r\nSet-Cookie: pwned=1";
+				$headers[0]                           = 'numeric-key';
+				$headers['X-Array']                   = array( 'no' );
+				return $headers;
+			}
 		);
-		$this->assertStringContainsString( "header_remove( 'X-Powered-By' )", $src );
+		$lines = Lafka_Security_Headers::build_headers();
+
+		$this->assertContains( 'Strict-Transport-Security: max-age=31536000', $lines );
+		$this->assertContains( 'X-Content-Type-Options: nosniff', $lines );
+		foreach ( $lines as $line ) {
+			$this->assertDoesNotMatchRegularExpression( '/^(X-Frame-Options|Referrer-Policy|X-Injected|X-Array|0):/', $line );
+			$this->assertStringNotContainsString( "\n", $line );
+		}
+	}
+
+	public function test_sender_strips_x_powered_by(): void {
+		// send_security_headers() bails on headers_sent(), which is always true
+		// under PHPUnit (and CLI keeps no header list), so this one line of the
+		// sender is pinned by source; everything it sends is build_headers().
+		$this->assertStringContainsString( "header_remove( 'X-Powered-By' )", $this->module_src() );
 	}
 
 	// ────────────────────────────────────────────────────────────────────────
