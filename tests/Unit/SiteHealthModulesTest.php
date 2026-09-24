@@ -39,6 +39,8 @@ final class SiteHealthModulesTest extends TestCase {
 		Functions\when( 'do_action' )->justReturn( null );
 		Functions\when( 'did_action' )->justReturn( 1 );
 		Functions\when( 'wp_using_ext_object_cache' )->justReturn( false );
+		Functions\when( 'wp_get_theme' )->justReturn( null );
+		Functions\when( 'is_child_theme' )->justReturn( false );
 	}
 
 	protected function tearDown(): void {

@@ -56,7 +56,7 @@ final class ReleasePackagingTest extends TestCase {
 			'.npmrc',
 			'.wp-env*.json',
 			'node_modules',
-			'vendor',
+			'/vendor',
 			'package.json',
 			'package-lock.json',
 			'composer.json',

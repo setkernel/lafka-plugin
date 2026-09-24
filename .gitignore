@@ -11,7 +11,7 @@ Thumbs.db
 
 # Dependencies
 node_modules/
-vendor/
+/vendor/
 
 # Test artefacts
 .phpunit.result.cache
