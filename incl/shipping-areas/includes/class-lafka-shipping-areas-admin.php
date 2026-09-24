@@ -172,22 +172,6 @@ class Lafka_Shipping_Areas_Admin {
 		<?php
 	}
 
-	public static function secondary_google_maps_api_key_cb( $args ) {
-		$options = get_option( 'lafka_shipping_areas_general' );
-		?>
-		<input id="<?php echo esc_attr( $args['label_for'] ); ?>"
-				name="lafka_shipping_areas_general[<?php echo esc_attr( $args['label_for'] ); ?>]"
-				class="lafka-admin-maps-api-key"
-				type="text"
-				value="<?php echo isset( $options[ $args['label_for'] ] ) ? esc_attr( $options[ $args['label_for'] ] ) : ''; ?>"
-		>
-		<p class="description">
-			<?php esc_html_e( 'If your main API Key has restrictions by HTTP referrers (web sites) you will need to enter a secondary API Key for the server to serve Distance Matrix API requests which is used for calculation of distance based shipping rates.', 'lafka-plugin' ); ?>
-			<?php esc_html_e( 'This Key can not be restricted by HTTP referrers (web sites) and only need the Distance Matrix API activated.', 'lafka-plugin' ); ?>
-		</p>
-		<?php
-	}
-
 	public static function pick_delivery_address_cb( $args ) {
 		$options = get_option( 'lafka_shipping_areas_general' );
 		$values  = array(
@@ -780,19 +764,6 @@ class Lafka_Shipping_Areas_Admin {
 			'general_section',
 			[
 				'label_for' => 'google_maps_api_key',
-			]
-		);
-		add_settings_field(
-			'secondary_google_maps_api_key',
-			esc_html__( 'Secondary Google Maps API Key', 'lafka-plugin' ),
-			array(
-				__CLASS__,
-				'secondary_google_maps_api_key_cb',
-			),
-			'lafka_shipping_areas_general',
-			'general_section',
-			[
-				'label_for' => 'secondary_google_maps_api_key',
 			]
 		);
 		add_settings_field(

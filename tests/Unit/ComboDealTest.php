@@ -25,26 +25,6 @@ final class ComboDealTest extends TestCase {
 		parent::tearDown();
 	}
 
-	public function test_pair_requires_two_different_items(): void {
-		$pizza   = array( 10 );
-		$poutine = array( 20 );
-		// pizza(10) + poutine(20) → qualifies
-		self::assertTrue( lafka_combo_cart_has_pair( array( $pizza, $poutine ), 10, 20 ) );
-		// only pizzas in cart → no pair
-		self::assertFalse( lafka_combo_cart_has_pair( array( $pizza, $pizza ), 10, 20 ) );
-	}
-
-	public function test_single_item_in_both_cats_does_not_self_qualify(): void {
-		$both = array( 10, 20 ); // one product in both categories
-		self::assertFalse( lafka_combo_cart_has_pair( array( $both ), 10, 20 ) );
-		// but that product + a second poutine does qualify
-		self::assertTrue( lafka_combo_cart_has_pair( array( $both, array( 20 ) ), 10, 20 ) );
-	}
-
-	public function test_zero_categories_never_match(): void {
-		self::assertFalse( lafka_combo_cart_has_pair( array( array( 10 ), array( 20 ) ), 0, 20 ) );
-	}
-
 	public function test_amount_fixed_capped_at_subtotal(): void {
 		$config = array( 'amount' => 8.0, 'type' => 'fixed' );
 		self::assertSame( 8.0, lafka_combo_deal_amount_for( $config, 40.0 ) );

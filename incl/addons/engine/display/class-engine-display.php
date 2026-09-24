@@ -46,7 +46,6 @@ class Lafka_Engine_Display {
 		add_filter( 'woocommerce_add_to_cart_url', array( $this, 'add_to_cart_url' ), 10 );
 		add_filter( 'woocommerce_product_add_to_cart_url', array( $this, 'add_to_cart_url' ), 10, 2 );
 		add_filter( 'woocommerce_product_supports', array( $this, 'ajax_add_to_cart_supports' ), 10, 3 );
-		add_filter( 'woocommerce_is_purchasable', array( $this, 'prevent_purchase_at_grouped_level' ), 10, 2 );
 
 		// Order view: turn file-upload URLs into clickable links.
 		add_filter( 'woocommerce_order_item_display_meta_value', array( $this, 'fix_file_uploaded_display' ) );
@@ -301,18 +300,6 @@ class Lafka_Engine_Display {
 			$url = (string) apply_filters( 'addons_add_to_cart_url', get_permalink( $product->get_id() ) );
 		}
 		return $url;
-	}
-
-	/**
-	 * Block grouped-product purchase when the variation has required addons —
-	 * customer must visit the variation's PDP to fill them in.
-	 */
-	public function prevent_purchase_at_grouped_level( $purchasable, $product ): bool {
-		$parent_id = $product->get_parent_id();
-		if ( $product && ! $product->is_type( 'variation' ) && $parent_id && is_single( $parent_id ) && $this->check_required_addons( $product->get_id() ) ) {
-			return false;
-		}
-		return (bool) $purchasable;
 	}
 
 	/**

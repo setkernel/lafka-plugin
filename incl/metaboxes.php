@@ -62,7 +62,6 @@ if ( ! function_exists( 'lafka_layout_callback' ) ) {
 		// Set default values
 		$values = array(
 			'lafka_layout'                 => 'default',
-			'lafka_top_header'             => 'default',
 			'lafka_footer_style'           => 'default',
 			'lafka_footer_size'            => 'default',
 			'lafka_header_size'            => 'default',
@@ -74,9 +73,6 @@ if ( ! function_exists( 'lafka_layout_callback' ) ) {
 
 		if ( isset( $custom['lafka_layout'] ) && $custom['lafka_layout'][0] != '' ) {
 			$values['lafka_layout'] = esc_attr( $custom['lafka_layout'][0] );
-		}
-		if ( isset( $custom['lafka_top_header'] ) && $custom['lafka_top_header'][0] != '' ) {
-			$values['lafka_top_header'] = esc_attr( $custom['lafka_top_header'][0] );
 		}
 		if ( isset( $custom['lafka_footer_style'] ) && $custom['lafka_footer_style'][0] != '' ) {
 			$values['lafka_footer_style'] = esc_attr( $custom['lafka_footer_style'][0] );
@@ -111,15 +107,6 @@ if ( ! function_exists( 'lafka_layout_callback' ) ) {
 		$output .= '<label for="lafka_layout_fullwidth">' . esc_html__( 'Full-Width', 'lafka-plugin' ) . '</label><br>';
 		$output .= '<input id="lafka_layout_boxed" ' . checked( $values['lafka_layout'], 'lafka_boxed', false ) . ' type="radio" value="lafka_boxed" name="lafka_layout">';
 		$output .= '<label for="lafka_layout_boxed">' . esc_html__( 'Boxed', 'lafka-plugin' ) . '</label><br>';
-
-		// Top Menu Bar
-		$output .= '<p><b>' . esc_html__( 'Top Menu Bar', 'lafka-plugin' ) . '</b></p>';
-		$output .= '<input id="lafka_top_header_default" ' . checked( $values['lafka_top_header'], 'default', false ) . ' type="radio" value="default" name="lafka_top_header">';
-		$output .= '<label for="lafka_top_header_default">' . esc_html__( 'Default', 'lafka-plugin' ) . '</label>&nbsp;';
-		$output .= '<input id="lafka_top_header_show" ' . checked( $values['lafka_top_header'], 'show', false ) . ' type="radio" value="show" name="lafka_top_header">';
-		$output .= '<label for="lafka_top_header_show">' . esc_html__( 'Show', 'lafka-plugin' ) . '</label>&nbsp;';
-		$output .= '<input id="lafka_top_header_hide" ' . checked( $values['lafka_top_header'], 'hide', false ) . ' type="radio" value="hide" name="lafka_top_header">';
-		$output .= '<label for="lafka_top_header_hide">' . esc_html__( 'Hide', 'lafka-plugin' ) . '</label>';
 
 		// Footer Size
 		$output .= '<p><b>' . esc_html__( 'Footer size', 'lafka-plugin' ) . '</b></p>';
@@ -255,10 +242,6 @@ if ( ! function_exists( 'lafka_save_layout_postdata' ) ) {
 			update_post_meta( $post_id, 'lafka_layout', sanitize_text_field( $_POST['lafka_layout'] ) );
 		}
 
-		if ( isset( $_POST['lafka_top_header'] ) ) {
-			update_post_meta( $post_id, 'lafka_top_header', sanitize_text_field( $_POST['lafka_top_header'] ) );
-		}
-
 		if ( isset( $_POST['lafka_footer_style'] ) ) {
 			update_post_meta( $post_id, 'lafka_footer_style', sanitize_text_field( $_POST['lafka_footer_style'] ) );
 		}
@@ -353,11 +336,8 @@ if ( ! function_exists( 'lafka_page_options_callback' ) ) {
 			'lafka_show_feat_image_in_post'  => 'yes',
 			'lafka_show_sidebar'             => 'yes',
 			'lafka_sidebar_position'         => 'default',
-			'lafka_show_footer_sidebar'      => 'yes',
 			'lafka_show_offcanvas_sidebar'   => 'yes',
-			'lafka_show_share'               => 'default',
 			'lafka_custom_sidebar'           => 'default',
-			'lafka_custom_footer_sidebar'    => 'default',
 			'lafka_custom_offcanvas_sidebar' => 'default',
 		);
 
@@ -379,20 +359,11 @@ if ( ! function_exists( 'lafka_page_options_callback' ) ) {
 		if ( isset( $custom['lafka_sidebar_position'] ) && $custom['lafka_sidebar_position'][0] != '' ) {
 			$values['lafka_sidebar_position'] = $custom['lafka_sidebar_position'][0];
 		}
-		if ( isset( $custom['lafka_show_footer_sidebar'] ) && $custom['lafka_show_footer_sidebar'][0] != '' ) {
-			$values['lafka_show_footer_sidebar'] = $custom['lafka_show_footer_sidebar'][0];
-		}
 		if ( isset( $custom['lafka_show_offcanvas_sidebar'] ) && $custom['lafka_show_offcanvas_sidebar'][0] != '' ) {
 			$values['lafka_show_offcanvas_sidebar'] = $custom['lafka_show_offcanvas_sidebar'][0];
 		}
-		if ( isset( $custom['lafka_show_share'] ) && $custom['lafka_show_share'][0] != '' ) {
-			$values['lafka_show_share'] = $custom['lafka_show_share'][0];
-		}
 		if ( isset( $custom['lafka_custom_sidebar'] ) && $custom['lafka_custom_sidebar'][0] != '' ) {
 			$values['lafka_custom_sidebar'] = $custom['lafka_custom_sidebar'][0];
-		}
-		if ( isset( $custom['lafka_custom_footer_sidebar'] ) && $custom['lafka_custom_footer_sidebar'][0] != '' ) {
-			$values['lafka_custom_footer_sidebar'] = $custom['lafka_custom_footer_sidebar'][0];
 		}
 		if ( isset( $custom['lafka_custom_offcanvas_sidebar'] ) && $custom['lafka_custom_offcanvas_sidebar'][0] != '' ) {
 			$values['lafka_custom_offcanvas_sidebar'] = $custom['lafka_custom_offcanvas_sidebar'][0];
@@ -434,15 +405,6 @@ if ( ! function_exists( 'lafka_page_options_callback' ) ) {
 			$output .= '<input id="lafka_show_feat_image_in_post_no" ' . checked( $values['lafka_show_feat_image_in_post'], 'no', false ) . ' type="radio" value="no" name="lafka_show_feat_image_in_post">';
 			$output .= '<label for="lafka_show_feat_image_in_post_no">' . esc_html__( 'No', 'lafka-plugin' ) . '</label>';
 		}
-
-		// Show share
-		$output .= '<p><label for="lafka_show_share"><b>' . esc_html__( 'Show Social Share Links', 'lafka-plugin' ) . '</b></label></p>';
-		$output .= '<input id="lafka_show_share_default" ' . checked( $values['lafka_show_share'], 'default', false ) . ' type="radio" value="default" name="lafka_show_share">';
-		$output .= '<label for="lafka_show_share_default">' . esc_html__( 'Default', 'lafka-plugin' ) . '</label>&nbsp;';
-		$output .= '<input id="lafka_show_share_yes" ' . checked( $values['lafka_show_share'], 'yes', false ) . ' type="radio" value="yes" name="lafka_show_share">';
-		$output .= '<label for="lafka_show_share_yes">' . esc_html__( 'Yes', 'lafka-plugin' ) . ' </label>&nbsp;';
-		$output .= '<input id="lafka_show_share_no" ' . checked( $values['lafka_show_share'], 'no', false ) . ' type="radio" value="no" name="lafka_show_share">';
-		$output .= '<label for="lafka_show_share_no">' . esc_html__( 'No', 'lafka-plugin' ) . '</label>';
 
 		// Show Main sidebar
 		$output .= '<p><label for="lafka_show_sidebar"><b>' . esc_html__( 'Main Sidebar', 'lafka-plugin' ) . '</b></label></p>';
@@ -511,36 +473,6 @@ if ( ! function_exists( 'lafka_page_options_callback' ) ) {
 
 		$output .= '</select>';
 
-		// Show footer sidebar
-		$output .= '<p><label for="lafka_show_footer_sidebar"><b>' . esc_html__( 'Footer Sidebar', 'lafka-plugin' ) . '</b></label></p>';
-		$output .= '<input id="lafka_show_footer_sidebar_yes" ' . checked( $values['lafka_show_footer_sidebar'], 'yes', false ) . ' type="radio" value="yes" name="lafka_show_footer_sidebar">';
-		$output .= '<label for="lafka_show_footer_sidebar_yes">' . esc_html__( 'Show', 'lafka-plugin' ) . ' </label>&nbsp;';
-		$output .= '<input id="lafka_show_footer_sidebar_no" ' . checked( $values['lafka_show_footer_sidebar'], 'no', false ) . ' type="radio" value="no" name="lafka_show_footer_sidebar">';
-		$output .= '<label for="lafka_show_footer_sidebar_no">' . esc_html__( 'Hide', 'lafka-plugin' ) . ' </label>';
-
-		// Select footer sidebar
-		$output .= "<select name='lafka_custom_footer_sidebar'>";
-
-		// Add a default option
-		$output .= '<option';
-		if ( $values['lafka_custom_footer_sidebar'] == 'default' ) {
-			$output .= " selected='selected'";
-		}
-		$output .= " value='default'>" . esc_html__( 'default', 'lafka-plugin' ) . '</option>';
-
-		// Fill the select element with all registered sidebars
-		foreach ( $wp_registered_sidebars as $sidebar_id => $sidebar ) {
-			if ( $sidebar_id != 'pre_header_sidebar' ) {
-				$output .= '<option';
-				if ( $sidebar_id == $values['lafka_custom_footer_sidebar'] ) {
-					$output .= " selected='selected'";
-				}
-				$output .= " value='" . esc_attr( $sidebar_id ) . "'>" . esc_html( $sidebar['name'] ) . '</option>';
-			}
-		}
-
-		$output .= '</select>';
-
 		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $output built with esc_attr/esc_html/esc_html__ per dynamic value; static markup is literal.
 		echo $output;
 	}
@@ -585,20 +517,11 @@ if ( ! function_exists( 'lafka_save_page_options_postdata' ) ) {
 		if ( isset( $_POST['lafka_sidebar_position'] ) ) {
 			update_post_meta( $post_id, 'lafka_sidebar_position', sanitize_text_field( $_POST['lafka_sidebar_position'] ) );
 		}
-		if ( isset( $_POST['lafka_show_footer_sidebar'] ) ) {
-			update_post_meta( $post_id, 'lafka_show_footer_sidebar', sanitize_text_field( $_POST['lafka_show_footer_sidebar'] ) );
-		}
 		if ( isset( $_POST['lafka_show_offcanvas_sidebar'] ) ) {
 			update_post_meta( $post_id, 'lafka_show_offcanvas_sidebar', sanitize_text_field( $_POST['lafka_show_offcanvas_sidebar'] ) );
 		}
-		if ( isset( $_POST['lafka_show_share'] ) ) {
-			update_post_meta( $post_id, 'lafka_show_share', sanitize_text_field( $_POST['lafka_show_share'] ) );
-		}
 		if ( isset( $_POST['lafka_custom_sidebar'] ) ) {
 			update_post_meta( $post_id, 'lafka_custom_sidebar', sanitize_text_field( $_POST['lafka_custom_sidebar'] ) );
-		}
-		if ( isset( $_POST['lafka_custom_footer_sidebar'] ) ) {
-			update_post_meta( $post_id, 'lafka_custom_footer_sidebar', sanitize_text_field( $_POST['lafka_custom_footer_sidebar'] ) );
 		}
 		if ( isset( $_POST['lafka_custom_offcanvas_sidebar'] ) ) {
 			update_post_meta( $post_id, 'lafka_custom_offcanvas_sidebar', sanitize_text_field( $_POST['lafka_custom_offcanvas_sidebar'] ) );
@@ -817,26 +740,10 @@ if ( ! function_exists( 'lafka_video_bckgr_callback' ) ) {
 		// Set default values
 		$values = array(
 			'lafka_video_bckgr_url'   => '',
-			'lafka_video_bckgr_start' => '',
-			'lafka_video_bckgr_end'   => '',
-			'lafka_video_bckgr_loop'  => 1,
-			'lafka_video_bckgr_mute'  => 1,
 		);
 
 		if ( isset( $custom['lafka_video_bckgr_url'] ) && $custom['lafka_video_bckgr_url'][0] != '' ) {
 			$values['lafka_video_bckgr_url'] = esc_attr( $custom['lafka_video_bckgr_url'][0] );
-		}
-		if ( isset( $custom['lafka_video_bckgr_start'] ) && $custom['lafka_video_bckgr_start'][0] != '' ) {
-			$values['lafka_video_bckgr_start'] = esc_attr( $custom['lafka_video_bckgr_start'][0] );
-		}
-		if ( isset( $custom['lafka_video_bckgr_end'] ) && $custom['lafka_video_bckgr_end'][0] != '' ) {
-			$values['lafka_video_bckgr_end'] = esc_attr( $custom['lafka_video_bckgr_end'][0] );
-		}
-		if ( isset( $custom['lafka_video_bckgr_loop'] ) && $custom['lafka_video_bckgr_loop'][0] != '' ) {
-			$values['lafka_video_bckgr_loop'] = esc_attr( $custom['lafka_video_bckgr_loop'][0] );
-		}
-		if ( isset( $custom['lafka_video_bckgr_mute'] ) && $custom['lafka_video_bckgr_mute'][0] != '' ) {
-			$values['lafka_video_bckgr_mute'] = esc_attr( $custom['lafka_video_bckgr_mute'][0] );
 		}
 
 		// description
@@ -845,22 +752,6 @@ if ( ! function_exists( 'lafka_video_bckgr_callback' ) ) {
 		// Video URL
 		$output .= '<p><label for="lafka_video_bckgr_url"><b>' . esc_html__( 'YouTube video URL', 'lafka-plugin' ) . '</b></label></p>';
 		$output .= '<input type="text" id="lafka_video_bckgr_url" name="lafka_video_bckgr_url" value="' . esc_attr( $values['lafka_video_bckgr_url'] ) . '" class="large-text" />';
-
-		// Start time
-		$output .= '<p><label for="lafka_video_bckgr_start"><b>' . esc_html__( 'Start time in seconds', 'lafka-plugin' ) . '</b></label></p>';
-		$output .= '<input type="text" id="lafka_video_bckgr_start" name="lafka_video_bckgr_start" value="' . esc_attr( $values['lafka_video_bckgr_start'] ) . '" size="8" />';
-
-		// End time
-		$output .= '<p><label for="lafka_video_bckgr_end"><b>' . esc_html__( 'End time in seconds', 'lafka-plugin' ) . '</b></label></p>';
-		$output .= '<input type="text" id="lafka_video_bckgr_end" name="lafka_video_bckgr_end" value="' . esc_attr( $values['lafka_video_bckgr_end'] ) . '" size="8" />';
-
-		// Loop
-		$output .= '<p><label for="lafka_video_bckgr_loop">';
-		$output .= "<input type='checkbox' id='lafka_video_bckgr_loop' name='lafka_video_bckgr_loop' value='1' " . checked( esc_attr( $values['lafka_video_bckgr_loop'] ), 1, false ) . '><b>' . esc_html__( 'Loop', 'lafka-plugin' ) . '</b></label></p>';
-
-		// Mute
-		$output .= '<p><label for="lafka_video_bckgr_mute">';
-		$output .= "<input type='checkbox' id='lafka_video_bckgr_mute' name='lafka_video_bckgr_mute' value='1' " . checked( esc_attr( $values['lafka_video_bckgr_mute'] ), 1, false ) . '><b>' . esc_html__( 'Mute', 'lafka-plugin' ) . '</b></label></p>';
 
 		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $output built with esc_attr/esc_html/esc_html__ per dynamic value; static markup is literal.
 		echo $output;
@@ -897,22 +788,6 @@ if ( ! function_exists( 'lafka_save_video_bckgr_postdata' ) ) {
 
 		if ( isset( $_POST['lafka_video_bckgr_url'] ) ) {
 			update_post_meta( $post_id, 'lafka_video_bckgr_url', esc_url( $_POST['lafka_video_bckgr_url'] ) );
-		}
-		if ( isset( $_POST['lafka_video_bckgr_start'] ) ) {
-			update_post_meta( $post_id, 'lafka_video_bckgr_start', sanitize_text_field( $_POST['lafka_video_bckgr_start'] ) );
-		}
-		if ( isset( $_POST['lafka_video_bckgr_end'] ) ) {
-			update_post_meta( $post_id, 'lafka_video_bckgr_end', sanitize_text_field( $_POST['lafka_video_bckgr_end'] ) );
-		}
-		if ( isset( $_POST['lafka_video_bckgr_loop'] ) && $_POST['lafka_video_bckgr_loop'] ) {
-			update_post_meta( $post_id, 'lafka_video_bckgr_loop', 1 );
-		} else {
-			update_post_meta( $post_id, 'lafka_video_bckgr_loop', 0 );
-		}
-		if ( isset( $_POST['lafka_video_bckgr_mute'] ) && $_POST['lafka_video_bckgr_mute'] ) {
-			update_post_meta( $post_id, 'lafka_video_bckgr_mute', 1 );
-		} else {
-			update_post_meta( $post_id, 'lafka_video_bckgr_mute', 0 );
 		}
 	}
 
