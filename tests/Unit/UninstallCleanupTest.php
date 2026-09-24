@@ -191,11 +191,11 @@ final class UninstallCleanupTest extends TestCase {
 	public function test_order_meta_is_documented_as_retained(): void {
 		$retained = Lafka_Uninstall::retained_meta_keys();
 		$this->assertContains( '_lafka_kds_', $retained );
-		$this->assertContains( '_lafka_addon_', $retained );
+		$this->assertContains( '_lafka_addon_keys', $retained );
 
 		// The delete lists must never touch order/order-item meta.
 		$this->assertNotContains( '_lafka_kds_', Lafka_Uninstall::deleted_post_meta_keys() );
-		$this->assertNotContains( '_lafka_addon_', Lafka_Uninstall::deleted_post_meta_keys() );
+		$this->assertNotContains( '_lafka_addon_keys', Lafka_Uninstall::deleted_post_meta_keys() );
 	}
 
 	// ─── Toggle OFF: minimal pass only ────────────────────────────────────────

@@ -24,7 +24,7 @@
  *     plugin-owned product + user meta keys.
  *
  * Intentionally RETAINED even under the toggle: WooCommerce orders and their
- * order-item meta (`_lafka_kds_*`, `_lafka_addon_*`, `_lafka_dl_*`, …). Orders
+ * order-item meta (`_lafka_kds_*`, `_lafka_addon_keys`, `_lafka_dl_*`, …). Orders
  * are the merchant's financial records; a plugin uninstall must not rewrite the
  * books. See retained_meta_keys() for the documented list.
  *
@@ -258,7 +258,7 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 		 */
 		public static function retained_meta_keys(): array {
 			return array(
-				'_lafka_addon_',            // order-item add-on selections
+				'_lafka_addon_keys',        // order-item add-on selection index (the selections themselves use display-name keys)
 				'_lafka_kds_',              // kitchen-display order state
 				'_lafka_dl_',               // dataLayer purchase attribution
 				'_lafka_special_instructions', // per-order kitchen note

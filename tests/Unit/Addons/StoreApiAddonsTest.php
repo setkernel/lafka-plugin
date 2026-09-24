@@ -408,6 +408,7 @@ namespace LafkaPlugin\Tests\Unit\Addons {
 				array(
 					array( 'key' => 'Extra Toppings', 'value' => 'Extra Cheese' ),
 					array( 'key' => 'Extra Toppings', 'value' => 'Mushrooms' ),
+					array( 'key' => '_lafka_addon_keys', 'value' => array( 'Extra Toppings' ) ),
 				),
 				$item->meta,
 				'Store API order-item meta must match the classic addon name→value writes.'

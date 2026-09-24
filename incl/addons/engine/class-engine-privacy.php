@@ -8,10 +8,11 @@
  * values are saved as order-item meta. Those records belong to the customer
  * and must respond to export/erase requests.
  *
- * Engine v2 writes addon order-item meta with the `_lafka_addon_` prefix.
- * Phase 7 will land the cart/display layer that actually writes these; this
- * class is in place ahead of time so the privacy contract is intact the
- * moment Phase 7 ships.
+ * The cart stores each selection under its customer-facing display key
+ * ("Extra Toppings ($1.50)" => "Extra Cheese") and lists those keys in the
+ * hidden `_lafka_addon_keys` item meta. Orders placed before that marker
+ * existed are matched by the product's current add-on group names — the
+ * same rule the re-order flow uses to read selections back.
  *
  * Registered via WP filters at hook time, paginated in batches of 25 orders
  * per request so customers with long histories don't time out.
@@ -24,9 +25,9 @@ defined( 'ABSPATH' ) || exit;
 
 class Lafka_Engine_Privacy {
 
-	const EXPORTER_ID    = 'lafka-addons';
-	const META_PREFIX    = '_lafka_addon_';
-	const PAGE_SIZE      = 25;
+	const EXPORTER_ID = 'lafka-addons';
+	const KEYS_META   = '_lafka_addon_keys';
+	const PAGE_SIZE   = 25;
 
 	public function register(): void {
 		add_filter( 'wp_privacy_personal_data_exporters', array( $this, 'register_exporter' ) );
@@ -95,13 +96,15 @@ class Lafka_Engine_Privacy {
 
 		foreach ( $orders as $order ) {
 			foreach ( $order->get_items() as $item ) {
-				foreach ( $item->get_meta_data() as $meta ) {
-					if ( ! $this->is_addon_meta_key( (string) $meta->key ) ) {
-						continue;
-					}
-					$item->delete_meta_data( $meta->key );
-					$removed++;
+				$keys = $this->addon_meta_keys( $item );
+				if ( empty( $keys ) ) {
+					continue;
 				}
+				foreach ( $keys as $key ) {
+					$item->delete_meta_data( $key );
+					++$removed;
+				}
+				$item->delete_meta_data( self::KEYS_META );
 				$item->save();
 			}
 		}
@@ -133,32 +136,63 @@ class Lafka_Engine_Privacy {
 	}
 
 	/**
-	 * Pull every meta on an order item whose key matches the addon prefix,
-	 * shaped for the GDPR exporter's "name/value" pair format.
+	 * The add-on selections on an order item, shaped for the GDPR exporter's
+	 * "name/value" pair format.
 	 *
 	 * @param WC_Order_Item $item
 	 * @return array<int, array{name: string, value: string}>
 	 */
 	private function collect_addon_meta( $item ): array {
-		$out = array();
+		$keys = $this->addon_meta_keys( $item );
+		$out  = array();
 		foreach ( $item->get_meta_data() as $meta ) {
-			$key = (string) $meta->key;
-			if ( ! $this->is_addon_meta_key( $key ) ) {
+			if ( ! in_array( (string) $meta->key, $keys, true ) ) {
 				continue;
 			}
 			$out[] = array(
-				'name'  => $this->humanize_meta_key( $key ),
+				'name'  => (string) $meta->key,
 				'value' => is_scalar( $meta->value ) ? (string) $meta->value : wp_json_encode( $meta->value ),
 			);
 		}
 		return $out;
 	}
 
-	private function is_addon_meta_key( string $key ): bool {
-		return 0 === strpos( $key, self::META_PREFIX );
-	}
+	/**
+	 * Meta keys on an order item that hold add-on selections.
+	 *
+	 * @param WC_Order_Item $item
+	 * @return string[]
+	 */
+	private function addon_meta_keys( $item ): array {
+		$present = array();
+		foreach ( $item->get_meta_data() as $meta ) {
+			$present[] = (string) $meta->key;
+		}
 
-	private function humanize_meta_key( string $key ): string {
-		return ucwords( str_replace( array( self::META_PREFIX, '_' ), array( '', ' ' ), $key ) );
+		$recorded = $item->get_meta( self::KEYS_META );
+		if ( is_array( $recorded ) ) {
+			return array_values( array_intersect( $present, array_map( 'strval', $recorded ) ) );
+		}
+
+		// Orders from before the marker: match the product's add-on group names.
+		$names = array();
+		if ( class_exists( 'Lafka_Engine_Helper' ) && method_exists( $item, 'get_product_id' ) ) {
+			foreach ( Lafka_Engine_Helper::get_product_addons( (int) $item->get_product_id() ) as $addon ) {
+				if ( '' !== (string) ( $addon['name'] ?? '' ) ) {
+					$names[] = (string) $addon['name'];
+				}
+			}
+		}
+
+		$keys = array();
+		foreach ( $present as $key ) {
+			foreach ( $names as $name ) {
+				if ( 0 === stripos( $key, $name ) ) {
+					$keys[] = $key;
+					break;
+				}
+			}
+		}
+		return $keys;
 	}
 }
