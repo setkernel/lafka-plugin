@@ -884,7 +884,9 @@ function lafka_plugin_after_plugins_loaded() {
 		}
 		require_once plugin_dir_path( __FILE__ ) . '/incl/woocommerce-functions.php';
 
-		// subcategories after 3.3.1 - will need refactoring in future
+		// Removed because it makes categories appear twice in shop and category
+		// view. Functionality is not lost: the theme calls
+		// woocommerce_maybe_show_product_subcategories() itself.
 		remove_filter( 'woocommerce_product_loop_start', 'woocommerce_maybe_show_product_subcategories' );
 
 		// Check if WPML and WooCommerce Multilingual are active
@@ -1032,10 +1034,6 @@ function lafka_plugin_after_plugins_loaded() {
 	 * images missing alt on /menu/.
 	 */
 	require_once plugin_dir_path( __FILE__ ) . 'incl/woocommerce/lafka-product-image-alt.php';
-
-	// Removed because causes categories to appear twice in shop and category view.
-	// Functionality not lost, because "woocommerce_maybe_show_product_subcategories" is called
-	remove_filter( 'woocommerce_product_loop_start', 'woocommerce_maybe_show_product_subcategories' );
 }
 
 // C-10: hook on `plugins_loaded` (priority 10) so the text domain is available

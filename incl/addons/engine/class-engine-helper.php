@@ -217,28 +217,4 @@ class Lafka_Engine_Helper {
 		return ! empty( $addon['description'] );
 	}
 
-	public static function is_wc_gte( string $version ): bool {
-		return defined( 'WC_VERSION' ) && version_compare( WC_VERSION, $version, '>=' );
-	}
-
-	public static function is_wc_gt( string $version ): bool {
-		return defined( 'WC_VERSION' ) && version_compare( WC_VERSION, $version, '>' );
-	}
-
-	public static function can_upload( $file ): bool {
-		return $file < wp_max_upload_size();
-	}
-
-	public static function is_filesize_over_limit( array $post_file ): bool {
-		$php_size_upload_errors = array( 1, 2 );
-		if ( ! empty( $post_file['error'] ) && in_array( $post_file['error'], $php_size_upload_errors, true ) ) {
-			return true;
-		}
-		return ! self::can_upload( $post_file['size'] ?? 0 );
-	}
-
-	public static function no_image_select_placeholder_src(): string {
-		$src = ( defined( 'WC_PRODUCT_ADDONS_PLUGIN_URL' ) ? WC_PRODUCT_ADDONS_PLUGIN_URL : '' ) . '/assets/images/no-image-select-placeholder.png';
-		return (string) apply_filters( 'woocommerce_product_addons_no_image_select_placeholder_src', $src );
-	}
 }

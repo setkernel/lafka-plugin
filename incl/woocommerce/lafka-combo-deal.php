@@ -180,25 +180,6 @@ if ( ! function_exists( 'lafka_combo_deal_amount_for' ) ) {
 	}
 }
 
-if ( ! function_exists( 'lafka_combo_deal_cart_categories' ) ) {
-	/**
-	 * Impure: category IDs per cart line item (one array per item).
-	 *
-	 * @return array
-	 */
-	function lafka_combo_deal_cart_categories(): array {
-		$out = array();
-		if ( ! function_exists( 'WC' ) || ! WC()->cart ) {
-			return $out;
-		}
-		foreach ( WC()->cart->get_cart() as $item ) {
-			$pid   = (int) ( $item['product_id'] ?? 0 );
-			$out[] = $pid ? wc_get_product_term_ids( $pid, 'product_cat' ) : array();
-		}
-		return $out;
-	}
-}
-
 if ( ! function_exists( 'lafka_combo_deal_cart_items' ) ) {
 	/**
 	 * Impure: per cart line item, its product-category IDs and single-unit price

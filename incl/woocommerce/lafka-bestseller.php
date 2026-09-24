@@ -45,8 +45,7 @@ if ( ! function_exists( 'lafka_pdp_get_bestseller_ids' ) ) {
 		//   2. INNER JOIN order_items + order_itemmeta — both have PRIMARY/MUL indices.
 		//   3. Group by meta_value directly (varchar product id) — skip CAST+posts join.
 		//   4. Post-filter dead/non-product IDs in PHP via wc_get_product() cache.
-		$is_hpos = class_exists( '\Automattic\WooCommerce\Utilities\OrderUtil' )
-			&& \Automattic\WooCommerce\Utilities\OrderUtil::custom_orders_table_usage_is_enabled();
+		$is_hpos = \Automattic\WooCommerce\Utilities\OrderUtil::custom_orders_table_usage_is_enabled();
 
 		if ( $is_hpos ) {
 			$sql = "SELECT oim.meta_value AS product_id
