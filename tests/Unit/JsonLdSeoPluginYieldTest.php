@@ -26,6 +26,7 @@ final class JsonLdSeoPluginYieldTest extends TestCase {
 		parent::setUp();
 		Monkey\setUp();
 		require_once dirname( __DIR__, 2 ) . '/incl/schema/class-lafka-json-ld.php';
+		require_once dirname( __DIR__, 2 ) . '/incl/seo/lafka-suppress-wc-breadcrumb-jsonld.php';
 	}
 
 	protected function tearDown(): void {
@@ -57,5 +58,15 @@ final class JsonLdSeoPluginYieldTest extends TestCase {
 		Monkey\Filters\expectApplied( 'lafka_schema_keep_wc_native_product' )->andReturn( true );
 
 		$this->assertSame( self::WC_PRODUCT, lafka_schema_suppress_wc_native_product( self::WC_PRODUCT ) );
+	}
+
+	public function test_wc_breadcrumbs_are_dropped_only_when_lafka_emits_its_own(): void {
+		$crumbs = array( '@type' => 'BreadcrumbList' );
+
+		Functions\when( 'lafka_seo_plugin_active' )->justReturn( false );
+		$this->assertSame( array(), lafka_suppress_wc_breadcrumb_jsonld( $crumbs ) );
+
+		Functions\when( 'lafka_seo_plugin_active' )->justReturn( true );
+		$this->assertSame( $crumbs, lafka_suppress_wc_breadcrumb_jsonld( $crumbs ) );
 	}
 }

@@ -26,4 +26,20 @@
 
 defined( 'ABSPATH' ) || exit;
 
-add_filter( 'woocommerce_structured_data_breadcrumblist', '__return_empty_array' );
+add_filter( 'woocommerce_structured_data_breadcrumblist', 'lafka_suppress_wc_breadcrumb_jsonld', 99 );
+
+if ( ! function_exists( 'lafka_suppress_wc_breadcrumb_jsonld' ) ) {
+	/**
+	 * Drop WooCommerce's BreadcrumbList — unless Lafka yields structured data
+	 * to an SEO plugin, in which case Lafka emits no breadcrumb and WC's stays.
+	 *
+	 * @param mixed $markup WC's breadcrumb markup.
+	 * @return mixed
+	 */
+	function lafka_suppress_wc_breadcrumb_jsonld( $markup ) {
+		if ( function_exists( 'lafka_schema_yields_to_seo_plugin' ) && lafka_schema_yields_to_seo_plugin() ) {
+			return $markup;
+		}
+		return array();
+	}
+}
