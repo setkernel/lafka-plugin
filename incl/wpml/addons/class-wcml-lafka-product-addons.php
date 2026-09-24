@@ -14,10 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class WCML_Lafka_Product_Addons {
 
-	const TEMPLATE_FOLDER   = '/templates/compatibility/';
-	const DIALOG_TEMPLATE   = 'product-addons-prices-dialog.twig';
-	const SETTINGS_TEMPLATE = 'product-addons-prices-settings.twig';
-	const PRICE_OPTION_KEY  = '_product_addon_prices';
+	const PRICE_OPTION_KEY = '_product_addon_prices';
 
 	/**
 	 * @var SitePress
@@ -47,20 +44,11 @@ class WCML_Lafka_Product_Addons {
 
 		add_action( 'init', array( $this, 'load_assets' ) );
 		add_filter( 'get_product_addons_product_terms', array( $this, 'addons_product_terms' ) );
-		add_filter( 'get_product_addons_fields', array( $this, 'product_addons_price_filter' ), 10, 2 );
 
 		add_action( 'updated_post_meta', array( $this, 'register_addons_strings' ), 10, 4 );
 		add_action( 'added_post_meta', array( $this, 'register_addons_strings' ), 10, 4 );
 
-		add_action( 'woocommerce-product-addons_panel_start', array( $this, 'show_pointer_info' ) );
-
 		if ( is_admin() && ! wp_doing_ajax() ) {
-			if ( $this->is_global_addon_edit_page() ) {
-				if ( ! isset( $_GET['edit'] ) ) {
-					add_action( 'admin_notices', array( $this, 'inf_translate_strings' ) );
-				}
-			}
-
 			add_action( 'wcml_gui_additional_box_html', array( $this, 'custom_box_html' ), 10, 3 );
 			add_filter( 'wcml_gui_additional_box_data', array( $this, 'custom_box_html_data' ), 10, 3 );
 			add_action( 'wcml_update_extra_fields', array( $this, 'addons_update' ), 10, 3 );
@@ -70,11 +58,7 @@ class WCML_Lafka_Product_Addons {
 			add_filter( 'wcml_do_not_display_custom_fields_for_product', array( $this, 'replace_tm_editor_custom_fields_with_own_sections' ) );
 
 			if ( $this->is_multi_currency_on() ) {
-				add_action( 'woocommerce_product_addons_panel_start', array( $this, 'load_dialog_resources' ) );
-				add_action( 'woocommerce_product_addons_panel_option_row', array( $this, 'dialog_button_after_option_row' ), 10, 4 );
-				add_action( 'woocommerce_product_addons_panel_before_options', array( $this, 'dialog_button_before_options' ), 10, 3 );
 				add_action( 'wcml_before_sync_product', array( $this, 'update_custom_prices_values' ) );
-				add_action( 'woocommerce_product_addons_global_edit_objects', array( $this, 'custom_prices_settings_block' ) );
 			}
 		} else {
 			add_filter( 'get_post_metadata', array( $this, 'translate_addons_strings' ), 10, 4 );
@@ -99,15 +83,6 @@ class WCML_Lafka_Product_Addons {
 	}
 
 
-	private function is_global_addon_edit_page() {
-		global $pagenow;
-
-		return 'edit.php' === $pagenow &&
-				isset( $_GET['post_type'] ) &&
-				'product' === $_GET['post_type'] &&
-				isset( $_GET['page'] ) &&
-				( 'global_addons' === $_GET['page'] || 'addons' === $_GET['page'] );
-	}
 
 	/**
 	 * @param string $product_id
@@ -175,49 +150,6 @@ class WCML_Lafka_Product_Addons {
 		return $null;
 	}
 
-	/**
-	 * @param $addons
-	 * @param $post_id
-	 *
-	 * @return mixed
-	 */
-	function product_addons_price_filter( $addons, $post_id ) {
-
-		if ( $this->is_multi_currency_on() ) {
-
-			$client_currency     = $this->woocommerce_wpml->multi_currency->get_client_currency();
-			$is_custom_prices_on = $this->is_product_custom_prices_on( $post_id );
-
-			foreach ( $addons as $add_id => $addon ) {
-
-				if ( isset( $addon['price'] ) && $addon['price'] ) {
-					if (
-						$is_custom_prices_on &&
-						isset( $addon[ 'price_' . $client_currency ] ) &&
-						$addon[ 'price_' . $client_currency ]
-					) {
-						$addons[ $add_id ]['price'] = $addon[ 'price_' . $client_currency ];
-					} else {
-						$addons[ $add_id ]['price'] = apply_filters( 'wcml_raw_price_amount', $addon['price'] );
-					}
-				}
-
-				foreach ( $addon['options'] as $key => $option ) {
-					if (
-						$is_custom_prices_on &&
-						isset( $option[ 'price_' . $client_currency ] ) &&
-						$option[ 'price_' . $client_currency ]
-					) {
-						$addons[ $add_id ]['options'][ $key ]['price'] = $option[ 'price_' . $client_currency ];
-					} else {
-						$addons[ $add_id ]['options'][ $key ]['price'] = apply_filters( 'wcml_raw_price_amount', $option['price'] );
-					}
-				}
-			}
-		}
-
-		return $addons;
-	}
 
 	/**
 	 * @param $product_terms
@@ -232,16 +164,6 @@ class WCML_Lafka_Product_Addons {
 		return $product_terms;
 	}
 
-	function inf_translate_strings() {
-
-		$pointer_ui = new WCML_Pointer_UI(
-			sprintf( __( 'You can translate strings related to global lafka add-ons on the %1$sWPML String Translation page%2$s. Use the search on the top of that page to find the strings.', 'lafka-plugin' ), '<a href="' . admin_url( 'admin.php?page=' . WPML_ST_FOLDER . '/menu/string-translation.php&context=wc_product_addons_strings' ) . '">', '</a>' ),
-			'',
-			'wpbody-content .woocommerce>h2'
-		);
-
-		$pointer_ui->show();
-	}
 
 	/**
 	 * @param $obj
@@ -414,39 +336,9 @@ class WCML_Lafka_Product_Addons {
 		return $this->multi_currency_mode === $this->sitepress->get_wp_api()->constant( 'WCML_MULTI_CURRENCIES_INDEPENDENT' );
 	}
 
-	public function load_dialog_resources() {
-		wp_enqueue_script( 'wcml-dialogs', WCML_PLUGIN_URL . '/res/js/dialogs' . WCML_JS_MIN . '.js', array( 'jquery-ui-dialog' ), WCML_VERSION );
-	}
 
-	/**
-	 * @param WP_Post|null $product
-	 * @param array $product_addons
-	 * @param int $loop
-	 * @param array $option
-	 */
-	public function dialog_button_after_option_row( $product, $product_addons, $loop, $option ) {
-		if ( $option ) {
-			$this->render_edit_price_element( $this->get_prices_dialog_model( $product_addons, $option, $loop, $this->is_product_custom_prices_on( $product ? $product->ID : false ) ) );
-		}
-	}
 
-	/**
-	 * @param WP_Post|null $product
-	 * @param array $product_addons
-	 * @param int $loop
-	 */
-	public function dialog_button_before_options( $product, $product_addons, $loop ) {
-		$this->render_edit_price_element( $this->get_prices_dialog_model( array(), $product_addons, $loop, $this->is_product_custom_prices_on( $product ? $product->ID : false ) ) );
-	}
 
-	/**
-	 * @param array $model
-	 */
-	private function render_edit_price_element( $model ) {
-		$twig_loader = $this->get_twig_loader();
-		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Twig template engine auto-escapes by default for HTML context; bundled WPML/WCML pattern.
-		echo $twig_loader->get_template()->show( $model, self::DIALOG_TEMPLATE );
-	}
 
 	/**
 	 * @return array
@@ -461,51 +353,15 @@ class WCML_Lafka_Product_Addons {
 		);
 	}
 
-	/**
-	 * @return WPML_Twig_Template_Loader
-	 */
-	private function get_twig_loader() {
-		return new WPML_Twig_Template_Loader( array( $this->sitepress->get_wp_api()->constant( 'WCML_PLUGIN_PATH' ) . self::TEMPLATE_FOLDER ) );
-	}
 
-	/**
-	 * @param int|false $product
-	 *
-	 * @return mixed
-	 */
-	private function is_product_custom_prices_on( $product_id ) {
 
-		if ( $product_id ) {
-			return get_post_meta( $product_id, '_wcml_custom_prices_status', true );
-		}
-
-		if ( $this->is_global_addon_edit_page() ) {
-			return $this->get_global_addon_prices_status();
-		}
-
-		return false;
-	}
-
-	/**
-	 * @return bool|mixed
-	 */
-	private function get_global_addon_prices_status() {
-
-		if ( isset( $_GET['edit'] ) ) {
-			return get_post_meta( absint( $_GET['edit'] ), '_wcml_custom_prices_status', true );
-		} elseif ( isset( $_POST['_wcml_custom_prices'] ) ) {
-			return sanitize_text_field( wp_unslash( $_POST['_wcml_custom_prices'] ) );
-		}
-
-		return false;
-	}
 
 	public function load_assets() {
 		global $pagenow;
 
 		$is_product_page     = 'post.php' === $pagenow && isset( $_GET['post'] );
 		$is_product_new_page = 'post-new.php' === $pagenow && isset( $_GET['post_type'] ) && 'product' === $_GET['post_type'];
-		if ( $is_product_page || $is_product_new_page || $this->is_global_addon_edit_page() ) {
+		if ( $is_product_page || $is_product_new_page ) {
 			wp_enqueue_script( 'wcml-product-addons', WCML_PLUGIN_URL . '/compatibility/res/js/wcml-product-addons' . WCML_JS_MIN . '.js', array( 'jquery' ), WCML_VERSION );
 			wp_enqueue_style( 'wcml-product-addons', WCML_PLUGIN_URL . '/compatibility/res/css/wcml-product-addons.css', '', WCML_VERSION );
 		}
@@ -575,52 +431,8 @@ class WCML_Lafka_Product_Addons {
 		return $product_addons;
 	}
 
-	/**
-	 * @param array $product_addons
-	 * @param array $option
-	 * @param int $loop
-	 * @param string|bool $custom_prices_on
-	 *
-	 * @return array
-	 */
-	private function get_prices_dialog_model( $product_addons, $option, $loop, $custom_prices_on ) {
 
-		$label = isset( $option['label'] ) ? $option['label'] : $option['name'];
 
-		return array(
-			'strings'           => array(
-				'dialog_title' => __( 'Multi-currency settings', 'lafka-plugin' ),
-				'description'  => sprintf( __( 'Here you can set different prices for the %s in multiple currencies:', 'lafka-plugin' ), '<strong>' . $label . '</strong>' ),
-				'apply'        => __( 'Apply', 'lafka-plugin' ),
-				'cancel'       => __( 'Cancel', 'lafka-plugin' ),
-			),
-			'custom_prices_on'  => $custom_prices_on,
-			'dialog_id'         => '_product_addon_option_' . md5( uniqid( $loop . $label ) ),
-			'option_id'         => isset( $product_addons[ $loop ]['options'] ) ? array_search( $option, $product_addons[ $loop ]['options'], true ) : '',
-			'addon_id'          => $loop,
-			'option_details'    => $option,
-			'default_currency'  => get_option( 'woocommerce_currency' ),
-			'active_currencies' => $this->woocommerce_wpml->multi_currency->get_currencies(),
-		);
-	}
-
-	public function custom_prices_settings_block() {
-		$twig_loader = $this->get_twig_loader();
-		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Twig template engine auto-escapes by default for HTML context; bundled WPML/WCML pattern.
-		echo $twig_loader->get_template()->show( $this->get_custom_prices_settings_model(), self::SETTINGS_TEMPLATE );
-	}
-
-	private function get_custom_prices_settings_model() {
-		return array(
-			'strings'          => array(
-				'label'    => __( 'Multi-currency settings', 'lafka-plugin' ),
-				'auto'     => __( 'Calculate prices in other currencies automatically', 'lafka-plugin' ),
-				'manually' => __( 'Set prices in other currencies manually', 'lafka-plugin' ),
-			),
-			'custom_prices_on' => $this->get_global_addon_prices_status(),
-			'nonce'            => wp_create_nonce( 'wcml_save_custom_prices' ),
-		);
-	}
 
 	/**
 	 * @param int $global_addon_id

@@ -505,6 +505,17 @@ final class AbandonedCartTest extends TestCase {
 	// 6. Capture + resume modules (source-grep)
 	// ─────────────────────────────────────────────────────────────────────────
 
+	public function test_capture_reads_the_email_from_the_checkout_review_payload(): void {
+		Functions\when( 'is_email' )->justReturn( true );
+		$_POST = array( 'post_data' => 'billing_first_name=Ann&billing_email=Guest%40Example.test' );
+		$this->assertSame( 'guest@example.test', \lafka_ac_capture_from_post() );
+
+		// Only the checkout form counts — not a stray top-level field.
+		$_POST = array( 'email' => 'other@example.test' );
+		$this->assertSame( '', \lafka_ac_capture_from_post() );
+		$_POST = array();
+	}
+
 	public function test_capture_module_hooks_woocommerce_actions(): void {
 		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/conversion/lafka-abandoned-cart-capture.php' );
 		$this->assertStringContainsString( 'woocommerce_checkout_update_order_review', $src );
