@@ -77,9 +77,10 @@ plugin stores.
 2. Upload the `lafka-plugin` folder to `/wp-content/plugins/`, or install the
    ZIP from **Plugins → Add New → Upload Plugin**.
 3. Activate the plugin through the **Plugins** menu in WordPress.
-4. Configure your restaurant details under **Appearance → Customize → Lafka —
-   Restaurant Information** (or seed them in bulk with the bundled WP-CLI
-   script, `scripts/migrate-restaurant-info.php`).
+4. Configure your restaurant details under **WooCommerce → Settings →
+   Restaurant** (or the **Appearance → Customize → Lafka — Restaurant
+   Information** panel), or copy them between sites with
+   `wp lafka config export` / `wp lafka config import`.
 5. Enable the modules you need under **WooCommerce → Feature Modules**. Every
    module is off by default until you opt in.
 
@@ -108,8 +109,9 @@ matching `--lafka-*` styling, but it functions on any WooCommerce-ready theme.
 
 = Where do the restaurant name, address and hours come from? =
 
-From your site configuration — the Customizer "Restaurant Information" panel or
-the WP-CLI seeding script — never from hardcoded values. Every NAP, geo, hours
+From your site configuration — the WooCommerce → Settings → Restaurant tab (or
+the Customizer "Restaurant Information" panel as a fallback), which
+`wp lafka config` can export and import — never from hardcoded values. Every NAP, geo, hours
 and social value is resolved through `lafka_get_restaurant_info()` and is
 filterable, so nothing about your business is baked into the code.
 

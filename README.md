@@ -23,29 +23,26 @@ These match the floor declared in `lafka-plugin.php` (`Requires at least:` / `Re
 
 The plugin ships with **zero hardcoded restaurant data** — every public NAP / hours / geo / social value is operator-configurable. After activation:
 
-1. **Seed your restaurant info via WP-CLI** (preferred — idempotent, ship-ready):
+1. **Enter your restaurant info** in either place:
+   - **WooCommerce → Settings → Restaurant** (canonical) — hours, cuisine, payment methods, schema type, price range, phone, email, geo and sameAs profiles. These write the canonical `lafka_business_*` options. The street address comes from **WooCommerce → Settings → General** (store address) unless you override it.
+   - **Appearance → Customize → "Lafka — Restaurant Information"** (8 sections, 26 settings) — the same `lafka_business_*` keys stored as `theme_mod`s, plus the homepage-hero image, default OG image and default locale. Customizer values are a **fallback**: a non-empty option always wins.
+
+2. **Or seed / copy it via WP-CLI** (round-trippable config bundle):
 
    ```bash
-   # Copy the sample, fill in your business details
-   cp wp-content/plugins/lafka-plugin/scripts/sample-restaurant-info.json my-restaurant.json
-   $EDITOR my-restaurant.json
-
-   # Dry-run first
-   LAFKA_RESTAURANT_INFO_DRY_RUN=1 wp eval-file wp-content/plugins/lafka-plugin/scripts/migrate-restaurant-info.php --path=/path/to/wp my-restaurant.json
-
-   # Then for real
-   wp eval-file wp-content/plugins/lafka-plugin/scripts/migrate-restaurant-info.php --path=/path/to/wp my-restaurant.json
+   wp lafka config export --file=lafka-config.json   # dump the current config
+   $EDITOR lafka-config.json                          # edit sections.business
+   wp lafka config import --file=lafka-config.json --dry-run   # review the diff
+   wp lafka config import --file=lafka-config.json             # apply
    ```
 
-   The 24 `lafka_business_*` theme_mods cover: name, address, phone, email, lat/lng, opening hours (7-day array), URL, accepted payments, served cuisine, accepts reservations, sameAs (5 social URLs), price-range, takeaway/delivery booleans.
-
-2. **Or configure via Customizer** — Appearance → Customize → "Lafka — Restaurant Information" panel (7 sections, 24 settings). The same `theme_mod` keys.
+   The `business` section writes the 23 canonical `lafka_business_*` options: `name`, `business_type`, `price_range`, `street`, `city`, `region`, `postal`, `country`, `geo_lat`, `geo_lng`, `phone_e164`, `phone_display`, `email`, `cuisines`, `payment_methods`, `same_as`, and `hours_mon` … `hours_sun`. The same export/import is available in the admin under **Lafka → Tools**.
 
 3. **Verify** — every Lafka-emitted JSON-LD schema, the `[lafka_nap]` shortcode, the contacts widget, and the editorial templates now pull from your operator config. No literals.
 
 4. **Place `[lafka_nap]`** anywhere you want the canonical NAP block (Restaurant Schema + visible HTML).
 
-`lafka_get_restaurant_info()` is the canonical resolver — defined in `incl/schema/lafka-schema-helpers.php`. Reads `theme_mod` → WP core fallback → empty. Filterable via `lafka_restaurant_info`.
+`lafka_get_restaurant_info()` is the canonical resolver — defined in `incl/schema/lafka-schema-helpers.php`. Per field it reads the `lafka_business_*` option → the `lafka_business_*` theme_mod → the WooCommerce store address / phone → a default (site name / admin email / empty). Filterable via `lafka_restaurant_info`.
 
 ## Features
 
@@ -131,7 +128,7 @@ lafka-plugin/
 │   └── wpml/            # WPML/WCML addon compat
 ├── shortcodes/          # All shortcode definitions
 ├── widgets/             # Widget classes
-├── scripts/             # Operator onboarding (migrate-restaurant-info.php + sample JSON)
+├── scripts/             # Dev tooling (version sync) — not shipped in the release zip
 ├── assets/              # JS, CSS, images
 ├── languages/           # Translation files
 └── lafka-plugin.php     # Main plugin file
