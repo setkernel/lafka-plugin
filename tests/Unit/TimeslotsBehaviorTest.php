@@ -127,6 +127,24 @@ final class TimeslotsBehaviorTest extends TestCase {
 		$this->assertSame( 1, $count( 5 ) );
 	}
 
+	public function test_offered_dates_start_from_today_on_the_store_clock(): void {
+		if ( class_exists( 'Lafka_Order_Hours', false ) ) {
+			\Lafka_Order_Hours::$timezone = '';
+		}
+		// UTC+14 and UTC-12 are always on different calendar days, so a list
+		// built on any single clock (e.g. UTC) cannot satisfy both.
+		foreach ( array( 'Pacific/Kiritimati', 'Etc/GMT+12' ) as $zone ) {
+			$tz = new \DateTimeZone( $zone );
+			Functions\when( 'wp_timezone' )->justReturn( $tz );
+
+			$this->assertSame(
+				array( ( new \DateTime( 'now', $tz ) )->format( 'Y-m-d' ) ),
+				Lafka_Timeslots::get_all_days_ahead_public( 0 ),
+				"Today must be today in $zone."
+			);
+		}
+	}
+
 	public function test_saved_mandatory_is_inert_while_feature_is_off(): void {
 		$this->options['lafka_shipping_areas_datetime'] = array(
 			'enable_datetime_option' => '',

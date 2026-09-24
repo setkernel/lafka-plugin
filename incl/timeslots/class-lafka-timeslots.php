@@ -661,7 +661,9 @@ class Lafka_Timeslots {
 	}
 
 	private static function get_all_days_ahead( $days_ahead ): array {
-		$current_time = new DateTime( 'now' );
+		// Same clock the submitted date is validated against (store/branch
+		// timezone), never the PHP default (UTC).
+		$current_time = new DateTime( 'now', class_exists( 'Lafka_Order_Hours' ) ? Lafka_Order_Hours::get_timezone() : wp_timezone() );
 		$interval     = DateInterval::createFromDateString( '1 day' );
 		$days         = array( $current_time->format( 'Y-m-d' ) );
 

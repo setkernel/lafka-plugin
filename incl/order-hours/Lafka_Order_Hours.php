@@ -312,7 +312,11 @@ class Lafka_Order_Hours {
 				$schedule_day_of_week = $schedule_array[ $weekday_index ];
 
 				foreach ( $schedule_day_of_week->periods as $period ) {
-					$open_time = DateTime::createFromFormat( 'H:i', $period->start, $timezone )->add( DateInterval::createFromDateString( $counter . ' days' ) );
+					// Anchor the opening on the store's own clock (branch or site
+					// timezone, the one $current_time is in) — never the PHP
+					// default (UTC), which shifted "Opens …" by the UTC offset.
+					$start     = array_map( 'intval', explode( ':', (string) $period->start ) + array( 0, 0 ) );
+					$open_time = ( clone $current_time )->setTime( $start[0], $start[1] )->add( DateInterval::createFromDateString( $counter . ' days' ) );
 
 					if ( $open_time > $current_time ) {
 						return $open_time;
