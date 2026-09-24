@@ -53,6 +53,7 @@ class Lafka_Shipping_Areas {
 		$options = get_option( 'lafka_shipping_areas_branches' );
 
 		require_once __DIR__ . '/../lafka-shipping-method-helpers.php';
+		require_once __DIR__ . '/../lafka-asset-helpers.php';
 
 		// Map shortcode — extracted to incl/map-shortcode/ in v9.3.0 (Path A4).
 		require_once __DIR__ . '/../map-shortcode/shortcode-lafka-shipping-areas.php';
@@ -231,15 +232,16 @@ class Lafka_Shipping_Areas {
 			// against the published delivery zones, so the order is still gated
 			// even when the client-side map never loads.
 			if ( wp_script_is( 'lafka-google-maps', 'registered' ) ) {
+				$handle_shipping_js = lafka_plugin_script_path( 'incl/shipping-areas/assets/js/frontend/lafka-shipping-areas-handle-shipping.min.js' );
 				wp_enqueue_script(
 					'lafka-shipping-areas-handle-shipping',
-					plugins_url( 'assets/js/frontend/lafka-shipping-areas-handle-shipping.min.js', __FILE__ ),
+					plugins_url( $handle_shipping_js, LAFKA_PLUGIN_FILE ),
 					array(
 						'jquery',
 						'lafka-google-maps',
 						'jquery-blockui',
 					),
-					lafka_plugin_asset_version( 'incl/shipping-areas/assets/js/frontend/lafka-shipping-areas-handle-shipping.min.js' ),
+					lafka_plugin_asset_version( $handle_shipping_js ),
 					true
 				);
 			}
@@ -282,7 +284,8 @@ class Lafka_Shipping_Areas {
 			$flatpickr_locale = apply_filters( 'lafka_flatpickr_locale', strtok( get_locale(), '_' ), get_locale() );
 			wp_enqueue_style( 'flatpickr' );
 			wp_enqueue_script( 'flatpickr-local' );
-			wp_enqueue_script( 'lafka-shipping-datetime', plugins_url( 'assets/js/frontend/lafka-shipping-datetime.min.js', __FILE__ ), array( 'jquery', 'select2', 'flatpickr' ), lafka_plugin_asset_version( 'incl/shipping-areas/assets/js/frontend/lafka-shipping-datetime.min.js' ), true );
+			$datetime_js       = lafka_plugin_script_path( 'incl/shipping-areas/assets/js/frontend/lafka-shipping-datetime.min.js' );
+			wp_enqueue_script( 'lafka-shipping-datetime', plugins_url( $datetime_js, LAFKA_PLUGIN_FILE ), array( 'jquery', 'select2', 'flatpickr' ), lafka_plugin_asset_version( $datetime_js ), true );
 			wp_localize_script(
 				'lafka-shipping-datetime',
 				'lafka_datetime_options',

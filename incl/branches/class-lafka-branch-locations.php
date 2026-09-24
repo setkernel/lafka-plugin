@@ -4,6 +4,8 @@ use Automattic\WooCommerce\Utilities\OrderUtil;
 
 defined( 'ABSPATH' ) || exit;
 
+require_once __DIR__ . '/../lafka-asset-helpers.php';
+
 class Lafka_Branch_Locations {
 	public static function init() {
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_scripts' ) );
@@ -80,21 +82,21 @@ class Lafka_Branch_Locations {
 		// loaded and would throw on every page-load otherwise. The branch
 		// selector falls back to the dropdown-only UX.
 		if ( wp_script_is( 'lafka-google-maps', 'registered' ) ) {
+			$branch_front_js = lafka_plugin_script_path( 'incl/shipping-areas/assets/js/frontend/lafka-branch-locations-front.min.js' );
 			wp_enqueue_script(
 				'lafka-branch-locations-front',
-				plugins_url( '../assets/js/frontend/lafka-branch-locations-front.min.js', __FILE__ ),
+				plugins_url( $branch_front_js, LAFKA_PLUGIN_FILE ),
 				array(
 					'lafka-google-maps',
 					'jquery-blockui',
 					'wc-country-select',
-					// P3-04: this minified vendor-style file calls $.magnificPopup.open()
-					// for the branch-selection modal. We don't have a non-min source to
-					// migrate it from, and branch selection is on the order critical
-					// path — so magnific is preserved specifically as a dep here while
+					// P3-04: this script calls $.magnificPopup.open() for the
+					// branch-selection modal; branch selection is on the order
+					// critical path, so magnific is preserved as a dep here while
 					// removed from the global enqueue everywhere else.
 					'magnific',
 				),
-				lafka_plugin_asset_version( 'incl/shipping-areas/assets/js/frontend/lafka-branch-locations-front.min.js' ),
+				lafka_plugin_asset_version( $branch_front_js ),
 				true
 			);
 			wp_enqueue_style( 'magnific' );

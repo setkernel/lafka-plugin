@@ -5,7 +5,7 @@ Only the most-used locales ship with the plugin: `ar`, `de`, `es`, `fr`,
 standalone UMD bundle — no `index.js` / `default.js` is needed, and English is
 flatpickr's built-in default.
 
-The PHP enqueue at `lafka-plugin.php` resolves the right file from
+The PHP registration in `incl/lafka-asset-registration.php` resolves the right file from
 `get_locale()`, trying `<ll-cc>.js`, then `<ll_cc>.js`, then the 2-letter
 `<ll>.js`, with a `file_exists()` check. If the user's locale isn't in this
 directory (or a child-theme override), no localized calendar JS loads — the

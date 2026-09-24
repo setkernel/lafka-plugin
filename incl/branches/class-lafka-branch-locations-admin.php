@@ -2,6 +2,7 @@
 defined( 'ABSPATH' ) || exit;
 
 require_once __DIR__ . '/../admin/lafka-term-form-nonce.php';
+require_once __DIR__ . '/../lafka-asset-helpers.php';
 
 // $_GET reads across this admin class are for filter state on the
 // order-list / branch-list / shop-order screens (branch_location_filter,
@@ -63,9 +64,10 @@ class Lafka_Branch_Locations_Admin {
 		// management still works via the dropdown UI; only the map-pick
 		// surface is disabled.
 		if ( wp_script_is( 'lafka-google-maps', 'registered' ) ) {
+			$branch_admin_js = lafka_plugin_script_path( 'incl/shipping-areas/assets/js/backend/lafka-branch-locations-admin.min.js' );
 			wp_enqueue_script(
 				'lafka-branch-locations-admin',
-				plugins_url( '../assets/js/backend/lafka-branch-locations-admin.min.js', __FILE__ ),
+				plugins_url( $branch_admin_js, LAFKA_PLUGIN_FILE ),
 				array(
 					'jquery',
 					'lafka-google-maps',
@@ -73,7 +75,7 @@ class Lafka_Branch_Locations_Admin {
 					'lafka-schedule',
 					'flatpickr',
 				),
-				lafka_plugin_asset_version( 'incl/shipping-areas/assets/js/backend/lafka-branch-locations-admin.min.js' ),
+				lafka_plugin_asset_version( $branch_admin_js ),
 				true
 			);
 		}

@@ -73,6 +73,12 @@ jobs:
       - name: JS tests
         run: npm test
 
+      # The committed .min.js builds must match their sources.
+      - name: Minified builds are up to date
+        run: |
+          npm run build
+          git diff --exit-code -- '*.min.js' || { echo "::error::Run npm run build and commit the regenerated .min.js files."; exit 1; }
+
   php:
     name: PHP
     runs-on: ubuntu-latest

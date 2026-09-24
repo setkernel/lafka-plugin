@@ -1,6 +1,8 @@
 <?php
 defined( 'ABSPATH' ) || exit;
 
+require_once __DIR__ . '/../incl/lafka-asset-helpers.php';
+
 // Include shortcodes classes
 // If WCMp is active
 if ( defined( 'LAFKA_PLUGIN_IS_WC_MARKETPLACE' ) && LAFKA_PLUGIN_IS_WC_MARKETPLACE ) {
@@ -1248,7 +1250,8 @@ if ( ! function_exists( 'lafka_map_shortcode' ) ) {
 			// Enqueue google maps script
 			wp_enqueue_script( 'lafka-google-maps' );
 			// Map config
-			wp_enqueue_script( 'lafka-plugin-map-config-' . $map_canvas_unique_id, plugins_url( 'assets/js/lafka-plugin-map-config.min.js', __DIR__ ), array( 'lafka-google-maps' ), false, true );
+			$map_config_js = lafka_plugin_script_path( 'assets/js/lafka-plugin-map-config.min.js' );
+			wp_enqueue_script( 'lafka-plugin-map-config-' . $map_canvas_unique_id, plugins_url( $map_config_js, LAFKA_PLUGIN_FILE ), array( 'lafka-google-maps' ), lafka_plugin_asset_version( $map_config_js ), true );
 			wp_add_inline_script(
 				'lafka-plugin-map-config-' . $map_canvas_unique_id,
 				"

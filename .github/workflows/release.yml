@@ -34,6 +34,19 @@ jobs:
         id: version
         run: echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
 
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      # Regenerate every first-party .min.js from its readable source so the
+      # zip can never ship a stale build (WP.org guideline 4: sources ship
+      # alongside the minified files).
+      - name: Build assets
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+
       - name: Build zip
         run: |
           mkdir lafka-plugin
@@ -49,6 +62,11 @@ jobs:
                    --exclude='.githooks' \
                    --exclude='.npmrc' \
                    --exclude='.wp-env*.json' \
+                   --exclude='.wp-env-uploads' \
+                   --exclude='.phpcs.cache' \
+                   --exclude='.eslintcache' \
+                   --exclude='.stylelintcache' \
+                   --exclude='.DS_Store' \
                    --exclude='node_modules' \
                    --exclude='/vendor' \
                    --exclude='package.json' \

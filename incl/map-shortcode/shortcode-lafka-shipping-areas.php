@@ -3,6 +3,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+require_once __DIR__ . '/../lafka-asset-helpers.php';
+
 function lafka_shipping_areas_shortcode( $atts = [], $content = null, $tag = '' ): string {
 	// normalize attribute keys, lowercase
 	$atts = array_change_key_case( (array) $atts, CASE_LOWER );
@@ -61,7 +63,8 @@ function lafka_shipping_areas_shortcode( $atts = [], $content = null, $tag = '' 
 			  . '</div>'
 			: '';
 	}
-	wp_enqueue_script( 'lafka-shipping-areas-shortcode-' . $shortcode_id, plugins_url( 'incl/shipping-areas/assets/js/frontend/lafka-shipping-areas-shortcode.min.js', LAFKA_PLUGIN_FILE ), array( 'lafka-google-maps' ), lafka_plugin_asset_version( 'incl/shipping-areas/assets/js/frontend/lafka-shipping-areas-shortcode.min.js' ), true );
+	$shortcode_js = lafka_plugin_script_path( 'incl/shipping-areas/assets/js/frontend/lafka-shipping-areas-shortcode.min.js' );
+	wp_enqueue_script( 'lafka-shipping-areas-shortcode-' . $shortcode_id, plugins_url( $shortcode_js, LAFKA_PLUGIN_FILE ), array( 'lafka-google-maps' ), lafka_plugin_asset_version( $shortcode_js ), true );
 	wp_localize_script(
 		'lafka-shipping-areas-shortcode-' . $shortcode_id,
 		'lafka_shipping_areas_shortcode_php_variables',

@@ -1,6 +1,8 @@
 <?php
 defined( 'ABSPATH' ) || exit;
 
+require_once __DIR__ . '/../../lafka-asset-helpers.php';
+
 // $_GET/$_POST reads in this admin file for display state (which tab,
 // post_id metabox context, settings-api updated flag) — no state mutation.
 // Settings API submits are nonce-verified by WP core.
@@ -132,15 +134,15 @@ class Lafka_Shipping_Areas_Admin {
 		wp_enqueue_style( 'lafka-shipping-areas-admin', plugins_url( '../assets/css/backend/lafka-shipping-areas-admin.css', __FILE__ ), array(), lafka_plugin_asset_version( 'incl/shipping-areas/assets/css/backend/lafka-shipping-areas-admin.css' ) );
 		if ( 'woocommerce_page_lafka_shipping_areas_admin' === $screen_id ) {
 			// Show/hide dependent settings rows on the settings form.
-			wp_enqueue_script( 'lafka-shipping-areas-admin', plugins_url( '../assets/js/backend/lafka-shipping-areas-admin.min.js', __FILE__ ), array( 'jquery' ), lafka_plugin_asset_version( 'incl/shipping-areas/assets/js/backend/lafka-shipping-areas-admin.min.js' ), true );
+			wp_enqueue_script( 'lafka-shipping-areas-admin', plugins_url( lafka_plugin_script_path( 'incl/shipping-areas/assets/js/backend/lafka-shipping-areas-admin.min.js' ), LAFKA_PLUGIN_FILE ), array( 'jquery' ), lafka_plugin_asset_version( lafka_plugin_script_path( 'incl/shipping-areas/assets/js/backend/lafka-shipping-areas-admin.min.js' ) ), true );
 		}
 		if ( wp_script_is( 'lafka-google-maps', 'registered' ) ) {
 			// These two map-pick UIs require Google Maps. Skip when no key
 			// is set — the rest of the shipping-areas admin still works.
 			if ( $screen->id === 'woocommerce_page_lafka_shipping_areas_admin' ) {
-				wp_enqueue_script( 'lafka-shipping-areas-admin-store-map', plugins_url( '../assets/js/backend/lafka-shipping-areas-pick-address-map.min.js', __FILE__ ), array( 'lafka-google-maps' ), lafka_plugin_asset_version( 'incl/shipping-areas/assets/js/backend/lafka-shipping-areas-pick-address-map.min.js' ), true );
+				wp_enqueue_script( 'lafka-shipping-areas-admin-store-map', plugins_url( lafka_plugin_script_path( 'incl/shipping-areas/assets/js/backend/lafka-shipping-areas-pick-address-map.min.js' ), LAFKA_PLUGIN_FILE ), array( 'lafka-google-maps' ), lafka_plugin_asset_version( lafka_plugin_script_path( 'incl/shipping-areas/assets/js/backend/lafka-shipping-areas-pick-address-map.min.js' ) ), true );
 			} elseif ( $screen->id === 'lafka_shipping_areas' ) {
-				wp_enqueue_script( 'lafka-shipping-areas-admin-define-area', plugins_url( '../assets/js/backend/lafka-shipping-areas-define-area.min.js', __FILE__ ), array( 'lafka-google-maps' ), lafka_plugin_asset_version( 'incl/shipping-areas/assets/js/backend/lafka-shipping-areas-define-area.min.js' ), true );
+				wp_enqueue_script( 'lafka-shipping-areas-admin-define-area', plugins_url( lafka_plugin_script_path( 'incl/shipping-areas/assets/js/backend/lafka-shipping-areas-define-area.min.js' ), LAFKA_PLUGIN_FILE ), array( 'lafka-google-maps' ), lafka_plugin_asset_version( lafka_plugin_script_path( 'incl/shipping-areas/assets/js/backend/lafka-shipping-areas-define-area.min.js' ) ), true );
 			}
 		}
 	}

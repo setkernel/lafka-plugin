@@ -51,6 +51,38 @@ export default [
 			},
 		},
 	},
+	// Shipping-areas / branch scripts: sources recovered by formatting the
+	// long-shipped minified builds (WP.org guideline 4). They read the
+	// wp_localize_script / inline-script globals below; the minifier's
+	// variable reuse trips a few stylistic rules.
+	{
+		files: ["incl/shipping-areas/assets/js/**/*.js"],
+		languageOptions: {
+			globals: {
+				lafka_branch_locations_front: "readonly",
+				lafka_branch_location_properties: "readonly",
+				lafka_datetime_options: "readonly",
+				lafka_shipping_areas_shortcode_php_variables: "readonly",
+				lafka_admin_map_params: "readonly",
+				lafka_shipping_properties: "readonly",
+				lafka_shipping_destination_address_property: "writable",
+				lafka_checkout_map_properties: "writable",
+				lafka_set_store_location: "readonly",
+				lafka_store_map_location: "readonly",
+				lafka_store_address: "readonly",
+				lafka_lowest_cost_shipping: "readonly",
+				lafka_no_shipping_methods_string: "readonly",
+				lafka_debug_mode: "readonly",
+				lafka_order_type: "readonly",
+				wc_country_select_params: "readonly",
+			},
+		},
+		rules: {
+			"no-redeclare": "off",
+			"no-unused-vars": "off",
+			"no-empty": "off",
+		},
+	},
 	// Node.js build scripts + node:test suites (ES modules).
 	{
 		files: ["scripts/**/*.mjs", "tests/js/**/*.mjs"],
