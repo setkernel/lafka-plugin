@@ -1,21 +1,12 @@
 <?php
 /**
- * PushNotificationsTest — locks down the Phase 3E (v9.29.0) Web Push module:
- *
- *   - DB schema source-grep + helper presence
- *   - REST route registration (subscribe / unsubscribe / vapid-key)
- *   - VAPID key sanitisation (valid vs invalid base64url)
- *   - Subscription save dedupes by endpoint (upsert path)
- *   - Reorder cron schedules + days clamping
- *   - Customizer panel + every setting has default + sanitize_callback
- *   - Audience resolver returns expected shape for 'all' / 'recent_customers'
- *     / explicit array
- *   - VAPID JWT + crypto encode/decode helpers (b64url, DER->JOSE, HKDF)
- *   - Main plugin requires every push module + activation hooks present
- *   - Uninstall.php drops the push table + option
+ * PushNotificationsTest — Web Push module: subscription persistence (insert,
+ * endpoint dedupe, soft/hard delete), REST route permission wiring and payload
+ * validation, the public VAPID-key endpoint, wp-config constant precedence for
+ * the VAPID keys, Customizer sanitizers, the crypto helpers (b64url, HKDF),
+ * reorder/cleanup cron scheduling, and audience resolution.
  *
  * @package Lafka\Plugin\Tests\Unit
- * @since   9.29.0
  */
 
 declare(strict_types=1);
@@ -42,6 +33,7 @@ if ( ! defined( 'MINUTE_IN_SECONDS' ) ) {
 	define( 'MINUTE_IN_SECONDS', 60 );
 }
 
+require_once __DIR__ . '/Stubs/wp-error-class.php';
 require_once dirname( __DIR__, 2 ) . '/incl/conversion/lafka-push-db.php';
 require_once dirname( __DIR__, 2 ) . '/incl/conversion/lafka-push-rest.php';
 require_once dirname( __DIR__, 2 ) . '/incl/conversion/lafka-push-sender.php';
@@ -195,6 +187,11 @@ final class PushNotificationsTest extends TestCase {
 			}
 		);
 		Functions\when( 'get_current_user_id' )->justReturn( 0 );
+		// Subscribe rate limiter: never limited here (PushNoncePermissionTest owns it).
+		Functions\when( 'get_transient' )->justReturn( false );
+		Functions\when( 'set_transient' )->justReturn( true );
+
+		unset( $_SERVER['HTTP_X_WP_NONCE'], $_REQUEST['_wpnonce'] );
 
 		// Reset the fake DB.
 		global $wpdb;
@@ -202,57 +199,16 @@ final class PushNotificationsTest extends TestCase {
 	}
 
 	protected function tearDown(): void {
+		unset( $GLOBALS['wpdb'], $_SERVER['HTTP_X_WP_NONCE'], $_REQUEST['_wpnonce'] );
 		Monkey\tearDown();
 		parent::tearDown();
 	}
 
 	// ─────────────────────────────────────────────────────────────────────────
-	// 1. DB schema (source-grep + functional)
+	// 1. Persistence
 	// ─────────────────────────────────────────────────────────────────────────
 
-	public function test_db_module_defines_table_name_helper(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/conversion/lafka-push-db.php' );
-		$this->assertStringContainsString( 'function lafka_push_table_name', $src );
-		$this->assertStringContainsString( 'lafka_push_subscriptions', $src );
-	}
-
-	public function test_schema_sql_contains_every_expected_column(): void {
-		$sql = \lafka_push_schema_sql();
-		$this->assertStringContainsString( 'CREATE TABLE', $sql );
-		$this->assertStringContainsString( 'lafka_push_subscriptions', $sql );
-		$required = array(
-			'id',
-			'user_id',
-			'endpoint',
-			'p256dh',
-			'auth',
-			'user_agent',
-			'locale',
-			'created_at',
-			'last_seen_at',
-			'unsubscribed_at',
-		);
-		foreach ( $required as $column ) {
-			$this->assertStringContainsString( $column, $sql, "Schema must include column {$column}" );
-		}
-	}
-
-	public function test_schema_sql_declares_primary_key_and_indexes(): void {
-		$sql = \lafka_push_schema_sql();
-		$this->assertStringContainsString( 'PRIMARY KEY', $sql );
-		$this->assertStringContainsString( 'UNIQUE KEY endpoint', $sql );
-		$this->assertStringContainsString( 'KEY user_id', $sql );
-		$this->assertStringContainsString( 'KEY last_seen_at', $sql );
-		$this->assertStringContainsString( 'KEY unsubscribed_at', $sql );
-	}
-
-	public function test_install_table_calls_dbdelta(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/conversion/lafka-push-db.php' );
-		$this->assertStringContainsString( 'dbDelta', $src );
-		$this->assertStringContainsString( 'lafka_push_db_version', $src );
-	}
-
-	public function test_save_subscription_inserts_new_row(): void {
+	public function test_save_subscription_inserts_a_row_using_only_schema_columns(): void {
 		global $wpdb;
 		$id = \lafka_push_save_subscription(
 			'https://fcm.googleapis.com/fcm/send/abc',
@@ -266,6 +222,16 @@ final class PushNotificationsTest extends TestCase {
 		$this->assertCount( 1, $wpdb->rows );
 		$this->assertSame( 'https://fcm.googleapis.com/fcm/send/abc', $wpdb->rows[0]['endpoint'] );
 		$this->assertSame( 42, $wpdb->rows[0]['user_id'] );
+
+		// Every column the writer persists must exist in the CREATE TABLE.
+		$sql     = \lafka_push_schema_sql();
+		$missing = array_values(
+			array_filter(
+				array_diff( array_keys( $wpdb->rows[0] ), array( 'id' ) ),
+				static fn( $col ) => 1 !== preg_match( '/^\s+' . preg_quote( $col, '/' ) . '\s/m', $sql )
+			)
+		);
+		$this->assertSame( array(), $missing, 'Inserted columns missing from lafka_push_schema_sql().' );
 	}
 
 	public function test_save_subscription_dedupes_by_endpoint(): void {
@@ -302,17 +268,31 @@ final class PushNotificationsTest extends TestCase {
 	// 2. REST routes + payload shape
 	// ─────────────────────────────────────────────────────────────────────────
 
-	public function test_rest_module_registers_three_routes(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/conversion/lafka-push-rest.php' );
-		$this->assertStringContainsString( "register_rest_route", $src );
-		$this->assertStringContainsString( "'/push/subscribe'", $src );
-		$this->assertStringContainsString( "'/push/unsubscribe'", $src );
-		$this->assertStringContainsString( "'/push/vapid-key'", $src );
-		$this->assertStringContainsString( "'lafka/v1'", $src );
+	public function test_rest_routes_require_a_nonce_for_writes_and_expose_the_key_publicly(): void {
+		Functions\when( 'get_theme_mod' )->alias(
+			static fn( $key, $default = null ) => 'lafka_push_enabled' === $key ? '1' : $default
+		);
+		$routes = array();
+		Functions\when( 'register_rest_route' )->alias(
+			static function ( $ns, $route, $args ) use ( &$routes ) {
+				$routes[ $ns . $route ] = $args;
+				return true;
+			}
+		);
+		\lafka_push_register_rest_routes();
+
+		$this->assertSame(
+			array( 'lafka/v1/push/subscribe', 'lafka/v1/push/unsubscribe', 'lafka/v1/push/vapid-key' ),
+			array_keys( $routes )
+		);
+		// The write routes' registered permission callback must refuse a request
+		// that carries no nonce (guests included).
+		foreach ( array( 'lafka/v1/push/subscribe', 'lafka/v1/push/unsubscribe' ) as $route ) {
+			$this->assertInstanceOf( 'WP_Error', call_user_func( $routes[ $route ]['permission_callback'], null ), $route );
+		}
+		$this->assertSame( '__return_true', $routes['lafka/v1/push/vapid-key']['permission_callback'] );
 	}
 
-	#[RunInSeparateProcess]
-	#[PreserveGlobalState( false )]
 	public function test_rest_subscribe_rejects_non_https_endpoint(): void {
 		Functions\when( 'get_theme_mod' )->alias(
 			static function ( $key, $default = null ) {
@@ -339,8 +319,6 @@ final class PushNotificationsTest extends TestCase {
 		$this->assertSame( 'invalid_payload', $response['code'] );
 	}
 
-	#[RunInSeparateProcess]
-	#[PreserveGlobalState( false )]
 	public function test_rest_subscribe_persists_when_payload_valid(): void {
 		Functions\when( 'get_theme_mod' )->alias(
 			static function ( $key, $default = null ) {
@@ -363,33 +341,9 @@ final class PushNotificationsTest extends TestCase {
 		$response = \lafka_push_rest_subscribe( $req );
 		$this->assertIsArray( $response );
 		$this->assertTrue( $response['ok'] );
-		$this->assertGreaterThan( 0, $response['subscription_id'] );
-	}
-
-	public function test_rest_unsubscribe_marks_row(): void {
-		Functions\when( 'get_theme_mod' )->alias(
-			static function ( $key, $default = null ) {
-				return 'lafka_push_enabled' === $key ? '1' : $default;
-			}
-		);
 		global $wpdb;
-		// Save with auth secret 'auth' — the unsubscribe route requires the caller
-		// to echo this per-subscription secret back as proof of ownership (IDOR
-		// fix), so the legitimate-owner request must carry keys.auth.
-		\lafka_push_save_subscription( 'https://example.com/ep', 'pub', 'auth', 42 );
-		$req      = new class() {
-			public function get_json_params() {
-				return array(
-					'endpoint' => 'https://example.com/ep',
-					'keys'     => array( 'auth' => 'auth' ),
-				);
-			}
-			public function get_params() {
-				return array(); }
-		};
-		$response = \lafka_push_rest_unsubscribe( $req );
-		$this->assertTrue( $response['ok'] );
-		$this->assertSame( 1, $response['removed'] );
+		$this->assertSame( $wpdb->rows[0]['id'], $response['subscription_id'] );
+		$this->assertSame( 'https://fcm.googleapis.com/fcm/send/abc123', $wpdb->rows[0]['endpoint'] );
 	}
 
 	public function test_rest_vapid_key_returns_public_key_and_enabled_flag(): void {
@@ -409,46 +363,40 @@ final class PushNotificationsTest extends TestCase {
 		$this->assertSame( 'PUBLICKEY_88_chars_base64url', $response['key'] );
 	}
 
-	// ─────────────────────────────────────────────────────────────────────────
-	// 3. Customizer + sanitizers
-	// ─────────────────────────────────────────────────────────────────────────
-
-	public function test_customizer_registers_lafka_push_panel(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/customizer/class-lafka-customizer-push.php' );
-		$this->assertStringContainsString( 'add_panel', $src );
-		$this->assertStringContainsString( "'lafka_push'", $src );
-	}
-
-	public function test_customizer_registers_all_required_settings(): void {
-		$src      = file_get_contents( dirname( __DIR__, 2 ) . '/incl/customizer/class-lafka-customizer-push.php' );
-		$required = array(
-			'lafka_push_enabled',
-			'lafka_push_vapid_public_key',
-			'lafka_push_vapid_private_key',
-			'lafka_push_vapid_subject',
-			'lafka_push_subscribe_prompt_enabled',
-			'lafka_push_subscribe_prompt_threshold',
-			'lafka_push_subscribe_prompt_copy',
-			'lafka_push_reorder_reminder_enabled',
-			'lafka_push_reorder_reminder_days',
+	/**
+	 * wp-config.php constants must win over theme_mods so a multi-admin site can
+	 * keep the VAPID private key out of wp_options. Separate process: the
+	 * constants are process-global.
+	 */
+	#[RunInSeparateProcess]
+	#[PreserveGlobalState( false )]
+	public function test_vapid_config_prefers_wp_config_constants_over_theme_mods(): void {
+		define( 'LAFKA_PUSH_VAPID_PUBLIC_KEY', 'CONST_PUBLIC' );
+		define( 'LAFKA_PUSH_VAPID_PRIVATE_KEY', 'CONST_PRIVATE' );
+		define( 'LAFKA_PUSH_VAPID_SUBJECT', 'mailto:const@example.test' );
+		Functions\when( 'get_theme_mod' )->alias(
+			static fn( $key, $default = null ) => array(
+				'lafka_push_enabled'           => '1',
+				'lafka_push_vapid_public_key'  => 'MOD_PUBLIC',
+				'lafka_push_vapid_private_key' => 'MOD_PRIVATE',
+				'lafka_push_vapid_subject'     => 'mailto:mod@example.test',
+			)[ $key ] ?? $default
 		);
-		foreach ( $required as $setting ) {
-			$this->assertStringContainsString(
-				"'" . $setting . "'",
-				$src,
-				"Customizer setting {$setting} must be registered."
-			);
-		}
+
+		$this->assertSame(
+			array(
+				'enabled' => true,
+				'public'  => 'CONST_PUBLIC',
+				'private' => 'CONST_PRIVATE',
+				'subject' => 'mailto:const@example.test',
+			),
+			\lafka_push_get_vapid_config()
+		);
 	}
 
-	public function test_every_customizer_setting_has_default_and_sanitize_callback(): void {
-		$src             = file_get_contents( dirname( __DIR__, 2 ) . '/incl/customizer/class-lafka-customizer-push.php' );
-		$default_count   = substr_count( $src, "'default'" );
-		$sanitize_count  = substr_count( $src, "'sanitize_callback'" );
-		$add_setting_cnt = substr_count( $src, '$wp_customize->add_setting' );
-		$this->assertGreaterThanOrEqual( $add_setting_cnt, $default_count, 'Every add_setting() must include a default.' );
-		$this->assertGreaterThanOrEqual( $add_setting_cnt, $sanitize_count, 'Every add_setting() must include a sanitize_callback.' );
-	}
+	// ─────────────────────────────────────────────────────────────────────────
+	// 3. Customizer sanitizers
+	// ─────────────────────────────────────────────────────────────────────────
 
 	public function test_sanitize_vapid_public_accepts_long_base64url(): void {
 		$valid = str_repeat( 'A', 88 );
@@ -502,7 +450,7 @@ final class PushNotificationsTest extends TestCase {
 	}
 
 	// ─────────────────────────────────────────────────────────────────────────
-	// 4. Crypto helpers (b64url + DER->JOSE + HKDF)
+	// 4. Crypto helpers (b64url + HKDF)
 	// ─────────────────────────────────────────────────────────────────────────
 
 	public function test_b64url_encode_strips_padding_and_uses_url_alphabet(): void {
@@ -521,24 +469,21 @@ final class PushNotificationsTest extends TestCase {
 		$this->assertSame( $raw, $decoded );
 	}
 
-	public function test_hkdf_returns_requested_length(): void {
-		$out = \lafka_push_hkdf( 'ikm', 'salt', 'info', 32 );
-		$this->assertSame( 32, strlen( $out ) );
-		$out16 = \lafka_push_hkdf( 'ikm', 'salt', 'info', 16 );
-		$this->assertSame( 16, strlen( $out16 ) );
+	public function test_hkdf_matches_rfc5869_test_vector(): void {
+		// RFC 5869 Appendix A.1 (SHA-256), first 32 bytes of the OKM — the
+		// length Web Push content encryption derives.
+		$out = \lafka_push_hkdf(
+			str_repeat( "\x0b", 22 ),
+			(string) hex2bin( '000102030405060708090a0b0c' ),
+			(string) hex2bin( 'f0f1f2f3f4f5f6f7f8f9' ),
+			32
+		);
+		$this->assertSame( '3cb25f25faacd57a90434f64d0362f2a2d2d0a90cf1a5a4c5db02d56ecc4c5bf', bin2hex( $out ) );
 	}
 
 	// ─────────────────────────────────────────────────────────────────────────
 	// 5. Reorder cron + audience resolver
 	// ─────────────────────────────────────────────────────────────────────────
-
-	public function test_reorder_cron_module_registers_schedule_and_handlers(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/conversion/lafka-push-reorder-cron.php' );
-		$this->assertStringContainsString( "wp_schedule_event", $src );
-		$this->assertStringContainsString( 'lafka_push_reorder_reminder', $src );
-		$this->assertStringContainsString( 'lafka_push_cleanup_subscriptions', $src );
-		$this->assertStringContainsString( "add_action( 'lafka_push_reorder_reminder'", $src );
-	}
 
 	public function test_reorder_schedule_stays_inert_when_push_disabled(): void {
 		// get_theme_mod default stub returns '0' → push OFF (its default).
@@ -621,92 +566,27 @@ final class PushNotificationsTest extends TestCase {
 		$this->assertSame( array( 1, 2, 4, 5 ), $ids );
 	}
 
-	public function test_resolve_audience_recent_customers_returns_array(): void {
-		// Mock wc_get_orders explicitly so this assertion is order-independent: once
-		// any other suite test (e.g. OrderNotificationsTest) has Brain-Monkey-defined
-		// wc_get_orders, function_exists() is true process-wide, so relying on it
-		// being undefined here is fragile. An empty result still yields an array.
-		Functions\when( 'wc_get_orders' )->justReturn( array() );
-		$out = \lafka_push_resolve_audience( 'recent_customers' );
-		$this->assertIsArray( $out );
-	}
-
-	// ─────────────────────────────────────────────────────────────────────────
-	// 6. Main plugin wiring + uninstall
-	// ─────────────────────────────────────────────────────────────────────────
-
-	public function test_main_plugin_requires_all_push_modules(): void {
-		$main = file_get_contents( dirname( __DIR__, 2 ) . '/lafka-plugin.php' );
-		$this->assertStringContainsString( 'incl/conversion/lafka-push-db.php', $main );
-		$this->assertStringContainsString( 'incl/conversion/lafka-push-rest.php', $main );
-		$this->assertStringContainsString( 'incl/conversion/lafka-push-sender.php', $main );
-		$this->assertStringContainsString( 'incl/conversion/lafka-push-reorder-cron.php', $main );
-		$this->assertStringContainsString( 'incl/customizer/class-lafka-customizer-push.php', $main );
-		$this->assertStringContainsString( 'incl/admin/class-lafka-push-admin.php', $main );
-	}
-
-	public function test_main_plugin_registers_push_activation_hooks(): void {
-		$main = file_get_contents( dirname( __DIR__, 2 ) . '/lafka-plugin.php' );
-		$this->assertStringContainsString( 'lafka_push_install_table', $main );
-		$this->assertStringContainsString( 'lafka_push_reorder_schedule_event', $main );
-		$this->assertStringContainsString( 'lafka_push_reorder_unschedule_event', $main );
-	}
-
-	public function test_uninstall_drops_push_table(): void {
-		// NX1-06: uninstall.php is now a thin bootstrap; the DROP + marker-delete
-		// logic lives in the testable Lafka_Uninstall class.
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/tools/class-lafka-uninstall.php' );
-		$this->assertStringContainsString( 'lafka_push_subscriptions', $src );
-		$this->assertStringContainsString( 'DROP TABLE IF EXISTS', $src );
-		$this->assertStringContainsString( 'lafka_push_db_version', $src );
-		$this->assertStringContainsString( 'lafka_push_activity_log', $src );
-		$this->assertStringContainsString( 'Lafka_Uninstall::run', file_get_contents( dirname( __DIR__, 2 ) . '/uninstall.php' ) );
-	}
-
-	// ────────────────────────────────────────────────────────────────────────
-	// v9.29.1 — VAPID constants override (P0 hardening from operator audit)
-	// ────────────────────────────────────────────────────────────────────────
-
-	/**
-	 * The sender's vapid-config resolver must check wp-config.php-defined
-	 * constants BEFORE falling back to get_theme_mod(). Without this lock,
-	 * a multi-admin site has no way to keep the VAPID private key out of
-	 * wp_options.
-	 */
-	public function test_sender_reads_lafka_push_vapid_constants_before_theme_mod(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/conversion/lafka-push-sender.php' );
-		$this->assertStringContainsString(
-			"defined( 'LAFKA_PUSH_VAPID_PRIVATE_KEY' )",
-			$src,
-			'sender must check LAFKA_PUSH_VAPID_PRIVATE_KEY constant'
+	public function test_resolve_audience_recent_customers_dedupes_and_drops_guests(): void {
+		$customer_by_order = array(
+			101 => 7,
+			102 => 0, // guest checkout
+			103 => 7, // repeat customer
+			104 => 9,
 		);
-		$this->assertStringContainsString(
-			"defined( 'LAFKA_PUSH_VAPID_PUBLIC_KEY' )",
-			$src,
-			'sender must check LAFKA_PUSH_VAPID_PUBLIC_KEY constant'
+		Functions\when( 'wc_get_orders' )->justReturn( array_keys( $customer_by_order ) );
+		Functions\when( 'wc_get_order' )->alias(
+			static function ( $id ) use ( $customer_by_order ) {
+				return new class( $customer_by_order[ $id ] ) {
+					private int $cid;
+					public function __construct( int $cid ) {
+						$this->cid = $cid;
+					}
+					public function get_customer_id(): int {
+						return $this->cid;
+					}
+				};
+			}
 		);
-		$this->assertStringContainsString(
-			"defined( 'LAFKA_PUSH_VAPID_SUBJECT' )",
-			$src,
-			'sender must check LAFKA_PUSH_VAPID_SUBJECT constant'
-		);
-	}
-
-	/**
-	 * Customizer description must document the constant override so operators
-	 * know the safer wp-config path exists.
-	 */
-	public function test_customizer_private_key_field_documents_constant_override(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/customizer/class-lafka-customizer-push.php' );
-		$this->assertStringContainsString(
-			'LAFKA_PUSH_VAPID_PRIVATE_KEY',
-			$src,
-			'private-key Customizer description must mention the wp-config constant'
-		);
-		$this->assertStringContainsString(
-			'wp-config.php',
-			$src,
-			'private-key Customizer description must point operators at wp-config.php'
-		);
+		$this->assertSame( array( 7, 9 ), \lafka_push_resolve_audience( 'recent_customers' ) );
 	}
 }

@@ -133,6 +133,7 @@ final class PushHeartbeatCleanupTest extends TestCase {
 	}
 
 	protected function tearDown(): void {
+		unset( $GLOBALS['wpdb'] );
 		Monkey\tearDown();
 		parent::tearDown();
 	}
@@ -141,42 +142,20 @@ final class PushHeartbeatCleanupTest extends TestCase {
 	// 1. cleanup prunes only soft-deleted rows
 	// ─────────────────────────────────────────────────────────────────────────
 
-	public function test_cleanup_targets_only_soft_deleted_rows(): void {
+	public function test_cleanup_prunes_only_soft_deleted_rows_past_the_window(): void {
+		// Regression (f070): active, still-deliverable rows used to be hard-deleted
+		// on last_seen_at age alone. The DELETE may only target unsubscribed rows.
 		global $wpdb;
 		$wpdb                = new FakeCleanupWpdb();
 		$wpdb->delete_return = 4;
 
-		$deleted = \lafka_push_cleanup( 60 );
+		$deleted = \lafka_push_cleanup( 30 );
 
 		$this->assertSame( 4, $deleted );
-		$this->assertStringContainsString( 'unsubscribed_at IS NOT NULL', $wpdb->last_query );
-		$this->assertStringContainsString( 'unsubscribed_at < DATE_SUB', $wpdb->last_query );
-	}
-
-	public function test_cleanup_never_prunes_active_rows_on_last_seen_at(): void {
-		global $wpdb;
-		$wpdb = new FakeCleanupWpdb();
-
-		\lafka_push_cleanup( 60 );
-
-		// The regression: active (deliverable) rows must NOT be deleted on
-		// last_seen_at age. The DELETE must reference neither last_seen_at nor an
-		// OR branch that would catch active rows.
+		$this->assertStringContainsString( 'WHERE unsubscribed_at IS NOT NULL AND unsubscribed_at < DATE_SUB(NOW(), INTERVAL 30 DAY)', $wpdb->last_query );
 		$this->assertStringNotContainsString( 'last_seen_at', $wpdb->last_query );
 		$this->assertStringNotContainsString( ' OR ', $wpdb->last_query );
-	}
-
-	public function test_cleanup_binds_the_window_exactly_once(): void {
-		global $wpdb;
-		$wpdb = new FakeCleanupWpdb();
-
-		\lafka_push_cleanup( 30 );
-
-		// One %d placeholder now → exactly one bound arg (it was bound twice while
-		// the OR last_seen_at branch existed).
-		$this->assertCount( 1, $wpdb->last_args );
-		$this->assertSame( 30, (int) $wpdb->last_args[0] );
-		$this->assertStringContainsString( 'INTERVAL 30 DAY', $wpdb->last_query );
+		$this->assertSame( array( 30 ), $wpdb->last_args );
 	}
 
 	// ─────────────────────────────────────────────────────────────────────────

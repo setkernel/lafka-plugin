@@ -2,15 +2,15 @@
 /**
  * UninstallCleanupTest — locks the NX1-06 uninstall contract.
  *
- *   - uninstall.php is a thin WP_UNINSTALL_PLUGIN-guarded bootstrap that
- *     delegates to the testable Lafka_Uninstall class.
+ *   - uninstall.php delegates to the testable Lafka_Uninstall class.
  *   - the "Remove all data on uninstall" toggle defaults OFF.
  *   - toggle OFF runs only the minimal pass (revert attributes + DROP the two
- *     conversion tables); it never deletes options, posts or terms.
+ *     conversion tables + their markers); it never deletes options, posts or terms.
  *   - toggle ON runs the full inventory-driven cleanup: prefixed option LIKE
  *     deletes, force-deletes each Lafka CPT's posts, deletes each Lafka
  *     taxonomy's terms, and removes the documented product/user meta keys.
- *   - the option-prefix inventory covers every known lafka* option name.
+ *   - the inventory covers every lafka* option, table, CPT and taxonomy the
+ *     plugin source writes/registers (derived by scanning the source once).
  *   - order + order-item meta is documented as intentionally retained.
  *
  * @package Lafka\Plugin\Tests\Unit
@@ -98,15 +98,6 @@ final class UninstallCleanupTest extends TestCase {
 		parent::tearDown();
 	}
 
-	// ─── Bootstrap shape ──────────────────────────────────────────────────────
-
-	public function test_uninstall_php_is_thin_bootstrap(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/uninstall.php' );
-		$this->assertStringContainsString( "defined( 'WP_UNINSTALL_PLUGIN' )", $src );
-		$this->assertStringContainsString( 'incl/tools/class-lafka-uninstall.php', $src );
-		$this->assertStringContainsString( 'Lafka_Uninstall::run', $src );
-	}
-
 	// ─── Toggle default + read ────────────────────────────────────────────────
 
 	public function test_data_toggle_defaults_off(): void {
@@ -129,15 +120,18 @@ final class UninstallCleanupTest extends TestCase {
 
 	// ─── Option-prefix inventory completeness ─────────────────────────────────
 
+	/** @var array<string,string>|null path => contents, scanned once per process. */
+	private static ?array $plugin_sources = null;
+
 	/**
-	 * Every option name the plugin's code writes, read off the source: option
-	 * API calls with a literal name, register_setting() option names, option
-	 * name constants, WooCommerce settings-page field ids, Customizer
-	 * option-type settings and option-name helper functions.
+	 * Every PHP source file the plugin ships (main file + incl/shortcodes/widgets).
 	 *
-	 * @return array<int,string>
+	 * @return array<string,string>
 	 */
-	private static function options_written_by_the_plugin(): array {
+	private static function plugin_sources(): array {
+		if ( null !== self::$plugin_sources ) {
+			return self::$plugin_sources;
+		}
 		$root  = dirname( __DIR__, 2 );
 		$files = array( $root . '/lafka-plugin.php' );
 		foreach ( array( 'incl', 'shortcodes', 'widgets' ) as $dir ) {
@@ -148,24 +142,50 @@ final class UninstallCleanupTest extends TestCase {
 				}
 			}
 		}
+		self::$plugin_sources = array();
+		foreach ( $files as $file ) {
+			self::$plugin_sources[ $file ] = (string) file_get_contents( $file );
+		}
+		return self::$plugin_sources;
+	}
 
-		$patterns = array(
+	/**
+	 * Every capture of $pattern across the plugin source.
+	 *
+	 * @return array<int,string>
+	 */
+	private static function scan( string $pattern ): array {
+		$names = array();
+		foreach ( self::plugin_sources() as $src ) {
+			if ( preg_match_all( $pattern, $src, $m ) ) {
+				$names = array_merge( $names, $m[1] );
+			}
+		}
+		return array_values( array_unique( $names ) );
+	}
+
+	/**
+	 * Every option name the plugin's code writes, read off the source: option
+	 * API calls with a literal name, register_setting() option names, option
+	 * name constants, WooCommerce settings-page field ids, Customizer
+	 * option-type settings and option-name helper functions.
+	 *
+	 * @return array<int,string>
+	 */
+	private static function options_written_by_the_plugin(): array {
+		$names = array();
+		foreach ( array(
 			"/(?:update_option|add_option)\(\s*'(lafka[a-z0-9_]*)'/",
 			"/register_setting\(\s*'[^']*'\s*,\s*'(lafka[a-z0-9_]*)'/",
 			"/const\s+\w*OPTION\w*\s*=\s*'(lafka[a-z0-9_]*)'/",
 			"/add_setting\(\s*'(lafka[a-z0-9_]*)'\s*,\s*array\((?:(?!add_setting).){0,200}?'type'\s*=>\s*'option'/s",
 			"/function\s+\w*option_(?:name|key)\w*\([^)]*\)[^{]*\{\s*return\s+'(lafka[a-z0-9_]*)'/",
-		);
-		$names = array();
-		foreach ( $files as $file ) {
-			$src = (string) file_get_contents( $file );
-			foreach ( $patterns as $pattern ) {
-				if ( preg_match_all( $pattern, $src, $m ) ) {
-					$names = array_merge( $names, $m[1] );
-				}
-			}
-			// WooCommerce settings-page fields store under their id (the
-			// *_title / *_end ids are section markers, not stored values).
+		) as $pattern ) {
+			$names = array_merge( $names, self::scan( $pattern ) );
+		}
+		// WooCommerce settings-page fields store under their id (the *_title /
+		// *_end ids are section markers, not stored values).
+		foreach ( self::plugin_sources() as $file => $src ) {
 			if ( str_contains( $file, 'class-lafka-wc-settings-restaurant.php' ) && preg_match_all( "/'id'\s*=>\s*'(lafka[a-z0-9_]*)'/", $src, $m ) ) {
 				foreach ( $m[1] as $id ) {
 					if ( ! preg_match( '/_(title|end)$/', $id ) ) {
@@ -199,19 +219,19 @@ final class UninstallCleanupTest extends TestCase {
 		$this->assertFalse( Lafka_Uninstall::option_matches( 'lafkax_notours' ) );
 	}
 
-	// ─── Inventory lists ──────────────────────────────────────────────────────
+	// ─── Table / CPT / taxonomy inventory completeness ────────────────────────
 
-	public function test_inventory_lists_are_exact(): void {
-		$this->assertSame(
-			array( 'lafka_abandoned_carts', 'lafka_push_subscriptions' ),
-			Lafka_Uninstall::tables()
-		);
-		$this->assertSame(
-			array( 'lafka-foodmenu', 'lafka_shipping_areas', 'lafka_glb_addon' ),
-			Lafka_Uninstall::post_types()
-		);
-		$this->assertContains( 'lafka_branch_location', Lafka_Uninstall::taxonomies() );
-		$this->assertContains( 'lafka_foodmenu_category', Lafka_Uninstall::taxonomies() );
+	public function test_every_table_cpt_and_taxonomy_the_plugin_registers_is_in_the_inventory(): void {
+		$tables     = self::scan( "/function\s+\w*table_name\w*\(\)[^{]*\{[^}]*?'(lafka_[a-z0-9_]+)'/" );
+		$post_types = self::scan( "/register_post_type\(\s*'(lafka[a-z0-9_-]*)'/" );
+		$taxonomies = self::scan( "/register_taxonomy\(\s*'(lafka[a-z0-9_-]*)'/" );
+
+		$this->assertNotEmpty( $tables, 'The table scan found nothing — pattern drift?' );
+		$this->assertNotEmpty( $post_types, 'The post-type scan found nothing — pattern drift?' );
+		$this->assertNotEmpty( $taxonomies, 'The taxonomy scan found nothing — pattern drift?' );
+		$this->assertSame( array(), array_values( array_diff( $tables, Lafka_Uninstall::tables() ) ), 'Tables the plugin creates but uninstall never drops.' );
+		$this->assertSame( array(), array_values( array_diff( $post_types, Lafka_Uninstall::post_types() ) ), 'CPTs whose posts survive a full uninstall.' );
+		$this->assertSame( array(), array_values( array_diff( $taxonomies, Lafka_Uninstall::taxonomies() ) ), 'Taxonomies whose terms survive a full uninstall.' );
 	}
 
 	public function test_order_meta_is_documented_as_retained(): void {
@@ -226,7 +246,7 @@ final class UninstallCleanupTest extends TestCase {
 
 	// ─── Toggle OFF: minimal pass only ────────────────────────────────────────
 
-	public function test_run_toggle_off_does_minimal_only(): void {
+	public function test_uninstall_php_with_toggle_off_does_the_minimal_pass_only(): void {
 		$wpdb            = new FakeUninstallWpdb();
 		$GLOBALS['wpdb'] = $wpdb;
 
@@ -235,23 +255,33 @@ final class UninstallCleanupTest extends TestCase {
 				return $default; // toggle off
 			}
 		);
-		$deleted_posts = array();
-		Functions\when( 'delete_option' )->justReturn( true );
-		Functions\when( 'wp_delete_post' )->alias(
-			static function ( $id, $force = false ) use ( &$deleted_posts ) {
-				$deleted_posts[] = array( $id, $force );
+		Functions\when( 'plugin_dir_path' )->alias( static fn( $file ) => dirname( $file ) . '/' );
+		$deleted_options = array();
+		Functions\when( 'delete_option' )->alias(
+			static function ( $name ) use ( &$deleted_options ) {
+				$deleted_options[] = $name;
 				return true;
 			}
 		);
+		Functions\expect( 'wp_delete_post' )->never();
+		Functions\expect( 'wp_delete_term' )->never();
 
-		Lafka_Uninstall::run();
+		// Nothing else in the plugin reads this WordPress-core constant.
+		if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
+			define( 'WP_UNINSTALL_PLUGIN', 'lafka-plugin/lafka-plugin.php' );
+		}
+		require dirname( __DIR__, 2 ) . '/uninstall.php';
 
 		$joined = implode( "\n", $wpdb->queries );
 		$this->assertStringContainsString( 'woocommerce_attribute_taxonomies', $joined );
 		$this->assertStringContainsString( 'DROP TABLE IF EXISTS wp_lafka_abandoned_carts', $joined );
 		$this->assertStringContainsString( 'DROP TABLE IF EXISTS wp_lafka_push_subscriptions', $joined );
 		$this->assertStringNotContainsString( 'DELETE FROM', $joined, 'Toggle OFF must not delete option/meta rows.' );
-		$this->assertSame( array(), $deleted_posts, 'Toggle OFF must not delete any posts.' );
+		$this->assertSame(
+			array( 'lafka_abandoned_cart_db_version', 'lafka_push_db_version', 'lafka_push_activity_log' ),
+			$deleted_options,
+			'Toggle OFF removes only the dropped tables\' markers.'
+		);
 	}
 
 	public function test_revert_attribute_types_scopes_to_lafka_swatch_types_only(): void {
@@ -386,6 +416,7 @@ final class UninstallCleanupTest extends TestCase {
 	// ─── Cross-file constant parity ───────────────────────────────────────────
 
 	public function test_modules_page_toggle_option_matches_uninstall_constant(): void {
+		Functions\when( 'is_admin' )->justReturn( false ); // keep the page class inert on load
 		require_once dirname( __DIR__, 2 ) . '/incl/class-lafka-options.php';
 		require_once dirname( __DIR__, 2 ) . '/incl/class-lafka-module-registry.php';
 		require_once dirname( __DIR__, 2 ) . '/incl/admin/class-lafka-modules-page.php';

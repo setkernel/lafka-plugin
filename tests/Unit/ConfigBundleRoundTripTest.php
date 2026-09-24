@@ -56,8 +56,7 @@ final class ConfigBundleRoundTripTest extends TestCase {
 
 		$bundle = Lafka_Config_Bundle::export();
 
-		self::assertSame( 1, Lafka_Config_Bundle::SCHEMA_VERSION );
-		self::assertSame( 1, $bundle['schema_version'] );
+		self::assertSame( Lafka_Config_Bundle::SCHEMA_VERSION, $bundle['schema_version'] );
 		self::assertArrayHasKey( 'generated_at', $bundle );
 		self::assertSame( 'https://example.test', $bundle['site_url'] );
 		self::assertArrayHasKey( 'sections', $bundle );
@@ -207,7 +206,7 @@ final class ConfigBundleRoundTripTest extends TestCase {
 		self::assertSame( 'delivery', $this->stores['term_meta'][ $branch->term_id ]['lafka_branch_order_type'] );
 		$area = $this->find_post( 'North Zone', 'lafka_shipping_areas' );
 		self::assertNotNull( $area );
-		self::assertSame( '44.6,-63.6|44.7,-63.5', $this->stores['post_meta'][ $area->ID ]['_lafka_shipping_area_polygon_coordinates'] );
+		self::assertSame( '10.0,20.0|10.1,20.1', $this->stores['post_meta'][ $area->ID ]['_lafka_shipping_area_polygon_coordinates'] );
 		$addon = $this->find_post( 'Pizza Toppings', 'lafka_glb_addon' );
 		self::assertNotNull( $addon );
 		self::assertSame( array( array( 'name' => 'Extra cheese' ) ), $this->stores['post_meta'][ $addon->ID ]['_product_addons'] );
@@ -371,8 +370,8 @@ final class ConfigBundleRoundTripTest extends TestCase {
 					'google_maps_api_key' => 'SECRET_MAPS_KEY',
 				),
 				'lafka_business_name'                => 'Fake Pizzeria',
-				'lafka_business_phone_display'       => '(902) 555-0100',
-				'lafka_business_geo_lat'             => '44.6488',
+				'lafka_business_phone_display'       => '(555) 555-0100',
+				'lafka_business_geo_lat'             => '12.3456',
 				'lafka_business_hours_mon'           => '11:00-23:00',
 				'lafka_free_delivery_threshold'      => '25',
 				'lafka_first_order_discount_percent' => '10',
@@ -406,7 +405,7 @@ final class ConfigBundleRoundTripTest extends TestCase {
 				11 => array(
 					'lafka_branch_order_type'   => 'delivery',
 					'lafka_branch_address'      => '123 Main St',
-					'lafka_branch_timezone'     => 'America/Toronto',
+					'lafka_branch_timezone'     => 'UTC',
 					'branch_id'                 => '11',
 				),
 			),
@@ -416,7 +415,7 @@ final class ConfigBundleRoundTripTest extends TestCase {
 			),
 			'post_meta'    => array(
 				21 => array(
-					'_lafka_shipping_area_polygon_coordinates' => '44.6,-63.6|44.7,-63.5',
+					'_lafka_shipping_area_polygon_coordinates' => '10.0,20.0|10.1,20.1',
 				),
 				31 => array(
 					'_product_addons'                => array( array( 'name' => 'Extra cheese' ) ),

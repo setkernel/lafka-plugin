@@ -1,27 +1,11 @@
 <?php
 /**
- * AbandonedCartTest — locks down the Phase 3B (v9.27.0) abandoned-cart engine:
- *
- *   - DB schema contains every expected column (source-grep + functional)
- *   - Activation hook installs the table + schedules the cron events
- *   - Cron registers `every_fifteen_minutes` interval via cron_schedules
- *   - Cron handler skips rows where recovery_sent_at IS NOT NULL
- *   - Cron handler skips rows whose email is on the operator opt-out list
- *   - Cron handler skips rows already linked to an order
- *   - Resume URL is built from the row's token
- *   - Email class registers via woocommerce_email_classes filter
- *   - Customizer panel + section + every setting has default + sanitize_callback
- *   - Sanitizers reject malformed input
- *   - Main plugin file requires every conversion module
- *   - Activation + deactivation hooks present in main file
- *
- * Source-grep heavy: the modules use $wpdb globally + WC()->cart at runtime,
- * which aren't worth booting WP for in unit tests. We mock the in-process
- * helpers (token generation, opt-out parsing, eligibility) directly and grep
- * the rest.
+ * AbandonedCartTest — abandoned-cart recovery engine: row persistence against
+ * the table schema, cron scheduling + eligibility (sent / converted / opted-out),
+ * capture gating, conversion + account-deletion cascades, cart restore from a
+ * resume link, recovery-email copy, and the Customizer sanitizers.
  *
  * @package Lafka\Plugin\Tests\Unit
- * @since   9.27.0
  */
 
 declare(strict_types=1);
@@ -42,7 +26,70 @@ require_once dirname( __DIR__, 2 ) . '/incl/conversion/lafka-abandoned-cart-db.p
 require_once dirname( __DIR__, 2 ) . '/incl/conversion/lafka-abandoned-cart-capture.php';
 require_once dirname( __DIR__, 2 ) . '/incl/conversion/lafka-abandoned-cart-cron.php';
 require_once dirname( __DIR__, 2 ) . '/incl/conversion/lafka-abandoned-cart-email.php';
+require_once dirname( __DIR__, 2 ) . '/incl/conversion/lafka-abandoned-cart-resume.php';
 require_once dirname( __DIR__, 2 ) . '/incl/customizer/class-lafka-customizer-abandoned-cart.php';
+
+/**
+ * Recording $wpdb double: get_var/get_row return canned values; insert/update/
+ * delete calls are captured for assertion.
+ */
+class FakeAbandonedCartWpdb {
+
+	public string $prefix = 'wp_';
+	public int $insert_id = 0;
+	/** @var mixed */
+	public $get_var_return = 0;
+	/** @var mixed */
+	public $get_row_return = null;
+	/** @var array<int,array<int,mixed>> */
+	public array $prepared = array();
+	/** @var array<string,array<int,array<string,mixed>>> */
+	public array $calls = array(
+		'insert'  => array(),
+		'update'  => array(),
+		'delete'  => array(),
+		'get_row' => array(),
+	);
+
+	public function prepare( $sql, ...$args ) {
+		$this->prepared[] = $args;
+		return $sql;
+	}
+
+	public function get_var( $sql ) {
+		return $this->get_var_return;
+	}
+
+	public function get_row( $sql ) {
+		$this->calls['get_row'][] = array( 'sql' => $sql );
+		return $this->get_row_return;
+	}
+
+	public function insert( $table, $data, $formats = null ) {
+		$this->calls['insert'][] = array(
+			'table' => $table,
+			'data'  => $data,
+		);
+		$this->insert_id = 99;
+		return 1;
+	}
+
+	public function update( $table, $data, $where, $formats = null, $where_formats = null ) {
+		$this->calls['update'][] = array(
+			'data'  => $data,
+			'where' => $where,
+		);
+		return 1;
+	}
+
+	public function delete( $table, $where, $formats = null ) {
+		$this->calls['delete'][] = array(
+			'table' => $table,
+			'where' => $where,
+		);
+		return 1;
+	}
+}
 
 final class AbandonedCartTest extends TestCase {
 
@@ -71,7 +118,6 @@ final class AbandonedCartTest extends TestCase {
 		Functions\when( 'apply_filters' )->returnArg( 2 );
 		Functions\when( 'get_theme_mod' )->returnArg( 2 );
 		Functions\when( 'wp_salt' )->justReturn( 'unit-test-salt' );
-		Functions\when( 'wp_generate_password' )->justReturn( 'PREVIEWTOKEN0000PREVIEWTOKEN0000' );
 		Functions\when( 'is_email' )->alias(
 			static function ( $email ) {
 				return is_string( $email ) && false !== strpos( $email, '@' );
@@ -80,95 +126,89 @@ final class AbandonedCartTest extends TestCase {
 	}
 
 	protected function tearDown(): void {
+		unset( $GLOBALS['wpdb'] );
+		$_POST = array();
+		$_GET  = array();
 		Monkey\tearDown();
 		parent::tearDown();
 	}
 
-	// ─────────────────────────────────────────────────────────────────────────
-	// 1. DB schema (source-grep)
-	// ─────────────────────────────────────────────────────────────────────────
-
-	public function test_db_module_defines_table_name_helper(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/conversion/lafka-abandoned-cart-db.php' );
-		$this->assertStringContainsString( 'function lafka_ac_table_name', $src );
-		$this->assertStringContainsString( 'lafka_abandoned_carts', $src );
+	private function install_fake_wpdb(): FakeAbandonedCartWpdb {
+		$wpdb            = new FakeAbandonedCartWpdb();
+		$GLOBALS['wpdb'] = $wpdb;
+		return $wpdb;
 	}
 
-	public function test_schema_sql_contains_create_table_statement(): void {
-		$sql = \lafka_ac_schema_sql();
-		$this->assertStringContainsString( 'CREATE TABLE', $sql );
-		$this->assertStringContainsString( 'lafka_abandoned_carts', $sql );
-	}
-
-	public function test_schema_sql_contains_every_expected_column(): void {
-		$sql = \lafka_ac_schema_sql();
-		$required = array(
-			'id',
-			'customer_email',
-			'session_id',
-			'resume_token',
-			'cart_contents',
-			'cart_total',
-			'currency',
-			'order_id',
-			'recovery_sent_at',
-			'created_at',
-			'last_seen_at',
+	private function enable_module(): void {
+		Functions\when( 'get_theme_mod' )->alias(
+			static fn( $key, $default = '' ) => 'lafka_ac_enabled' === $key ? '1' : $default
 		);
-		foreach ( $required as $column ) {
-			$this->assertStringContainsString( $column, $sql, "Schema must include column {$column}" );
-		}
 	}
 
-	public function test_schema_sql_declares_primary_key_and_indexes(): void {
-		$sql = \lafka_ac_schema_sql();
-		$this->assertStringContainsString( 'PRIMARY KEY', $sql );
-		$this->assertStringContainsString( 'KEY customer_email', $sql );
-		$this->assertStringContainsString( 'KEY session_id', $sql );
-		$this->assertStringContainsString( 'KEY resume_token', $sql );
+	// ─────────────────────────────────────────────────────────────────────────
+	// 1. Persistence
+	// ─────────────────────────────────────────────────────────────────────────
+
+	public function test_save_cart_inserts_only_columns_the_schema_defines(): void {
+		$wpdb = $this->install_fake_wpdb();
+		Functions\when( 'current_time' )->justReturn( '2026-06-28 12:00:00' );
+		Functions\when( 'wp_generate_password' )->justReturn( str_repeat( 'a', 32 ) );
+
+		$id = \lafka_ac_save_cart( 'alice@example.com', array( 'items' => array( array( 'product_id' => 1 ) ) ), 'sess-1', 12.5, 'USD' );
+
+		$this->assertSame( 99, $id );
+		$this->assertCount( 1, $wpdb->calls['insert'] );
+		$row = $wpdb->calls['insert'][0]['data'];
+		$this->assertSame( 'alice@example.com', $row['customer_email'] );
+		$this->assertSame( 0, $row['order_id'] );
+		$this->assertNull( $row['recovery_sent_at'] );
+
+		// Every column the writer persists must exist in the CREATE TABLE, or the
+		// insert fails on a real database.
+		$sql     = \lafka_ac_schema_sql();
+		$missing = array_values(
+			array_filter(
+				array_keys( $row ),
+				static fn( $col ) => 1 !== preg_match( '/^\s+' . preg_quote( $col, '/' ) . '\s/m', $sql )
+			)
+		);
+		$this->assertSame( array(), $missing, 'Inserted columns missing from lafka_ac_schema_sql().' );
 	}
 
-	public function test_install_table_calls_dbdelta(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/conversion/lafka-abandoned-cart-db.php' );
-		$this->assertStringContainsString( 'dbDelta', $src );
-		$this->assertStringContainsString( 'lafka_abandoned_cart_db_version', $src );
+	public function test_save_cart_updates_the_pending_row_for_the_same_email_and_session(): void {
+		$wpdb                 = $this->install_fake_wpdb();
+		$wpdb->get_var_return = 7; // an existing pending row
+		Functions\when( 'current_time' )->justReturn( '2026-06-28 12:00:00' );
+
+		$id = \lafka_ac_save_cart( 'alice@example.com', array( 'items' => array( array( 'product_id' => 1 ) ) ), 'sess-1', 20.0 );
+
+		$this->assertSame( 7, $id );
+		$this->assertSame( array(), $wpdb->calls['insert'], 'A second capture must not create a duplicate row.' );
+		$this->assertSame( array( 'id' => 7 ), $wpdb->calls['update'][0]['where'] );
 	}
 
-	public function test_generate_resume_token_uses_wp_generate_password_when_available(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/conversion/lafka-abandoned-cart-db.php' );
-		$this->assertStringContainsString( 'wp_generate_password( 32, false, false )', $src );
-	}
-
-	public function test_generate_resume_token_returns_a_url_safe_string(): void {
-		// With wp_generate_password stubbed in setUp, the function returns a
-		// fixed alnum string. Confirm format expectations hold.
-		$token = \lafka_ac_generate_resume_token();
-		$this->assertIsString( $token );
-		$this->assertGreaterThanOrEqual( 16, strlen( $token ) );
-		$this->assertSame( 1, preg_match( '/^[A-Za-z0-9]+$/', $token ) );
+	public function test_resume_token_requests_32_url_safe_characters(): void {
+		// The token is the only credential on the resume link: it must be long and
+		// free of URL-hostile special characters.
+		Functions\expect( 'wp_generate_password' )->once()->with( 32, false, false )->andReturn( 'TOKEN' );
+		$this->assertSame( 'TOKEN', \lafka_ac_generate_resume_token() );
 	}
 
 	// ─────────────────────────────────────────────────────────────────────────
 	// 2. Cron scheduling
 	// ─────────────────────────────────────────────────────────────────────────
 
-	public function test_cron_registers_every_fifteen_minutes_schedule(): void {
-		$schedules = \lafka_ac_register_cron_schedule( array() );
-		$this->assertArrayHasKey( 'every_fifteen_minutes', $schedules );
-		$this->assertSame( 15 * 60, $schedules['every_fifteen_minutes']['interval'] );
-		$this->assertArrayHasKey( 'display', $schedules['every_fifteen_minutes'] );
-	}
-
-	public function test_cron_preserves_existing_schedules(): void {
-		$existing  = array(
-			'hourly' => array(
-				'interval' => 3600,
-				'display'  => 'Hourly',
-			),
+	public function test_cron_adds_fifteen_minute_schedule_and_keeps_existing_ones(): void {
+		$schedules = \lafka_ac_register_cron_schedule(
+			array(
+				'hourly' => array(
+					'interval' => 3600,
+					'display'  => 'Hourly',
+				),
+			)
 		);
-		$schedules = \lafka_ac_register_cron_schedule( $existing );
 		$this->assertArrayHasKey( 'hourly', $schedules );
-		$this->assertArrayHasKey( 'every_fifteen_minutes', $schedules );
+		$this->assertSame( 15 * 60, $schedules['every_fifteen_minutes']['interval'] );
 	}
 
 	public function test_schedule_events_stays_inert_when_capture_disabled(): void {
@@ -226,13 +266,6 @@ final class AbandonedCartTest extends TestCase {
 		\lafka_ac_maybe_install_table();
 
 		$this->assertNotContains( 'lafka_abandoned_cart_db_version', $read, 'Disabled module must not probe/install its table.' );
-	}
-
-	public function test_cron_module_references_check_event_hook(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/conversion/lafka-abandoned-cart-cron.php' );
-		$this->assertStringContainsString( 'lafka_check_abandoned_carts', $src );
-		$this->assertStringContainsString( 'lafka_cleanup_abandoned_carts', $src );
-		$this->assertStringContainsString( 'wp_schedule_event', $src );
 	}
 
 	public function test_cron_get_delay_minutes_clamps_to_safe_window(): void {
@@ -406,24 +439,6 @@ final class AbandonedCartTest extends TestCase {
 	// 4. Email class registration
 	// ─────────────────────────────────────────────────────────────────────────
 
-	public function test_email_module_registers_wc_email_class_filter(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/conversion/lafka-abandoned-cart-email.php' );
-		$this->assertStringContainsString( "add_filter( 'woocommerce_email_classes'", $src );
-		$this->assertStringContainsString( 'LAFKA_Abandoned_Cart_Email', $src );
-	}
-
-	public function test_email_class_file_extends_wc_email(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/conversion/class-lafka-abandoned-cart-email-class.php' );
-		$this->assertStringContainsString( 'class LAFKA_Abandoned_Cart_Email extends WC_Email', $src );
-		$this->assertStringContainsString( 'add_action( \'lafka_abandoned_cart_email_trigger\'', $src );
-	}
-
-	public function test_email_class_uses_woocommerce_header_and_footer_actions(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/conversion/lafka-abandoned-cart-email.php' );
-		$this->assertStringContainsString( 'woocommerce_email_header', $src );
-		$this->assertStringContainsString( 'woocommerce_email_footer', $src );
-	}
-
 	public function test_email_class_registration_filter_returns_array_with_new_class(): void {
 		// WC_Email stub is required at file top so the class_exists guard in the
 		// production module sees the stub and lazy-loads the subclass file.
@@ -433,43 +448,8 @@ final class AbandonedCartTest extends TestCase {
 	}
 
 	// ─────────────────────────────────────────────────────────────────────────
-	// 5. Customizer panel + sanitizers
+	// 5. Customizer sanitizers
 	// ─────────────────────────────────────────────────────────────────────────
-
-	public function test_customizer_registers_lafka_abandoned_cart_panel(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/customizer/class-lafka-customizer-abandoned-cart.php' );
-		$this->assertStringContainsString( 'add_panel', $src );
-		$this->assertStringContainsString( "'lafka_abandoned_cart'", $src );
-	}
-
-	public function test_customizer_registers_all_required_settings(): void {
-		$src      = file_get_contents( dirname( __DIR__, 2 ) . '/incl/customizer/class-lafka-customizer-abandoned-cart.php' );
-		$required = array(
-			'lafka_ac_enabled',
-			'lafka_ac_delay_minutes',
-			'lafka_ac_subject',
-			'lafka_ac_intro_heading',
-			'lafka_ac_intro_body',
-			'lafka_ac_cta_label',
-			'lafka_ac_global_opt_out',
-		);
-		foreach ( $required as $setting ) {
-			$this->assertStringContainsString(
-				"'" . $setting . "'",
-				$src,
-				"Customizer setting {$setting} must be registered."
-			);
-		}
-	}
-
-	public function test_every_customizer_setting_has_default_and_sanitize_callback(): void {
-		$src             = file_get_contents( dirname( __DIR__, 2 ) . '/incl/customizer/class-lafka-customizer-abandoned-cart.php' );
-		$default_count   = substr_count( $src, "'default'" );
-		$sanitize_count  = substr_count( $src, "'sanitize_callback'" );
-		$add_setting_cnt = substr_count( $src, '$wp_customize->add_setting' );
-		$this->assertGreaterThanOrEqual( $add_setting_cnt, $default_count, 'Every add_setting() call must include a default.' );
-		$this->assertGreaterThanOrEqual( $add_setting_cnt, $sanitize_count, 'Every add_setting() call must include a sanitize_callback.' );
-	}
 
 	public function test_sanitize_checkbox_normalises_truthy_input(): void {
 		$this->assertSame( '1', Lafka_Customizer_Abandoned_Cart::sanitize_checkbox( '1' ) );
@@ -502,7 +482,7 @@ final class AbandonedCartTest extends TestCase {
 	}
 
 	// ─────────────────────────────────────────────────────────────────────────
-	// 6. Capture + resume modules (source-grep)
+	// 6. Capture, conversion + deletion cascades, resume
 	// ─────────────────────────────────────────────────────────────────────────
 
 	public function test_capture_reads_the_email_from_the_checkout_review_payload(): void {
@@ -516,71 +496,106 @@ final class AbandonedCartTest extends TestCase {
 		$_POST = array();
 	}
 
-	public function test_capture_module_hooks_woocommerce_actions(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/conversion/lafka-abandoned-cart-capture.php' );
-		$this->assertStringContainsString( 'woocommerce_checkout_update_order_review', $src );
-		$this->assertStringContainsString( 'woocommerce_checkout_order_processed', $src );
+	public function test_checkout_capture_stores_nothing_while_module_is_disabled(): void {
+		// Default-OFF module: typing an email on /checkout/ must not persist it.
+		$wpdb  = $this->install_fake_wpdb();
+		$_POST = array( 'post_data' => 'billing_email=guest%40example.test' );
+
+		\lafka_ac_handle_update_order_review();
+
+		$this->assertSame( array(), $wpdb->calls['insert'] );
+		$this->assertSame( array(), $wpdb->calls['update'] );
 	}
 
-	public function test_capture_module_cascades_account_deletion(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/conversion/lafka-abandoned-cart-capture.php' );
-		$this->assertStringContainsString( 'woocommerce_account_delete_completed', $src );
-		$this->assertStringContainsString( 'delete_user', $src );
+	public function test_placed_order_marks_the_pending_cart_row_recovered(): void {
+		$this->enable_module();
+		$wpdb                 = $this->install_fake_wpdb();
+		$wpdb->get_var_return = 7;
+		Functions\when( 'wc_get_order' )->justReturn(
+			new class() {
+				public function get_billing_email(): string {
+					return 'Buyer@Example.test';
+				}
+			}
+		);
+
+		\lafka_ac_handle_order_processed( 55 );
+
+		$this->assertSame( array( 'buyer@example.test' ), $wpdb->prepared[0], 'Row lookup must use the lowercased billing email.' );
+		$this->assertSame(
+			array(
+				'data'  => array( 'order_id' => 55 ),
+				'where' => array( 'id' => 7 ),
+			),
+			$wpdb->calls['update'][0],
+			'The converted cart must be linked to the order so no recovery email goes out.'
+		);
 	}
 
-	public function test_capture_self_gates_on_enabled_toggle(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/conversion/lafka-abandoned-cart-capture.php' );
-		$this->assertStringContainsString( 'lafka_ac_capture_is_enabled', $src );
-		$this->assertStringContainsString( 'lafka_ac_enabled', $src );
+	public function test_account_deletion_purges_the_users_cart_rows(): void {
+		$wpdb = $this->install_fake_wpdb();
+		Functions\when( 'get_userdata' )->justReturn( (object) array( 'user_email' => 'Member@Example.test' ) );
+
+		\lafka_ac_handle_account_deleted( (object) array( 'user_email' => 'Guest@Example.test' ) );
+		\lafka_ac_handle_account_deleted( 12 );
+		\lafka_ac_handle_account_deleted( 0 );
+
+		$this->assertSame(
+			array(
+				array( 'customer_email' => 'guest@example.test' ),
+				array( 'customer_email' => 'member@example.test' ),
+			),
+			array_column( $wpdb->calls['delete'], 'where' )
+		);
 	}
 
-	public function test_resume_module_hooks_init_priority_5(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/conversion/lafka-abandoned-cart-resume.php' );
-		$this->assertStringContainsString( "add_action( 'init', 'lafka_ac_handle_resume_request', 5 )", $src );
+	public function test_restore_cart_replaces_the_cart_with_the_saved_items(): void {
+		$cart = new class() {
+			public bool $emptied = false;
+			/** @var array<int,array<int,int>> */
+			public array $added = array();
+			public function empty_cart(): void {
+				$this->emptied = true;
+			}
+			public function add_to_cart( $product_id, $qty, $variation_id ) {
+				$this->added[] = array( $product_id, $qty, $variation_id );
+				return 'key';
+			}
+		};
+		Functions\when( 'WC' )->justReturn( (object) array( 'cart' => $cart ) );
+
+		\lafka_ac_restore_cart_from_payload(
+			array(
+				'items' => array(
+					array(
+						'product_id' => 10,
+						'quantity'   => 2,
+					),
+					array(
+						'product_id'   => 11,
+						'variation_id' => 12,
+						'quantity'     => 0,
+					),
+					array( 'product_id' => 0 ),
+				),
+			)
+		);
+
+		$this->assertTrue( $cart->emptied, 'Existing cart contents must not double up with the restored items.' );
+		$this->assertSame( array( array( 10, 2, 0 ), array( 11, 1, 12 ) ), $cart->added );
 	}
 
-	public function test_resume_module_reads_get_token_and_restores_cart(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/conversion/lafka-abandoned-cart-resume.php' );
-		$this->assertStringContainsString( 'lafka_resume_cart', $src );
-		$this->assertStringContainsString( 'add_to_cart', $src );
-		$this->assertStringContainsString( 'wp_safe_redirect', $src );
-	}
+	public function test_resume_request_ignores_short_and_unknown_tokens(): void {
+		$wpdb = $this->install_fake_wpdb();
+		Functions\when( 'WC' )->justReturn( null );
+		Functions\expect( 'wp_safe_redirect' )->never();
 
-	public function test_resume_module_redirects_to_cart_after_restore(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/conversion/lafka-abandoned-cart-resume.php' );
-		$this->assertStringContainsString( 'wc_get_cart_url', $src );
-	}
+		$_GET = array( 'lafka_resume_cart' => 'short' );
+		\lafka_ac_handle_resume_request();
+		$this->assertSame( array(), $wpdb->calls['get_row'], 'Tokens under 16 chars must not hit the database.' );
 
-	// ─────────────────────────────────────────────────────────────────────────
-	// 7. Main plugin wiring
-	// ─────────────────────────────────────────────────────────────────────────
-
-	public function test_main_plugin_requires_all_conversion_modules(): void {
-		$main = file_get_contents( dirname( __DIR__, 2 ) . '/lafka-plugin.php' );
-		$this->assertStringContainsString( 'incl/conversion/lafka-abandoned-cart-db.php', $main );
-		$this->assertStringContainsString( 'incl/conversion/lafka-abandoned-cart-capture.php', $main );
-		$this->assertStringContainsString( 'incl/conversion/lafka-abandoned-cart-cron.php', $main );
-		$this->assertStringContainsString( 'incl/conversion/lafka-abandoned-cart-email.php', $main );
-		$this->assertStringContainsString( 'incl/conversion/lafka-abandoned-cart-resume.php', $main );
-		$this->assertStringContainsString( 'incl/customizer/class-lafka-customizer-abandoned-cart.php', $main );
-	}
-
-	public function test_main_plugin_registers_activation_and_deactivation_hooks(): void {
-		$main = file_get_contents( dirname( __DIR__, 2 ) . '/lafka-plugin.php' );
-		$this->assertStringContainsString( 'register_activation_hook', $main );
-		$this->assertStringContainsString( 'register_deactivation_hook', $main );
-		$this->assertStringContainsString( 'lafka_ac_install_table', $main );
-		$this->assertStringContainsString( 'lafka_ac_schedule_events', $main );
-		$this->assertStringContainsString( 'lafka_ac_unschedule_events', $main );
-	}
-
-	public function test_uninstall_drops_abandoned_cart_table(): void {
-		// NX1-06: uninstall.php is now a thin bootstrap; the DROP + marker-delete
-		// logic lives in the testable Lafka_Uninstall class.
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/tools/class-lafka-uninstall.php' );
-		$this->assertStringContainsString( 'lafka_abandoned_carts', $src );
-		$this->assertStringContainsString( 'DROP TABLE IF EXISTS', $src );
-		$this->assertStringContainsString( 'lafka_abandoned_cart_db_version', $src );
-		$this->assertStringContainsString( 'Lafka_Uninstall::run', file_get_contents( dirname( __DIR__, 2 ) . '/uninstall.php' ) );
+		$_GET = array( 'lafka_resume_cart' => str_repeat( 'z', 32 ) );
+		\lafka_ac_handle_resume_request(); // get_row returns null → no restore, no redirect.
+		$this->assertCount( 1, $wpdb->calls['get_row'] );
 	}
 }

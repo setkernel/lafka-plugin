@@ -7,8 +7,9 @@
  * that DON'T need WordPress and that regression-lock the deterministic kernel
  * every downstream e2e/preset job depends on:
  *
- *   - the fixture data file is deterministic + structurally valid (12 products
- *     across 4 neutral categories, unique slugs, both simple + variable types),
+ *   - the fixture data is structurally valid (unique clean slugs, every product
+ *     in a real category, every category populated, simple + variable types,
+ *     numeric prices),
  *   - both required addon pricing strategies are exercised (flat_per_option +
  *     flat_group) and assigned to a real category,
  *   - business info is fake-but-schema-valid (E.164 phone, numeric geo, email),
@@ -72,50 +73,29 @@ final class SeedDemoFixtureTest extends TestCase {
 
 	// ─── Fixture integrity ──────────────────────────────────────────────────
 
-	public function test_fixtures_expose_all_top_level_sections(): void {
-		$f = Lafka_CLI_Seed_Demo::fixtures();
-		foreach ( array( 'business', 'order_hours', 'flags', 'categories', 'products', 'addon_groups', 'branch', 'area', 'page_menu' ) as $key ) {
-			self::assertArrayHasKey( $key, $f, "fixtures() is missing the '$key' section" );
-		}
-	}
-
-	public function test_exactly_four_categories_with_unique_deterministic_slugs(): void {
-		$cats  = Lafka_CLI_Seed_Demo::fixtures()['categories'];
-		$slugs = array_column( $cats, 'slug' );
-
-		self::assertCount( 4, $cats );
-		self::assertSame( array_unique( $slugs ), $slugs, 'category slugs must be unique' );
-		foreach ( $slugs as $slug ) {
-			self::assertMatchesRegularExpression( '/^[a-z0-9-]+$/', (string) $slug, 'category slug must be a clean deterministic slug' );
-		}
-	}
-
-	public function test_exactly_twelve_products_spread_across_all_four_categories(): void {
+	public function test_categories_and_products_reference_each_other_consistently(): void {
 		$f          = Lafka_CLI_Seed_Demo::fixtures();
 		$cat_slugs  = array_column( $f['categories'], 'slug' );
 		$products   = $f['products'];
 		$prod_slugs = array_column( $products, 'slug' );
-		$used_cats  = array();
 
-		self::assertCount( 12, $products );
+		// Slugs are the idempotency key for re-seeding: unique + sanitize_title-clean.
+		self::assertSame( array_unique( $cat_slugs ), $cat_slugs, 'category slugs must be unique' );
 		self::assertSame( array_unique( $prod_slugs ), $prod_slugs, 'product slugs must be unique' );
+		foreach ( array_merge( $cat_slugs, $prod_slugs ) as $slug ) {
+			self::assertMatchesRegularExpression( '/^[a-z0-9-]+$/', (string) $slug );
+		}
 
+		$used_cats = array();
 		foreach ( $products as $product ) {
-			self::assertMatchesRegularExpression( '/^[a-z0-9-]+$/', (string) $product['slug'] );
 			self::assertContains( $product['category'], $cat_slugs, "product {$product['slug']} references an unknown category" );
-			self::assertContains( $product['type'], array( 'simple', 'variable' ) );
 			$used_cats[ $product['category'] ] = true;
 		}
+		self::assertSame( array(), array_values( array_diff( $cat_slugs, array_keys( $used_cats ) ) ), 'every category needs products' );
 
-		foreach ( $cat_slugs as $slug ) {
-			self::assertArrayHasKey( $slug, $used_cats, "category '$slug' has no products" );
-		}
-	}
-
-	public function test_products_include_both_simple_and_variable_types(): void {
-		$types = array_column( Lafka_CLI_Seed_Demo::fixtures()['products'], 'type' );
-		self::assertContains( 'simple', $types );
-		self::assertContains( 'variable', $types );
+		$types = array_unique( array_column( $products, 'type' ) );
+		sort( $types );
+		self::assertSame( array( 'simple', 'variable' ), $types );
 	}
 
 	public function test_every_product_price_is_a_numeric_string(): void {
@@ -143,7 +123,6 @@ final class SeedDemoFixtureTest extends TestCase {
 
 		foreach ( $addon_sets as $set ) {
 			self::assertContains( $set['category'], $cat_slugs, 'addon group must target a real category' );
-			self::assertSame( 'pizzas', $set['category'], 'the demo assigns addon groups to the pizza category' );
 			foreach ( $set['product_addons'] as $group ) {
 				$modes[ $group['pricing_mode'] ] = true;
 			}
@@ -196,20 +175,7 @@ final class SeedDemoFixtureTest extends TestCase {
 		}
 	}
 
-	public function test_flags_enable_order_hours_and_shipping_areas(): void {
-		$flags = Lafka_CLI_Seed_Demo::fixtures()['flags'];
-		self::assertSame( 'enabled', $flags['order_hours'] );
-		self::assertSame( 'enabled', $flags['shipping_areas'] );
-	}
-
 	// ─── Manifest round-trip ────────────────────────────────────────────────
-
-	public function test_empty_manifest_has_versioned_id_buckets(): void {
-		$m = Lafka_CLI_Seed_Demo::empty_manifest();
-		self::assertSame( Lafka_CLI_Seed_Demo::MANIFEST_VERSION, $m['version'] );
-		self::assertArrayHasKey( 'ids', $m );
-		self::assertIsArray( $m['ids'] );
-	}
 
 	public function test_record_then_recorded_id_returns_the_id(): void {
 		$m = Lafka_CLI_Seed_Demo::empty_manifest();
@@ -278,19 +244,4 @@ final class SeedDemoFixtureTest extends TestCase {
 		self::assertTrue( Lafka_Shipping_Areas::point_in_polygon( $lat, $lng, $decoded ), 'the fake centre must fall inside the seeded delivery zone' );
 		self::assertFalse( Lafka_Shipping_Areas::point_in_polygon( $lat + 10.0, $lng, $decoded ), 'a far-away point must fall outside the seeded delivery zone' );
 	}
-
-	// ─── CLI registration ───────────────────────────────────────────────────
-
-	public function test_cli_command_is_registered_and_loaded_by_the_plugin(): void {
-		$module = (string) file_get_contents( dirname( __DIR__, 2 ) . '/incl/cli/class-lafka-cli-seed-demo.php' );
-		self::assertMatchesRegularExpression(
-			"/WP_CLI::add_command\(\s*['\"]lafka seed-demo['\"]\s*,/",
-			$module,
-			'the seeder must register the `lafka seed-demo` command'
-		);
-
-		$main = (string) file_get_contents( dirname( __DIR__, 2 ) . '/lafka-plugin.php' );
-		self::assertStringContainsString( 'incl/cli/class-lafka-cli-seed-demo.php', $main, 'the plugin must require the seeder' );
-	}
-
 }

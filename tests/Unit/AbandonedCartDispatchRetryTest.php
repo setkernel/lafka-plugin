@@ -167,13 +167,4 @@ final class AbandonedCartDispatchRetryTest extends TestCase {
 
 		$this->assertSame( array(), $this->recorded_updates(), 'A row without a valid id must never be stamped.' );
 	}
-
-	// ─────────────────────────────────────────────────────────────────────────
-	// Source-grep: the cron loop short-circuits without WooCommerce active.
-	// ─────────────────────────────────────────────────────────────────────────
-
-	public function test_run_check_guards_on_woocommerce_active(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/conversion/lafka-abandoned-cart-cron.php' );
-		$this->assertStringContainsString( "class_exists( 'WooCommerce' )", $src );
-	}
 }

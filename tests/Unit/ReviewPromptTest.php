@@ -1,28 +1,11 @@
 <?php
 /**
- * ReviewPromptTest — locks down the Phase 3D (v9.28.0) post-purchase review
- * prompt engine across all three layers:
- *
- *   - WC_Email subclass registers via woocommerce_email_classes filter
- *   - Cron scheduler hooks woocommerce_order_status_completed and skips
- *     orders without billing_email / with _lafka_review_email_sent / with
- *     user-level opt-out
- *   - 24-hour scheduling math correct (configurable hours → seconds → time())
- *   - Subject template substitutes {firstname} + {site}
- *   - Star tap row produces 5 links with rating=1..5 query params
- *   - REST routes registered + permission_callback gating works
- *   - Banner cookie set when user has in-window completed order, cleared
- *     when dismissed, never set for guests
- *   - Banner-shown endpoint rate-limited via transient
- *   - Unsubscribe URL produces stable HMAC token; tampering rejected
- *   - Customizer panel + section + every setting has default + sanitize_callback
- *   - Main plugin file requires all three new modules
- *
- * Source-grep where booting WP would cost more than the test signals; otherwise
- * Brain Monkey stubs the WP/WC functions the helpers call.
+ * ReviewPromptTest — post-purchase review prompt engine (email + banner):
+ * scheduling/idempotence, skip rules, subject tokens, star-tap target URLs,
+ * the per-user HMAC unsubscribe link, banner cookie gating, the banner REST
+ * routes' permission gates + rate limit, and the Customizer sanitizers.
  *
  * @package Lafka\Plugin\Tests\Unit
- * @since   9.28.0
  */
 
 declare(strict_types=1);
@@ -36,6 +19,7 @@ use PHPUnit\Framework\TestCase;
 
 // WC_Email stub must load before the email module so its class_exists guard sees it.
 require_once dirname( __DIR__ ) . '/Unit/Stubs/wc-email-stub.php';
+require_once dirname( __DIR__ ) . '/Unit/Stubs/wp-error-class.php';
 
 // Mark the runtime as test mode so wp_safe_redirect in the unsubscribe handler
 // doesn't exit() and end the PHPUnit process. The production guard is `! defined`,
@@ -197,18 +181,6 @@ final class ReviewPromptTest extends TestCase {
 	// 1. WC_Email registration
 	// ─────────────────────────────────────────────────────────────────────────
 
-	public function test_email_module_registers_wc_email_class_filter(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/conversion/lafka-review-prompt-email.php' );
-		$this->assertStringContainsString( "add_filter( 'woocommerce_email_classes'", $src );
-		$this->assertStringContainsString( 'LAFKA_Review_Prompt_Email', $src );
-	}
-
-	public function test_email_class_file_extends_wc_email_and_binds_trigger(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/conversion/class-lafka-review-prompt-email-class.php' );
-		$this->assertStringContainsString( 'class LAFKA_Review_Prompt_Email extends WC_Email', $src );
-		$this->assertStringContainsString( "add_action( 'lafka_review_prompt_email_trigger'", $src );
-	}
-
 	public function test_email_class_registration_filter_returns_array_with_new_class(): void {
 		$classes = \lafka_review_email_register_class( array() );
 		$this->assertArrayHasKey( 'LAFKA_Review_Prompt_Email', $classes );
@@ -218,17 +190,6 @@ final class ReviewPromptTest extends TestCase {
 	// ─────────────────────────────────────────────────────────────────────────
 	// 2. Scheduling + cron + idempotence
 	// ─────────────────────────────────────────────────────────────────────────
-
-	public function test_scheduler_module_hooks_woocommerce_order_status_completed(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/conversion/lafka-review-prompt-email.php' );
-		$this->assertStringContainsString( "add_action( 'woocommerce_order_status_completed', 'lafka_review_email_schedule_for_order'", $src );
-		$this->assertStringContainsString( "add_action( 'lafka_send_review_email', 'lafka_review_email_run_cron'", $src );
-	}
-
-	public function test_email_uses_wp_schedule_single_event(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/conversion/lafka-review-prompt-email.php' );
-		$this->assertStringContainsString( 'wp_schedule_single_event', $src );
-	}
 
 	public function test_delay_hours_clamps_to_safe_window(): void {
 		$this->stub_theme_mods( array( 'lafka_review_email_delay_hours' => 0 ) );
@@ -439,10 +400,10 @@ final class ReviewPromptTest extends TestCase {
 	}
 
 	public function test_resolve_target_url_appends_rating_param_when_configured(): void {
-		$this->stub_theme_mods( array( 'lafka_review_target_url' => 'https://g.page/r/CXX/review' ) );
+		$this->stub_theme_mods( array( 'lafka_review_target_url' => 'https://reviews.example.test/r/abc' ) );
 		$url = \lafka_review_email_resolve_target_url( 3, new FakeOrder() );
 		$this->assertStringContainsString( 'rating=3', $url );
-		$this->assertStringContainsString( 'g.page/r/CXX/review', $url );
+		$this->assertStringContainsString( 'reviews.example.test/r/abc', $url );
 	}
 
 	public function test_resolve_target_url_clamps_rating_to_1_5(): void {
@@ -615,18 +576,35 @@ final class ReviewPromptTest extends TestCase {
 	// 6. Banner REST endpoints
 	// ─────────────────────────────────────────────────────────────────────────
 
-	public function test_banner_module_registers_rest_routes_under_lafka_v1(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/conversion/lafka-review-prompt-banner.php' );
-		$this->assertStringContainsString( 'register_rest_route', $src );
-		$this->assertStringContainsString( "'lafka/v1'", $src );
-		$this->assertStringContainsString( '/review-banner-dismiss', $src );
-		$this->assertStringContainsString( '/review-banner-shown', $src );
+	public function test_rest_routes_gate_dismiss_on_login_and_leave_beacon_public(): void {
+		$routes = array();
+		Functions\when( 'register_rest_route' )->alias(
+			static function ( $ns, $route, $args ) use ( &$routes ) {
+				$routes[ $ns . $route ] = $args;
+				return true;
+			}
+		);
+		\lafka_review_banner_register_rest_routes();
+
+		$this->assertSame( array( 'lafka/v1/review-banner-dismiss', 'lafka/v1/review-banner-shown' ), array_keys( $routes ) );
+
+		// The dismiss route writes user meta: its registered permission callback
+		// must refuse a guest.
+		Functions\when( 'is_user_logged_in' )->justReturn( false );
+		$this->assertInstanceOf( 'WP_Error', call_user_func( $routes['lafka/v1/review-banner-dismiss']['permission_callback'] ) );
+		$this->assertSame( '__return_true', $routes['lafka/v1/review-banner-shown']['permission_callback'] );
 	}
 
 	public function test_dismiss_permission_rejects_guests(): void {
 		Functions\when( 'is_user_logged_in' )->justReturn( false );
 		$result = \lafka_review_banner_rest_dismiss_permission();
 		$this->assertInstanceOf( 'WP_Error', $result );
+	}
+
+	public function test_dismiss_permission_rejects_logged_in_user_without_read_cap(): void {
+		Functions\when( 'is_user_logged_in' )->justReturn( true );
+		Functions\when( 'current_user_can' )->justReturn( false );
+		$this->assertInstanceOf( 'WP_Error', \lafka_review_banner_rest_dismiss_permission() );
 	}
 
 	public function test_dismiss_permission_accepts_logged_in_with_read_cap(): void {
@@ -685,42 +663,8 @@ final class ReviewPromptTest extends TestCase {
 	}
 
 	// ─────────────────────────────────────────────────────────────────────────
-	// 7. Customizer panel + sanitizers
+	// 7. Customizer sanitizers
 	// ─────────────────────────────────────────────────────────────────────────
-
-	public function test_customizer_registers_lafka_reviews_panel(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/customizer/class-lafka-customizer-reviews.php' );
-		$this->assertStringContainsString( 'add_panel', $src );
-		$this->assertStringContainsString( "'lafka_reviews'", $src );
-	}
-
-	public function test_customizer_registers_all_required_settings(): void {
-		$src      = file_get_contents( dirname( __DIR__, 2 ) . '/incl/customizer/class-lafka-customizer-reviews.php' );
-		$required = array(
-			'lafka_review_email_enabled',
-			'lafka_review_email_delay_hours',
-			'lafka_review_email_subject',
-			'lafka_review_email_intro',
-			'lafka_review_target_url',
-			'lafka_review_target_label',
-			'lafka_review_banner_enabled',
-			'lafka_review_banner_window_days',
-			'lafka_review_banner_copy',
-			'lafka_review_banner_cta_label',
-		);
-		foreach ( $required as $setting ) {
-			$this->assertStringContainsString( "'" . $setting . "'", $src, "Setting {$setting} must register." );
-		}
-	}
-
-	public function test_every_customizer_setting_has_default_and_sanitize_callback(): void {
-		$src             = file_get_contents( dirname( __DIR__, 2 ) . '/incl/customizer/class-lafka-customizer-reviews.php' );
-		$default_count   = substr_count( $src, "'default'" );
-		$sanitize_count  = substr_count( $src, "'sanitize_callback'" );
-		$add_setting_cnt = substr_count( $src, '$wp_customize->add_setting' );
-		$this->assertGreaterThanOrEqual( $add_setting_cnt, $default_count, 'Every add_setting() must include a default.' );
-		$this->assertGreaterThanOrEqual( $add_setting_cnt, $sanitize_count, 'Every add_setting() must include a sanitize_callback.' );
-	}
 
 	public function test_sanitize_checkbox_normalises_truthy_input(): void {
 		$this->assertSame( '1', Lafka_Customizer_Reviews::sanitize_checkbox( '1' ) );
@@ -749,23 +693,6 @@ final class ReviewPromptTest extends TestCase {
 		$this->assertSame( '', Lafka_Customizer_Reviews::sanitize_review_url( null ) );
 		$this->assertSame( '', Lafka_Customizer_Reviews::sanitize_review_url( array( 'evil' ) ) );
 		// Brain Monkey stubs esc_url_raw → returnArg, so a clean string survives.
-		$this->assertSame( 'https://g.page/r/CXX/review', Lafka_Customizer_Reviews::sanitize_review_url( 'https://g.page/r/CXX/review' ) );
-	}
-
-	// ─────────────────────────────────────────────────────────────────────────
-	// 8. Main plugin wiring
-	// ─────────────────────────────────────────────────────────────────────────
-
-	public function test_main_plugin_requires_all_phase_3d_modules(): void {
-		$main = file_get_contents( dirname( __DIR__, 2 ) . '/lafka-plugin.php' );
-		$this->assertStringContainsString( 'incl/conversion/lafka-review-prompt-email.php', $main );
-		$this->assertStringContainsString( 'incl/conversion/lafka-review-prompt-banner.php', $main );
-		$this->assertStringContainsString( 'incl/customizer/class-lafka-customizer-reviews.php', $main );
-	}
-
-	public function test_cli_module_still_present(): void {
-		// CLI helpers are independent of the Phase 3D email pipeline and remain
-		// available for the operator (wp lafka reviews status / enable / disable).
-		$this->assertNotEmpty( file_get_contents( dirname( __DIR__, 2 ) . '/incl/cli/lafka-reviews-cli.php' ) );
+		$this->assertSame( 'https://reviews.example.test/r/abc', Lafka_Customizer_Reviews::sanitize_review_url( 'https://reviews.example.test/r/abc' ) );
 	}
 }

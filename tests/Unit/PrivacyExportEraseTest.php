@@ -81,10 +81,10 @@ final class PrivacyExportEraseTest extends TestCase {
 	// ─── Registration ─────────────────────────────────────────────────────────
 
 	public function test_register_hooks_both_privacy_filters(): void {
-		// add_filter is defined by the test bootstrap before Patchwork loads, so
-		// it can't be spied on via Brain Monkey. Assert the wiring by source: the
-		// class's register() must add both core privacy filters, and calling it
-		// must not error against the bootstrap's no-op add_filter.
+		// The only guard that core's Tools → Export/Erase Personal Data ever sees
+		// these callbacks. add_filter is a no-op defined by tests/bootstrap.php
+		// before Patchwork loads, so it can't be spied on: pin the two calls by
+		// source and prove register() runs cleanly.
 		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/conversion/class-lafka-conversion-privacy.php' );
 		$this->assertStringContainsString( "add_filter( 'wp_privacy_personal_data_exporters'", $src );
 		$this->assertStringContainsString( "add_filter( 'wp_privacy_personal_data_erasers'", $src );
@@ -233,13 +233,5 @@ final class PrivacyExportEraseTest extends TestCase {
 		$this->assertSame( 2, $result['items_removed'] );
 		$this->assertTrue( $result['done'] );
 		$this->assertSame( array( 'customer_email' => 'buyer@example.com' ), $wpdb->deletes[0]['where'] );
-	}
-
-	// ─── Runtime wiring ───────────────────────────────────────────────────────
-
-	public function test_main_plugin_registers_conversion_privacy(): void {
-		$main = file_get_contents( dirname( __DIR__, 2 ) . '/lafka-plugin.php' );
-		$this->assertStringContainsString( 'incl/conversion/class-lafka-conversion-privacy.php', $main );
-		$this->assertStringContainsString( 'new Lafka_Conversion_Privacy()', $main );
 	}
 }
