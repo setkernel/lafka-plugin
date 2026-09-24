@@ -27,6 +27,8 @@
 
 defined( 'ABSPATH' ) || exit;
 
+require_once __DIR__ . '/../lafka-shipping-method-helpers.php';
+
 if ( ! class_exists( 'Lafka_Promotions' ) ) {
 
 	final class Lafka_Promotions {
@@ -187,7 +189,7 @@ if ( ! class_exists( 'Lafka_Promotions' ) ) {
 				return $rates;
 			}
 			foreach ( $rates as $rate_id => $rate ) {
-				if ( 'local_pickup' !== $rate->method_id ) {
+				if ( ! lafka_is_pickup_shipping_method( $rate->method_id ) ) {
 					unset( $rates[ $rate_id ] );
 				}
 			}
