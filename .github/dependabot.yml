@@ -25,6 +25,11 @@ updates:
     labels:
       - dependencies
       - composer
+    # Known peer ceiling: wp-coding-standards/wpcs 3.x requires PHPCS 3.x, so a
+    # PHPCS 4 major bump cannot land until WPCS supports it.
+    ignore:
+      - dependency-name: 'squizlabs/php_codesniffer'
+        update-types: ['version-update:semver-major']
     groups:
       composer-minor-and-patch:
         patterns: ['*']
@@ -43,6 +48,11 @@ updates:
     labels:
       - dependencies
       - javascript
+    # Known peer ceiling: @wordpress/stylelint-config 23.x peers on stylelint
+    # ^16 (see COMPATIBILITY.md "Known incompatibilities").
+    ignore:
+      - dependency-name: 'stylelint'
+        update-types: ['version-update:semver-major']
     groups:
       npm-minor-and-patch:
         patterns: ['*']
