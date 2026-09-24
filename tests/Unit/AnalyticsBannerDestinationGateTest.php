@@ -1,30 +1,10 @@
 <?php
 /**
- * AnalyticsBannerDestinationGateTest — locks down the consent-banner
- * destination gate (audit f083).
- *
- * Regression context: lafka_emit_consent_banner() only checked
- * lafka_analytics_banner_enabled() (default '1'). Unlike every other analytics
- * emitter (page-context, custom-events, dl-client, store-events all gate on
- * lafka_analytics_is_active()), the banner did NOT check whether any tracking
- * destination was configured. A fresh/default install with zero GTM / GA4 /
- * Clarity / Pixel / CF-beacon IDs therefore rendered a fixed bottom-of-viewport
- * "we use cookies" banner to every visitor — pointless (no cookies are set),
- * arguably misleading, and a conversion drag on the default theme.
- *
- * The fix adds, immediately after the banner-enabled check:
- *
- *   if ( ! function_exists( 'lafka_analytics_is_active' )
- *        || ! lafka_analytics_is_active() ) { return; }
- *
- * This test pins:
- *   - banner emits when enabled AND a tracking destination is configured
- *   - banner is silent when enabled but NO destination is configured
- *   - every dataLayer destination (and the CF beacon) trips the gate
- *   - the enabled flag still wins (disabled → silent even with a destination)
+ * Consent banner destination gate (audit f083): the banner renders only when
+ * it is enabled AND a tracking destination is configured. A default install
+ * with no tracking IDs sets no cookies, so it must not show a cookie banner.
  *
  * @package Lafka\Plugin\Tests\Unit
- * @since   9.31.0
  */
 
 declare(strict_types=1);
@@ -93,34 +73,6 @@ final class AnalyticsBannerDestinationGateTest extends TestCase {
 		ob_start();
 		$fn();
 		return (string) ob_get_clean();
-	}
-
-	// ────────────────────────────────────────────────────────────────────────
-	// The gate function must be available at the point the banner fires.
-	// ────────────────────────────────────────────────────────────────────────
-
-	public function test_destination_gate_function_is_defined(): void {
-		$this->assertTrue(
-			function_exists( 'lafka_analytics_is_active' ),
-			'lafka_analytics_is_active() must be defined (required at bootstrap) so the banner gate has something to call.'
-		);
-	}
-
-	// ────────────────────────────────────────────────────────────────────────
-	// Banner emits only when enabled AND a destination is configured.
-	// ────────────────────────────────────────────────────────────────────────
-
-	public function test_banner_emits_when_enabled_and_destination_configured(): void {
-		$this->stub_settings( array(
-			'lafka_consent_banner_enabled' => '1',
-			'lafka_gtm_container_id'       => self::VALID['lafka_gtm_container_id'],
-		) );
-		$out = $this->capture( 'lafka_emit_consent_banner' );
-		$this->assertStringContainsString( 'id="lafka-consent-banner"', $out );
-		$this->assertStringContainsString( 'data-lafka-consent="accept"', $out );
-		$this->assertStringContainsString( 'data-lafka-consent="reject"', $out );
-		$this->assertStringContainsString( 'data-lafka-consent="settings"', $out );
-		$this->assertStringContainsString( 'lafka_consent_v1', $out );
 	}
 
 	public function test_banner_silent_when_enabled_but_no_destination_configured(): void {

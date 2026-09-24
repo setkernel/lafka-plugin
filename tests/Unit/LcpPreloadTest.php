@@ -1,4 +1,13 @@
 <?php
+/**
+ * Homepage LCP hero: preload URL + fetchpriority. Both hooks are closures
+ * registered at include time (unreachable while add_action/add_filter are
+ * no-ops under the harness), so this reads the comment-free source until they
+ * become named functions.
+ *
+ * @package Lafka\Plugin\Tests\Unit
+ */
+
 declare(strict_types=1);
 
 namespace LafkaPlugin\Tests\Unit;
@@ -6,48 +15,20 @@ namespace LafkaPlugin\Tests\Unit;
 use PHPUnit\Framework\TestCase;
 
 final class LcpPreloadTest extends TestCase {
-	private string $src;
 
-	protected function setUp(): void {
-		parent::setUp();
-		$this->src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/perf/lcp-preload.php' );
-	}
+	public function test_both_hero_hooks_read_the_canonical_hero_setting_on_the_front_page_only(): void {
+		$code = '';
+		foreach ( token_get_all( (string) file_get_contents( dirname( __DIR__, 2 ) . '/incl/perf/lcp-preload.php' ) ) as $t ) {
+			if ( ! is_array( $t ) || ! in_array( $t[0], array( T_COMMENT, T_DOC_COMMENT ), true ) ) {
+				$code .= is_array( $t ) ? $t[1] : $t;
+			}
+		}
 
-	public function test_module_file_exists(): void {
-		$this->assertFileExists( dirname( __DIR__, 2 ) . '/incl/perf/lcp-preload.php' );
-	}
-
-	public function test_lcp_image_url_filter_registered(): void {
-		$this->assertMatchesRegularExpression(
-			"/add_filter\(\s*['\"]lafka_lcp_image_url['\"]/",
-			$this->src
-		);
-	}
-
-	public function test_filter_gated_to_front_page(): void {
-		$this->assertStringContainsString( 'is_front_page()', $this->src );
-	}
-
-	public function test_resolves_attachment_id_via_wp_get_attachment_image_url(): void {
-		$this->assertStringContainsString( 'wp_get_attachment_image_url', $this->src );
-		$this->assertStringContainsString( 'is_numeric', $this->src );
-	}
-
-	public function test_falls_back_to_full_url_for_string_value(): void {
-		$this->assertStringContainsString( 'esc_url_raw', $this->src );
-	}
-
-	public function test_fetchpriority_applied_to_hero_attachment(): void {
-		$this->assertMatchesRegularExpression(
-			"/add_filter\(\s*['\"]wp_get_attachment_image_attributes['\"]/",
-			$this->src
-		);
-		$this->assertStringContainsString( "'fetchpriority'", $this->src );
-		$this->assertStringContainsString( "'high'", $this->src );
-		$this->assertStringContainsString( "'eager'", $this->src );
-	}
-
-	public function test_attachment_id_pulled_from_known_option(): void {
-		$this->assertStringContainsString( 'lafka_homepage_hero_attachment_id', $this->src );
+		// v9.30.x regression: the preload + fetchpriority hooks only read the
+		// legacy keys, so a hero set via lafka_home_hero_image_id got neither.
+		$this->assertSame( 2, substr_count( $code, "get_theme_mod( 'lafka_home_hero_image_id', 0 )" ) );
+		$this->assertSame( 2, substr_count( $code, 'if ( ! is_front_page() ) {' ) );
+		$this->assertStringContainsString( "\$attr['fetchpriority'] = 'high';", $code );
+		$this->assertStringContainsString( "\$attr['loading']       = 'eager';", $code );
 	}
 }

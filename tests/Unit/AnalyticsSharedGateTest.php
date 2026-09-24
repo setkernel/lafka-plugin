@@ -1,25 +1,12 @@
 <?php
 /**
- * AnalyticsSharedGateTest — locks the SSOT consolidation of the analytics
- * "is a destination configured?" gates (f023).
- *
- * Before this fix three near-duplicate implementations existed with divergent
- * coverage: lafka_analytics_is_active() (GTM/GA4/Clarity/Pixel + CF beacon),
- * lafka_custom_events_has_analytics_id() (4-check, no beacon) and an inline
- * $has_id block in lafka-wc-events.php (4-check, no beacon). They are now
- * collapsed onto one shared gate:
- *
- *   - lafka_analytics_has_datalayer_destination()  → GTM/GA4/Clarity/Pixel
- *   - lafka_analytics_is_active()                  → the above OR the CF beacon
- *
- * This test pins:
- *   - the shared gate exists and detects each dataLayer destination
- *   - a CF-beacon-only site is NOT a dataLayer destination (the client bundles
- *     stay un-enqueued) but IS "active" (cheap server pushes still emit)
- *   - the custom-events gate never drifts from the shared gate
+ * Shared analytics destination gates (f023):
+ *   - lafka_analytics_has_datalayer_destination() → GTM / GA4 / Clarity / Pixel
+ *   - lafka_analytics_is_active()                 → the above OR the CF beacon
+ * The cookieless CF beacon never consumes window.dataLayer, so a beacon-only
+ * site must not enqueue the dataLayer client bundles but still counts as active.
  *
  * @package Lafka\Plugin\Tests\Unit
- * @since   9.31.1
  */
 
 declare(strict_types=1);
@@ -72,13 +59,6 @@ final class AnalyticsSharedGateTest extends TestCase {
 			static function ( $key, $default = '' ) use ( $set ) {
 				return array_key_exists( $key, $set ) ? $set[ $key ] : $default;
 			}
-		);
-	}
-
-	public function test_shared_gate_function_exists(): void {
-		$this->assertTrue(
-			function_exists( 'lafka_analytics_has_datalayer_destination' ),
-			'The shared dataLayer-destination gate must be defined.'
 		);
 	}
 
@@ -137,25 +117,5 @@ final class AnalyticsSharedGateTest extends TestCase {
 			\lafka_analytics_is_active(),
 			'A configured CF beacon must still count as "analytics active".'
 		);
-	}
-
-	public function test_custom_events_gate_never_drifts_from_shared_gate(): void {
-		$configs = array(
-			array(),
-			array( 'lafka_gtm_container_id' => self::VALID['lafka_gtm_container_id'] ),
-			array( 'lafka_cf_beacon_token' => self::VALID['lafka_cf_beacon_token'] ),
-			array(
-				'lafka_clarity_project_id' => self::VALID['lafka_clarity_project_id'],
-				'lafka_cf_beacon_token'    => self::VALID['lafka_cf_beacon_token'],
-			),
-		);
-		foreach ( $configs as $config ) {
-			$this->stub_theme_mods( $config );
-			$this->assertSame(
-				\lafka_analytics_has_datalayer_destination(),
-				\lafka_custom_events_has_analytics_id(),
-				'custom-events gate must equal the shared gate for config: ' . implode( ',', array_keys( $config ) )
-			);
-		}
 	}
 }

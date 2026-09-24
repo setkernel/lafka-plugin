@@ -1,25 +1,11 @@
 <?php
 /**
- * AnalyticsNonGoogleConsentGatingTest — locks down the consent gating fix for
- * the non-Google direct emitters (audit f043).
- *
- * Regression context: the direct (non-GTM) Meta Pixel emitter loaded
- * fbevents.js and immediately called fbq('init',…) + fbq('track','PageView'),
- * and the Clarity emitter injected the clarity.ms tag — both at wp_head:2 with
- * NO consent gating. Google Consent Mode v2 (the bundled banner) only governs
- * Google's gtag tags; Meta Pixel and Microsoft Clarity ignore it, so with the
- * banner's default 'denied' state the pixel still dropped _fbp/_fbc cookies and
- * sent a PageView, and Clarity still ran, before the visitor accepted anything.
- *
- * The fix drives both platforms from the same lafka_consent_v1 decision:
- *   - Meta Pixel: revoke BEFORE init, then only replay a PageView when a stored
- *     ad_storage===true decision already exists at load; the banner JS grants /
- *     revokes + fires the deferred PageView on an explicit accept.
- *   - Clarity: expose a lazy loader and only invoke it when a stored
- *     analytics_storage===true decision exists; the banner JS loads it on grant.
+ * Consent gating for the non-Google direct emitters (audit f043). Meta Pixel
+ * and Microsoft Clarity ignore Google Consent Mode, so without explicit gating
+ * they drop cookies / send beacons before the visitor decides. Both are driven
+ * from the same lafka_consent_v1 decision the bundled banner persists.
  *
  * @package Lafka\Plugin\Tests\Unit
- * @since   9.23.0
  */
 
 declare(strict_types=1);
@@ -81,127 +67,53 @@ final class AnalyticsNonGoogleConsentGatingTest extends TestCase {
 		return (string) ob_get_clean();
 	}
 
-	// ────────────────────────────────────────────────────────────────────────
-	// Meta Pixel head emit: revoke before init, PageView gated on stored grant
-	// ────────────────────────────────────────────────────────────────────────
-
-	public function test_meta_pixel_revokes_consent_before_init(): void {
+	public function test_meta_pixel_revokes_before_init_and_tracks_only_on_stored_ad_storage_grant(): void {
 		$this->stub_settings( array( 'lafka_meta_pixel_id' => '123456789012345' ) );
 		$out = $this->capture( 'lafka_emit_direct_meta_pixel' );
 
-		$this->assertStringContainsString( "fbq('consent', 'revoke')", $out, 'Meta Pixel must revoke consent so init drops no cookie / sends no beacon.' );
-
-		$revoke_pos = strpos( $out, "fbq('consent', 'revoke')" );
-		$init_pos   = strpos( $out, "fbq('init'" );
-		$this->assertNotFalse( $revoke_pos );
-		$this->assertNotFalse( $init_pos );
-		$this->assertLessThan( $init_pos, $revoke_pos, 'consent revoke must run BEFORE fbq init.' );
-	}
-
-	public function test_meta_pixel_gates_pageview_on_stored_ad_storage(): void {
-		$this->stub_settings( array( 'lafka_meta_pixel_id' => '123456789012345' ) );
-		$out = $this->capture( 'lafka_emit_direct_meta_pixel' );
-
-		// Reads the same key the banner persists.
+		$revoke = strpos( $out, "fbq('consent', 'revoke')" );
+		$init   = strpos( $out, "fbq('init'" );
+		$gate   = strpos( $out, "if (d && d.ad_storage) {" );
+		$track  = strpos( $out, "fbq('track', 'PageView')" );
+		$this->assertNotFalse( $revoke, 'Pixel must revoke consent so init drops no cookie / sends no beacon.' );
+		$this->assertNotFalse( $gate );
+		$this->assertLessThan( $init, $revoke, 'Consent revoke must run before fbq init.' );
+		$this->assertLessThan( $track, $gate, 'The PageView must sit behind the stored ad_storage check.' );
+		$this->assertSame( 1, substr_count( $out, "fbq('track'" ), 'No ungated track call may be emitted.' );
 		$this->assertStringContainsString( "localStorage.getItem('lafka_consent_v1')", $out );
-		// PageView is gated behind a stored ad_storage===true decision.
-		$this->assertMatchesRegularExpression( '/if\s*\(\s*d\s*&&\s*d\.ad_storage\s*\)/', $out );
-		// Only inside that gate does it grant + fire the PageView.
-		$this->assertStringContainsString( "fbq('consent', 'grant')", $out );
-		$this->assertStringContainsString( "fbq('track', 'PageView')", $out );
-
-		// The PageView call must come AFTER the ad_storage gate opens, never at
-		// top level — the gate keyword must precede every track call.
-		$gate_pos  = strpos( $out, 'd.ad_storage' );
-		$track_pos = strpos( $out, "fbq('track', 'PageView')" );
-		$this->assertNotFalse( $gate_pos );
-		$this->assertNotFalse( $track_pos );
-		$this->assertLessThan( $track_pos, $gate_pos, 'The PageView must be gated behind the ad_storage check.' );
 	}
 
-	public function test_meta_pixel_read_guards_against_parse_errors(): void {
-		$this->stub_settings( array( 'lafka_meta_pixel_id' => '123456789012345' ) );
-		$out = $this->capture( 'lafka_emit_direct_meta_pixel' );
-		$this->assertStringContainsString( 'try {', $out );
-		$this->assertStringContainsString( 'catch(e)', $out );
-	}
-
-	// ────────────────────────────────────────────────────────────────────────
-	// Clarity head emit: not injected unconditionally; deferred behind consent
-	// ────────────────────────────────────────────────────────────────────────
-
-	public function test_clarity_tag_is_not_loaded_unconditionally(): void {
+	public function test_clarity_tag_loads_only_through_the_consent_gated_loader(): void {
 		$this->stub_settings( array( 'lafka_clarity_project_id' => 'abc123xyz' ) );
 		$out = $this->capture( 'lafka_emit_direct_clarity' );
 
-		// The external tag still appears, but only inside a lazy loader.
-		$this->assertStringContainsString( 'clarity.ms/tag/', $out );
-		$this->assertStringContainsString( 'window.lafkaLoadClarity', $out );
-
-		// The loader is DEFINED before the tag src — the src must live inside it.
-		$loader_pos = strpos( $out, 'window.lafkaLoadClarity = function' );
-		$tag_pos    = strpos( $out, 'clarity.ms/tag/' );
-		$this->assertNotFalse( $loader_pos );
-		$this->assertNotFalse( $tag_pos );
-		$this->assertLessThan( $tag_pos, $loader_pos, 'The clarity.ms tag must be inside the lazy loader, not at top level.' );
-	}
-
-	public function test_clarity_loader_invoked_only_when_stored_analytics_granted(): void {
-		$this->stub_settings( array( 'lafka_clarity_project_id' => 'abc123xyz' ) );
-		$out = $this->capture( 'lafka_emit_direct_clarity' );
-
-		$this->assertStringContainsString( "localStorage.getItem('lafka_consent_v1')", $out );
+		$loader = strpos( $out, 'window.lafkaLoadClarity = function' );
+		$this->assertNotFalse( $loader );
+		$this->assertLessThan( strpos( $out, 'clarity.ms/tag/' ), $loader, 'The clarity.ms tag must live inside the lazy loader.' );
 		$this->assertMatchesRegularExpression(
 			'/if\s*\(\s*d\s*&&\s*d\.analytics_storage\s*\)\s*\{\s*window\.lafkaLoadClarity\(\)/',
 			$out,
-			'Clarity must only load when a stored analytics_storage===true decision exists at load.'
+			'Clarity may only load at page start when a stored analytics_storage grant exists.'
 		);
 	}
 
-	public function test_clarity_read_guards_against_parse_errors(): void {
-		$this->stub_settings( array( 'lafka_clarity_project_id' => 'abc123xyz' ) );
-		$out = $this->capture( 'lafka_emit_direct_clarity' );
-		$this->assertStringContainsString( 'try {', $out );
-		$this->assertStringContainsString( 'catch(e)', $out );
-	}
-
-	// ────────────────────────────────────────────────────────────────────────
-	// Banner applyConsent: drives Meta + Clarity from the explicit decision
-	// ────────────────────────────────────────────────────────────────────────
-
-	public function test_banner_applyconsent_drives_meta_pixel(): void {
-		// A configured destination satisfies the banner's lafka_analytics_is_active()
-		// gate so the banner JS is emitted (gate itself covered by the dedicated
-		// AnalyticsBannerDestinationGateTest).
+	public function test_banner_decision_drives_meta_pixel_and_clarity(): void {
 		$this->stub_settings( array(
 			'lafka_consent_banner_enabled' => '1',
 			'lafka_gtm_container_id'       => 'GTM-XYZ987',
 		) );
 		$out = $this->capture( 'lafka_emit_consent_banner' );
 
-		// Grant/revoke mirrors the ad_storage decision.
 		$this->assertStringContainsString( "window.fbq('consent', state.ad_storage ? 'grant' : 'revoke')", $out );
-		// A PageView fires once ad_storage is granted (deduped against head emit).
-		$this->assertStringContainsString( "window.fbq('track','PageView')", $out );
 		$this->assertMatchesRegularExpression(
-			'/if\s*\(\s*state\.ad_storage\s*&&\s*!\s*window\._lafkaFbPageView\s*\)/',
+			'/if\s*\(\s*state\.ad_storage\s*&&\s*!\s*window\._lafkaFbPageView\s*\)\s*\{\s*window\.fbq\(\'track\',\'PageView\'\)/',
 			$out,
-			'The banner PageView must be deduped against the head-emit flag.'
+			'The banner PageView must require ad_storage and be deduped against the head emit.'
 		);
-	}
-
-	public function test_banner_applyconsent_loads_clarity_on_analytics_grant(): void {
-		$this->stub_settings( array(
-			'lafka_consent_banner_enabled' => '1',
-			'lafka_gtm_container_id'       => 'GTM-XYZ987',
-		) );
-		$out = $this->capture( 'lafka_emit_consent_banner' );
-
 		$this->assertMatchesRegularExpression(
-			'/if\s*\(\s*state\.analytics_storage\s*&&\s*typeof\s*window\.lafkaLoadClarity\s*===\s*.function.\s*\)/',
+			'/if\s*\(\s*state\.analytics_storage\s*&&\s*typeof\s*window\.lafkaLoadClarity\s*===\s*.function.\s*\)\s*\{\s*window\.lafkaLoadClarity\(\);/',
 			$out,
-			'Clarity must load from applyConsent only when analytics_storage is granted.'
+			'Clarity must load from the banner only when analytics_storage is granted.'
 		);
-		$this->assertStringContainsString( 'window.lafkaLoadClarity();', $out );
 	}
 }

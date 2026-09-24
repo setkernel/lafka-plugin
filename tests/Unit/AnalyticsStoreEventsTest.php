@@ -1,53 +1,76 @@
 <?php
+/**
+ * Store-events client JS is enqueued only when an analytics destination is
+ * configured (including a CF-beacon-only site), so unconfigured installs pay
+ * no request cost.
+ *
+ * @package Lafka\Plugin\Tests\Unit
+ */
+
 declare(strict_types=1);
 
 namespace LafkaPlugin\Tests\Unit;
 
+use Brain\Monkey;
+use Brain\Monkey\Functions;
 use PHPUnit\Framework\TestCase;
 
-/**
- * Tracking foundation: store-specific events (enqueue + JS contracts).
- */
+require_once dirname( __DIR__, 2 ) . '/incl/analytics/lafka-analytics-emitter.php';
+require_once dirname( __DIR__, 2 ) . '/incl/analytics/lafka-wc-events.php';
+require_once dirname( __DIR__, 2 ) . '/incl/analytics/lafka-cf-analytics.php';
+require_once dirname( __DIR__, 2 ) . '/incl/analytics/lafka-page-context.php';
+require_once dirname( __DIR__, 2 ) . '/incl/analytics/lafka-store-events.php';
+
 final class AnalyticsStoreEventsTest extends TestCase {
 
-	private string $php;
-	private string $js;
+	/** @var list<string> */
+	private array $enqueued = array();
 
 	protected function setUp(): void {
-		$root      = dirname( __DIR__, 2 );
-		$this->php = file_get_contents( $root . '/incl/analytics/lafka-store-events.php' );
-		$this->js  = file_get_contents( $root . '/assets/js/lafka-store-events.js' );
-	}
-
-	public function test_enqueue_gated_on_analytics_active(): void {
-		$this->assertMatchesRegularExpression(
-			"/add_action\(\s*'wp_enqueue_scripts',\s*'lafka_analytics_enqueue_store_events'/",
-			$this->php
+		parent::setUp();
+		Monkey\setUp();
+		$this->enqueued = array();
+		Functions\when( 'is_admin' )->justReturn( false );
+		Functions\when( 'get_theme_mod' )->returnArg( 2 );
+		Functions\when( 'plugins_url' )->returnArg();
+		Functions\when( 'lafka_plugin_asset_version' )->justReturn( '1' );
+		Functions\when( 'wp_enqueue_script' )->alias(
+			function ( $handle ) {
+				$this->enqueued[] = $handle;
+			}
 		);
-		$this->assertStringContainsString( 'lafka_analytics_is_active', $this->php );
-		$this->assertStringContainsString( "wp_enqueue_script(\n\t\t\t'lafka-store-events'", $this->php );
 	}
 
-	public function test_js_emits_the_store_events(): void {
-		foreach ( array( 'order_channel_click', 'select_fulfilment', 'select_addon', 'store_closed_view' ) as $ev ) {
-			$this->assertStringContainsString( "event: '$ev'", $this->js, "store-events.js must push $ev." );
-		}
+	protected function tearDown(): void {
+		Monkey\tearDown();
+		parent::tearDown();
 	}
 
-	public function test_js_binds_the_data_attr_contracts(): void {
-		foreach ( array(
-			'[data-lafka-order-channel]',
-			'[data-lafka-fulfilment]',
-			'.product-addon',
-			'.lafka-store-closed-card',
-		) as $sel ) {
-			$this->assertStringContainsString( $sel, $this->js, "store-events.js must bind $sel." );
-		}
+	private function configure( string $key, string $value ): void {
+		Functions\when( 'get_theme_mod' )->alias(
+			static fn( $k, $default = '' ) => $k === $key ? $value : $default
+		);
 	}
 
-	public function test_order_channel_contract_documented(): void {
-		$doc = file_get_contents( dirname( __DIR__, 2 ) . '/docs/TRACKING.md' );
-		$this->assertStringContainsString( 'data-lafka-order-channel', $doc,
-			'The order_channel data-attr contract must be documented for the conversion workstream.' );
+	public function test_not_enqueued_without_a_destination(): void {
+		lafka_analytics_enqueue_store_events();
+		$this->assertSame( array(), $this->enqueued );
+	}
+
+	public function test_enqueued_for_a_datalayer_destination_or_cf_beacon(): void {
+		$this->configure( 'lafka_gtm_container_id', 'GTM-XYZ987' );
+		lafka_analytics_enqueue_store_events();
+
+		$this->configure( 'lafka_cf_beacon_token', 'abcdef0123456789abcdef0123456789' );
+		lafka_analytics_enqueue_store_events();
+
+		$this->assertSame( array( 'lafka-store-events', 'lafka-store-events' ), $this->enqueued );
+	}
+
+	public function test_not_enqueued_in_admin(): void {
+		$this->configure( 'lafka_gtm_container_id', 'GTM-XYZ987' );
+		Functions\when( 'is_admin' )->justReturn( true );
+		lafka_analytics_enqueue_store_events();
+		$this->assertSame( array(), $this->enqueued );
 	}
 }

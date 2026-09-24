@@ -51,4 +51,11 @@ final class JsonLdSeoPluginYieldTest extends TestCase {
 
 		$this->assertSame( array(), lafka_schema_suppress_wc_native_product( self::WC_PRODUCT ) );
 	}
+
+	public function test_operators_can_keep_wc_product_schema_alongside_lafka(): void {
+		Functions\when( 'lafka_seo_plugin_active' )->justReturn( false );
+		Monkey\Filters\expectApplied( 'lafka_schema_keep_wc_native_product' )->andReturn( true );
+
+		$this->assertSame( self::WC_PRODUCT, lafka_schema_suppress_wc_native_product( self::WC_PRODUCT ) );
+	}
 }

@@ -1,48 +1,80 @@
 <?php
+/**
+ * Cloudflare Web Analytics beacon: emitted only for a valid operator token
+ * (keeps the OSS plugin account-free), and — being cookieless — independent
+ * of the consent defaults that gate GTM / GA4.
+ *
+ * @package Lafka\Plugin\Tests\Unit
+ */
+
 declare(strict_types=1);
 
 namespace LafkaPlugin\Tests\Unit;
 
+use Brain\Monkey;
+use Brain\Monkey\Functions;
 use PHPUnit\Framework\TestCase;
 
-/**
- * Tracking foundation: Cloudflare Web Analytics beacon.
- */
+require_once dirname( __DIR__, 2 ) . '/incl/analytics/lafka-cf-analytics.php';
+
 final class AnalyticsCfAnalyticsTest extends TestCase {
 
-	private string $src;
+	private const TOKEN = 'abcdef0123456789abcdef0123456789';
 
 	protected function setUp(): void {
-		$this->src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/analytics/lafka-cf-analytics.php' );
+		parent::setUp();
+		Monkey\setUp();
+		Functions\when( 'is_admin' )->justReturn( false );
+		Functions\when( 'wp_json_encode' )->alias( static fn( $v ) => json_encode( $v ) );
+		Functions\when( 'esc_attr' )->alias( static fn( $v ) => htmlspecialchars( (string) $v, ENT_QUOTES ) );
 	}
 
-	public function test_token_accessor_validates_32_hex(): void {
-		$this->assertStringContainsString( 'function lafka_analytics_cf_beacon_token', $this->src );
-		$this->assertMatchesRegularExpression( "/\\^\[a-f0-9\]\{32\}\\\$/", $this->src,
-			'CF token must validate against 32 lowercase hex chars.' );
-		$this->assertStringContainsString( "get_theme_mod( 'lafka_cf_beacon_token'", $this->src );
+	protected function tearDown(): void {
+		Monkey\tearDown();
+		parent::tearDown();
 	}
 
-	public function test_emits_on_wp_footer_when_token_set(): void {
-		$this->assertMatchesRegularExpression(
-			"/add_action\(\s*'wp_footer',\s*'lafka_analytics_emit_cf_beacon'/",
-			$this->src
+	private function stub_theme_mods( array $mods ): void {
+		Functions\when( 'get_theme_mod' )->alias(
+			static fn( $key, $default = '' ) => array_key_exists( $key, $mods ) ? $mods[ $key ] : $default
 		);
-		$this->assertStringContainsString( 'static.cloudflareinsights.com/beacon.min.js', $this->src );
-		$this->assertStringContainsString( 'data-cf-beacon', $this->src );
 	}
 
-	public function test_no_op_when_token_empty(): void {
-		// Must bail when token resolves to '' (keeps OSS plugin account-free).
-		$this->assertMatchesRegularExpression( "/if\s*\(\s*''\s*===\s*\\\$token\s*\)\s*\{\s*return;/", $this->src );
+	private function emit(): string {
+		ob_start();
+		lafka_analytics_emit_cf_beacon();
+		return (string) ob_get_clean();
 	}
 
-	public function test_beacon_is_cookieless_not_consent_gated(): void {
-		// The CF beacon is privacy-first/cookieless, so it must NOT call the
-		// consent-state accessor or be gated on Consent Mode the way GTM/GA4 are.
-		// (The word "consent" may appear in comments explaining this.)
-		$this->assertStringNotContainsString( 'lafka_analytics_consent', $this->src,
-			'CF beacon must not gate on Consent Mode (it is cookieless).' );
-		$this->assertStringNotContainsString( "wp_script_is( 'gtm", $this->src );
+	public function test_token_must_be_32_hex_chars(): void {
+		$this->stub_theme_mods( array( 'lafka_cf_beacon_token' => '  ' . strtoupper( self::TOKEN ) . ' ' ) );
+		$this->assertSame( self::TOKEN, lafka_analytics_cf_beacon_token() );
+
+		foreach ( array( '', 'abc', self::TOKEN . '0', 'zzzzzz0123456789abcdef0123456789', "x'><script>" ) as $bad ) {
+			$this->stub_theme_mods( array( 'lafka_cf_beacon_token' => $bad ) );
+			$this->assertSame( '', lafka_analytics_cf_beacon_token(), "Rejected token: {$bad}" );
+		}
+	}
+
+	public function test_beacon_emits_with_token_even_under_denied_consent_defaults(): void {
+		$this->stub_theme_mods(
+			array(
+				'lafka_cf_beacon_token'           => self::TOKEN,
+				'lafka_consent_default_analytics' => 'denied',
+			)
+		);
+		$this->assertSame(
+			'<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon=\'{&quot;token&quot;:&quot;' . self::TOKEN . '&quot;}\'></script>' . "\n",
+			$this->emit()
+		);
+	}
+
+	public function test_beacon_is_silent_without_token_and_in_admin(): void {
+		$this->stub_theme_mods( array() );
+		$this->assertSame( '', $this->emit() );
+
+		$this->stub_theme_mods( array( 'lafka_cf_beacon_token' => self::TOKEN ) );
+		Functions\when( 'is_admin' )->justReturn( true );
+		$this->assertSame( '', $this->emit() );
 	}
 }

@@ -1,64 +1,89 @@
 <?php
+/**
+ * CLS guard: <img> tags missing width/height get them from the attachment
+ * record, else from the local file (cached); remote images are never read.
+ *
+ * @package Lafka\Plugin\Tests\Unit
+ */
+
 declare(strict_types=1);
 
 namespace LafkaPlugin\Tests\Unit;
 
+use Brain\Monkey;
+use Brain\Monkey\Functions;
 use PHPUnit\Framework\TestCase;
 
 final class ImageDimensionsTest extends TestCase {
-	private string $src;
+
+	private string $uploads;
 
 	protected function setUp(): void {
 		parent::setUp();
-		$this->src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/perf/image-dimensions.php' );
-	}
-
-	public function test_module_file_exists(): void {
-		$this->assertFileExists( dirname( __DIR__, 2 ) . '/incl/perf/image-dimensions.php' );
-	}
-
-	public function test_function_lafka_inject_image_dimensions_defined(): void {
-		$this->assertStringContainsString( 'function lafka_inject_image_dimensions', $this->src );
-	}
-
-	public function test_function_lafka_url_to_local_path_defined(): void {
-		$this->assertStringContainsString( 'function lafka_url_to_local_path', $this->src );
-	}
-
-	public function test_three_filters_registered(): void {
-		$this->assertMatchesRegularExpression(
-			"/add_filter\(\s*['\"]the_content['\"]\s*,\s*['\"]lafka_inject_image_dimensions['\"]/",
-			$this->src
+		Monkey\setUp();
+		if ( ! defined( 'DAY_IN_SECONDS' ) ) {
+			define( 'DAY_IN_SECONDS', 86400 );
+		}
+		$this->uploads = sys_get_temp_dir() . '/lafka-imgdims-' . getmypid();
+		Functions\when( 'attachment_url_to_postid' )->justReturn( 0 );
+		Functions\when( 'wp_get_attachment_metadata' )->justReturn( false );
+		Functions\when( 'get_transient' )->justReturn( false );
+		Functions\when( 'set_transient' )->justReturn( true );
+		Functions\when( 'wp_get_upload_dir' )->justReturn(
+			array(
+				'baseurl' => 'https://example.test/wp-content/uploads',
+				'basedir' => $this->uploads,
+			)
 		);
-		$this->assertMatchesRegularExpression(
-			"/add_filter\(\s*['\"]post_thumbnail_html['\"]\s*,\s*['\"]lafka_inject_image_dimensions['\"]/",
-			$this->src
+		Functions\when( 'content_url' )->justReturn( 'https://example.test/wp-content' );
+		require_once dirname( __DIR__, 2 ) . '/incl/perf/image-dimensions.php';
+	}
+
+	protected function tearDown(): void {
+		if ( is_dir( $this->uploads ) ) {
+			array_map( 'unlink', glob( $this->uploads . '/*' ) ?: array() );
+			rmdir( $this->uploads );
+		}
+		Monkey\tearDown();
+		parent::tearDown();
+	}
+
+	public function test_dimensions_come_from_the_attachment_record(): void {
+		Functions\when( 'wp_get_attachment_metadata' )->alias(
+			static fn( $id ) => 55 === $id ? array( 'width' => 800, 'height' => 600 ) : false
 		);
-		$this->assertMatchesRegularExpression(
-			"/add_filter\(\s*['\"]widget_text['\"]\s*,\s*['\"]lafka_inject_image_dimensions['\"]/",
-			$this->src
+		$html = '<p><img class="wp-image-55" src="https://example.test/wp-content/uploads/a.jpg" alt=""></p>';
+
+		$this->assertSame(
+			'<p><img class="wp-image-55" src="https://example.test/wp-content/uploads/a.jpg" alt="" width="800" height="600"></p>',
+			lafka_inject_image_dimensions( $html )
 		);
 	}
 
-	public function test_uses_attachment_lookup_before_getimagesize(): void {
-		// Pure-WP lookup must be tried first (no I/O); getimagesize is the
-		// fallback. Ordering matters for perf.
-		$attachment_pos = strpos( $this->src, 'wp_get_attachment_metadata' );
-		$getimagesize_pos = strpos( $this->src, 'getimagesize' );
-		$this->assertNotFalse( $attachment_pos );
-		$this->assertNotFalse( $getimagesize_pos );
-		$this->assertLessThan( $getimagesize_pos, $attachment_pos );
+	public function test_local_file_is_measured_once_and_cached(): void {
+		mkdir( $this->uploads );
+		// 3x2 PNG.
+		file_put_contents( $this->uploads . '/b.png', base64_decode( 'iVBORw0KGgoAAAANSUhEUgAAAAMAAAACCAIAAAASFvFNAAAAEklEQVR4nGP4z8DAwMDAwMAAAB7wAv8gHkNtAAAAAElFTkSuQmCC' ) );
+		$cached = array();
+		Functions\when( 'set_transient' )->alias(
+			static function ( $key, $value ) use ( &$cached ) {
+				$cached[ $key ] = $value;
+				return true;
+			}
+		);
+
+		$out = lafka_inject_image_dimensions( '<img src="https://example.test/wp-content/uploads/b.png">' );
+
+		$this->assertSame( '<img src="https://example.test/wp-content/uploads/b.png" width="3" height="2">', $out );
+		$this->assertSame( array( 'lafka_imgdims_' . md5( 'https://example.test/wp-content/uploads/b.png' ) => array( 3, 2 ) ), $cached );
 	}
 
-	public function test_getimagesize_results_cached_in_transient(): void {
-		$this->assertStringContainsString( 'set_transient', $this->src );
-		$this->assertStringContainsString( 'lafka_imgdims_', $this->src );
-	}
+	public function test_images_that_already_have_dimensions_or_are_remote_are_left_alone(): void {
+		$sized  = '<img src="https://example.test/wp-content/uploads/c.jpg" width="10" height="10">';
+		$remote = '<img src="https://cdn.other.test/d.jpg">';
 
-	public function test_url_to_local_path_only_resolves_local_urls(): void {
-		// Must never attempt to fetch remote URLs — only resolve URLs that
-		// match the upload dir or content_url prefix.
-		$this->assertStringContainsString( 'wp_get_upload_dir', $this->src );
-		$this->assertStringContainsString( 'content_url', $this->src );
+		$this->assertSame( $sized . $remote, lafka_inject_image_dimensions( $sized . $remote ) );
+		$this->assertNull( lafka_url_to_local_path( 'https://cdn.other.test/d.jpg' ) );
+		$this->assertSame( $this->uploads . '/2026/e.jpg', lafka_url_to_local_path( 'https://example.test/wp-content/uploads/2026/e.jpg' ) );
 	}
 }

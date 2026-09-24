@@ -1,43 +1,71 @@
 <?php
+/**
+ * Microsoft Clarity custom-tags client: enqueued when Clarity is configured
+ * directly, or when a GTM-loaded Clarity opts in via lafka_enable_clarity_tags.
+ *
+ * @package Lafka\Plugin\Tests\Unit
+ */
+
 declare(strict_types=1);
 
 namespace LafkaPlugin\Tests\Unit;
 
+use Brain\Monkey;
+use Brain\Monkey\Functions;
 use PHPUnit\Framework\TestCase;
 
-/**
- * Tracking foundation: Microsoft Clarity custom tags.
- */
+require_once dirname( __DIR__, 2 ) . '/incl/analytics/lafka-analytics-emitter.php';
+require_once dirname( __DIR__, 2 ) . '/incl/analytics/lafka-clarity-tags.php';
+
 final class AnalyticsClarityTagsTest extends TestCase {
 
-	private string $php;
-	private string $js;
+	/** @var list<string> */
+	private array $enqueued = array();
 
 	protected function setUp(): void {
-		$root      = dirname( __DIR__, 2 );
-		$this->php = file_get_contents( $root . '/incl/analytics/lafka-clarity-tags.php' );
-		$this->js  = file_get_contents( $root . '/assets/js/lafka-clarity-tags.js' );
-	}
-
-	public function test_enqueue_gated_on_clarity_or_filter(): void {
-		$this->assertStringContainsString( 'lafka_analytics_clarity_id', $this->php );
-		$this->assertStringContainsString( "apply_filters( 'lafka_enable_clarity_tags'", $this->php );
-		$this->assertMatchesRegularExpression(
-			"/add_action\(\s*'wp_enqueue_scripts',\s*'lafka_analytics_enqueue_clarity_tags'/",
-			$this->php
+		parent::setUp();
+		Monkey\setUp();
+		$this->enqueued = array();
+		Functions\when( 'is_admin' )->justReturn( false );
+		Functions\when( 'get_theme_mod' )->returnArg( 2 );
+		Functions\when( 'apply_filters' )->returnArg( 2 );
+		Functions\when( 'plugins_url' )->returnArg();
+		Functions\when( 'lafka_plugin_asset_version' )->justReturn( '1' );
+		Functions\when( 'wp_enqueue_script' )->alias(
+			function ( $handle ) {
+				$this->enqueued[] = $handle;
+			}
 		);
 	}
 
-	public function test_js_sets_tags_and_is_safe_without_clarity(): void {
-		$this->assertStringContainsString( "window.clarity('set'", $this->js );
-		$this->assertStringContainsString( "typeof window.clarity === 'function'", $this->js );
-		// must not break GTM: it wraps dataLayer.push but still calls the original.
-		$this->assertStringContainsString( 'origPush.apply', $this->js );
+	protected function tearDown(): void {
+		Monkey\tearDown();
+		parent::tearDown();
 	}
 
-	public function test_js_maps_page_context_and_funnel(): void {
-		$this->assertStringContainsString( "'page_context'", $this->js );
-		$this->assertStringContainsString( 'funnel_step', $this->js );
-		$this->assertStringContainsString( "'identify'", $this->js );
+	public function test_not_enqueued_without_clarity(): void {
+		lafka_analytics_enqueue_clarity_tags();
+		$this->assertSame( array(), $this->enqueued );
+	}
+
+	public function test_enqueued_when_clarity_is_configured_directly(): void {
+		Functions\when( 'get_theme_mod' )->alias(
+			static fn( $key, $default = '' ) => 'lafka_clarity_project_id' === $key ? 'abc123xyz' : $default
+		);
+		lafka_analytics_enqueue_clarity_tags();
+		$this->assertSame( array( 'lafka-clarity-tags' ), $this->enqueued );
+	}
+
+	public function test_enqueued_for_gtm_loaded_clarity_via_filter_but_never_in_admin(): void {
+		Functions\when( 'apply_filters' )->alias(
+			static fn( $hook, $value ) => 'lafka_enable_clarity_tags' === $hook ? true : $value
+		);
+		lafka_analytics_enqueue_clarity_tags();
+		$this->assertSame( array( 'lafka-clarity-tags' ), $this->enqueued );
+
+		$this->enqueued = array();
+		Functions\when( 'is_admin' )->justReturn( true );
+		lafka_analytics_enqueue_clarity_tags();
+		$this->assertSame( array(), $this->enqueued );
 	}
 }

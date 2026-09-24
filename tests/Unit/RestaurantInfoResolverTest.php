@@ -8,7 +8,7 @@
  *   3. WooCommerce store option (`woocommerce_store_*` / `woocommerce_default_country`)
  *   4. Sensible default      (or empty for fields that are skipped from schema)
  *
- * v9.7.6 added layer (3) so operators don't have to enter address/phone twice.
+ * plus the WP-core fallbacks and the lafka_restaurant_info filter.
  *
  * @package Lafka\Plugin\Tests\Unit
  */
@@ -154,5 +154,58 @@ final class RestaurantInfoResolverTest extends TestCase {
 		$this->assertStringContainsString( 'Smalltown', $info['address_display'] );
 		$this->assertStringContainsString( 'ON A1B 2C3', $info['address_display'] );
 		$this->assertSame( '123 Main, Smalltown', $info['address_short'] );
+	}
+
+	public function test_customizer_values_feed_the_composites_and_hours(): void {
+		$this->stub_wc_options( array() );
+		$mods = array(
+			'lafka_business_name'       => 'Test Cafe',
+			'lafka_business_street'     => '123 Main St',
+			'lafka_business_city'       => 'Springfield',
+			'lafka_business_region'     => 'IL',
+			'lafka_business_postal'     => '62704',
+			'lafka_business_country'    => 'US',
+			'lafka_business_phone_e164' => '+15551234567',
+			'lafka_business_geo_lat'    => '39.78',
+			'lafka_business_hours_mon'  => '11:00-23:00',
+		);
+		Functions\when( 'get_theme_mod' )->alias( static fn( $key, $default = null ) => $mods[ $key ] ?? $default );
+
+		$info = \lafka_get_restaurant_info();
+
+		$this->assertSame( 'Test Cafe', $info['name'] );
+		$this->assertSame( '+15551234567', $info['phone_e164'] );
+		$this->assertSame( '39.78', $info['geo_lat'] );
+		$this->assertSame( '123 Main St, Springfield', $info['address_short'] );
+		$this->assertStringContainsString( 'IL 62704', $info['address_display'] );
+		$this->assertNotSame( '', $info['directions_url'] );
+		$this->assertSame( array( 'Monday' => '11:00-23:00' ), $info['hours'] );
+		$this->assertCount( 1, $info['opening_hours'] );
+	}
+
+	public function test_name_and_email_fall_back_to_wp_core(): void {
+		$this->stub_wc_options( array() );
+		Functions\when( 'get_bloginfo' )->alias(
+			static fn( $what ) => array( 'name' => 'Generic WP Site', 'admin_email' => 'admin@example.test' )[ $what ] ?? ''
+		);
+
+		$info = \lafka_get_restaurant_info();
+
+		$this->assertSame( 'Generic WP Site', $info['name'] );
+		$this->assertSame( 'admin@example.test', $info['email'] );
+	}
+
+	public function test_lafka_restaurant_info_filter_has_the_last_word(): void {
+		$this->stub_wc_options( array() );
+		Functions\when( 'apply_filters' )->alias(
+			static function ( $hook, $value ) {
+				if ( 'lafka_restaurant_info' === $hook && is_array( $value ) ) {
+					$value['name'] = 'Filter Override';
+				}
+				return $value;
+			}
+		);
+
+		$this->assertSame( 'Filter Override', \lafka_get_restaurant_info()['name'] );
 	}
 }

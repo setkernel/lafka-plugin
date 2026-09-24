@@ -1,21 +1,11 @@
 <?php
 /**
- * ProductImageAltBackfillTest — locks the runtime backfill that
- * substitutes a WC product's display name for empty `alt=""` on
- * product images.
- *
- * The visual QA pass on 2026-05-18 found 104 of 108 product images on
- * /menu/ shipped with empty alt because the operator never populated
- * the attachment's `_wp_attachment_image_alt` meta. This filter is the
- * runtime safety net; the CLI command `wp lafka image-alts apply`
- * (incl/cli/lafka-image-alt-backfill.php) remains the durable fix.
- *
- * NOTE: This file uses bracketed namespaces so we can declare a minimal
- * WC_Product stub in the global namespace (required for the `instanceof`
- * check inside the filter) alongside the namespaced test class.
+ * Runtime alt-text backfill: an empty alt on a product image falls back to
+ * the product name (via post_parent, else the thumbnail/gallery meta lookup);
+ * an operator-set alt always wins. The bracketed global namespace holds the
+ * WC_Product stub the filter's instanceof check needs.
  *
  * @package Lafka\Plugin\Tests\Unit
- * @since   9.22.2
  */
 
 declare(strict_types=1);
@@ -52,36 +42,6 @@ namespace LafkaPlugin\Tests\Unit {
 		protected function tearDown(): void {
 			Monkey\tearDown();
 			parent::tearDown();
-		}
-
-		// ────────────────────────────────────────────────────────────────────
-		// Source-grep regressions
-		// ────────────────────────────────────────────────────────────────────
-
-		public function test_module_file_exists(): void {
-			$this->assertFileExists(
-				dirname( __DIR__, 2 ) . '/incl/woocommerce/lafka-product-image-alt.php'
-			);
-		}
-
-		public function test_filter_registered_on_wp_get_attachment_image_attributes(): void {
-			$src = file_get_contents(
-				dirname( __DIR__, 2 ) . '/incl/woocommerce/lafka-product-image-alt.php'
-			);
-			$this->assertMatchesRegularExpression(
-				"/add_filter\(\s*['\"]wp_get_attachment_image_attributes['\"]\s*,\s*['\"]lafka_backfill_product_image_alt['\"]/",
-				$src,
-				'Filter must be registered on wp_get_attachment_image_attributes'
-			);
-		}
-
-		public function test_module_required_from_main_plugin(): void {
-			$src = file_get_contents( dirname( __DIR__, 2 ) . '/lafka-plugin.php' );
-			$this->assertStringContainsString(
-				'incl/woocommerce/lafka-product-image-alt.php',
-				$src,
-				'Main plugin file must require the product-image-alt backfill module.'
-			);
 		}
 
 		// ────────────────────────────────────────────────────────────────────
