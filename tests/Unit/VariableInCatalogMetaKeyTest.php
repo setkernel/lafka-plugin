@@ -1,32 +1,67 @@
 <?php
+/**
+ * Per-variation "Show in Catalog?" option: saved from the variations form
+ * under the frozen `_lafka_variable_in_catalog` key the theme reads, never
+ * touched by out-of-band variation saves.
+ *
+ * @package Lafka_Plugin
+ */
+
 declare(strict_types=1);
 
 namespace LafkaPlugin\Tests\Unit;
 
+use Brain\Monkey;
+use Brain\Monkey\Functions;
 use PHPUnit\Framework\TestCase;
 
-require_once dirname( __DIR__, 2 ) . '/incl/woocommerce-functions.php';
-
-/**
- * SSOT guard for the per-variation "show in catalog" meta key.
- *
- * The plugin writes this key and the theme reads it across the repo boundary,
- * so the value is a frozen persisted DB key. Renaming it would silently break
- * the theme's in-catalog variation rendering against existing stored meta.
- * This test pins the canonical accessor to that literal so any accidental
- * rename fails loudly in CI instead of in production.
- */
 final class VariableInCatalogMetaKeyTest extends TestCase {
 
-	public function test_accessor_is_defined(): void {
-		self::assertTrue(
-			function_exists( 'lafka_meta_variable_in_catalog' ),
-			'Plugin must expose the SSOT accessor for the catalog-visibility meta key.'
+	/** @var array<int, array{0: int, 1: string, 2: mixed}> */
+	private array $writes = array();
+
+	protected function setUp(): void {
+		parent::setUp();
+		Monkey\setUp();
+		require_once dirname( __DIR__, 2 ) . '/incl/woocommerce-functions.php';
+		$_POST = array();
+		Functions\when( 'update_post_meta' )->alias(
+			function ( $id, $key, $value ) {
+				$this->writes[] = array( $id, $key, $value );
+				return true;
+			}
 		);
 	}
 
-	public function test_accessor_returns_frozen_db_key(): void {
-		// This value is persisted post meta — it must never drift.
-		self::assertSame( '_lafka_variable_in_catalog', lafka_meta_variable_in_catalog() );
+	protected function tearDown(): void {
+		$_POST = array();
+		Monkey\tearDown();
+		parent::tearDown();
+	}
+
+	public function test_ticking_saves_on_under_the_key_the_theme_reads(): void {
+		$_POST = array(
+			'_lafka_variable_in_catalog_field' => array( 0 => '1' ),
+			'_lafka_variable_in_catalog'       => array( 0 => 'on' ),
+		);
+
+		lafka_save_variable_in_catalog_option( 61, 0 );
+
+		$this->assertSame( array( array( 61, '_lafka_variable_in_catalog', true ) ), $this->writes );
+	}
+
+	public function test_unticking_the_only_ticked_variation_saves_off(): void {
+		// No checkbox is posted at all once the last one is unticked.
+		$_POST = array( '_lafka_variable_in_catalog_field' => array( 0 => '1' ) );
+
+		lafka_save_variable_in_catalog_option( 61, 0 );
+
+		$this->assertSame( array( array( 61, '_lafka_variable_in_catalog', false ) ), $this->writes );
+	}
+
+	public function test_out_of_band_variation_saves_leave_the_option_alone(): void {
+		lafka_save_variable_in_catalog_option( 61, 0 );
+
+		$this->assertSame( array(), $this->writes );
 	}
 }

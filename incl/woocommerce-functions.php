@@ -55,6 +55,8 @@ if ( ! function_exists( 'lafka_show_variable_in_catalog_option' ) ) {
 			<input type="checkbox" class="checkbox lafka_variable_in_catalog"
 					name="_lafka_variable_in_catalog[<?php echo esc_attr( $loop ); ?>]" <?php checked( $variation->_lafka_variable_in_catalog, true ); ?> />
 		</label>
+		<?php // An unticked checkbox posts nothing; this marks the field as submitted. ?>
+		<input type="hidden" name="_lafka_variable_in_catalog_field[<?php echo esc_attr( $loop ); ?>]" value="1" />
 		<?php
 	}
 }
@@ -72,20 +74,23 @@ if ( ! function_exists( 'lafka_save_variable_in_catalog_option' ) ) {
 	 * to OFF for that variation. A single bulk price update destroyed all
 	 * catalog visibility flags on every variation it touched.
 	 *
-	 * Fix: only write when the form sent the parent array key, signalling
-	 * the variation-edit form is the actual save context. Out-of-band saves
-	 * leave the existing meta untouched.
+	 * Only write when the variation-options form rendered this variation's
+	 * field (its hidden `_lafka_variable_in_catalog_field[$i]` marker was
+	 * posted) — out-of-band saves leave the existing meta untouched, while an
+	 * unticked box (which posts nothing itself) still saves as OFF, even when
+	 * it is the last ticked variation being unticked.
 	 *
 	 * @param int $variation_id Variation post ID.
 	 * @param int $i            Loop index for the variation in the admin form.
 	 */
 	function lafka_save_variable_in_catalog_option( $variation_id, $i ) {
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WC's variation save flow gates on its own nonce before this hook fires.
-		if ( ! isset( $_POST['_lafka_variable_in_catalog'] ) || ! is_array( $_POST['_lafka_variable_in_catalog'] ) ) {
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- WC's variation save flow gates on its own nonce before this hook fires.
+		if ( ! isset( $_POST['_lafka_variable_in_catalog_field'][ $i ] ) ) {
 			return;
 		}
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing
-		update_post_meta( $variation_id, lafka_meta_variable_in_catalog(), isset( $_POST['_lafka_variable_in_catalog'][ $i ] ) );
+		$show = isset( $_POST['_lafka_variable_in_catalog'][ $i ] );
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
+		update_post_meta( $variation_id, lafka_meta_variable_in_catalog(), $show );
 	}
 }
 
