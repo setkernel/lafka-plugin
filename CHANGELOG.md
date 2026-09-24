@@ -67,6 +67,18 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
   regenerated (1661 strings) and versioned with the SSOT.
 - **Copy**: the checkout win-back field no longer promises an email that is
   never sent.
+- **Order hours**: an empty or invalid branch timezone falls back to the site
+  timezone instead of fataling the closed-store card and branch status.
+- **Promotions**: the BOGO cart label and banner state the configured discount
+  (e.g. "25% Off", "Free") instead of always "50% Off".
+- **SEO**: WooCommerce's BreadcrumbList is kept when Lafka yields structured
+  data to an SEO plugin.
+- **Performance**: the LCP preload and fetchpriority hints resolve the same
+  homepage hero (they read different legacy keys).
+- **Admin**: the food-menu metabox save no longer warns about, or blanks,
+  weight / nutrition fields a request didn't send; swatch colour terms without
+  a colour no longer render invalid CSS.
+- **CLI**: `wp lafka image-alts … --post-type=X` skips unattached images.
 - **Checkout**: implicit (hidden) branch / order-type values are filled into
   the session before the Store API gates run, so the delivery geo-fence and
   order-type meta work on single-branch / single-order-type block checkouts.
@@ -127,6 +139,11 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
   `incl/conversion/lafka-email-unsubscribe.php`.
 - New filters: `lafka_pickup_shipping_method_ids`,
   `lafka_branch_order_count_statuses`.
+- Test suite rationalised: tests execute the code and assert behaviour instead
+  of grepping source for implementation strings, comments or existence (1518
+  tests / 4319 assertions → 1126 / 2735, 154 → 143 files, plus node:test JS
+  tests); the operator-literal guard stores only hashes; the bootstrap records
+  hook registrations so wiring is asserted by running registration code.
 
 ### Performance
 - Shipping-area front CSS loads only on cart/checkout (or sitewide while branch
