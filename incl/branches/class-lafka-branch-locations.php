@@ -463,9 +463,15 @@ class Lafka_Branch_Locations {
 		if ( isset( WC()->session ) ) {
 			$branch_location_session = WC()->session->get( 'lafka_branch_location' );
 			if ( ! empty( $branch_location_session['branch_id'] ) && is_numeric( $branch_location_session['branch_id'] ) ) {
-				global $wpdb;
-				$query['join']  .= " LEFT JOIN  {$wpdb->prefix}term_relationships AS term_rel ON (p.ID = term_rel.object_id)";
-				$query['where'] .= " AND term_rel.term_taxonomy_id = {$branch_location_session['branch_id']}";
+				// term_relationships keys on term_taxonomy_id, which is not the
+				// term id stored in the session — resolve it.
+				$branch = get_term( (int) $branch_location_session['branch_id'], 'lafka_branch_location' );
+				if ( $branch instanceof WP_Term || ( is_object( $branch ) && isset( $branch->term_taxonomy_id ) ) ) {
+					global $wpdb;
+					$term_taxonomy_id = (int) $branch->term_taxonomy_id;
+					$query['join']   .= " LEFT JOIN  {$wpdb->prefix}term_relationships AS term_rel ON (p.ID = term_rel.object_id)";
+					$query['where']  .= " AND term_rel.term_taxonomy_id = {$term_taxonomy_id}";
+				}
 			}
 		}
 
@@ -478,8 +484,8 @@ class Lafka_Branch_Locations {
 			if ( ! empty( $branch_location_session['branch_id'] ) && is_numeric( $branch_location_session['branch_id'] ) ) {
 				$branch_products_tax_args = array(
 					'taxonomy' => 'lafka_branch_location',
-					'field'    => 'term_taxonomy_id',
-					'terms'    => $branch_location_session['branch_id'],
+					'field'    => 'term_id', // The session stores the term id.
+					'terms'    => (int) $branch_location_session['branch_id'],
 				);
 				$tax_query[]              = $branch_products_tax_args;
 			}
@@ -494,8 +500,8 @@ class Lafka_Branch_Locations {
 			if ( isset( $query_args['tax_query'] ) && is_array( $query_args['tax_query'] ) && ! empty( $branch_location_session['branch_id'] ) && is_numeric( $branch_location_session['branch_id'] ) ) {
 				$branch_products_tax_args  = array(
 					'taxonomy' => 'lafka_branch_location',
-					'field'    => 'term_taxonomy_id',
-					'terms'    => $branch_location_session['branch_id'],
+					'field'    => 'term_id', // The session stores the term id.
+					'terms'    => (int) $branch_location_session['branch_id'],
 				);
 				$query_args['tax_query'][] = $branch_products_tax_args;
 			}
