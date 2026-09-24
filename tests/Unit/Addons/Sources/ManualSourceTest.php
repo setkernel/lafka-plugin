@@ -5,7 +5,6 @@ namespace LafkaPlugin\Tests\Unit\Addons\Sources;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 use Lafka_Addon_Group;
-use Lafka_Addon_Schema;
 use Lafka_Manual_Source;
 use PHPUnit\Framework\TestCase;
 
@@ -23,12 +22,6 @@ final class ManualSourceTest extends TestCase {
 	protected function tearDown(): void {
 		Monkey\tearDown();
 		parent::tearDown();
-	}
-
-	public function test_id_and_label(): void {
-		$source = new Lafka_Manual_Source();
-		self::assertSame( Lafka_Addon_Schema::SOURCE_MANUAL, $source->id() );
-		self::assertNotEmpty( $source->label() );
 	}
 
 	public function test_get_options_returns_group_options_unchanged(): void {

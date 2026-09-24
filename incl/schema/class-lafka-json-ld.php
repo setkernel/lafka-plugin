@@ -21,19 +21,46 @@
 
 defined( 'ABSPATH' ) || exit;
 
+if ( ! function_exists( 'lafka_schema_yields_to_seo_plugin' ) ) {
+	/**
+	 * Whether Lafka stays out of structured data because a dedicated SEO
+	 * plugin (Yoast, Rank Math, SEOPress, AIOSEO) owns it. Operators can force
+	 * Lafka's graph regardless with the `lafka_schema_force_emit` filter.
+	 *
+	 * @return bool
+	 */
+	function lafka_schema_yields_to_seo_plugin() {
+		// Detection lives in lafka_seo_plugin_active() (incl/seo/lafka-seo-plugin-detect.php), shared
+		// with the OpenGraph and meta-description emitters; the inline fallback
+		// keeps this module usable when loaded without the main plugin file.
+		$seo_plugin_active = function_exists( 'lafka_seo_plugin_active' )
+			? lafka_seo_plugin_active()
+			: (
+				defined( 'WPSEO_VERSION' )                      // Yoast SEO.
+				|| class_exists( 'RankMath' )                   // Rank Math.
+				|| defined( 'SEOPRESS_VERSION' )                // SEOPress.
+				|| class_exists( '\\AIOSEO\\Plugin\\AIOSEO' )   // All in One SEO.
+			);
+
+		return $seo_plugin_active && ! (bool) apply_filters( 'lafka_schema_force_emit', false );
+	}
+}
+
 /**
- * Suppress WooCommerce's native Product structured data on product pages.
- * Lafka's @graph block at wp_head priority 11 carries Product + Restaurant +
- * BreadcrumbList in one merge-friendly @graph, with proper escaping (HEX_TAG).
- * WC's native block can contain double-encoded entities (&amp;amp;) that
- * invalidate it — so removing it tightens the schema surface.
+ * Suppress WooCommerce's native Product structured data on product pages —
+ * but only when Lafka emits its own Product node. Lafka's @graph block at
+ * wp_head priority 11 carries Product + Restaurant + BreadcrumbList in one
+ * merge-friendly @graph, with proper escaping (HEX_TAG); WC's native block can
+ * contain double-encoded entities (&amp;amp;). When Lafka yields to an SEO
+ * plugin it emits nothing, so WC's block is left alone (otherwise the page
+ * would carry no Product schema at all).
  *
  * Filterable for operators who need WC's native block back.
  */
 add_filter( 'woocommerce_structured_data_product', 'lafka_schema_suppress_wc_native_product', 99 );
 if ( ! function_exists( 'lafka_schema_suppress_wc_native_product' ) ) {
 	function lafka_schema_suppress_wc_native_product( $markup ) {
-		if ( apply_filters( 'lafka_schema_keep_wc_native_product', false ) ) {
+		if ( lafka_schema_yields_to_seo_plugin() || apply_filters( 'lafka_schema_keep_wc_native_product', false ) ) {
 			return $markup;
 		}
 		return array();
@@ -81,33 +108,10 @@ if ( ! class_exists( 'Lafka_JSON_LD' ) ) {
 				return;
 			}
 
-			/*
-			 * v9.19.0: defer to SEO ecosystem plugins when active. Yoast SEO,
-			 * Rank Math, and SEOPress all emit Organization/LocalBusiness
-			 * JSON-LD on every page. Emitting our Restaurant graph alongside
-			 * theirs creates "two top-level entities" warnings in Google
-			 * Search Console. The convention is: if the operator has
-			 * installed a dedicated SEO plugin, defer the @graph to it.
-			 *
-			 * Detection lives in lafka_seo_plugin_active() (lafka-plugin.php),
-			 * the single source of truth shared with the OpenGraph and meta
-			 * description head emitters. A function_exists() guard keeps this
-			 * module safe if it is ever loaded without the main plugin file
-			 * (e.g. in isolated unit tests).
-			 *
-			 * Operators who want our schema regardless can override via
-			 * the `lafka_schema_force_emit` filter (return true).
-			 */
-			$seo_plugin_active = function_exists( 'lafka_seo_plugin_active' )
-				? lafka_seo_plugin_active()
-				: (
-					defined( 'WPSEO_VERSION' )                      // Yoast SEO.
-					|| class_exists( 'RankMath' )                   // Rank Math.
-					|| defined( 'SEOPRESS_VERSION' )                // SEOPress.
-					|| class_exists( '\\AIOSEO\\Plugin\\AIOSEO' )   // All in One SEO.
-				);
-			$force = (bool) apply_filters( 'lafka_schema_force_emit', false );
-			if ( $seo_plugin_active && ! $force ) {
+			// Defer to SEO ecosystem plugins when active: they emit their own
+			// Organization/LocalBusiness graph, and two top-level entities draw
+			// Search Console warnings.
+			if ( lafka_schema_yields_to_seo_plugin() ) {
 				return;
 			}
 

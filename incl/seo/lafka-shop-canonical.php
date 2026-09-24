@@ -122,6 +122,13 @@ if ( ! function_exists( 'lafka_seo_emit_shop_canonical' ) ) {
 			return;
 		}
 
+		// An SEO plugin prints its own canonical (and receives ours through the
+		// wpseo_canonical / get_canonical_url filters below) — a second
+		// <link rel="canonical"> would make Google ignore both.
+		if ( function_exists( 'lafka_seo_plugin_active' ) && lafka_seo_plugin_active() ) {
+			return;
+		}
+
 		$url = lafka_seo_shop_canonical_url();
 		if ( empty( $url ) ) {
 			return;

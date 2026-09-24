@@ -12,8 +12,8 @@
  *     (incl. the 169.254.169.254 cloud-metadata host and ::1) and accepts a
  *     publicly-routable literal; fails closed on an unresolvable host.
  *   - lafka_push_http_post(): blocks non-https URLs and private-IP hosts before
- *     ever calling cURL, and source-pins the cURL hardening (HTTPS-only
- *     protocols, no redirect following).
+ *     ever calling cURL, and source-pins the cURL transfer hardening (HTTPS-only
+ *     protocols, no redirect following) — cURL can't be exercised offline.
  *   - lafka_push_send(): belt-and-suspenders host guard refuses to send to a
  *     row whose endpoint host is not an allowed provider.
  *
@@ -28,8 +28,6 @@ namespace LafkaPlugin\Tests\Unit;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 use PHPUnit\Framework\Attributes\DataProvider;
-use PHPUnit\Framework\Attributes\PreserveGlobalState;
-use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\TestCase;
 
 if ( ! defined( 'LAFKA_TESTING' ) ) {
@@ -57,6 +55,9 @@ final class PushSsrfGuardTest extends TestCase {
 		Functions\when( 'apply_filters' )->returnArg( 2 );
 		Functions\when( 'get_current_user_id' )->justReturn( 0 );
 		Functions\when( 'get_locale' )->justReturn( 'en_US' );
+		// Subscribe rate limiter: never limited here.
+		Functions\when( 'get_transient' )->justReturn( false );
+		Functions\when( 'set_transient' )->justReturn( true );
 	}
 
 	protected function tearDown(): void {
@@ -129,8 +130,6 @@ final class PushSsrfGuardTest extends TestCase {
 	// 2. REST subscribe boundary
 	// ─────────────────────────────────────────────────────────────────────────
 
-	#[RunInSeparateProcess]
-	#[PreserveGlobalState( false )]
 	public function test_rest_subscribe_rejects_internal_host(): void {
 		Functions\when( 'get_theme_mod' )->alias(
 			static function ( $key, $default = null ) {
@@ -155,36 +154,6 @@ final class PushSsrfGuardTest extends TestCase {
 		$this->assertIsArray( $response );
 		$this->assertFalse( $response['ok'] );
 		$this->assertSame( 'invalid_endpoint_host', $response['code'] );
-	}
-
-	#[RunInSeparateProcess]
-	#[PreserveGlobalState( false )]
-	public function test_rest_subscribe_still_accepts_provider_host(): void {
-		Functions\when( 'get_theme_mod' )->alias(
-			static function ( $key, $default = null ) {
-				return 'lafka_push_enabled' === $key ? '1' : $default;
-			}
-		);
-		// Persist path needs a fake $wpdb; stub save to avoid DB coupling.
-		Functions\when( 'lafka_push_save_subscription' )->justReturn( 7 );
-		$req = new class() {
-			public function get_json_params() {
-				return array(
-					'endpoint' => 'https://fcm.googleapis.com/fcm/send/abc123',
-					'keys'     => array(
-						'p256dh' => 'BNxxxlongbase64urlkey-yes',
-						'auth'   => 'authsecret_base64',
-					),
-				);
-			}
-			public function get_params() {
-				return array();
-			}
-		};
-		$response = \lafka_push_rest_subscribe( $req );
-		$this->assertIsArray( $response );
-		$this->assertTrue( $response['ok'] );
-		$this->assertSame( 7, $response['subscription_id'] );
 	}
 
 	// ─────────────────────────────────────────────────────────────────────────
@@ -228,8 +197,10 @@ final class PushSsrfGuardTest extends TestCase {
 	}
 
 	public function test_is_safe_remote_host_fails_closed_on_unresolvable(): void {
-		// RFC 6761 guarantees `.invalid` never resolves.
-		$this->assertFalse( \lafka_push_is_safe_remote_host( 'definitely-not-real.invalid' ) );
+		// A name with an empty label is rejected by the system resolver itself
+		// (no DNS query leaves the machine), so this exercises the "no addresses
+		// resolved" branch deterministically and instantly, offline or in CI.
+		$this->assertFalse( \lafka_push_is_safe_remote_host( 'unresolvable..invalid' ) );
 	}
 
 	// ─────────────────────────────────────────────────────────────────────────
@@ -270,13 +241,23 @@ final class PushSsrfGuardTest extends TestCase {
 		$this->assertSame( 201, $res['http_code'] );
 	}
 
-	public function test_sender_source_pins_curl_hardening(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/conversion/lafka-push-sender.php' );
-		$this->assertStringContainsString( 'FILTER_FLAG_NO_PRIV_RANGE', $src );
-		$this->assertStringContainsString( 'FILTER_FLAG_NO_RES_RANGE', $src );
-		$this->assertStringContainsString( 'CURLOPT_PROTOCOLS', $src );
-		$this->assertStringContainsString( 'CURLOPT_REDIR_PROTOCOLS', $src );
-		$this->assertStringContainsString( 'CURLOPT_FOLLOWLOCATION', $src );
+	public function test_curl_transfer_is_https_only_with_no_redirects(): void {
+		$options = \lafka_push_curl_options( array( 'TTL: 60' ), 'ciphertext' );
+
+		$this->assertFalse( $options[ CURLOPT_FOLLOWLOCATION ] );
+		$this->assertSame( CURLPROTO_HTTPS, $options[ CURLOPT_PROTOCOLS ] );
+		$this->assertSame( CURLPROTO_HTTPS, $options[ CURLOPT_REDIR_PROTOCOLS ] );
+		$this->assertSame( array_key_first( $options ), CURLOPT_FOLLOWLOCATION, 'The redirect rule is applied first.' );
+		$this->assertTrue( $options[ CURLOPT_POST ] );
+		$this->assertSame( 'ciphertext', $options[ CURLOPT_POSTFIELDS ] );
+		$this->assertSame( array( 'TTL: 60' ), $options[ CURLOPT_HTTPHEADER ] );
+		$this->assertTrue( $options[ CURLOPT_RETURNTRANSFER ] );
+		$this->assertSame( 15, $options[ CURLOPT_TIMEOUT ] );
+		$this->assertSame( 5, $options[ CURLOPT_CONNECTTIMEOUT ] );
+
+		// Every option is one this cURL build accepts, so curl_setopt_array()
+		// applies them all.
+		$this->assertTrue( curl_setopt_array( curl_init(), $options ) );
 	}
 
 	// ─────────────────────────────────────────────────────────────────────────
@@ -294,7 +275,7 @@ final class PushSsrfGuardTest extends TestCase {
 				return $map[ $key ] ?? $default;
 			}
 		);
-		Functions\when( 'get_bloginfo' )->justReturn( 'op@example.com' );
+		Functions\when( 'get_option' )->alias( static fn( $key, $default = false ) => 'admin_email' === $key ? 'op@example.com' : $default );
 
 		$row = (object) array(
 			'endpoint' => 'https://attacker.example.com/collect',

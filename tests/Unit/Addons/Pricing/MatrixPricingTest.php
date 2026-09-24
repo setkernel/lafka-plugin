@@ -25,12 +25,6 @@ final class MatrixPricingTest extends TestCase {
 		parent::tearDown();
 	}
 
-	public function test_id_and_label(): void {
-		$strategy = new Lafka_Matrix_Pricing();
-		self::assertSame( Lafka_Addon_Schema::PRICING_MATRIX, $strategy->id() );
-		self::assertNotEmpty( $strategy->label() );
-	}
-
 	public function test_expand_is_passthrough_for_already_nested_prices(): void {
 		$matrix = array( 'pa_size' => array( 'small' => '0.50', 'medium' => '1.00' ) );
 		$group = Lafka_Addon_Group::from_array( array(

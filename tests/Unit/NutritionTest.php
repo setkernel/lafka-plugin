@@ -1,172 +1,192 @@
 <?php
 /**
- * NutritionTest — locks down the nutrition module's data-integrity and
- * extensibility guarantees.
- *
- * Two main areas:
- *   - v9.7.13 data-loss guard: process_meta_box must bail on saves where
- *     the panel marker isn't present (prevents Quick Edit / REST / bulk
- *     saves from silently wiping operator-entered nutrition meta).
- *   - v9.7.14 extensibility: lafka_nutrition_meta_fields filter must run
- *     and numeric inputs prevent typo'd values.
+ * Nutrition facts product panel: what the panel submits is what gets saved,
+ * and saves that did not come from the panel (Quick Edit, REST, bulk edit,
+ * programmatic) leave the stored nutrition untouched — the v9.7.13 data-loss
+ * bug wiped every field on such saves.
  *
  * @package Lafka\Plugin\Tests\Unit
- * @since   9.7.14
  */
 
 declare(strict_types=1);
 
 namespace LafkaPlugin\Tests\Unit;
 
+use Brain\Monkey;
+use Brain\Monkey\Functions;
+use Lafka_Nutrition_Admin;
+use Lafka_Nutrition_Config;
 use PHPUnit\Framework\TestCase;
+use ReflectionProperty;
+
+require_once dirname( __DIR__, 2 ) . '/incl/nutrition/includes/class-lafka-nutrition-config.php';
+require_once dirname( __DIR__, 2 ) . '/incl/nutrition/admin/class-lafka-nutrition-admin.php';
 
 final class NutritionTest extends TestCase {
 
-	private function admin_src(): string {
-		return file_get_contents( dirname( __DIR__, 2 ) . '/incl/nutrition/admin/class-lafka-nutrition-admin.php' );
+	/** @var array<string, mixed> */
+	private array $saved_fields;
+
+	protected function setUp(): void {
+		parent::setUp();
+		Monkey\setUp();
+		$this->saved_fields = Lafka_Nutrition_Config::$nutrition_meta_fields;
+		$_POST              = array();
+
+		$escape = static fn( $v ) => htmlspecialchars( (string) $v, ENT_QUOTES );
+		Functions\when( 'esc_html__' )->returnArg();
+		Functions\when( 'esc_html_e' )->echoArg();
+		Functions\when( 'esc_html' )->alias( $escape );
+		Functions\when( 'esc_attr' )->alias( $escape );
+		Functions\when( 'sanitize_text_field' )->alias( static fn( $v ) => trim( strip_tags( (string) $v ) ) );
+		Functions\when( 'wp_unslash' )->returnArg();
+		Functions\when( 'apply_filters' )->returnArg( 2 );
+		$this->init_fields();
 	}
 
-	private function panel_src(): string {
-		return file_get_contents( dirname( __DIR__, 2 ) . '/incl/nutrition/admin/views/html-nutrition-panel.php' );
+	protected function tearDown(): void {
+		Lafka_Nutrition_Config::$nutrition_meta_fields = $this->saved_fields;
+		( new ReflectionProperty( Lafka_Nutrition_Config::class, 'initialized' ) )->setValue( null, false );
+		$_POST = array();
+		Monkey\tearDown();
+		parent::tearDown();
 	}
 
-	private function config_src(): string {
-		return file_get_contents( dirname( __DIR__, 2 ) . '/incl/nutrition/includes/class-lafka-nutrition-config.php' );
+	private function init_fields(): void {
+		( new ReflectionProperty( Lafka_Nutrition_Config::class, 'initialized' ) )->setValue( null, false );
+		Lafka_Nutrition_Config::init_fields();
 	}
 
-	// ────────────────────────────────────────────────────────────────────────
-	// v9.7.13 — data-loss guard
-	// ────────────────────────────────────────────────────────────────────────
+	/**
+	 * A WC_Product double recording meta writes.
+	 *
+	 * @param array<string, string> $meta Existing product meta.
+	 */
+	private static function product( array $meta = array() ): object {
+		return new class( $meta ) {
+			/** @var array<string, string> */
+			public array $written = array();
+			public bool $saved    = false;
+			public function __construct( private array $meta ) {}
+			public function get_meta( $key ) {
+				return $this->meta[ $key ] ?? '';
+			}
+			public function update_meta_data( $key, $value ) {
+				$this->written[ $key ] = $value;
+			}
+			public function save() {
+				$this->saved = true;
+			}
+		};
+	}
 
-	public function test_panel_emits_marker_field(): void {
-		// The marker is what process_meta_box looks for to confirm a save
-		// originated from this product editor (vs. REST / Quick Edit /
-		// programmatic). Removing it would re-introduce the data-loss bug.
-		$src = $this->panel_src();
-		$this->assertMatchesRegularExpression(
-			"/<input\s+type=\"hidden\"\s+name=\"_lafka_nutrition_panel_present\"/",
-			$src,
-			'Panel template must emit _lafka_nutrition_panel_present hidden field.'
+	/**
+	 * Render the panel for $product and return the form fields a browser
+	 * would submit ( name => value ), plus the input elements themselves.
+	 *
+	 * @return array{0: array<string, string>, 1: \DOMNodeList}
+	 */
+	private function submit_panel( object $product ): array {
+		$GLOBALS['post'] = (object) array( 'ID' => 42 );
+		Functions\when( 'wc_get_product' )->justReturn( $product );
+
+		ob_start();
+		( new Lafka_Nutrition_Admin() )->panel();
+		$html = (string) ob_get_clean();
+
+		$dom = new \DOMDocument();
+		$dom->loadHTML( '<?xml encoding="utf-8"?>' . $html, LIBXML_NOERROR );
+		$inputs = $dom->getElementsByTagName( 'input' );
+		$fields = array();
+		foreach ( $inputs as $input ) {
+			$fields[ $input->getAttribute( 'name' ) ] = $input->getAttribute( 'value' );
+		}
+		unset( $GLOBALS['post'] );
+
+		return array( $fields, $inputs );
+	}
+
+	public function test_panel_submission_round_trips_every_field(): void {
+		$stored = array(
+			'_lafka_nutrition_energy'  => '650',
+			'_lafka_nutrition_protein' => '28.3',
+			'_lafka_product_allergens' => 'Milk, Eggs',
 		);
+		list( $fields, $inputs ) = $this->submit_panel( self::product( $stored ) );
+
+		// The operator edits one value and saves the product editor.
+		$fields['_lafka_nutrition_protein'] = '30';
+		$_POST                              = $fields;
+		$product                            = self::product( $stored );
+		Functions\when( 'wc_get_product' )->justReturn( $product );
+		( new Lafka_Nutrition_Admin() )->process_meta_box( 42 );
+
+		self::assertTrue( $product->saved );
+		self::assertSame( '650', $product->written['_lafka_nutrition_energy'] );
+		self::assertSame( '30', $product->written['_lafka_nutrition_protein'] );
+		self::assertSame( '', $product->written['_lafka_nutrition_salt'] );
+		self::assertSame( 'Milk, Eggs', $product->written['_lafka_product_allergens'] );
+
+		// Nutrition values are numeric, non-negative inputs.
+		$non_numeric = array();
+		foreach ( $inputs as $input ) {
+			$name = ltrim( $input->getAttribute( 'name' ), '_' );
+			if ( isset( Lafka_Nutrition_Config::$nutrition_meta_fields[ $name ] )
+				&& ( 'number' !== $input->getAttribute( 'type' ) || '0' !== $input->getAttribute( 'min' ) ) ) {
+				$non_numeric[] = $name;
+			}
+		}
+		self::assertSame( array(), $non_numeric );
 	}
 
-	public function test_process_meta_box_bails_when_marker_absent(): void {
-		// Regression lock for the v9.7.13 fix. process_meta_box must early-
-		// return when the marker isn't in $_POST so out-of-band saves don't
-		// trigger the meta-wipe loop.
-		$src = $this->admin_src();
-		$this->assertMatchesRegularExpression(
-			"/!\s*isset\(\s*\\\$_POST\['_lafka_nutrition_panel_present'\]\s*\)\s*\)\s*\{[^}]*return;/s",
-			$src,
-			'process_meta_box must early-return when panel marker is missing from $_POST.'
+	public function test_saves_not_made_from_the_panel_leave_nutrition_untouched(): void {
+		// e.g. Quick Edit: WooCommerce fires woocommerce_process_product_meta
+		// without any nutrition fields in the request.
+		$_POST   = array( '_regular_price' => '12.00' );
+		$product = self::product( array( '_lafka_nutrition_energy' => '650' ) );
+		Functions\when( 'wc_get_product' )->justReturn( $product );
+
+		( new Lafka_Nutrition_Admin() )->process_meta_box( 42 );
+
+		self::assertSame( array(), $product->written );
+		self::assertFalse( $product->saved );
+	}
+
+	public function test_save_for_a_missing_product_is_a_no_op(): void {
+		$_POST = array( '_lafka_nutrition_panel_present' => '1' );
+		Functions\when( 'wc_get_product' )->justReturn( false );
+
+		( new Lafka_Nutrition_Admin() )->process_meta_box( 42 );
+
+		$this->addToAssertionCount( 1 ); // Reaching here means no fatal on a null product.
+	}
+
+	public function test_fields_are_filterable_for_other_markets(): void {
+		$received = null;
+		Functions\when( 'apply_filters' )->alias(
+			static function ( $hook, $fields ) use ( &$received ) {
+				if ( 'lafka_nutrition_meta_fields' === $hook ) {
+					$received = $fields;
+					// A non-US reference intake, and an extra field.
+					$fields['lafka_nutrition_sodium']['DI']     = 2.0;
+					$fields['lafka_nutrition_calcium']          = $fields['lafka_nutrition_salt'];
+					$fields['lafka_nutrition_calcium']['label'] = 'Calcium (mg)';
+				}
+				return $fields;
+			}
 		);
-	}
+		$this->init_fields();
 
-	public function test_process_meta_box_guard_runs_before_loop(): void {
-		// Marker check must come BEFORE the meta-write loop inside
-		// process_meta_box. The class iterates nutrition_meta_fields TWICE
-		// — once in panel() to populate the editor, once in process_meta_box()
-		// to save it — so we scope the assertion to the slice of source
-		// inside process_meta_box().
-		$src     = $this->admin_src();
-		$fn_pos  = strpos( $src, 'public function process_meta_box' );
-		$this->assertNotFalse( $fn_pos, 'process_meta_box function must exist' );
-		$slice   = substr( $src, $fn_pos );
+		self::assertCount( 10, $received, 'The filter receives the full default map.' );
+		self::assertSame( 2.0, Lafka_Nutrition_Config::$nutrition_meta_fields['lafka_nutrition_sodium']['DI'] );
 
-		$marker_pos = strpos( $slice, "isset( \$_POST['_lafka_nutrition_panel_present'] )" );
-		$loop_pos   = strpos( $slice, '$nutrition_meta_fields as $field_name' );
-		$this->assertNotFalse( $marker_pos, 'isset() guard must exist inside process_meta_box' );
-		$this->assertNotFalse( $loop_pos, 'meta loop must exist inside process_meta_box' );
-		$this->assertLessThan( $loop_pos, $marker_pos, 'Marker isset guard must come before the meta loop.' );
-	}
-
-	public function test_process_meta_box_handles_missing_product(): void {
-		// wc_get_product() can return null/false for trashed/deleted products
-		// — must early-return rather than calling ->update_meta_data() on null.
-		$src = $this->admin_src();
-		$this->assertMatchesRegularExpression(
-			'/!\s*\$product\s*\)\s*\{[^}]*return;/s',
-			$src,
-			'process_meta_box must defend against null wc_get_product return.'
-		);
-	}
-
-	// ────────────────────────────────────────────────────────────────────────
-	// v9.7.14 — filter + numeric inputs
-	// ────────────────────────────────────────────────────────────────────────
-
-	public function test_meta_fields_map_is_filterable(): void {
-		// US FDA DI defaults aren't right for EU/UK/Canada. The filter lets
-		// non-US operators override without forking. Without it, this OSS
-		// plugin imposes US dietary-target arithmetic on every market.
-		$src = $this->config_src();
-		$this->assertMatchesRegularExpression(
-			"/apply_filters\(\s*\n?\s*'lafka_nutrition_meta_fields'/",
-			$src,
-			'Nutrition fields map must be filterable via lafka_nutrition_meta_fields.'
-		);
-	}
-
-	public function test_filter_receives_full_default_map(): void {
-		// The defaults must be passed AS-IS into the filter — operators that
-		// hook need to see all 10 fields so they can override a subset rather
-		// than rebuild the whole map.
-		$src = $this->config_src();
-		$this->assertStringContainsString(
-			"apply_filters( 'lafka_nutrition_meta_fields', \$defaults )",
-			$src
-		);
-	}
-
-	public function test_panel_inputs_are_numeric_with_decimal_step(): void {
-		// type=number prevents operators from typing letters ("65O" calories)
-		// or other non-numeric junk that the frontend then divides by DI to
-		// compute a meaningless percentage. step=0.01 + min=0 + inputmode=decimal
-		// covers mobile UX and prevents negatives.
-		$src = $this->panel_src();
-		$this->assertMatchesRegularExpression(
-			'/type="number"\s+min="0"\s+step="0\.01"\s+inputmode="decimal"/',
-			$src,
-			'Nutrition inputs must be type=number with min=0, step=0.01, inputmode=decimal.'
-		);
-	}
-
-	public function test_panel_no_longer_uses_text_inputs_for_nutrition(): void {
-		// Regression lock against re-introducing type=text on nutrition fields.
-		// Allergens stays type=text (it's a comma-separated list); we only
-		// want to assert the loop's nutrition inputs are numeric.
-		$src = $this->panel_src();
-		$this->assertDoesNotMatchRegularExpression(
-			'/<input\s+type="text"\s+name="_<\?php echo esc_attr\(\s*\$nutrition_meta_field/',
-			$src,
-			'Nutrition inputs must not regress to type=text.'
-		);
-	}
-
-	// ────────────────────────────────────────────────────────────────────────
-	// Existing-shape locks (rendering, allergens, hook registration)
-	// ────────────────────────────────────────────────────────────────────────
-
-	public function test_allergens_field_remains_in_panel(): void {
-		// Separate from the nutrition loop; comma-separated free text. Must
-		// keep flowing through the marker-gated process_meta_box.
-		$src = $this->panel_src();
-		$this->assertStringContainsString( '_lafka_product_allergens', $src );
-	}
-
-	public function test_admin_hooks_woocommerce_product_data_panels(): void {
-		$src = $this->admin_src();
-		$this->assertMatchesRegularExpression(
-			"/add_action\(\s*'woocommerce_product_data_panels'/",
-			$src
-		);
-	}
-
-	public function test_admin_hooks_process_product_meta(): void {
-		$src = $this->admin_src();
-		$this->assertMatchesRegularExpression(
-			"/add_action\(\s*'woocommerce_process_product_meta'/",
-			$src
-		);
+		// A field added through the filter is rendered and saved like the built-ins.
+		list( $fields ) = $this->submit_panel( self::product() );
+		self::assertArrayHasKey( '_lafka_nutrition_calcium', $fields );
+		$_POST   = array_merge( $fields, array( '_lafka_nutrition_calcium' => '120' ) );
+		$product = self::product();
+		Functions\when( 'wc_get_product' )->justReturn( $product );
+		( new Lafka_Nutrition_Admin() )->process_meta_box( 42 );
+		self::assertSame( '120', $product->written['_lafka_nutrition_calcium'] );
 	}
 }

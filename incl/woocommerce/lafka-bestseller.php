@@ -45,8 +45,7 @@ if ( ! function_exists( 'lafka_pdp_get_bestseller_ids' ) ) {
 		//   2. INNER JOIN order_items + order_itemmeta — both have PRIMARY/MUL indices.
 		//   3. Group by meta_value directly (varchar product id) — skip CAST+posts join.
 		//   4. Post-filter dead/non-product IDs in PHP via wc_get_product() cache.
-		$is_hpos = class_exists( '\Automattic\WooCommerce\Utilities\OrderUtil' )
-			&& \Automattic\WooCommerce\Utilities\OrderUtil::custom_orders_table_usage_is_enabled();
+		$is_hpos = \Automattic\WooCommerce\Utilities\OrderUtil::custom_orders_table_usage_is_enabled();
 
 		if ( $is_hpos ) {
 			$sql = "SELECT oim.meta_value AS product_id
@@ -114,7 +113,8 @@ if ( ! function_exists( 'lafka_pdp_render_bestseller_eyebrow' ) ) {
 		$rank = (int) $rank + 1;
 		printf(
 			'<span class="lafka-pdp-eyebrow lafka-pdp-eyebrow--bestseller">%s</span>',
-			esc_html( '★ #' . $rank . ' BEST SELLER' )
+			/* translators: %d: best-seller rank (1-3). */
+			esc_html( sprintf( __( '★ #%d BEST SELLER', 'lafka-plugin' ), $rank ) )
 		);
 	}
 }

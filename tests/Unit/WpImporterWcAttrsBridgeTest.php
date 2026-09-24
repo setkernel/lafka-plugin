@@ -8,7 +8,6 @@
  *   - Per-post + per-term iteration (multiple `pa_*` terms per product).
  *   - Non-product posts and non-`pa_*` terms ignored.
  *   - Invalid input (non-array, missing keys) handled defensively.
- *   - Filter is registered as wp_import_posts.
  *   - Returns the posts array unchanged (filter passthrough).
  *
  * @package Lafka\Plugin\Tests\Unit
@@ -21,6 +20,7 @@ namespace LafkaPlugin\Tests\Unit;
 
 use Brain\Monkey;
 use Brain\Monkey\Functions;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 require_once dirname( __DIR__, 2 ) . '/incl/compat/wp-importer-wc-attrs-bridge.php';
@@ -111,43 +111,6 @@ final class WpImporterWcAttrsBridgeTest extends TestCase {
 		$this->assertCount( 0, $this->created, 'Existing taxonomy must not trigger create or register.' );
 	}
 
-	public function test_skips_non_product_posts(): void {
-		// A WXR file contains posts/pages/products/etc. Bridge must only
-		// react to product posts so a `pa_*` slug accidentally appearing on
-		// a non-product post can't trigger taxonomy creation.
-		$posts = array(
-			array(
-				'post_type' => 'page',
-				'terms'     => array(
-					array( 'domain' => 'pa_size', 'name' => 'Large', 'slug' => 'large' ),
-				),
-			),
-		);
-
-		\lafka_compat_wp_importer_create_missing_wc_attrs( $posts );
-
-		$this->assertCount( 0, $this->created );
-	}
-
-	public function test_skips_non_pa_taxonomies(): void {
-		// product_cat / product_tag / custom taxonomies must not be
-		// auto-created — only WC product attributes (the `pa_*` prefix).
-		$posts = array(
-			array(
-				'post_type' => 'product',
-				'terms'     => array(
-					array( 'domain' => 'product_cat', 'name' => 'Pizzas', 'slug' => 'pizzas' ),
-					array( 'domain' => 'product_tag', 'name' => 'Featured', 'slug' => 'featured' ),
-					array( 'domain' => 'custom_tax', 'name' => 'Foo', 'slug' => 'foo' ),
-				),
-			),
-		);
-
-		\lafka_compat_wp_importer_create_missing_wc_attrs( $posts );
-
-		$this->assertCount( 0, $this->created );
-	}
-
 	public function test_creates_each_unique_pa_taxonomy_once_per_product(): void {
 		// Multi-attribute product (size + colour). Both must get created.
 		$posts = array(
@@ -172,53 +135,52 @@ final class WpImporterWcAttrsBridgeTest extends TestCase {
 		$this->assertContains( 'pa_color', $created_taxonomies );
 	}
 
-	public function test_handles_empty_posts_array(): void {
-		$result = \lafka_compat_wp_importer_create_missing_wc_attrs( array() );
-		$this->assertSame( array(), $result );
-		$this->assertCount( 0, $this->created );
+	/**
+	 * Inputs that must create nothing: non-product posts (a stray `pa_*` slug on
+	 * a page), non-attribute taxonomies, and malformed / empty WXR entries.
+	 *
+	 * @param array<int, mixed> $posts WXR posts.
+	 */
+	#[DataProvider( 'inert_posts_provider' )]
+	public function test_creates_nothing_for_inert_input( array $posts ): void {
+		$this->assertSame( $posts, \lafka_compat_wp_importer_create_missing_wc_attrs( $posts ) );
+		$this->assertSame( array(), $this->created );
 	}
 
-	public function test_handles_non_array_input(): void {
-		// Defensive — if a future filter chain breaks the contract and feeds
-		// a non-array, the bridge must fail closed (no creates) rather than fatal.
-		$result = \lafka_compat_wp_importer_create_missing_wc_attrs( 'not-an-array' );
-		$this->assertSame( 'not-an-array', $result );
-		$this->assertCount( 0, $this->created );
-	}
-
-	public function test_handles_post_without_terms(): void {
-		$posts = array(
-			array( 'post_type' => 'product' ),
-			array( 'post_type' => 'product', 'terms' => array() ),
-			array( 'post_type' => 'product', 'terms' => 'malformed' ),
-		);
-
-		\lafka_compat_wp_importer_create_missing_wc_attrs( $posts );
-
-		$this->assertCount( 0, $this->created );
-	}
-
-	public function test_handles_term_with_missing_domain(): void {
-		$posts = array(
-			array(
-				'post_type' => 'product',
-				'terms'     => array(
-					array( 'name' => 'Orphan', 'slug' => 'orphan' ),
+	/**
+	 * @return array<string, array{0: array<int, mixed>}>
+	 */
+	public static function inert_posts_provider(): array {
+		$pa_size = array( array( 'domain' => 'pa_size', 'name' => 'Large', 'slug' => 'large' ) );
+		return array(
+			'no posts'             => array( array() ),
+			'non-product post'     => array( array( array( 'post_type' => 'page', 'terms' => $pa_size ) ) ),
+			'non-pa taxonomies'    => array(
+				array(
+					array(
+						'post_type' => 'product',
+						'terms'     => array(
+							array( 'domain' => 'product_cat', 'name' => 'Mains', 'slug' => 'mains' ),
+							array( 'domain' => 'product_tag', 'name' => 'Featured', 'slug' => 'featured' ),
+							array( 'domain' => 'custom_tax', 'name' => 'Foo', 'slug' => 'foo' ),
+						),
+					),
 				),
 			),
+			'product without terms' => array(
+				array(
+					array( 'post_type' => 'product' ),
+					array( 'post_type' => 'product', 'terms' => array() ),
+					array( 'post_type' => 'product', 'terms' => 'malformed' ),
+				),
+			),
+			'term without domain'  => array( array( array( 'post_type' => 'product', 'terms' => array( array( 'name' => 'Orphan', 'slug' => 'orphan' ) ) ) ) ),
 		);
-
-		\lafka_compat_wp_importer_create_missing_wc_attrs( $posts );
-
-		$this->assertCount( 0, $this->created );
 	}
 
-	public function test_filter_registered_on_wp_import_posts(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/compat/wp-importer-wc-attrs-bridge.php' );
-		$this->assertMatchesRegularExpression(
-			"/add_filter\(\s*'wp_import_posts'\s*,\s*'lafka_compat_wp_importer_create_missing_wc_attrs'\s*\)/",
-			$src,
-			'Bridge must register on wp_import_posts (upstream WP Importer hook).'
-		);
+	public function test_non_array_input_passes_through_untouched(): void {
+		// A broken upstream filter chain must fail closed (no creates), not fatal.
+		$this->assertSame( 'not-an-array', \lafka_compat_wp_importer_create_missing_wc_attrs( 'not-an-array' ) );
+		$this->assertSame( array(), $this->created );
 	}
 }

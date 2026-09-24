@@ -1,13 +1,8 @@
 <?php
 /**
- * Plugin-side behavior lock for BOGO + delivery-min math (P2-01b).
- *
- * Mirrors the child-side LafkaPromotionsTest. Asserts against the static
- * methods on Lafka_Promotions so any drift between the plugin's copy of
- * the math and the child's pure helpers is caught in CI.
- *
- * Class skips its WP-runtime hook registration when add_action() isn't
- * defined — so we can require the file standalone and call statics.
+ * BOGO + delivery-minimum math on Lafka_Promotions' static helpers, at the
+ * default knob values (get_option empty → constants). Non-default BOGO
+ * discounts are covered by BogoBlendedPriceReconciliationTest.
  */
 
 declare(strict_types=1);
@@ -26,14 +21,48 @@ final class LafkaPromotionsTest extends TestCase {
 	protected function setUp(): void {
 		parent::setUp();
 		Monkey\setUp();
-		// knob() reads via get_option() with an internal static cache. Stub
-		// get_option to return empty so knob() falls back to the constants.
+		// Empty option → knob() falls back to the constants.
 		Functions\when( 'get_option' )->justReturn( array() );
+		Lafka_Promotions::flush_knobs();
 	}
 
 	protected function tearDown(): void {
 		Monkey\tearDown();
 		parent::tearDown();
+	}
+
+	// ─── Shopper-facing offer text follows the configured discount ──────────
+
+	/**
+	 * @return array<string, array{0: mixed, 1: string}>
+	 */
+	public static function offers(): array {
+		return array(
+			'default half off' => array( '', '50% Off' ),
+			'quarter off'      => array( '0.25', '25% Off' ),
+			'free'             => array( '1', 'Free' ),
+		);
+	}
+
+	#[\PHPUnit\Framework\Attributes\DataProvider( 'offers' )]
+	public function test_bogo_label_and_banner_state_the_configured_discount( $discount, string $offer ): void {
+		Functions\when( 'get_option' )->justReturn( array( 'bogo_discount' => $discount ) );
+		Functions\when( '__' )->returnArg();
+		Functions\when( 'esc_html__' )->returnArg();
+		Functions\when( 'esc_html' )->returnArg();
+		Lafka_Promotions::flush_knobs();
+		$promotions = ( new \ReflectionClass( Lafka_Promotions::class ) )->newInstanceWithoutConstructor();
+
+		$data = $promotions->render_bogo_label(
+			array(),
+			array(
+				'_bogo_50'             => true,
+				'_bogo_discounted_qty' => 2,
+			)
+		);
+
+		self::assertSame( "BOGO {$offer} applied to 2 unit(s)", $data[0]['value'] );
+		self::assertSame( $offer, Lafka_Promotions::bogo_offer_label() );
 	}
 
 	// ─── distribute_discounts (audit case list) ─────────────────────────────

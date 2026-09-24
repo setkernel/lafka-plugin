@@ -34,22 +34,41 @@ jobs:
         id: version
         run: echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
 
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      # Regenerate every first-party .min.js from its readable source so the
+      # zip can never ship a stale build (WP.org guideline 4: sources ship
+      # alongside the minified files).
+      - name: Build assets
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+
       - name: Build zip
         run: |
           mkdir lafka-plugin
           # NX1-10d: dev-only files must never ship in the installable zip.
           # Excluded: VCS/CI metadata, dependencies, package manifests, lint +
-          # phpunit + wp-env tooling, the test suite, ops/build scripts, and the
-          # internal planning docs. Runtime files STAY — readme.txt,
-          # COMPATIBILITY.md, the operator guides under docs/, languages/.
+          # phpunit + wp-env tooling, the test suite, and ops/build scripts.
+          # Runtime files STAY — readme.txt,
+          # COMPATIBILITY.md, the operator guides under docs/, languages/,
+          # and LICENSE (GPLv2 requires shipping the licence text).
           rsync -a --exclude='.git' \
                    --exclude='.github' \
                    --exclude='.gitignore' \
                    --exclude='.githooks' \
                    --exclude='.npmrc' \
                    --exclude='.wp-env*.json' \
+                   --exclude='.wp-env-uploads' \
+                   --exclude='.phpcs.cache' \
+                   --exclude='.eslintcache' \
+                   --exclude='.stylelintcache' \
+                   --exclude='.DS_Store' \
                    --exclude='node_modules' \
-                   --exclude='vendor' \
+                   --exclude='/vendor' \
                    --exclude='package.json' \
                    --exclude='package-lock.json' \
                    --exclude='composer.json' \
@@ -59,12 +78,11 @@ jobs:
                    --exclude='eslint.config.mjs' \
                    --exclude='phpunit.xml.dist' \
                    --exclude='.phpunit.result.cache' \
+                   --exclude='.phpunit.cache' \
                    --exclude='tests' \
                    --exclude='scripts' \
-                   --exclude='docs/superpowers' \
                    --exclude='CONTRIBUTING.md' \
                    --exclude='README.md' \
-                   --exclude='LICENSE' \
                    ./ lafka-plugin/
           zip -r lafka-plugin.zip lafka-plugin/
 

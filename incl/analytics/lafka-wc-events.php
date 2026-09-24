@@ -741,6 +741,21 @@ if ( ! function_exists( 'lafka_dl_enqueue_client' ) ) {
 			$version,
 			true
 		);
+
+		// add_shipping_info / add_payment_info carry the checkout's items: hand
+		// the client the same cart payload begin_checkout emits server-side.
+		if ( function_exists( 'is_checkout' ) && is_checkout()
+			&& ! ( function_exists( 'is_wc_endpoint_url' ) && is_wc_endpoint_url( 'order-received' ) ) ) {
+			wp_localize_script(
+				'lafka-dl-client',
+				'lafkaDlCheckout',
+				array(
+					'currency' => lafka_dl_currency(),
+					'value'    => lafka_dl_cart_value(),
+					'items'    => lafka_dl_items_from_cart(),
+				)
+			);
+		}
 	}
 }
 

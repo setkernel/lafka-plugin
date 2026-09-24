@@ -207,20 +207,6 @@ if ( ! function_exists( 'lafka_emit_consent_replay' ) ) {
 	}
 }
 
-if ( ! function_exists( 'lafka_emit_datalayer_init' ) ) {
-	/**
-	 * Ensure the dataLayer global exists before any tag pushes to it.
-	 *
-	 * The consent-mode emit above already declares it, but keep this as a
-	 * standalone helper so tests can call it in isolation and so a future
-	 * refactor that moves consent-mode behind a feature flag does not lose
-	 * dataLayer bootstrap.
-	 */
-	function lafka_emit_datalayer_init(): void {
-		echo "<script>window.dataLayer = window.dataLayer || [];</script>\n";
-	}
-}
-
 if ( ! function_exists( 'lafka_emit_gsc_verification' ) ) {
 	/**
 	 * Emit the Google Search Console verification meta tag.

@@ -210,7 +210,6 @@ class Lafka_WebP_Convert_Command {
 			return false;
 		}
 		$ok = imagewebp( $img, $dst, $quality );
-		imagedestroy( $img );
 		return (bool) $ok;
 	}
 }

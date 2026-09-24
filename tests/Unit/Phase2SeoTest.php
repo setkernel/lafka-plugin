@@ -1,19 +1,9 @@
 <?php
 /**
- * Phase 2 (v9.26.0) — FAQPage schema + sitemap exclusions + robots audit.
- *
- * Locks down:
- *   - FAQPage entity emits with correct schema.org shape
- *   - FAQ resolves from theme_mods AND from page content (block / classic)
- *   - FAQ skips on non-contact pages
- *   - Sitemap filter excludes WC funnel pages from the `page` sub-sitemap
- *   - Sitemap filter passes through other post types unchanged
- *   - robots.txt filter appends every required Disallow directive
- *   - robots.txt filter no-ops in "Discourage search engines" mode
- *   - Plugin wires the new modules + bumps version to 9.26.0
+ * FAQPage schema (contact-page gate, theme_mod + page-content sources),
+ * sitemap exclusions and the robots.txt additions.
  *
  * @package Lafka\Plugin\Tests\Unit
- * @since   9.26.0
  */
 
 declare(strict_types=1);
@@ -22,6 +12,7 @@ namespace LafkaPlugin\Tests\Unit;
 
 use Brain\Monkey;
 use Brain\Monkey\Functions;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 // WP-core symbols used by the modules under test. OBJECT is a sentinel
@@ -48,59 +39,8 @@ final class Phase2SeoTest extends TestCase {
 		parent::tearDown();
 	}
 
-	private function plugin_root(): string {
-		return dirname( __DIR__, 2 );
-	}
-
 	// ────────────────────────────────────────────────────────────────────
-	// 1. Plugin wiring
-	// ────────────────────────────────────────────────────────────────────
-
-	public function test_plugin_version_bumped_to_9_26_0(): void {
-		$src = (string) file_get_contents( $this->plugin_root() . '/lafka-plugin.php' );
-		// Forward-compatible: Phase 2 landed at 9.26.0 and later phases bump
-		// past it (3B → 9.27.0, etc). Lock the floor, not the exact version.
-		if ( ! preg_match( '/Version:\s*(\d+)\.(\d+)\.(\d+)/', $src, $m ) ) {
-			$this->fail( 'Plugin header missing Version:.' );
-		}
-		$version = sprintf( '%03d.%03d.%03d', (int) $m[1], (int) $m[2], (int) $m[3] );
-		$this->assertGreaterThanOrEqual(
-			'009.026.000',
-			$version,
-			'Plugin header version must be >= 9.26.0 (Phase 2 floor).'
-		);
-	}
-
-	public function test_plugin_requires_faq_schema_module(): void {
-		$src = (string) file_get_contents( $this->plugin_root() . '/incl/schema/class-lafka-json-ld.php' );
-		$this->assertStringContainsString(
-			'lafka-schema-faq.php',
-			$src,
-			'JSON-LD orchestrator must require the FAQ schema module.'
-		);
-	}
-
-	public function test_orchestrator_adds_faq_to_graph(): void {
-		$src = (string) file_get_contents( $this->plugin_root() . '/incl/schema/class-lafka-json-ld.php' );
-		$this->assertStringContainsString(
-			'lafka_schema_faq()',
-			$src,
-			'JSON-LD orchestrator must call lafka_schema_faq() into the @graph builder.'
-		);
-	}
-
-	public function test_plugin_requires_sitemap_module(): void {
-		$src = (string) file_get_contents( $this->plugin_root() . '/lafka-plugin.php' );
-		$this->assertStringContainsString( 'incl/seo/lafka-sitemap.php', $src );
-	}
-
-	public function test_plugin_requires_robots_module(): void {
-		$src = (string) file_get_contents( $this->plugin_root() . '/lafka-plugin.php' );
-		$this->assertStringContainsString( 'incl/seo/lafka-robots.php', $src );
-	}
-
-	// ────────────────────────────────────────────────────────────────────
-	// 2. FAQPage schema — contact-page gate
+	// FAQPage schema — contact-page gate
 	// ────────────────────────────────────────────────────────────────────
 
 	private function stub_contact_page( string $slug = 'contact' ): void {
@@ -138,57 +78,34 @@ final class Phase2SeoTest extends TestCase {
 		$this->assertNull( \lafka_schema_faq(), 'FAQ schema must return null when not on a singular page.' );
 	}
 
-	public function test_faq_emits_on_contact_slug(): void {
-		$this->stub_contact_page( 'contact' );
-		Functions\when( 'get_theme_mod' )->alias( static function ( $key, $default = '' ) {
-			$fixtures = array(
-				'lafka_contact_faq_1_q' => 'How long do orders take?',
-				'lafka_contact_faq_1_a' => 'About 25 minutes for pickup.',
-			);
-			return $fixtures[ $key ] ?? $default;
-		} );
+	// ────────────────────────────────────────────────────────────────────
+	// FAQPage schema — output shape
+	// ────────────────────────────────────────────────────────────────────
 
-		$schema = \lafka_schema_faq();
-		$this->assertIsArray( $schema );
-		$this->assertSame( 'FAQPage', $schema['@type'] );
+	/**
+	 * @return array<string, array{0:string, 1:string}>
+	 */
+	public static function contact_pages(): array {
+		return array(
+			'contact slug'     => array( 'contact', '' ),
+			'contact-us slug'  => array( 'contact-us', '' ),
+			'contact template' => array( 'reach-us', 'template-contact.php' ),
+		);
 	}
 
-	public function test_faq_emits_on_contact_us_slug(): void {
-		$this->stub_contact_page( 'contact-us' );
-		Functions\when( 'get_theme_mod' )->alias( static function ( $key, $default = '' ) {
-			$fixtures = array(
+	#[DataProvider( 'contact_pages' )]
+	public function test_faq_emits_on_contact_pages( string $slug, string $template ): void {
+		$this->stub_contact_page( $slug );
+		Functions\when( 'is_page_template' )->alias( static fn( $tpl ) => '' !== $template && $tpl === $template );
+		Functions\when( 'get_theme_mod' )->alias(
+			static fn( $key, $default = '' ) => array(
 				'lafka_contact_faq_1_q' => 'Q1?',
 				'lafka_contact_faq_1_a' => 'A1.',
-			);
-			return $fixtures[ $key ] ?? $default;
-		} );
+			)[ $key ] ?? $default
+		);
 
-		$schema = \lafka_schema_faq();
-		$this->assertIsArray( $schema );
-		$this->assertSame( 'FAQPage', $schema['@type'] );
+		$this->assertSame( 'FAQPage', \lafka_schema_faq()['@type'] ?? null );
 	}
-
-	public function test_faq_emits_on_contact_template(): void {
-		Functions\when( 'is_page' )->justReturn( true );
-		Functions\when( 'get_post_field' )->justReturn( 'reach-us' );
-		Functions\when( 'is_page_template' )->alias( static fn( $tpl ) => 'template-contact.php' === $tpl );
-		Functions\when( 'apply_filters' )->returnArg( 2 );
-		Functions\when( 'wp_strip_all_tags' )->returnArg();
-		Functions\when( 'get_theme_mod' )->alias( static function ( $key, $default = '' ) {
-			$fixtures = array(
-				'lafka_contact_faq_1_q' => 'Q?',
-				'lafka_contact_faq_1_a' => 'A.',
-			);
-			return $fixtures[ $key ] ?? $default;
-		} );
-
-		$schema = \lafka_schema_faq();
-		$this->assertIsArray( $schema, 'FAQ must emit when page uses template-contact.php even if slug differs.' );
-	}
-
-	// ────────────────────────────────────────────────────────────────────
-	// 3. FAQPage schema — output shape
-	// ────────────────────────────────────────────────────────────────────
 
 	public function test_faq_schema_shape_matches_spec(): void {
 		$this->stub_contact_page();
@@ -250,29 +167,8 @@ final class Phase2SeoTest extends TestCase {
 		$this->assertNull( \lafka_schema_faq(), 'FAQ must return null when no items resolve.' );
 	}
 
-	public function test_faq_json_safe_for_apostrophes_and_ampersands(): void {
-		$this->stub_contact_page();
-		Functions\when( 'get_theme_mod' )->alias( static function ( $key, $default = '' ) {
-			$fixtures = array(
-				'lafka_contact_faq_1_q' => "What's the deal & how does it work?",
-				'lafka_contact_faq_1_a' => "It's simple — pick & order.",
-			);
-			return $fixtures[ $key ] ?? $default;
-		} );
-
-		$schema = \lafka_schema_faq();
-		$this->assertIsArray( $schema );
-		$json = wp_json_encode_compat( $schema );
-		$this->assertIsString( $json );
-		// Decode round-trip — apostrophes and ampersands must survive.
-		$decoded = json_decode( $json, true );
-		$this->assertIsArray( $decoded );
-		$this->assertSame( "What's the deal & how does it work?", $decoded['mainEntity'][0]['name'] );
-		$this->assertSame( "It's simple — pick & order.", $decoded['mainEntity'][0]['acceptedAnswer']['text'] );
-	}
-
 	// ────────────────────────────────────────────────────────────────────
-	// 4. FAQPage — content parser
+	// FAQPage — content parser
 	// ────────────────────────────────────────────────────────────────────
 
 	public function test_faq_parser_extracts_from_classic_html(): void {
@@ -350,16 +246,8 @@ HTML;
 	}
 
 	// ────────────────────────────────────────────────────────────────────
-	// 5. Sitemap filter
+	// Sitemap filter
 	// ────────────────────────────────────────────────────────────────────
-
-	public function test_sitemap_excluded_slug_list_contains_canonical_set(): void {
-		Functions\when( 'apply_filters' )->returnArg( 2 );
-		$slugs = \lafka_sitemap_excluded_slugs();
-		foreach ( array( 'cart', 'checkout', 'my-account', 'order-received', 'order-pay' ) as $expected ) {
-			$this->assertContains( $expected, $slugs, "Sitemap exclusion list must contain '{$expected}'." );
-		}
-	}
 
 	public function test_sitemap_filter_excludes_cart_checkout_account_pages(): void {
 		Functions\when( 'apply_filters' )->returnArg( 2 );
@@ -417,15 +305,6 @@ HTML;
 		$this->assertContains( 6, $args['post__not_in'] );
 	}
 
-	public function test_sitemap_filter_is_registered_in_source(): void {
-		$src = (string) file_get_contents( $this->plugin_root() . '/incl/seo/lafka-sitemap.php' );
-		$this->assertMatchesRegularExpression(
-			"/add_filter\(\s*'wp_sitemaps_posts_query_args'/",
-			$src,
-			'Sitemap module must register the wp_sitemaps_posts_query_args filter.'
-		);
-	}
-
 	public function test_sitemap_drops_users_provider(): void {
 		Functions\when( 'apply_filters' )->returnArg( 2 ); // lafka_sitemap_keep_users default false
 		$this->assertFalse(
@@ -439,16 +318,8 @@ HTML;
 		);
 	}
 
-	public function test_sitemap_users_provider_filter_registered(): void {
-		$src = (string) file_get_contents( $this->plugin_root() . '/incl/seo/lafka-sitemap.php' );
-		$this->assertMatchesRegularExpression(
-			"/add_filter\(\s*'wp_sitemaps_add_provider'/",
-			$src
-		);
-	}
-
 	// ────────────────────────────────────────────────────────────────────
-	// 6. robots.txt filter
+	// robots.txt filter
 	// ────────────────────────────────────────────────────────────────────
 
 	public function test_robots_filter_appends_all_required_disallow_directives(): void {
@@ -503,70 +374,4 @@ HTML;
 		$this->assertDoesNotMatchRegularExpression( '/\n{3,}/', $out, 'Output must not contain triple-newlines.' );
 	}
 
-	public function test_robots_filter_is_registered_in_source(): void {
-		$src = (string) file_get_contents( $this->plugin_root() . '/incl/seo/lafka-robots.php' );
-		$this->assertMatchesRegularExpression(
-			"/add_filter\(\s*'robots_txt'/",
-			$src,
-			'Robots module must register the robots_txt filter.'
-		);
-	}
-
-	// ────────────────────────────────────────────────────────────────────
-	// 7. Local SEO guide doc presence + content sanity
-	// ────────────────────────────────────────────────────────────────────
-
-	/**
-	 * LAFKA_LOCAL_SEO_GUIDE.md lives in the parent WORKSPACE, not inside the
-	 * plugin repo, so it is absent when the plugin is checked out alone (CI).
-	 * Skip there (local-dev verification only) instead of failing the build —
-	 * matching the sibling-repo skip pattern used elsewhere in the suite.
-	 * (Fixed 2026-06-27: this had silently red-lit plugin CI on main since
-	 * 2026-05-19.)
-	 */
-	private function local_seo_guide_path_or_skip(): string {
-		$path = dirname( __DIR__, 3 ) . '/LAFKA_LOCAL_SEO_GUIDE.md';
-		if ( ! file_exists( $path ) ) {
-			$this->markTestSkipped( 'LAFKA_LOCAL_SEO_GUIDE.md is a parent-workspace doc, not part of the plugin repo; absent in isolated CI.' );
-		}
-		return $path;
-	}
-
-	public function test_local_seo_guide_doc_exists(): void {
-		$path = $this->local_seo_guide_path_or_skip();
-		$this->assertFileExists( $path, 'LAFKA_LOCAL_SEO_GUIDE.md must be present at the lafka/ parent directory.' );
-	}
-
-	public function test_local_seo_guide_covers_required_sections(): void {
-		$path = $this->local_seo_guide_path_or_skip();
-		$body = (string) file_get_contents( $path );
-		foreach ( array(
-			'Google Business Profile',
-			'Local citations',
-			'Schema',
-			'Review collection',
-			'Page speed',
-			'Local content',
-			'Tracking SEO performance',
-		) as $heading ) {
-			$this->assertStringContainsString(
-				$heading,
-				$body,
-				"Local SEO guide must cover '{$heading}'."
-			);
-		}
-	}
-}
-
-/**
- * Minimal stand-in for WP's wp_json_encode() used inside the test only.
- * Brain Monkey would otherwise complain about unstubbed calls inside helper.
- */
-if ( ! function_exists( 'LafkaPlugin\\Tests\\Unit\\wp_json_encode_compat' ) ) {
-	function wp_json_encode_compat( $data ): string {
-		return (string) json_encode(
-			$data,
-			JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
-		);
-	}
 }

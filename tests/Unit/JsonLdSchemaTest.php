@@ -1,675 +1,404 @@
 <?php
 /**
- * P6-SEO-1/2/3/6 + W2-T1: JSON-LD structured data regression tests.
- *
- * Tests are a mix of source-grep locks (cheap, catch registration drift) and
- * functional generator tests (exercise the helper/generator functions directly
- * without booting WordPress via Brain Monkey stubs).
- *
- * After W2-T1 the schema generators read from `lafka_get_restaurant_info()`
- * (Customizer-driven). Tests assert STRUCTURE + Customizer-override behavior,
- * not literal Peppery values.
+ * JSON-LD node generators: WebSite, Restaurant + its NAP/geo/hours helpers,
+ * Product (offers, description fallback, review-backed rating), BreadcrumbList
+ * and the price-currency helper. The @graph emitter is covered in
+ * JsonLdEmitTest; the Restaurant no-self-rating lock in
+ * RestaurantSchemaNoSelfRatingTest.
  *
  * @package Lafka\Plugin\Tests\Unit
- * @since   8.8.1
  */
 
 declare(strict_types=1);
 
-namespace LafkaPlugin\Tests\Unit;
-
-use Brain\Monkey;
-use Brain\Monkey\Functions;
-use PHPUnit\Framework\TestCase;
-use PHPUnit\Framework\Attributes\DataProvider;
-
-/**
- * Bring in the schema module files directly so we can call the generator
- * functions without going through lafka-plugin.php (which would try to
- * load WP core and WooCommerce at include time).
- *
- * Brain Monkey stubs out the WP functions each generator needs.
- */
-require_once dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-helpers.php';
-require_once dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-restaurant.php';
-require_once dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-website.php';
-require_once dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-breadcrumb.php';
-// lafka-schema-menu.php and lafka-schema-product.php depend heavily on
-// WC_Product / wc_get_products — tested via source-grep and structural checks.
-
-final class JsonLdSchemaTest extends TestCase {
-
-	/**
-	 * Test fixtures injected via stubbed get_theme_mod() so the resolver returns
-	 * non-empty values for the structural assertions below.
-	 */
-	private const FIXTURES = array(
-		'lafka_business_name'             => 'Acme Test Cafe',
-		'lafka_business_street'           => '123 Test Street',
-		'lafka_business_city'             => 'Testville',
-		'lafka_business_region'           => 'TS',
-		'lafka_business_postal'           => 'T1S 1S1',
-		'lafka_business_country'          => 'CA',
-		'lafka_business_phone_e164'       => '+15551234567',
-		'lafka_business_phone_display'    => '+1 555-123-4567',
-		'lafka_business_email'            => 'hello@example.test',
-		'lafka_business_geo_lat'          => '45.0',
-		'lafka_business_geo_lng'          => '-75.0',
-		'lafka_business_price_range'      => '$$',
-		'lafka_business_cuisines'         => 'Pizza, Italian',
-		'lafka_business_payment_methods'  => 'Cash, Visa',
-		'lafka_business_same_as'          => "https://example.test/page1\nhttps://example.test/page2",
-		'lafka_business_hours_mon'        => '11:00-23:00',
-		'lafka_business_hours_tue'        => '11:00-23:00',
-		'lafka_business_hours_wed'        => '11:00-23:00',
-		'lafka_business_hours_thu'        => '11:00-23:00',
-		'lafka_business_hours_fri'        => '11:00-23:00',
-		'lafka_business_hours_sat'        => '11:00-23:00',
-		'lafka_business_hours_sun'        => '11:00-23:00',
-		// Social-proof rating + count (theme_mods written by the Lafka theme's
-		// social-proof Customizer panel). These are decorative marketing figures
-		// with no backing Review entities, so (as of f016) they are intentionally
-		// NOT transcribed into the Restaurant schema as an aggregateRating.
-		'lafka_social_proof_rating'       => '4.8',
-		'lafka_social_proof_count'        => 1200,
-	);
-
-	protected function setUp(): void {
-		parent::setUp();
-		Monkey\setUp();
-	}
-
-	// ─── WebSite node (sitelinks search box + brand entity) ──────────────────
-
-	public function test_website_node_has_searchaction(): void {
-		$this->stub_populated_install();
-		Functions\when( 'get_bloginfo' )->alias(
-			static fn( $k = '' ) => 'name' === $k ? 'Peppery' : ( 'description' === $k ? 'Best pizza' : '' )
-		);
-		$node = lafka_schema_website();
-		self::assertSame( 'WebSite', $node['@type'] );
-		self::assertSame( 'Peppery', $node['name'] );
-		self::assertSame( 'SearchAction', $node['potentialAction']['@type'] );
-		self::assertStringContainsString( '{search_term_string}', $node['potentialAction']['target']['urlTemplate'] );
-		self::assertStringEndsWith( '#website', (string) $node['@id'] );
-	}
-
-	public function test_website_links_restaurant_as_publisher(): void {
-		$this->stub_populated_install(); // populated → restaurant basics exist
-		$node = lafka_schema_website();
-		self::assertArrayHasKey( 'publisher', $node );
-		self::assertStringEndsWith( '#restaurant', (string) $node['publisher']['@id'] );
-	}
-
-	public function test_website_no_publisher_when_unconfigured(): void {
-		// Realistic fresh / OSS-default install: WordPress always has a site
-		// title, so lafka_get_restaurant_info()['name'] is non-empty (it falls
-		// back to get_bloginfo('name')) — but no NAP (street/city/postal/phone)
-		// has been configured. In this state the Restaurant #restaurant node is
-		// NOT added to the @graph, so WebSite.publisher must NOT link to a
-		// #restaurant @id that doesn't exist (a dangling reference).
-		$this->stub_unconfigured_install();
-		Functions\when( 'get_bloginfo' )->alias(
-			static fn( $k = '' ) => 'name' === $k ? 'My Fresh Site' : ''
-		);
-		$node = lafka_schema_website();
-		self::assertArrayNotHasKey( 'publisher', $node ); // no fabricated brand link
-	}
-
-	protected function tearDown(): void {
-		Monkey\tearDown();
-		parent::tearDown();
-	}
-
-	/**
-	 * Wire up Brain Monkey stubs that simulate a populated Customizer install.
-	 * Helper used by every functional test below.
-	 *
-	 * NOTE: get_woocommerce_currency is stubbed defensively here even though
-	 * the restaurant-schema generator gates its call behind function_exists().
-	 * Once any other test class (e.g. AnalyticsWcEventsTest) registers a
-	 * Brain Monkey stub on this name, the function is permanently defined
-	 * in PHP's symbol table — so function_exists() returns true and the
-	 * generator calls into it. Without a per-test expectation, it throws
-	 * MissingFunctionExpectations. Pre-stubbing here keeps the helper safe
-	 * regardless of class-execution order.
-	 */
-	private function stub_populated_install(): void {
-		Functions\when( 'get_theme_mod' )->alias( function ( $key, $default = null ) {
-			return self::FIXTURES[ $key ] ?? $default;
-		} );
-		Functions\when( 'get_option' )->returnArg( 2 );
-		Functions\when( 'get_bloginfo' )->justReturn( '' );
-		Functions\when( 'get_site_icon_url' )->justReturn( '' );
-		Functions\when( 'home_url' )->justReturn( 'http://localhost:8891' );
-		Functions\when( 'trailingslashit' )->alias( fn( $url ) => rtrim( $url, '/' ) . '/' );
-		Functions\when( 'apply_filters' )->returnArg( 2 );
-		Functions\when( 'get_woocommerce_currency' )->justReturn( 'USD' );
-	}
-
-	/**
-	 * Wire up Brain Monkey stubs that simulate an unconfigured install
-	 * (no theme_mods, no options).
-	 */
-	private function stub_unconfigured_install(): void {
-		Functions\when( 'get_theme_mod' )->returnArg( 2 );
-		Functions\when( 'get_option' )->returnArg( 2 );
-		Functions\when( 'get_bloginfo' )->justReturn( '' );
-		Functions\when( 'get_site_icon_url' )->justReturn( '' );
-		Functions\when( 'home_url' )->justReturn( 'http://localhost:8891' );
-		Functions\when( 'trailingslashit' )->alias( fn( $url ) => rtrim( $url, '/' ) . '/' );
-		Functions\when( 'apply_filters' )->returnArg( 2 );
-		Functions\when( 'get_woocommerce_currency' )->justReturn( '' );
-	}
-
-	// ────────────────────────────────────────────────────────────────────────
-	// 1. Orchestrator source-grep locks
-	// ────────────────────────────────────────────────────────────────────────
-
-	public function test_orchestrator_class_exists_in_source(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/schema/class-lafka-json-ld.php' );
-		$this->assertStringContainsString( 'class Lafka_JSON_LD', $src );
-	}
-
-	public function test_wp_head_callback_registered_at_priority_11(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/schema/class-lafka-json-ld.php' );
-		$this->assertMatchesRegularExpression(
-			"/add_action\(\s*'wp_head'\s*,\s*array\(\s*__CLASS__\s*,\s*'emit'\s*\)\s*,\s*11\s*\)/",
-			$src,
-			"wp_head hook must be registered at priority 11"
-		);
-	}
-
-	public function test_orchestrator_loaded_from_main_plugin_file(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/lafka-plugin.php' );
-		$this->assertStringContainsString(
-			"incl/schema/class-lafka-json-ld.php",
-			$src,
-			'Main plugin file must require the JSON-LD orchestrator'
-		);
-	}
-
-	public function test_emit_skips_admin_feed_404(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/schema/class-lafka-json-ld.php' );
-		$this->assertStringContainsString( 'is_admin()', $src );
-		$this->assertStringContainsString( 'is_feed()', $src );
-		$this->assertStringContainsString( 'is_404()', $src );
-	}
-
-	public function test_emit_skips_when_basics_unconfigured(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/schema/class-lafka-json-ld.php' );
-		// Orchestrator must guard Restaurant emission on the shared basics
-		// predicate (lafka_schema_has_restaurant_basics) so the Restaurant node
-		// and WebSite.publisher gate on the exact same condition.
-		$this->assertStringContainsString( 'lafka_schema_has_restaurant_basics', $src );
-		$this->assertStringContainsString( '$has_basics', $src );
-	}
-
-	// ────────────────────────────────────────────────────────────────────────
-	// v9.22.2 — Product schema description fallback (160-char cap)
-	// ────────────────────────────────────────────────────────────────────────
-
-	/**
-	 * Visual QA on 2026-05-18 found PDP Product entities had
-	 * description: null because operators left short_description empty.
-	 * Fallback to the first 160 chars of the long description prevents
-	 * null and keeps it inside Google's rich-results truncation window.
-	 */
-	public function test_product_schema_falls_back_to_full_description(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-product.php' );
-		$this->assertStringContainsString(
-			'get_description',
-			$src,
-			'Product schema must read $product->get_description() as a fallback when short_description is empty.'
-		);
-	}
-
-	/**
-	 * The 160-char cap mirrors the SERP-snippet upper bound used by Google
-	 * for Product.description in rich results.
-	 */
-	public function test_product_schema_caps_fallback_at_160_chars(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-product.php' );
-		$this->assertMatchesRegularExpression(
-			'/>\s*160|160\s*\)/',
-			$src,
-			'Product description fallback must cap at 160 chars.'
-		);
-	}
-
-	/**
-	 * Operator-set short_description must always win — never fall through
-	 * to the truncated long description when an actual short blurb exists.
-	 */
-	public function test_product_schema_prefers_short_description(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-product.php' );
-		$this->assertStringContainsString(
-			'get_short_description',
-			$src,
-			'Product schema must check short_description first.'
-		);
-	}
-
-	public function test_graph_wrapper_used(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/schema/class-lafka-json-ld.php' );
-		$this->assertStringContainsString( "'@graph'", $src );
-		$this->assertStringContainsString( "'@context'", $src );
-	}
-
-	// ────────────────────────────────────────────────────────────────────────
-	// 2. Helpers: lafka_schema_get_nap() — single source-of-truth
-	// ────────────────────────────────────────────────────────────────────────
-
-	public function test_helpers_nap_exposes_required_keys(): void {
-		$this->stub_populated_install();
-		$nap = lafka_schema_get_nap();
-
-		$expected = array( 'name', 'street', 'city', 'region', 'postal', 'country', 'telephone', 'telephone_display' );
-		foreach ( $expected as $key ) {
-			$this->assertArrayHasKey( $key, $nap );
-			$this->assertIsString( $nap[ $key ] );
-		}
-		$this->assertNotEmpty( $nap['name'] );
-		$this->assertNotEmpty( $nap['street'] );
-	}
-
-	public function test_helpers_geo_returns_valid_coordinates_when_configured(): void {
-		$this->stub_populated_install();
-		$geo = lafka_schema_get_geo();
-
-		$this->assertIsArray( $geo );
-		$this->assertSame( 'GeoCoordinates', $geo['@type'] );
-		$this->assertIsFloat( $geo['latitude'] );
-		$this->assertIsFloat( $geo['longitude'] );
-		$this->assertGreaterThanOrEqual( -90.0, $geo['latitude'] );
-		$this->assertLessThanOrEqual( 90.0, $geo['latitude'] );
-		$this->assertGreaterThanOrEqual( -180.0, $geo['longitude'] );
-		$this->assertLessThanOrEqual( 180.0, $geo['longitude'] );
-	}
-
-	public function test_helpers_geo_returns_null_when_unconfigured(): void {
-		$this->stub_unconfigured_install();
-		$geo = lafka_schema_get_geo();
-		$this->assertNull( $geo, 'Geo block must be null when lat/lng not both set, so schema generator can skip the field.' );
-	}
-
-	public function test_helpers_opening_hours_one_block_per_day_when_configured(): void {
-		$this->stub_populated_install();
-		$hours = lafka_schema_get_opening_hours();
-
-		$this->assertNotEmpty( $hours );
-		$this->assertCount( 7, $hours, 'Resolver emits one OpeningHoursSpecification block per configured day.' );
-		foreach ( $hours as $spec ) {
-			$this->assertSame( 'OpeningHoursSpecification', $spec['@type'] );
-			$this->assertArrayHasKey( 'dayOfWeek', $spec );
-			$this->assertArrayHasKey( 'opens', $spec );
-			$this->assertArrayHasKey( 'closes', $spec );
+namespace {
+	// Same minimal stub as AnalyticsWcEventsTest / ProductImageAltBackfillTest
+	// (whichever loads first wins); the generators type-hint WC_Product.
+	if ( ! class_exists( 'WC_Product' ) ) {
+		class WC_Product {
+			public function get_name( $context = 'view' ) {
+				return '';
+			}
 		}
 	}
+}
 
-	public function test_helpers_opening_hours_empty_when_unconfigured(): void {
-		$this->stub_unconfigured_install();
-		$this->assertSame( array(), lafka_schema_get_opening_hours() );
-	}
+namespace LafkaPlugin\Tests\Unit {
 
-	public function test_helpers_same_as_returns_filtered_url_list(): void {
-		$this->stub_populated_install();
-		$same_as = lafka_schema_get_same_as();
-		$this->assertIsArray( $same_as );
-		$this->assertNotEmpty( $same_as );
-		foreach ( $same_as as $url ) {
-			$this->assertIsString( $url );
-			$this->assertNotFalse( filter_var( $url, FILTER_VALIDATE_URL ) );
+	use Brain\Monkey;
+	use Brain\Monkey\Functions;
+	use PHPUnit\Framework\TestCase;
+
+	require_once dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-helpers.php';
+	require_once dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-restaurant.php';
+	require_once dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-website.php';
+	require_once dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-breadcrumb.php';
+	require_once dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-product.php';
+
+	final class JsonLdSchemaTest extends TestCase {
+
+		private const FIXTURES = array(
+			'lafka_business_name'            => 'Acme Test Cafe',
+			'lafka_business_street'          => '123 Test Street',
+			'lafka_business_city'            => 'Testville',
+			'lafka_business_region'          => 'TS',
+			'lafka_business_postal'          => 'T1S 1S1',
+			'lafka_business_country'         => 'CA',
+			'lafka_business_phone_e164'      => '+15551234567',
+			'lafka_business_phone_display'   => '+1 555-123-4567',
+			'lafka_business_email'           => 'hello@example.test',
+			'lafka_business_geo_lat'         => '45.0',
+			'lafka_business_geo_lng'         => '-75.0',
+			'lafka_business_price_range'     => '$$',
+			'lafka_business_cuisines'        => 'Pizza, Italian',
+			'lafka_business_payment_methods' => 'Cash, Visa',
+			'lafka_business_same_as'         => "https://example.test/page1\nhttps://example.test/page2",
+			'lafka_business_hours_mon'       => '11:00-23:00',
+			'lafka_business_hours_tue'       => '11:00-23:00',
+			'lafka_business_hours_wed'       => '11:00-23:00',
+			'lafka_business_hours_thu'       => '11:00-23:00',
+			'lafka_business_hours_fri'       => '11:00-23:00',
+			'lafka_business_hours_sat'       => '11:00-23:00',
+			'lafka_business_hours_sun'       => '11:00-23:00',
+		);
+
+		protected function setUp(): void {
+			parent::setUp();
+			Monkey\setUp();
 		}
-	}
 
-	public function test_helpers_postal_address_structure(): void {
-		$this->stub_populated_install();
-		$addr = lafka_schema_get_postal_address();
-
-		$this->assertIsArray( $addr );
-		$this->assertSame( 'PostalAddress', $addr['@type'] );
-		foreach ( array( 'streetAddress', 'addressLocality', 'addressRegion', 'postalCode', 'addressCountry' ) as $k ) {
-			$this->assertArrayHasKey( $k, $addr );
-			$this->assertIsString( $addr[ $k ] );
+		protected function tearDown(): void {
+			Monkey\tearDown();
+			parent::tearDown();
 		}
-	}
 
-	public function test_helpers_postal_address_returns_null_when_unconfigured(): void {
-		$this->stub_unconfigured_install();
-		$this->assertNull( lafka_schema_get_postal_address() );
-	}
+		/**
+		 * get_woocommerce_currency is stubbed even where the code checks
+		 * function_exists(): once any suite stubs it, the symbol exists for the
+		 * rest of the process.
+		 *
+		 * @param array<string, mixed> $theme_mods
+		 */
+		private function stub_install( array $theme_mods ): void {
+			Functions\when( 'get_theme_mod' )->alias( static fn( $key, $default = null ) => $theme_mods[ $key ] ?? $default );
+			Functions\when( 'get_option' )->alias( static fn( $key, $default = false ) => $default );
+			Functions\when( 'get_bloginfo' )->justReturn( '' );
+			Functions\when( 'get_site_icon_url' )->justReturn( '' );
+			Functions\when( 'home_url' )->alias( static fn( $path = '' ) => 'https://example.test' . $path );
+			Functions\when( 'trailingslashit' )->alias( static fn( $url ) => rtrim( (string) $url, '/' ) . '/' );
+			Functions\when( 'apply_filters' )->returnArg( 2 );
+			Functions\when( 'get_woocommerce_currency' )->justReturn( 'USD' );
+		}
 
-	// ────────────────────────────────────────────────────────────────────────
-	// 3. Restaurant generator: required fields
-	// ────────────────────────────────────────────────────────────────────────
+		private function stub_populated_install(): void {
+			$this->stub_install( self::FIXTURES );
+		}
 
-	public function test_restaurant_generator_returns_required_fields(): void {
-		$this->stub_populated_install();
-		$schema = lafka_schema_restaurant();
+		private function stub_unconfigured_install(): void {
+			$this->stub_install( array() );
+		}
 
-		$this->assertIsArray( $schema );
-		$this->assertContains( 'Restaurant', (array) $schema['@type'] );
-		$this->assertContains( 'LocalBusiness', (array) $schema['@type'] );
-		$this->assertContains( 'FoodEstablishment', (array) $schema['@type'] );
-		$this->assertArrayHasKey( 'name', $schema );
-		$this->assertIsString( $schema['name'] );
-		$this->assertNotEmpty( $schema['name'] );
-		$this->assertArrayHasKey( 'telephone', $schema );
-		$this->assertSame( '$$', $schema['priceRange'] );
-		$this->assertFalse( $schema['acceptsReservations'] );
-		$this->assertArrayHasKey( 'address', $schema );
-		$this->assertSame( 'PostalAddress', $schema['address']['@type'] );
-		$this->assertArrayHasKey( 'geo', $schema );
-		$this->assertSame( 'GeoCoordinates', $schema['geo']['@type'] );
-		$this->assertArrayHasKey( 'openingHoursSpecification', $schema );
-		$this->assertNotEmpty( $schema['openingHoursSpecification'] );
-		$this->assertArrayHasKey( 'sameAs', $schema );
-		$this->assertNotEmpty( $schema['sameAs'] );
-		$this->assertStringContainsString( '#restaurant', $schema['@id'] );
-	}
+		// ── WebSite ─────────────────────────────────────────────────────────
 
-	public function test_restaurant_generator_skips_empty_fields_when_unconfigured(): void {
-		$this->stub_unconfigured_install();
-		$schema = lafka_schema_restaurant();
+		public function test_website_node_has_searchaction(): void {
+			$this->stub_populated_install();
+			Functions\when( 'get_bloginfo' )->alias(
+				static fn( $k = '' ) => 'name' === $k ? 'Example Restaurant' : ''
+			);
+			$node = lafka_schema_website();
+			self::assertSame( 'WebSite', $node['@type'] );
+			self::assertSame( 'Example Restaurant', $node['name'] );
+			self::assertSame( 'SearchAction', $node['potentialAction']['@type'] );
+			self::assertSame( 'https://example.test/?s={search_term_string}', $node['potentialAction']['target']['urlTemplate'] );
+			self::assertSame( 'https://example.test/#website', $node['@id'] );
+		}
 
-		$this->assertIsArray( $schema );
-		// Skipped because no values configured: address, geo, hours, sameAs, cuisines.
-		$this->assertArrayNotHasKey( 'address', $schema, 'Address must be skipped when unconfigured.' );
-		$this->assertArrayNotHasKey( 'geo', $schema, 'Geo must be skipped when unconfigured.' );
-		$this->assertArrayNotHasKey( 'openingHoursSpecification', $schema, 'Hours must be skipped when unconfigured.' );
-		$this->assertArrayNotHasKey( 'sameAs', $schema, 'sameAs must be skipped when empty.' );
-		$this->assertArrayNotHasKey( 'servesCuisine', $schema, 'servesCuisine must be skipped when empty.' );
-	}
+		public function test_website_links_restaurant_as_publisher_when_configured(): void {
+			$this->stub_populated_install();
+			self::assertSame( array( '@id' => 'https://example.test/#restaurant' ), lafka_schema_website()['publisher'] );
+		}
 
-	public function test_restaurant_schema_encodes_to_valid_json(): void {
-		$this->stub_populated_install();
-		$schema  = lafka_schema_restaurant();
-		$payload = array(
-			'@context' => 'https://schema.org',
-			'@graph'   => array( $schema ),
-		);
+		public function test_website_has_no_publisher_on_a_fresh_install(): void {
+			// A site title exists (so the resolver has a name) but no NAP: the
+			// #restaurant node is not emitted, so publisher must not dangle to it.
+			$this->stub_unconfigured_install();
+			Functions\when( 'get_bloginfo' )->alias( static fn( $k = '' ) => 'name' === $k ? 'My Fresh Site' : '' );
+			self::assertArrayNotHasKey( 'publisher', lafka_schema_website() );
+		}
 
-		$json = json_encode( $payload, JSON_UNESCAPED_SLASHES );
-		$this->assertIsString( $json, 'json_encode should not return false' );
+		// ── Restaurant helpers ──────────────────────────────────────────────
 
-		$decoded = json_decode( $json, true );
-		$this->assertIsArray( $decoded, 'Decoded JSON must be an array' );
-		$this->assertArrayHasKey( '@graph', $decoded );
-	}
+		public function test_geo_is_emitted_only_when_both_coordinates_are_set(): void {
+			$this->stub_populated_install();
+			self::assertSame(
+				array( '@type' => 'GeoCoordinates', 'latitude' => 45.0, 'longitude' => -75.0 ),
+				lafka_schema_get_geo()
+			);
 
-	public function test_restaurant_name_not_html_escaped_in_json(): void {
-		// Inject a fixture name with an ampersand to verify JSON encoding.
-		Functions\when( 'get_theme_mod' )->alias( function ( $key, $default = null ) {
-			$fixtures = self::FIXTURES;
-			$fixtures['lafka_business_name'] = 'Test & Co.';
-			return $fixtures[ $key ] ?? $default;
-		} );
-		Functions\when( 'get_option' )->returnArg( 2 );
-		Functions\when( 'get_bloginfo' )->justReturn( '' );
-		Functions\when( 'get_site_icon_url' )->justReturn( '' );
-		Functions\when( 'home_url' )->justReturn( 'http://localhost:8891' );
-		Functions\when( 'trailingslashit' )->alias( fn( $url ) => rtrim( $url, '/' ) . '/' );
-		Functions\when( 'apply_filters' )->returnArg( 2 );
-		// Defensive: see stub_populated_install() docstring for why.
-		Functions\when( 'get_woocommerce_currency' )->justReturn( 'USD' );
+			$this->stub_unconfigured_install();
+			self::assertNull( lafka_schema_get_geo() );
+		}
 
-		$schema = lafka_schema_restaurant();
-		$json   = json_encode( $schema, JSON_UNESCAPED_SLASHES );
+		public function test_opening_hours_one_block_per_configured_day(): void {
+			$this->stub_populated_install();
+			$hours = lafka_schema_get_opening_hours();
+			self::assertCount( 7, $hours );
+			foreach ( $hours as $spec ) {
+				self::assertSame( 'OpeningHoursSpecification', $spec['@type'] );
+				self::assertSame( '11:00', $spec['opens'] );
+				self::assertSame( '23:00', $spec['closes'] );
+			}
 
-		// json_encode (without JSON_HEX_AMP) preserves "&" as the literal character,
-		// which is correct for JSON-LD — only HTML contexts need &amp;.
-		$this->assertStringNotContainsString( '&amp;', $json );
-		$decoded = json_decode( $json, true );
-		$this->assertSame( 'Test & Co.', $decoded['name'] );
-	}
+			$this->stub_unconfigured_install();
+			self::assertSame( array(), lafka_schema_get_opening_hours() );
+		}
 
-	public function test_restaurant_never_emits_aggregate_rating_even_when_social_proof_configured(): void {
-		// Regression lock (f016): a fully-populated install WITH the decorative
-		// social-proof rating + count theme_mods set must still NOT surface an
-		// aggregateRating on the Restaurant / LocalBusiness / FoodEstablishment
-		// node. Self-serving LocalBusiness ratings with no backing Review
-		// entities are a Spammy Structured Markup policy violation; the only
-		// compliant rating surface is the Product node (real WooCommerce reviews).
-		$this->stub_populated_install();
-		$schema = lafka_schema_restaurant();
+		public function test_same_as_is_a_list_of_the_configured_urls(): void {
+			$this->stub_populated_install();
+			self::assertSame( array( 'https://example.test/page1', 'https://example.test/page2' ), lafka_schema_get_same_as() );
+		}
 
-		// Sanity: confirm the social-proof fixtures ARE configured, so the
-		// absence below proves intentional suppression, not missing data.
-		$this->assertSame( '4.8', self::FIXTURES['lafka_social_proof_rating'] );
-		$this->assertSame( 1200, self::FIXTURES['lafka_social_proof_count'] );
-		$this->assertArrayNotHasKey(
-			'aggregateRating',
-			$schema,
-			'Restaurant node must never emit a self-serving aggregateRating built from the decorative social-proof theme_mods.'
-		);
-	}
+		public function test_postal_address_is_built_from_nap_or_omitted(): void {
+			$this->stub_populated_install();
+			self::assertSame(
+				array(
+					'@type'           => 'PostalAddress',
+					'streetAddress'   => '123 Test Street',
+					'addressLocality' => 'Testville',
+					'addressRegion'   => 'TS',
+					'postalCode'      => 'T1S 1S1',
+					'addressCountry'  => 'CA',
+				),
+				lafka_schema_get_postal_address()
+			);
 
-	public function test_restaurant_omits_aggregate_rating_when_unconfigured(): void {
-		$this->stub_unconfigured_install();
-		$schema = lafka_schema_restaurant();
+			$this->stub_unconfigured_install();
+			self::assertNull( lafka_schema_get_postal_address() );
+		}
 
-		$this->assertArrayNotHasKey( 'aggregateRating', $schema, 'aggregateRating must be skipped when social-proof unconfigured.' );
-	}
+		// ── Restaurant node ─────────────────────────────────────────────────
 
-	public function test_restaurant_omits_aggregate_rating_when_only_rating_set(): void {
-		// Rating alone (no review count) is ambiguous — Google's rich-result
-		// validator requires both. Verify partial data triggers omission.
-		Functions\when( 'get_theme_mod' )->alias( function ( $key, $default = null ) {
-			$only_rating = self::FIXTURES;
-			$only_rating['lafka_social_proof_count'] = 0;
-			return $only_rating[ $key ] ?? $default;
-		} );
-		Functions\when( 'get_option' )->returnArg( 2 );
-		Functions\when( 'get_bloginfo' )->justReturn( '' );
-		Functions\when( 'get_site_icon_url' )->justReturn( '' );
-		Functions\when( 'home_url' )->justReturn( 'http://localhost:8891' );
-		Functions\when( 'trailingslashit' )->alias( fn( $url ) => rtrim( $url, '/' ) . '/' );
-		Functions\when( 'apply_filters' )->returnArg( 2 );
-		// Defensive: see stub_populated_install() docstring for why.
-		Functions\when( 'get_woocommerce_currency' )->justReturn( 'USD' );
+		public function test_restaurant_node_carries_the_configured_business(): void {
+			$this->stub_populated_install();
+			$schema = lafka_schema_restaurant();
 
-		$schema = lafka_schema_restaurant();
-		$this->assertArrayNotHasKey( 'aggregateRating', $schema, 'aggregateRating requires both rating AND count to emit.' );
-	}
+			self::assertSame( array( 'Restaurant', 'LocalBusiness', 'FoodEstablishment' ), array_values( (array) $schema['@type'] ) );
+			self::assertSame( 'https://example.test/#restaurant', $schema['@id'] );
+			self::assertSame( 'Acme Test Cafe', $schema['name'] );
+			self::assertSame( '+15551234567', $schema['telephone'] );
+			self::assertSame( '$$', $schema['priceRange'] );
+			self::assertFalse( $schema['acceptsReservations'] );
+			self::assertSame( 'PostalAddress', $schema['address']['@type'] );
+			self::assertSame( 'GeoCoordinates', $schema['geo']['@type'] );
+			self::assertCount( 7, $schema['openingHoursSpecification'] );
+			self::assertSame( array( 'https://example.test/page1', 'https://example.test/page2' ), $schema['sameAs'] );
+		}
 
-	public function test_wc_breadcrumb_jsonld_suppression_registered(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/seo/lafka-suppress-wc-breadcrumb-jsonld.php' );
-		$this->assertNotFalse( $src, 'Suppression file must exist.' );
-		$this->assertStringContainsString( "add_filter( 'woocommerce_structured_data_breadcrumblist', '__return_empty_array' )", $src );
-	}
+		public function test_restaurant_node_skips_unconfigured_fields(): void {
+			$this->stub_unconfigured_install();
+			$schema = lafka_schema_restaurant();
 
-	public function test_wc_breadcrumb_suppression_loaded_from_main_plugin_file(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/lafka-plugin.php' );
-		$this->assertStringContainsString( 'lafka-suppress-wc-breadcrumb-jsonld.php', $src );
-	}
+			foreach ( array( 'address', 'geo', 'openingHoursSpecification', 'sameAs', 'servesCuisine' ) as $key ) {
+				self::assertArrayNotHasKey( $key, $schema );
+			}
+		}
 
-	// ────────────────────────────────────────────────────────────────────────
-	// 4. Breadcrumb generator
-	// ────────────────────────────────────────────────────────────────────────
+		public function test_restaurant_name_is_not_html_escaped(): void {
+			$this->stub_install( array( 'lafka_business_name' => 'Test & Co.' ) + self::FIXTURES );
+			self::assertSame( 'Test & Co.', lafka_schema_restaurant()['name'] );
+		}
 
-	public function test_breadcrumb_returns_null_on_front_page(): void {
-		Functions\when( 'is_front_page' )->justReturn( true );
+		// ── Product node ────────────────────────────────────────────────────
 
-		$result = lafka_schema_breadcrumb();
-		$this->assertNull( $result );
-	}
+		/**
+		 * @param array<string, mixed> $props
+		 */
+		private function product( array $props ): \WC_Product {
+			return new class( $props ) extends \WC_Product {
+				/** @param array<string, mixed> $p */
+				public function __construct( private array $p ) {
+				}
+				public function get_name( $context = 'view' ) {
+					return $this->p['name'] ?? 'Garden Salad';
+				}
+				public function get_short_description() {
+					return $this->p['short'] ?? '';
+				}
+				public function get_description() {
+					return $this->p['long'] ?? '';
+				}
+				public function get_image_id() {
+					return 0;
+				}
+				public function get_sku() {
+					return '';
+				}
+				public function is_in_stock() {
+					return $this->p['in_stock'] ?? true;
+				}
+				public function is_type( $type ) {
+					return isset( $this->p['variation_prices'] ) && 'variable' === $type;
+				}
+				public function get_variation_prices( $for_display = false ) {
+					return array( 'price' => $this->p['variation_prices'] ?? array() );
+				}
+				public function get_price() {
+					return $this->p['price'] ?? '12.5';
+				}
+				public function get_review_count() {
+					return $this->p['review_count'] ?? 0;
+				}
+				public function get_average_rating() {
+					return $this->p['rating'] ?? 0;
+				}
+			};
+		}
 
-	public function test_breadcrumb_list_item_builder(): void {
-		$item = lafka_schema_breadcrumb_item( 1, 'Home', 'http://localhost:8891/' );
+		/**
+		 * @param array<string, mixed> $props
+		 * @return array<string, mixed>
+		 */
+		private function product_schema( array $props ): array {
+			$this->stub_populated_install();
+			$product = $this->product( $props );
+			Functions\when( 'get_queried_object_id' )->justReturn( 7 );
+			Functions\when( 'wc_get_product' )->justReturn( $product );
+			Functions\when( 'get_permalink' )->justReturn( 'https://example.test/product/garden-salad/' );
+			Functions\when( 'wp_strip_all_tags' )->alias( static fn( $v ) => strip_tags( (string) $v ) );
+			return lafka_schema_product();
+		}
 
-		$this->assertSame( 'ListItem', $item['@type'] );
-		$this->assertSame( 1, $item['position'] );
-		$this->assertSame( 'Home', $item['name'] );
-		$this->assertSame( 'http://localhost:8891/', $item['item'] );
-	}
+		public function test_product_node_offer_brand_and_identity(): void {
+			$schema = $this->product_schema( array( 'price' => '12.5', 'in_stock' => false ) );
 
-	public function test_breadcrumb_source_contains_required_types(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-breadcrumb.php' );
-		$this->assertStringContainsString( 'BreadcrumbList', $src );
-		$this->assertStringContainsString( 'ListItem', $src );
-		$this->assertStringContainsString( 'itemListElement', $src );
-	}
+			self::assertSame( 'Product', $schema['@type'] );
+			self::assertSame( 'https://example.test/product/garden-salad/#product', $schema['@id'] );
+			self::assertSame( array( '@type' => 'Brand', 'name' => 'Acme Test Cafe' ), $schema['brand'] );
+			self::assertSame( 'Offer', $schema['offers']['@type'] );
+			self::assertSame( '12.50', $schema['offers']['price'] );
+			self::assertSame( 'USD', $schema['offers']['priceCurrency'] );
+			self::assertSame( 'https://schema.org/OutOfStock', $schema['offers']['availability'] );
+			self::assertMatchesRegularExpression( '/^\d{4}-\d{2}-\d{2}$/', $schema['offers']['priceValidUntil'] );
+		}
 
-	// ────────────────────────────────────────────────────────────────────────
-	// 5. Menu generator source-grep locks
-	// ────────────────────────────────────────────────────────────────────────
+		public function test_variable_product_with_a_price_range_gets_an_aggregate_offer(): void {
+			$offers = $this->product_schema( array( 'variation_prices' => array( 9 => '8', 10 => '14.5' ) ) )['offers'];
+			self::assertSame( 'AggregateOffer', $offers['@type'] );
+			self::assertSame( '8.00', $offers['lowPrice'] );
+			self::assertSame( '14.50', $offers['highPrice'] );
 
-	public function test_menu_generator_uses_transient_cache(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-menu.php' );
-		$this->assertStringContainsString( 'get_transient', $src );
-		$this->assertStringContainsString( 'set_transient', $src );
-		$this->assertStringContainsString( 'lafka_menu_jsonld', $src );
-	}
+			$offers = $this->product_schema( array( 'variation_prices' => array( 9 => '8', 10 => '8' ) ) )['offers'];
+			self::assertSame( 'Offer', $offers['@type'] );
+			self::assertSame( '8.00', $offers['price'] );
+		}
 
-	public function test_menu_cache_busted_on_product_save(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-menu.php' );
-		$this->assertStringContainsString( 'save_post_product', $src );
-		$this->assertStringContainsString( 'delete_transient', $src );
-	}
+		public function test_product_without_a_price_has_no_offer(): void {
+			self::assertArrayNotHasKey( 'offers', $this->product_schema( array( 'price' => '' ) ) );
+		}
 
-	#[DataProvider('cacheBustHookProvider')]
-	public function test_menu_cache_busted_on_each_relevant_hook( string $hook ): void {
-		// Regression lock for v9.7.5 — before this version only save_post_product
-		// busted the cache, so a product going out of stock or a category rename
-		// could leave stale schema in the transient for up to 12 hours.
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-menu.php' );
-		$this->assertMatchesRegularExpression(
-			"/add_action\(\s*'" . preg_quote( $hook, '/' ) . "'/",
-			$src,
-			"Menu schema must bust its transient cache on the '{$hook}' hook."
-		);
-	}
+		public function test_description_prefers_short_description(): void {
+			$schema = $this->product_schema( array( 'short' => '<p>Crisp greens.</p>', 'long' => 'Long text.' ) );
+			self::assertSame( 'Crisp greens.', $schema['description'] );
+		}
 
-	/**
-	 * @return array<string, array{0:string}>
-	 */
-	public static function cacheBustHookProvider(): array {
-		return array(
-			'product save'              => array( 'save_post_product' ),
-			'product delete'            => array( 'delete_post' ),
-			'stock status change'       => array( 'woocommerce_product_set_stock_status' ),
-			'variation stock change'    => array( 'woocommerce_variation_set_stock_status' ),
-			'product API update'        => array( 'woocommerce_update_product' ),
-			'category edit'             => array( 'edited_product_cat' ),
-			'category create'           => array( 'created_product_cat' ),
-			'category delete'           => array( 'delete_product_cat' ),
-		);
-	}
+		public function test_description_falls_back_to_a_capped_long_description(): void {
+			// Regression: an empty short description used to emit description: null.
+			$long   = "<p>Fresh\n\n   leaves " . str_repeat( 'and crunchy croutons ', 20 ) . '</p>';
+			$schema = $this->product_schema( array( 'long' => $long ) );
 
-	public function test_delete_post_bust_filtered_to_product_post_type(): void {
-		// Naively hooking delete_post would bust the cache on every post deletion
-		// sitewide — must be filtered to 'product' to avoid pointless invalidation.
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-menu.php' );
-		$this->assertMatchesRegularExpression(
-			"/'product'\s*===\s*get_post_type/",
-			$src,
-			'delete_post hook must filter on product post-type before busting cache.'
-		);
-	}
+			self::assertLessThanOrEqual( 160, mb_strlen( $schema['description'] ) );
+			self::assertStringStartsWith( 'Fresh leaves and crunchy', $schema['description'] );
+			self::assertStringEndsWith( '...', $schema['description'] );
 
-	public function test_menu_generator_filters_uncategorized(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-menu.php' );
-		$this->assertStringContainsString( 'uncategorized', $src );
-	}
+			self::assertSame( 'Short one.', $this->product_schema( array( 'long' => 'Short one.' ) )['description'] );
+			self::assertArrayNotHasKey( 'description', $this->product_schema( array() ) );
+		}
 
-	// ────────────────────────────────────────────────────────────────────────
-	// 6. Product generator source-grep locks
-	// ────────────────────────────────────────────────────────────────────────
+		public function test_product_rating_only_from_real_reviews(): void {
+			self::assertArrayNotHasKey( 'aggregateRating', $this->product_schema( array() ) );
+			self::assertArrayNotHasKey( 'aggregateRating', $this->product_schema( array( 'review_count' => 3, 'rating' => 0 ) ) );
 
-	public function test_product_generator_handles_variable_products(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-product.php' );
-		$this->assertStringContainsString( 'AggregateOffer', $src );
-		$this->assertStringContainsString( 'get_variation_prices', $src );
-	}
-
-	public function test_product_generator_emits_price_valid_until(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-product.php' );
-		$this->assertStringContainsString( 'priceValidUntil', $src );
-	}
-
-	public function test_product_generator_emits_brand(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-product.php' );
-		$this->assertStringContainsString( "'Brand'", $src );
-		$this->assertStringContainsString( "'brand'", $src );
-	}
-
-	public function test_product_generator_conditionally_emits_aggregate_rating(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-product.php' );
-		$this->assertStringContainsString( 'AggregateRating', $src );
-		$this->assertStringContainsString( 'get_review_count', $src );
-		$this->assertStringContainsString( 'get_average_rating', $src );
-	}
-
-	// ────────────────────────────────────────────────────────────────────────
-	// 7. Currency resolution (v9.7.3 — replaces hardcoded 'CAD' literals)
-	// ────────────────────────────────────────────────────────────────────────
-
-	public function test_no_hardcoded_currency_literals_in_schema_files(): void {
-		// Regression lock for v9.7.3. Before this version six 'priceCurrency'
-		// emissions were hardcoded to 'CAD' — wrong on every non-CAD store.
-		$paths = array(
-			dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-helpers.php',
-			dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-product.php',
-		);
-		foreach ( $paths as $path ) {
-			$src = file_get_contents( $path );
-			$this->assertDoesNotMatchRegularExpression(
-				"/'priceCurrency'\s*=>\s*'[A-Z]{3}'/",
-				$src,
-				basename( $path ) . ' must not hardcode an ISO-4217 currency literal in priceCurrency.'
+			self::assertSame(
+				array(
+					'@type'       => 'AggregateRating',
+					'ratingValue' => '4.3',
+					'reviewCount' => 3,
+					'bestRating'  => '5',
+					'worstRating' => '1',
+				),
+				$this->product_schema( array( 'review_count' => 3, 'rating' => 4.33 ) )['aggregateRating']
 			);
 		}
-	}
 
-	public function test_currency_helper_reads_woocommerce_currency(): void {
-		Functions\when( 'get_woocommerce_currency' )->justReturn( 'EUR' );
-		Functions\when( 'apply_filters' )->returnArg( 2 );
+		// ── BreadcrumbList ──────────────────────────────────────────────────
 
-		$this->assertSame( 'EUR', \lafka_schema_get_price_currency() );
-	}
+		public function test_breadcrumb_is_skipped_on_the_front_page(): void {
+			Functions\when( 'is_front_page' )->justReturn( true );
+			self::assertNull( lafka_schema_breadcrumb() );
+		}
 
-	// ────────────────────────────────────────────────────────────────────────
-	// 8. Breadcrumb i18n (v9.7.4 — labels translatable for non-English stores)
-	// ────────────────────────────────────────────────────────────────────────
+		public function test_breadcrumb_labels_are_translatable_and_menu_crumb_targets_menu_page(): void {
+			$this->stub_unconfigured_install();
+			Functions\when( '__' )->alias( static fn( $text ) => 'xx-' . $text );
+			Functions\when( 'is_front_page' )->justReturn( false );
+			Functions\when( 'get_queried_object' )->justReturn( null );
+			Functions\when( 'is_product' )->justReturn( false );
+			Functions\when( 'is_product_category' )->justReturn( false );
+			Functions\when( 'is_shop' )->justReturn( true );
 
-	public function test_breadcrumb_home_label_is_translatable(): void {
-		// Regression lock: 'Home' as a string literal in lafka_schema_breadcrumb_item()
-		// would emit untranslated to non-English stores. Must be wrapped in __().
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-breadcrumb.php' );
-		$this->assertMatchesRegularExpression(
-			"/__\(\s*'Home'\s*,\s*'lafka-plugin'\s*\)/",
-			$src,
-			"Breadcrumb 'Home' label must be translatable via __()."
-		);
-	}
+			self::assertSame(
+				array(
+					'@type'           => 'BreadcrumbList',
+					'itemListElement' => array(
+						array( '@type' => 'ListItem', 'position' => 1, 'name' => 'xx-Home', 'item' => 'https://example.test/' ),
+						array( '@type' => 'ListItem', 'position' => 2, 'name' => 'xx-Menu', 'item' => 'https://example.test/menu/' ),
+					),
+				),
+				lafka_schema_breadcrumb()
+			);
+		}
 
-	public function test_breadcrumb_menu_label_is_translatable(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-breadcrumb.php' );
-		$this->assertMatchesRegularExpression(
-			"/__\(\s*'Menu'\s*,\s*'lafka-plugin'\s*\)/",
-			$src,
-			"Breadcrumb 'Menu' label must be translatable via __()."
-		);
-	}
+		// ── Price currency ──────────────────────────────────────────────────
 
-	public function test_currency_filter_can_override(): void {
-		Functions\when( 'get_woocommerce_currency' )->justReturn( 'CAD' );
-		Functions\when( 'apply_filters' )->alias(
-			static function ( $hook, $value ) {
-				return 'lafka_schema_price_currency' === $hook ? 'GBP' : $value;
+		public function test_currency_comes_from_woocommerce(): void {
+			Functions\when( 'get_woocommerce_currency' )->justReturn( 'EUR' );
+			Functions\when( 'apply_filters' )->returnArg( 2 );
+			self::assertSame( 'EUR', \lafka_schema_get_price_currency() );
+		}
+
+		public function test_currency_filter_can_override(): void {
+			Functions\when( 'get_woocommerce_currency' )->justReturn( 'CAD' );
+			Functions\when( 'apply_filters' )->alias(
+				static fn( $hook, $value ) => 'lafka_schema_price_currency' === $hook ? 'GBP' : $value
+			);
+			self::assertSame( 'GBP', \lafka_schema_get_price_currency() );
+		}
+
+		public function test_empty_wc_currency_falls_back_to_usd(): void {
+			// Headless WC setups can return '' during early bootstrap; '' is invalid schema.
+			Functions\when( 'get_woocommerce_currency' )->justReturn( '' );
+			Functions\when( 'apply_filters' )->returnArg( 2 );
+			self::assertSame( 'USD', \lafka_schema_get_price_currency() );
+		}
+
+		// ── Menu cache invalidation ─────────────────────────────────────────
+
+		/**
+		 * The Menu node is cached for 12h; it must be busted when anything that
+		 * changes it changes (v9.7.5: out-of-stock items kept reading InStock).
+		 * The buster is a closure registered at include time, unreachable while
+		 * add_action is a no-op, so the registration is read from source.
+		 */
+		public function test_menu_cache_is_busted_by_every_menu_affecting_hook(): void {
+			$src     = (string) file_get_contents( dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-menu.php' );
+			$missing = array();
+			foreach ( array( 'save_post_product', 'delete_post', 'woocommerce_product_set_stock_status', 'woocommerce_variation_set_stock_status', 'woocommerce_update_product', 'edited_product_cat', 'created_product_cat', 'delete_product_cat' ) as $hook ) {
+				if ( ! preg_match( "/add_action\(\s*'" . preg_quote( $hook, '/' ) . "'/", $src ) ) {
+					$missing[] = $hook;
+				}
 			}
-		);
-
-		$this->assertSame( 'GBP', \lafka_schema_get_price_currency() );
-	}
-
-	public function test_currency_helper_treats_empty_wc_currency_as_usd(): void {
-		// Some headless WC configurations return '' from get_woocommerce_currency
-		// during early bootstrap; emitting '' would produce invalid schema.
-		Functions\when( 'get_woocommerce_currency' )->justReturn( '' );
-		Functions\when( 'apply_filters' )->returnArg( 2 );
-
-		$this->assertSame( 'USD', \lafka_schema_get_price_currency() );
+			self::assertSame( array(), $missing );
+			self::assertMatchesRegularExpression( "/'product'\s*===\s*get_post_type/", $src, 'delete_post must only bust for products.' );
+		}
 	}
 }

@@ -2,10 +2,8 @@
 /**
  * Lafka_Engine_Helper — public utility surface for the addon engine.
  *
- * Replaces the legacy WC_Product_Addons_Helper. Same static-method shape so
- * call sites in the cart, display, and any third-party theme overrides
- * port with a class rename. WC_Product_Addons_Helper is class_aliased to
- * this class at the bottom of the file for back-compat.
+ * Replaces the legacy WC_Product_Addons_Helper (its back-compat class_alias
+ * was removed in v8.18.0; call sites use Lafka_Engine_Helper directly).
  *
  * The central read method, get_product_addons(), wraps Lafka_Engine_Resolver
  * (which returns Lafka_Addon_Group[] VOs) and converts back to the legacy
@@ -57,7 +55,14 @@ class Lafka_Engine_Helper {
 
 		$addons = array();
 		foreach ( $groups as $group ) {
-			$addons[] = self::group_to_legacy_array( $group );
+			$addon = self::group_to_legacy_array( $group );
+			// A group whose every option the operator un-included has nothing
+			// to offer — rendering it would show an empty (possibly required,
+			// hence unsatisfiable) field.
+			if ( empty( $addon['options'] ) ) {
+				continue;
+			}
+			$addons[] = $addon;
 		}
 
 		$addons = self::assign_field_names( $addons, (int) $post_id, $prefix );
@@ -80,10 +85,19 @@ class Lafka_Engine_Helper {
 	/**
 	 * Convert a Lafka_Addon_Group VO to the legacy associative array shape
 	 * that templates and field classes expect.
+	 *
+	 * Options the operator un-ticked ("Include" in the group editor) are
+	 * dropped here — the one place the storefront, the classic cart, the
+	 * Store API cart and addon pricing all read options from — so an
+	 * excluded option is never rendered, never matched from a posted value,
+	 * and never priced.
 	 */
 	public static function group_to_legacy_array( Lafka_Addon_Group $group ): array {
 		$options = array();
 		foreach ( $group->options as $opt ) {
+			if ( ! $opt->included ) {
+				continue;
+			}
 			$options[] = array(
 				'id'       => $opt->id,
 				'label'    => $opt->label,
@@ -215,30 +229,5 @@ class Lafka_Engine_Helper {
 			return false;
 		}
 		return ! empty( $addon['description'] );
-	}
-
-	public static function is_wc_gte( string $version ): bool {
-		return defined( 'WC_VERSION' ) && version_compare( WC_VERSION, $version, '>=' );
-	}
-
-	public static function is_wc_gt( string $version ): bool {
-		return defined( 'WC_VERSION' ) && version_compare( WC_VERSION, $version, '>' );
-	}
-
-	public static function can_upload( $file ): bool {
-		return $file < wp_max_upload_size();
-	}
-
-	public static function is_filesize_over_limit( array $post_file ): bool {
-		$php_size_upload_errors = array( 1, 2 );
-		if ( ! empty( $post_file['error'] ) && in_array( $post_file['error'], $php_size_upload_errors, true ) ) {
-			return true;
-		}
-		return ! self::can_upload( $post_file['size'] ?? 0 );
-	}
-
-	public static function no_image_select_placeholder_src(): string {
-		$src = ( defined( 'WC_PRODUCT_ADDONS_PLUGIN_URL' ) ? WC_PRODUCT_ADDONS_PLUGIN_URL : '' ) . '/assets/images/no-image-select-placeholder.png';
-		return (string) apply_filters( 'woocommerce_product_addons_no_image_select_placeholder_src', $src );
 	}
 }

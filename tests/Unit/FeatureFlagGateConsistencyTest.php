@@ -42,26 +42,6 @@ final class FeatureFlagGateConsistencyTest extends TestCase {
 	}
 
 	/**
-	 * Post-init, with no saved value, is_enabled() resolves the registered theme
-	 * default — exactly like the defaults-aware lafka_get_option() path.
-	 *
-	 * @param string $registered_default The std value the theme registers.
-	 * @param bool   $expected           Whether the flag should read as enabled.
-	 */
-	#[DataProvider( 'registered_default_provider' )]
-	public function test_resolves_registered_default_after_init( string $registered_default, bool $expected ): void {
-		Functions\when( 'get_option' )->justReturn( array() );
-		Functions\when( 'did_action' )->justReturn( 1 );
-		Lafka_Options::set_defaults( array( 'product_addons' => $registered_default ) );
-
-		self::assertSame(
-			$expected,
-			Lafka_Options::is_enabled( 'product_addons' ),
-			'is_enabled() must honour the registered theme default once init has fired.'
-		);
-	}
-
-	/**
 	 * The headline fix: post-init, is_enabled() agrees with the defaults-aware
 	 * get() lookup (the path lafka_get_option() takes) for the same key.
 	 *
@@ -111,38 +91,28 @@ final class FeatureFlagGateConsistencyTest extends TestCase {
 	}
 
 	/**
-	 * A persisted value always wins, in both init states — this is how a fresh
-	 * install behaves once the 'lafka' option is seeded on activation: the
-	 * pre-init gate reads the persisted 'enabled' value directly.
+	 * A persisted value always wins, in both init states: an activation-seeded
+	 * 'enabled' reads ON, and an admin's explicitly-saved '' stays OFF.
 	 *
-	 * @param int  $did_init Stubbed did_action('init') return (0 pre-init, 1 post-init).
+	 * @param int    $did_init Stubbed did_action('init') return (0 pre-init, 1 post-init).
+	 * @param string $saved    Persisted flag value.
+	 * @param bool   $expected Whether the flag should read as enabled.
 	 */
-	#[DataProvider( 'init_state_provider' )]
-	public function test_saved_enabled_value_wins_regardless_of_init_state( int $did_init ): void {
-		Functions\when( 'get_option' )->justReturn( array( 'product_addons' => 'enabled' ) );
+	#[DataProvider( 'saved_value_provider' )]
+	public function test_saved_value_wins_regardless_of_init_state( int $did_init, string $saved, bool $expected ): void {
+		Functions\when( 'get_option' )->justReturn( array( 'product_addons' => $saved ) );
 		Functions\when( 'did_action' )->justReturn( $did_init );
+		Lafka_Options::set_defaults( array( 'product_addons' => 'enabled' === $saved ? '' : 'enabled' ) );
 
-		self::assertTrue( Lafka_Options::is_enabled( 'product_addons' ) );
+		self::assertSame( $expected, Lafka_Options::is_enabled( 'product_addons' ) );
 	}
 
-	/**
-	 * An explicitly-saved empty (disabled) value is respected in both init states
-	 * — the activation seeder is create-only and never overrides an admin choice.
-	 *
-	 * @param int $did_init Stubbed did_action('init') return.
-	 */
-	#[DataProvider( 'init_state_provider' )]
-	public function test_saved_disabled_value_stays_off_regardless_of_init_state( int $did_init ): void {
-		Functions\when( 'get_option' )->justReturn( array( 'product_addons' => '' ) );
-		Functions\when( 'did_action' )->justReturn( $did_init );
-
-		self::assertFalse( Lafka_Options::is_enabled( 'product_addons' ) );
-	}
-
-	public static function init_state_provider(): array {
+	public static function saved_value_provider(): array {
 		return array(
-			'pre-init'  => array( 0 ),
-			'post-init' => array( 1 ),
+			'pre-init, saved enabled'   => array( 0, 'enabled', true ),
+			'post-init, saved enabled'  => array( 1, 'enabled', true ),
+			'pre-init, saved disabled'  => array( 0, '', false ),
+			'post-init, saved disabled' => array( 1, '', false ),
 		);
 	}
 

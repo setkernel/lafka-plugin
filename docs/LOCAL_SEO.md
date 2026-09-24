@@ -26,10 +26,11 @@ Manage at <https://business.google.com>.
 - [ ] **Reviews**: this is huge — see §4.
 
 ## 2. Fill the schema settings (powers the JSON-LD rich results)
-Set these in **WooCommerce → Settings → Restaurant**, or in the Customizer under
-**Lafka — Restaurant Information** (both write the same options). Empty fields are
-omitted from schema (honest), so completing them strengthens your knowledge-panel
-+ rich results:
+Set these in **WooCommerce → Settings → Restaurant** (the canonical source). The
+Customizer panel **Lafka — Restaurant Information** holds the same fields as a
+fallback — it is only used where the WooCommerce tab is left empty. Empty fields
+are omitted from schema (honest), so completing them strengthens your
+knowledge-panel + rich results:
 - [ ] **Cuisine & Payment** → your cuisines (e.g. Pizza, Sushi, Burgers, Vegan) and payment methods (e.g. Visa, Mastercard, Amex, Debit, Cash, Apple Pay).
 - [ ] **Schema & Geo** → business type (`Restaurant`), price range (`$$`), phone (E.164 + display), email, **geo lat/lng** (exact rooftop pin).
 - [ ] **Social Profiles** → every profile URL (Facebook, Instagram, etc.). These become schema `sameAs` — a strong entity-disambiguation signal.
@@ -42,13 +43,15 @@ the URL through <https://search.google.com/test/rich-results>.
 What the code already emits automatically: `Restaurant`/`LocalBusiness`/`FoodEstablishment`,
 `WebSite` (+ sitelinks SearchAction), `areaServed` (your city), `BreadcrumbList`,
 per-product `Product`/`Offer`, and `Menu`. Review stars (`aggregateRating`) appear
-**only when you have real reviews** wired to the social-proof setting — never faked.
+**only on `Product` nodes, built from real WooCommerce product reviews** — never on
+the `Restaurant` node (self-serving LocalBusiness ratings violate Google's
+structured-data policy) and never from the decorative social-proof setting.
 
 ## 3. NAP consistency (Name · Address · Phone)
 Pick ONE canonical format and use it **identically** everywhere — site, GBP,
 Facebook, Instagram, Yelp, Apple Maps, directories. Inconsistent NAP is a top
 cause of weak local ranking.
-- Canonical source on the site: WooCommerce → Settings → General (address) + Restaurant tab (phone), also editable in Customizer → Lafka — Restaurant Information. The footer, schema, and announce bar all read from there.
+- Canonical source on the site: WooCommerce → Settings → General (address) + the Restaurant tab (phone). Customizer → Lafka — Restaurant Information is a fallback used only where those are empty. The footer, schema, and announce bar all read through the same resolver.
 
 ## 4. Reviews (ranking + conversion)
 - [ ] After each order, ask for a Google review — add a short link (GBP gives a
@@ -70,7 +73,7 @@ city/neighbourhood directories. Same NAP everywhere.
 
 ## 7. Measure
 - **Google Search Console** — verify the domain; watch local query impressions/clicks, fix coverage issues, submit the sitemap.
-- **GA4 + Clarity** (already wired) — watch `order_channel_click[direct]`, `select_item`, `begin_checkout`, `purchase`; Clarity heatmaps on `/menu/` + PDP.
+- **GA4 + Clarity** (once configured under Customizer → Lafka — Analytics) — watch `order_channel_click[direct]`, `select_item`, `begin_checkout`, `purchase`; Clarity heatmaps on `/menu/` + PDP.
 - Monthly: Map Pack rank for your top 5 queries, GBP calls/direction-requests/website-clicks.
 
 ---

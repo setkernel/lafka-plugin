@@ -14,7 +14,9 @@
  *   - Price range (for schema priceRange)
  *   - Phone display format (the human-readable phone shown in the UI)
  *   - sameAs URLs (Facebook, Instagram, Yelp, etc. — for schema sameAs)
- *   - Homepage hero image
+ *
+ * (The homepage hero / LCP image is set in the Customizer — Lafka
+ * Restaurant Info → Homepage Hero — which is what lcp-preload.php reads.)
  *
  * **What this tab does NOT duplicate** (sourced from WP/WC core instead):
  *   - Restaurant name → `get_bloginfo('name')` (WP Settings → General → Site Title)
@@ -87,7 +89,6 @@ if ( ! function_exists( 'lafka_define_wc_settings_restaurant_class' ) ) {
 						'cuisine'    => __( 'Cuisine & Payment', 'lafka-plugin' ),
 						'schema'     => __( 'Schema & Geo', 'lafka-plugin' ),
 						'social'     => __( 'Social Profiles', 'lafka-plugin' ),
-						'hero'       => __( 'Homepage Hero', 'lafka-plugin' ),
 						'promotions' => __( 'Promotions', 'lafka-plugin' ),
 					)
 				);
@@ -101,8 +102,6 @@ if ( ! function_exists( 'lafka_define_wc_settings_restaurant_class' ) ) {
 						return $this->get_schema_settings();
 					case 'social':
 						return $this->get_social_settings();
-					case 'hero':
-						return $this->get_hero_settings();
 					case 'promotions':
 						return $this->get_promotions_settings();
 					default:
@@ -280,31 +279,6 @@ if ( ! function_exists( 'lafka_define_wc_settings_restaurant_class' ) ) {
 					array(
 						'type' => 'sectionend',
 						'id'   => 'lafka_restaurant_social_end',
-					),
-				);
-			}
-
-			private function get_hero_settings() {
-				return array(
-					array(
-						'title' => __( 'Homepage hero (LCP preload)', 'lafka-plugin' ),
-						'type'  => 'title',
-						'desc'  => $this->intro_html(
-							__( 'Image preloaded on the homepage for fastest Largest Contentful Paint. Used by the lafka_lcp_image_url filter in lafka-plugin/incl/perf/lcp-preload.php. Leave empty to disable preloading.', 'lafka-plugin' )
-						),
-						'id'    => 'lafka_restaurant_hero_title',
-					),
-					array(
-						'title'    => __( 'Hero image URL', 'lafka-plugin' ),
-						'desc_tip' => __( 'Absolute URL. Use Media Library "Copy URL" to grab the address of an uploaded image.', 'lafka-plugin' ),
-						'id'       => 'lafka_homepage_hero_image',
-						'type'     => 'text',
-						'default'  => '',
-						'css'      => 'min-width: 480px;',
-					),
-					array(
-						'type' => 'sectionend',
-						'id'   => 'lafka_restaurant_hero_end',
 					),
 				);
 			}

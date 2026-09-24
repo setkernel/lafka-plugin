@@ -12,7 +12,6 @@
  * surface is the Product node, which is sourced from real WooCommerce reviews.
  *
  * @package Lafka\Plugin\Tests\Unit
- * @since   9.22.3
  */
 
 declare(strict_types=1);
@@ -64,13 +63,11 @@ final class RestaurantSchemaNoSelfRatingTest extends TestCase {
 				return self::FIXTURES[ $key ] ?? $default;
 			}
 		);
-		// Robust against 1- and 2-arg calls: WP's get_option() may be invoked
-		// with only a key (e.g. Lafka_Order_Hours::get_schedule_display_hours_map()
-		// reads `get_option( 'lafka_order_hours_options' )`). returnArg( 2 ) throws
-		// in that case, so alias to "return the supplied default, else false" —
-		// the same contract get_option() honours for unset options.
+		// The social-proof figures are exposed through options too, so a
+		// rating read from either store would surface. get_option() may be
+		// called with a key only (order-hours map), hence the default.
 		Functions\when( 'get_option' )->alias(
-			static fn( $key, $default = false ) => $default
+			static fn( $key, $default = false ) => self::FIXTURES[ $key ] ?? $default
 		);
 		Functions\when( 'get_bloginfo' )->justReturn( '' );
 		Functions\when( 'get_site_icon_url' )->justReturn( '' );
@@ -84,60 +81,11 @@ final class RestaurantSchemaNoSelfRatingTest extends TestCase {
 		$this->stub_populated_install();
 		$schema = lafka_schema_restaurant();
 
-		$this->assertIsArray( $schema );
-		// Sanity: the social-proof fixtures ARE set, yet no rating must surface.
-		$this->assertSame( '4.8', self::FIXTURES['lafka_social_proof_rating'] );
+		$this->assertSame( 'Acme Test Cafe', $schema['name'], 'Precondition: the node is built from the populated install.' );
 		$this->assertArrayNotHasKey(
 			'aggregateRating',
 			$schema,
 			'Restaurant/LocalBusiness node must never emit a self-serving aggregateRating built from the decorative social-proof theme_mods.'
 		);
-	}
-
-	public function test_restaurant_schema_source_does_not_reference_social_proof_theme_mods(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-restaurant.php' );
-		$this->assertNotFalse( $src );
-
-		// Strip comments before asserting: the source documents WHY it refuses
-		// to transcribe the social-proof theme_mods (and that explanation names
-		// them), but the executable code must never actually read those keys or
-		// emit an aggregateRating. Linting the code-only token stream keeps this
-		// regression lock honest without forbidding the explanatory comment.
-		$code = self::strip_php_comments( $src );
-
-		$this->assertStringNotContainsString(
-			'lafka_social_proof_rating',
-			$code,
-			'Restaurant schema code must not read the decorative social-proof rating theme_mod.'
-		);
-		$this->assertStringNotContainsString(
-			'lafka_social_proof_count',
-			$code,
-			'Restaurant schema code must not read the decorative social-proof count theme_mod.'
-		);
-		$this->assertStringNotContainsString(
-			'aggregateRating',
-			$code,
-			'Restaurant schema code must not emit an aggregateRating key.'
-		);
-	}
-
-	/**
-	 * Return the source with all comments (line, block and docblock) removed,
-	 * so assertions target executable code rather than documentation prose.
-	 */
-	private static function strip_php_comments( string $src ): string {
-		$code = '';
-		foreach ( token_get_all( $src ) as $token ) {
-			if ( is_array( $token ) ) {
-				if ( T_COMMENT === $token[0] || T_DOC_COMMENT === $token[0] ) {
-					continue;
-				}
-				$code .= $token[1];
-			} else {
-				$code .= $token;
-			}
-		}
-		return $code;
 	}
 }

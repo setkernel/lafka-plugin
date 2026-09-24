@@ -18,6 +18,8 @@
 
 defined( 'ABSPATH' ) || exit;
 
+require_once __DIR__ . '/../lafka-shipping-method-helpers.php';
+
 if ( ! function_exists( 'lafka_get_free_delivery_threshold' ) ) {
 	/**
 	 * SSOT free-delivery threshold in store currency (0 = off).
@@ -74,7 +76,7 @@ if ( ! function_exists( 'lafka_free_delivery_apply_rates' ) ) {
 			return $rates;
 		}
 		foreach ( (array) $rates as $rate ) {
-			if ( ! is_object( $rate ) || 'local_pickup' === $rate->method_id ) {
+			if ( ! is_object( $rate ) || lafka_is_pickup_shipping_method( $rate->method_id ) ) {
 				continue;
 			}
 			$rate->cost = 0;

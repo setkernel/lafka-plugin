@@ -51,7 +51,7 @@
  *      classic notice text (WooCommerce converts the notice to a RouteException).
  *
  * @package Lafka_Addons_Engine
- * @since   9.36.0
+ * @since   10.0.0
  */
 
 defined( 'ABSPATH' ) || exit;

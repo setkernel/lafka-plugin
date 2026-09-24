@@ -2,8 +2,9 @@
 /**
  * Last-order card.
  *
- * Sets a 365-day cookie on woocommerce_thankyou with a JSON summary of the
- * order's line items. Reader returns null/array. Renderer echoes a "Your usual?"
+ * Sets a 365-day cookie when the order-received page is requested (on
+ * template_redirect, before any output — woocommerce_thankyou fires mid-page,
+ * after headers are sent) with a signed JSON summary of the order's items. Reader returns null/array. Renderer echoes a "Your usual?"
  * card on PDP for returning visitors. Reorder AJAX endpoint re-adds the
  * order's items to the cart.
  *
@@ -66,16 +67,15 @@ if ( ! function_exists( 'lafka_pdp_recent_order_signature' ) ) {
     }
 }
 
-if ( ! function_exists( 'lafka_pdp_set_last_order_cookie' ) ) {
-    function lafka_pdp_set_last_order_cookie( int $order_id ): void {
-        if ( headers_sent() ) {
-            return;
-        }
-        $order = function_exists( 'wc_get_order' ) ? wc_get_order( $order_id ) : null;
-        if ( ! $order ) {
-            return;
-        }
-
+if ( ! function_exists( 'lafka_pdp_last_order_cookie_value' ) ) {
+    /**
+     * The signed JSON the last-order cookie stores for an order (first six
+     * lines), or null when the order has no line items.
+     *
+     * @param WC_Order $order Order.
+     * @return string|null
+     */
+    function lafka_pdp_last_order_cookie_value( $order ): ?string {
         $items = array();
         foreach ( $order->get_items() as $item ) {
             $items[] = array(
@@ -90,36 +90,104 @@ if ( ! function_exists( 'lafka_pdp_set_last_order_cookie' ) ) {
             }
         }
         if ( empty( $items ) ) {
-            return;
+            return null;
         }
 
-        $payload = array(
-            'order_id' => (int) $order_id,
+        $order_id = (int) $order->get_id();
+        $payload  = array(
+            'order_id' => $order_id,
             'items'    => $items,
+            // Tamper-proof the client-side cookie: only the server can mint
+            // this signature, so the reorder endpoint can reject a forged or
+            // edited cookie before acting on its contents.
+            'sig'      => lafka_pdp_recent_order_signature( $order_id, $items ),
         );
-        // Tamper-proof the client-side cookie. Only the server can mint this
-        // signature, so the reorder endpoint can detect and reject a forged or
-        // edited cookie before acting on its contents.
-        $payload['sig'] = lafka_pdp_recent_order_signature( (int) $order_id, $items );
-        $json = wp_json_encode( $payload );
-        if ( false === $json ) {
+        $json     = wp_json_encode( $payload );
+
+        return false === $json ? null : $json;
+    }
+}
+
+if ( ! function_exists( 'lafka_pdp_last_order_cookie_options' ) ) {
+    /**
+     * setcookie() options for the last-order cookie: a year, sitewide, never
+     * readable from JavaScript, not sent on cross-site subrequests.
+     *
+     * @return array<string,mixed>
+     */
+    function lafka_pdp_last_order_cookie_options(): array {
+        return array(
+            'expires'  => time() + YEAR_IN_SECONDS,
+            'path'     => '/',
+            'secure'   => is_ssl(),
+            'httponly' => true,
+            'samesite' => 'Lax',
+        );
+    }
+}
+
+if ( ! function_exists( 'lafka_pdp_set_last_order_cookie' ) ) {
+    /**
+     * Store the last-order cookie for an order (no-op once output started).
+     *
+     * @param int $order_id Order id.
+     * @return void
+     */
+    function lafka_pdp_set_last_order_cookie( int $order_id ): void {
+        if ( headers_sent() ) {
+            return;
+        }
+        $order = function_exists( 'wc_get_order' ) ? wc_get_order( $order_id ) : null;
+        if ( ! $order ) {
+            return;
+        }
+        $json = lafka_pdp_last_order_cookie_value( $order );
+        if ( null === $json ) {
             return;
         }
 
-        setcookie(
-            LAFKA_PDP_LAST_ORDER_COOKIE,
-            $json,
-            array(
-				'expires'  => time() + YEAR_IN_SECONDS,
-				'path'     => '/',
-				'secure'   => is_ssl(),
-				'httponly' => true,
-				'samesite' => 'Lax',
-            ) 
-        );
+        setcookie( LAFKA_PDP_LAST_ORDER_COOKIE, $json, lafka_pdp_last_order_cookie_options() );
         $_COOKIE[ LAFKA_PDP_LAST_ORDER_COOKIE ] = $json;
     }
-    add_action( 'woocommerce_thankyou', 'lafka_pdp_set_last_order_cookie' );
+}
+
+if ( ! function_exists( 'lafka_pdp_confirmed_order_id' ) ) {
+    /**
+     * The order whose order-received page is being requested, when the URL
+     * carries that order's key (the same proof WooCommerce requires to show
+     * the page); 0 otherwise.
+     *
+     * @return int
+     */
+    function lafka_pdp_confirmed_order_id(): int {
+        if ( ! function_exists( 'is_wc_endpoint_url' ) || ! is_wc_endpoint_url( 'order-received' ) ) {
+            return 0;
+        }
+        $order_id = absint( get_query_var( 'order-received' ) );
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- the order key is the capability (as on WC's own thank-you page).
+        $key   = isset( $_GET['key'] ) ? wc_clean( wp_unslash( $_GET['key'] ) ) : '';
+        $order = $order_id > 0 ? wc_get_order( $order_id ) : null;
+        if ( ! $order || '' === $key || ! hash_equals( (string) $order->get_order_key(), (string) $key ) ) {
+            return 0;
+        }
+
+        return $order_id;
+    }
+}
+
+if ( ! function_exists( 'lafka_pdp_remember_confirmed_order' ) ) {
+    /**
+     * template_redirect: set the last-order cookie while headers can still be sent.
+     *
+     * @return void
+     */
+    function lafka_pdp_remember_confirmed_order(): void {
+        $order_id = lafka_pdp_confirmed_order_id();
+        if ( $order_id > 0 ) {
+            lafka_pdp_set_last_order_cookie( $order_id );
+        }
+    }
+    add_action( 'template_redirect', 'lafka_pdp_remember_confirmed_order' );
 }
 
 if ( ! function_exists( 'lafka_pdp_get_last_order' ) ) {

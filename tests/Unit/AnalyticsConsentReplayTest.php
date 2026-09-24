@@ -1,24 +1,12 @@
 <?php
 /**
- * AnalyticsConsentReplayTest — locks down the returning-visitor consent replay
- * fix (audit f007).
- *
- * Regression context: Consent Mode v2 defaults emit 'denied' at wp_head:1 on
- * every page load. Originally the footer banner JS only ran applyConsent()
- * inside the accept/reject/save click handlers and, on load, did
- * `if (!existing){ showBanner(); }` — so a returning visitor with a stored
- * decision had their grants read but never replayed to gtag, leaving every
- * subsequent page stuck at the 'denied' default.
- *
- * The fix is two-layered:
- *   1. A head replay (lafka_emit_consent_replay) fires gtag('consent','update')
- *      from the persisted localStorage decision INSIDE the wait_for_update
- *      window (wp_head:1, right after the defaults).
- *   2. The footer banner JS re-applies the stored decision on load
- *      (`if (existing){ applyConsent(existing); } else { showBanner(); }`).
+ * Returning-visitor consent replay (audit f007). Consent Mode v2 defaults emit
+ * 'denied' on every page; a stored decision must be replayed (in <head>,
+ * inside the wait_for_update window, and again by the footer banner JS) or a
+ * visitor who accepted is silently downgraded to denied on every later page.
+ * Registration order (replay after defaults) is covered in AnalyticsEmitterTest.
  *
  * @package Lafka\Plugin\Tests\Unit
- * @since   9.23.0
  */
 
 declare(strict_types=1);
@@ -84,43 +72,16 @@ final class AnalyticsConsentReplayTest extends TestCase {
 	// Footer banner JS: replays the stored decision on load
 	// ────────────────────────────────────────────────────────────────────────
 
-	public function test_banner_js_applies_stored_consent_on_load(): void {
-		// The core regression: on load, when a decision is already stored the
-		// banner JS MUST call applyConsent(existing) — not skip straight to the
-		// no-op `if (!existing)` branch that left returning visitors denied.
-		// A configured destination satisfies the banner's lafka_analytics_is_active()
-		// gate so the banner JS is emitted (gate itself covered by the dedicated
-		// AnalyticsBannerDestinationGateTest).
+	public function test_banner_js_replays_stored_decision_and_only_shows_banner_without_one(): void {
 		$this->stub_settings( array(
 			'lafka_consent_banner_enabled' => '1',
 			'lafka_gtm_container_id'       => 'GTM-XYZ987',
 		) );
 		$out = $this->capture( 'lafka_emit_consent_banner' );
 		$this->assertMatchesRegularExpression(
-			'/if\s*\(\s*existing\s*\)\s*\{\s*applyConsent\(\s*existing\s*\)/',
+			'/if\s*\(\s*existing\s*\)\s*\{\s*applyConsent\(\s*existing\s*\);\s*\}\s*else\s*\{\s*showBanner\(\);/',
 			$out,
-			'Banner JS must replay the stored decision via applyConsent(existing) on load.'
-		);
-	}
-
-	public function test_banner_js_only_shows_banner_when_no_stored_decision(): void {
-		// showBanner() must be the *else* of the stored-decision check, so a
-		// returning visitor with a decision never re-sees the banner.
-		$this->stub_settings( array(
-			'lafka_consent_banner_enabled' => '1',
-			'lafka_gtm_container_id'       => 'GTM-XYZ987',
-		) );
-		$out = $this->capture( 'lafka_emit_consent_banner' );
-		$this->assertMatchesRegularExpression(
-			'/\}\s*else\s*\{\s*showBanner\(\);/',
-			$out,
-			'showBanner() must be gated behind the "no stored decision" else branch.'
-		);
-		// The old, broken `if (!existing){ showBanner(); }` form must be gone.
-		$this->assertDoesNotMatchRegularExpression(
-			'/if\s*\(\s*!\s*existing\s*\)\s*\{\s*showBanner/',
-			$out,
-			'The broken on-load branch (if(!existing){showBanner();}) must be removed.'
+			'On load the stored decision must be re-applied; the banner shows only when none is stored.'
 		);
 	}
 
@@ -147,38 +108,5 @@ final class AnalyticsConsentReplayTest extends TestCase {
 		$this->stub_settings( array( 'lafka_consent_banner_enabled' => '0' ) );
 		$out = $this->capture( 'lafka_emit_consent_replay' );
 		$this->assertSame( '', $out, 'Head replay must no-op when the consent banner feature is off.' );
-	}
-
-	public function test_head_replay_guards_against_parse_errors(): void {
-		// Private-mode / corrupt-JSON access must not throw; the script wraps the
-		// read in try/catch so a failure simply leaves the denied defaults intact.
-		$this->stub_settings( array( 'lafka_consent_banner_enabled' => '1' ) );
-		$out = $this->capture( 'lafka_emit_consent_replay' );
-		$this->assertStringContainsString( 'try {', $out );
-		$this->assertStringContainsString( 'catch(e)', $out );
-	}
-
-	// ────────────────────────────────────────────────────────────────────────
-	// Hook registration: replay runs at wp_head:1, after the defaults
-	// ────────────────────────────────────────────────────────────────────────
-
-	public function test_head_replay_hooked_at_wp_head_priority_1(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/analytics/lafka-analytics-emitter.php' );
-		$this->assertMatchesRegularExpression(
-			"/add_action\(\s*'wp_head',\s*'lafka_emit_consent_replay',\s*1\s*\)/",
-			$src
-		);
-	}
-
-	public function test_head_replay_registered_after_defaults(): void {
-		// Order is load-bearing: the replay calls gtag(), which the defaults
-		// emit defines. Same priority (1) means registration order decides
-		// execution order, so the replay registration must come AFTER defaults.
-		$src          = file_get_contents( dirname( __DIR__, 2 ) . '/incl/analytics/lafka-analytics-emitter.php' );
-		$defaults_pos = strpos( $src, "add_action( 'wp_head', 'lafka_emit_consent_mode_defaults', 1 )" );
-		$replay_pos   = strpos( $src, "add_action( 'wp_head', 'lafka_emit_consent_replay', 1 )" );
-		$this->assertNotFalse( $defaults_pos );
-		$this->assertNotFalse( $replay_pos );
-		$this->assertGreaterThan( $defaults_pos, $replay_pos );
 	}
 }

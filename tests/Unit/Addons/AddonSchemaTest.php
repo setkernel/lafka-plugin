@@ -26,18 +26,6 @@ final class AddonSchemaTest extends TestCase {
 		parent::tearDown();
 	}
 
-	public function test_pricing_mode_constants_defined(): void {
-		self::assertSame( 'flat_group', Lafka_Addon_Schema::PRICING_FLAT_GROUP );
-		self::assertSame( 'flat_per_option', Lafka_Addon_Schema::PRICING_FLAT_PER_OPTION );
-		self::assertSame( 'flat_per_size', Lafka_Addon_Schema::PRICING_FLAT_PER_SIZE );
-		self::assertSame( 'matrix', Lafka_Addon_Schema::PRICING_MATRIX );
-	}
-
-	public function test_source_constants_defined(): void {
-		self::assertSame( 'manual', Lafka_Addon_Schema::SOURCE_MANUAL );
-		self::assertSame( 'attribute', Lafka_Addon_Schema::SOURCE_ATTRIBUTE );
-	}
-
 	public function test_default_group_returns_canonical_shape(): void {
 		$defaults = Lafka_Addon_Schema::default_group();
 

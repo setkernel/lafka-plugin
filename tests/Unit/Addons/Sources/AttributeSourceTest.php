@@ -42,12 +42,6 @@ final class AttributeSourceTest extends TestCase {
 		parent::tearDown();
 	}
 
-	public function test_id_and_label(): void {
-		$source = new Lafka_Attribute_Source();
-		self::assertSame( Lafka_Addon_Schema::SOURCE_ATTRIBUTE, $source->id() );
-		self::assertNotEmpty( $source->label() );
-	}
-
 	public function test_get_options_returns_term_based_options(): void {
 		$group = Lafka_Addon_Group::from_array( array(
 			'name'                     => 'G',

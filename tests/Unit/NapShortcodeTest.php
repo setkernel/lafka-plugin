@@ -1,4 +1,12 @@
 <?php
+/**
+ * [lafka_nap] (incl/schema/lafka-nap-shortcode.php): the NAP block and its
+ * single parts, all from lafka_schema_get_nap() (Customizer-driven), escaped
+ * on output, with a tap-to-call link only when a phone number is set.
+ *
+ * @package Lafka\Plugin\Tests\Unit
+ */
+
 declare(strict_types=1);
 
 namespace LafkaPlugin\Tests\Unit;
@@ -7,27 +15,55 @@ use Brain\Monkey;
 use Brain\Monkey\Functions;
 use PHPUnit\Framework\TestCase;
 
-/**
- * P6-UX-5 + P6-SEO-1 + W2-T1 regression lock: canonical NAP must be
- * Customizer-driven, NOT hardcoded. After the W2-T1 refactor:
- *
- *   - lafka_get_restaurant_info() (lafka-schema-helpers.php) is the single
- *     resolver. It reads theme_mod -> option -> WP-core fallback per field.
- *   - lafka_schema_get_nap() pulls from the resolver.
- *   - The [lafka_nap] shortcode in lafka-plugin.php delegates to
- *     lafka_schema_get_nap().
- *
- * No restaurant-specific literals must appear in OSS source. Tests assert
- * STRUCTURE (presence + types) and resolver behavior (Customizer override),
- * not literal Peppery values.
- */
-require_once dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-helpers.php';
-
 final class NapShortcodeTest extends TestCase {
+
+	private const NAP = array(
+		'name'              => 'Test <Kitchen>',
+		'street'            => '123 Test Street',
+		'city'              => 'Testville',
+		'region'            => 'TS',
+		'postal'            => 'T1S 1S1',
+		'country'           => 'CA',
+		'telephone'         => '+15551234567',
+		'telephone_display' => '(555) 123-4567',
+	);
+
+	/** @var list<array{0:string, 1:mixed}>|null add_shortcode() calls made when the module loaded. */
+	private static ?array $shortcodes = null;
+
+	/** @var array<string, string> */
+	private array $nap = self::NAP;
 
 	protected function setUp(): void {
 		parent::setUp();
 		Monkey\setUp();
+		$this->nap = self::NAP;
+
+		$escape = static fn( $s ) => htmlspecialchars( (string) $s, ENT_QUOTES );
+		Functions\when( 'esc_html' )->alias( $escape );
+		Functions\when( 'esc_attr' )->alias( $escape );
+		Functions\when( 'shortcode_atts' )->alias( static fn( $defaults, $atts ) => array_merge( $defaults, array_intersect_key( (array) $atts, $defaults ) ) );
+		Functions\when( 'apply_filters' )->alias( fn( $hook, $value ) => 'lafka_schema_nap' === $hook ? $this->nap : $value );
+		// Inputs of lafka_get_restaurant_info(), which lafka_schema_get_nap() reads first.
+		Functions\when( 'get_option' )->alias( static fn( $key, $fallback = false ) => $fallback );
+		Functions\when( 'get_theme_mod' )->alias( static fn( $key, $fallback = false ) => $fallback );
+		Functions\when( 'get_bloginfo' )->justReturn( '' );
+		Functions\when( 'get_site_icon_url' )->justReturn( '' );
+		Functions\when( 'home_url' )->alias( static fn( $path = '' ) => 'https://example.test' . $path );
+		Functions\when( 'trailingslashit' )->alias( static fn( $url ) => rtrim( (string) $url, '/' ) . '/' );
+		Functions\when( 'wp_cache_get' )->justReturn( false );
+		Functions\when( 'wp_cache_set' )->justReturn( true );
+
+		require_once dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-helpers.php';
+		if ( null === self::$shortcodes ) {
+			self::$shortcodes = array();
+			Functions\when( 'add_shortcode' )->alias(
+				static function ( $tag, $callback ) {
+					self::$shortcodes[] = array( $tag, $callback );
+				}
+			);
+			require_once dirname( __DIR__, 2 ) . '/incl/schema/lafka-nap-shortcode.php';
+		}
 	}
 
 	protected function tearDown(): void {
@@ -35,176 +71,56 @@ final class NapShortcodeTest extends TestCase {
 		parent::tearDown();
 	}
 
-	/**
-	 * The schema helpers file MUST NOT contain restaurant-specific literals.
-	 * Operator content flows through Customizer, not source code.
-	 */
-	public function test_helpers_file_contains_no_hardcoded_site_values(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-helpers.php' );
-		$forbidden = array( 'Peppery', 'Sackville Drive', 'B4C 2R8', '19022525353', '902-252-5353', '44.7720', '-63.6789', 'three.ppps' );
-		foreach ( $forbidden as $needle ) {
-			$this->assertStringNotContainsString(
-				$needle,
-				$src,
-				"OSS-safety: {$needle} must not appear in lafka-schema-helpers.php — Customizer is the source-of-truth."
-			);
+	public function test_registers_the_lafka_nap_shortcode(): void {
+		$this->assertSame( array( array( 'lafka_nap', 'lafka_nap_shortcode' ) ), self::$shortcodes );
+	}
+
+	public function test_full_block_is_an_escaped_address_with_a_tap_to_call_link(): void {
+		$this->assertSame(
+			'<address class="lafka-nap"><strong>Test &lt;Kitchen&gt;</strong><br>123 Test Street, Testville, TS T1S 1S1<br><a href="tel:+15551234567">(555) 123-4567</a></address>',
+			lafka_nap_shortcode( array() )
+		);
+		$this->assertSame( lafka_nap_shortcode( '' ), lafka_nap_shortcode( array( 'part' => 'unknown' ) ) );
+	}
+
+	public function test_single_parts(): void {
+		$expected = array(
+			'name'    => 'Test &lt;Kitchen&gt;',
+			'address' => '123 Test Street, Testville, TS T1S 1S1',
+			'street'  => '123 Test Street',
+			'city'    => 'Testville',
+			'region'  => 'TS',
+			'postal'  => 'T1S 1S1',
+			'phone'   => '<a href="tel:+15551234567">(555) 123-4567</a>',
+		);
+		foreach ( $expected as $part => $html ) {
+			$this->assertSame( $html, lafka_nap_shortcode( array( 'part' => $part ) ), $part );
 		}
 	}
 
-	/**
-	 * Resolver returns the documented array shape with all required keys.
-	 */
-	public function test_resolver_returns_documented_shape(): void {
-		Functions\when( 'get_theme_mod' )->returnArg( 2 ); // returns the default
-		Functions\when( 'get_option' )->returnArg( 2 );
-		Functions\when( 'get_bloginfo' )->justReturn( '' );
-		Functions\when( 'get_site_icon_url' )->justReturn( '' );
-		Functions\when( 'home_url' )->justReturn( 'http://example.test' );
-		Functions\when( 'trailingslashit' )->alias( fn( $url ) => rtrim( $url, '/' ) . '/' );
-		Functions\when( 'apply_filters' )->returnArg( 2 );
+	public function test_phone_link_is_escaped(): void {
+		$this->nap['telephone']         = '+1"555';
+		$this->nap['telephone_display'] = '<b>555</b>';
+		$link                           = '<a href="tel:+1&quot;555">&lt;b&gt;555&lt;/b&gt;</a>';
+		$this->assertSame( $link, lafka_nap_shortcode( array( 'part' => 'phone' ) ) );
+		$this->assertStringContainsString( '<br>' . $link . '</address>', lafka_nap_shortcode( array() ) );
+	}
 
-		$info = lafka_get_restaurant_info();
+	public function test_no_phone_means_no_tel_link(): void {
+		$this->nap['telephone'] = '';
+		$this->assertSame( '', lafka_nap_shortcode( array( 'part' => 'phone' ) ) );
+		$this->assertStringNotContainsString( 'tel:', lafka_nap_shortcode( array() ) );
+	}
 
-		$expected_keys = array(
-			'name', 'street', 'city', 'region', 'postal', 'country',
-			'address_display', 'address_short',
-			'phone_e164', 'phone_display', 'email',
-			'geo_lat', 'geo_lng',
-			'price_range', 'cuisines', 'payment_methods',
-			'business_type', 'same_as',
-			'logo_url', 'menu_url', 'directions_url',
-			'hours', 'opening_hours',
+	public function test_address_skips_missing_pieces(): void {
+		$this->nap = array_merge(
+			self::NAP,
+			array(
+				'street' => '',
+				'region' => '',
+				'postal' => '',
+			)
 		);
-		foreach ( $expected_keys as $key ) {
-			$this->assertArrayHasKey( $key, $info, "Resolver must expose '{$key}'" );
-		}
-		$this->assertIsArray( $info['business_type'] );
-		$this->assertIsArray( $info['cuisines'] );
-		$this->assertIsArray( $info['payment_methods'] );
-		$this->assertIsArray( $info['same_as'] );
-		$this->assertIsArray( $info['hours'] );
-		$this->assertIsArray( $info['opening_hours'] );
-	}
-
-	/**
-	 * Resolver picks up theme_mod values when set (Customizer override path).
-	 */
-	public function test_resolver_picks_up_theme_mod_values(): void {
-		$fixtures = array(
-			'lafka_business_name'          => 'Test Cafe',
-			'lafka_business_street'        => '123 Main St',
-			'lafka_business_city'          => 'Springfield',
-			'lafka_business_region'        => 'IL',
-			'lafka_business_postal'        => '62704',
-			'lafka_business_country'       => 'US',
-			'lafka_business_phone_e164'    => '+15551234567',
-			'lafka_business_phone_display' => '+1 555-123-4567',
-			'lafka_business_geo_lat'       => '39.78',
-			'lafka_business_geo_lng'       => '-89.65',
-			'lafka_business_hours_mon'     => '11:00-23:00',
-		);
-		Functions\when( 'get_theme_mod' )->alias( function ( $key, $default = null ) use ( $fixtures ) {
-			return $fixtures[ $key ] ?? $default;
-		} );
-		Functions\when( 'get_option' )->returnArg( 2 );
-		Functions\when( 'get_bloginfo' )->justReturn( '' );
-		Functions\when( 'get_site_icon_url' )->justReturn( '' );
-		Functions\when( 'home_url' )->justReturn( 'http://example.test' );
-		Functions\when( 'trailingslashit' )->alias( fn( $url ) => rtrim( $url, '/' ) . '/' );
-		Functions\when( 'apply_filters' )->returnArg( 2 );
-
-		$info = lafka_get_restaurant_info();
-
-		$this->assertSame( 'Test Cafe', $info['name'] );
-		$this->assertSame( '123 Main St', $info['street'] );
-		$this->assertSame( 'Springfield', $info['city'] );
-		$this->assertSame( '+15551234567', $info['phone_e164'] );
-		$this->assertSame( '39.78', $info['geo_lat'] );
-		$this->assertNotEmpty( $info['address_display'] );
-		$this->assertNotEmpty( $info['address_short'] );
-		$this->assertNotEmpty( $info['directions_url'] );
-		$this->assertArrayHasKey( 'Monday', $info['hours'] );
-		$this->assertSame( '11:00-23:00', $info['hours']['Monday'] );
-		$this->assertCount( 1, $info['opening_hours'] );
-	}
-
-	/**
-	 * Resolver falls back to WP core (get_bloginfo) when no Customizer value.
-	 */
-	public function test_resolver_falls_back_to_wp_core(): void {
-		Functions\when( 'get_theme_mod' )->returnArg( 2 );
-		Functions\when( 'get_option' )->returnArg( 2 );
-		Functions\when( 'get_bloginfo' )->alias( function ( $what ) {
-			if ( 'name' === $what ) {
-				return 'Generic WP Site';
-			}
-			if ( 'admin_email' === $what ) {
-				return 'admin@example.test';
-			}
-			return '';
-		} );
-		Functions\when( 'get_site_icon_url' )->justReturn( '' );
-		Functions\when( 'home_url' )->justReturn( 'http://example.test' );
-		Functions\when( 'trailingslashit' )->alias( fn( $url ) => rtrim( $url, '/' ) . '/' );
-		Functions\when( 'apply_filters' )->returnArg( 2 );
-
-		$info = lafka_get_restaurant_info();
-
-		$this->assertSame( 'Generic WP Site', $info['name'] );
-		$this->assertSame( 'admin@example.test', $info['email'] );
-	}
-
-	/**
-	 * The lafka_restaurant_info filter is the topmost extension point.
-	 */
-	public function test_resolver_filterable_via_lafka_restaurant_info(): void {
-		Functions\when( 'get_theme_mod' )->returnArg( 2 );
-		Functions\when( 'get_option' )->returnArg( 2 );
-		Functions\when( 'get_bloginfo' )->justReturn( '' );
-		Functions\when( 'get_site_icon_url' )->justReturn( '' );
-		Functions\when( 'home_url' )->justReturn( 'http://example.test' );
-		Functions\when( 'trailingslashit' )->alias( fn( $url ) => rtrim( $url, '/' ) . '/' );
-		Functions\when( 'apply_filters' )->alias( function ( $hook, $value ) {
-			if ( 'lafka_restaurant_info' === $hook && is_array( $value ) ) {
-				$value['name'] = 'Filter Override';
-			}
-			return $value;
-		} );
-
-		$info = lafka_get_restaurant_info();
-		$this->assertSame( 'Filter Override', $info['name'] );
-	}
-
-	/**
-	 * The shortcode must delegate to lafka_schema_get_nap() — no inline literals.
-	 */
-	public function test_shortcode_delegates_to_nap_helper(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/lafka-plugin.php' );
-		$this->assertStringContainsString(
-			'lafka_schema_get_nap()',
-			$src,
-			'lafka_nap_shortcode must call lafka_schema_get_nap() (not duplicate inline literals)'
-		);
-	}
-
-	public function test_shortcode_registered(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/lafka-plugin.php' );
-		$this->assertMatchesRegularExpression(
-			"/add_shortcode\(\s*['\"]lafka_nap['\"]\s*,\s*['\"]lafka_nap_shortcode['\"]/",
-			$src
-		);
-		$this->assertStringContainsString( 'function lafka_nap_shortcode', $src );
-	}
-
-	public function test_part_attribute_supported(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/lafka-plugin.php' );
-		// Must support part-based switching (verify via switch case keywords)
-		foreach ( array( 'name', 'address', 'street', 'city', 'region', 'postal', 'phone' ) as $part ) {
-			$this->assertMatchesRegularExpression(
-				"/case\s+['\"]{$part}['\"]/",
-				$src,
-				"[lafka_nap part='{$part}'] is not handled"
-			);
-		}
+		$this->assertSame( 'Testville', lafka_nap_shortcode( array( 'part' => 'address' ) ) );
 	}
 }

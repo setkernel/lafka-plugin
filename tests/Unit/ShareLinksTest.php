@@ -1,165 +1,151 @@
 <?php
 /**
- * ShareLinksTest — locks down the v9.7.20 hardening of the
- * lafka_share_links() helper used by 5 theme files (forum, single-foodmenu,
- * single, woocommerce-functions ×2).
+ * Social share links (incl/lafka-share-links.php).
  *
- * Source-grep based. Functional testing the rendered output would need a
- * full WP/WC bootstrap to wire up get_the_post_thumbnail_url et al.
+ *   - lafka_has_to_show_share(): posts follow the per-post switch, falling
+ *     back to the global "share on posts" option unless the post opts out;
+ *     products follow the global "share on products" option;
+ *   - lafka_share_links(): every link opens a new tab with
+ *     rel="noopener noreferrer" (tab-nabbing), every href goes through
+ *     esc_url(), and the default networks are all HTTPS (or mailto:);
+ *   - the `lafka_share_networks` filter can add networks; malformed entries
+ *     are skipped.
  *
  * @package Lafka\Plugin\Tests\Unit
- * @since   9.7.20
  */
 
 declare(strict_types=1);
 
 namespace LafkaPlugin\Tests\Unit;
 
+use Brain\Monkey;
+use Brain\Monkey\Functions;
 use PHPUnit\Framework\TestCase;
-use PHPUnit\Framework\Attributes\DataProvider;
 
 final class ShareLinksTest extends TestCase {
 
-	private function bootstrap_src(): string {
-		return file_get_contents( dirname( __DIR__, 2 ) . '/lafka-plugin.php' );
+	/** @var array<string, string> */
+	private array $options = array();
+
+	private string $single_meta = '';
+
+	private bool $is_product = false;
+
+	/** @var array<string, mixed>|null Forced `lafka_share_networks` result. */
+	private ?array $networks = null;
+
+	protected function setUp(): void {
+		parent::setUp();
+		Monkey\setUp();
+		$this->options     = array();
+		$this->single_meta = '';
+		$this->is_product  = false;
+		$this->networks    = null;
+
+		$escape = static fn( $s ) => htmlspecialchars( (string) $s, ENT_QUOTES );
+		Functions\when( 'lafka_get_option' )->justReturn( false );
+		Functions\when( 'get_option' )->alias( fn( $key ) => $this->options[ $key ] ?? false );
+		Functions\when( 'get_the_ID' )->justReturn( 7 );
+		Functions\when( 'get_post_meta' )->alias( fn( $id, $key ) => 7 === $id && 'lafka_show_share' === $key ? $this->single_meta : '' );
+		Functions\when( 'is_product' )->alias( fn() => $this->is_product );
+		Functions\when( 'get_the_post_thumbnail_url' )->justReturn( 'https://example.test/pizza.jpg' );
+		Functions\when( 'esc_attr__' )->returnArg();
+		Functions\when( 'esc_html__' )->returnArg();
+		Functions\when( 'esc_attr' )->alias( $escape );
+		Functions\when( 'esc_html' )->alias( $escape );
+		// Like WordPress: a disallowed protocol yields ''.
+		Functions\when( 'esc_url' )->alias( static fn( $url ) => preg_match( '#^(https://|mailto:)#', (string) $url ) ? $escape( $url ) : '' );
+		Functions\when( 'wp_kses_post' )->returnArg();
+		Functions\when( 'apply_filters' )->alias( fn( $hook, $value ) => 'lafka_share_networks' === $hook && null !== $this->networks ? $this->networks : $value );
+
+		require_once dirname( __DIR__, 2 ) . '/incl/lafka-share-links.php';
 	}
 
-	public function test_share_endpoints_use_https(): void {
-		// Modern browsers either upgrade http://→https:// or block mixed
-		// content; emitting https from the start avoids both. Each share
-		// host must appear exactly once in the share-links function with
-		// https://.
-		$src = $this->bootstrap_src();
+	protected function tearDown(): void {
+		unset( $GLOBALS['post'] );
+		Monkey\tearDown();
+		parent::tearDown();
+	}
 
-		$endpoints = array(
-			'https://www.facebook.com/sharer.php',
-			'https://twitter.com/share',
-			'https://pinterest.com/pin/create/button',
-			'https://www.linkedin.com/shareArticle',
-			'https://vk.com/share.php',
-		);
-		foreach ( $endpoints as $endpoint ) {
-			$this->assertStringContainsString(
-				$endpoint,
-				$src,
-				"Share endpoint must be https://: {$endpoint}"
-			);
+	private function render( string $title = 'Fish & Chips' ): string {
+		$GLOBALS['post'] = (object) array( 'ID' => 7 );
+		ob_start();
+		lafka_share_links( $title, 'https://example.test/fish-and-chips/' );
+		return (string) ob_get_clean();
+	}
+
+	/**
+	 * @return array<string, string> Network key => href.
+	 */
+	private static function links( string $html ): array {
+		preg_match_all( '/<a class="lafka-share-([a-z]+)" title="[^"]*" href="([^"]*)" target="_blank" rel="noopener noreferrer">/', $html, $m );
+		self::assertSame( substr_count( $html, '<a ' ), count( $m[0] ), 'Every share link opens a new tab with rel="noopener noreferrer".' );
+		return array_combine( $m[1], $m[2] );
+	}
+
+	public function test_posts_follow_the_per_post_switch_over_the_global_option(): void {
+		$this->assertFalse( lafka_has_to_show_share() );
+
+		$this->single_meta = 'yes';
+		$this->assertTrue( lafka_has_to_show_share() );
+
+		$this->options['lafka_share_on_posts'] = 'yes';
+		$this->single_meta                     = '';
+		$this->assertTrue( lafka_has_to_show_share() );
+
+		$this->single_meta = 'no';
+		$this->assertFalse( lafka_has_to_show_share() );
+	}
+
+	public function test_products_follow_the_global_product_option(): void {
+		$this->is_product                      = true;
+		$this->options['lafka_share_on_posts'] = 'yes';
+		$this->single_meta                     = 'yes';
+		$this->assertFalse( lafka_has_to_show_share() );
+
+		$this->options['lafka_share_on_products'] = 'yes';
+		$this->assertTrue( lafka_has_to_show_share() );
+	}
+
+	public function test_nothing_renders_when_sharing_is_off(): void {
+		$this->assertSame( '', $this->render() );
+	}
+
+	public function test_default_networks_are_https_noopener_and_encoded(): void {
+		$this->single_meta = 'yes';
+		$html              = $this->render();
+		$links             = self::links( $html );
+
+		$this->assertSame( array( 'facebook', 'twitter', 'pinterest', 'linkedin', 'whatsapp', 'telegram', 'email', 'vkontakte' ), array_keys( $links ) );
+		foreach ( $links as $network => $href ) {
+			$this->assertMatchesRegularExpression( '#^(https://|mailto:)#', $href, $network );
 		}
+		// Title and link are RFC 3986-encoded into the query (then HTML-escaped).
+		$this->assertStringContainsString( 'u=https%3A%2F%2Fexample.test%2Ffish-and-chips%2F&amp;t=Fish%20%26%20Chips', $links['facebook'] );
+		$this->assertStringContainsString( 'media=https%3A%2F%2Fexample.test%2Fpizza.jpg', $links['pinterest'] );
+		$this->assertStringStartsWith( '<div class="lafka-share-links"><span>Share:</span>', $html );
 	}
 
-	public function test_no_http_share_endpoints_remain(): void {
-		// Regression lock — the pre-fix code used http:// for all 5 hosts.
-		// Searches for the specific http:// share endpoint strings; matches
-		// elsewhere in the file (general http://) aren't blocked.
-		$src = $this->bootstrap_src();
-
-		$forbidden = array(
-			'http://www.facebook.com/sharer.php',
-			'http://twitter.com/share',
-			'http://pinterest.com/pin/create/button',
-			'http://www.linkedin.com/shareArticle',
-			'http://vk.com/share.php',
+	public function test_filtered_networks_are_escaped_and_malformed_entries_skipped(): void {
+		$this->single_meta = 'yes';
+		$this->networks    = array(
+			'mastodon' => array(
+				'label' => 'Toot "this"',
+				'url'   => 'https://share.example.test/?text=x',
+			),
+			'evil'     => array(
+				'label' => 'Evil',
+				'url'   => 'javascript:alert(1)',
+			),
+			'nolabel'  => array( 'url' => 'https://example.test/' ),
+			'scalar'   => 'https://example.test/',
 		);
-		foreach ( $forbidden as $bad ) {
-			$this->assertStringNotContainsString(
-				$bad,
-				$src,
-				"Share endpoint must not regress to http://: {$bad}"
-			);
-		}
-	}
+		$html  = $this->render();
+		$links = self::links( $html );
 
-	public function test_share_hrefs_pass_through_esc_url(): void {
-		// Defense-in-depth: each assembled href runs through esc_url() even
-		// though hosts are hardcoded and query params are pre-encoded.
-		// v9.7.24: refactored to a foreach over a filterable network array,
-		// so esc_url() is now called once inside the format string (not
-		// per-network). The number of rendered links is dynamic; we just
-		// assert the format string carries esc_url on the href.
-		$src = $this->bootstrap_src();
-
-		$fn_start = strpos( $src, 'function lafka_share_links' );
-		$this->assertNotFalse( $fn_start, 'lafka_share_links function must exist.' );
-		$slice = substr( $src, $fn_start, 8000 );
-
-		$this->assertMatchesRegularExpression(
-			"/esc_url\(\s*\\\$net\['url'\]\s*\)/",
-			$slice,
-			"Share-link href must run \$net['url'] through esc_url() before output."
-		);
-	}
-
-	public function test_share_links_use_rawurlencode(): void {
-		// urlencode() emits + for spaces (form-data style); rawurlencode()
-		// emits %20 (URI style per RFC 3986). For URL query params,
-		// rawurlencode is more correct.
-		$src = $this->bootstrap_src();
-
-		$fn_start = strpos( $src, 'function lafka_share_links' );
-		$slice    = substr( $src, $fn_start, 8000 );
-
-		// v9.7.24 expanded the default network list 5 → 8 (added WhatsApp,
-		// Telegram, email). Bumping the floor accordingly.
-		$this->assertGreaterThanOrEqual(
-			8,
-			preg_match_all( '/rawurlencode\(/', $slice ),
-			'Share links must use rawurlencode for query params.'
-		);
-		$this->assertSame(
-			0,
-			preg_match_all( '/[^w]urlencode\(/', $slice ),
-			'Share links must not regress to urlencode().'
-		);
-	}
-
-	public function test_share_networks_filter_present(): void {
-		// v9.7.24: list of share networks is filterable so child plugins
-		// can add Mastodon / BlueSky / etc. without forking. Pre-fix the
-		// 5 networks were hardcoded as 5 separate sprintf calls.
-		$src = $this->bootstrap_src();
-		$this->assertMatchesRegularExpression(
-			"/apply_filters\(\s*\n?\s*'lafka_share_networks'/",
-			$src,
-			'Share-network list must be filterable via lafka_share_networks.'
-		);
-	}
-
-	#[DataProvider('modernNetworksProvider')]
-	public function test_default_network_list_includes_modern_network( string $key ): void {
-		// Defaults must include the modern essentials so operators don't
-		// have to write a filter just to enable WhatsApp / Telegram / email.
-		$src = $this->bootstrap_src();
-		$fn_start = strpos( $src, 'function lafka_share_links' );
-		$slice    = substr( $src, $fn_start, 8000 );
-		$this->assertMatchesRegularExpression(
-			"/'" . preg_quote( $key, '/' ) . "'\s*=>\s*array\(/",
-			$slice,
-			"Default share-network list must include '{$key}'."
-		);
-	}
-
-	public static function modernNetworksProvider(): array {
-		return array(
-			'whatsapp' => array( 'whatsapp' ),
-			'telegram' => array( 'telegram' ),
-			'email'    => array( 'email' ),
-		);
-	}
-
-	public function test_share_links_have_noopener_noreferrer(): void {
-		// target="_blank" without rel="noopener" lets the opened share page
-		// access window.opener (tab-nabbing). v9.7.24: refactored to a
-		// single sprintf format string (not per-network), so we look for
-		// the literal pattern in the format string itself.
-		$src = $this->bootstrap_src();
-
-		$fn_start = strpos( $src, 'function lafka_share_links' );
-		$slice    = substr( $src, $fn_start, 8000 );
-
-		$this->assertGreaterThanOrEqual(
-			1,
-			preg_match_all( '/rel="noopener noreferrer"/', $slice ),
-			'Each share link must include rel="noopener noreferrer" alongside target="_blank".'
-		);
+		$this->assertSame( array( 'mastodon', 'evil' ), array_keys( $links ) );
+		$this->assertSame( '', $links['evil'] );
+		$this->assertStringContainsString( 'title="Toot &quot;this&quot;"', $html );
+		$this->assertStringNotContainsString( 'javascript:', $html );
 	}
 }

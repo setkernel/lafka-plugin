@@ -24,7 +24,7 @@
  *     plugin-owned product + user meta keys.
  *
  * Intentionally RETAINED even under the toggle: WooCommerce orders and their
- * order-item meta (`_lafka_kds_*`, `_lafka_addon_*`, `_lafka_dl_*`, …). Orders
+ * order-item meta (`_lafka_kds_*`, `_lafka_addon_keys`, `_lafka_dl_*`, …). Orders
  * are the merchant's financial records; a plugin uninstall must not rewrite the
  * books. See retained_meta_keys() for the documented list.
  *
@@ -35,7 +35,7 @@
  * rows by name.
  *
  * @package Lafka\Plugin\Tools
- * @since   9.36.0
+ * @since   10.0.0
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -143,6 +143,11 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 			return array(
 				'lafka',                          // the master flag/settings array
 				'lafka_last_processed_order_ids', // KDS poller cursor
+				'lafka_checkout_mode',            // classic vs block checkout choice
+				'lafka_email_unsub_list',         // marketing-email unsubscribe list
+				'lafka_security_options',         // security-header toggles
+				'lafka_block_cart_shim_done',     // block-cart page shim marker
+				'lafka_seed_demo_manifest',       // `wp lafka seed-demo` bookkeeping
 				self::DATA_TOGGLE_OPTION,         // the uninstall toggle itself
 			);
 		}
@@ -175,6 +180,7 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 				'lafka_github_updates_', // self-updater bookkeeping (defensive)
 				'lafka_contact_',        // contact-block options
 				'lafka_promotions_',     // promo knobs + migration-notice dismissal
+				'lafka_combo_deal_',     // combo-deal categories / amount / type
 			);
 		}
 
@@ -258,13 +264,13 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 		 */
 		public static function retained_meta_keys(): array {
 			return array(
-				'_lafka_addon_',            // order-item add-on selections
+				'_lafka_addon_keys',        // order-item add-on selection index (the selections themselves use display-name keys)
 				'_lafka_kds_',              // kitchen-display order state
 				'_lafka_dl_',               // dataLayer purchase attribution
 				'_lafka_special_instructions', // per-order kitchen note
 				'_lafka_review_email_sent', // order-level send guard
 				'_lafka_push_reorder_sent_', // order-level send guard
-				'_lafka_winback_email',     // order-level send guard
+				'_lafka_winback_email',     // win-back address captured at checkout
 			);
 		}
 

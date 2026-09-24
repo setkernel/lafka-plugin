@@ -13,15 +13,13 @@
  *   - The woocommerce_email_headers filter appends List-Unsubscribe +
  *     List-Unsubscribe-Post for the Lafka email ids only, scoped per recipient
  *   - The postal-address footer helper reads the Customizer-driven NAP source
- *   - The abandoned-cart body renderer short-circuits (no send) for an
- *     opted-out recipient
+ *   - The abandoned-cart body renderer and the review-email skip rule both
+ *     honour the opt-out store (guest recipients included)
  *
- * The generic helpers are defined inside the two conversion email modules behind
- * function_exists guards; loading the abandoned-cart module is enough to expose
- * them here.
+ * The helpers live in incl/conversion/lafka-email-unsubscribe.php, which both
+ * email modules require.
  *
  * @package Lafka\Plugin\Tests\Unit
- * @since   9.29.0
  */
 
 declare(strict_types=1);
@@ -147,11 +145,12 @@ final class EmailUnsubscribeTest extends TestCase {
 	// URL
 	// ─────────────────────────────────────────────────────────────────────────
 
-	public function test_url_contains_token_and_email_args(): void {
-		$url = \lafka_unsub_url( 'alice@example.com' );
-		$this->assertStringContainsString( 'lafka_unsubscribe=', $url );
-		$this->assertStringContainsString( 'e=', $url );
-		$this->assertStringContainsString( '://lafka.test', $url );
+	public function test_url_carries_the_recipients_own_token_and_email(): void {
+		$url = \lafka_unsub_url( 'Alice@Example.com' );
+		$this->assertSame(
+			'https://lafka.test/?lafka_unsubscribe=' . \lafka_unsub_token( 'alice@example.com' ) . '&e=' . rawurlencode( 'alice@example.com' ),
+			$url
+		);
 	}
 
 	public function test_url_empty_for_empty_email(): void {
@@ -233,9 +232,12 @@ final class EmailUnsubscribeTest extends TestCase {
 			}
 		};
 		$out = \lafka_unsub_email_headers( "Content-Type: text/html\r\n", 'lafka_abandoned_cart', null, $email );
-		$this->assertStringContainsString( 'Content-Type: text/html', $out );
-		$this->assertStringContainsString( 'List-Unsubscribe: <', $out );
-		$this->assertStringContainsString( 'List-Unsubscribe-Post: List-Unsubscribe=One-Click', $out );
+		$this->assertSame(
+			"Content-Type: text/html\r\n"
+			. 'List-Unsubscribe: <' . \lafka_unsub_url( 'alice@example.com' ) . ">\r\n"
+			. "List-Unsubscribe-Post: List-Unsubscribe=One-Click\r\n",
+			$out
+		);
 	}
 
 	public function test_email_headers_noop_for_unrelated_email_id(): void {
@@ -265,7 +267,7 @@ final class EmailUnsubscribeTest extends TestCase {
 		// renders those operator-entered values verbatim — proving the address is
 		// sourced, never a hardcoded literal.
 		$store = array(
-			'lafka_business_name'    => 'Peppery Pizza',
+			'lafka_business_name'    => 'Example Restaurant',
 			'lafka_business_street'  => '742 Evergreen Terrace',
 			'lafka_business_city'    => 'Springfield',
 			'lafka_business_region'  => 'IL',
@@ -284,7 +286,7 @@ final class EmailUnsubscribeTest extends TestCase {
 		Functions\when( 'apply_filters' )->returnArg( 2 );
 
 		$addr = \lafka_unsub_postal_address();
-		$this->assertStringContainsString( 'Peppery Pizza', $addr );
+		$this->assertStringContainsString( 'Example Restaurant', $addr );
 		$this->assertStringContainsString( '742 Evergreen Terrace', $addr );
 		$this->assertStringContainsString( '62704', $addr );
 	}

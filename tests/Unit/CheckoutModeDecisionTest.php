@@ -18,6 +18,7 @@ use Brain\Monkey;
 use Brain\Monkey\Filters;
 use Brain\Monkey\Functions;
 use Lafka_Checkout_Mode;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class CheckoutModeDecisionTest extends TestCase {
@@ -39,34 +40,19 @@ final class CheckoutModeDecisionTest extends TestCase {
 	 *  Pure decision table (decide_mode)
 	 * ----------------------------------------------------------------- */
 
-	public function test_fresh_install_defaults_to_blocks(): void {
-		// mode not set, no pre-existing lafka state → blocks.
-		$this->assertSame(
-			Lafka_Checkout_Mode::MODE_BLOCKS,
-			Lafka_Checkout_Mode::decide_mode( false, '', false )
+	/** @return array<string, array{0: bool, 1: string, 2: bool, 3: string}> */
+	public static function decisions(): array {
+		return array(
+			'fresh install defaults to blocks'            => array( false, '', false, 'blocks' ),
+			'existing install migrates to classic'        => array( false, '', true, 'classic' ),
+			'explicit blocks kept on an existing install' => array( true, 'blocks', true, 'blocks' ),
+			'explicit classic kept on a fresh install'    => array( true, 'classic', false, 'classic' ),
 		);
 	}
 
-	public function test_existing_install_migrates_to_classic(): void {
-		// mode not set, pre-existing lafka state → classic (byte-identical behaviour).
-		$this->assertSame(
-			Lafka_Checkout_Mode::MODE_CLASSIC,
-			Lafka_Checkout_Mode::decide_mode( false, '', true )
-		);
-	}
-
-	public function test_explicit_blocks_choice_is_never_overridden_even_on_existing_install(): void {
-		$this->assertSame(
-			Lafka_Checkout_Mode::MODE_BLOCKS,
-			Lafka_Checkout_Mode::decide_mode( true, Lafka_Checkout_Mode::MODE_BLOCKS, true )
-		);
-	}
-
-	public function test_explicit_classic_choice_is_never_overridden_on_fresh_install(): void {
-		$this->assertSame(
-			Lafka_Checkout_Mode::MODE_CLASSIC,
-			Lafka_Checkout_Mode::decide_mode( true, Lafka_Checkout_Mode::MODE_CLASSIC, false )
-		);
+	#[DataProvider( 'decisions' )]
+	public function test_decide_mode( bool $is_set, string $stored, bool $has_existing_state, string $expected ): void {
+		$this->assertSame( $expected, Lafka_Checkout_Mode::decide_mode( $is_set, $stored, $has_existing_state ) );
 	}
 
 	public function test_is_valid_mode_whitelist(): void {
@@ -81,38 +67,25 @@ final class CheckoutModeDecisionTest extends TestCase {
 	 *  Runtime resolution (get_mode / is_blocks / is_classic)
 	 * ----------------------------------------------------------------- */
 
-	public function test_get_mode_returns_stored_blocks(): void {
-		Functions\when( 'get_option' )->justReturn( 'blocks' );
-		Filters\expectApplied( 'lafka_force_classic_checkout' )->andReturn( false );
-		$this->assertSame( 'blocks', Lafka_Checkout_Mode::get_mode() );
-		$this->assertTrue( Lafka_Checkout_Mode::is_blocks() );
+	/** @return array<string, array{0: string, 1: bool, 2: string}> */
+	public static function runtime_modes(): array {
+		return array(
+			'stored blocks'                       => array( 'blocks', false, 'blocks' ),
+			'stored classic'                      => array( 'classic', false, 'classic' ),
+			'unset option is an in-place upgrade' => array( '', false, 'classic' ),
+			'garbage value'                       => array( 'nonsense', false, 'classic' ),
+			'force-classic filter wins'           => array( 'blocks', true, 'classic' ),
+		);
 	}
 
-	public function test_get_mode_returns_stored_classic(): void {
-		Functions\when( 'get_option' )->justReturn( 'classic' );
-		Filters\expectApplied( 'lafka_force_classic_checkout' )->andReturn( false );
-		$this->assertSame( 'classic', Lafka_Checkout_Mode::get_mode() );
-		$this->assertTrue( Lafka_Checkout_Mode::is_classic() );
-	}
+	#[DataProvider( 'runtime_modes' )]
+	public function test_get_mode( string $stored, bool $force_classic, string $expected ): void {
+		Functions\when( 'get_option' )->justReturn( $stored );
+		Filters\expectApplied( 'lafka_force_classic_checkout' )->andReturn( $force_classic );
 
-	public function test_unset_option_defaults_to_classic_at_runtime(): void {
-		// Production preservation: an unset option at runtime is an in-place upgrade.
-		Functions\when( 'get_option' )->justReturn( '' );
-		Filters\expectApplied( 'lafka_force_classic_checkout' )->andReturn( false );
-		$this->assertSame( 'classic', Lafka_Checkout_Mode::get_mode() );
-	}
-
-	public function test_garbage_option_value_defaults_to_classic(): void {
-		Functions\when( 'get_option' )->justReturn( 'nonsense' );
-		Filters\expectApplied( 'lafka_force_classic_checkout' )->andReturn( false );
-		$this->assertSame( 'classic', Lafka_Checkout_Mode::get_mode() );
-	}
-
-	public function test_force_classic_filter_overrides_stored_blocks(): void {
-		Functions\when( 'get_option' )->justReturn( 'blocks' );
-		Filters\expectApplied( 'lafka_force_classic_checkout' )->andReturn( true );
-		$this->assertSame( 'classic', Lafka_Checkout_Mode::get_mode() );
-		$this->assertTrue( Lafka_Checkout_Mode::is_classic() );
+		$this->assertSame( $expected, Lafka_Checkout_Mode::get_mode() );
+		$this->assertSame( 'blocks' === $expected, Lafka_Checkout_Mode::is_blocks() );
+		$this->assertSame( 'classic' === $expected, Lafka_Checkout_Mode::is_classic() );
 	}
 
 	/* ----------------------------------------------------------------- *

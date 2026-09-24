@@ -90,9 +90,9 @@ if ( ! function_exists( 'lafka_push_get_vapid_config' ) ) {
 			? (string) LAFKA_PUSH_VAPID_SUBJECT
 			: ( function_exists( 'get_theme_mod' ) ? (string) get_theme_mod( 'lafka_push_vapid_subject', '' ) : '' );
 
-		if ( '' === $subject ) {
-			$site    = function_exists( 'get_bloginfo' ) ? (string) get_bloginfo( 'admin_email' ) : 'operator@example.com';
-			$subject = 'mailto:' . $site;
+		// Older Customizer builds pre-filled a placeholder address; never send it.
+		if ( '' === $subject || 'mailto:operator@site.com' === strtolower( $subject ) ) {
+			$subject = lafka_push_default_vapid_subject();
 		}
 		return array(
 			'enabled' => $enabled,
@@ -100,6 +100,21 @@ if ( ! function_exists( 'lafka_push_get_vapid_config' ) ) {
 			'private' => $private,
 			'subject' => $subject,
 		);
+	}
+}
+
+if ( ! function_exists( 'lafka_push_default_vapid_subject' ) ) {
+	/**
+	 * The VAPID contact used when none is configured: the site admin email
+	 * (Settings → General), filterable via `lafka_push_default_vapid_subject`.
+	 *
+	 * @return string mailto: URI, or '' when no admin email is set.
+	 */
+	function lafka_push_default_vapid_subject(): string {
+		$email   = function_exists( 'get_option' ) ? trim( (string) get_option( 'admin_email', '' ) ) : '';
+		$subject = '' !== $email ? 'mailto:' . $email : '';
+
+		return (string) apply_filters( 'lafka_push_default_vapid_subject', $subject );
 	}
 }
 
@@ -282,7 +297,9 @@ if ( ! function_exists( 'lafka_push_encrypt_payload' ) ) {
 		if ( false === $ua_key ) {
 			return null;
 		}
-		$shared = @openssl_pkey_derive( $ua_key, $ec, 32 );
+		// P-256 ECDH yields the 32-byte shared secret on its own; the
+		// key_length argument is deprecated as of PHP 8.5.
+		$shared = @openssl_pkey_derive( $ua_key, $ec );
 		if ( false === $shared || '' === $shared ) {
 			return null;
 		}
@@ -518,6 +535,39 @@ if ( ! function_exists( 'lafka_push_is_safe_remote_host' ) ) {
 	}
 }
 
+if ( ! function_exists( 'lafka_push_curl_options' ) ) {
+	/**
+	 * cURL options for one push delivery (a POST to the provider endpoint).
+	 *
+	 * The transfer is confined to HTTPS and never follows redirects — an open
+	 * redirect on a provider must not be able to bounce us to http:// or to an
+	 * internal host lafka_push_http_post() just refused. The redirect rule
+	 * comes first, so it is applied even if a later option is rejected.
+	 *
+	 * Requires the cURL extension (callers check curl_init first).
+	 *
+	 * @param string[] $headers Request headers ("Name: value").
+	 * @param string   $body    Encrypted payload.
+	 * @return array<int, mixed> For curl_setopt_array().
+	 */
+	function lafka_push_curl_options( array $headers, string $body ): array {
+		$options = array(
+			CURLOPT_FOLLOWLOCATION => false,
+			CURLOPT_POST           => true,
+			CURLOPT_POSTFIELDS     => $body,
+			CURLOPT_HTTPHEADER     => $headers,
+			CURLOPT_RETURNTRANSFER => true,
+			CURLOPT_TIMEOUT        => 15,
+			CURLOPT_CONNECTTIMEOUT => 5,
+		);
+		if ( defined( 'CURLPROTO_HTTPS' ) ) {
+			$options[ CURLOPT_PROTOCOLS ]       = CURLPROTO_HTTPS;
+			$options[ CURLOPT_REDIR_PROTOCOLS ] = CURLPROTO_HTTPS;
+		}
+		return $options;
+	}
+}
+
 if ( ! function_exists( 'lafka_push_http_post' ) ) {
 	/**
 	 * Tiny cURL wrapper used by lafka_push_send().
@@ -553,23 +603,15 @@ if ( ! function_exists( 'lafka_push_http_post' ) ) {
 			);
 		}
 		$ch = curl_init( $url );
-		curl_setopt( $ch, CURLOPT_POST, true );
-		curl_setopt( $ch, CURLOPT_POSTFIELDS, $body );
-		curl_setopt( $ch, CURLOPT_HTTPHEADER, $headers );
-		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
-		curl_setopt( $ch, CURLOPT_TIMEOUT, 15 );
-		curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 5 );
-		// Confine the transfer to HTTPS and never follow redirects — an open
-		// redirect on a provider must not be able to bounce us to http:// or to
-		// an internal host we just refused above.
-		if ( defined( 'CURLPROTO_HTTPS' ) ) {
-			curl_setopt( $ch, CURLOPT_PROTOCOLS, CURLPROTO_HTTPS );
-			curl_setopt( $ch, CURLOPT_REDIR_PROTOCOLS, CURLPROTO_HTTPS );
+		// Fail closed: never send with only part of the hardening applied.
+		if ( ! curl_setopt_array( $ch, lafka_push_curl_options( $headers, $body ) ) ) {
+			return array(
+				'http_code' => 0,
+				'body'      => 'curl_setopt_failed',
+			);
 		}
-		curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, false );
 		$resp_body = (string) curl_exec( $ch );
 		$http_code = (int) curl_getinfo( $ch, CURLINFO_HTTP_CODE );
-		curl_close( $ch );
 		return array(
 			'http_code' => $http_code,
 			'body'      => $resp_body,

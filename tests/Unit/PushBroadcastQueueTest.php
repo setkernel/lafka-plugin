@@ -15,6 +15,7 @@
  *     updates the activity-log entry in place, finalises it as 'done', and
  *     cleans up the job record.
  *   - the runner is a safe no-op for an unknown / already-complete job.
+ *   - the admin "Send now" handler goes through the queue.
  *
  * @package Lafka\Plugin\Tests\Unit
  * @since   9.29.3
@@ -26,8 +27,6 @@ namespace LafkaPlugin\Tests\Unit;
 
 use Brain\Monkey;
 use Brain\Monkey\Functions;
-use PHPUnit\Framework\Attributes\PreserveGlobalState;
-use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use PHPUnit\Framework\TestCase;
 
 if ( ! defined( 'LAFKA_TESTING' ) ) {
@@ -42,6 +41,7 @@ if ( ! defined( 'DAY_IN_SECONDS' ) ) {
 
 require_once dirname( __DIR__, 2 ) . '/incl/conversion/lafka-push-db.php';
 require_once dirname( __DIR__, 2 ) . '/incl/conversion/lafka-push-sender.php';
+require_once dirname( __DIR__, 2 ) . '/incl/admin/class-lafka-push-admin.php';
 
 /**
  * Cursor-aware $wpdb stand-in: get_results() honours the `id > %d` cursor and
@@ -101,8 +101,6 @@ class FakeQueueWpdb {
 	}
 }
 
-#[RunTestsInSeparateProcesses]
-#[PreserveGlobalState( false )]
 final class PushBroadcastQueueTest extends TestCase {
 
 	/** @var array<string,mixed> In-memory wp_options stand-in. */
@@ -121,6 +119,9 @@ final class PushBroadcastQueueTest extends TestCase {
 		Functions\when( 'sanitize_text_field' )->returnArg();
 		Functions\when( 'get_current_user_id' )->justReturn( 0 );
 		Functions\when( 'get_locale' )->justReturn( 'en_US' );
+		Functions\when( 'current_time' )->justReturn( '2026-06-28 12:00:00' );
+		Functions\when( 'get_bloginfo' )->justReturn( 'ops@example.test' );
+		Functions\when( 'wp_generate_uuid4' )->alias( static fn() => bin2hex( random_bytes( 8 ) ) );
 		// Push left disabled → lafka_push_send() fails fast (no crypto/network).
 		Functions\when( 'get_theme_mod' )->returnArg( 2 );
 
@@ -173,6 +174,7 @@ final class PushBroadcastQueueTest extends TestCase {
 	}
 
 	protected function tearDown(): void {
+		unset( $GLOBALS['wpdb'] );
 		Monkey\tearDown();
 		parent::tearDown();
 	}
@@ -200,7 +202,7 @@ final class PushBroadcastQueueTest extends TestCase {
 		return array(
 			'title' => 'Lunch deal',
 			'body'  => 'Two for one today.',
-			'url'   => 'https://example.com/menu/',
+			'url'   => 'https://example.test/menu/',
 			'icon'  => '',
 		);
 	}
@@ -209,48 +211,59 @@ final class PushBroadcastQueueTest extends TestCase {
 	// enqueue: never sends inline, returns a queued descriptor, schedules cron
 	// ─────────────────────────────────────────────────────────────────────────
 
-	public function test_enqueue_returns_queued_descriptor_with_audience_size(): void {
+	public function test_enqueue_persists_a_job_logs_it_and_schedules_one_batch_without_sending(): void {
 		$this->seed_rows( 5 );
 		$result = \lafka_push_enqueue_broadcast( 'all', $this->payload() );
 
-		$this->assertIsArray( $result );
 		$this->assertTrue( $result['queued'] );
 		$this->assertNotEmpty( $result['job_id'] );
 		$this->assertSame( 5, $result['audience_size'] );
-		$this->assertSame( 0, $result['sent'] );
-		$this->assertSame( 0, $result['failed'] );
-	}
+		$this->assertSame( 0, $result['sent'] + $result['failed'], 'Enqueue must never send inline.' );
 
-	public function test_enqueue_schedules_a_single_background_batch(): void {
-		$this->seed_rows( 5 );
-		$result = \lafka_push_enqueue_broadcast( 'all', $this->payload() );
-
-		$this->assertCount( 1, $this->scheduled, 'Enqueue must schedule exactly one cron batch.' );
-		$this->assertSame( 'lafka_push_broadcast_batch', $this->scheduled[0]['hook'] );
-		$this->assertSame( array( $result['job_id'] ), $this->scheduled[0]['args'] );
-	}
-
-	public function test_enqueue_writes_a_queued_activity_log_entry(): void {
-		$this->seed_rows( 5 );
-		$result = \lafka_push_enqueue_broadcast( 'all', $this->payload() );
+		$this->assertSame(
+			array(
+				array(
+					'when' => $this->scheduled[0]['when'],
+					'hook' => 'lafka_push_broadcast_batch',
+					'args' => array( $result['job_id'] ),
+				),
+			),
+			$this->scheduled,
+			'Enqueue must schedule exactly one cron batch for this job.'
+		);
 
 		$log = $this->opts['lafka_push_activity_log'] ?? array();
 		$this->assertCount( 1, $log );
 		$this->assertSame( 'queued', $log[0]['status'] );
 		$this->assertSame( $result['job_id'], $log[0]['job'] );
 		$this->assertSame( 5, $log[0]['size'] );
-		$this->assertSame( 'Lunch deal', $log[0]['title'] );
-	}
-
-	public function test_enqueue_persists_a_job_record_with_zeroed_cursor(): void {
-		$this->seed_rows( 5 );
-		$result = \lafka_push_enqueue_broadcast( 'all', $this->payload() );
 
 		$job = \lafka_push_get_job( $result['job_id'] );
-		$this->assertNotNull( $job );
 		$this->assertSame( 'queued', $job['status'] );
 		$this->assertSame( 0, $job['cursor'] );
 		$this->assertNull( $job['user_ids'], 'The "all" audience must store a null user-id filter.' );
+	}
+
+	public function test_admin_send_button_queues_instead_of_sending_inline(): void {
+		// Regression (f051): the admin "Send now" used to loop every send inside
+		// the page request and die at max_execution_time.
+		$this->seed_rows( 3 );
+		Functions\when( 'wp_unslash' )->returnArg();
+		Functions\when( 'sanitize_textarea_field' )->returnArg();
+		Functions\when( 'esc_url_raw' )->returnArg();
+
+		$result = \Lafka_Push_Admin::handle_send(
+			array(
+				'title'    => 'Lunch deal',
+				'body'     => 'Two for one today.',
+				'audience' => 'all',
+			)
+		);
+
+		$this->assertTrue( $result['queued'] );
+		$this->assertSame( 3, $result['audience_size'] );
+		$this->assertCount( 1, $this->scheduled );
+		$this->assertSame( 'queued', $this->opts['lafka_push_activity_log'][0]['status'], 'Nothing may be sent during the admin request.' );
 	}
 
 	// ─────────────────────────────────────────────────────────────────────────
@@ -278,6 +291,10 @@ final class PushBroadcastQueueTest extends TestCase {
 
 		\lafka_push_run_broadcast_batch( $job_id ); // row 5 → complete
 		$this->assertNull( \lafka_push_get_job( $job_id ), 'Completed job record must be cleaned up.' );
+
+		// enqueue(1) + tick1(1) + tick2(1); the completing tick must not reschedule.
+		$this->assertSame( array( 'lafka_push_broadcast_batch' ), array_values( array_unique( array_column( $this->scheduled, 'hook' ) ) ) );
+		$this->assertCount( 3, $this->scheduled );
 	}
 
 	public function test_runner_never_resends_a_row(): void {
@@ -300,61 +317,18 @@ final class PushBroadcastQueueTest extends TestCase {
 		$this->assertCount( 1, $log, 'A broadcast must occupy exactly one activity-log row.' );
 	}
 
-	public function test_runner_reschedules_only_while_rows_remain(): void {
-		$this->seed_rows( 5 );
-		$enqueue = \lafka_push_enqueue_broadcast( 'all', $this->payload() );
-		$job_id  = $enqueue['job_id'];
-
-		// One schedule from enqueue.
-		$this->assertCount( 1, $this->scheduled );
-
-		\lafka_push_run_broadcast_batch( $job_id ); // rows 1,2 → reschedule
-		\lafka_push_run_broadcast_batch( $job_id ); // rows 3,4 → reschedule
-		\lafka_push_run_broadcast_batch( $job_id ); // row 5 → complete, no reschedule
-
-		// enqueue(1) + tick1(1) + tick2(1) = 3; the completing tick must not reschedule.
-		$this->assertCount( 3, $this->scheduled );
-		foreach ( $this->scheduled as $event ) {
-			$this->assertSame( 'lafka_push_broadcast_batch', $event['hook'] );
-			$this->assertSame( array( $job_id ), $event['args'] );
-		}
-	}
-
-	public function test_runner_is_a_noop_for_unknown_job(): void {
+	public function test_runner_is_a_noop_for_unknown_or_completed_jobs(): void {
 		$this->seed_rows( 3 );
 		\lafka_push_run_broadcast_batch( 'does-not-exist' );
 
-		$this->assertSame( array(), $this->opts['lafka_push_activity_log'] ?? array() );
-		$this->assertCount( 0, $this->scheduled );
-	}
-
-	public function test_runner_is_a_noop_for_completed_job(): void {
-		$job_id = 'already-done';
-		$this->opts[ \lafka_push_job_option_key( $job_id ) ] = array(
-			'id'     => $job_id,
+		$this->opts[ \lafka_push_job_option_key( 'already-done' ) ] = array(
+			'id'     => 'already-done',
 			'status' => 'complete',
 		);
-		\lafka_push_run_broadcast_batch( $job_id );
+		\lafka_push_run_broadcast_batch( 'already-done' );
 
-		// No new schedule, job record left untouched.
+		$this->assertSame( array(), $this->opts['lafka_push_activity_log'] ?? array() );
 		$this->assertCount( 0, $this->scheduled );
-		$this->assertNotNull( \lafka_push_get_job( $job_id ) );
-	}
-
-	// ─────────────────────────────────────────────────────────────────────────
-	// source-pins: the admin path must be off-thread, and the wiring present
-	// ─────────────────────────────────────────────────────────────────────────
-
-	public function test_admin_send_path_uses_the_async_enqueue(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/admin/class-lafka-push-admin.php' );
-		$this->assertStringContainsString( 'lafka_push_enqueue_broadcast', $src );
-		$this->assertStringNotContainsString( 'return lafka_push_broadcast(', $src );
-	}
-
-	public function test_sender_registers_the_batch_cron_handler(): void {
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/conversion/lafka-push-sender.php' );
-		$this->assertStringContainsString( "add_action( 'lafka_push_broadcast_batch', 'lafka_push_run_broadcast_batch'", $src );
-		$this->assertStringContainsString( 'set_time_limit( 0 )', $src );
-		$this->assertStringContainsString( 'ignore_user_abort( true )', $src );
+		$this->assertNotNull( \lafka_push_get_job( 'already-done' ), 'A completed job record is left untouched.' );
 	}
 }

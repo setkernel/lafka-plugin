@@ -52,6 +52,9 @@ class Lafka_Shipping_Areas {
 	private function includes() {
 		$options = get_option( 'lafka_shipping_areas_branches' );
 
+		require_once __DIR__ . '/../lafka-shipping-method-helpers.php';
+		require_once __DIR__ . '/../lafka-asset-helpers.php';
+
 		// Map shortcode — extracted to incl/map-shortcode/ in v9.3.0 (Path A4).
 		require_once __DIR__ . '/../map-shortcode/shortcode-lafka-shipping-areas.php';
 
@@ -96,10 +99,11 @@ class Lafka_Shipping_Areas {
 		add_action( 'woocommerce_review_order_before_payment', array( $this, 'add_map_to_checkout' ) );
 		// Validate "mandatory to pick address"
 		add_action( 'woocommerce_checkout_process', array( $this, 'validate_checkout_field_process' ) );
-		// Store picked map location to order. `woocommerce_checkout_update_order_meta`
-		// was deprecated in WC 9.0; `woocommerce_checkout_create_order` fires before
-		// the order is saved on the classic checkout path, receives WC_Order directly,
-		// and is HPOS-safe without branching.
+		// Store picked map location to order. `woocommerce_checkout_create_order`
+		// (rather than `woocommerce_checkout_update_order_meta`, which only passes
+		// an order ID after the save) fires before the order is saved on the classic
+		// checkout path, receives WC_Order directly, and is HPOS-safe without
+		// branching or a second save.
 		add_action( 'woocommerce_checkout_create_order', array( $this, 'checkout_update_order_meta' ), 10, 2 );
 
 		// `lowest_cost_shipping`, `hide_shipping_cost_at_cart`,
@@ -211,7 +215,13 @@ class Lafka_Shipping_Areas {
 	}
 
 	public function enqueue_scripts() {
-		wp_enqueue_style( 'lafka-shipping-areas-front', plugins_url( 'assets/css/frontend/lafka-shipping-areas-front.css', __FILE__ ), array(), lafka_plugin_asset_version( 'incl/shipping-areas/assets/css/frontend/lafka-shipping-areas-front.css' ) );
+		// Front styles cover the cart/checkout delivery UI (map, shipping
+		// methods, date/time) and, when branch selection is on, the branch
+		// modal + "change branch" bar shown sitewide (mini-cart).
+		$branches = get_option( 'lafka_shipping_areas_branches' );
+		if ( is_cart() || is_checkout() || ! empty( $branches['enable_branch_selection_modal'] ) ) {
+			wp_enqueue_style( 'lafka-shipping-areas-front', plugins_url( 'assets/css/frontend/lafka-shipping-areas-front.css', __FILE__ ), array(), lafka_plugin_asset_version( 'incl/shipping-areas/assets/css/frontend/lafka-shipping-areas-front.css' ) );
+		}
 
 		if ( is_cart() || is_checkout() ) {
 			// The handle-shipping JS uses Google Maps for geo-fencing the
@@ -222,15 +232,16 @@ class Lafka_Shipping_Areas {
 			// against the published delivery zones, so the order is still gated
 			// even when the client-side map never loads.
 			if ( wp_script_is( 'lafka-google-maps', 'registered' ) ) {
+				$handle_shipping_js = lafka_plugin_script_path( 'incl/shipping-areas/assets/js/frontend/lafka-shipping-areas-handle-shipping.min.js' );
 				wp_enqueue_script(
 					'lafka-shipping-areas-handle-shipping',
-					plugins_url( 'assets/js/frontend/lafka-shipping-areas-handle-shipping.min.js', __FILE__ ),
+					plugins_url( $handle_shipping_js, LAFKA_PLUGIN_FILE ),
 					array(
 						'jquery',
 						'lafka-google-maps',
 						'jquery-blockui',
 					),
-					lafka_plugin_asset_version( 'incl/shipping-areas/assets/js/frontend/lafka-shipping-areas-handle-shipping.min.js' ),
+					lafka_plugin_asset_version( $handle_shipping_js ),
 					true
 				);
 			}
@@ -273,7 +284,8 @@ class Lafka_Shipping_Areas {
 			$flatpickr_locale = apply_filters( 'lafka_flatpickr_locale', strtok( get_locale(), '_' ), get_locale() );
 			wp_enqueue_style( 'flatpickr' );
 			wp_enqueue_script( 'flatpickr-local' );
-			wp_enqueue_script( 'lafka-shipping-datetime', plugins_url( 'assets/js/frontend/lafka-shipping-datetime.min.js', __FILE__ ), array( 'jquery', 'select2', 'flatpickr' ), lafka_plugin_asset_version( 'incl/shipping-areas/assets/js/frontend/lafka-shipping-datetime.min.js' ), true );
+			$datetime_js       = lafka_plugin_script_path( 'incl/shipping-areas/assets/js/frontend/lafka-shipping-datetime.min.js' );
+			wp_enqueue_script( 'lafka-shipping-datetime', plugins_url( $datetime_js, LAFKA_PLUGIN_FILE ), array( 'jquery', 'select2', 'flatpickr' ), lafka_plugin_asset_version( $datetime_js ), true );
 			wp_localize_script(
 				'lafka-shipping-datetime',
 				'lafka_datetime_options',
@@ -347,9 +359,12 @@ class Lafka_Shipping_Areas {
 	}
 
 	public static function add_recipient_to_order_emails( $recipient, $object, $wc_email_object ): string {
-		if ( $object instanceof \Automattic\WooCommerce\Admin\Overrides\Order ) {
-			$recipients      = array_map( 'trim', explode( ',', $recipient ) );
-			$order_branch_id = self::get_order_meta_backward_compatible( $object->get_id(), 'lafka_selected_branch_id' );
+		// Any order object — the WC Analytics Order override class only exists
+		// when WC Admin is loaded, so matching it silently skipped branch
+		// managers on stores without Analytics.
+		if ( $object instanceof WC_Order ) {
+			$recipients      = array_filter( array_map( 'trim', explode( ',', (string) $recipient ) ) );
+			$order_branch_id = $object->get_meta( 'lafka_selected_branch_id' );
 			if ( ! empty( $order_branch_id ) ) {
 				$branch_user_id   = get_term_meta( $order_branch_id, 'lafka_branch_user', true );
 				$branch_user_data = get_userdata( $branch_user_id );
@@ -534,22 +549,78 @@ class Lafka_Shipping_Areas {
 		);
 	}
 
-	public function validate_checkout_field_process() {
-		$options = get_option( 'lafka_shipping_areas_general' );
-
-		// Geo-fencing only applies when pinpoint delivery is on AND mandatory.
-		if ( empty( $options['pick_delivery_address'] ) || empty( $options['mandatory_pickup_delivery'] ) ) {
-			return;
+	/**
+	 * Pure decision: must this checkout carry a pinpointed, in-zone delivery
+	 * location? Only when pinpoint delivery is on AND mandatory, the cart is
+	 * actually shipped, and the customer is not collecting the order — neither
+	 * a Lafka "pickup" order type nor a WooCommerce pickup shipping method
+	 * (classic `local_pickup` or blocks `pickup_location`).
+	 *
+	 * @param mixed    $options        The lafka_shipping_areas_general option.
+	 * @param string   $order_type     Session order type ('delivery', 'pickup' or '').
+	 * @param string[] $chosen_methods Chosen shipping rate ids.
+	 * @param bool     $needs_shipping Whether the cart needs shipping.
+	 * @return bool
+	 */
+	public static function delivery_pinpoint_required( $options, string $order_type, array $chosen_methods, bool $needs_shipping ): bool {
+		if ( ! is_array( $options ) || empty( $options['pick_delivery_address'] ) || empty( $options['mandatory_pickup_delivery'] ) ) {
+			return false;
+		}
+		if ( ! $needs_shipping || 'pickup' === $order_type ) {
+			return false;
+		}
+		foreach ( $chosen_methods as $method ) {
+			if ( lafka_is_pickup_shipping_method( (string) $method ) ) {
+				return false;
+			}
 		}
 
-		// Pickup orders are collected from the branch, so they never carry a
-		// delivery pinpoint — skip the whole gate for them, otherwise a legit
-		// pickup checkout would be blocked for the missing field.
-		if ( isset( WC()->session ) ) {
-			$branch_location_session = WC()->session->get( 'lafka_branch_location' );
-			if ( ! empty( $branch_location_session['order_type'] ) && 'pickup' === $branch_location_session['order_type'] ) {
-				return;
+		return true;
+	}
+
+	/**
+	 * delivery_pinpoint_required() for the current request: options, the WC
+	 * session's order type + chosen shipping methods, and the cart.
+	 *
+	 * @param string[]|null $chosen_methods Chosen rate ids from the request, or
+	 *                                      null to read the WC session's.
+	 * @return bool
+	 */
+	public static function checkout_requires_delivery_pinpoint( ?array $chosen_methods = null ): bool {
+		$order_type     = '';
+		$needs_shipping = true;
+		$wc             = function_exists( 'WC' ) ? WC() : null;
+
+		if ( is_object( $wc ) && isset( $wc->session ) && is_object( $wc->session ) ) {
+			$branch     = $wc->session->get( 'lafka_branch_location' );
+			$order_type = is_array( $branch ) ? (string) ( $branch['order_type'] ?? '' ) : '';
+			if ( null === $chosen_methods ) {
+				$chosen_methods = (array) $wc->session->get( 'chosen_shipping_methods' );
 			}
+		}
+		if ( is_object( $wc ) && isset( $wc->cart ) && is_object( $wc->cart ) ) {
+			$needs_shipping = (bool) $wc->cart->needs_shipping();
+		}
+
+		return self::delivery_pinpoint_required(
+			get_option( 'lafka_shipping_areas_general' ),
+			$order_type,
+			array_map( 'strval', (array) $chosen_methods ),
+			$needs_shipping
+		);
+	}
+
+	public function validate_checkout_field_process() {
+		// The classic form posts the chosen rates; WC only copies them into the
+		// session after woocommerce_checkout_process, so read the POST first.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- woocommerce_checkout_process context; WC core verifies the checkout nonce upstream.
+		$posted_methods = isset( $_POST['shipping_method'] ) ? array_map( 'sanitize_text_field', (array) wp_unslash( $_POST['shipping_method'] ) ) : null;
+
+		// Geo-fencing only applies to delivered orders when pinpoint delivery
+		// is on AND mandatory. Pickup orders (Lafka order type or a WC pickup
+		// method) are collected, so they never carry a delivery pinpoint.
+		if ( ! self::checkout_requires_delivery_pinpoint( $posted_methods ) ) {
+			return;
 		}
 
 		// (a) Missing OR blank must both fail. Omitting the hidden field from the

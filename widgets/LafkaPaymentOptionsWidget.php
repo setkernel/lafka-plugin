@@ -12,7 +12,8 @@ class LafkaPaymentOptionsWidget extends WP_Widget {
 	}
 
 	public function widget( $args, $instance ) {
-		$title = apply_filters( 'widget_title', $instance['title'] );
+		$instance = (array) $instance;
+		$title    = apply_filters( 'widget_title', $instance['title'] ?? '' );
 
 		echo wp_kses_post( $args['before_widget'] );
 		if ( ! empty( $title ) ) {
@@ -26,7 +27,7 @@ class LafkaPaymentOptionsWidget extends WP_Widget {
 			endif;
 		}
 
-		if ( trim( $instance['seal'] ) !== '' ) :
+		if ( trim( (string) ( $instance['seal'] ?? '' ) ) !== '' ) :
 			?>
 			<div id="seals"><?php echo wp_kses_post( $instance['seal'] ); ?></div>
 			<?php

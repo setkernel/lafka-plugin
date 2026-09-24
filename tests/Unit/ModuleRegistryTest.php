@@ -90,10 +90,6 @@ final class ModuleRegistryTest extends TestCase {
 		sort( $expected );
 
 		self::assertSame( $expected, $ids );
-	}
-
-	public function test_get_returns_module_object_or_null(): void {
-		self::assertInstanceOf( Lafka_Module::class, Lafka_Module_Registry::get( 'promotions' ) );
 		self::assertNull( Lafka_Module_Registry::get( 'not_a_real_module' ) );
 	}
 
@@ -326,6 +322,15 @@ final class ModuleRegistryTest extends TestCase {
 			'page=lafka_order_hours',
 			Lafka_Module_Registry::get( 'order_hours' )->get_settings_url()
 		);
+	}
+
+	public function test_docs_url_is_empty_until_module_docs_exist(): void {
+		// No docs/modules/<slug>.md pages exist, so a guessed URL would render a
+		// 404 "Docs" link on every Modules card. Empty unless filtered.
+		Functions\when( 'apply_filters' )->returnArg( 2 );
+		foreach ( Lafka_Module_Registry::all() as $id => $module ) {
+			self::assertSame( '', Lafka_Module_Registry::docs_url( $module ), "Module '{$id}' must not link to non-existent docs." );
+		}
 	}
 
 	// ─── Storage classification (used by Site Health rewire) ────────────────

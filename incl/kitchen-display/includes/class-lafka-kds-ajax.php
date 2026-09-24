@@ -183,10 +183,7 @@ class Lafka_KDS_Ajax {
 			// `$order` object's in-memory cache when `wc_get_orders()` returned
 			// the WC_Order — so this call is unnecessary (and primes the wrong
 			// cache for orders that don't have a `wp_posts` row at all).
-			if (
-				! class_exists( '\Automattic\WooCommerce\Utilities\OrderUtil' )
-				|| ! \Automattic\WooCommerce\Utilities\OrderUtil::custom_orders_table_usage_is_enabled()
-			) {
+			if ( ! \Automattic\WooCommerce\Utilities\OrderUtil::custom_orders_table_usage_is_enabled() ) {
 				update_meta_cache( 'post', $all_order_ids );
 			}
 

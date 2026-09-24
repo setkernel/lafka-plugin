@@ -1,62 +1,88 @@
 <?php
+/**
+ * Best-seller data + PDP eyebrow badge.
+ *
+ * @package Lafka_Plugin
+ */
+
 declare(strict_types=1);
 
 namespace LafkaPlugin\Tests\Unit;
 
+use Brain\Monkey;
+use Brain\Monkey\Functions;
+use Mockery;
 use PHPUnit\Framework\TestCase;
 
 final class BestsellerEyebrowTest extends TestCase {
 
-    public function test_get_bestseller_ids_function(): void {
-        $src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/woocommerce/lafka-bestseller.php' );
-        $this->assertStringContainsString( 'function lafka_pdp_get_bestseller_ids', $src );
-    }
+	protected function setUp(): void {
+		parent::setUp();
+		Monkey\setUp();
+		if ( ! defined( 'HOUR_IN_SECONDS' ) ) {
+			define( 'HOUR_IN_SECONDS', 3600 );
+		}
+		require_once dirname( __DIR__, 2 ) . '/tests/Unit/Stubs/wc-orderutil-stub.php';
+		require_once dirname( __DIR__, 2 ) . '/incl/woocommerce/lafka-bestseller.php';
+		Functions\when( 'get_theme_mod' )->alias( static fn( $key, $default = false ) => $default );
+		Functions\when( 'esc_html' )->returnArg();
+		// A translation that visibly marks every string it translates.
+		Functions\when( '__' )->alias( static fn( $text ) => '[fr] ' . $text );
+	}
 
-    public function test_uses_transient_cache(): void {
-        $src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/woocommerce/lafka-bestseller.php' );
-        $this->assertStringContainsString( 'get_transient', $src );
-        $this->assertStringContainsString( 'set_transient', $src );
-    }
+	protected function tearDown(): void {
+		Monkey\tearDown();
+		parent::tearDown();
+	}
 
-    public function test_queries_90_day_window(): void {
-        $src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/woocommerce/lafka-bestseller.php' );
-        $this->assertStringContainsString( 'INTERVAL 90 DAY', $src );
-    }
+	private function render( int $product_id ): string {
+		ob_start();
+		lafka_pdp_render_bestseller_eyebrow( $product_id );
+		return (string) ob_get_clean();
+	}
 
-    public function test_respects_eyebrow_toggle(): void {
-        $src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/woocommerce/lafka-bestseller.php' );
-        $this->assertStringContainsString( 'lafka_pdp_show_bestseller_eyebrow', $src );
-    }
+	public function test_badge_shows_the_translated_rank_for_a_top_three_product(): void {
+		Functions\when( 'wp_cache_get' )->justReturn( array( 5, 9, 12, 40 ) );
 
-    public function test_render_function_exists(): void {
-        $src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/woocommerce/lafka-bestseller.php' );
-        $this->assertStringContainsString( 'function lafka_pdp_render_bestseller_eyebrow', $src );
-    }
+		$this->assertSame(
+			'<span class="lafka-pdp-eyebrow lafka-pdp-eyebrow--bestseller">[fr] ★ #2 BEST SELLER</span>',
+			$this->render( 9 )
+		);
+		$this->assertSame( '', $this->render( 40 ), 'Only the top three carry the badge.' );
+	}
 
-    public function test_query_routes_on_hpos_status(): void {
-        // Regression lock for v9.7.7. Pre-fix the query hardcoded the HPOS
-        // wc_orders table — non-HPOS sites got an empty bestseller list
-        // silently. The fix branches on OrderUtil::custom_orders_table_usage_is_enabled()
-        // and uses {$wpdb->posts} with post_type='shop_order' on legacy installs.
-        $src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/woocommerce/lafka-bestseller.php' );
-        $this->assertStringContainsString(
-            'OrderUtil::custom_orders_table_usage_is_enabled',
-            $src,
-            'Bestseller query must check HPOS status before picking the order table.'
-        );
-    }
+	public function test_badge_respects_the_customizer_toggle(): void {
+		Functions\when( 'wp_cache_get' )->justReturn( array( 5 ) );
+		Functions\when( 'get_theme_mod' )->justReturn( 'no' );
 
-    public function test_legacy_branch_joins_wp_posts_with_shop_order_filter(): void {
-        $src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/woocommerce/lafka-bestseller.php' );
-        $this->assertMatchesRegularExpression(
-            "/o\.post_type\s*=\s*'shop_order'/",
-            $src,
-            'Legacy CPT branch must filter the order join by post_type=shop_order.'
-        );
-        $this->assertMatchesRegularExpression(
-            "/post_status\s+IN\s*\(\s*'wc-completed'\s*,\s*'wc-processing'\s*\)/",
-            $src,
-            'Legacy branch must use post_status (not status) on wp_posts.'
-        );
-    }
+		$this->assertSame( '', $this->render( 5 ) );
+	}
+
+	public function test_best_sellers_skip_deleted_products_and_are_cached(): void {
+		Functions\when( 'wp_cache_get' )->justReturn( false );
+		Functions\when( 'get_transient' )->justReturn( false );
+		Functions\when( 'wp_cache_set' )->justReturn( true );
+		$live = Mockery::mock( 'WC_Product' );
+		Functions\when( 'wc_get_product' )->alias( static fn( $id ) => in_array( $id, array( 5, 9 ), true ) ? $live : false );
+		$cached = null;
+		Functions\when( 'set_transient' )->alias(
+			static function ( $key, $value ) use ( &$cached ) {
+				$cached = $value;
+			}
+		);
+		$previous        = $GLOBALS['wpdb'] ?? null;
+		$GLOBALS['wpdb'] = new class() {
+			public string $prefix = 'wp_';
+			public string $posts  = 'wp_posts';
+			public function get_col( $sql ) {
+				return array( '5', '0', '77', '9' ); // 77 was deleted.
+			}
+		};
+
+		$ids             = lafka_pdp_get_bestseller_ids();
+		$GLOBALS['wpdb'] = $previous;
+
+		$this->assertSame( array( 5, 9 ), $ids );
+		$this->assertSame( array( 5, 9 ), $cached );
+	}
 }

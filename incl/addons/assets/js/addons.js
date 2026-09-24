@@ -350,8 +350,7 @@ jQuery( document ).ready( function($) {
 					// To show our "price display suffix" we have to do some magic since the string can contain variables (excl/incl tax values)
 					// so we have to take our sub total and find out what the tax value is, which we can do via an ajax call
 					// if its a simple string, or no string at all, we can output the string without an extra call
-					var price_display_suffix = '',
-						sub_total_string     = typeof( $totals.data( 'i18n_sub_total' ) ) === 'undefined' ? lafka_addons_params.i18n_sub_total : $totals.data( 'i18n_sub_total' );
+					var sub_total_string = typeof( $totals.data( 'i18n_sub_total' ) ) === 'undefined' ? lafka_addons_params.i18n_sub_total : $totals.data( 'i18n_sub_total' );
 
 					// no sufix is present, so we can just output the total
 					if ( ! lafka_addons_params.price_display_suffix ) {
@@ -369,52 +368,12 @@ jQuery( document ).ready( function($) {
 						return;
 					}
 
-					// Based on the totals/info and settings we have, we need to use the get_price_*_tax functions
-					// to get accurate totals. We can get these values with a special Ajax function
-					$.ajax( {
-						type: 'POST',
-						url:  lafka_addons_params.ajax_url,
-						data: {
-							action: 'wc_product_addons_calculate_tax',
-							product_id: product_id,
-							add_on_total: total,
-							add_on_total_raw: total_raw,
-							qty: qty
-						},
-						success: 	function( result ) {
-							if ( result.result == 'SUCCESS' ) {
-								price_display_suffix = '<small class="woocommerce-price-suffix">' + lafka_addons_params.price_display_suffix + '</small>';
-								var formatted_price_including_tax = accounting.formatMoney( result.price_including_tax, {
-									symbol 		: lafka_addons_params.currency_format_symbol,
-									decimal 	: lafka_addons_params.currency_format_decimal_sep,
-									thousand	: lafka_addons_params.currency_format_thousand_sep,
-									precision 	: lafka_addons_params.currency_format_num_decimals,
-									format		: lafka_addons_params.currency_format
-								} );
-								var formatted_price_excluding_tax = accounting.formatMoney( result.price_excluding_tax, {
-									symbol 		: lafka_addons_params.currency_format_symbol,
-									decimal 	: lafka_addons_params.currency_format_decimal_sep,
-									thousand	: lafka_addons_params.currency_format_thousand_sep,
-									precision 	: lafka_addons_params.currency_format_num_decimals,
-									format		: lafka_addons_params.currency_format
-								} );
-								price_display_suffix = price_display_suffix.replace( '{price_including_tax}', formatted_price_including_tax );
-								price_display_suffix = price_display_suffix.replace( '{price_excluding_tax}', formatted_price_excluding_tax );
-								html                 = html + '<dt>' + sub_total_string + '</dt><dd><strong><span class="amount">' + formatted_sub_total + '</span> ' + price_display_suffix + ' </strong></dd></dl>';
-								$totals.html( html );
-								$cart.trigger( 'updated_addons' );
-							} else {
-								html = html + '<dt>' + sub_total_string + '</dt><dd><strong><span class="amount">' + formatted_sub_total + '</span></strong></dd></dl>';
-								$totals.html( html );
-								$cart.trigger( 'updated_addons' );
-							}
-						},
-						error: function() {
-							html = html + '<dt>' + sub_total_string + '</dt><dd><strong><span class="amount">' + formatted_sub_total + '</span></strong></dd></dl>';
-							$totals.html( html );
-							$cart.trigger( 'updated_addons' );
-						}
-					});
+					// The suffix uses {price_including_tax} / {price_excluding_tax}
+					// placeholders that need server-side tax maths; no endpoint
+					// provides it, so show the sub total without the suffix.
+					html = html + '<dt>' + sub_total_string + '</dt><dd><strong><span class="amount">' + formatted_sub_total + '</span></strong></dd></dl>';
+					$totals.html( html );
+					$cart.trigger( 'updated_addons' );
 				} else {
 					$totals.empty();
 					$cart.trigger( 'updated_addons' );

@@ -73,28 +73,52 @@ final class EngineHelperTest extends TestCase {
 		self::assertSame( 'opt-1', $arr['options'][0]['id'] );
 	}
 
-	public function test_legacy_class_alias_dropped_in_v8_18_0(): void {
-		// v8.18.0 removed the WC_Product_Addons_Helper class_alias. Internal
-		// callers (templates, combos compat) all reference Lafka_Engine_Helper
-		// directly now. Third-party themes/plugins that depended on the old
-		// class name need to update — this is a deliberate breaking change
-		// in the major-cleanup release.
-		self::assertFalse(
-			class_exists( 'WC_Product_Addons_Helper', false ),
-			'WC_Product_Addons_Helper alias should be gone — Lafka_Engine_Helper is the canonical class'
+	public function test_excluded_options_are_not_offered_and_empty_groups_are_dropped(): void {
+		$stored = array(
+			array(
+				'name'    => 'Toppings',
+				'type'    => 'checkbox',
+				'options' => array(
+					array( 'id' => 'cheese', 'label' => 'Cheese', 'price' => '1.00', 'included' => true ),
+					array( 'id' => 'truffle', 'label' => 'Truffle', 'price' => '9.00', 'included' => false ),
+				),
+			),
+			array(
+				'name'     => 'Sauce',
+				'type'     => 'radiobutton',
+				'required' => 1,
+				'options'  => array(
+					array( 'id' => 'bbq', 'label' => 'BBQ', 'price' => '', 'included' => false ),
+				),
+			),
 		);
+		$product = new class() {
+			public function get_meta( $key ) {
+				return '';
+			}
+			public function get_attributes() {
+				return array();
+			}
+		};
+		Functions\when( 'wc_get_product' )->justReturn( $product );
+		Functions\when( 'wp_get_post_parent_id' )->justReturn( 0 );
+		Functions\when( 'get_posts' )->justReturn( array() );
+		Functions\when( 'wc_get_object_terms' )->justReturn( array() );
+		Functions\when( 'get_post_meta' )->alias(
+			static fn( $id, $key ) => '_product_addons' === $key && 7 === $id ? $stored : ''
+		);
+
+		$addons = Lafka_Engine_Helper::get_product_addons( 7 );
+
+		self::assertCount( 1, $addons, 'A group with every option excluded must not be offered at all.' );
+		self::assertSame( 'Toppings', $addons[0]['name'] );
+		self::assertSame( array( 'Cheese' ), array_column( $addons[0]['options'], 'label' ) );
 	}
 
-	public function test_is_addon_required_with_empty(): void {
+	public function test_is_addon_required_reads_the_required_flag(): void {
 		self::assertFalse( Lafka_Engine_Helper::is_addon_required( array() ) );
-	}
-
-	public function test_is_addon_required_with_one(): void {
-		self::assertTrue( Lafka_Engine_Helper::is_addon_required( array( 'required' => '1' ) ) );
-	}
-
-	public function test_is_addon_required_with_zero(): void {
 		self::assertFalse( Lafka_Engine_Helper::is_addon_required( array( 'required' => '0' ) ) );
+		self::assertTrue( Lafka_Engine_Helper::is_addon_required( array( 'required' => '1' ) ) );
 	}
 
 	public function test_should_display_description_requires_both_enable_and_text(): void {

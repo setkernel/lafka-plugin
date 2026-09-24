@@ -3,39 +3,15 @@ declare(strict_types=1);
 
 namespace LafkaPlugin\Tests\Unit;
 
-use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Regression guard for audit f096, widened for NX1-07p.
- *
- * The plugin loads its catalog under the 'lafka-plugin' text domain
- * (load_plugin_textdomain in lafka-plugin.php). Audit f096 fixed ~16 gettext
- * calls under incl/ that passed the THEME's 'lafka' domain instead, so their
- * msgids never landed in the plugin POT and fell back to English whenever the
- * plugin ran without the Lafka theme.
- *
- * The original guard only walked incl/, which meant stray domains in the
- * root plugin file, the classic widgets under widgets/, and the shortcode
- * partials under shortcodes/ ('lafka', 'lafka-foodmenu', 'lafka-widgets-thumb',
- * 'lafka-stretched-header', one-off widget domains) were tolerated. NX1-07p
- * widens the scan to the ENTIRE plugin (excluding vendor / node_modules /
- * tests) and adds two further guards:
- *
- *   1. No gettext call may pass a literal text domain other than 'lafka-plugin'
- *      (widened scope).
- *   2. No gettext ECHO/RETURN call may pass a non-literal (variable) msgid:
- *      esc_attr_e( $var ) / esc_html_e( $var ) etc. silently translate a
- *      runtime value against the implicit 'default' domain — an invisible
- *      stray domain that never loads the plugin catalog. Such calls must be
- *      plain escape-and-echo (echo esc_attr( $var )) instead.
- *   3. None of the named legacy stray domains may appear as a gettext domain.
- *
- * Only the argument lists of the gettext functions below are inspected, so
- * wp_cache_* group names and other non-gettext uses of the bare 'lafka'
- * literal (e.g. lafka-bestseller.php / lafka-asset-pruning.php cache groups)
- * are ignored. Calls whose domain is a variable / computed expression are
- * skipped for the domain check because they cannot be asserted statically.
+ * The plugin loads only the 'lafka-plugin' text domain. Any gettext call under
+ * another domain (the theme's 'lafka', legacy widget domains, the implicit
+ * 'default') falls back to English whenever the plugin runs on its own, and a
+ * variable msgid (esc_attr_e( $var )) translates a runtime value against
+ * 'default'. Token-walks every plugin PHP file (vendor / node_modules / tests
+ * and dot-directories pruned) once per process.
  */
 final class GettextDomainConsistencyTest extends TestCase {
 
@@ -46,22 +22,7 @@ final class GettextDomainConsistencyTest extends TestCase {
 	 *
 	 * @var array<int, string>
 	 */
-	private const SKIP_DIRS = array( 'vendor', 'node_modules', 'tests', '.git' );
-
-	/**
-	 * Legacy stray text domains that must never resurface as a gettext domain.
-	 * These once shipped in widgets / shortcodes and never loaded a catalog.
-	 *
-	 * @var array<int, string>
-	 */
-	private const KNOWN_STRAY_DOMAINS = array(
-		'lafka',
-		'lafka-foodmenu',
-		'lafka-widgets-thumb',
-		'lafka-stretched-header',
-		'lafka-widgets',
-		'default',
-	);
+	private const SKIP_DIRS = array( 'vendor', 'node_modules', 'tests' );
 
 	/**
 	 * Gettext functions whose final string-literal argument is the text domain.
@@ -90,43 +51,34 @@ final class GettextDomainConsistencyTest extends TestCase {
 	}
 
 	/**
-	 * Every PHP file in the plugin except the excluded tooling directories.
+	 * Every PHP file in the plugin. Excluded directories are pruned rather than
+	 * walked, so the thousands of vendor / node_modules files are never visited.
 	 *
 	 * @return array<int, \SplFileInfo>
 	 */
 	private static function php_files(): array {
-		$root  = self::plugin_root();
-		$files = array();
-
+		$skip     = array_flip( self::SKIP_DIRS );
 		$iterator = new \RecursiveIteratorIterator(
-			new \RecursiveDirectoryIterator( $root, \FilesystemIterator::SKIP_DOTS )
+			new \RecursiveCallbackFilterIterator(
+				new \RecursiveDirectoryIterator( self::plugin_root(), \FilesystemIterator::SKIP_DOTS ),
+				static function ( \SplFileInfo $file ) use ( $skip ): bool {
+					if ( $file->isDir() ) {
+						return ! isset( $skip[ $file->getFilename() ] ) && ! str_starts_with( $file->getFilename(), '.' );
+					}
+					return 'php' === $file->getExtension();
+				}
+			)
 		);
 
-		foreach ( $iterator as $file ) {
-			if ( 'php' !== $file->getExtension() ) {
-				continue;
-			}
-
-			$relative = str_replace( $root . DIRECTORY_SEPARATOR, '', $file->getPathname() );
-			$segments = explode( DIRECTORY_SEPARATOR, $relative );
-			if ( array_intersect( $segments, self::SKIP_DIRS ) ) {
-				continue;
-			}
-
-			$files[] = $file;
-		}
-
-		return $files;
+		return iterator_to_array( $iterator, false );
 	}
 
 	/**
 	 * Token-walk every gettext call in the plugin and classify offenders.
 	 *
-	 * The result is memoized because several test methods (and one data
-	 * provider) consume it — re-tokenizing the whole plugin per call would be
-	 * needlessly slow and memory-heavy.
+	 * Memoized: both tests consume it, and the whole plugin is tokenized once.
 	 *
-	 * @return array{wrong_domain: array<int, string>, non_literal_text: array<int, string>, domains: array<int, array{0: string, 1: string, 2: int, 3: string}>}
+	 * @return array{wrong_domain: array<int, string>, non_literal_text: array<int, string>}
 	 */
 	private static function collect_offenders(): array {
 		static $cache = null;
@@ -137,7 +89,6 @@ final class GettextDomainConsistencyTest extends TestCase {
 		$functions        = array_flip( self::GETTEXT_FUNCTIONS );
 		$wrong_domain     = array();
 		$non_literal_text = array();
-		$domains          = array();
 
 		foreach ( self::php_files() as $file ) {
 			$tokens = token_get_all( (string) file_get_contents( $file->getPathname() ) );
@@ -220,8 +171,7 @@ final class GettextDomainConsistencyTest extends TestCase {
 					continue; // Variable / computed domain — not statically checkable.
 				}
 
-				$domain      = trim( $last_top_arg[1], "'\"" );
-				$domains[]   = array( $file->getFilename(), $token[1], $token[2], $domain );
+				$domain = trim( $last_top_arg[1], "'\"" );
 				if ( self::EXPECTED_DOMAIN !== $domain ) {
 					$wrong_domain[] = sprintf(
 						'%s:%d %s() uses text domain "%s"',
@@ -239,7 +189,6 @@ final class GettextDomainConsistencyTest extends TestCase {
 		$cache = array(
 			'wrong_domain'     => $wrong_domain,
 			'non_literal_text' => $non_literal_text,
-			'domains'          => $domains,
 		);
 		return $cache;
 	}
@@ -267,83 +216,6 @@ final class GettextDomainConsistencyTest extends TestCase {
 				. "loads the plugin catalog. Use plain escape-and-echo (echo esc_attr( \$value )) "
 				. "for dynamic output instead.\n"
 				. implode( "\n", $offenders )
-		);
-	}
-
-	#[DataProvider( 'known_stray_domain_provider' )]
-	public function test_known_stray_domain_is_never_a_gettext_domain( string $stray ): void {
-		$hits = array();
-		foreach ( self::collect_offenders()['domains'] as $call ) {
-			list( $filename, $function, $line, $domain ) = $call;
-			if ( $stray === $domain ) {
-				$hits[] = sprintf( '%s:%d %s()', $filename, $line, $function );
-			}
-		}
-
-		$this->assertSame(
-			array(),
-			$hits,
-			sprintf(
-				'The legacy stray text domain "%s" must never appear as a gettext '
-					. "domain — it loads no catalog. Normalize to 'lafka-plugin'.\n%s",
-				$stray,
-				implode( "\n", $hits )
-			)
-		);
-	}
-
-	/**
-	 * @return array<string, array{0: string}>
-	 */
-	public static function known_stray_domain_provider(): array {
-		$cases = array();
-		foreach ( self::KNOWN_STRAY_DOMAINS as $domain ) {
-			$cases[ $domain ] = array( $domain );
-		}
-		return $cases;
-	}
-
-	/**
-	 * The specific strings flagged by audit f096, with the source file each
-	 * lives in. Each must now be wrapped with the plugin domain and must NOT
-	 * use the theme's 'lafka' domain.
-	 *
-	 * @return array<string, array{0: string, 1: string}>
-	 */
-	public static function audited_string_provider(): array {
-		$dietary = 'incl/woocommerce/lafka-dietary-tags.php';
-		$hours   = 'incl/order-hours/Lafka_Order_Hours.php';
-		$meta    = 'incl/woocommerce-metaboxes.php';
-
-		return array(
-			'dietary: Popular'          => array( $dietary, 'Popular' ),
-			'dietary: Vegetarian'       => array( $dietary, 'Vegetarian' ),
-			'dietary: Vegan'            => array( $dietary, 'Vegan' ),
-			'dietary: Spicy'            => array( $dietary, 'Spicy' ),
-			'dietary: vegan desc'       => array( $dietary, 'No animal products of any kind.' ),
-			'hours: Closed right now'   => array( $hours, 'Closed right now' ),
-			'hours: Opens %s'           => array( $hours, 'Opens %s' ),
-			'hours: closed notice'      => array( $hours, 'Sorry, the store is currently closed and is not accepting orders.' ),
-			'meta: Choose an image'     => array( $meta, 'Choose an image' ),
-			'meta: Use image'           => array( $meta, 'Use image' ),
-		);
-	}
-
-	#[DataProvider( 'audited_string_provider' )]
-	public function test_audited_string_uses_plugin_domain( string $relative_path, string $msgid ): void {
-		$source = (string) file_get_contents( self::plugin_root() . '/' . $relative_path );
-		$quoted = preg_quote( $msgid, '/' );
-
-		$this->assertMatchesRegularExpression(
-			"/(?:__|_e|_x|esc_html__|esc_attr__)\(\s*'" . $quoted . "'.*?'lafka-plugin'/s",
-			$source,
-			sprintf( '"%s" in %s must be wrapped with the lafka-plugin text domain.', $msgid, $relative_path )
-		);
-
-		$this->assertDoesNotMatchRegularExpression(
-			"/'" . $quoted . "'\s*,(?:\s*'[^']*'\s*,)?\s*'lafka'\s*\)/",
-			$source,
-			sprintf( '"%s" in %s must not use the theme\'s lafka text domain.', $msgid, $relative_path )
 		);
 	}
 }

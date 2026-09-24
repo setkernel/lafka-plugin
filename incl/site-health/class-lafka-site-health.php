@@ -162,7 +162,7 @@ if ( ! class_exists( 'Lafka_Site_Health' ) ) {
 					'color' => 'orange',
 				),
 				'description' => '<p>' . esc_html__(
-					'The Lafka security-headers module ships dormant by default to avoid breaking iframe embeds (Stripe / payment gateway returns) on existing sites. To enable it: WP-CLI `wp option patch update lafka enable_security_headers enabled`. Disabling later: same command with `disabled`.',
+					'The Lafka security-headers module ships dormant by default to avoid breaking iframe embeds (Stripe / payment gateway returns) on existing sites. Enable it under Tools → Lafka Security, or with WP-CLI: `wp option patch insert lafka_security_options enable_security_headers enabled` (use `update` instead of `insert` once the key exists; `disabled` turns it off).',
 					'lafka-plugin'
 				) . '</p>',
 				'actions'     => '<p><a href="https://github.com/setkernel/lafka-plugin/blob/main/incl/security/class-lafka-security-headers.php" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Read more about the module', 'lafka-plugin' ) . '</a></p>',

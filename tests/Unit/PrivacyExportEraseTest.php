@@ -14,7 +14,7 @@
  *   - erase returns the core removed/retained/messages/done shape.
  *
  * @package Lafka\Plugin\Tests\Unit
- * @since   9.36.0
+ * @since   10.0.0
  */
 
 declare(strict_types=1);
@@ -81,16 +81,15 @@ final class PrivacyExportEraseTest extends TestCase {
 	// ─── Registration ─────────────────────────────────────────────────────────
 
 	public function test_register_hooks_both_privacy_filters(): void {
-		// add_filter is defined by the test bootstrap before Patchwork loads, so
-		// it can't be spied on via Brain Monkey. Assert the wiring by source: the
-		// class's register() must add both core privacy filters, and calling it
-		// must not error against the bootstrap's no-op add_filter.
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/conversion/class-lafka-conversion-privacy.php' );
-		$this->assertStringContainsString( "add_filter( 'wp_privacy_personal_data_exporters'", $src );
-		$this->assertStringContainsString( "add_filter( 'wp_privacy_personal_data_erasers'", $src );
+		// Core's Tools → Export/Erase Personal Data only sees callbacks hooked here.
+		require_once __DIR__ . '/Support/Hooks.php';
+		\LafkaPlugin\Tests\Unit\Support\Hooks::reset();
 
 		( new Lafka_Conversion_Privacy() )->register();
-		$this->assertTrue( true );
+
+		$registered = \LafkaPlugin\Tests\Unit\Support\Hooks::registered();
+		$this->assertContains( 'wp_privacy_personal_data_exporters -> register_exporters', $registered );
+		$this->assertContains( 'wp_privacy_personal_data_erasers -> register_erasers', $registered );
 	}
 
 	public function test_register_exporters_adds_push_and_ac(): void {
@@ -233,13 +232,5 @@ final class PrivacyExportEraseTest extends TestCase {
 		$this->assertSame( 2, $result['items_removed'] );
 		$this->assertTrue( $result['done'] );
 		$this->assertSame( array( 'customer_email' => 'buyer@example.com' ), $wpdb->deletes[0]['where'] );
-	}
-
-	// ─── Runtime wiring ───────────────────────────────────────────────────────
-
-	public function test_main_plugin_registers_conversion_privacy(): void {
-		$main = file_get_contents( dirname( __DIR__, 2 ) . '/lafka-plugin.php' );
-		$this->assertStringContainsString( 'incl/conversion/class-lafka-conversion-privacy.php', $main );
-		$this->assertStringContainsString( 'new Lafka_Conversion_Privacy()', $main );
 	}
 }

@@ -26,7 +26,7 @@ if ( ! function_exists( 'lafka_schema_has_restaurant_basics' ) ) {
 	 * absent from the graph (which the Rich Results validator flags). Factoring
 	 * the check here keeps the two gates from diverging.
 	 *
-	 * @since 9.35.1
+	 * @since 10.0.0
 	 *
 	 * @return bool True when every required NAP basic is populated.
 	 */

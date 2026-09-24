@@ -7,6 +7,12 @@
 
 	<!-- Show progress and sniff codes in all reports -->
 	<arg value="ps"/>
+
+	<!-- Speed: sniff files in parallel, and skip files unchanged since the last
+	     run (cache keyed on file content + ruleset; git-ignored, restored by
+	     actions/cache in CI). -->
+	<arg name="parallel" value="8"/>
+	<arg name="cache" value=".phpcs.cache"/>
 	<arg name="colors"/>
 	<arg name="extensions" value="php"/>
 
@@ -26,11 +32,8 @@
 		     after a dedicated formatting pass. -->
 		<exclude name="WordPress.PHP.YodaConditions.NotYoda"/>
 		<exclude name="WordPress.NamingConventions.ValidVariableName.VariableNotSnakeCase"/>
-		<exclude name="WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase"/>
-		<exclude name="WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid"/>
 		<exclude name="Squiz.PHP.DisallowMultipleAssignments.Found"/>
 		<exclude name="Squiz.PHP.DisallowMultipleAssignments.FoundInControlStructure"/>
-		<exclude name="Squiz.PHP.CommentedOutCode.Found"/>
 		<exclude name="WordPress.Files.FileName.NotHyphenatedLowercase"/>
 		<exclude name="WordPress.Files.FileName.InvalidClassFileName"/>
 
@@ -39,7 +42,6 @@
 		     incrementally during a dedicated audit pass. -->
 		<exclude name="Universal.Operators.StrictComparisons.LooseEqual"/>
 		<exclude name="Universal.Operators.StrictComparisons.LooseNotEqual"/>
-		<exclude name="WordPress.PHP.StrictComparisons.LooseComparison"/>
 
 		<!-- P5-Sec audit pass (2026-05-14): all security sniff families re-enabled.
 		     WordPress.DB.PreparedSQL.* (foundation), WordPress.Security.EscapeOutput.*,
@@ -51,11 +53,8 @@
 
 		<!-- Polish-tier sniffs that need contextual judgment per call site.
 		     Tracked as P5-Polish. -->
-		<exclude name="WordPress.DateTime.RestrictedFunctions.date_date"/>
-		<exclude name="WordPress.DateTime.RestrictedFunctions.date_gmmktime"/>
 		<exclude name="WordPress.WP.GlobalVariablesOverride.Prohibited"/>
 		<exclude name="WordPress.WP.EnqueuedResourceParameters.NoExplicitVersion"/>
-		<exclude name="WordPress.WP.EnqueuedResourceParameters.MissingVersion"/>
 		<exclude name="WordPress.WP.AlternativeFunctions.json_encode_json_encode"/>
 		<exclude name="WordPress.WP.AlternativeFunctions.parse_url_parse_url"/>
 		<exclude name="WordPress.WP.AlternativeFunctions.curl_curl_init"/>
@@ -65,19 +64,13 @@
 		<exclude name="WordPress.PHP.DontExtract.extract_extract"/>
 		<exclude name="WordPress.PHP.DevelopmentFunctions.error_log_error_log"/>
 		<exclude name="WordPress.WP.I18n.MissingTranslatorsComment"/>
-		<exclude name="WordPress.WP.I18n.MissingArgDomain"/>
 		<exclude name="WordPress.WP.I18n.NonSingularStringLiteralText"/>
-		<exclude name="WordPress.WP.I18n.NonSingularStringLiteralSingle"/>
-		<exclude name="WordPress.WP.I18n.NonSingularStringLiteralPlural"/>
 		<exclude name="Generic.CodeAnalysis.RequireExplicitBooleanOperatorPrecedence.MissingParentheses"/>
 		<exclude name="Generic.CodeAnalysis.AssignmentInCondition.Found"/>
 		<exclude name="Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed"/>
 		<exclude name="Universal.Operators.DisallowShortTernary.Found"/>
 		<exclude name="Universal.Files.SeparateFunctionsFromOO.Mixed"/>
-		<exclude name="Generic.Strings.UnnecessaryStringConcat.Found"/>
 		<exclude name="Squiz.WhiteSpace.SuperfluousWhitespace.EndLine"/>
-		<exclude name="WordPress.WhiteSpace.OperatorSpacing.NoSpaceBefore"/>
-		<exclude name="WordPress.WhiteSpace.OperatorSpacing.NoSpaceAfter"/>
 		<exclude name="Generic.WhiteSpace.DisallowSpaceIndent.SpacesUsed"/>
 
 		<!-- Plugin-specific exclusions for legacy patterns. -->
@@ -85,37 +78,35 @@
 		<exclude name="Generic.PHP.ForbiddenFunctions.FoundWithAlternative"/>
 		<exclude name="WordPress.NamingConventions.ValidFunctionName.FunctionNameInvalid"/>
 		<exclude name="Squiz.PHP.DisallowSizeFunctionsInLoops.Found"/>
-		<exclude name="Universal.ControlStructures.DisallowLonelyIf.Found"/>
 		<exclude name="Generic.PHP.DeprecatedFunctions.Deprecated"/>
 		<exclude name="Generic.Files.OneObjectStructurePerFile.MultipleFound"/>
 		<exclude name="Generic.CodeAnalysis.EmptyStatement.DetectedIf"/>
 		<exclude name="WordPress.WP.EnqueuedResources.NonEnqueuedStylesheet"/>
 		<exclude name="WordPress.WP.EnqueuedResources.NonEnqueuedScript"/>
-		<!-- Text domains: codebase uses 'lafka' (theme domain) for strings shared
-		     with the theme; PHPCS expects per-package domain. Cleanup is a per-string
-		     decision (some are intentional theme-domain reuse). Tracked as P5-Polish. -->
-		<exclude name="WordPress.WP.I18n.TextDomainMismatch"/>
-		<exclude name="WordPress.WP.I18n.NoEmptyStrings"/>
 		<!-- Legacy class-method visibility: PHP 4-style implicit-public. Mechanical
 		     to fix but touches every class method. Tracked as P5-Polish. -->
 		<exclude name="Squiz.Scope.MethodScope.Missing"/>
 		<!-- get_terms() positional args deprecated; mechanical fix per call site. -->
 		<exclude name="WordPress.WP.DeprecatedParameters.Get_termsParam2Found"/>
-		<!-- i18n placeholder ordering / singular-placeholder rules: per-string
-		     review needed during a translation pass. -->
-		<exclude name="WordPress.WP.I18n.MismatchedPlaceholders"/>
-		<exclude name="WordPress.WP.I18n.MissingSingularPlaceholder"/>
-		<exclude name="WordPress.WP.I18n.UnorderedPlaceholdersText"/>
-		<exclude name="WordPress.WP.I18n.UnorderedPlaceholdersSingle"/>
-		<exclude name="WordPress.WP.I18n.UnorderedPlaceholdersPlural"/>
-		<exclude name="WordPress.WP.I18n.MixedOrderedPlaceholdersText"/>
 	</rule>
 
-	<!-- Check for cross-version PHP compatibility -->
+	<!-- Plugin nonce verifiers: calls to these count as nonce verification. -->
+	<rule ref="WordPress.Security.NonceVerification">
+		<properties>
+			<property name="customNonceVerificationFunctions" type="array">
+				<element value="lafka_verify_term_form_nonce"/>
+			</property>
+		</properties>
+	</rule>
+
+	<!-- Cross-version PHP compatibility against the 8.1 floor. PHPCompatibility
+	     10 (alpha) is required: 9.3.5 has no PHP 8.x sniffs. -->
 	<config name="testVersion" value="8.1-"/>
 	<rule ref="PHPCompatibilityWP"/>
 
-	<!-- WordPress text domain -->
+	<!-- WordPress text domain. Every string uses 'lafka-plugin' — the
+	     WordPress.WP.I18n.TextDomainMismatch sniff is enforced, and
+	     GettextDomainConsistencyTest guards it in PHPUnit too. -->
 	<config name="text_domain" value="lafka-plugin"/>
 
 	<!-- Minimum supported WordPress version (WP 6.6 = mid-2024 baseline) -->
@@ -124,7 +115,6 @@
 	<!-- Exclude third-party / vendor directories -->
 	<exclude-pattern>/vendor/*</exclude-pattern>
 	<exclude-pattern>/node_modules/*</exclude-pattern>
-	<exclude-pattern>/importer/*</exclude-pattern>
 	<!-- PHPUnit tests use their own PascalCase naming convention, not WP kebab-case. -->
 	<exclude-pattern>/tests/*</exclude-pattern>
 </ruleset>

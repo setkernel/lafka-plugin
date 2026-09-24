@@ -1,6 +1,8 @@
 <?php
 defined( 'ABSPATH' ) || exit;
 
+require_once __DIR__ . '/../../lafka-asset-helpers.php';
+
 // $_GET/$_POST reads in this admin file for display state (which tab,
 // post_id metabox context, settings-api updated flag) — no state mutation.
 // Settings API submits are nonce-verified by WP core.
@@ -103,17 +105,44 @@ class Lafka_Shipping_Areas_Admin {
 		<?php
 	}
 
+	/**
+	 * Admin screens that render shipping-areas / branch / order-hours markup
+	 * styled by lafka-shipping-areas-admin.css (settings pages, the delivery
+	 * area CPT, branch terms, and the orders list's branch/type/time columns).
+	 *
+	 * @return string[]
+	 */
+	public static function styled_screen_ids(): array {
+		return array(
+			'woocommerce_page_lafka_shipping_areas_admin',
+			'woocommerce_page_lafka_order_hours',
+			'lafka_shipping_areas',
+			'edit-lafka_shipping_areas',
+			'edit-lafka_branch_location',
+			'edit-shop_order',
+			'woocommerce_page_wc-orders',
+		);
+	}
+
 	public static function enqueue_scripts() {
-		wp_enqueue_script( 'lafka-shipping-areas-admin', plugins_url( '../assets/js/backend/lafka-shipping-areas-admin.min.js', __FILE__ ), array( 'jquery' ), lafka_plugin_asset_version( 'incl/shipping-areas/assets/js/backend/lafka-shipping-areas-admin.min.js' ), true );
+		$screen    = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+		$screen_id = is_object( $screen ) ? (string) $screen->id : '';
+		if ( ! in_array( $screen_id, self::styled_screen_ids(), true ) ) {
+			return;
+		}
+
 		wp_enqueue_style( 'lafka-shipping-areas-admin', plugins_url( '../assets/css/backend/lafka-shipping-areas-admin.css', __FILE__ ), array(), lafka_plugin_asset_version( 'incl/shipping-areas/assets/css/backend/lafka-shipping-areas-admin.css' ) );
-		$screen = get_current_screen();
-		if ( is_object( $screen ) && wp_script_is( 'lafka-google-maps', 'registered' ) ) {
+		if ( 'woocommerce_page_lafka_shipping_areas_admin' === $screen_id ) {
+			// Show/hide dependent settings rows on the settings form.
+			wp_enqueue_script( 'lafka-shipping-areas-admin', plugins_url( lafka_plugin_script_path( 'incl/shipping-areas/assets/js/backend/lafka-shipping-areas-admin.min.js' ), LAFKA_PLUGIN_FILE ), array( 'jquery' ), lafka_plugin_asset_version( lafka_plugin_script_path( 'incl/shipping-areas/assets/js/backend/lafka-shipping-areas-admin.min.js' ) ), true );
+		}
+		if ( wp_script_is( 'lafka-google-maps', 'registered' ) ) {
 			// These two map-pick UIs require Google Maps. Skip when no key
 			// is set — the rest of the shipping-areas admin still works.
 			if ( $screen->id === 'woocommerce_page_lafka_shipping_areas_admin' ) {
-				wp_enqueue_script( 'lafka-shipping-areas-admin-store-map', plugins_url( '../assets/js/backend/lafka-shipping-areas-pick-address-map.min.js', __FILE__ ), array( 'lafka-google-maps' ), lafka_plugin_asset_version( 'incl/shipping-areas/assets/js/backend/lafka-shipping-areas-pick-address-map.min.js' ), true );
+				wp_enqueue_script( 'lafka-shipping-areas-admin-store-map', plugins_url( lafka_plugin_script_path( 'incl/shipping-areas/assets/js/backend/lafka-shipping-areas-pick-address-map.min.js' ), LAFKA_PLUGIN_FILE ), array( 'lafka-google-maps' ), lafka_plugin_asset_version( lafka_plugin_script_path( 'incl/shipping-areas/assets/js/backend/lafka-shipping-areas-pick-address-map.min.js' ) ), true );
 			} elseif ( $screen->id === 'lafka_shipping_areas' ) {
-				wp_enqueue_script( 'lafka-shipping-areas-admin-define-area', plugins_url( '../assets/js/backend/lafka-shipping-areas-define-area.min.js', __FILE__ ), array( 'lafka-google-maps' ), lafka_plugin_asset_version( 'incl/shipping-areas/assets/js/backend/lafka-shipping-areas-define-area.min.js' ), true );
+				wp_enqueue_script( 'lafka-shipping-areas-admin-define-area', plugins_url( lafka_plugin_script_path( 'incl/shipping-areas/assets/js/backend/lafka-shipping-areas-define-area.min.js' ), LAFKA_PLUGIN_FILE ), array( 'lafka-google-maps' ), lafka_plugin_asset_version( lafka_plugin_script_path( 'incl/shipping-areas/assets/js/backend/lafka-shipping-areas-define-area.min.js' ) ), true );
 			}
 		}
 	}
@@ -132,29 +161,13 @@ class Lafka_Shipping_Areas_Admin {
 				value="<?php echo ! empty( $options[ $args['label_for'] ] ) ? esc_attr( $options[ $args['label_for'] ] ) : esc_attr( $google_maps_api_key ); ?>"
 		>
 		<p class="description">
-			<?php esc_html_e( 'Note: Google Maps API Key may already be set in', 'lafka-plugin' ); ?>
-			<a href="<?php echo esc_url( admin_url( 'admin.php?page=lafka-optionsframework#of-option-general' ) ); ?>" target="_blank"><?php esc_html_e( 'Theme Options', 'lafka-plugin' ); ?></a>.
-			<?php esc_html_e( 'In this case it will be pre-filled.', 'lafka-plugin' ); ?>
+			<?php esc_html_e( 'This is the same key as the Google Maps API key in', 'lafka-plugin' ); ?>
+			<a href="<?php echo esc_url( admin_url( 'customize.php?autofocus[section]=lafka_settings_general' ) ); ?>"><?php esc_html_e( 'Customizer → Lafka — Site Settings → General', 'lafka-plugin' ); ?></a>
+			<?php esc_html_e( '(Lafka theme); a key saved in either place is used by both.', 'lafka-plugin' ); ?>
 			<br>
 			<?php esc_html_e( 'If you don\'t have API key, see how to ', 'lafka-plugin' ); ?>
 			<a href="https://developers.google.com/maps/documentation/javascript/get-api-key" target="_blank"><?php esc_html_e( 'Generate Google Maps JavaScript API key', 'lafka-plugin' ); ?></a>
 			<?php esc_html_e( '(Enable following APIs: Places API, Geocoding API, Distance Matrix API)', 'lafka-plugin' ); ?>
-		</p>
-		<?php
-	}
-
-	public static function secondary_google_maps_api_key_cb( $args ) {
-		$options = get_option( 'lafka_shipping_areas_general' );
-		?>
-		<input id="<?php echo esc_attr( $args['label_for'] ); ?>"
-				name="lafka_shipping_areas_general[<?php echo esc_attr( $args['label_for'] ); ?>]"
-				class="lafka-admin-maps-api-key"
-				type="text"
-				value="<?php echo isset( $options[ $args['label_for'] ] ) ? esc_attr( $options[ $args['label_for'] ] ) : ''; ?>"
-		>
-		<p class="description">
-			<?php esc_html_e( 'If your main API Key has restrictions by HTTP referrers (web sites) you will need to enter a secondary API Key for the server to serve Distance Matrix API requests which is used for calculation of distance based shipping rates.', 'lafka-plugin' ); ?>
-			<?php esc_html_e( 'This Key can not be restricted by HTTP referrers (web sites) and only need the Distance Matrix API activated.', 'lafka-plugin' ); ?>
 		</p>
 		<?php
 	}
@@ -626,7 +639,7 @@ class Lafka_Shipping_Areas_Admin {
 		wp_nonce_field( 'lafka_shipping_area_save', 'lafka_shipping_area_polygon_nonce' );
 		?>
 		<div id="lafka-shipping-areas-admin-define-area-map"></div>
-		<input type="hidden" name="lafka_shipping_area_polygon_coordinates" id="lafka_shipping_area_polygon_coordinates" value="<?php echo esc_attr( $value ); ?>"
+		<input type="hidden" name="lafka_shipping_area_polygon_coordinates" id="lafka_shipping_area_polygon_coordinates" value="<?php echo esc_attr( $value ); ?>" />
 		<?php
 	}
 
@@ -751,19 +764,6 @@ class Lafka_Shipping_Areas_Admin {
 			'general_section',
 			[
 				'label_for' => 'google_maps_api_key',
-			]
-		);
-		add_settings_field(
-			'secondary_google_maps_api_key',
-			esc_html__( 'Secondary Google Maps API Key', 'lafka-plugin' ),
-			array(
-				__CLASS__,
-				'secondary_google_maps_api_key_cb',
-			),
-			'lafka_shipping_areas_general',
-			'general_section',
-			[
-				'label_for' => 'secondary_google_maps_api_key',
 			]
 		);
 		add_settings_field(

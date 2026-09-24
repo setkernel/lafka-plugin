@@ -39,6 +39,8 @@ final class SiteHealthModulesTest extends TestCase {
 		Functions\when( 'do_action' )->justReturn( null );
 		Functions\when( 'did_action' )->justReturn( 1 );
 		Functions\when( 'wp_using_ext_object_cache' )->justReturn( false );
+		Functions\when( 'wp_get_theme' )->justReturn( null );
+		Functions\when( 'is_child_theme' )->justReturn( false );
 	}
 
 	protected function tearDown(): void {
@@ -46,42 +48,37 @@ final class SiteHealthModulesTest extends TestCase {
 		parent::tearDown();
 	}
 
-	public function test_debug_info_lists_the_five_flags(): void {
+	public function test_security_recommendation_points_at_the_option_the_toggle_uses(): void {
+		Functions\when( 'get_option' )->justReturn( array() );
+		Functions\when( 'esc_html' )->returnArg( 1 );
+		require_once dirname( __DIR__, 2 ) . '/incl/security/class-lafka-security-headers.php';
+
+		$result = Lafka_Site_Health::instance()->test_security_headers();
+
+		self::assertSame( 'recommended', $result['status'] );
+		self::assertStringContainsString( 'Tools → Lafka Security', $result['description'] );
+		self::assertStringContainsString( 'wp option patch insert lafka_security_options enable_security_headers enabled', $result['description'] );
+	}
+
+	public function test_flag_rows_are_exactly_the_registry_option_flags(): void {
 		Functions\when( 'get_option' )->justReturn( array() );
 
-		$info   = Lafka_Site_Health::instance()->add_debug_information( array() );
-		$fields = $info['lafka']['fields'];
+		$fields         = Lafka_Site_Health::instance()->add_debug_information( array() )['lafka']['fields'];
+		$registry_flags = array_keys( Lafka_Module_Registry::modules_by_storage( 'lafka_option' ) );
 
 		foreach ( array( 'product_addons', 'shipping_areas', 'order_hours', 'kitchen_display', 'promotions' ) as $flag ) {
-			self::assertArrayHasKey( $flag, $fields, "Site Health must still list the $flag flag." );
+			self::assertContains( $flag, $registry_flags );
 		}
+		self::assertSame( array(), array_diff( $registry_flags, array_keys( $fields ) ), 'Every registry flag must have a Site Health row.' );
 	}
 
-	public function test_flag_rows_come_from_the_registry(): void {
-		Functions\when( 'get_option' )->justReturn( array() );
-
-		$info   = Lafka_Site_Health::instance()->add_debug_information( array() );
-		$fields = $info['lafka']['fields'];
-
-		$registry_flags = array_keys( Lafka_Module_Registry::modules_by_storage( 'lafka_option' ) );
-		foreach ( $registry_flags as $flag ) {
-			self::assertArrayHasKey( $flag, $fields );
-		}
-	}
-
-	public function test_flag_value_formatting_unchanged(): void {
-		// Empty option → "Disabled (default)" for every flag (same as before).
-		Functions\when( 'get_option' )->justReturn( array() );
-
-		$info = Lafka_Site_Health::instance()->add_debug_information( array() );
-		self::assertSame( 'Disabled (default)', $info['lafka']['fields']['promotions']['value'] );
-	}
-
-	public function test_enabled_flag_reads_lafka_option(): void {
+	public function test_flag_values_read_the_lafka_option(): void {
 		Functions\when( 'get_option' )->justReturn( array( 'kitchen_display' => 'enabled' ) );
 
-		$info = Lafka_Site_Health::instance()->add_debug_information( array() );
-		self::assertSame( 'Enabled', $info['lafka']['fields']['kitchen_display']['value'] );
+		$fields = Lafka_Site_Health::instance()->add_debug_information( array() )['lafka']['fields'];
+
+		self::assertSame( 'Enabled', $fields['kitchen_display']['value'] );
+		self::assertSame( 'Disabled (default)', $fields['promotions']['value'] );
 	}
 
 	public function test_non_flag_rows_still_present(): void {

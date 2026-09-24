@@ -41,9 +41,26 @@ class Lafka_Order_Hours {
 	}
 
 	public static function get_timezone(): DateTimeZone {
-		if ( self::$timezone ) {
-			return new DateTimeZone( self::$timezone );
-		} else {
+		return self::resolve_timezone( (string) self::$timezone );
+	}
+
+	/**
+	 * A branch timezone setting as a DateTimeZone: 'default', empty or an
+	 * unknown identifier fall back to the site timezone instead of throwing
+	 * (which fataled the closed-store card and branch status).
+	 *
+	 * @param string $timezone_string Stored lafka_branch_timezone value.
+	 * @return DateTimeZone
+	 */
+	public static function resolve_timezone( string $timezone_string ): DateTimeZone {
+		if ( '' === $timezone_string || 'default' === $timezone_string ) {
+			return wp_timezone();
+		}
+		try {
+			return new DateTimeZone( $timezone_string );
+		} catch ( Throwable $e ) {
+			// Throwable, not Exception: under Xdebug on PHP 8.3+, decorating the
+			// DateInvalidTimeZoneException fails and surfaces as an Error.
 			return wp_timezone();
 		}
 	}
@@ -312,7 +329,11 @@ class Lafka_Order_Hours {
 				$schedule_day_of_week = $schedule_array[ $weekday_index ];
 
 				foreach ( $schedule_day_of_week->periods as $period ) {
-					$open_time = DateTime::createFromFormat( 'H:i', $period->start, $timezone )->add( DateInterval::createFromDateString( $counter . ' days' ) );
+					// Anchor the opening on the store's own clock (branch or site
+					// timezone, the one $current_time is in) — never the PHP
+					// default (UTC), which shifted "Opens …" by the UTC offset.
+					$start     = array_map( 'intval', explode( ':', (string) $period->start ) + array( 0, 0 ) );
+					$open_time = ( clone $current_time )->setTime( $start[0], $start[1] )->add( DateInterval::createFromDateString( $counter . ' days' ) );
 
 					if ( $open_time > $current_time ) {
 						return $open_time;
@@ -376,11 +397,7 @@ class Lafka_Order_Hours {
 			$is_overridden = get_term_meta( $branch_id, 'lafka_branch_override_order_hours_global', true );
 			if ( ! empty( $is_overridden ) ) {
 				$branch_timezone_string = get_term_meta( $branch_id, 'lafka_branch_timezone', true );
-				if ( $branch_timezone_string === 'default' ) {
-					$branch_timezone = wp_timezone();
-				} else {
-					$branch_timezone = new DateTimeZone( $branch_timezone_string );
-				}
+				$branch_timezone = self::resolve_timezone( (string) $branch_timezone_string );
 				$branch_schedule              = htmlspecialchars_decode( get_term_meta( $branch_id, 'lafka_branch_order_hours_schedule', true ) );
 				$branch_force_override_check  = get_term_meta( $branch_id, 'lafka_branch_order_hours_force_override_check', true );
 				$branch_force_override_status = get_term_meta( $branch_id, 'lafka_branch_order_hours_force_override_status', true );
@@ -424,11 +441,7 @@ class Lafka_Order_Hours {
 		$branch_holidays_calendar     = null;
 		if ( ! empty( $is_overridden ) ) {
 			$branch_timezone_string = get_term_meta( $branch_id, 'lafka_branch_timezone', true );
-			if ( $branch_timezone_string === 'default' ) {
-				$branch_timezone = wp_timezone();
-			} else {
-				$branch_timezone = new DateTimeZone( $branch_timezone_string );
-			}
+			$branch_timezone = self::resolve_timezone( (string) $branch_timezone_string );
 			$branch_schedule              = htmlspecialchars_decode( get_term_meta( $branch_id, 'lafka_branch_order_hours_schedule', true ) );
 			$branch_force_override_check  = get_term_meta( $branch_id, 'lafka_branch_order_hours_force_override_check', true );
 			$branch_force_override_status = get_term_meta( $branch_id, 'lafka_branch_order_hours_force_override_status', true );

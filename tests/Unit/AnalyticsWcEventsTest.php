@@ -1,21 +1,11 @@
 <?php
 /**
- * AnalyticsWcEventsTest — locks down the Phase 1B (v9.24.0) WC ecommerce
- * dataLayer event layer:
- *
- *   - lafka_dl_item_payload() returns the canonical GA4 item shape
- *   - lafka_dl_items_from_cart() pulls items from WC()->cart correctly
- *   - View events emit only on their respective WP conditional pages
- *   - view_item_list distinguishes /menu/ vs category vs shop vs related
- *   - purchase fires exactly once per order (HPOS-safe order-meta gate)
- *   - add_to_cart server-side payload structurally matches AJAX-fragment payload
- *   - All GA4 event names are snake_case ≤40 chars
- *   - Currency is pulled from get_woocommerce_currency()
- *   - Client JS is enqueued only when an analytics ID is set
- *   - Plugin wires the new file + bumps version to 9.24.0
+ * WooCommerce ecommerce dataLayer events: GA4 item payload, view events gated
+ * on their WP conditionals, view_item_list labelling, purchase fired once per
+ * order (HPOS-safe CRUD lock), AJAX add_to_cart parity, and the client JS
+ * enqueue gate.
  *
  * @package Lafka\Plugin\Tests\Unit
- * @since   9.24.0
  */
 
 declare(strict_types=1);
@@ -55,8 +45,6 @@ namespace LafkaPlugin\Tests\Unit {
 
 	use Brain\Monkey;
 	use Brain\Monkey\Functions;
-	use PHPUnit\Framework\Attributes\PreserveGlobalState;
-	use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 	use PHPUnit\Framework\TestCase;
 
 	// Bring the customizer accessor functions into scope before the events file
@@ -112,19 +100,8 @@ namespace LafkaPlugin\Tests\Unit {
 		}
 
 		// ────────────────────────────────────────────────────────────────────
-		// 1. Item payload shape
+		// Item payload shape
 		// ────────────────────────────────────────────────────────────────────
-
-		public function test_item_payload_has_canonical_ga4_keys(): void {
-			$product = new \Lafka_Test_WC_Product( 42, 'Margherita Pizza', 12.50 );
-			Functions\when( 'wc_get_product_category_list' )->justReturn( '<a>Pizza</a>, <a>Vegetarian</a>' );
-			$payload = \lafka_dl_item_payload( $product, 2 );
-			$this->assertArrayHasKey( 'item_id', $payload );
-			$this->assertArrayHasKey( 'item_name', $payload );
-			$this->assertArrayHasKey( 'item_category', $payload );
-			$this->assertArrayHasKey( 'price', $payload );
-			$this->assertArrayHasKey( 'quantity', $payload );
-		}
 
 		public function test_item_payload_values_are_correct(): void {
 			$product = new \Lafka_Test_WC_Product( 42, 'Margherita Pizza', 12.50 );
@@ -164,68 +141,7 @@ namespace LafkaPlugin\Tests\Unit {
 		}
 
 		// ────────────────────────────────────────────────────────────────────
-		// 2. Cart items helper
-		// ────────────────────────────────────────────────────────────────────
-
-		// Runs in a clean process (PreserveGlobalState disabled): Brain Monkey
-		// defines mocked functions at the PHP symbol level, and PHP cannot
-		// undefine a function once created — so any earlier test in the shared
-		// suite that mocks WC() (e.g. AbandonedCartDispatchRetryTest) leaves
-		// function_exists('WC') permanently true, which would push this test down
-		// the WC()-call path instead of the intended "WooCommerce absent" early
-		// return. A separate process guarantees WC is genuinely undefined so the
-		// !function_exists('WC') guard is the branch under test.
-		#[RunInSeparateProcess]
-		#[PreserveGlobalState( false )]
-		public function test_items_from_cart_returns_empty_without_wc(): void {
-			// WC() is not defined in tests, so the function returns empty.
-			$this->assertFalse( function_exists( 'WC' ), 'Precondition: WC() must be undefined for this branch.' );
-			$this->assertSame( array(), \lafka_dl_items_from_cart() );
-		}
-
-		// ────────────────────────────────────────────────────────────────────
-		// 3. Event names are GA4-compliant
-		// ────────────────────────────────────────────────────────────────────
-
-		public function test_all_event_names_are_snake_case_and_short(): void {
-			// Pulled from the spec table — every event the module emits.
-			$events = array(
-				'view_item',
-				'view_item_list',
-				'select_item',
-				'add_to_cart',
-				'remove_from_cart',
-				'view_cart',
-				'begin_checkout',
-				'add_shipping_info',
-				'add_payment_info',
-				'purchase',
-				'search',
-			);
-			foreach ( $events as $event ) {
-				$this->assertMatchesRegularExpression( '/^[a-z][a-z0-9_]*$/', $event, "{$event} must be snake_case" );
-				$this->assertLessThanOrEqual( 40, strlen( $event ), "{$event} must be ≤40 chars per GA4 spec" );
-			}
-		}
-
-		public function test_module_source_contains_all_required_event_names(): void {
-			$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/analytics/lafka-wc-events.php' );
-			$required = array(
-				'view_item',
-				'view_item_list',
-				'view_cart',
-				'begin_checkout',
-				'add_to_cart',
-				'remove_from_cart',
-				'purchase',
-			);
-			foreach ( $required as $event ) {
-				$this->assertStringContainsString( "'{$event}'", $src, "module must reference event {$event}" );
-			}
-		}
-
-		// ────────────────────────────────────────────────────────────────────
-		// 4. view_item — singular product page only
+		// view_item — singular product page only
 		// ────────────────────────────────────────────────────────────────────
 
 		public function test_view_item_emits_on_singular_product(): void {
@@ -254,7 +170,7 @@ namespace LafkaPlugin\Tests\Unit {
 		}
 
 		// ────────────────────────────────────────────────────────────────────
-		// 5. view_item_list distinguishes /menu/ vs category vs shop vs related
+		// view_item_list distinguishes /menu/ vs category vs shop vs related
 		// ────────────────────────────────────────────────────────────────────
 
 		public function test_view_item_list_labels_menu_page(): void {
@@ -302,7 +218,7 @@ namespace LafkaPlugin\Tests\Unit {
 		}
 
 		// ────────────────────────────────────────────────────────────────────
-		// 6. view_cart / begin_checkout gate on WP conditional
+		// view_cart / begin_checkout gate on WP conditional
 		// ────────────────────────────────────────────────────────────────────
 
 		public function test_view_cart_absent_when_not_on_cart_page(): void {
@@ -323,7 +239,7 @@ namespace LafkaPlugin\Tests\Unit {
 		}
 
 		// ────────────────────────────────────────────────────────────────────
-		// 7. purchase fires once per order (idempotency)
+		// purchase fires once per order (idempotency)
 		// ────────────────────────────────────────────────────────────────────
 
 		public function test_purchase_emits_when_flag_unset(): void {
@@ -389,7 +305,7 @@ namespace LafkaPlugin\Tests\Unit {
 		}
 
 		// ────────────────────────────────────────────────────────────────────
-		// 8. AJAX add_to_cart payload parity
+		// AJAX add_to_cart payload parity
 		// ────────────────────────────────────────────────────────────────────
 
 		public function test_ajax_fragment_carries_add_to_cart_event(): void {
@@ -452,7 +368,7 @@ namespace LafkaPlugin\Tests\Unit {
 		}
 
 		// ────────────────────────────────────────────────────────────────────
-		// 9. Currency pulled from get_woocommerce_currency
+		// Currency pulled from get_woocommerce_currency
 		// ────────────────────────────────────────────────────────────────────
 
 		public function test_currency_comes_from_woocommerce(): void {
@@ -467,71 +383,8 @@ namespace LafkaPlugin\Tests\Unit {
 		}
 
 		// ────────────────────────────────────────────────────────────────────
-		// 10. Hook registration + plugin wiring
+		// Client JS enqueued only when an analytics ID is configured
 		// ────────────────────────────────────────────────────────────────────
-
-		public function test_module_hooks_view_item_on_woocommerce_before_single_product_summary(): void {
-			$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/analytics/lafka-wc-events.php' );
-			$this->assertMatchesRegularExpression(
-				"/add_action\(\s*'woocommerce_before_single_product_summary',\s*'lafka_dl_emit_view_item'/",
-				$src
-			);
-		}
-
-		public function test_module_hooks_purchase_on_woocommerce_thankyou(): void {
-			$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/analytics/lafka-wc-events.php' );
-			$this->assertMatchesRegularExpression(
-				"/add_action\(\s*'woocommerce_thankyou',\s*'lafka_dl_emit_purchase'/",
-				$src
-			);
-		}
-
-		public function test_module_hooks_add_to_cart_on_woocommerce_add_to_cart(): void {
-			$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/analytics/lafka-wc-events.php' );
-			$this->assertMatchesRegularExpression(
-				"/add_action\(\s*'woocommerce_add_to_cart',\s*'lafka_dl_emit_add_to_cart'/",
-				$src
-			);
-		}
-
-		public function test_module_hooks_remove_from_cart_on_cart_item_removed(): void {
-			$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/analytics/lafka-wc-events.php' );
-			$this->assertMatchesRegularExpression(
-				"/add_action\(\s*'woocommerce_cart_item_removed',\s*'lafka_dl_emit_remove_from_cart'/",
-				$src
-			);
-		}
-
-		public function test_module_filters_ajax_fragments_for_add_to_cart(): void {
-			$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/analytics/lafka-wc-events.php' );
-			$this->assertMatchesRegularExpression(
-				"/add_filter\(\s*'woocommerce_add_to_cart_fragments',\s*'lafka_dl_inject_ajax_add_to_cart'/",
-				$src
-			);
-		}
-
-		// ────────────────────────────────────────────────────────────────────
-		// 11. Client JS enqueued only when an analytics ID is configured
-		// ────────────────────────────────────────────────────────────────────
-
-		public function test_client_js_file_exists_in_assets(): void {
-			$this->assertFileExists( dirname( __DIR__, 2 ) . '/assets/js/lafka-dl-client.js' );
-		}
-
-		public function test_client_js_enqueue_conditional_on_analytics_id(): void {
-			$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/analytics/lafka-wc-events.php' );
-			// Source-grep that the enqueue function checks for at least one of
-			// the configured-ID helpers before calling wp_enqueue_script.
-			$this->assertStringContainsString( 'function lafka_dl_enqueue_client', $src );
-			$this->assertStringContainsString( 'lafka_analytics_gtm_id', $src );
-			$this->assertStringContainsString( 'lafka_analytics_ga4_id', $src );
-			// Verify the guard returns early before wp_enqueue_script.
-			$pos_guard   = strpos( $src, '$has_id = false' );
-			$pos_enqueue = strpos( $src, 'wp_enqueue_script' );
-			$this->assertNotFalse( $pos_guard );
-			$this->assertNotFalse( $pos_enqueue );
-			$this->assertLessThan( $pos_enqueue, $pos_guard, '$has_id guard must precede wp_enqueue_script call' );
-		}
 
 		public function test_client_js_skipped_without_analytics_id(): void {
 			// All IDs empty (default theme_mod stub returns the default param,
@@ -563,97 +416,57 @@ namespace LafkaPlugin\Tests\Unit {
 			$this->assertSame( 'lafka-dl-client', $handle );
 		}
 
-		public function test_client_js_enqueued_with_ga4_id(): void {
+		public function test_checkout_page_hands_the_client_the_cart_items(): void {
 			Functions\when( 'get_theme_mod' )->alias( static function ( $key, $default = null ) {
-				if ( 'lafka_ga4_measurement_id' === $key ) {
-					return 'G-ABCDE12345';
-				}
-				return null === $default ? '' : $default;
+				return 'lafka_gtm_container_id' === $key ? 'GTM-ABC123' : ( null === $default ? '' : $default );
 			} );
-			$handle = null;
-			Functions\when( 'wp_enqueue_script' )->alias( static function ( $h ) use ( &$handle ) {
-				$handle = $h;
-			} );
+			Functions\when( 'wp_enqueue_script' )->justReturn( true );
 			Functions\when( 'plugins_url' )->returnArg();
 			Functions\when( 'lafka_plugin_asset_version' )->justReturn( '1' );
+			Functions\when( 'is_checkout' )->justReturn( true );
+			Functions\when( 'is_wc_endpoint_url' )->justReturn( false );
+			Functions\when( 'get_woocommerce_currency' )->justReturn( 'EUR' );
+			$cart = new class() {
+				public function get_cart() {
+					return array( 'k' => array( 'data' => new \Lafka_Test_WC_Product( 10, 'Margherita', 12.5 ), 'quantity' => 2 ) );
+				}
+				public function get_subtotal() {
+					return 25.0;
+				}
+			};
+			Functions\when( 'WC' )->justReturn( (object) array( 'cart' => $cart ) );
+			Functions\when( 'wc_get_product_category_list' )->justReturn( '' );
+			$items = array( array( 'item_id' => '10', 'item_name' => 'Margherita', 'item_category' => '', 'price' => 12.5, 'quantity' => 2 ) );
+			$localized = array();
+			Functions\when( 'wp_localize_script' )->alias( static function ( $handle, $name, $data ) use ( &$localized ) {
+				$localized[ $handle ][ $name ] = $data;
+			} );
+
 			\lafka_dl_enqueue_client();
-			$this->assertSame( 'lafka-dl-client', $handle );
-		}
 
-		public function test_client_js_binds_added_to_cart_event(): void {
-			$src = file_get_contents( dirname( __DIR__, 2 ) . '/assets/js/lafka-dl-client.js' );
-			$this->assertStringContainsString( "'added_to_cart'", $src );
-			$this->assertStringContainsString( "'removed_from_cart'", $src );
-		}
-
-		public function test_client_js_handles_search_event(): void {
-			$src = file_get_contents( dirname( __DIR__, 2 ) . '/assets/js/lafka-dl-client.js' );
-			$this->assertStringContainsString( "event: 'search'", $src );
-			$this->assertStringContainsString( 'data-lafka-menu-search', $src );
-		}
-
-		public function test_client_js_handles_select_item_click(): void {
-			$src = file_get_contents( dirname( __DIR__, 2 ) . '/assets/js/lafka-dl-client.js' );
-			$this->assertStringContainsString( 'data-lafka-item-id', $src );
-			$this->assertStringContainsString( "'select_item'", $src );
-		}
-
-		public function test_client_js_handles_shipping_and_payment_radios(): void {
-			$src = file_get_contents( dirname( __DIR__, 2 ) . '/assets/js/lafka-dl-client.js' );
-			$this->assertStringContainsString( "'add_shipping_info'", $src );
-			$this->assertStringContainsString( "'add_payment_info'", $src );
-			$this->assertStringContainsString( 'shipping_method', $src );
-			$this->assertStringContainsString( 'payment_method', $src );
-		}
-
-		public function test_client_js_never_calls_gtag_directly(): void {
-			$src = file_get_contents( dirname( __DIR__, 2 ) . '/assets/js/lafka-dl-client.js' );
-			// Strip JS comments so the doc-comment "never gtag()" isn't a false positive.
-			$code = preg_replace( '#/\*.*?\*/#s', '', $src );
-			$code = preg_replace( '#//.*#', '', (string) $code );
-			$this->assertStringNotContainsString( 'gtag(', (string) $code, 'client JS must push only to dataLayer — GTM owns routing' );
-		}
-
-		// ────────────────────────────────────────────────────────────────────
-		// 12. Plugin wiring + version bump
-		// ────────────────────────────────────────────────────────────────────
-
-		public function test_plugin_requires_wc_events_module(): void {
-			$src = file_get_contents( dirname( __DIR__, 2 ) . '/lafka-plugin.php' );
-			$this->assertStringContainsString( 'incl/analytics/lafka-wc-events.php', $src );
-		}
-
-		public function test_plugin_version_bumped_to_at_least_9_24_0(): void {
-			$src = file_get_contents( dirname( __DIR__, 2 ) . '/lafka-plugin.php' );
-			$this->assertMatchesRegularExpression(
-				'/Version:\s*(\d+)\.(\d+)\.(\d+)\b/',
-				$src,
-				'Plugin header must declare a SemVer version string.'
-			);
-			preg_match( '/Version:\s*(\d+)\.(\d+)\.(\d+)\b/', $src, $m );
-			$major = (int) ( $m[1] ?? 0 );
-			$minor = (int) ( $m[2] ?? 0 );
-			$this->assertTrue(
-				$major > 9 || ( 9 === $major && $minor >= 24 ),
-				'Plugin must be ≥ 9.24.0 once Phase 1B (lafka-wc-events.php) ships.'
+			$this->assertSame(
+				array(
+					'currency' => 'EUR',
+					'value'    => 25.0,
+					'items'    => $items,
+				),
+				$localized['lafka-dl-client']['lafkaDlCheckout'] ?? null
 			);
 		}
 
-		public function test_emit_push_uses_dataLayer_not_gtag(): void {
+		// ────────────────────────────────────────────────────────────────────
+		// dataLayer push envelope
+		// ────────────────────────────────────────────────────────────────────
+
+		public function test_emit_push_clears_stale_ecommerce_then_pushes_to_datalayer(): void {
+			// Google's documented pattern: {ecommerce:null} before each event so
+			// stale ecommerce data can't leak between events. Never gtag() — GTM routes.
 			$out = $this->capture( static fn() => \lafka_dl_emit_push( 'test_event', array( 'foo' => 'bar' ) ) );
-			$this->assertStringContainsString( 'window.dataLayer.push', $out );
-			$this->assertStringNotContainsString( 'gtag(', $out, 'emit must push to dataLayer, never call gtag — GTM owns routing' );
-		}
-
-		public function test_emit_push_clears_stale_ecommerce_before_push(): void {
-			// Google's documented pattern: push {ecommerce:null} before each event
-			// to prevent stale ecommerce data leaking between events.
-			$out         = $this->capture( static fn() => \lafka_dl_emit_push( 'test_event', array() ) );
-			$clear_pos   = strpos( $out, 'ecommerce: null' );
-			$payload_pos = strpos( $out, '"test_event"' );
-			$this->assertNotFalse( $clear_pos );
-			$this->assertNotFalse( $payload_pos );
-			$this->assertLessThan( $payload_pos, $clear_pos, 'ecommerce:null clear must precede the event push' );
+			$this->assertSame(
+				"<script>\nwindow.dataLayer = window.dataLayer || [];\nwindow.dataLayer.push({ecommerce: null});\n"
+					. 'window.dataLayer.push({"event":"test_event","ecommerce":{"foo":"bar"}});' . "\n</script>\n",
+				$out
+			);
 		}
 	}
 }

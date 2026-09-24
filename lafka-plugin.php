@@ -51,6 +51,12 @@ if ( ! function_exists( 'lafka_plugin_asset_version' ) ) {
 // Load shared options helper — available to both plugin and theme.
 require_once plugin_dir_path( __FILE__ ) . 'incl/class-lafka-options.php';
 
+// Pickup-vs-delivery shipping-method recognition shared across modules.
+require_once plugin_dir_path( __FILE__ ) . 'incl/lafka-shipping-method-helpers.php';
+
+// SCRIPT_DEBUG-aware script path helper.
+require_once plugin_dir_path( __FILE__ ) . 'incl/lafka-asset-helpers.php';
+
 // Typed feature-module registry (NX1-01) — the single list of gated modules
 // the Modules dashboard, Site Health and (later) the setup wizard read from.
 // Foundational: required before Site Health / the Modules page below.
@@ -185,10 +191,9 @@ function is_lafka_kitchen_display( $lafka_options = null ) {
 /**
  * BOGO + delivery-minimum + promo banner (P2-01).
  *
- * When OFF (default), the legacy implementation in lafka-child/functions.php
- * stays active. When ON, that child code self-gates off and this plugin module
- * owns all promo behavior. Mutual-exclusion gate prevents double-applied hooks
- * during rollout.
+ * Default OFF. OFF means no promotions at all: the legacy lafka-child
+ * implementation was removed in lafka-child 6.0.0, so there is no fallback.
+ * Sites upgrading from lafka-child <= 5.x must enable this module explicitly.
  */
 function is_lafka_promotions( $lafka_options = null ) {
 	return Lafka_Options::is_enabled( 'promotions' );
@@ -273,40 +278,11 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/compat/wp-importer-wc-attrs-bri
  */
 require_once plugin_dir_path( __FILE__ ) . 'incl/compat/lafka-wpbakery-fallback.php';
 
-if ( ! function_exists( 'lafka_seo_plugin_active' ) ) {
-	/**
-	 * Whether a dedicated SEO plugin is managing head metadata.
-	 *
-	 * Single source of truth for the "an SEO plugin owns head metadata"
-	 * decision, shared by every Lafka head emitter: the JSON-LD @graph
-	 * (incl/schema/class-lafka-json-ld.php), the OpenGraph / Twitter Card
-	 * tags (lafka_insert_og_tags), and the meta description
-	 * (lafka_render_meta_description).
-	 *
-	 * When any of these plugins is active it emits its own
-	 * Organization/LocalBusiness JSON-LD, <meta name="description">, and
-	 * og:* / twitter:* tags — so Lafka must defer to avoid duplicate,
-	 * conflicting metadata being served to search engines and social
-	 * scrapers on every public page.
-	 *
-	 * Detects: Yoast SEO, Rank Math, SEOPress, All in One SEO.
-	 *
-	 * Defined before the schema require below so the JSON-LD module can
-	 * reuse it as its single source of truth rather than duplicating the
-	 * detection inline.
-	 *
-	 * @since 9.23.0
-	 * @return bool True when a dedicated SEO plugin is active.
-	 */
-	function lafka_seo_plugin_active() {
-		return (
-			defined( 'WPSEO_VERSION' )                      // Yoast SEO.
-			|| class_exists( 'RankMath' )                   // Rank Math.
-			|| defined( 'SEOPRESS_VERSION' )                // SEOPress.
-			|| class_exists( '\\AIOSEO\\Plugin\\AIOSEO' )   // All in One SEO.
-		);
-	}
-}
+/**
+ * lafka_seo_plugin_active() — shared by the JSON-LD, OpenGraph and meta
+ * description emitters; must load before the schema module below.
+ */
+require_once plugin_dir_path( __FILE__ ) . 'incl/seo/lafka-seo-plugin-detect.php';
 
 /**
  * P6-SEO-1/2/3/6: JSON-LD structured data — Restaurant, Menu, Product,
@@ -467,8 +443,8 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/analytics/lafka-clarity-tags.ph
  *     own header/footer/styling. The class body lives in the sibling
  *     class-lafka-abandoned-cart-email-class.php file (lazy-loaded — WC_Email
  *     isn't defined until WC has booted).
- *   - incl/conversion/lafka-abandoned-cart-resume.php  hooks `init` priority 5
- *     to inspect `$_GET['lafka_resume_cart']`, restore the visitor's cart, and
+ *   - incl/conversion/lafka-abandoned-cart-resume.php  hooks `wp_loaded`
+ *     priority 20 (after WC loads the session cart) to inspect `$_GET['lafka_resume_cart']`, restore the visitor's cart, and
  *     redirect to /cart/.
  *   - incl/customizer/class-lafka-customizer-abandoned-cart.php  registers the
  *     `lafka_abandoned_cart` Customizer panel — enable toggle (default OFF),
@@ -542,8 +518,8 @@ if ( function_exists( 'register_deactivation_hook' ) ) {
  *
  * Email + banner are both default OFF — operator opt-in. Either can be enabled
  * independently. The Phase 3D class supersedes the original P6-UX-8 simple
- * review-prompt email; the legacy file in incl/emails/ is kept but is now a
- * no-op shim that defers to the Phase 3D scheduler.
+ * review-prompt email (its inert incl/emails/ shim was removed in the
+ * lean pass).
  */
 require_once plugin_dir_path( __FILE__ ) . 'incl/conversion/lafka-review-prompt-email.php';
 require_once plugin_dir_path( __FILE__ ) . 'incl/conversion/lafka-review-prompt-banner.php';
@@ -715,18 +691,6 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/cli/lafka-config-cli.php';
 require_once plugin_dir_path( __FILE__ ) . 'incl/cli/class-lafka-cli-seed-demo.php';
 
 /**
- * P6-UX-8 (W3-T6) — deprecated as of v9.28.0 (Phase 3D).
- *
- * The original simple review-prompt email lived at incl/emails/lafka-review-prompt-email.php.
- * It has been superseded by the richer Phase 3D pipeline registered above
- * (incl/conversion/lafka-review-prompt-email.php + WC_Email subclass +
- * Customizer panel). The legacy file is now a no-op shim retained only so
- * any third-party that grep'd the include path doesn't fatal on a missing
- * file. New installations only hook the Phase 3D scheduler.
- */
-require_once plugin_dir_path( __FILE__ ) . 'incl/emails/lafka-review-prompt-email.php';
-
-/**
  * P6-PERF-4 (W3-T2, 2026-04-28): Asset pruning — dequeue heavy third-party assets
  * on pages that don't use them. Currently handles Revolution Slider (~150 KB CSS+JS).
  * Self-gates via is_admin() inside the module; safe to load unconditionally.
@@ -896,7 +860,9 @@ function lafka_plugin_after_plugins_loaded() {
 		}
 		require_once plugin_dir_path( __FILE__ ) . '/incl/woocommerce-functions.php';
 
-		// subcategories after 3.3.1 - will need refactoring in future
+		// Removed because it makes categories appear twice in shop and category
+		// view. Functionality is not lost: the theme calls
+		// woocommerce_maybe_show_product_subcategories() itself.
 		remove_filter( 'woocommerce_product_loop_start', 'woocommerce_maybe_show_product_subcategories' );
 
 		// Check if WPML and WooCommerce Multilingual are active
@@ -1044,10 +1010,6 @@ function lafka_plugin_after_plugins_loaded() {
 	 * images missing alt on /menu/.
 	 */
 	require_once plugin_dir_path( __FILE__ ) . 'incl/woocommerce/lafka-product-image-alt.php';
-
-	// Removed because causes categories to appear twice in shop and category view.
-	// Functionality not lost, because "woocommerce_maybe_show_product_subcategories" is called
-	remove_filter( 'woocommerce_product_loop_start', 'woocommerce_maybe_show_product_subcategories' );
 }
 
 // C-10: hook on `plugins_loaded` (priority 10) so the text domain is available
@@ -1262,228 +1224,8 @@ if ( ! function_exists( 'lafka_optionsframework_adminbar' ) ) {
 	}
 }
 
-// Register scripts
-add_action( 'wp_enqueue_scripts', 'lafka_register_plugin_scripts' );
-if ( ! function_exists( 'lafka_register_plugin_scripts' ) ) {
-
-	function lafka_register_plugin_scripts() {
-
-		// PERF-C02 / f105: The Lafka theme is the only supported runtime for the
-		// theme-owned vendor handles below — it already registers/enqueues them
-		// (see incl/system/core-functions.php) with matching src/version. The
-		// theme-active guard further down returns early when the Lafka theme is
-		// NOT the active stylesheet, so nothing here can act as a "plugin runs
-		// without the Lafka theme" fallback (the URLs point at the theme directory
-		// regardless). The pure flexslider/owl-carousel/cloud-zoom/countdown
-		// duplicates were dead code and have been removed. `magnific` is kept
-		// because the theme deliberately does NOT register it and relies on the
-		// plugin to (the branch-locations ordering modal depends on the handle);
-		// the remaining lafka-dialog/typed/nice-select/isotope registrations are
-		// still theme-owned duplicates kept only for the active-theme case.
-		// Do NOT wp_enqueue here — that would override the theme's conditional
-		// enqueue guards (magnific is pulled in only via branch-locations deps).
-		//
-		// `lafka_asset_version()` is defined by the Lafka theme; keep a thin shim
-		// onto the plugin's own helper so the guarded registrations below never
-		// fatal on a missing function.
-		if ( ! function_exists( 'lafka_asset_version' ) ) {
-			function lafka_asset_version( $relative_path = '' ) {
-				return lafka_plugin_asset_version( ltrim( $relative_path, '/' ) );
-			}
-		}
-
-		/**
-		 * Plugin-OWNED frontend assets are registered ABOVE the Lafka-theme
-		 * guard below. Their URLs come from `plugins_url()` / maps.googleapis —
-		 * they live in this plugin, not in any theme directory, so they never
-		 * 404 regardless of the active theme. Registering them unconditionally
-		 * honours the documented standalone-fallback contract so the checkout
-		 * delivery date/time picker (flatpickr / flatpickr-local, a submit-path
-		 * control) and the [lafka_map] shortcode (lafka-google-maps) keep
-		 * working even when a non-Lafka theme is active.
-		 */
-
-		// Flatpickr (plugin-only asset — not in theme)
-		wp_register_script( 'flatpickr', plugins_url( 'assets/js/flatpickr/flatpickr.min.js', __FILE__ ), array( 'jquery' ), lafka_plugin_asset_version( 'assets/js/flatpickr/flatpickr.min.js' ), true );
-
-		// P6-PERF-6: enqueue ONLY the current site locale's flatpickr l10n file.
-		// Try candidate filenames in priority order:
-		//   1. Full locale lowercased with hyphen   (e.g. en-ca.js)
-		//   2. Full locale lowercased with underscore (e.g. en_ca.js)
-		//   3. Short-code only                       (e.g. en.js, fr.js)
-		// English (en_US, en_CA, en_GB) is flatpickr's built-in default — no l10n file needed.
-		$fp_locale       = get_locale(); // e.g. en_CA, fr_CA
-		$fp_short        = strtolower( substr( $fp_locale, 0, 2 ) );
-		$fp_candidates   = array(
-			str_replace( '_', '-', strtolower( $fp_locale ) ) . '.js',
-			strtolower( $fp_locale ) . '.js',
-			$fp_short . '.js',
-		);
-		$fp_l10n_dir     = plugin_dir_path( LAFKA_PLUGIN_FILE ) . 'assets/js/flatpickr/l10n/';
-		$fp_l10n_url_base = plugins_url( 'assets/js/flatpickr/l10n/', __FILE__ );
-		$fp_picked       = null;
-		foreach ( $fp_candidates as $fp_candidate ) {
-			if ( file_exists( $fp_l10n_dir . $fp_candidate ) ) {
-				$fp_picked = $fp_candidate;
-				break;
-			}
-		}
-		if ( null === $fp_picked ) {
-			// Check the theme's custom l10n override directory using the same priority list.
-			$fp_theme_dir     = get_stylesheet_directory() . '/lafka_plugin_templates/flatpickr_l10n/';
-			$fp_theme_url_base = get_stylesheet_directory_uri() . '/lafka_plugin_templates/flatpickr_l10n/';
-			foreach ( $fp_candidates as $fp_candidate ) {
-				if ( file_exists( $fp_theme_dir . $fp_candidate ) ) {
-					wp_register_script( 'flatpickr-l10n', $fp_theme_url_base . $fp_candidate, array( 'flatpickr' ), lafka_plugin_asset_version( 'assets/js/flatpickr/flatpickr.min.js' ), true );
-					break;
-				}
-			}
-		} else {
-			wp_register_script( 'flatpickr-l10n', $fp_l10n_url_base . $fp_picked, array( 'flatpickr' ), lafka_plugin_asset_version( 'assets/js/flatpickr/l10n/' . $fp_picked ), true );
-		}
-		// Back-compat alias: 'flatpickr-local' is still referenced in shipping-areas.
-		// If it is not already registered, alias it to the new handle (or skip when
-		// no l10n file was found, as before).
-		if ( wp_script_is( 'flatpickr-l10n', 'registered' ) && ! wp_script_is( 'flatpickr-local', 'registered' ) ) {
-			$fp_l10n_obj = wp_scripts()->query( 'flatpickr-l10n', 'registered' );
-			wp_register_script( 'flatpickr-local', $fp_l10n_obj->src, $fp_l10n_obj->deps, $fp_l10n_obj->ver, true );
-		}
-
-		wp_register_style( 'flatpickr', plugins_url( 'assets/js/flatpickr/flatpickr.min.css', __FILE__ ), array(), lafka_plugin_asset_version( 'assets/js/flatpickr/flatpickr.min.css' ) );
-
-		// google maps — only when an API key is configured. Without a key the
-		// loader returns 401 + a console error on every Geocoding/Places call.
-		// Skip the registration so dependent enqueues fail-closed via the
-		// `wp_script_is('lafka-google-maps','registered')` gate at each call
-		// site (`lafka_map` shortcode, shipping-areas shortcode, branch
-		// locations admin, etc.).
-		if ( function_exists( 'lafka_get_option' ) ) {
-			$lafka_maps_api_key = lafka_get_option( 'google_maps_api_key' );
-			if ( ! empty( $lafka_maps_api_key ) ) {
-				wp_register_script(
-					'lafka-google-maps',
-					'https://maps.googleapis.com/maps/api/js?key=' . rawurlencode( $lafka_maps_api_key ) . '&libraries=geometry,places&v=weekly&language=' . get_locale() . '&callback=Function.prototype',
-					array( 'jquery' ),
-					false,
-					true
-				);
-			}
-		}
-
-		/**
-		 * v9.12.0: Theme-URL fallback registrations are guarded so they only
-		 * fire when the Lafka theme (parent or child) is the active stylesheet.
-		 *
-		 * Why: previously these `wp_register_*` calls used
-		 * `get_template_directory_uri()` unconditionally — when this plugin
-		 * is active alongside a NON-Lafka theme (operator switched themes,
-		 * plugin used standalone, etc.), the registered URLs pointed to
-		 * non-existent assets in the other theme's directory. If any
-		 * plugin/theme then tried to enqueue these handles, the browser
-		 * would 404 on magnific, isotope, etc.
-		 *
-		 * Guard: only register when the active theme template is 'lafka'.
-		 */
-		$lafka_theme_active = function_exists( 'wp_get_theme' ) && 'lafka' === (string) wp_get_theme()->get_template();
-		if ( ! $lafka_theme_active ) {
-			return;
-		}
-
-		// f105: flexslider, owl-carousel (+ theme-default/animate), cloud-zoom,
-		// jquery-plugin and countdown were dead duplicate "fallback"
-		// re-registrations — the Lafka theme already owns those handles (see
-		// incl/system/core-functions.php). Removed.
-
-		// P3-04: lafka-dialog (native <dialog> wrapper) — replaces magnific
-		// for everything except the branch-locations modal (which still uses
-		// magnific because its minified vendor file calls $.magnificPopup.open
-		// and we don't have a source to migrate it from).
-		$lafka_dialog_suffix = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
-		wp_register_script( 'lafka-dialog', get_template_directory_uri() . '/js/lafka-dialog' . $lafka_dialog_suffix . '.js', array(), lafka_asset_version( '/js/lafka-dialog' . $lafka_dialog_suffix . '.js' ), true );
-		wp_register_style( 'lafka-dialog', get_template_directory_uri() . '/styles/lafka-dialog.css', array(), lafka_asset_version( '/styles/lafka-dialog.css' ) );
-
-		// Magnific stays registered — branch-locations.min.js (ordering critical
-		// path) depends on it. It is no longer globally enqueued; only loads
-		// when the branch-locations feature pulls it in via its deps array.
-		wp_register_script( 'magnific', get_template_directory_uri() . '/js/magnific/jquery.magnific-popup.min.js', array( 'jquery' ), lafka_asset_version( '/js/magnific/jquery.magnific-popup.min.js' ), true );
-		wp_register_style( 'magnific', get_template_directory_uri() . '/styles/magnific/magnific-popup.css', array(), lafka_asset_version( '/styles/magnific/magnific-popup.css' ) );
-
-		// `appear` + `is-in-viewport` removed in P3-05 (theme migrated to native
-		// IntersectionObserver via lafkaOnVisible). The vendor JS files no longer
-		// ship with the theme, so registering them here would 404. Leaving the
-		// handles unregistered: any caller that depends on them will get a
-		// "doing it wrong" notice rather than a broken script tag.
-
-		wp_register_script( 'typed', get_template_directory_uri() . '/js/typed.min.js', array(), lafka_asset_version( '/js/typed.min.js' ), true );
-
-		wp_register_script( 'nice-select', get_template_directory_uri() . '/js/jquery.nice-select.min.js', array( 'jquery' ), lafka_asset_version( '/js/jquery.nice-select.min.js' ), true );
-
-		// Isotope
-		wp_register_script( 'isotope', get_template_directory_uri() . '/js/isotope/dist/isotope.pkgd.min.js', array( 'jquery', 'imagesloaded' ), lafka_asset_version( '/js/isotope/dist/isotope.pkgd.min.js' ), true );
-	}
-
-}
-
-// Register scripts
-add_action( 'admin_enqueue_scripts', 'lafka_register_admin_plugin_scripts' );
-if ( ! function_exists( 'lafka_register_admin_plugin_scripts' ) ) {
-	function lafka_register_admin_plugin_scripts() {
-		// Flatpickr
-		wp_register_script( 'flatpickr', plugins_url( 'assets/js/flatpickr/flatpickr.min.js', __FILE__ ), array( 'jquery' ), lafka_plugin_asset_version( 'assets/js/flatpickr/flatpickr.min.js' ), true );
-		wp_register_style( 'flatpickr', plugins_url( 'assets/js/flatpickr/flatpickr.min.css', __FILE__ ), array(), lafka_plugin_asset_version( 'assets/js/flatpickr/flatpickr.min.css' ) );
-
-		// Schedule
-		wp_register_script(
-			'lafka-schedule',
-			plugins_url( 'assets/js/schedule/jquery.schedule.min.js', __FILE__ ),
-			array(
-				'jquery-ui-core',
-				'jquery-ui-draggable',
-				'jquery-ui-resizable',
-			),
-			lafka_plugin_asset_version( 'assets/js/schedule/jquery.schedule.min.js' ),
-			true
-		);
-		wp_register_style( 'lafka-schedule', plugins_url( 'assets/css/schedule/jquery.schedule.min.css', __FILE__ ), array(), lafka_plugin_asset_version( 'assets/css/schedule/jquery.schedule.min.css' ) );
-
-		// ajax upload files
-		wp_enqueue_script( 'plupload' );
-		$suffix = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
-		wp_enqueue_script( 'lafka-plugin-admin', plugins_url( 'assets/js/lafka-plugin-admin' . $suffix . '.js', __FILE__ ), array( 'plupload' ), lafka_plugin_asset_version( 'assets/js/lafka-plugin-admin' . $suffix . '.js' ), true );
-		wp_localize_script(
-			'lafka-plugin-admin',
-			'localise',
-			array(
-				'confirm_import_1'     => esc_html__( 'Confirm importing settings from', 'lafka-plugin' ),
-				'confirm_import_2'     => esc_html__( '. Current Theme Options will be overwritten. Continue?', 'lafka-plugin' ),
-				'import_success'       => esc_html__( 'Options successfully imported. Reloading.', 'lafka-plugin' ),
-				'upload_error'         => esc_html__( 'There was a problem with the upload. Error', 'lafka-plugin' ),
-				'export_url'           => esc_url( wp_nonce_url( add_query_arg( 'action', 'lafka_options_export', admin_url( 'admin-post.php' ) ), 'lafka_options_export' ) ),
-				'options_upload_nonce' => wp_create_nonce( 'lafka_options_upload_nonce' ),
-			)
-		);
-
-		$screen    = get_current_screen();
-		$screen_id = $screen ? $screen->id : '';
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- admin taxonomy screen detection from $_GET['taxonomy']; read-only display gating, no state mutation.
-		if ( strstr( $screen_id, 'lafka_foodmenu_category' ) && ! empty( $_GET['taxonomy'] ) && in_array( wp_unslash( $_GET['taxonomy'] ), array( 'lafka_foodmenu_category' ), true ) ) {
-			wp_register_script( 'lafka-plugin-term-ordering', plugins_url( 'assets/js/lafka-plugin-foodmenu-cat-ordering.js', __FILE__ ), array( 'jquery-ui-sortable' ), lafka_plugin_asset_version( 'assets/js/lafka-plugin-foodmenu-cat-ordering.js' ) );
-			wp_enqueue_script( 'lafka-plugin-term-ordering' );
-			wp_localize_script(
-				'lafka-plugin-term-ordering',
-				'lafka_cat_ordering',
-				array(
-					'nonce' => wp_create_nonce( 'lafka-foodmenu-cat-ordering' ),
-				)
-			);
-			wp_enqueue_style( 'lafka-plugin-term-ordering-style', plugins_url( 'assets/css/lafka-plugin-term-ordering.css', __FILE__ ), array(), lafka_plugin_asset_version( 'assets/css/lafka-plugin-term-ordering.css' ) );
-		}
-		// google maps
-		if ( function_exists( 'lafka_get_option' ) ) {
-			wp_register_script( 'lafka-google-maps', 'https://maps.googleapis.com/maps/api/js?' . ( lafka_get_option( 'google_maps_api_key' ) ? 'key=' . lafka_get_option( 'google_maps_api_key' ) . '&' : '' ) . 'libraries=geometry&v=weekly&language=' . get_locale() . '&callback=Function.prototype', array( 'jquery' ), false, true );
-		}
-	}
-}
+// Script/style handle registration (front end + admin).
+require_once plugin_dir_path( __FILE__ ) . 'incl/lafka-asset-registration.php';
 
 // Enqueue the script for proper positioning the custom added font in vc edit form
 add_filter( 'vc_edit_form_enqueue_script', 'lafka_enqueue_edit_form_scripts' );
@@ -1819,500 +1561,12 @@ if ( ! function_exists( 'lafka_contact_form_generate_response' ) ) {
 
 }
 
-if ( ! function_exists( 'lafka_share_links' ) ) {
-
-	/**
-	 * Displays social networks share links
-	 *
-	 * @param $title
-	 * @param $link
-	 */
-	function lafka_share_links( $title, $link ) {
-
-		$has_to_show_share = lafka_has_to_show_share();
-
-		if ( $has_to_show_share ) {
-			global $post;
-
-			$media         = get_the_post_thumbnail_url( $post->ID, 'large' );
-			$decoded_title = html_entity_decode( $title );
-
-			// v9.7.24: filterable network list. Pre-fix the 5 hardcoded
-			// networks (Facebook / Twitter / Pinterest / LinkedIn / VK)
-			// were frozen circa 2015 — operators couldn't add WhatsApp,
-			// Telegram, Mastodon, BlueSky, or even an email-this-page link
-			// without forking. Now defaults include the modern essentials
-			// and child plugins / themes hook the filter to extend.
-			//
-			// rawurlencode (not urlencode) for URL query params per RFC 3986;
-			// esc_url() on the full href as defense-in-depth even though
-			// hosts are hardcoded; HTTPS on every endpoint.
-			//
-			// Filter signature:
-			//   apply_filters( 'lafka_share_networks',
-			//     array $defaults, string $title, string $link, string $media )
-			//   → array<string, array{ label:string, url:string }>
-			$networks = (array) apply_filters(
-				'lafka_share_networks',
-				array(
-					'facebook'  => array(
-						'label' => esc_attr__( 'Share on Facebook', 'lafka-plugin' ),
-						'url'   => 'https://www.facebook.com/sharer.php?u=' . rawurlencode( $link ) . '&t=' . rawurlencode( $decoded_title ),
-					),
-					'twitter'   => array(
-						'label' => esc_attr__( 'Share on X (Twitter)', 'lafka-plugin' ),
-						'url'   => 'https://twitter.com/share?text=' . rawurlencode( $decoded_title ) . '&url=' . rawurlencode( $link ),
-					),
-					'pinterest' => array(
-						'label' => esc_attr__( 'Share on Pinterest', 'lafka-plugin' ),
-						'url'   => 'https://pinterest.com/pin/create/button?media=' . rawurlencode( (string) $media ) . '&url=' . rawurlencode( $link ) . '&description=' . rawurlencode( $decoded_title ),
-					),
-					'linkedin'  => array(
-						'label' => esc_attr__( 'Share on LinkedIn', 'lafka-plugin' ),
-						'url'   => 'https://www.linkedin.com/shareArticle?url=' . rawurlencode( $link ) . '&title=' . rawurlencode( $decoded_title ),
-					),
-					'whatsapp'  => array(
-						'label' => esc_attr__( 'Share on WhatsApp', 'lafka-plugin' ),
-						// `wa.me` redirects to native app on mobile, web.whatsapp.com on desktop.
-						'url'   => 'https://wa.me/?text=' . rawurlencode( $decoded_title . ' ' . $link ),
-					),
-					'telegram'  => array(
-						'label' => esc_attr__( 'Share on Telegram', 'lafka-plugin' ),
-						'url'   => 'https://t.me/share/url?url=' . rawurlencode( $link ) . '&text=' . rawurlencode( $decoded_title ),
-					),
-					'email'     => array(
-						'label' => esc_attr__( 'Share by email', 'lafka-plugin' ),
-						'url'   => 'mailto:?subject=' . rawurlencode( $decoded_title ) . '&body=' . rawurlencode( $link ),
-					),
-					'vkontakte' => array(
-						// Legacy network kept for back-compat with existing CSS overrides.
-						'label' => esc_attr__( 'Share on VK', 'lafka-plugin' ),
-						'url'   => 'https://vk.com/share.php?url=' . rawurlencode( $link ) . '&title=' . rawurlencode( $decoded_title ) . '&image=' . rawurlencode( (string) $media ),
-					),
-				),
-				$decoded_title,
-				$link,
-				(string) $media
-			);
-
-			$share_links_html = '<span>' . esc_html__( 'Share', 'lafka-plugin' ) . ':</span>';
-			foreach ( $networks as $key => $net ) {
-				if ( ! is_array( $net ) || empty( $net['url'] ) || empty( $net['label'] ) ) {
-					continue;
-				}
-				$share_links_html .= sprintf(
-					'<a class="lafka-share-%s" title="%s" href="%s" target="_blank" rel="noopener noreferrer"><span class="screen-reader-text">%s</span></a>',
-					esc_attr( $key ),
-					esc_attr( $net['label'] ),
-					esc_url( $net['url'] ),
-					esc_html( $net['label'] )
-				);
-			}
-
-			// Each <a> built above is fully escaped; wp_kses_post on the
-			// container is defense-in-depth for any future addition that
-			// might forget per-piece escaping.
-			echo '<div class="lafka-share-links">' . wp_kses_post( $share_links_html ) . '<div class="clear"></div></div>';
-		}
-	}
-}
-
-add_action( 'wp_head', 'lafka_insert_og_tags' );
-if ( ! function_exists( 'lafka_insert_og_tags' ) ) {
-	/**
-	 * Emit OpenGraph + Twitter Card tags on every public page.
-	 * P6-SEO-5: full coverage (was og:image only).
-	 *
-	 * v9.22.2 image fallback chain (first non-empty wins):
-	 *   1. Per-post `_lafka_og_image` post meta (manual override on any page).
-	 *   2. Featured image of the singular post/product.
-	 *   3. Customizer `lafka_og_image_default` (operator-pinned hero photo).
-	 *   4. Site icon (last-resort fallback).
-	 *
-	 * Without the Customizer default, archive pages like /menu/ and
-	 * /contact-us/ emitted no `og:image` at all — bad social-share previews.
-	 *
-	 * v9.22.2 locale: emit goes through `lafka_og_locale` filter; operator
-	 * can pin a non-WP-Settings locale (e.g. en_CA when Site Language is
-	 * still en_US) via Customizer `lafka_default_locale`. Same value drives
-	 * `<html lang>` via the language_attributes filter below.
-	 */
-	function lafka_insert_og_tags() {
-		if ( is_admin() || is_feed() || is_404() ) {
-			return;
-		}
-
-		/*
-		 * Defer to a dedicated SEO plugin (Yoast / Rank Math / SEOPress /
-		 * AIOSEO) when one is active — it already emits a full set of
-		 * og:* / twitter:* tags. Emitting ours alongside theirs duplicates
-		 * the OpenGraph/Twitter Card metadata on every public page and
-		 * confuses social scrapers. Mirrors the JSON-LD @graph deferral in
-		 * incl/schema/class-lafka-json-ld.php so a single "an SEO plugin
-		 * owns head metadata" decision (lafka_seo_plugin_active()) governs
-		 * all head emitters.
-		 *
-		 * Operators who want Lafka's tags regardless can override via the
-		 * `lafka_head_meta_force_emit` filter (return true) — the head-meta
-		 * sibling of `lafka_schema_force_emit`.
-		 */
-		if ( lafka_seo_plugin_active() && ! (bool) apply_filters( 'lafka_head_meta_force_emit', false ) ) {
-			return;
-		}
-
-		global $post;
-
-		// ===== Resolve title / description / URL / image / type per context =====
-		// Front-page check MUST come before is_singular() — when the homepage is a
-		// static page (Settings → Reading), both are true. We want the front-page
-		// branch to win so the homepage carries og:type=restaurant.restaurant and
-		// og:title=site-name (not the page's literal title like "Home New").
-		// We still pass $post to the description resolver so any per-page
-		// _lafka_meta_description override is honored on the static front page.
-		// Resolve image URL + actual width/height. Pre-v9.7.24 the dimensions
-		// were always WP's `large_size_w`/`large_size_h` option (default
-		// 1024×1024) regardless of the actual image — so a portrait 800×1200
-		// thumbnail emitted og:image:width=1024, og:image:height=1024,
-		// causing Facebook/LinkedIn/Slack to crop badly or compute wrong
-		// aspect ratios in cached previews.
-		//
-		// Now we look up the actual image src array via
-		// wp_get_attachment_image_src(), which returns [url, width, height,
-		// is_intermediate]. For site-icon fallback we know the requested
-		// size (1200×1200 — site icons are square).
-		$image        = '';
-		$image_width  = 0;
-		$image_height = 0;
-
-		$resolve_post_image = static function ( $post_id ) use ( &$image, &$image_width, &$image_height ) {
-			// Tier 1: per-post override via `_lafka_og_image` post meta.
-			// Stored as either a numeric attachment ID or a raw URL.
-			$override = get_post_meta( (int) $post_id, '_lafka_og_image', true );
-			if ( $override ) {
-				if ( is_numeric( $override ) ) {
-					$src = wp_get_attachment_image_src( (int) $override, 'large' );
-					if ( is_array( $src ) && ! empty( $src[0] ) ) {
-						$image        = (string) $src[0];
-						$image_width  = (int) ( $src[1] ?? 0 );
-						$image_height = (int) ( $src[2] ?? 0 );
-						return;
-					}
-				} else {
-					$image = (string) $override;
-					// Unknown dimensions — emitter will skip width/height tags.
-					return;
-				}
-			}
-			// Tier 2: featured image of the singular post/product.
-			$thumb_id = (int) get_post_thumbnail_id( $post_id );
-			if ( ! $thumb_id ) {
-				return;
-			}
-			$src = wp_get_attachment_image_src( $thumb_id, 'large' );
-			if ( ! is_array( $src ) || empty( $src[0] ) ) {
-				return;
-			}
-			$image        = (string) $src[0];
-			$image_width  = (int) ( $src[1] ?? 0 );
-			$image_height = (int) ( $src[2] ?? 0 );
-		};
-
-		if ( is_front_page() || is_home() ) {
-			$title       = get_bloginfo( 'name' );
-			$description = lafka_resolve_meta_description( ( is_singular() && $post ) ? $post : null );
-			$url         = home_url( '/' );
-			if ( is_singular() && $post ) {
-				$resolve_post_image( $post->ID );
-			}
-			$og_type     = 'restaurant.restaurant';
-		} elseif ( is_singular() && $post ) {
-			$title       = get_the_title( $post );
-			$description = lafka_resolve_meta_description( $post );
-			$url         = get_permalink( $post );
-			$resolve_post_image( $post->ID );
-			$og_type     = ( function_exists( 'is_product' ) && is_product() ) ? 'product' : 'article';
-		} elseif ( is_tax() || is_category() || is_tag() ) {
-			$term        = get_queried_object();
-			$title       = $term ? $term->name : get_bloginfo( 'name' );
-			$description = $term && ! empty( $term->description ) ? wp_strip_all_tags( $term->description ) : lafka_resolve_meta_description( null );
-			$url         = $term ? get_term_link( $term ) : home_url( '/' );
-			$og_type     = 'website';
-		} else {
-			$title       = wp_get_document_title();
-			$description = lafka_resolve_meta_description( null );
-			$url         = home_url( add_query_arg( null, null ) );
-			$og_type     = 'website';
-		}
-
-		// Tier 3: Customizer-pinned default OG image. Applies on any page
-		// that fell through tiers 1+2 (archives, /menu/, /contact-us/,
-		// homepage without featured image, etc).
-		if ( '' === $image ) {
-			$og_default = get_theme_mod( 'lafka_og_image_default', '' );
-			if ( '' !== $og_default && null !== $og_default ) {
-				if ( is_numeric( $og_default ) ) {
-					$src = wp_get_attachment_image_src( (int) $og_default, 'large' );
-					if ( is_array( $src ) && ! empty( $src[0] ) ) {
-						$image        = (string) $src[0];
-						$image_width  = (int) ( $src[1] ?? 0 );
-						$image_height = (int) ( $src[2] ?? 0 );
-					}
-				} else {
-					$image = (string) $og_default;
-					// String URL — dimensions unknown, width/height tags skipped.
-				}
-			}
-		}
-
-		// Tier 4 (last resort): site icon. Square, low resolution — still
-		// better than no preview at all.
-		if ( '' === $image && function_exists( 'get_site_icon_url' ) ) {
-			$icon = get_site_icon_url( 1200 );
-			if ( $icon ) {
-				$image        = $icon;
-				$image_width  = 1200; // site icons are always square at the requested size.
-				$image_height = 1200;
-			}
-		}
-
-		$site_name = get_bloginfo( 'name' );
-
-		// Locale: Customizer default (operator-pinned) takes precedence over
-		// WP Settings → General → Site Language. Output normalized to "xx_YY"
-		// (underscore, not hyphen). The `lafka_og_locale` filter lets a
-		// theme/plugin override per-request without touching settings.
-		$customizer_locale = (string) get_theme_mod( 'lafka_default_locale', '' );
-		$locale            = '' !== $customizer_locale
-			? str_replace( '-', '_', $customizer_locale )
-			: str_replace( '-', '_', get_locale() );
-		$locale            = (string) apply_filters( 'lafka_og_locale', $locale );
-
-		// ===== Emit =====
-		printf( '<meta property="og:title" content="%s">' . "\n", esc_attr( $title ) );
-		printf( '<meta property="og:description" content="%s">' . "\n", esc_attr( $description ) );
-		printf( '<meta property="og:url" content="%s">' . "\n", esc_url( $url ) );
-		printf( '<meta property="og:type" content="%s">' . "\n", esc_attr( $og_type ) );
-		printf( '<meta property="og:site_name" content="%s">' . "\n", esc_attr( $site_name ) );
-		printf( '<meta property="og:locale" content="%s">' . "\n", esc_attr( $locale ) );
-
-		if ( $image ) {
-			printf( '<meta property="og:image" content="%s">' . "\n", esc_url( $image ) );
-			// Emit dimensions only when we actually know them — emitting wrong
-			// dimensions is worse than omitting them (crawlers fall back to
-			// fetching+measuring vs trusting bad metadata).
-			if ( $image_width > 0 && $image_height > 0 ) {
-				printf( '<meta property="og:image:width" content="%d">' . "\n", (int) $image_width );
-				printf( '<meta property="og:image:height" content="%d">' . "\n", (int) $image_height );
-			}
-		}
-
-		printf( '<meta name="twitter:card" content="%s">' . "\n", $image ? 'summary_large_image' : 'summary' );
-		printf( '<meta name="twitter:title" content="%s">' . "\n", esc_attr( $title ) );
-		printf( '<meta name="twitter:description" content="%s">' . "\n", esc_attr( $description ) );
-		if ( $image ) {
-			printf( '<meta name="twitter:image" content="%s">' . "\n", esc_url( $image ) );
-		}
-	}
-}
-
 /**
- * Drive <html lang="…"> from the Customizer `lafka_default_locale` setting
- * (v9.22.2). Without this filter the WP core uses Settings → General →
- * Site Language. Operators on `en_US` WP installs that serve a Canadian
- * audience can pin `en_CA` (or any other locale) via the Customizer
- * "Social Sharing" section without wrangling WP Settings.
- *
- * Frontend only — admin keeps the WP core locale for back-office i18n.
+ * Social share links (lafka_share_links(), lafka_has_to_show_share()) and
+ * head metadata (OpenGraph/Twitter tags, meta description, <html lang>).
  */
-add_filter( 'language_attributes', 'lafka_filter_language_attributes', 10, 2 );
-if ( ! function_exists( 'lafka_filter_language_attributes' ) ) {
-	/**
-	 * @param string $output Existing attribute string e.g. `lang="en-US"`.
-	 * @param string $doctype Either 'html' or 'xhtml'.
-	 */
-	function lafka_filter_language_attributes( $output, $doctype = 'html' ) {
-		if ( is_admin() ) {
-			return $output;
-		}
-		if ( ! function_exists( 'get_theme_mod' ) ) {
-			return $output;
-		}
-		$override = (string) get_theme_mod( 'lafka_default_locale', '' );
-		if ( '' === $override ) {
-			return $output;
-		}
-		// Allow plugins/themes to short-circuit. Mirror the OG filter name
-		// for discoverability — same setting drives both surfaces.
-		$override = (string) apply_filters( 'lafka_og_locale', str_replace( '-', '_', $override ) );
-		// `<html lang>` uses hyphen form per BCP-47 (e.g. en-CA), so flip
-		// the underscore the filter normalised on.
-		$lang_attr = str_replace( '_', '-', $override );
-		$replacement = sprintf( 'lang="%s"', esc_attr( $lang_attr ) );
-		// Replace any existing lang="…" attribute; append when absent.
-		if ( preg_match( '/\blang="[^"]*"/', $output ) ) {
-			$output = preg_replace( '/\blang="[^"]*"/', $replacement, $output, 1 );
-		} else {
-			$output = trim( $output . ' ' . $replacement );
-		}
-		return $output;
-	}
-}
-
-add_action( 'wp_head', 'lafka_render_meta_description', 1 );
-if ( ! function_exists( 'lafka_render_meta_description' ) ) {
-	/**
-	 * Emit <meta name="description"> from per-post override or context-specific default.
-	 * P6-SEO-4 + P6-SEO-5: replaces silent absence of meta description.
-	 */
-	function lafka_render_meta_description() {
-		if ( is_admin() || is_feed() || is_404() ) {
-			return;
-		}
-
-		/*
-		 * Defer to a dedicated SEO plugin when active — it emits its own
-		 * <meta name="description">. See lafka_insert_og_tags() for the full
-		 * rationale; the same `lafka_head_meta_force_emit` override applies so
-		 * the deferral decision stays consistent across all head emitters.
-		 */
-		if ( lafka_seo_plugin_active() && ! (bool) apply_filters( 'lafka_head_meta_force_emit', false ) ) {
-			return;
-		}
-
-		global $post;
-		$desc = lafka_resolve_meta_description( is_singular() && $post ? $post : null );
-		if ( $desc ) {
-			printf( '<meta name="description" content="%s">' . "\n", esc_attr( $desc ) );
-		}
-	}
-}
-
-if ( ! function_exists( 'lafka_resolve_meta_description' ) ) {
-	/**
-	 * Resolution order (first non-empty wins):
-	 *   1. Per-post `_lafka_meta_description` post meta (manual override).
-	 *   2. WC product short description (single product).
-	 *   3. Post excerpt (any singular).
-	 *   4. WC term description (taxonomy archive).
-	 *   5. Site tagline (Settings → General → Tagline).
-	 *   6. Restaurant Information description (Customizer panel) — final fallback
-	 *      so the homepage gets a meaningful <meta name="description"> even when
-	 *      the operator hasn't set a tagline yet. Without this, fresh installs
-	 *      ship with no meta description at all, capping Lighthouse SEO ≤92.
-	 *   7. Constructed local-business pitch from name + servedCuisine + locality.
-	 */
-	function lafka_resolve_meta_description( $post_or_null ) {
-		if ( $post_or_null ) {
-			$override = get_post_meta( $post_or_null->ID, '_lafka_meta_description', true );
-			if ( $override ) {
-				return $override;
-			}
-			if ( function_exists( 'is_product' ) && is_product() ) {
-				$product = wc_get_product( $post_or_null->ID );
-				if ( $product && $product->get_short_description() ) {
-					return wp_strip_all_tags( $product->get_short_description() );
-				}
-			}
-			if ( ! empty( $post_or_null->post_excerpt ) ) {
-				return wp_strip_all_tags( $post_or_null->post_excerpt );
-			}
-		}
-		if ( is_tax() || is_category() || is_tag() ) {
-			$term = get_queried_object();
-			if ( $term && ! empty( $term->description ) ) {
-				return wp_strip_all_tags( $term->description );
-			}
-		}
-		$tagline = get_bloginfo( 'description' );
-		if ( $tagline ) {
-			// WP defaults the tagline to either "Just another WordPress site"
-			// or the site name on some installs. Either case produces a
-			// useless meta description that competes with — and loses to —
-			// the Restaurant Information description the operator can
-			// configure. Skip the tagline when it's the default WP boilerplate
-			// or a verbatim duplicate of the site name, so the next
-			// fallback gets a chance.
-			$site_name      = function_exists( 'get_bloginfo' ) ? (string) get_bloginfo( 'name' ) : '';
-			$is_wp_default  = 'Just another WordPress site' === $tagline;
-			$is_dupe_of_nam = '' !== $site_name && 0 === strcasecmp( trim( $tagline ), trim( $site_name ) );
-			if ( ! $is_wp_default && ! $is_dupe_of_nam ) {
-				return $tagline;
-			}
-		}
-		if ( function_exists( 'lafka_get_restaurant_info' ) ) {
-			$info = lafka_get_restaurant_info();
-			if ( ! empty( $info['description'] ) ) {
-				return wp_strip_all_tags( $info['description'] );
-			}
-			// Construct a sensible auto-pitch when the operator has set NAP but
-			// not a description: "{name} — fresh {cuisine} in {locality}".
-			$bits = array();
-			if ( ! empty( $info['name'] ) ) {
-				$bits[] = $info['name'];
-			}
-			// Read the flat keys that lafka_get_restaurant_info() actually
-			// returns (`cuisines`, `city`). The legacy code looked for
-			// `servedCuisine` and `address.addressLocality`, which never
-			// existed in the array — making the pitch always collapse to
-			// just `name`. Fixed in v9.22.1.
-			$cuisine = '';
-			if ( ! empty( $info['cuisines'] ) ) {
-				$cuisine = is_array( $info['cuisines'] )
-					? implode( ', ', array_map( 'strval', $info['cuisines'] ) )
-					: (string) $info['cuisines'];
-			}
-			$locality = ! empty( $info['city'] ) ? (string) $info['city'] : '';
-			if ( $cuisine && $locality ) {
-				$bits[] = sprintf(
-					/* translators: 1: cuisine list, 2: city/locality */
-					__( 'Fresh %1$s in %2$s — order online or call.', 'lafka-plugin' ),
-					$cuisine,
-					$locality
-				);
-			} elseif ( $locality ) {
-				$bits[] = sprintf(
-					/* translators: %s: city/locality */
-					__( 'Serving %s — order online or call.', 'lafka-plugin' ),
-					$locality
-				);
-			}
-			if ( ! empty( $bits ) ) {
-				return implode( ' — ', $bits );
-			}
-		}
-		return '';
-	}
-}
-
-if ( ! function_exists( 'lafka_has_to_show_share' ) ) {
-	function lafka_has_to_show_share() {
-
-		if ( function_exists( 'lafka_get_option' ) ) {
-			$general_option         = get_option( 'lafka_share_on_posts' ) === 'yes';
-			$general_option_product = get_option( 'lafka_share_on_products' ) === 'yes';
-			$single_meta            = get_post_meta( get_the_ID(), 'lafka_show_share', true );
-
-			$target = 'single';
-			if ( function_exists( 'is_product' ) && is_product() ) {
-				$target = 'product';
-			}
-
-			$has_to_show_share = false;
-
-			if ( $target === 'single' && $single_meta === 'yes' ) {
-				$has_to_show_share = true;
-			} elseif ( $target === 'single' && $general_option && $single_meta !== 'no' ) {
-				$has_to_show_share = true;
-			} elseif ( $target === 'product' && $general_option_product ) {
-				$has_to_show_share = true;
-			}
-
-			return $has_to_show_share;
-		}
-
-		return false;
-	}
-}
+require_once plugin_dir_path( __FILE__ ) . 'incl/lafka-share-links.php';
+require_once plugin_dir_path( __FILE__ ) . 'incl/seo/lafka-head-meta.php';
 
 add_action( 'woocommerce_single_product_summary', 'lafka_show_custom_product_popup_link', 12 );
 if ( ! function_exists( 'lafka_show_custom_product_popup_link' ) ) {
@@ -2409,96 +1663,6 @@ if ( ! function_exists( 'lafka_output_info_tooltips' ) ) {
 	}
 }
 
-// Import theme options
-add_action( 'wp_ajax_lafka_options_upload', 'lafka_options_upload' );
-if ( ! function_exists( 'lafka_options_upload' ) ) {
-	function lafka_options_upload() {
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'lafka-plugin' ) ), 403 );
-		}
-
-		check_ajax_referer( 'lafka_options_upload_nonce', 'security' );
-
-		if ( ! isset( $_FILES['file'] ) || ! is_array( $_FILES['file'] ) || empty( $_FILES['file']['tmp_name'] ) ) {
-			wp_send_json_error( array( 'message' => __( 'No file provided', 'lafka-plugin' ) ), 400 );
-		}
-
-		$file = $_FILES['file'];
-
-		if ( ! empty( $file['error'] ) ) {
-			wp_send_json_error( array( 'message' => __( 'Upload failed', 'lafka-plugin' ) ), 400 );
-		}
-
-		// Size cap — settings exports are small text/JSON files; 5MB is far more than enough.
-		$max_size = 5 * MB_IN_BYTES;
-		if ( ! empty( $file['size'] ) && (int) $file['size'] > $max_size ) {
-			wp_send_json_error( array( 'message' => __( 'File too large (5 MB max)', 'lafka-plugin' ) ), 400 );
-		}
-
-		// Server-side MIME sniff (do not trust client-supplied $_FILES['file']['type']).
-		$allowed_types = array( 'application/json', 'text/plain', 'application/xml', 'text/xml' );
-		$detected_type = '';
-		if ( function_exists( 'finfo_open' ) ) {
-			$finfo = finfo_open( FILEINFO_MIME_TYPE );
-			if ( $finfo ) {
-				$detected_type = (string) finfo_file( $finfo, $file['tmp_name'] );
-				finfo_close( $finfo );
-			}
-		}
-		if ( $detected_type && ! in_array( $detected_type, $allowed_types, true ) ) {
-			wp_send_json_error(
-				array( 'message' => sprintf( /* translators: %s: detected MIME type */ __( 'Invalid file type (%s). Only JSON/XML/plain text are allowed.', 'lafka-plugin' ), $detected_type ) ),
-				400
-			);
-		}
-
-		// Confirm the uploaded file is in fact an uploaded file (not a path-traversal attempt).
-		if ( ! is_uploaded_file( $file['tmp_name'] ) ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid upload', 'lafka-plugin' ) ), 400 );
-		}
-
-		$lafka_transfer_content = Lafka_Transfer_Content::getInstance();
-		$result                 = $lafka_transfer_content->importSettings( $file['tmp_name'], false, false, false, true );
-		wp_send_json_success( $result );
-	}
-}
-
-// Export theme options
-add_action( 'admin_post_lafka_options_export', 'lafka_options_export' );
-if ( ! function_exists( 'lafka_options_export' ) ) {
-	function lafka_options_export() {
-		// Capability + CSRF check before doing any work.
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( esc_html__( 'You do not have permission to export theme options.', 'lafka-plugin' ), 403 );
-		}
-		check_admin_referer( 'lafka_options_export' );
-
-		$lafka_transfer_content = Lafka_Transfer_Content::getInstance();
-		$export_file_path       = $lafka_transfer_content->exportThemeOptions();
-
-		// Defense in depth: require export to live inside the expected directory so a
-		// compromised exportThemeOptions() can't be used to readfile() arbitrary paths.
-		$export_dir   = realpath( get_template_directory() . '/store/settings' );
-		$resolved     = $export_file_path ? realpath( $export_file_path ) : false;
-		$path_is_safe = $resolved && $export_dir && str_starts_with( $resolved, $export_dir . DIRECTORY_SEPARATOR );
-
-		if ( $path_is_safe && file_exists( $resolved ) ) {
-			nocache_headers();
-			header( 'Content-Description: File Transfer' );
-			header( 'Content-Type: application/octet-stream' );
-			header( 'Content-Disposition: attachment; filename="' . basename( $resolved ) . '"' );
-			header( 'Content-Length: ' . filesize( $resolved ) );
-			readfile( $resolved );
-			// Best-effort cleanup so /store/settings/ doesn't fill up.
-			@unlink( $resolved );
-			exit;
-		}
-
-		wp_safe_redirect( admin_url( 'admin.php?page=lafka-optionsframework' ) );
-		exit;
-	}
-}
-
 // Allow safe HTML descriptions in WordPress Menu (related to Mega menu)
 remove_filter( 'nav_menu_description', 'strip_tags' );
 add_filter( 'nav_menu_description', 'wp_kses_post' );
@@ -2557,79 +1721,5 @@ if ( ! function_exists( 'lafka_js_async_exclude' ) ) {
 	}
 }
 
-add_shortcode( 'lafka_nap', 'lafka_nap_shortcode' );
-if ( ! function_exists( 'lafka_nap_shortcode' ) ) {
-	/**
-	 * P6-UX-5 + W2-T1: canonical NAP block. Reads from lafka_get_restaurant_info()
-	 * via lafka_schema_get_nap() — the single source-of-truth shared with the
-	 * JSON-LD module and the editorial templates. Operator content flows from
-	 * the Customizer panel "Lafka — Restaurant Information".
-	 *
-	 * Usage:
-	 *   [lafka_nap]                       // full address block
-	 *   [lafka_nap part="address"]        // address line only
-	 *   [lafka_nap part="phone"]          // tap-to-call phone link
-	 *   [lafka_nap part="name"]           // restaurant name
-	 *   [lafka_nap part="street"]         // street address
-	 *   [lafka_nap part="city"]           // city
-	 *   [lafka_nap part="region"]         // region/state
-	 *   [lafka_nap part="postal"]         // postal/ZIP code
-	 */
-	function lafka_nap_shortcode( $atts ) {
-		$atts = shortcode_atts( array( 'part' => 'all' ), $atts, 'lafka_nap' );
-
-		// Delegate to the canonical helper — Customizer-driven.
-		$nap = lafka_schema_get_nap();
-
-		$name   = $nap['name'];
-		$street = $nap['street'];
-		$city   = $nap['city'];
-		$region = $nap['region'];
-		$postal = $nap['postal'];
-		$phone  = $nap['telephone_display'];
-		$tel    = $nap['telephone'];
-
-		$address_parts = array_filter( array( $street, trim( $city . ', ' . $region . ' ' . $postal, ' ,' ) ) );
-		$address       = implode( ', ', $address_parts );
-
-		switch ( $atts['part'] ) {
-			case 'name':
-				return esc_html( $name );
-			case 'address':
-				return esc_html( $address );
-			case 'street':
-				return esc_html( $street );
-			case 'city':
-				return esc_html( $city );
-			case 'region':
-				return esc_html( $region );
-			case 'postal':
-				return esc_html( $postal );
-			case 'phone':
-				if ( '' === $tel ) {
-					return '';
-				}
-				return sprintf(
-					'<a href="tel:%s">%s</a>',
-					esc_attr( $tel ),
-					esc_html( $phone )
-				);
-			case 'all':
-			default:
-				$phone_html = '';
-				if ( '' !== $tel ) {
-					$phone_html = sprintf(
-						'<br><a href="tel:%s">%s</a>',
-						esc_attr( $tel ),
-						esc_html( $phone )
-					);
-				}
-				return sprintf(
-					'<address class="lafka-nap"><strong>%s</strong><br>%s%s</address>',
-					esc_html( $name ),
-					esc_html( $address ),
-					$phone_html
-				);
-		}
-	}
-}
+/** [lafka_nap] shortcode — Customizer-driven name / address / phone. */
+require_once plugin_dir_path( __FILE__ ) . 'incl/schema/lafka-nap-shortcode.php';

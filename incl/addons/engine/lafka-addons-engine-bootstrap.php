@@ -2,8 +2,10 @@
 /**
  * Lafka Addons Engine v2 — Bootstrap
  *
- * Loads the new engine alongside the legacy addon system. Phase 1: dormant.
- * Phase 2: admin form rewires to it. Phase 3: cart/display rewires to it.
+ * Loads the addon engine — the only addon implementation (the legacy addon
+ * system was retired in v8.18.0). Required from
+ * Lafka_Product_Addons::init_classes(); admin, cart, display, Store API,
+ * REST and CLI all run on it.
  *
  * @package Lafka_Addons_Engine
  * @since   8.13.0
@@ -20,9 +22,9 @@ if ( ! defined( 'LAFKA_ADDONS_ENGINE_PATH' ) ) {
 	define( 'LAFKA_ADDONS_ENGINE_PATH', __DIR__ );
 }
 
-// Autoload the engine's classes. The engine intentionally does not bootstrap
-// hooks at file-load time — Phase 2+ controllers will instantiate what they
-// need via the public Lafka_Addons_Engine facade (added in Task 18).
+// Load the engine's classes. Controllers (cart/display/admin/Store API) are
+// instantiated by Lafka_Product_Addons::init_classes(); this file itself only
+// registers the cache-invalidation, privacy, REST and CLI hooks below.
 require_once __DIR__ . '/interfaces/interface-pricing-strategy.php';
 require_once __DIR__ . '/interfaces/interface-options-source.php';
 require_once __DIR__ . '/data/class-addon-schema.php';

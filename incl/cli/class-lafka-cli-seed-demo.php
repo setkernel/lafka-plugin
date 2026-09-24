@@ -35,7 +35,7 @@
  * defined; only the command registration self-gates on WP_CLI.
  *
  * @package Lafka\Plugin\CLI
- * @since   9.37.0
+ * @since   10.0.0
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -763,7 +763,6 @@ if ( ! class_exists( 'Lafka_CLI_Seed_Demo' ) ) {
 			ob_start();
 			imagepng( $image );
 			$data = (string) ob_get_clean();
-			imagedestroy( $image );
 			return $data;
 		}
 

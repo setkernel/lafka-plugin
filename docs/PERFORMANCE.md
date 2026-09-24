@@ -3,18 +3,20 @@
 Fast pages = better Core Web Vitals = better local ranking + higher conversion.
 The code side ships LCP hero preload, deferred non-critical CSS, asset pruning,
 and conditional script loading. This file is the **infra/operator checklist** —
-mostly Cloudflare (already in front of the site) + WordPress cache headers.
+CDN settings (Cloudflare shown as the example; if you use it) + WordPress cache
+headers.
 
 ## What the code already does
 - **LCP**: homepage hero image is `<link rel=preload>`'d (set it in WooCommerce →
-  Settings → Restaurant → Homepage Hero). Fonts (Fraunces) are preloaded.
+  Settings → Restaurant → Homepage Hero). With the Lafka theme, the display font
+  is preloaded too (Fraunces by default, or the active preset's display face).
 - **CSS**: page-specific stylesheets load only where needed (e.g. PDP CSS only on
   products); non-critical CSS is deferred (`media=print` → `onload`).
 - **JS**: WPBakery front JS is dequeued off the front page; WooCommerce
   add-to-cart script loads where the drawer/upsell can appear.
 - **Schema/markup**: single `@graph` block, no duplicate SEO-plugin output.
 
-## Cloudflare (do these in the dashboard)
+## Cloudflare (if your site sits behind it — do these in the dashboard)
 - [ ] **Caching → Configuration**: Browser Cache TTL = "Respect existing headers".
 - [ ] **Speed → Optimization**:
   - Auto Minify: leave OFF (assets are already built/minified; double-minify risk).
@@ -34,15 +36,18 @@ mostly Cloudflare (already in front of the site) + WordPress cache headers.
 
 ## WordPress / origin cache headers
 If a page-cache plugin is used, exclude: cart, checkout, my-account, and any page
-with `woocommerce_items_in_cart` / session cookies. Static assets already carry
-far-future cache headers via the build; confirm the host isn't stripping them.
+with `woocommerce_items_in_cart` / session cookies. Plugin assets are
+cache-busted by a `filemtime()`-based `?ver=` string, so they are safe to cache
+for a long time — but the far-future `Cache-Control` / `Expires` headers
+themselves come from your web server or CDN, not from the plugin. Set them
+there.
 
 ## Images (operator)
 - [ ] Upload product photos sized ~1200px max; let WP generate the responsive set.
 - [ ] Any product with **no image** hurts both conversion and the merchant feed —
   audit your catalogue and add photos. Priorities: top sellers first.
-- [ ] Consider Cloudflare **Polish** (WebP/AVIF auto-conversion) = ON, lossy — a
-  zero-code way to serve modern formats without a WP WebP pipeline.
+- [ ] If you use Cloudflare, consider **Polish** (WebP/AVIF auto-conversion) =
+  ON, lossy — a zero-code way to serve modern formats.
 
 ## Measure (target: green CWV)
 - **PageSpeed Insights** / Search Console "Core Web Vitals" report — watch the
@@ -50,10 +55,3 @@ far-future cache headers via the build; confirm the host isn't stripping them.
 - Targets: **LCP < 2.5s**, **INP < 200ms**, **CLS < 0.1** (mobile first).
 - Re-test after any theme/asset change. The home hero image is the usual LCP
   element — keep it preloaded + appropriately sized.
-
-## Still on the code roadmap (needs visual QA before shipping)
-- Regenerate critical/above-the-fold CSS after the conversion-phase markup changes.
-- Purge dead rules from the legacy `style.css` monolith (large; high-risk → must
-  be verified at 375/768/1280 before release).
-- WPBakery → native template migration for the remaining builder pages (removes
-  the heavy js_composer asset load site-wide).

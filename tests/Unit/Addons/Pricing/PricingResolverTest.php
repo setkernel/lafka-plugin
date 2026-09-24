@@ -11,23 +11,19 @@ use Lafka_Flat_Per_Option_Pricing;
 use Lafka_Flat_Per_Size_Pricing;
 use Lafka_Matrix_Pricing;
 use Lafka_Pricing_Resolver;
+use Lafka_Pricing_Strategy;
 use PHPUnit\Framework\TestCase;
 
 require_once dirname( __DIR__, 4 ) . '/incl/addons/engine/lafka-addons-engine-bootstrap.php';
 
 final class PricingResolverTest extends TestCase {
 
-	private Lafka_Pricing_Resolver $resolver;
-
 	protected function setUp(): void {
 		parent::setUp();
 		Monkey\setUp();
 		Functions\when( '__' )->returnArg( 1 );
 		Functions\when( 'wp_generate_uuid4' )->justReturn( 'test-uuid-0000' );
-		// Resolver calls apply_filters in its constructor — return the strategies arg unchanged.
 		Functions\when( 'apply_filters' )->returnArg( 2 );
-
-		$this->resolver = new Lafka_Pricing_Resolver();
 	}
 
 	protected function tearDown(): void {
@@ -35,59 +31,69 @@ final class PricingResolverTest extends TestCase {
 		parent::tearDown();
 	}
 
-	public function test_returns_flat_group_for_flat_group_mode(): void {
-		$group = Lafka_Addon_Group::from_array( array(
-			'name'         => 'G',
-			'pricing_mode' => Lafka_Addon_Schema::PRICING_FLAT_GROUP,
-		) );
-		$strategy = $this->resolver->for_group( $group );
-		self::assertInstanceOf( Lafka_Flat_Group_Pricing::class, $strategy );
+	private static function group( string $mode ): Lafka_Addon_Group {
+		return Lafka_Addon_Group::from_array(
+			array(
+				'name'         => 'G',
+				'pricing_mode' => $mode,
+			)
+		);
 	}
 
-	public function test_returns_flat_per_option_for_flat_per_option_mode(): void {
-		$group = Lafka_Addon_Group::from_array( array(
-			'name'         => 'G',
-			'pricing_mode' => Lafka_Addon_Schema::PRICING_FLAT_PER_OPTION,
-		) );
-		self::assertInstanceOf( Lafka_Flat_Per_Option_Pricing::class, $this->resolver->for_group( $group ) );
-	}
+	public function test_each_stored_mode_resolves_to_its_strategy(): void {
+		$resolver = new Lafka_Pricing_Resolver();
+		$resolved = array();
+		foreach ( Lafka_Addon_Schema::pricing_modes() as $mode ) {
+			$resolved[ $mode ] = get_class( $resolver->for_group( self::group( $mode ) ) );
+		}
 
-	public function test_returns_flat_per_size_for_flat_per_size_mode(): void {
-		$group = Lafka_Addon_Group::from_array( array(
-			'name'         => 'G',
-			'pricing_mode' => Lafka_Addon_Schema::PRICING_FLAT_PER_SIZE,
-		) );
-		self::assertInstanceOf( Lafka_Flat_Per_Size_Pricing::class, $this->resolver->for_group( $group ) );
-	}
-
-	public function test_returns_matrix_for_matrix_mode(): void {
-		$group = Lafka_Addon_Group::from_array( array(
-			'name'         => 'G',
-			'pricing_mode' => Lafka_Addon_Schema::PRICING_MATRIX,
-		) );
-		self::assertInstanceOf( Lafka_Matrix_Pricing::class, $this->resolver->for_group( $group ) );
+		self::assertSame(
+			array(
+				Lafka_Addon_Schema::PRICING_FLAT_GROUP      => Lafka_Flat_Group_Pricing::class,
+				Lafka_Addon_Schema::PRICING_FLAT_PER_OPTION => Lafka_Flat_Per_Option_Pricing::class,
+				Lafka_Addon_Schema::PRICING_FLAT_PER_SIZE   => Lafka_Flat_Per_Size_Pricing::class,
+				Lafka_Addon_Schema::PRICING_MATRIX          => Lafka_Matrix_Pricing::class,
+			),
+			$resolved
+		);
 	}
 
 	public function test_unknown_mode_falls_back_to_flat_per_option(): void {
-		// v8.13.0 dropped the legacy strategy. Unknown modes fall back to
-		// the canonical default (flat_per_option), which is also the schema
-		// default for fresh groups.
-		$group = Lafka_Addon_Group::from_array( array(
-			'name'         => 'G',
-			'pricing_mode' => 'something_unknown',
-		) );
-		$strategy = $this->resolver->for_group( $group );
+		$strategy = ( new Lafka_Pricing_Resolver() )->for_group( self::group( 'something_unknown' ) );
 		self::assertSame( Lafka_Addon_Schema::PRICING_FLAT_PER_OPTION, $strategy->id() );
 	}
 
-	public function test_register_filter_allows_third_party_strategies(): void {
-		$resolver = new Lafka_Pricing_Resolver();
-		$strategies = $resolver->all_strategies();
+	public function test_third_party_strategy_registered_via_filter_is_resolved(): void {
+		$custom = new class() implements Lafka_Pricing_Strategy {
+			public function id(): string {
+				return 'bulk_tier';
+			}
+			public function label(): string {
+				return 'Bulk tier';
+			}
+			public function expand( Lafka_Addon_Group $group ): Lafka_Addon_Group {
+				return $group;
+			}
+			public function validate( Lafka_Addon_Group $group ): array {
+				return array();
+			}
+		};
+		Functions\when( 'apply_filters' )->alias(
+			static function ( $hook, $strategies ) use ( $custom ) {
+				if ( 'lafka_addons_register_pricing_strategy' === $hook ) {
+					$strategies['bulk_tier'] = $custom;
+				}
+				return $strategies;
+			}
+		);
 
-		self::assertCount( 4, $strategies );
-		self::assertArrayHasKey( Lafka_Addon_Schema::PRICING_FLAT_GROUP, $strategies );
-		self::assertArrayHasKey( Lafka_Addon_Schema::PRICING_FLAT_PER_OPTION, $strategies );
-		self::assertArrayHasKey( Lafka_Addon_Schema::PRICING_FLAT_PER_SIZE, $strategies );
-		self::assertArrayHasKey( Lafka_Addon_Schema::PRICING_MATRIX, $strategies );
+		$resolver = new Lafka_Pricing_Resolver();
+
+		self::assertSame( $custom, $resolver->for_group( self::group( 'bulk_tier' ) ) );
+		self::assertInstanceOf(
+			Lafka_Flat_Group_Pricing::class,
+			$resolver->for_group( self::group( Lafka_Addon_Schema::PRICING_FLAT_GROUP ) ),
+			'Registering a strategy must not displace the built-ins.'
+		);
 	}
 }

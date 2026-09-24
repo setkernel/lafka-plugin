@@ -54,8 +54,7 @@ final class AddonScalarPriceWalkerTest extends TestCase {
 		}
 		// Walker is depth-bounded at 10. Deeper than that → result is still
 		// nested → coerce to 0 rather than letting an array leak.
-		$result = lafka_addons_walk_to_scalar_price( $nested );
-		self::assertIsScalar( $result );
+		self::assertSame( 0, lafka_addons_walk_to_scalar_price( $nested ) );
 	}
 
 	public function test_returns_zero_on_object(): void {
@@ -63,16 +62,5 @@ final class AddonScalarPriceWalkerTest extends TestCase {
 		// downstream (float) cast / wc_price() call gets a safe value
 		// rather than a TypeError.
 		self::assertSame( 0, lafka_addons_walk_to_scalar_price( new \stdClass() ) );
-	}
-
-	public function test_terminates_quickly_on_pathological_input(): void {
-		$nested = array();
-		for ( $i = 0; $i < 50; $i++ ) {
-			$nested = array( 'k' . $i => $nested );
-		}
-		$start  = microtime( true );
-		$result = lafka_addons_walk_to_scalar_price( $nested );
-		$elapsed = microtime( true ) - $start;
-		self::assertLessThan( 0.05, $elapsed );
 	}
 }

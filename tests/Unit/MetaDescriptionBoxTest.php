@@ -1,74 +1,132 @@
 <?php
+/**
+ * Per-post meta description meta box: registered on posts, pages and (when
+ * WooCommerce is active) products; saved only with a valid nonce and the
+ * edit_post capability, as single-line text under the key the resolver reads.
+ *
+ * @package Lafka\Plugin\Tests\Unit
+ */
+
 declare(strict_types=1);
 
 namespace LafkaPlugin\Tests\Unit;
 
+use Brain\Monkey;
+use Brain\Monkey\Functions;
 use PHPUnit\Framework\TestCase;
 
-/**
- * P6-SEO-4 W2-T2 regression lock: per-post meta description meta box must
- * be registered, rendered with a placeholder showing the auto-resolved fallback,
- * and saved with proper nonce + capability checks.
- */
 final class MetaDescriptionBoxTest extends TestCase {
 
-    private string $module;
+	/** @var list<array{0:string, 1:int, 2?:string}> */
+	private array $writes = array();
 
-    protected function setUp(): void {
-        parent::setUp();
-        $this->module = file_get_contents(
-            dirname( __DIR__, 2 ) . '/incl/admin/lafka-meta-description-box.php'
-        );
-    }
+	protected function setUp(): void {
+		parent::setUp();
+		Monkey\setUp();
+		$this->writes = array();
+		Functions\when( 'wp_unslash' )->returnArg();
+		Functions\when( 'sanitize_text_field' )->alias( static fn( $v ) => trim( preg_replace( '/\s+/', ' ', strip_tags( (string) $v ) ) ) );
+		Functions\when( 'wp_verify_nonce' )->alias(
+			static fn( $nonce, $action ) => 'good-nonce' === $nonce && 'lafka_meta_description_save' === $action ? 1 : false
+		);
+		Functions\when( 'current_user_can' )->alias( static fn( $cap, $post_id ) => 'edit_post' === $cap && 42 === $post_id );
+		Functions\when( 'update_post_meta' )->alias(
+			function ( $post_id, $key, $value ) {
+				$this->writes[] = array( 'update', $post_id, $key, $value );
+			}
+		);
+		Functions\when( 'delete_post_meta' )->alias(
+			function ( $post_id, $key ) {
+				$this->writes[] = array( 'delete', $post_id, $key );
+			}
+		);
+		require_once dirname( __DIR__, 2 ) . '/incl/admin/lafka-meta-description-box.php';
+	}
 
-    public function test_module_exists(): void {
-        $this->assertNotEmpty( $this->module );
-    }
+	protected function tearDown(): void {
+		$_POST = array();
+		Monkey\tearDown();
+		parent::tearDown();
+	}
 
-    public function test_register_box_hooked_to_add_meta_boxes(): void {
-        $this->assertMatchesRegularExpression(
-            "/add_action\(\s*['\"]add_meta_boxes['\"]\s*,\s*['\"]lafka_meta_description_register_box['\"]/",
-            $this->module
-        );
-    }
+	public function test_saves_sanitized_single_line_text_to_the_resolver_key(): void {
+		$_POST = array(
+			'lafka_meta_description_nonce' => 'good-nonce',
+			'lafka_meta_description'       => "  Wood-fired pizza\nand <b>salads</b>  ",
+		);
+		lafka_meta_description_save( 42 );
+		$this->assertSame( array( array( 'update', 42, '_lafka_meta_description', 'Wood-fired pizza and salads' ) ), $this->writes );
+	}
 
-    public function test_save_hooked_to_save_post(): void {
-        $this->assertMatchesRegularExpression(
-            "/add_action\(\s*['\"]save_post['\"]\s*,\s*['\"]lafka_meta_description_save['\"]/",
-            $this->module
-        );
-    }
+	public function test_empty_value_deletes_the_override(): void {
+		$_POST = array(
+			'lafka_meta_description_nonce' => 'good-nonce',
+			'lafka_meta_description'       => '',
+		);
+		lafka_meta_description_save( 42 );
+		$this->assertSame( array( array( 'delete', 42, '_lafka_meta_description' ) ), $this->writes );
+	}
 
-    public function test_box_registers_for_post_page_and_product(): void {
-        $this->assertStringContainsString( "'post'", $this->module );
-        $this->assertStringContainsString( "'page'", $this->module );
-        $this->assertStringContainsString( "post_type_exists( 'product' )", $this->module );
-    }
+	public function test_nothing_is_written_without_a_valid_nonce_or_capability(): void {
+		$_POST = array( 'lafka_meta_description' => 'Injected' );
+		lafka_meta_description_save( 42 );
 
-    public function test_save_uses_nonce_and_capability_check(): void {
-        $this->assertStringContainsString( 'wp_verify_nonce', $this->module );
-        $this->assertStringContainsString( "current_user_can( 'edit_post'", $this->module );
-    }
+		$_POST['lafka_meta_description_nonce'] = 'forged';
+		lafka_meta_description_save( 42 );
 
-    public function test_save_uses_sanitize_text_field_not_textarea(): void {
-        // Meta descriptions should NOT be multi-line (Google treats line breaks
-        // as spaces in SERP snippets anyway), so sanitize_text_field is correct.
-        $this->assertStringContainsString( 'sanitize_text_field', $this->module );
-        $this->assertStringNotContainsString( 'sanitize_textarea_field', $this->module );
-    }
+		$_POST['lafka_meta_description_nonce'] = 'good-nonce';
+		lafka_meta_description_save( 7 ); // Current user can't edit post 7.
 
-    public function test_storage_key_matches_resolver(): void {
-        // The resolver in W1-T15 (lafka_resolve_meta_description) reads
-        // _lafka_meta_description; the box must write to the same key.
-        $this->assertStringContainsString( "'_lafka_meta_description'", $this->module );
-    }
+		$this->assertSame( array(), $this->writes );
+	}
 
-    public function test_placeholder_uses_resolver_for_fallback_preview(): void {
-        $this->assertStringContainsString( 'lafka_resolve_meta_description', $this->module );
-    }
+	public function test_box_is_registered_for_products_only_when_the_post_type_exists(): void {
+		$screens = array();
+		Functions\when( '__' )->returnArg();
+		Functions\when( 'add_meta_box' )->alias(
+			static function ( $id, $title, $callback, $screen ) use ( &$screens ) {
+				$screens[] = $screen;
+			}
+		);
 
-    public function test_main_plugin_requires_module(): void {
-        $main = file_get_contents( dirname( __DIR__, 2 ) . '/lafka-plugin.php' );
-        $this->assertStringContainsString( 'lafka-meta-description-box.php', $main );
-    }
+		Functions\when( 'post_type_exists' )->justReturn( false );
+		lafka_meta_description_register_box();
+		$this->assertSame( array( 'post', 'page' ), $screens );
+
+		$screens = array();
+		Functions\when( 'post_type_exists' )->alias( static fn( $type ) => 'product' === $type );
+		lafka_meta_description_register_box();
+		$this->assertSame( array( 'post', 'page', 'product' ), $screens );
+	}
+
+	public function test_counter_script_targets_the_textarea_not_the_metabox_wrapper(): void {
+		// The postbox wrapper WordPress renders carries the metabox id; the
+		// field must not reuse it, or the counter reads the wrapper's .value.
+		$metabox_id = null;
+		Functions\when( '__' )->returnArg();
+		Functions\when( 'post_type_exists' )->justReturn( false );
+		Functions\when( 'add_meta_box' )->alias(
+			static function ( $id ) use ( &$metabox_id ) {
+				$metabox_id = $id;
+			}
+		);
+		lafka_meta_description_register_box();
+
+		Functions\when( 'wp_nonce_field' )->justReturn( '' );
+		Functions\when( 'get_post_meta' )->justReturn( '' );
+		Functions\when( 'esc_attr' )->returnArg();
+		Functions\when( 'esc_textarea' )->returnArg();
+		Functions\when( 'esc_html_e' )->justReturn( null );
+		if ( function_exists( 'lafka_resolve_meta_description' ) ) {
+			// Loaded by another test; its fallback preview is not under test here.
+			Functions\when( 'lafka_resolve_meta_description' )->justReturn( '' );
+		}
+		ob_start();
+		lafka_meta_description_render_box( (object) array( 'ID' => 42 ) );
+		$html = (string) ob_get_clean();
+
+		$this->assertSame( 1, preg_match( '/<textarea\s+id="([^"]+)"/', $html, $field ) );
+		$this->assertNotSame( $metabox_id, $field[1] );
+		$this->assertStringContainsString( "getElementById( '{$field[1]}' )", $html );
+	}
 }

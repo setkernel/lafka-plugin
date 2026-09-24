@@ -2,6 +2,8 @@
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
+
+require_once __DIR__ . '/admin/lafka-term-form-nonce.php';
 /**
  * Register second image field for WooCommerce categories
  * to be used in the category header
@@ -278,10 +280,7 @@ if ( ! function_exists( 'lafka_woocommerce_custom_cat_fields_save' ) ) {
 		if ( ! is_admin() ) {
 			return;
 		}
-		$lafka_nonce_action = ! empty( $_POST['action'] ) && 'editedtag' === $_POST['action']
-			? 'update-tag_' . (int) $term_id
-			: 'add-tag';
-		if ( ! isset( $_POST['_wpnonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ), $lafka_nonce_action ) ) {
+		if ( ! lafka_verify_term_form_nonce( $term_id ) ) {
 			return;
 		}
 

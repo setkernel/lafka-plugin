@@ -1,6 +1,9 @@
 <?php
 defined( 'ABSPATH' ) || exit;
 
+require_once __DIR__ . '/../admin/lafka-term-form-nonce.php';
+require_once __DIR__ . '/../lafka-asset-helpers.php';
+
 // $_GET reads across this admin class are for filter state on the
 // order-list / branch-list / shop-order screens (branch_location_filter,
 // order_type_filter, etc.). All are read-only display logic; no state
@@ -46,6 +49,13 @@ class Lafka_Branch_Locations_Admin {
 	}
 
 	public static function admin_enqueue_scripts() {
+		// Branch term screens (the branch fields) and the product editor (the
+		// "Branch Locations" taxonomy box the script toggles).
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+		if ( ! is_object( $screen ) || ! in_array( (string) $screen->id, array( 'edit-lafka_branch_location', 'product', 'woocommerce_page_lafka_shipping_areas_admin' ), true ) ) {
+			return;
+		}
+
 		wp_enqueue_media();
 		wp_enqueue_style( 'lafka-schedule' );
 		wp_enqueue_style( 'flatpickr' );
@@ -54,9 +64,10 @@ class Lafka_Branch_Locations_Admin {
 		// management still works via the dropdown UI; only the map-pick
 		// surface is disabled.
 		if ( wp_script_is( 'lafka-google-maps', 'registered' ) ) {
+			$branch_admin_js = lafka_plugin_script_path( 'incl/shipping-areas/assets/js/backend/lafka-branch-locations-admin.min.js' );
 			wp_enqueue_script(
 				'lafka-branch-locations-admin',
-				plugins_url( '../assets/js/backend/lafka-branch-locations-admin.min.js', __FILE__ ),
+				plugins_url( $branch_admin_js, LAFKA_PLUGIN_FILE ),
 				array(
 					'jquery',
 					'lafka-google-maps',
@@ -64,7 +75,7 @@ class Lafka_Branch_Locations_Admin {
 					'lafka-schedule',
 					'flatpickr',
 				),
-				lafka_plugin_asset_version( 'incl/shipping-areas/assets/js/backend/lafka-branch-locations-admin.min.js' ),
+				lafka_plugin_asset_version( $branch_admin_js ),
 				true
 			);
 		}
@@ -580,10 +591,7 @@ class Lafka_Branch_Locations_Admin {
 		if ( ! is_admin() ) {
 			return;
 		}
-		$lafka_nonce_action = ! empty( $_POST['action'] ) && 'editedtag' === $_POST['action']
-			? 'update-tag_' . (int) $term_id
-			: 'add-tag';
-		if ( ! isset( $_POST['_wpnonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ), $lafka_nonce_action ) ) {
+		if ( ! lafka_verify_term_form_nonce( $term_id ) ) {
 			return;
 		}
 
@@ -950,19 +958,20 @@ class Lafka_Branch_Locations_Admin {
 				}
 			}
 
+			// No branches → no branch filter to offer.
 			if ( ! empty( $branches_for_select ) ) {
+				$filtered_branch_id = $_GET['branch_location_filter'] ?? '';
+				?>
+				<select id="branch_location_filter" name="branch_location_filter">
+					<option value=""><?php esc_html_e( 'All Branches', 'lafka-plugin' ); ?></option>
+					<?php foreach ( $branches_for_select as $id => $name ) : ?>
+						<option value="<?php echo esc_attr( $id ); ?>" <?php selected( $id, (int) $filtered_branch_id ); ?> >
+							<?php echo esc_html( $name ); ?>
+						</option>
+					<?php endforeach; ?>
+				</select>
+				<?php
 			}
-			$filtered_branch_id = $_GET['branch_location_filter'] ?? '';
-			?>
-			<select id="branch_location_filter" name="branch_location_filter">
-				<option value=""><?php esc_html_e( 'All Branches', 'lafka-plugin' ); ?></option>
-				<?php foreach ( $branches_for_select as $id => $name ) : ?>
-					<option value="<?php echo esc_attr( $id ); ?>" <?php selected( $id, (int) $filtered_branch_id ); ?> >
-						<?php echo esc_html( $name ); ?>
-					</option>
-				<?php endforeach; ?>
-			</select>
-			<?php
 		}
 		$filtered_order_type = $_GET['order_type_filter'] ?? '';
 		?>
@@ -987,10 +996,15 @@ class Lafka_Branch_Locations_Admin {
 			// managers saw the global pending count instead of their branch
 			// scope. Use the documented `meta_query` form, which works in both
 			// stores in WC 8.x+.
-			$ids = wc_get_orders(
+			// Same meaning as WooCommerce's own badge (orders waiting on the
+			// store: processing) plus the kitchen-display in-progress states —
+			// not every order the branch ever had.
+			$statuses = (array) apply_filters( 'lafka_branch_order_count_statuses', array( 'wc-processing', 'wc-accepted', 'wc-preparing', 'wc-ready' ) );
+			$ids      = wc_get_orders(
 				array(
 					'limit'      => -1,
 					'return'     => 'ids',
+					'status'     => $statuses,
 					'meta_query' => array(
 						array(
 							'key'     => 'lafka_selected_branch_id',

@@ -2,20 +2,9 @@
 declare(strict_types=1);
 
 /**
- * Locks LafkaMobileGroupedWalker::group_terms() — the path the bundled
- * lafka-theme mobile drawer actually consumes for its Categories section.
- *
- * Background (2026-07 audit): the walker's wp_nav_menu hooks gate on a
- * 'mobile' theme_location that the bundled theme stopped rendering in the
- * v5.55 header rebuild, so the whole grouped-mobile-menu feature (including
- * its live Customizer toggle) was dead code. group_terms() is the repaired
- * contract: the theme hands it the get_terms() list and renders the ordered
- * label => terms buckets.
- *
- * Brain Monkey stubs the WP functions (plugin-suite convention — defining
- * them as plain globals here would DefinedTooEarly-poison every later
- * Monkey test); the walker file is required inside setUp() so add_filter
- * exists at load time. Walker_Nav_Menu is a plain class stub.
+ * LafkaMobileGroupedWalker::group_terms() — the mobile drawer's category
+ * grouping: heuristic buckets in declared order, an "Everything else" tail,
+ * no empty groups, and operator reshaping through lafka_mobile_menu_groups.
  *
  * @package Lafka\Plugin\Tests\Unit
  */
@@ -26,19 +15,6 @@ use Brain\Monkey;
 use Brain\Monkey\Functions;
 use LafkaMobileGroupedWalker;
 use PHPUnit\Framework\TestCase;
-
-if ( ! class_exists( 'Walker_Nav_Menu' ) ) {
-	// Minimal parent so the walker class file can load; group_terms() never
-	// touches these.
-	class_alias( MobileGroupedWalkerParentStub::class, 'Walker_Nav_Menu' );
-}
-
-class MobileGroupedWalkerParentStub {
-	public function start_lvl( &$output, $depth = 0, $args = null ) {}
-	public function end_lvl( &$output, $depth = 0, $args = null ) {}
-	public function start_el( &$output, $item, $depth = 0, $args = null, $id = 0 ) {}
-	public function end_el( &$output, $item, $depth = 0, $args = null ) {}
-}
 
 final class MobileGroupedTermsTest extends TestCase {
 

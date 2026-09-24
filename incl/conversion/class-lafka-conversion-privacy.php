@@ -23,7 +23,7 @@
  * addon-engine privacy contract (incl/addons/engine/class-engine-privacy.php).
  *
  * @package Lafka\Plugin\Conversion
- * @since   9.36.0
+ * @since   10.0.0
  */
 
 defined( 'ABSPATH' ) || exit;

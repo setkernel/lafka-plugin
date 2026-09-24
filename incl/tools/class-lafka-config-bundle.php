@@ -13,7 +13,7 @@
  *     "schema_version": 1,
  *     "generated_at":   "2026-07-06T12:00:00+00:00",
  *     "site_url":       "https://source.example",
- *     "plugin_version": "9.36.0",
+ *     "plugin_version": "10.0.0",
  *     "manifest": { "excluded": [ "…human-readable notes…" ] },
  *     "sections": { "flags": {…}, "business": {…}, … }
  *   }
@@ -53,7 +53,7 @@
  * (incl/admin/class-lafka-tools-page.php) are thin surfaces over this class.
  *
  * @package Lafka\Plugin\Tools
- * @since   9.36.0
+ * @since   10.0.0
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -314,7 +314,6 @@ if ( ! class_exists( 'Lafka_Config_Bundle' ) ) {
 				'lafka_business_hours_fri',
 				'lafka_business_hours_sat',
 				'lafka_business_hours_sun',
-				'lafka_homepage_hero_image',
 				'lafka_homepage_hero_attachment_id',
 				'lafka_contact_phone',
 				'lafka_share_on_posts',

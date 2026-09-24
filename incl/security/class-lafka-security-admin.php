@@ -5,9 +5,9 @@
  * Adds Tools → Lafka Security so ops can flip the `enable_security_headers`
  * toggle without WP-CLI. Read-only status panel shows what's currently active.
  *
- * The toggle writes to the existing `lafka` option array (the same key
- * Lafka_Security_Headers::is_active() reads from), so this is purely a UI
- * over the existing gating logic — no engine changes.
+ * The toggle writes to the dedicated `lafka_security_options` array
+ * (Lafka_Security_Headers::OPTION_KEY — what is_active() reads first), so
+ * this is purely a UI over the existing gating logic — no engine changes.
  *
  * @package Lafka
  * @since   8.7.0
@@ -53,7 +53,7 @@ if ( ! class_exists( 'Lafka_Security_Admin' ) ) {
 		}
 
 		/**
-		 * Form-post handler. Toggles `lafka['enable_security_headers']` between
+		 * Form-post handler. Toggles `lafka_security_options['enable_security_headers']` between
 		 * 'enabled' and 'disabled' based on the submitted value.
 		 */
 		public function handle_save() {

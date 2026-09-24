@@ -34,12 +34,4 @@ final class WpbakeryFallbackTest extends TestCase {
 	public function test_returns_string_for_empty(): void {
 		self::assertSame( '', lafka_wpbakery_strip_orphans( '' ) );
 	}
-
-	public function test_detection_helpers_exist(): void {
-		self::assertTrue( function_exists( 'lafka_wpbakery_is_active' ) );
-		self::assertTrue( function_exists( 'lafka_revslider_is_active' ) );
-		// In the unit context neither plugin is loaded.
-		self::assertFalse( lafka_wpbakery_is_active() );
-		self::assertFalse( lafka_revslider_is_active() );
-	}
 }

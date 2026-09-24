@@ -16,9 +16,9 @@
  *     (flat_per_option, flat_group, flat_per_size, matrix) identically to classic.
  *   · ORDER-META PARITY: the addons built from a mapped selection produce the same
  *     order-item meta writes as classic (same Lafka_Engine_Cart::order_line_item()).
- *   · STRUCTURE: the adapter hooks the real Store API filter, reads `extensions`,
- *     delegates to Lafka_Engine_Cart::add_cart_item_data(), and injects the same
- *     $post_data into the engine's classic validation — no duplicated option matching.
+ *   · ADD-ITEM: the Store API add-to-cart data gains cart_item_data['addons'] built
+ *     by Lafka_Engine_Cart::add_cart_item_data() for the owner (parent) product,
+ *     and the same $post_data is handed to the engine's classic validation.
  *
  * The full HTTP round-trip (RouteException surfacing, item_data render) is exercised
  * by the live wp-env contract checks in the item, matching the StoreApiParityTest
@@ -30,19 +30,7 @@
 declare(strict_types=1);
 
 namespace {
-	if ( ! class_exists( '\WP_Error' ) ) {
-		class WP_Error { // phpcs:ignore
-			public string $code;
-			public string $message;
-			public function __construct( $code = '', $message = '' ) {
-				$this->code    = (string) $code;
-				$this->message = (string) $message;
-			}
-			public function get_error_message() {
-				return $this->message;
-			}
-		}
-	}
+	require_once dirname( __DIR__ ) . '/Stubs/wp-error-class.php';
 
 	// Minimal ArrayAccess request stub so extract_selections() can be exercised
 	// against the WP_REST_Request shape without booting WordPress.
@@ -93,6 +81,7 @@ namespace LafkaPlugin\Tests\Unit\Addons {
 	use Lafka_Engine_Cart;
 	use Lafka_Engine_Field_Factory;
 	use Lafka_Engine_Store_Api;
+	use Mockery;
 	use PHPUnit\Framework\TestCase;
 
 	require_once dirname( __DIR__, 3 ) . '/incl/addons/engine/lafka-addons-engine-bootstrap.php';
@@ -101,7 +90,6 @@ namespace LafkaPlugin\Tests\Unit\Addons {
 
 		private Lafka_Engine_Cart $cart;
 		private Lafka_Engine_Store_Api $adapter;
-		private string $src;
 
 		protected function setUp(): void {
 			parent::setUp();
@@ -125,10 +113,6 @@ namespace LafkaPlugin\Tests\Unit\Addons {
 			// convention). Reuse the one cart instance so no hook is double-bound.
 			$this->cart    = new Lafka_Engine_Cart();
 			$this->adapter = new Lafka_Engine_Store_Api( $this->cart );
-
-			$this->src = file_get_contents(
-				dirname( __DIR__, 3 ) . '/incl/addons/engine/cart/class-engine-store-api.php'
-			);
 		}
 
 		protected function tearDown(): void {
@@ -408,6 +392,7 @@ namespace LafkaPlugin\Tests\Unit\Addons {
 				array(
 					array( 'key' => 'Extra Toppings', 'value' => 'Extra Cheese' ),
 					array( 'key' => 'Extra Toppings', 'value' => 'Mushrooms' ),
+					array( 'key' => '_lafka_addon_keys', 'value' => array( 'Extra Toppings' ) ),
 				),
 				$item->meta,
 				'Store API order-item meta must match the classic addon name→value writes.'
@@ -415,49 +400,108 @@ namespace LafkaPlugin\Tests\Unit\Addons {
 		}
 
 		/* ----------------------------------------------------------------- *
-		 *  Structural — delegation, no duplication
+		 *  Add-item hook — delegation to the engine cart + classic validation
 		 * ----------------------------------------------------------------- */
 
-		public function test_hooks_the_store_api_add_to_cart_filter(): void {
-			self::assertMatchesRegularExpression(
-				"/add_filter\(\s*'woocommerce_store_api_add_to_cart_data'\s*,\s*array\(\s*\\\$this\s*,\s*'inject_addon_selections'/",
-				$this->src,
-				'Adapter must hook the real Store API add-to-cart data filter.'
+		/**
+		 * Adapter wired to a mocked engine cart so the delegation contract is
+		 * observable: which owner id and $post_data the engine receives.
+		 */
+		private function adapter_with_cart( $engine_cart ): Lafka_Engine_Store_Api {
+			return new Lafka_Engine_Store_Api( $engine_cart );
+		}
+
+		private static function add_item_request( array $selections ): array {
+			return array(
+				'id'         => 250,
+				'quantity'   => 1,
+				'extensions' => array( 'lafka' => array( 'addons' => $selections ) ),
 			);
 		}
 
-		public function test_delegates_to_engine_field_pipeline(): void {
-			self::assertStringContainsString(
-				'$this->engine_cart->add_cart_item_data(',
-				$this->src,
-				'Adapter must build addons via the engine cart field pipeline (no duplicate parsing).'
+		public function test_add_item_builds_addons_through_engine_cart_for_parent_product(): void {
+			$variation = Mockery::mock( 'WC_Product' );
+			$variation->shouldReceive( 'is_type' )->with( 'variation' )->andReturn( true );
+			$variation->shouldReceive( 'get_parent_id' )->andReturn( 94 );
+			Functions\when( 'wc_get_product' )->justReturn( $variation );
+
+			$expected_post = array(
+				'add-to-cart'               => 94,
+				'addon-94-extra-toppings-0' => array( 'cheese' ),
 			);
-			// It must NOT re-implement option matching itself.
-			self::assertStringNotContainsString(
-				"in_array( strtolower",
-				$this->src,
-				'Adapter must not duplicate the field classes option-matching logic.'
+			$addons      = array(
+				array(
+					'name'  => 'Extra Toppings',
+					'value' => 'Extra Cheese',
+					'price' => '1.50',
+				),
 			);
-			self::assertStringNotContainsString(
-				'get_cart_item_data()',
-				$this->src,
-				'Adapter must not call the field get_cart_item_data() directly — it delegates through the engine cart.'
+			$engine_cart = Mockery::mock( Lafka_Engine_Cart::class );
+			$engine_cart->shouldReceive( 'add_cart_item_data' )
+				->once()
+				->with( array(), 94, $expected_post )
+				->andReturn( array( 'addons' => $addons ) );
+			$adapter = $this->adapter_with_cart( $engine_cart );
+
+			$data = $adapter->inject_addon_selections(
+				array(
+					'id'             => 250,
+					'quantity'       => 1,
+					'cart_item_data' => array( 'gift_note' => 'kept' ),
+				),
+				self::add_item_request( array( '94-extra-toppings-0' => array( 'cheese' ) ) )
 			);
+
+			self::assertSame(
+				array(
+					'gift_note' => 'kept',
+					'addons'    => $addons,
+				),
+				$data['cart_item_data']
+			);
+			// The engine's classic add-to-cart validation sees the same selections.
+			self::assertSame( $expected_post, $adapter->inject_request_post_data( null ) );
+			$adapter->clear_pending();
+			self::assertNull( $adapter->inject_request_post_data( null ), 'Pending selections are dropped once the add completes.' );
 		}
 
-		public function test_injects_post_data_into_classic_validation(): void {
-			self::assertMatchesRegularExpression(
-				"/add_filter\(\s*'lafka_addons_request_post_data'\s*,\s*array\(\s*\\\$this\s*,\s*'inject_request_post_data'/",
-				$this->src,
-				'Adapter must feed the same $post_data to the engine classic validation hook.'
+		public function test_add_item_without_selections_leaves_classic_path_untouched(): void {
+			$product = Mockery::mock( 'WC_Product' );
+			$product->shouldReceive( 'is_type' )->andReturn( false );
+			$product->shouldReceive( 'get_id' )->andReturn( 94 );
+			Functions\when( 'wc_get_product' )->justReturn( $product );
+
+			$engine_cart = Mockery::mock( Lafka_Engine_Cart::class );
+			$engine_cart->shouldReceive( 'add_cart_item_data' )->once()->andReturn( array( 'addons' => array() ) );
+			$adapter = $this->adapter_with_cart( $engine_cart );
+
+			// A first add with selections, then one without: the second must not
+			// inherit the first one's $post_data (batch requests).
+			$adapter->inject_addon_selections( array( 'id' => 94 ), self::add_item_request( array( '94-note-0' => 'x' ) ) );
+			$data = array(
+				'id'       => 94,
+				'quantity' => 2,
 			);
+
+			self::assertSame( $data, $adapter->inject_addon_selections( $data, array( 'id' => 94 ) ) );
+			self::assertSame( 'classic', $adapter->inject_request_post_data( 'classic' ) );
 		}
 
-		public function test_reads_selections_from_extensions(): void {
-			self::assertStringContainsString(
-				"\$request['extensions']",
-				$this->src,
-				'Adapter must read selections from the Store API request extensions.'
+		public function test_invalid_selection_surfaces_as_an_error_not_a_silent_add(): void {
+			$product = Mockery::mock( 'WC_Product' );
+			$product->shouldReceive( 'is_type' )->andReturn( false );
+			$product->shouldReceive( 'get_id' )->andReturn( 94 );
+			Functions\when( 'wc_get_product' )->justReturn( $product );
+
+			$engine_cart = Mockery::mock( Lafka_Engine_Cart::class );
+			$engine_cart->shouldReceive( 'add_cart_item_data' )->andThrow( new \Exception( '"Sauce" is a required field.' ) );
+
+			$this->expectException( \RuntimeException::class );
+			$this->expectExceptionMessage( '"Sauce" is a required field.' );
+
+			$this->adapter_with_cart( $engine_cart )->inject_addon_selections(
+				array( 'id' => 94 ),
+				self::add_item_request( array( '94-sauce-0' => '' ) )
 			);
 		}
 	}

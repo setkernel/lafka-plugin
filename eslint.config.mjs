@@ -13,22 +13,12 @@ export default [
 				// Core WP / WC
 				wp: "readonly",
 				ajaxurl: "readonly",
-				wc_add_to_cart_params: "readonly",
 				wc_add_to_cart_variation_params: "readonly",
-				wc_composite_params: "readonly",
-				wc_cp_get_variation_data: "readonly",
-				woocommerce_params: "readonly",
 				// Lafka payloads (wp_localize_script)
-				lafka_ajax_object: "readonly",
-				lafka_plugin_ajax: "readonly",
 				lafka_addons_params: "readonly",
 				lafka_cat_ordering: "readonly",
-				wc_combo_params: "readonly",
-				wc_add_to_cart_combo_params: "readonly",
 				// Per-page-injected vars used in admin scripts
-				localise: "readonly",
 				accounting: "readonly",
-				plupload: "readonly",
 				// Third-party libs
 				google: "readonly",
 				flatpickr: "readonly",
@@ -61,9 +51,41 @@ export default [
 			},
 		},
 	},
-	// Node.js build scripts (ES modules) — e.g. scripts/sync-version.mjs.
+	// Shipping-areas / branch scripts: sources recovered by formatting the
+	// long-shipped minified builds (WP.org guideline 4). They read the
+	// wp_localize_script / inline-script globals below; the minifier's
+	// variable reuse trips a few stylistic rules.
 	{
-		files: ["scripts/**/*.mjs"],
+		files: ["incl/shipping-areas/assets/js/**/*.js"],
+		languageOptions: {
+			globals: {
+				lafka_branch_locations_front: "readonly",
+				lafka_branch_location_properties: "readonly",
+				lafka_datetime_options: "readonly",
+				lafka_shipping_areas_shortcode_php_variables: "readonly",
+				lafka_admin_map_params: "readonly",
+				lafka_shipping_properties: "readonly",
+				lafka_shipping_destination_address_property: "writable",
+				lafka_checkout_map_properties: "writable",
+				lafka_set_store_location: "readonly",
+				lafka_store_map_location: "readonly",
+				lafka_store_address: "readonly",
+				lafka_lowest_cost_shipping: "readonly",
+				lafka_no_shipping_methods_string: "readonly",
+				lafka_debug_mode: "readonly",
+				lafka_order_type: "readonly",
+				wc_country_select_params: "readonly",
+			},
+		},
+		rules: {
+			"no-redeclare": "off",
+			"no-unused-vars": "off",
+			"no-empty": "off",
+		},
+	},
+	// Node.js build scripts + node:test suites (ES modules).
+	{
+		files: ["scripts/**/*.mjs", "tests/js/**/*.mjs"],
 		languageOptions: {
 			sourceType: "module",
 			globals: {
@@ -82,8 +104,6 @@ export default [
 			"assets/js/schedule/jquery.schedule.min.js",
 			// Minified files
 			"**/*.min.js",
-			// Importer
-			"importer/**",
 		],
 	},
 ];

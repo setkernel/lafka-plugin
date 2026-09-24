@@ -67,39 +67,6 @@ if ( ! function_exists( 'lafka_combo_deal_config' ) ) {
 	}
 }
 
-if ( ! function_exists( 'lafka_combo_cart_has_pair' ) ) {
-	/**
-	 * Pure: does the cart contain at least one item in cat A AND one in cat B,
-	 * satisfied by two DIFFERENT line items (so a single product that happens to
-	 * sit in both categories does not self-qualify)?
-	 *
-	 * @param array $items_categories List of category-id arrays, one per line item.
-	 * @param int   $cat_a
-	 * @param int   $cat_b
-	 * @return bool
-	 */
-	function lafka_combo_cart_has_pair( array $items_categories, int $cat_a, int $cat_b ): bool {
-		if ( $cat_a <= 0 || $cat_b <= 0 ) {
-			return false;
-		}
-		foreach ( $items_categories as $i => $cats_a ) {
-			$cats_a = array_map( 'intval', (array) $cats_a );
-			if ( ! in_array( $cat_a, $cats_a, true ) ) {
-				continue;
-			}
-			foreach ( $items_categories as $j => $cats_b ) {
-				if ( $i === $j ) {
-					continue; // must be a different line item
-				}
-				if ( in_array( $cat_b, array_map( 'intval', (array) $cats_b ), true ) ) {
-					return true;
-				}
-			}
-		}
-		return false;
-	}
-}
-
 if ( ! function_exists( 'lafka_combo_find_pair' ) ) {
 	/**
 	 * Pure: locate the single qualifying combo pair and return its keys + the
@@ -177,25 +144,6 @@ if ( ! function_exists( 'lafka_combo_deal_amount_for' ) ) {
 			return $subtotal > 0 ? round( $subtotal * ( min( 100.0, $amount ) / 100 ), 2 ) : 0.0;
 		}
 		return round( min( $amount, max( 0.0, $subtotal ) ), 2 ); // fixed, never exceeds subtotal
-	}
-}
-
-if ( ! function_exists( 'lafka_combo_deal_cart_categories' ) ) {
-	/**
-	 * Impure: category IDs per cart line item (one array per item).
-	 *
-	 * @return array
-	 */
-	function lafka_combo_deal_cart_categories(): array {
-		$out = array();
-		if ( ! function_exists( 'WC' ) || ! WC()->cart ) {
-			return $out;
-		}
-		foreach ( WC()->cart->get_cart() as $item ) {
-			$pid   = (int) ( $item['product_id'] ?? 0 );
-			$out[] = $pid ? wc_get_product_term_ids( $pid, 'product_cat' ) : array();
-		}
-		return $out;
 	}
 }
 

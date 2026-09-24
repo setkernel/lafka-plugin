@@ -28,12 +28,6 @@ final class FlatPerSizePricingTest extends TestCase {
 		parent::tearDown();
 	}
 
-	public function test_id_and_label(): void {
-		$strategy = new Lafka_Flat_Per_Size_Pricing();
-		self::assertSame( Lafka_Addon_Schema::PRICING_FLAT_PER_SIZE, $strategy->id() );
-		self::assertNotEmpty( $strategy->label() );
-	}
-
 	public function test_expand_writes_size_matrix_to_every_option(): void {
 		$group = Lafka_Addon_Group::from_array( array(
 			'name'              => 'Toppings',

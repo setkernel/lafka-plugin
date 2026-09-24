@@ -33,6 +33,13 @@ class LafkaContactsWidget extends WP_Widget {
 	 * @param string $field    Instance key (worktime, address, phone, fax, email).
 	 * @return string
 	 */
+	/**
+	 * Restaurant info for the current render (lazy; reset per widget() call).
+	 *
+	 * @var array|null
+	 */
+	private $info = null;
+
 	private function resolve( array $instance, string $field ): string {
 		// Per-widget override wins.
 		if ( isset( $instance[ $field ] ) && '' !== trim( (string) $instance[ $field ] ) ) {
@@ -43,7 +50,10 @@ class LafkaContactsWidget extends WP_Widget {
 		if ( ! function_exists( 'lafka_get_restaurant_info' ) ) {
 			return '';
 		}
-		$info = lafka_get_restaurant_info();
+		if ( null === $this->info ) {
+			$this->info = (array) lafka_get_restaurant_info(); // Once per render, not per field.
+		}
+		$info = $this->info;
 
 		switch ( $field ) {
 			case 'address':
@@ -66,7 +76,8 @@ class LafkaContactsWidget extends WP_Widget {
 	}
 
 	public function widget( $args, $instance ) {
-		$instance = (array) $instance;
+		$this->info = null;
+		$instance   = (array) $instance;
 		$title    = apply_filters( 'widget_title', $instance['title'] ?? '' );
 
 		$worktime = $this->resolve( $instance, 'worktime' );
@@ -79,8 +90,10 @@ class LafkaContactsWidget extends WP_Widget {
 		// parse it correctly (display value can include spaces/dashes).
 		$tel_e164 = '';
 		if ( '' !== $phone && function_exists( 'lafka_get_restaurant_info' ) ) {
-			$info     = lafka_get_restaurant_info();
-			$tel_e164 = (string) ( $info['phone_e164'] ?? '' );
+			if ( null === $this->info ) {
+				$this->info = (array) lafka_get_restaurant_info();
+			}
+			$tel_e164 = (string) ( $this->info['phone_e164'] ?? '' );
 		}
 
 		echo wp_kses_post( $args['before_widget'] );

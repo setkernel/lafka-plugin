@@ -1,100 +1,149 @@
 <?php
 /**
- * SecurityAdminTest — locks down Lafka_Security_Admin's form-post handler
- * surface.
+ * SecurityAdminTest — Lafka_Security_Admin's form-post handler controls the
+ * security-headers toggle, so its gates are exactly what an attacker would
+ * target to flip the headers off remotely:
  *
- * The handler controls a security toggle. Its three gates — capability
- * check, nonce verification, allowlist sanitization — are exactly the
- * ones an attacker would target to flip headers off remotely; tests
- * confirm none of them have drifted.
- *
- * Source-grep based since the handler does too much (wp_die, wp_safe_redirect,
- * exit) to test functionally without a heavier harness.
+ *   - a non-admin is refused before the nonce is even consulted,
+ *   - a failed nonce blocks the write,
+ *   - the submitted value is allowlisted to enabled|disabled and written to the
+ *     dedicated option (preserving sibling keys), then redirected safely,
+ *   - the settings page itself refuses non-admins.
  *
  * @package Lafka\Plugin\Tests\Unit
- * @since   9.7.12
  */
 
 declare(strict_types=1);
 
 namespace LafkaPlugin\Tests\Unit;
 
+use Brain\Monkey;
+use Brain\Monkey\Functions;
+use Lafka_Security_Admin;
+use Lafka_Security_Headers;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
+
+// Load the real Lafka_Options first so the bootstrap's stub (guarded by
+// class_exists) never shadows it for later test files that require the real one.
+require_once dirname( __DIR__, 2 ) . '/incl/class-lafka-options.php';
+require_once __DIR__ . '/Stubs/security-headers-bootstrap.php';
 
 final class SecurityAdminTest extends TestCase {
 
-	private string $src;
-
 	protected function setUp(): void {
 		parent::setUp();
-		$this->src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/security/class-lafka-security-admin.php' );
+		Monkey\setUp();
+		\Lafka_Options::flush(); // Drop any 'lafka' option array cached by an earlier test.
+		Functions\when( 'esc_html__' )->returnArg();
+		Functions\when( 'sanitize_text_field' )->returnArg();
+		Functions\when( 'wp_unslash' )->returnArg();
+		Functions\when( 'admin_url' )->alias( static fn( $path = '' ) => 'https://example.test/wp-admin/' . $path );
+		Functions\when( 'add_query_arg' )->alias( static fn( $args, $url ) => $url . '?' . http_build_query( $args ) );
+		// WordPress dies here; throwing lets the test observe it without exit().
+		Functions\when( 'wp_die' )->alias(
+			static function () {
+				throw new RuntimeException( 'wp_die' );
+			}
+		);
+		// The class file auto-instantiates when is_admin(); keep it inert on load.
+		Functions\when( 'is_admin' )->justReturn( false );
+		require_once dirname( __DIR__, 2 ) . '/incl/security/class-lafka-security-admin.php';
 	}
 
-	public function test_handle_save_checks_capability_first(): void {
-		// manage_options gate must come BEFORE check_admin_referer so an
-		// unauthorized POST gets 403, not a "nonce expired" error that leaks
-		// admin-area existence. (Caps before nonce is the standard pattern.)
-		$cap_pos   = strpos( $this->src, "current_user_can( 'manage_options' )" );
-		$nonce_pos = strpos( $this->src, 'check_admin_referer( self::NONCE_ACTION )' );
-		$this->assertNotFalse( $cap_pos, 'handle_save must check manage_options.' );
-		$this->assertNotFalse( $nonce_pos, 'handle_save must verify the nonce.' );
-		$this->assertLessThan( $nonce_pos, $cap_pos, 'Capability check must come before nonce verification.' );
+	protected function tearDown(): void {
+		$_POST = array();
+		Monkey\tearDown();
+		parent::tearDown();
 	}
 
-	public function test_handle_save_uses_check_admin_referer_not_just_wp_verify_nonce(): void {
-		// check_admin_referer wraps wp_verify_nonce + die on failure. Using
-		// it (vs raw wp_verify_nonce) ensures a failed nonce returns 403
-		// rather than silently falling through to the option write.
-		$this->assertStringContainsString( 'check_admin_referer( self::NONCE_ACTION )', $this->src );
+	public function test_non_admin_is_refused_before_the_nonce_or_option_is_touched(): void {
+		Functions\when( 'current_user_can' )->justReturn( false );
+		Functions\expect( 'check_admin_referer' )->never();
+		Functions\expect( 'update_option' )->never();
+		$_POST = array( 'enable_security_headers' => 'disabled' );
+
+		$this->expectExceptionMessage( 'wp_die' );
+		Lafka_Security_Admin::instance()->handle_save();
 	}
 
-	public function test_toggle_value_is_allowlisted(): void {
-		// The submitted value flows from $_POST through sanitize_text_field
-		// and then a strict allowlist (`'enabled' === $requested`) — anything
-		// else falls back to 'disabled'. Ensures an attacker can't smuggle
-		// a third value into the option.
-		$this->assertMatchesRegularExpression(
-			"/'enabled'\s*===\s*\\\$requested\s*\)\s*\?\s*'enabled'\s*:\s*'disabled'/",
-			$this->src,
-			"Submitted toggle value must be allowlisted to enabled|disabled."
+	public function test_failed_nonce_blocks_the_write(): void {
+		Functions\when( 'current_user_can' )->justReturn( true );
+		Functions\expect( 'check_admin_referer' )
+			->once()
+			->with( Lafka_Security_Admin::NONCE_ACTION )
+			->andThrow( new RuntimeException( 'nonce' ) );
+		Functions\expect( 'update_option' )->never();
+		$_POST = array( 'enable_security_headers' => 'disabled' );
+
+		$this->expectExceptionMessage( 'nonce' );
+		Lafka_Security_Admin::instance()->handle_save();
+	}
+
+	/**
+	 * @return array<string,array{0:array<string,string>,1:string}>
+	 */
+	public static function provider_submitted_values(): array {
+		return array(
+			'enable'        => array( array( 'enable_security_headers' => 'enabled' ), 'enabled' ),
+			'disable'       => array( array( 'enable_security_headers' => 'disabled' ), 'disabled' ),
+			'smuggled'      => array( array( 'enable_security_headers' => 'enabled; other' ), 'disabled' ),
+			'missing field' => array( array(), 'disabled' ),
 		);
 	}
 
-	public function test_uses_dedicated_option_key_not_main_lafka_array(): void {
-		// Storage rationale: theme's options-framework register_setting('lafka', ...)
-		// drops unregistered keys. Writing through the main `lafka` option
-		// would silently lose the toggle on next save. The dedicated
-		// `lafka_security_options` key sidesteps that.
-		$this->assertStringContainsString( 'Lafka_Security_Headers::OPTION_KEY', $this->src );
-		$this->assertStringContainsString( 'update_option( Lafka_Security_Headers::OPTION_KEY, $opts )', $this->src );
-	}
-
-	public function test_uses_admin_post_action_not_admin_init(): void {
-		// admin_post_<action> dispatches off `action` POST var — the right
-		// pattern for a one-shot form-post handler. admin_init would fire
-		// on every admin pageload and is the wrong hook.
-		$this->assertMatchesRegularExpression(
-			"/add_action\(\s*'admin_post_lafka_security_save'/",
-			$this->src
+	#[DataProvider( 'provider_submitted_values' )]
+	public function test_save_allowlists_the_value_into_the_dedicated_option( array $post, string $stored ): void {
+		Functions\when( 'current_user_can' )->justReturn( true );
+		Functions\when( 'check_admin_referer' )->justReturn( 1 );
+		Functions\when( 'get_option' )->justReturn( array( 'unrelated' => 'kept' ) );
+		$written = array();
+		Functions\when( 'update_option' )->alias(
+			static function ( $key, $value ) use ( &$written ) {
+				$written[ $key ] = $value;
+				return true;
+			}
 		);
-	}
-
-	public function test_render_page_also_gates_on_capability(): void {
-		// Defense-in-depth — even though add_management_page already gates
-		// on manage_options, render_page double-checks in case a later
-		// refactor changes the menu cap and the page-render mismatches.
-		$this->assertMatchesRegularExpression(
-			"/public function render_page[\s\S]*?current_user_can\(\s*'manage_options'\s*\)/",
-			$this->src,
-			'render_page must gate on manage_options as defense-in-depth.'
+		$redirect = '';
+		Functions\when( 'wp_safe_redirect' )->alias(
+			static function ( $url ) use ( &$redirect ) {
+				$redirect = $url;
+				throw new RuntimeException( 'redirect' ); // stand-in for the exit that follows.
+			}
 		);
+		$_POST = $post;
+
+		try {
+			Lafka_Security_Admin::instance()->handle_save();
+			$this->fail( 'handle_save must end in a redirect.' );
+		} catch ( RuntimeException $e ) {
+			$this->assertSame( 'redirect', $e->getMessage() );
+		}
+
+		$this->assertSame(
+			array(
+				Lafka_Security_Headers::OPTION_KEY => array(
+					'unrelated'                               => 'kept',
+					Lafka_Security_Headers::TOGGLE_OPTION_KEY => $stored,
+				),
+			),
+			$written
+		);
+		$this->assertSame( 'https://example.test/wp-admin/tools.php?page=lafka-security&updated=' . $stored, $redirect );
 	}
 
-	public function test_post_save_redirect_uses_safe_redirect(): void {
-		// wp_safe_redirect (not raw wp_redirect) caps targets to the host
-		// allowlist — reduces blast radius if a future refactor accidentally
-		// builds the URL from user input.
-		$this->assertStringContainsString( 'wp_safe_redirect(', $this->src );
-		$this->assertStringNotContainsString( 'wp_redirect(', $this->src );
+	public function test_settings_page_refuses_non_admins(): void {
+		Functions\when( 'current_user_can' )->justReturn( false );
+
+		ob_start();
+		try {
+			Lafka_Security_Admin::instance()->render_page();
+			$this->fail( 'render_page must wp_die for a non-admin.' );
+		} catch ( RuntimeException $e ) {
+			$this->assertSame( 'wp_die', $e->getMessage() );
+		} finally {
+			$this->assertSame( '', ob_get_clean(), 'Nothing may render before the capability check.' );
+		}
 	}
 }

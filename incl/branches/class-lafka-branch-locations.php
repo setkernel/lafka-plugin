@@ -4,6 +4,8 @@ use Automattic\WooCommerce\Utilities\OrderUtil;
 
 defined( 'ABSPATH' ) || exit;
 
+require_once __DIR__ . '/../lafka-asset-helpers.php';
+
 class Lafka_Branch_Locations {
 	public static function init() {
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_scripts' ) );
@@ -20,10 +22,10 @@ class Lafka_Branch_Locations {
 		add_action( 'wp_ajax_nopriv_lafka_change_branch', array( __CLASS__, 'change_branch' ) );
 		add_action( 'wp_ajax_lafka_change_branch', array( __CLASS__, 'change_branch' ) );
 
-		// Add meta fields to the order. `woocommerce_checkout_update_order_meta`
-		// was deprecated in WC 9.0; `woocommerce_checkout_create_order` fires
-		// before save and receives WC_Order directly so HPOS works without
-		// branching.
+		// Add meta fields to the order. `woocommerce_checkout_create_order`
+		// (rather than `woocommerce_checkout_update_order_meta`, which only
+		// passes an order ID after the save) fires before save and receives
+		// WC_Order directly so HPOS works without branching.
 		add_action( 'woocommerce_checkout_create_order', array( __CLASS__, 'checkout_field_update_order_meta_fields' ), 10, 2 );
 
 		// Alter Products meta query to get only the corresponding branch products
@@ -80,21 +82,21 @@ class Lafka_Branch_Locations {
 		// loaded and would throw on every page-load otherwise. The branch
 		// selector falls back to the dropdown-only UX.
 		if ( wp_script_is( 'lafka-google-maps', 'registered' ) ) {
+			$branch_front_js = lafka_plugin_script_path( 'incl/shipping-areas/assets/js/frontend/lafka-branch-locations-front.min.js' );
 			wp_enqueue_script(
 				'lafka-branch-locations-front',
-				plugins_url( '../assets/js/frontend/lafka-branch-locations-front.min.js', __FILE__ ),
+				plugins_url( $branch_front_js, LAFKA_PLUGIN_FILE ),
 				array(
 					'lafka-google-maps',
 					'jquery-blockui',
 					'wc-country-select',
-					// P3-04: this minified vendor-style file calls $.magnificPopup.open()
-					// for the branch-selection modal. We don't have a non-min source to
-					// migrate it from, and branch selection is on the order critical
-					// path — so magnific is preserved specifically as a dep here while
+					// P3-04: this script calls $.magnificPopup.open() for the
+					// branch-selection modal; branch selection is on the order
+					// critical path, so magnific is preserved as a dep here while
 					// removed from the global enqueue everywhere else.
 					'magnific',
 				),
-				lafka_plugin_asset_version( 'incl/shipping-areas/assets/js/frontend/lafka-branch-locations-front.min.js' ),
+				lafka_plugin_asset_version( $branch_front_js ),
 				true
 			);
 			wp_enqueue_style( 'magnific' );
@@ -463,9 +465,15 @@ class Lafka_Branch_Locations {
 		if ( isset( WC()->session ) ) {
 			$branch_location_session = WC()->session->get( 'lafka_branch_location' );
 			if ( ! empty( $branch_location_session['branch_id'] ) && is_numeric( $branch_location_session['branch_id'] ) ) {
-				global $wpdb;
-				$query['join']  .= " LEFT JOIN  {$wpdb->prefix}term_relationships AS term_rel ON (p.ID = term_rel.object_id)";
-				$query['where'] .= " AND term_rel.term_taxonomy_id = {$branch_location_session['branch_id']}";
+				// term_relationships keys on term_taxonomy_id, which is not the
+				// term id stored in the session — resolve it.
+				$branch = get_term( (int) $branch_location_session['branch_id'], 'lafka_branch_location' );
+				if ( $branch instanceof WP_Term || ( is_object( $branch ) && isset( $branch->term_taxonomy_id ) ) ) {
+					global $wpdb;
+					$term_taxonomy_id = (int) $branch->term_taxonomy_id;
+					$query['join']   .= " LEFT JOIN  {$wpdb->prefix}term_relationships AS term_rel ON (p.ID = term_rel.object_id)";
+					$query['where']  .= " AND term_rel.term_taxonomy_id = {$term_taxonomy_id}";
+				}
 			}
 		}
 
@@ -478,8 +486,8 @@ class Lafka_Branch_Locations {
 			if ( ! empty( $branch_location_session['branch_id'] ) && is_numeric( $branch_location_session['branch_id'] ) ) {
 				$branch_products_tax_args = array(
 					'taxonomy' => 'lafka_branch_location',
-					'field'    => 'term_taxonomy_id',
-					'terms'    => $branch_location_session['branch_id'],
+					'field'    => 'term_id', // The session stores the term id.
+					'terms'    => (int) $branch_location_session['branch_id'],
 				);
 				$tax_query[]              = $branch_products_tax_args;
 			}
@@ -494,8 +502,8 @@ class Lafka_Branch_Locations {
 			if ( isset( $query_args['tax_query'] ) && is_array( $query_args['tax_query'] ) && ! empty( $branch_location_session['branch_id'] ) && is_numeric( $branch_location_session['branch_id'] ) ) {
 				$branch_products_tax_args  = array(
 					'taxonomy' => 'lafka_branch_location',
-					'field'    => 'term_taxonomy_id',
-					'terms'    => $branch_location_session['branch_id'],
+					'field'    => 'term_id', // The session stores the term id.
+					'terms'    => (int) $branch_location_session['branch_id'],
 				);
 				$query_args['tax_query'][] = $branch_products_tax_args;
 			}
@@ -625,7 +633,12 @@ class Lafka_Branch_Locations {
 		$branch_location_session = WC()->session->get( 'lafka_branch_location' );
 		// woocommerce_checkout_create_order fires before save, so update_meta_data
 		// on the in-memory WC_Order is enough; HPOS and CPT paths converge.
-		$order->update_meta_data( 'lafka_selected_branch_id', sanitize_text_field( $branch_location_session['branch_id'] ?? null ) );
+		// Only a real branch is recorded: an empty value would read as "some
+		// branch" to meta queries and escape the no-branch timeslot count.
+		$session_branch_id = absint( $branch_location_session['branch_id'] ?? 0 );
+		if ( $session_branch_id > 0 ) {
+			$order->update_meta_data( 'lafka_selected_branch_id', (string) $session_branch_id );
+		}
 		if ( ! empty( $branch_location_session['order_type'] ) ) {
 			$order_type = $branch_location_session['order_type'];
 			$branch_id  = isset( $branch_location_session['branch_id'] ) ? (int) $branch_location_session['branch_id'] : 0;
@@ -744,7 +757,7 @@ class Lafka_Branch_Locations {
 		// PERF-H26: Prime term meta cache for ALL branches in a single query
 		// instead of N individual get_term_meta() calls (one per branch).
 		$branch_ids = array_keys( $branch_locations );
-		update_term_meta_cache( $branch_ids );
+		update_termmeta_cache( $branch_ids );
 
 		// First pass: collect all shipping area IDs from all branches
 		$all_shipping_area_ids     = array();

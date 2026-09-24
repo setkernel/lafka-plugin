@@ -1,15 +1,8 @@
 <?php
 /**
- * Phase 4: end-to-end integration test that exercises the engine pipeline
- * for each pricing mode and asserts the stored shape is what the legacy
- * cart code (Lafka_Product_Addon_Cart::apply_attribute_specific_price)
- * expects to read.
- *
- * Why this exists: until Phase 5 refactors the cart layer, the legacy
- * cart class reads `_product_addons` meta directly. The engine must
- * write a shape compatible with that reader. This test pins that
- * contract — if a future engine change accidentally writes a different
- * shape, this test fails before the change ships.
+ * Editor save pipeline end to end: POST → Lafka_Engine_Editor::parse_groups()
+ * → expand_groups() (pricing strategy) → repository → `_product_addons` meta,
+ * and the stored shape priced by the cart (Lafka_Engine_Cart).
  *
  * @package Lafka\Plugin\Tests\Unit
  */
@@ -22,6 +15,7 @@ use Brain\Monkey;
 use Brain\Monkey\Functions;
 use Lafka_Addon_Schema;
 use Lafka_Addons_Engine;
+use Lafka_Engine_Cart;
 use Lafka_Engine_Editor;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
@@ -63,10 +57,7 @@ final class EngineEndToEndTest extends TestCase {
 			}
 		);
 
-		// Reset engine singleton.
-		$ref      = new ReflectionClass( Lafka_Addons_Engine::class );
-		$instance = $ref->getProperty( 'instance' );
-		$instance->setValue( null, null );
+		( new ReflectionClass( Lafka_Addons_Engine::class ) )->getProperty( 'instance' )->setValue( null, null );
 	}
 
 	protected function tearDown(): void {
@@ -74,209 +65,148 @@ final class EngineEndToEndTest extends TestCase {
 		parent::tearDown();
 	}
 
-	private function save_via_editor( int $post_id, array $post_data ): void {
+	/**
+	 * Save one POSTed group through the editor pipeline and return the stored
+	 * `_product_addons[0]` entry.
+	 */
+	private function save_group( array $raw_group ): array {
 		$editor = new Lafka_Engine_Editor();
-		$groups = $editor->parse_groups( $post_data );
-		$groups = $editor->expand_groups( $groups );
-		Lafka_Addons_Engine::instance()->repository()->save_groups( $post_id, $groups );
+		$groups = $editor->expand_groups( $editor->parse_groups( array( 'lafka_addon_groups' => array( $raw_group ) ) ) );
+		Lafka_Addons_Engine::instance()->repository()->save_groups( 1, $groups );
+
+		return $this->stored_meta[1][0];
 	}
 
-	/**
-	 * Flat-group mode: every option's stored price = the single group price.
-	 * Cart code reads scalar prices directly — no per-attribute resolution.
-	 */
 	public function test_flat_group_writes_scalar_price_to_every_option(): void {
-		$this->save_via_editor( 1, array(
-			'lafka_addon_groups' => array(
-				array(
-					'name'             => 'Premium Toppings',
-					'pricing_mode'     => Lafka_Addon_Schema::PRICING_FLAT_GROUP,
-					'options_source'   => Lafka_Addon_Schema::SOURCE_MANUAL,
-					'group_flat_price' => '1.50',
-					'options'          => array(
-						array( 'id' => 'a', 'label' => 'Cheese' ),
-						array( 'id' => 'b', 'label' => 'Truffle' ),
-					),
+		$stored = $this->save_group(
+			array(
+				'name'             => 'Premium Toppings',
+				'pricing_mode'     => Lafka_Addon_Schema::PRICING_FLAT_GROUP,
+				'group_flat_price' => '1.50',
+				'options'          => array(
+					array( 'id' => 'a', 'label' => 'Cheese' ),
+					array( 'id' => 'b', 'label' => 'Truffle' ),
 				),
-			),
-		) );
-
-		$stored = $this->stored_meta[1];
-		self::assertSame( '1.50', $stored[0]['options'][0]['price'] );
-		self::assertSame( '1.50', $stored[0]['options'][1]['price'] );
-	}
-
-	/**
-	 * Flat-per-option: each option keeps its own scalar price (passthrough).
-	 */
-	public function test_flat_per_option_keeps_per_option_scalars(): void {
-		$this->save_via_editor( 2, array(
-			'lafka_addon_groups' => array(
-				array(
-					'name'           => 'Toppings',
-					'pricing_mode'   => Lafka_Addon_Schema::PRICING_FLAT_PER_OPTION,
-					'options_source' => Lafka_Addon_Schema::SOURCE_MANUAL,
-					'options'        => array(
-						array( 'id' => 'a', 'label' => 'Cheese',  'price' => '1.00' ),
-						array( 'id' => 'b', 'label' => 'Truffle', 'price' => '3.00' ),
-					),
-				),
-			),
-		) );
-
-		$stored = $this->stored_meta[2];
-		self::assertSame( '1.00', $stored[0]['options'][0]['price'] );
-		self::assertSame( '3.00', $stored[0]['options'][1]['price'] );
-	}
-
-	/**
-	 * Flat-per-size: every option gets the same nested matrix. Cart code
-	 * reads the matrix and applies per-attribute pricing.
-	 *
-	 * Storage shape: options[i]['price'] = ['pa_size' => ['small' => $X, ...]]
-	 *
-	 * This is the shape Lafka_Product_Addon_Cart::apply_attribute_specific_price
-	 * expects to find when iterating $cart_item['variation'].
-	 */
-	public function test_flat_per_size_writes_uniform_matrix_to_every_option(): void {
-		$this->save_via_editor( 3, array(
-			'lafka_addon_groups' => array(
-				array(
-					'name'              => 'Toppings',
-					'pricing_mode'      => Lafka_Addon_Schema::PRICING_FLAT_PER_SIZE,
-					'options_source'    => Lafka_Addon_Schema::SOURCE_MANUAL,
-					'variations'        => '1',
-					'attribute'         => '1',
-					'group_size_prices' => array(
-						'small'  => '0.50',
-						'medium' => '1.00',
-						'large'  => '1.50',
-					),
-					'options'           => array(
-						array( 'id' => 'a', 'label' => 'Cheese' ),
-						array( 'id' => 'b', 'label' => 'Mushroom' ),
-					),
-				),
-			),
-		) );
-
-		$stored          = $this->stored_meta[3];
-		$expected_matrix = array(
-			'pa_size' => array(
-				'small'  => '0.50',
-				'medium' => '1.00',
-				'large'  => '1.50',
-			),
+			)
 		);
-		self::assertSame( $expected_matrix, $stored[0]['options'][0]['price'] );
-		self::assertSame( $expected_matrix, $stored[0]['options'][1]['price'] );
+
+		self::assertSame( array( '1.50', '1.50' ), array_column( $stored['options'], 'price' ) );
 	}
 
-	/**
-	 * Matrix mode: each option keeps its OWN per-attribute matrix.
-	 */
+	public function test_flat_per_option_keeps_per_option_scalars(): void {
+		$stored = $this->save_group(
+			array(
+				'name'         => 'Toppings',
+				'pricing_mode' => Lafka_Addon_Schema::PRICING_FLAT_PER_OPTION,
+				'options'      => array(
+					array( 'id' => 'a', 'label' => 'Cheese', 'price' => '1.00' ),
+					array( 'id' => 'b', 'label' => 'Truffle', 'price' => '3.00' ),
+				),
+			)
+		);
+
+		self::assertSame( array( '1.00', '3.00' ), array_column( $stored['options'], 'price' ) );
+	}
+
+	public function test_flat_per_size_writes_uniform_matrix_to_every_option(): void {
+		$stored = $this->save_group(
+			array(
+				'name'              => 'Toppings',
+				'pricing_mode'      => Lafka_Addon_Schema::PRICING_FLAT_PER_SIZE,
+				'variations'        => '1',
+				'attribute'         => '1',
+				'group_size_prices' => array( 'small' => '0.50', 'medium' => '1.00', 'large' => '1.50' ),
+				'options'           => array(
+					array( 'id' => 'a', 'label' => 'Cheese' ),
+					array( 'id' => 'b', 'label' => 'Mushroom' ),
+				),
+			)
+		);
+
+		$expected = array( 'pa_size' => array( 'small' => '0.50', 'medium' => '1.00', 'large' => '1.50' ) );
+		self::assertSame( array( $expected, $expected ), array_column( $stored['options'], 'price' ) );
+	}
+
 	public function test_matrix_mode_preserves_per_option_matrices(): void {
-		$this->save_via_editor( 4, array(
-			'lafka_addon_groups' => array(
-				array(
-					'name'           => 'Toppings',
-					'pricing_mode'   => Lafka_Addon_Schema::PRICING_MATRIX,
-					'options_source' => Lafka_Addon_Schema::SOURCE_MANUAL,
-					'variations'     => '1',
-					'attribute'      => '1',
-					'options'        => array(
-						array(
-							'id'    => 'a',
-							'label' => 'Cheese',
-							'matrix_price' => array(
-								'pa_size' => array( 'small' => '0.50', 'medium' => '1.00' ),
-							),
-						),
-						array(
-							'id'    => 'b',
-							'label' => 'Truffle',
-							'matrix_price' => array(
-								'pa_size' => array( 'small' => '2.00', 'medium' => '3.00' ),
-							),
-						),
+		$stored = $this->save_group(
+			array(
+				'name'         => 'Toppings',
+				'pricing_mode' => Lafka_Addon_Schema::PRICING_MATRIX,
+				'variations'   => '1',
+				'attribute'    => '1',
+				'options'      => array(
+					array(
+						'id'           => 'a',
+						'label'        => 'Cheese',
+						'matrix_price' => array( 'pa_size' => array( 'small' => '0.50', 'medium' => '1.00' ) ),
+					),
+					array(
+						'id'           => 'b',
+						'label'        => 'Truffle',
+						'matrix_price' => array( 'pa_size' => array( 'small' => '2.00', 'medium' => '3.00' ) ),
 					),
 				),
-			),
-		) );
+			)
+		);
 
-		$stored = $this->stored_meta[4];
-		self::assertSame( '1.00', $stored[0]['options'][0]['price']['pa_size']['medium'] );
-		self::assertSame( '3.00', $stored[0]['options'][1]['price']['pa_size']['medium'] );
+		self::assertSame( '1.00', $stored['options'][0]['price']['pa_size']['medium'] );
+		self::assertSame( '3.00', $stored['options'][1]['price']['pa_size']['medium'] );
 	}
 
 	/**
-	 * Round-trip via the repository: save_groups → get_groups returns
-	 * value objects with all v2 fields intact.
+	 * The stored flat_per_size shape is what the cart prices: the customer's
+	 * chosen size resolves to the operator-entered amount for that size.
 	 */
-	public function test_round_trip_via_repository(): void {
-		$this->save_via_editor( 5, array(
-			'lafka_addon_groups' => array(
+	public function test_cart_prices_the_stored_per_size_shape_by_chosen_size(): void {
+		$stored = $this->save_group(
+			array(
+				'name'              => 'Toppings',
+				'pricing_mode'      => Lafka_Addon_Schema::PRICING_FLAT_PER_SIZE,
+				'variations'        => '1',
+				'attribute'         => '1',
+				'group_size_prices' => array( 'small' => '0.50', 'medium' => '1.00', 'large' => '1.50' ),
+				'options'           => array( array( 'id' => 'a', 'label' => 'Cheese' ) ),
+			)
+		);
+
+		$priced = ( new Lafka_Engine_Cart() )->apply_attribute_specific_price(
+			array(
 				array(
-					'name'                     => 'Crust',
-					'pricing_mode'             => Lafka_Addon_Schema::PRICING_FLAT_PER_SIZE,
-					'options_source'           => Lafka_Addon_Schema::SOURCE_ATTRIBUTE,
-					'options_source_attribute' => 'pa_premium_toppings',
-					'variations'               => '1',
-					'attribute'                => '1',
-					'included_size_slugs'      => array( 'medium', 'large' ),
-					'group_size_prices'        => array( 'medium' => '1.00', 'large' => '1.50' ),
-					'options'                  => array( array( 'id' => 'a', 'label' => 'Thin' ) ),
+					'name'  => 'Toppings',
+					'price' => $stored['options'][0]['price'],
 				),
 			),
-		) );
+			array( 'variation' => array( 'attribute_pa_size' => 'large' ) )
+		);
 
-		$loaded = Lafka_Addons_Engine::instance()->repository()->get_groups( 5 );
-
-		self::assertCount( 1, $loaded );
-		self::assertSame( 'Crust', $loaded[0]->name );
-		self::assertSame( Lafka_Addon_Schema::PRICING_FLAT_PER_SIZE, $loaded[0]->pricing_mode );
-		self::assertSame( Lafka_Addon_Schema::SOURCE_ATTRIBUTE, $loaded[0]->options_source );
-		self::assertSame( 'pa_premium_toppings', $loaded[0]->options_source_attribute );
-		self::assertSame( array( 'medium', 'large' ), $loaded[0]->included_size_slugs );
-		self::assertSame( array( 'medium' => '1.00', 'large' => '1.50' ), $loaded[0]->group_size_prices );
+		self::assertSame( '1.50', $priced[0]['price'] );
 	}
 
-	/**
-	 * Cart-side contract check: the legacy
-	 * Lafka_Product_Addon_Cart::apply_attribute_specific_price() walks
-	 * $cart_item['variation'] and looks up $addon['price'][taxonomy][slug].
-	 *
-	 * After flat_per_size expand, the lookup must resolve to a scalar.
-	 */
-	public function test_flat_per_size_output_matches_legacy_cart_lookup_contract(): void {
-		$this->save_via_editor( 6, array(
-			'lafka_addon_groups' => array(
-				array(
-					'name'              => 'Toppings',
-					'pricing_mode'      => Lafka_Addon_Schema::PRICING_FLAT_PER_SIZE,
-					'options_source'    => Lafka_Addon_Schema::SOURCE_MANUAL,
-					'variations'        => '1',
-					'attribute'         => '1',
-					'group_size_prices' => array( 'medium' => '1.00' ),
-					'options'           => array( array( 'id' => 'a', 'label' => 'Cheese' ) ),
-				),
-			),
-		) );
+	public function test_unknown_pricing_mode_is_saved_as_flat_per_option(): void {
+		// A tampered / stale form must not persist a mode no strategy understands.
+		$stored = $this->save_group(
+			array(
+				'name'         => 'G',
+				'pricing_mode' => 'something_unknown',
+				'options'      => array( array( 'id' => 'x', 'label' => 'X', 'price' => '1.00' ) ),
+			)
+		);
 
-		$stored      = $this->stored_meta[6];
-		$option_price = $stored[0]['options'][0]['price'];
-		$variation   = array( 'attribute_pa_size' => 'medium' );
+		self::assertSame( Lafka_Addon_Schema::PRICING_FLAT_PER_OPTION, $stored['pricing_mode'] );
+		self::assertSame( '1.00', $stored['options'][0]['price'] );
+	}
 
-		// Reproduce the legacy cart's lookup logic.
-		$resolved = null;
-		foreach ( $variation as $prefixed_name => $value ) {
-			$bare = str_replace( 'attribute_', '', $prefixed_name );
-			if ( isset( $option_price[ $bare ][ $value ] ) ) {
-				$resolved = $option_price[ $bare ][ $value ];
-				break;
-			}
-		}
+	public function test_included_size_slugs_are_normalized(): void {
+		$stored = $this->save_group(
+			array(
+				'name'                => 'G',
+				'pricing_mode'        => Lafka_Addon_Schema::PRICING_FLAT_PER_SIZE,
+				'included_size_slugs' => array( 'Small', 'Medium', 'Large' ),
+				'group_size_prices'   => array( 'small' => '0.50' ),
+				'options'             => array( array( 'id' => 'x', 'label' => 'X' ) ),
+			)
+		);
 
-		self::assertSame( '1.00', $resolved, 'Legacy cart lookup must resolve to the operator-entered scalar.' );
+		self::assertSame( array( 'small', 'medium', 'large' ), $stored['included_size_slugs'] );
 	}
 }

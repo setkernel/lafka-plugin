@@ -238,6 +238,7 @@ class Lafka_Engine_Cart {
 			return;
 		}
 
+		$keys = array();
 		foreach ( $values['addons'] as $addon ) {
 			$key         = $addon['name'];
 			$addon_price = $this->coerce_price_to_scalar( $addon['price'] );
@@ -249,7 +250,13 @@ class Lafka_Engine_Cart {
 			}
 
 			$item->add_meta_data( $key, $addon['value'] );
+			$keys[] = $key;
 		}
+
+		// The selections above are stored under customer-facing display keys
+		// ("Extra Toppings ($1.50)"); record which keys are add-on data so the
+		// privacy exporter/eraser can find them later (hidden: leading "_").
+		$item->add_meta_data( Lafka_Engine_Privacy::KEYS_META, array_values( array_unique( $keys ) ), true );
 	}
 
 	/**

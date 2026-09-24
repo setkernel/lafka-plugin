@@ -83,22 +83,6 @@ class Lafka_Options {
 	}
 
 	/**
-	 * Retrieve the entire options array (cached).
-	 *
-	 * @return array
-	 */
-	public static function get_all() {
-		if ( null === self::$options ) {
-			self::$options = get_option( 'lafka', array() );
-			if ( ! is_array( self::$options ) ) {
-				self::$options = array();
-			}
-		}
-
-		return self::$options;
-	}
-
-	/**
 	 * Check whether a feature flag option is explicitly set to 'enabled'.
 	 *
 	 * Useful for: product_addons, shipping_areas, product_combos, order_hours,

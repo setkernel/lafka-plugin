@@ -54,8 +54,9 @@ if ( ! function_exists( 'lafka_meta_description_render_box' ) ) {
 		<p class="description">
 			<?php esc_html_e( 'Custom meta description for SEO. If empty, an automatic description will be used (post excerpt, WC short description, or site tagline). Recommended length: 120-160 characters.', 'lafka-plugin' ); ?>
 		</p>
+		<?php // The metabox wrapper already uses the id "lafka_meta_description". ?>
 		<textarea
-			id="lafka_meta_description"
+			id="lafka_meta_description_input"
 			name="lafka_meta_description"
 			rows="3"
 			style="width:100%; font-family: inherit;"
@@ -68,7 +69,7 @@ if ( ! function_exists( 'lafka_meta_description_render_box' ) ) {
 		</p>
 		<script>
 		( function () {
-			var ta = document.getElementById( 'lafka_meta_description' );
+			var ta = document.getElementById( 'lafka_meta_description_input' );
 			var ct = document.getElementById( 'lafka-meta-desc-count' );
 			if ( ! ta || ! ct ) return;
 			function update() {

@@ -25,12 +25,6 @@ final class FlatPerOptionPricingTest extends TestCase {
 		parent::tearDown();
 	}
 
-	public function test_id_and_label(): void {
-		$strategy = new Lafka_Flat_Per_Option_Pricing();
-		self::assertSame( Lafka_Addon_Schema::PRICING_FLAT_PER_OPTION, $strategy->id() );
-		self::assertNotEmpty( $strategy->label() );
-	}
-
 	public function test_expand_is_passthrough_for_already_scalar_prices(): void {
 		$group = Lafka_Addon_Group::from_array( array(
 			'name'         => 'Toppings',

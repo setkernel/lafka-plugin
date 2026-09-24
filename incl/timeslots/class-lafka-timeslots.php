@@ -94,10 +94,10 @@ class Lafka_Timeslots {
 		// WC_Checkout::process_checkout(); the create_order hook below fires
 		// after validation, so an error there cannot block the order.
 		add_action( 'woocommerce_checkout_process', array( $this, 'validate_datetime_fields' ) );
-		// Save datetime to order. `woocommerce_checkout_update_order_meta`
-		// was deprecated in WC 9.0; `woocommerce_checkout_create_order`
-		// fires before the order is saved, receives WC_Order directly,
-		// and is HPOS-safe without branching.
+		// Save datetime to order. `woocommerce_checkout_create_order`
+		// (rather than `woocommerce_checkout_update_order_meta`, which only
+		// passes an order ID after the save) fires before the order is saved,
+		// receives WC_Order directly, and is HPOS-safe without branching.
 		add_action( 'woocommerce_checkout_create_order', array( $this, 'checkout_datetime_update_order_meta' ), 10, 2 );
 
 		// Show datetime in admin order list — both legacy CPT + HPOS.
@@ -145,14 +145,30 @@ class Lafka_Timeslots {
 	}
 
 	/**
+	 * Whether the operator turned the delivery/pickup date-time feature on
+	 * (Shipping Areas → Date/Time → enable). Every date/time requirement —
+	 * global or per-branch — is inert while this is off.
+	 */
+	public static function is_feature_enabled(): bool {
+		$datetime_options = get_option( 'lafka_shipping_areas_datetime' );
+
+		return is_array( $datetime_options ) && ! empty( $datetime_options['enable_datetime_option'] );
+	}
+
+	/**
 	 * Hydrate datetime config: read globals, optionally override from
 	 * the in-session branch's term meta if the branch opts out of the
 	 * global config.
 	 */
 	public function init_order_date_time_options() {
 		$datetime_options = get_option( 'lafka_shipping_areas_datetime' );
+		$enabled          = self::is_feature_enabled();
 
-		$this->order_date_time_mandatory  = $datetime_options['datetime_mandatory'] ?? false;
+		// "Mandatory" only means something while the date/time feature is on. A
+		// store that saved mandatory=1 and later switched the feature off must
+		// not keep demanding a date/time no UI collects (block checkout would be
+		// unplaceable).
+		$this->order_date_time_mandatory  = $enabled && ! empty( $datetime_options['datetime_mandatory'] );
 		$this->order_date_time_days_ahead = $datetime_options['days_ahead'] ?? 30;
 		// Floor the slot duration to a sane minimum at the source. A 0 / ''
 		// value (the register_setting min/max is HTML-only, trivially bypassed
@@ -161,12 +177,12 @@ class Lafka_Timeslots {
 		// get_timeslots_for_date(). Never let it fall below 1 minute.
 		$this->order_date_time_timeslot_duration = max( 1, (int) ( $datetime_options['timeslot_duration'] ?? 60 ) );
 
-		if ( isset( WC()->session ) ) {
+		if ( $enabled && function_exists( 'WC' ) && isset( WC()->session ) ) {
 			$lafka_branch_location_id_in_session = WC()->session->get( 'lafka_branch_location' )['branch_id'] ?? null;
 			if ( ! empty( $lafka_branch_location_id_in_session ) ) {
 				$override_global_date_time = get_term_meta( $lafka_branch_location_id_in_session, 'lafka_branch_override_datetime_global', true );
 				if ( ! empty( $override_global_date_time ) ) {
-					$this->order_date_time_mandatory  = get_term_meta( $lafka_branch_location_id_in_session, 'lafka_branch_datetime_mandatory', true );
+					$this->order_date_time_mandatory  = ! empty( get_term_meta( $lafka_branch_location_id_in_session, 'lafka_branch_datetime_mandatory', true ) );
 					$this->order_date_time_days_ahead = get_term_meta( $lafka_branch_location_id_in_session, 'lafka_branch_datetime_days_ahead', true );
 					// Per-branch meta has no floor either; apply the same minimum.
 					$this->order_date_time_timeslot_duration = max( 1, (int) get_term_meta( $lafka_branch_location_id_in_session, 'lafka_branch_datetime_timeslot_duration', true ) );
@@ -645,7 +661,9 @@ class Lafka_Timeslots {
 	}
 
 	private static function get_all_days_ahead( $days_ahead ): array {
-		$current_time = new DateTime( 'now' );
+		// Same clock the submitted date is validated against (store/branch
+		// timezone), never the PHP default (UTC).
+		$current_time = new DateTime( 'now', class_exists( 'Lafka_Order_Hours' ) ? Lafka_Order_Hours::get_timezone() : wp_timezone() );
 		$interval     = DateInterval::createFromDateString( '1 day' );
 		$days         = array( $current_time->format( 'Y-m-d' ) );
 
@@ -689,21 +707,27 @@ class Lafka_Timeslots {
 	}
 
 	private static function get_number_of_orders_per_timeslot( $branch_id, DateTime $order_date, $order_timeslot ): int {
-		// Branch clause: a numeric ID matches that branch's orders; anything else
-		// (empty/null/non-numeric) matches orders with NO branch assigned. Using
-		// `'value' => null` was a bug because SQL `meta_value = NULL` never
-		// matches — orders were silently undercounted, leading to overbooking.
-		// Use `compare => 'NOT EXISTS'` for the unset case.
-		if ( is_numeric( $branch_id ) ) {
+		// Branch clause: a branch ID matches that branch's orders; anything else
+		// matches orders with NO branch — the meta absent, or stored empty (older
+		// orders were written with an empty value), so neither escapes the count.
+		if ( is_numeric( $branch_id ) && (int) $branch_id > 0 ) {
 			$branch_clause = array(
 				'key'     => 'lafka_selected_branch_id',
-				'value'   => $branch_id,
+				'value'   => (string) (int) $branch_id,
 				'compare' => '=',
 			);
 		} else {
 			$branch_clause = array(
-				'key'     => 'lafka_selected_branch_id',
-				'compare' => 'NOT EXISTS',
+				'relation' => 'OR',
+				array(
+					'key'     => 'lafka_selected_branch_id',
+					'compare' => 'NOT EXISTS',
+				),
+				array(
+					'key'     => 'lafka_selected_branch_id',
+					'value'   => '',
+					'compare' => '=',
+				),
 			);
 		}
 

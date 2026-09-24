@@ -41,8 +41,8 @@ class Lafka_WC_Variation_Swatches_Frontend {
 	 * Enqueue scripts and stylesheets
 	 */
 	public function enqueue_scripts() {
-		wp_enqueue_style( 'lafka-wcs-frontend', plugins_url( '../../assets/css/lafka-plugin-swatches.css', __DIR__ ), array(), lafka_plugin_asset_version( 'incl/swatches/assets/css/lafka-plugin-swatches.css' ) );
-		wp_enqueue_script( 'lafka-wcs-frontend', plugins_url( '../../assets/js/lafka-plugin-swatches.js', __DIR__ ), array( 'jquery' ), lafka_plugin_asset_version( 'incl/swatches/assets/js/lafka-plugin-swatches.js' ), true );
+		wp_enqueue_style( 'lafka-wcs-frontend', plugins_url( 'assets/css/lafka-plugin-swatches.css', LAFKA_PLUGIN_FILE ), array(), lafka_plugin_asset_version( 'assets/css/lafka-plugin-swatches.css' ) );
+		wp_enqueue_script( 'lafka-wcs-frontend', plugins_url( 'assets/js/lafka-plugin-swatches.js', LAFKA_PLUGIN_FILE ), array( 'jquery' ), lafka_plugin_asset_version( 'assets/js/lafka-plugin-swatches.js' ), true );
 	}
 
 	/**
@@ -116,7 +116,10 @@ class Lafka_WC_Variation_Swatches_Frontend {
 
 		switch ( $attr->attribute_type ) {
 			case 'color':
-				$color             = get_term_meta( $term->term_id, 'color', true );
+				$color = (string) get_term_meta( $term->term_id, 'color', true );
+				if ( 1 !== preg_match( '/^#[0-9a-f]{6}$/i', $color ) ) {
+					$color = '#ffffff'; // No / malformed color: keep the CSS valid.
+				}
 				list( $r, $g, $b ) = sscanf( $color, '#%02x%02x%02x' );
 				$html              = sprintf(
 					'<span class="swatch swatch-color swatch-%s %s" style="background-color:%s;color:%s;" title="%s" data-value="%s">%s</span>',

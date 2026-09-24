@@ -112,6 +112,22 @@ if ( ! class_exists( 'Lafka_Security_Headers' ) ) {
 			// in COMPATIBILITY.md.
 			header_remove( 'X-Powered-By' );
 
+			foreach ( self::build_headers() as $line ) {
+				header( $line );
+			}
+		}
+
+		/**
+		 * The header lines send_security_headers() emits: the default map run
+		 * through the `lafka_security_headers` filter, skipping entries with an
+		 * empty or non-string name/value and any containing a line break (a
+		 * filtered value must not be able to smuggle in a second header).
+		 *
+		 * Pure — no output — so the emission contract is testable.
+		 *
+		 * @return string[] "Name: value" lines.
+		 */
+		public static function build_headers() {
 			$headers = self::get_default_headers();
 
 			/**
@@ -128,12 +144,17 @@ if ( ! class_exists( 'Lafka_Security_Headers' ) ) {
 			 */
 			$headers = (array) apply_filters( 'lafka_security_headers', $headers );
 
+			$lines = array();
 			foreach ( $headers as $name => $value ) {
 				if ( ! is_string( $name ) || '' === $name || ! is_string( $value ) || '' === $value ) {
 					continue;
 				}
-				header( $name . ': ' . $value );
+				if ( false !== strpbrk( $name . $value, "\r\n" ) ) {
+					continue;
+				}
+				$lines[] = $name . ': ' . $value;
 			}
+			return $lines;
 		}
 
 		/**

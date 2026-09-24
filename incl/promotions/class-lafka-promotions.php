@@ -3,9 +3,8 @@
  * Lafka_Promotions — BOGO 50% + delivery-minimum + promo banner.
  *
  * Migrated from `lafka-child/functions.php` (P2-01). Math lifted from the
- * child's `inc/lafka-promotions.php` pure helpers (which remain there for
- * back-compat during rollout — the child file gates itself off when this
- * plugin module is enabled).
+ * child's former `inc/lafka-promotions.php` pure helpers; lafka-child 6.0.0
+ * removed its copy, so this module is the only implementation.
  *
  * GATING: hook wiring is conditional on `is_lafka_promotions()` (reads
  * `Lafka_Options::is_enabled('promotions')`). Default OFF. NOTE: the child
@@ -14,7 +13,8 @@
  * enable this module explicitly; Lafka_Promotions_Admin surfaces a migration
  * notice for the lafka-child cohort when the module is off.
  *
- * KNOBS (currently hardcoded — admin UI tracked as P2-01a):
+ * KNOBS (defaults below; Lafka_Promotions_Admin overrides them via the
+ * `lafka_promotions_options` option, read through knob()):
  *   - DELIVERY_MIN     = 30      cart subtotal threshold below which delivery
  *                                 rates get hidden (only local pickup remains).
  *   - BOGO_DISCOUNT    = 0.5     fraction off cheapest units. Half-off = 0.5.
@@ -27,6 +27,8 @@
 
 defined( 'ABSPATH' ) || exit;
 
+require_once __DIR__ . '/../lafka-shipping-method-helpers.php';
+
 if ( ! class_exists( 'Lafka_Promotions' ) ) {
 
 	final class Lafka_Promotions {
@@ -38,17 +40,31 @@ if ( ! class_exists( 'Lafka_Promotions' ) ) {
 		const OPTION_KEY    = 'lafka_promotions_options';
 
 		/**
+		 * Per-request cache of the `lafka_promotions_options` array.
+		 *
+		 * @var array|null
+		 */
+		private static $knobs = null;
+
+		/**
+		 * Drop the cached knobs (after the option changes, and in tests).
+		 *
+		 * @return void
+		 */
+		public static function flush_knobs(): void {
+			self::$knobs = null;
+		}
+
+		/**
 		 * Read a knob from `lafka_promotions_options` with the constant as fallback.
 		 * Admin UI (Lafka_Promotions_Admin) writes to this option.
 		 */
 		public static function knob( $name ) {
-			static $opts = null;
-			if ( null === $opts ) {
-				$opts = get_option( self::OPTION_KEY, array() );
-				if ( ! is_array( $opts ) ) {
-					$opts = array();
-				}
+			if ( null === self::$knobs ) {
+				$opts        = get_option( self::OPTION_KEY, array() );
+				self::$knobs = is_array( $opts ) ? $opts : array();
 			}
+			$opts = self::$knobs;
 			$defaults = array(
 				'delivery_min'  => self::DELIVERY_MIN,
 				'bogo_discount' => self::BOGO_DISCOUNT,
@@ -59,6 +75,22 @@ if ( ! class_exists( 'Lafka_Promotions' ) ) {
 				return $opts[ $name ];
 			}
 			return isset( $defaults[ $name ] ) ? $defaults[ $name ] : null;
+		}
+
+		/**
+		 * The configured BOGO discount as shopper-facing text: "Free" at 100%,
+		 * otherwise "<n>% Off" — so the cart label and banner always match the
+		 * discount actually charged.
+		 *
+		 * @return string
+		 */
+		public static function bogo_offer_label(): string {
+			$fraction = min( 1.0, max( 0.0, (float) self::knob( 'bogo_discount' ) ) );
+			if ( $fraction >= 1.0 ) {
+				return __( 'Free', 'lafka-plugin' );
+			}
+			/* translators: %s: discount percentage, e.g. 50 */
+			return sprintf( __( '%s%% Off', 'lafka-plugin' ), (string) round( $fraction * 100, 1 ) );
 		}
 
 		/** @var Lafka_Promotions|null */
@@ -187,7 +219,7 @@ if ( ! class_exists( 'Lafka_Promotions' ) ) {
 				return $rates;
 			}
 			foreach ( $rates as $rate_id => $rate ) {
-				if ( 'local_pickup' !== $rate->method_id ) {
+				if ( ! lafka_is_pickup_shipping_method( $rate->method_id ) ) {
 					unset( $rates[ $rate_id ] );
 				}
 			}
@@ -287,8 +319,9 @@ if ( ! class_exists( 'Lafka_Promotions' ) ) {
 			$item_data[] = array(
 				'name'  => esc_html__( '🎉 Promotion', 'lafka-plugin' ),
 				'value' => sprintf(
-					/* translators: %d: number of units to which the discount applies */
-					esc_html__( 'BOGO 50%% Off applied to %d unit(s)', 'lafka-plugin' ),
+					/* translators: 1: the BOGO offer (e.g. "50% Off" or "Free"), 2: number of units the discount applies to */
+					esc_html__( 'BOGO %1$s applied to %2$d unit(s)', 'lafka-plugin' ),
+					esc_html( self::bogo_offer_label() ),
 					$disc_qty
 				),
 			);
@@ -354,7 +387,10 @@ if ( ! class_exists( 'Lafka_Promotions' ) ) {
 			?>
 			<div id="lafka-bogo-banner" role="banner" hidden>
 				<div class="lafka-bogo-inner">
-					🔥 <?php esc_html_e( 'Buy 1, Get 1 50% Off', 'lafka-plugin' ); ?>
+					<?php
+					/* translators: %s: the BOGO offer (e.g. "50% Off" or "Free") */
+					echo '🔥 ' . esc_html( sprintf( __( 'Buy 1, Get 1 %s', 'lafka-plugin' ), self::bogo_offer_label() ) );
+					?>
 				</div>
 				<button class="lafka-bogo-close" aria-label="<?php esc_attr_e( 'Close banner', 'lafka-plugin' ); ?>">&times;</button>
 			</div>

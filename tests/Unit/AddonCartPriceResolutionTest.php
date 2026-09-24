@@ -175,14 +175,11 @@ final class AddonCartPriceResolutionTest extends TestCase {
 		);
 		$cart_item = array(); // unmatched
 
-		$start  = microtime( true );
 		$result = $this->cart->apply_attribute_specific_price( $addons, $cart_item );
-		$elapsed = microtime( true ) - $start;
 
-		self::assertLessThan( 0.1, $elapsed, 'Walker must terminate quickly — depth-bounded.' );
-		// At depth limit (10), result is still nested — coerce to 0 in that
-		// case rather than letting an array leak to (float) cast.
-		self::assertIsScalar( $result[0]['price'] );
+		// Past the depth limit (10) the walk gives up and charges 0 rather than
+		// letting an array leak into a (float) cast.
+		self::assertSame( 0, $result[0]['price'] );
 	}
 
 	public function test_addon_without_price_key_is_skipped_safely(): void {

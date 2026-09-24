@@ -6,6 +6,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 // Pure token-verification helpers (P2-02a). Loaded at file scope so the static
 // token methods below work whenever this class is loaded, independent of instance().
 require_once __DIR__ . '/includes/class-lafka-kds-token.php';
+require_once __DIR__ . '/../lafka-shipping-method-helpers.php';
 
 class Lafka_Kitchen_Display {
 	/**
@@ -194,27 +195,7 @@ class Lafka_Kitchen_Display {
 	 * Detect order type (pickup or delivery).
 	 */
 	public static function get_order_type( $order ) {
-		// Check lafka meta first
-		$type = $order->get_meta( 'lafka_order_type' );
-		if ( $type ) {
-			return $type;
-		}
-
-		// Fallback: check shipping methods
-		$shipping_methods = $order->get_shipping_methods();
-		foreach ( $shipping_methods as $method ) {
-			$method_id = $method->get_method_id();
-			if ( 'local_pickup' === $method_id ) {
-				return 'pickup';
-			}
-		}
-
-		// If no shipping methods at all, treat as pickup
-		if ( empty( $shipping_methods ) ) {
-			return 'pickup';
-		}
-
-		return 'delivery';
+		return lafka_order_fulfilment_type( $order );
 	}
 }
 

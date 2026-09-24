@@ -1,10 +1,8 @@
 # Lafka Compatibility Matrix
 
-Tested combinations of Lafka theme + plugin + child + their dependencies.
-Each row is **known-good** — runs the test suite green and the smoke
-checklist passes in staging.
+Supported versions of the Lafka plugin's dependencies, and how each is checked.
 
-> The "minimum" floor is what `composer.json` / plugin headers enforce.
+> The "minimum" floor is what the plugin header declares.
 > The "recommended" column is the maintainer-recommended production target;
 > what CI actually runs is described in the *CI* section below.
 
@@ -18,12 +16,12 @@ checklist passes in staging.
 | **Node.js** (build only) | 20 | 24 | 24         |
 | **Apache** (recommended for security headers) | 2.4 | 2.4.66+ | 2.4.66 |
 
-`.wp-env.json` pins the local integration stack at WP 6.9.4 / WC 10.7.0 /
-PHP 8.2; CI's PHP job runs PHPUnit + PHPCS on the runner's single
-pre-installed PHP (currently 8.3, matching prod), not on wp-env. The PHPUnit
-suites additionally run on PHP 8.5 locally. The full Playwright end-to-end
-pass was last run on the WP 6.9.4 / WC 10.7.0 / PHP 8.3.30 stack (Session 5,
-2026-04-27); re-run it against the bumped stack before the next release.
+`.wp-env.json` pins the local integration stack at WP 7.0 / WC 10.9.1 /
+PHP 8.4; CI's PHP job runs PHPUnit + PHPCS on the runner's single
+pre-installed PHP (currently 8.3, matching prod), not on wp-env. End-to-end
+coverage is the theme repo's Playwright smoke suite (`e2e.yml` in
+lafka-theme), which boots wp-env with the theme + this plugin + WooCommerce and
+seeds it with `wp lafka seed-demo`.
 
 ## Package versions
 
@@ -33,8 +31,10 @@ with `package.json` + `package-lock.json` by `npm version` (see *Updating this
 document*). To avoid restating a number that drifts, this matrix records only the
 **compatibility floors**, which change rarely:
 
-| Package         | Minimum sibling versions |
-|-----------------|--------------------------|
+Floors are **advisory** — documented, not enforced by any version check.
+
+| Package         | Minimum sibling versions (advisory) |
+|-----------------|-------------------------------------|
 | lafka-plugin    | theme ≥ 6.13.0, child ≥ 6.0.6 |
 | lafka-theme     | plugin ≥ 9.30.0 (optional but expected) |
 | lafka-child     | theme ≥ 6.13.0 (parent) |
@@ -43,39 +43,35 @@ Each repo is tagged and released independently on its own cadence — the plugin
 and theme advance faster than the thin child, so their versions are not expected
 to move in lock-step.
 
-## CI (single-runner PHPUnit; PHP floor enforced statically)
+## CI (single-runner PHPUnit; PHP 8.1 floor checked statically)
 
 CI does **not** run a multi-PHP test matrix. Under the first-party-actions-only
-policy (see the header comment in `.github/workflows/ci.yml`), each repo's PHP
-job runs PHPUnit + PHPCS on the runner's **single** pre-installed PHP (currently
-8.3, matching prod); the multi-PHP matrix was deliberately traded away for that
-constraint. The **PHP 8.1 floor is enforced statically, not by running PHPUnit
-on 8.1**: PHPCompatibility sniffs (`phpcompatibility/phpcompatibility-wp`, wired
-as `testVersion 8.1-` + `PHPCompatibilityWP` in `.phpcs.xml.dist`) flag any
-8.2+-only construct during PHPCS, and the `Requires PHP: 8.1` plugin header
-gates activation at runtime.
+policy (see the header comment in `.github/workflows/ci.yml`), the PHP job runs
+PHPUnit + PHPCS on the runner's **single** pre-installed PHP (currently 8.3,
+matching prod).
 
-| Repo | PHPUnit + PHPCS | PHP-floor check |
-|----|----|----|
-| **lafka-plugin** | runner PHP (8.3) | PHPCompatibility `8.1-` |
-| **lafka-theme**  | runner PHP (8.3) | PHPCompatibility `8.1-` |
-| **lafka-child**  | runner PHP (8.3) | PHPCompatibility `8.1-` |
+The **PHP 8.1 floor is checked by PHPCS**: `.phpcs.xml.dist` runs
+`PHPCompatibilityWP` with `testVersion 8.1-` on PHPCompatibility **10**
+(`10.0.0-alpha2`, via `phpcompatibility-wp 3.0.0-alpha2` — the 9.x line has
+no PHP 8.x sniffs). A PHP 8.2+-only construct (readonly classes, DNF types,
+`json_validate()`, …) fails CI. The check is static: it catches syntax and
+known new functions/constants, not every behavioural difference between PHP
+versions, and the unit tests themselves run on the runner PHP only. The
+`Requires PHP: 8.1` plugin header still blocks activation on older PHP.
 
-CI checks: PHPCS (WordPress-Extra ruleset, ~60 sniff exclusions documented in
-`.phpcs.xml.dist`) + PHPUnit (Brain Monkey), both on the runner PHP. JS/CSS
-linted separately on Node 24 (ESLint + Stylelint).
+CI checks: PHPCS (WordPress-Extra ruleset + PHPCompatibility; exclusions
+documented in `.phpcs.xml.dist`) + PHPUnit (Brain Monkey), both on the runner
+PHP, plus `npm run check-version`. JS is linted (ESLint), CSS linted
+(Stylelint), front-end JS behaviour-tested (`npm test`, node:test) and the
+committed `.min.js` builds are checked against their sources (`npm run build`)
+on Node 24.
 
 The security sniff families — `WordPress.Security.EscapeOutput.*`,
 `WordPress.Security.NonceVerification.*`, `WordPress.DB.PreparedSQL.*` —
 are **enforced as errors** (re-enabled in the 2026-05-14 P5-Sec pass). Only
 the narrow `WordPress.Security.EscapeOutput.ExceptionNotEscaped` is excluded.
 
-A container-based PHP 8.1 / 8.3 test matrix (first-party `container:` images,
-no community actions) is a tracked follow-up — roadmap item **NX1-08c** in
-`ROADMAP_2026-07-05.md`. Until it lands, cross-version coverage is
-static-analysis-only via PHPCompatibility.
-
-WP × WC integration matrix is pending integration tests — tracked as P2-04a.
+There is no WP × WC integration-test matrix yet.
 
 ## Server-level configuration recommendations
 
@@ -136,27 +132,25 @@ maps loader without a key. Closed in plugin v8.7.4 + theme v5.8.3.
   when @wordpress/stylelint-config@24+ ships.
 - **WP < 6.6** — uses `wp_body_open()` (since 5.2) but several other APIs
   the codebase depends on (CPT REST, modern HPOS hooks) are 6.6+.
-- **WC < 9.5** — combos + addons rely on hook signatures changed in 9.5.
-  `woocommerce_checkout_update_order_meta` (deprecated WC 9.0) is no
-  longer used as of Session 5 — all three call sites moved to
-  `woocommerce_checkout_create_order`.
+- **WC < 9.5** — addons rely on hook signatures changed in 9.5. Checkout
+  meta is written on `woocommerce_checkout_create_order` (not
+  `woocommerce_checkout_update_order_meta`) so it receives the `WC_Order`
+  before save.
 - **PHP < 8.1** — uses `static fn()` short closures (since 7.4 actually,
   but 8.1 is the floor for declared types in pricing helpers).
 
 ## HPOS (custom_order_tables) status
 
-The plugin **declares HPOS compatibility** at boot:
-`FeaturesUtil::declare_compatibility('custom_order_tables', __FILE__, true)`
-(`lafka-plugin.php:181-183`).
+The plugin **declares HPOS compatibility** in its `before_woocommerce_init`
+callback in `lafka-plugin.php`:
+`FeaturesUtil::declare_compatibility('custom_order_tables', __FILE__, true)`.
 
-Verified clean under HPOS in Session 5:
+HPOS-safe patterns in the codebase:
 - All checkout meta saves go through `woocommerce_checkout_create_order`
   with `$order->update_meta_data()` — works in both HPOS and CPT stores
   without branching.
 - `wc_get_orders(['meta_query' => ...])` is used everywhere a custom
   meta filter is needed (HPOS supports it natively in WC 8.x+).
-  Previously broken `value=>null` clauses (silent no-op under SQL =
-  semantics → slot overbooking) were fixed in Session 5.
 - KDS dashboard meta priming is HPOS-aware: skips
   `update_meta_cache('post', $ids)` when HPOS is on (order meta lives
   in `wc_orders_meta`, not `wp_postmeta`); per-order meta is already
@@ -164,10 +158,10 @@ Verified clean under HPOS in Session 5:
 - Branch-scoped admin order count uses `meta_query` form so HPOS and
   CPT both honor the filter.
 
-## Block-based Cart/Checkout (WC 10.6+ default) — SUPPORTED
+## Block-based Cart/Checkout (WooCommerce default since 8.3) — SUPPORTED
 
-**The plugin declares `cart_checkout_blocks` compatibility** (NX1-04b —
-closes **P3-01**). Both the modern block Cart/Checkout and the classic
+**The plugin declares `cart_checkout_blocks` compatibility** in the same
+`before_woocommerce_init` callback as HPOS. Both the modern block Cart/Checkout and the classic
 shortcode Cart/Checkout are fully supported; the operator picks which one
 customers see via **Lafka → Modules → Checkout experience**.
 
@@ -237,27 +231,24 @@ support in core 5.8. Mobile Safari ≥ 14, Chrome/Firefox/Edge ≥ 100.
 
 ## What's tested where
 
-- **Unit tests** (this repo's `tests/Unit/` per package) — pure-helper
-  math, options precedence, feature-flag wiring, style.css headers. No WP
-  runtime; Brain Monkey mocks WP/WC functions.
+- **Unit tests** (`tests/Unit/`) — pure-helper math, options precedence,
+  feature-flag wiring, plugin header / version SSOT. No WP runtime; Brain
+  Monkey mocks WP/WC functions.
 - **Analytics / conversion / web-push** (`tests/Unit/`) — GA4 `dataLayer`
   emitter + Consent Mode v2 defaults (`AnalyticsEmitterTest`,
   `AnalyticsWcEventsTest`, `AnalyticsCustomEventsTest`); abandoned-cart
   capture/cron/email (`AbandonedCartTest`); review-prompt scheduling
   (`ReviewPromptTest`); web-push subscribe/send (`PushNotificationsTest`).
   Browser push *delivery* (VAPID round-trip to a live service worker) is
-  smoke-checked manually, not yet in the e2e grid.
-- **Integration tests** — not yet present. Tracked as P2-04a.
-- **Manual smoke** — `wp option patch update lafka promotions enabled`
-  cutover for the BOGO module; KDS standalone-page rendering; cart with
-  mixed-price items; delivery-min boundary at $30.
-- **End-to-end (Session 5)** — full Docker stack on
-  `wordpress:latest` (6.9.4) + WC 10.7.0 + PHP 8.3.30, driven via
-  Playwright with a brand-new Chrome user-data-dir. Storefront
-  (home/shop/product/cart/checkout/order-received), KDS dashboard with
-  state-machine transitions, all 5 admin pages (Promotions / KDS /
-  Order Hours / Shipping Areas / Security), Site Health debug section.
-  Real order placed end-to-end with COD payment + BOGO discounts.
+  smoke-checked manually, not yet in the e2e suite.
+- **Integration tests** — not yet present.
+- **Manual smoke** — enabling Lafka → Modules → Promotions for the BOGO
+  module; KDS standalone-page rendering; cart with mixed-price items;
+  delivery-minimum boundary at the configured minimum.
+- **End-to-end** — the theme repo's Playwright smoke suite (`e2e.yml` in
+  lafka-theme) boots wp-env with theme + plugin + WooCommerce, seeds it with
+  `wp lafka seed-demo`, and walks the ordering funnel. It is non-blocking
+  for now.
 
 ## Updating this document
 
@@ -268,8 +259,8 @@ npm version <patch|minor|major>   # or an explicit x.y.z
 ```
 
 `npm version` bumps `package.json`, then the `version` lifecycle hook
-(`scripts/sync-version.mjs`) writes the WordPress header (`lafka-plugin.php` /
-`style.css`) and any versioned docs, npm syncs `package-lock.json`, and a
+(`scripts/sync-version.mjs`) writes the plugin header (`lafka-plugin.php`) and
+the `readme.txt` Stable tag, npm syncs `package-lock.json`, and a
 `vX.Y.Z` git tag + release commit are created — then `git push --follow-tags`.
 **Never hand-edit a version.** `npm run check-version` is a CI gate (and a
 PHPUnit guard, `VersionConsistencyTest`) that fails the build on any drift.

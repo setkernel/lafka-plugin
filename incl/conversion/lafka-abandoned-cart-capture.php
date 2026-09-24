@@ -167,19 +167,16 @@ if ( ! function_exists( 'lafka_ac_get_session_id' ) ) {
 
 if ( ! function_exists( 'lafka_ac_capture_from_post' ) ) {
 	/**
-	 * Read the customer email from the current request's POST payload.
-	 *
-	 * WC's checkout AJAX puts the entire serialised form in $_POST['post_data'];
-	 * the regular checkout submit lands in $_POST['billing_email']. Both surfaces
-	 * are covered so the row is written on either path.
+	 * Read the customer email from the checkout's update_order_review AJAX
+	 * request, which carries the serialised checkout form in
+	 * $_POST['post_data'] (the only caller is that hook's handler).
 	 *
 	 * @return string Lowercased + sanitised email, or '' if none found / invalid.
 	 */
 	function lafka_ac_capture_from_post(): string {
-		// CSRF: this helper only fires from WC core hooks
-		// (woocommerce_checkout_update_order_review + woocommerce_checkout_order_processed),
-		// both of which verify their own checkout nonce upstream before invoking
-		// the action chain. Suppress the Missing-nonce sniff for the whole
+		// CSRF: this helper only fires from WC core's
+		// woocommerce_checkout_update_order_review hook, which verifies its own
+		// checkout nonce upstream before invoking the action chain. Suppress the Missing-nonce sniff for the whole
 		// function since it never runs outside that protected context.
 		// phpcs:disable WordPress.Security.NonceVerification.Missing
 		$email = '';
@@ -192,15 +189,6 @@ if ( ! function_exists( 'lafka_ac_capture_from_post' ) ) {
 			}
 		}
 
-		// Regular checkout submit.
-		if ( '' === $email && isset( $_POST['billing_email'] ) && is_string( $_POST['billing_email'] ) ) {
-			$email = wp_unslash( $_POST['billing_email'] );
-		}
-
-		// Custom Lafka blur-event AJAX endpoint (theme-side opt-in).
-		if ( '' === $email && isset( $_POST['email'] ) && is_string( $_POST['email'] ) ) {
-			$email = wp_unslash( $_POST['email'] );
-		}
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 
 		if ( '' === $email ) {

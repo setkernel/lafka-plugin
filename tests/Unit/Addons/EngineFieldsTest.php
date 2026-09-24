@@ -1,23 +1,8 @@
 <?php
 declare(strict_types=1);
 
-// Stub WP_Error in the GLOBAL namespace — referenced as `\WP_Error` from
-// the (un-namespaced) engine field source. Bracketed namespace syntax is
-// the only way to mix global + namespaced declarations in one file.
 namespace {
-	if ( ! class_exists( '\WP_Error' ) ) {
-		class WP_Error { // phpcs:ignore
-			public string $code;
-			public string $message;
-			public function __construct( $code = '', $message = '' ) {
-				$this->code    = (string) $code;
-				$this->message = (string) $message;
-			}
-			public function get_error_message() {
-				return $this->message;
-			}
-		}
-	}
+	require_once dirname( __DIR__ ) . '/Stubs/wp-error-class.php';
 }
 
 namespace LafkaPlugin\Tests\Unit\Addons {
@@ -58,66 +43,45 @@ namespace LafkaPlugin\Tests\Unit\Addons {
 			parent::tearDown();
 		}
 
-		// ---------------------------------------------------------------
-		// Factory
-		// ---------------------------------------------------------------
+		public function test_factory_maps_each_field_type_to_its_field_class(): void {
+			$created = array();
+			foreach ( array( 'checkbox', 'radiobutton', 'textarea', 'mystery' ) as $type ) {
+				$field            = Lafka_Engine_Field_Factory::create( array( 'type' => $type ), array() );
+				$created[ $type ] = $field ? get_class( $field ) : null;
+			}
 
-		public function test_factory_creates_list_for_checkbox(): void {
-			$field = Lafka_Engine_Field_Factory::create( array( 'type' => 'checkbox' ), array() );
-			self::assertInstanceOf( Lafka_Engine_Field_List::class, $field );
-		}
-
-		public function test_factory_creates_list_for_radiobutton(): void {
-			$field = Lafka_Engine_Field_Factory::create( array( 'type' => 'radiobutton' ), array() );
-			self::assertInstanceOf( Lafka_Engine_Field_List::class, $field );
-		}
-
-		public function test_factory_creates_textarea(): void {
-			$field = Lafka_Engine_Field_Factory::create( array( 'type' => 'textarea' ), array() );
-			self::assertInstanceOf( Lafka_Engine_Field_Textarea::class, $field );
-		}
-
-		public function test_factory_returns_null_for_unknown_type(): void {
-			self::assertNull( Lafka_Engine_Field_Factory::create( array( 'type' => 'mystery' ), array() ) );
+			self::assertSame(
+				array(
+					'checkbox'    => Lafka_Engine_Field_List::class,
+					'radiobutton' => Lafka_Engine_Field_List::class,
+					'textarea'    => Lafka_Engine_Field_Textarea::class,
+					'mystery'     => null,
+				),
+				$created
+			);
 		}
 
 		// ---------------------------------------------------------------
-		// List field validation
+		// List field validation (required-field edge cases live in
+		// AddonFieldListRequiredValidationTest)
 		// ---------------------------------------------------------------
 
-		public function test_list_required_with_empty_returns_error(): void {
-			$field  = new Lafka_Engine_Field_List(
-				array( 'type' => 'checkbox', 'name' => 'Toppings', 'required' => 1, 'options' => array() ),
-				array()
+		public function test_list_limit_caps_the_number_of_selections(): void {
+			$addon = array(
+				'type'    => 'checkbox',
+				'name'    => 'Toppings',
+				'limit'   => 2,
+				'options' => array(
+					array( 'id' => 'a', 'label' => 'A' ),
+					array( 'id' => 'b', 'label' => 'B' ),
+					array( 'id' => 'c', 'label' => 'C' ),
+				),
 			);
-			$result = $field->validate();
-			self::assertInstanceOf( WP_Error::class, $result );
-		}
 
-		public function test_list_required_with_empty_string_array_returns_error(): void {
-			$field  = new Lafka_Engine_Field_List(
-				array( 'type' => 'checkbox', 'name' => 'Toppings', 'required' => 1, 'options' => array() ),
-				array( '' )
-			);
-			$result = $field->validate();
-			self::assertInstanceOf( WP_Error::class, $result );
-		}
-
-		public function test_list_required_with_value_passes(): void {
-			$field = new Lafka_Engine_Field_List(
-				array( 'type' => 'checkbox', 'name' => 'Toppings', 'required' => 1, 'options' => array() ),
-				array( 'cheese' )
-			);
-			self::assertTrue( $field->validate() );
-		}
-
-		public function test_list_limit_violation_returns_error(): void {
-			$field  = new Lafka_Engine_Field_List(
-				array( 'type' => 'checkbox', 'name' => 'Toppings', 'limit' => 2, 'options' => array() ),
-				array( 'a', 'b', 'c' )
-			);
-			$result = $field->validate();
-			self::assertInstanceOf( WP_Error::class, $result );
+			self::assertTrue( ( new Lafka_Engine_Field_List( $addon, array( 'a', 'b' ) ) )->validate() );
+			$over = ( new Lafka_Engine_Field_List( $addon, array( 'a', 'b', 'c' ) ) )->validate();
+			self::assertInstanceOf( WP_Error::class, $over );
+			self::assertSame( 'lafka_addon_over_limit', $over->code );
 		}
 
 		// ---------------------------------------------------------------
@@ -159,6 +123,39 @@ namespace LafkaPlugin\Tests\Unit\Addons {
 			$data = $field->get_cart_item_data();
 			self::assertCount( 1, $data );
 			self::assertSame( 'Cheese', $data[0]['value'] );
+		}
+
+		public function test_list_rejects_a_value_that_is_not_on_offer(): void {
+			// 'truffle' was excluded by the operator, so it is absent from the
+			// legacy-shape options the helper hands the field.
+			$field = new Lafka_Engine_Field_List(
+				array(
+					'type'    => 'checkbox',
+					'name'    => 'Toppings',
+					'options' => array(
+						array( 'id' => 'cheese', 'label' => 'Cheese', 'price' => '1.00' ),
+					),
+				),
+				array( 'cheese', 'truffle' )
+			);
+
+			self::assertInstanceOf( WP_Error::class, $field->validate() );
+			self::assertSame( array( '1.00' ), array_column( $field->get_cart_item_data(), 'price' ), 'An option not on offer must never be charged.' );
+		}
+
+		public function test_list_accepts_offered_values_by_id_and_label_slug(): void {
+			$field = new Lafka_Engine_Field_List(
+				array(
+					'type'    => 'radiobutton',
+					'name'    => 'Sauce',
+					'options' => array(
+						array( 'id' => 'opt-1', 'label' => 'BBQ Smoke', 'price' => '' ),
+					),
+				),
+				array( array( 'bbq-smoke' ) )
+			);
+
+			self::assertTrue( $field->validate() );
 		}
 
 		public function test_list_cart_item_data_returns_false_on_empty(): void {

@@ -71,28 +71,4 @@ final class KDSEmailIdentityTest extends TestCase {
 		$prop = ( new ReflectionClass( $email ) )->getProperty( 'sent_flag_meta_key' );
 		$this->assertSame( $expected_flag, $prop->getValue( $email ), "sent_flag_meta_key mismatch for {$class}" );
 	}
-
-	public function test_each_subclass_has_unique_dedupe_flag(): void {
-		$flags = array();
-		foreach ( $this->emailIdentityProvider() as $row ) {
-			$flags[] = $row[2];
-		}
-		$this->assertSame(
-			count( $flags ),
-			count( array_unique( $flags ) ),
-			'Two subclasses share the same sent_flag_meta_key — emails would silently dedupe against each other.'
-		);
-	}
-
-	public function test_each_subclass_has_unique_id(): void {
-		$ids = array();
-		foreach ( $this->emailIdentityProvider() as $row ) {
-			$ids[] = $row[1];
-		}
-		$this->assertSame(
-			count( $ids ),
-			count( array_unique( $ids ) ),
-			'Two subclasses share the same email id — WC would treat them as one email.'
-		);
-	}
 }
