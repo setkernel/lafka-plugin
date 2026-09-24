@@ -1,9 +1,9 @@
 <?php
 /**
- * Checkout email-capture field — "Save 10% on next order".
+ * Checkout email-capture field for an operator-worded win-back offer.
  *
- * Optional. Captures into wp_wc_orders meta_data under key _lafka_winback_email.
- * Win-back email sequence is deferred — v1 just collects.
+ * Optional. Stores the address on the order (meta `_lafka_winback_email`);
+ * the plugin sends nothing automatically — following up is up to the store.
  *
  * @package Lafka\Plugin\WooCommerce
  * @since   8.12.0
@@ -30,7 +30,7 @@ if ( ! function_exists( 'lafka_pdp_render_checkout_email_capture' ) ) {
 		<div class="lafka-checkout-winback">
 			<label for="lafka_winback_email" class="lafka-checkout-winback__label">
 				<?php echo esc_html( $headline ); ?>
-				<span class="lafka-checkout-winback__hint"><?php esc_html_e( "Optional — we'll email you a one-time code.", 'lafka-plugin' ); ?></span>
+				<span class="lafka-checkout-winback__hint"><?php esc_html_e( 'Optional — saved with your order so the store can contact you about this offer.', 'lafka-plugin' ); ?></span>
 			</label>
 			<input
 				type="email"

@@ -1,68 +1,84 @@
 <?php
+/**
+ * Optional checkout win-back email field: rendered only when the operator
+ * wrote an offer, honest about what happens, stored on the order when valid.
+ *
+ * @package Lafka_Plugin
+ */
+
 declare(strict_types=1);
 
 namespace LafkaPlugin\Tests\Unit;
 
+use Brain\Monkey;
+use Brain\Monkey\Functions;
+use Mockery;
 use PHPUnit\Framework\TestCase;
 
 final class CheckoutEmailCaptureTest extends TestCase {
 
-    private string $src;
+	private string $offer = '';
 
-    protected function setUp(): void {
-        $this->src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/woocommerce/lafka-checkout-email-capture.php' );
-    }
+	protected function setUp(): void {
+		parent::setUp();
+		Monkey\setUp();
+		$_POST = array();
+		Functions\when( 'get_theme_mod' )->alias( fn( $key, $default = '' ) => 'lafka_pdp_winback_offer_text' === $key ? $this->offer : $default );
+		Functions\when( 'esc_html' )->returnArg();
+		Functions\when( 'esc_html_e' )->alias( static function ( $text ) {
+			echo $text; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		} );
+		Functions\when( 'esc_attr_e' )->alias( static function ( $text ) {
+			echo $text; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		} );
+		Functions\when( 'wp_unslash' )->returnArg();
+		Functions\when( 'sanitize_email' )->alias( static fn( $v ) => trim( (string) $v ) );
+		Functions\when( 'is_email' )->alias( static fn( $v ) => false !== filter_var( $v, FILTER_VALIDATE_EMAIL ) );
+		require_once dirname( __DIR__, 2 ) . '/incl/woocommerce/lafka-checkout-email-capture.php';
+	}
 
-    public function test_render_function(): void {
-        $this->assertStringContainsString( 'function lafka_pdp_render_checkout_email_capture', $this->src );
-    }
+	protected function tearDown(): void {
+		$_POST = array();
+		Monkey\tearDown();
+		parent::tearDown();
+	}
 
-    public function test_save_handler(): void {
-        $this->assertStringContainsString( 'function lafka_pdp_save_checkout_email_capture', $this->src );
-    }
+	private function render(): string {
+		ob_start();
+		lafka_pdp_render_checkout_email_capture();
+		return (string) ob_get_clean();
+	}
 
-    public function test_meta_key(): void {
-        $this->assertStringContainsString( '_lafka_winback_email', $this->src );
-    }
+	public function test_no_field_without_an_operator_offer(): void {
+		$this->assertSame( '', $this->render() );
+	}
 
-    public function test_hooks_checkout_after_customer_details(): void {
-        $this->assertMatchesRegularExpression(
-            "/add_action\(\s*['\"]woocommerce_checkout_after_customer_details['\"]/",
-            $this->src
-        );
-    }
+	public function test_field_shows_the_offer_and_promises_no_automatic_email(): void {
+		$this->offer = 'Get a treat on your next visit';
 
-    public function test_sanitizes_email(): void {
-        $this->assertStringContainsString( 'sanitize_email', $this->src );
-    }
+		$html = $this->render();
 
-    public function test_winback_copy_is_operator_configurable(): void {
-        // Regression lock for v9.7.8. Pre-fix the headline was hardcoded to
-        // "Save 10% on your next order" but the file's own comment said the
-        // win-back coupon flow is not implemented yet. Operators on a
-        // different discount tier — or no discount at all — were promising
-        // 10% they never delivered. Now operator-configurable via Customizer
-        // (lafka_pdp_winback_offer_text); empty string hides the field.
-        $this->assertStringContainsString(
-            'lafka_pdp_winback_offer_text',
-            $this->src,
-            'Winback headline must read from the Customizer setting, not a hardcoded literal.'
-        );
-        $this->assertDoesNotMatchRegularExpression(
-            "/_e\(\s*'(?:[^']*?)Save 10%[^']*?'/",
-            $this->src,
-            'Hardcoded "Save 10%" copy must not be reintroduced.'
-        );
-    }
+		$this->assertStringContainsString( 'Get a treat on your next visit', $html );
+		$this->assertStringContainsString( 'name="lafka_winback_email"', $html );
+		$this->assertStringNotContainsString( 'email you', $html, 'Nothing sends an email, so the hint must not promise one.' );
+	}
 
-    public function test_render_returns_early_when_offer_text_blank(): void {
-        // Empty string ⇒ feature disabled. The whole render function must
-        // bail before emitting any markup so non-Peppery installs don't ship
-        // a half-implemented feature.
-        $this->assertMatchesRegularExpression(
-            "/'' === \\\$headline\s*\)\s*\{[^}]*return;/s",
-            $this->src,
-            'Render function must return early when winback offer text is blank.'
-        );
-    }
+	public function test_a_valid_address_is_stored_on_the_order(): void {
+		$_POST['lafka_winback_email'] = 'guest@example.test';
+		$order                        = Mockery::mock( 'WC_Order' );
+		$order->shouldReceive( 'update_meta_data' )->once()->with( '_lafka_winback_email', 'guest@example.test' );
+		$order->shouldReceive( 'save' )->once();
+		Functions\when( 'wc_get_order' )->justReturn( $order );
+
+		lafka_pdp_save_checkout_email_capture( 12 );
+		$this->addToAssertionCount( 1 );
+	}
+
+	public function test_an_invalid_address_is_ignored(): void {
+		$_POST['lafka_winback_email'] = 'not-an-email';
+		Functions\expect( 'wc_get_order' )->never();
+
+		lafka_pdp_save_checkout_email_capture( 12 );
+		$this->addToAssertionCount( 1 );
+	}
 }

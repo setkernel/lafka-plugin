@@ -270,7 +270,7 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 				'_lafka_special_instructions', // per-order kitchen note
 				'_lafka_review_email_sent', // order-level send guard
 				'_lafka_push_reorder_sent_', // order-level send guard
-				'_lafka_winback_email',     // order-level send guard
+				'_lafka_winback_email',     // win-back address captured at checkout
 			);
 		}
 
