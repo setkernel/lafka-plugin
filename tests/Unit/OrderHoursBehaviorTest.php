@@ -114,6 +114,16 @@ namespace LafkaPlugin\Tests\Unit {
 			);
 		}
 
+		public function test_unset_or_invalid_branch_timezones_fall_back_to_the_site_timezone(): void {
+			$site = new DateTimeZone( 'Europe/Paris' );
+			Functions\when( 'wp_timezone' )->justReturn( $site );
+
+			foreach ( array( '', 'default', 'Not/AZone' ) as $stored ) {
+				$this->assertSame( 'Europe/Paris', Lafka_Order_Hours::resolve_timezone( $stored )->getName(), "Stored: '{$stored}'" );
+			}
+			$this->assertSame( 'Asia/Tokyo', Lafka_Order_Hours::resolve_timezone( 'Asia/Tokyo' )->getName() );
+		}
+
 		public function test_next_opening_is_computed_on_the_store_clock(): void {
 			// Every day "opens" (a zero-length period, so the store is never open)
 			// at the store-clock time two hours from now; the next opening must be
