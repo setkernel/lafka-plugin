@@ -28,6 +28,12 @@
 			"pattern": "^Stable tag:\\s*(\\d+\\.\\d+\\.\\d+[^\\s]*)",
 			"flags": "m",
 			"required": true
+		},
+		{
+			"file": "languages/lafka-plugin.pot",
+			"pattern": "^\"Project-Id-Version: Lafka Plugin (\\d+\\.\\d+\\.\\d+[^\\\\\\s]*)",
+			"flags": "m",
+			"required": true
 		}
 	],
 	"devDependencies": {
