@@ -129,40 +129,66 @@ final class UninstallCleanupTest extends TestCase {
 
 	// ─── Option-prefix inventory completeness ─────────────────────────────────
 
-	public function test_option_prefix_list_covers_every_known_option(): void {
-		$known = array(
-			'lafka',
-			'lafka_abandoned_cart_db_version',
-			'lafka_contact_phone',
-			'lafka_dietary_tags_seeded_version',
-			'lafka_first_order_discount_percent',
-			'lafka_free_delivery_threshold',
-			'lafka_homepage_hero_attachment_id',
-			'lafka_kds_options',
-			'lafka_kds_token_activity',
-			'lafka_order_hours_options',
-			'lafka_push_activity_log',
-			'lafka_push_db_version',
-			'lafka_share_on_posts',
-			'lafka_share_on_products',
-			'lafka_shipping_areas_advanced',
-			'lafka_shipping_areas_branches',
-			'lafka_shipping_areas_datetime',
-			'lafka_shipping_areas_general',
-			'lafka_slow_day_days',
-			'lafka_slow_day_discount_percent',
-			'lafka_business_name',
-			'lafka_business_geo_lat',
-			'lafka_last_processed_order_ids',
-			'lafka_restaurant_info',
-			'lafka_restaurant_hero_title',
-			'lafka_delete_data_on_uninstall',
+	/**
+	 * Every option name the plugin's code writes, read off the source: option
+	 * API calls with a literal name, register_setting() option names, option
+	 * name constants, WooCommerce settings-page field ids, Customizer
+	 * option-type settings and option-name helper functions.
+	 *
+	 * @return array<int,string>
+	 */
+	private static function options_written_by_the_plugin(): array {
+		$root  = dirname( __DIR__, 2 );
+		$files = array( $root . '/lafka-plugin.php' );
+		foreach ( array( 'incl', 'shortcodes', 'widgets' ) as $dir ) {
+			$it = new \RecursiveIteratorIterator( new \RecursiveDirectoryIterator( $root . '/' . $dir, \FilesystemIterator::SKIP_DOTS ) );
+			foreach ( $it as $file ) {
+				if ( 'php' === $file->getExtension() ) {
+					$files[] = $file->getPathname();
+				}
+			}
+		}
+
+		$patterns = array(
+			"/(?:update_option|add_option)\(\s*'(lafka[a-z0-9_]*)'/",
+			"/register_setting\(\s*'[^']*'\s*,\s*'(lafka[a-z0-9_]*)'/",
+			"/const\s+\w*OPTION\w*\s*=\s*'(lafka[a-z0-9_]*)'/",
+			"/add_setting\(\s*'(lafka[a-z0-9_]*)'\s*,\s*array\((?:(?!add_setting).){0,200}?'type'\s*=>\s*'option'/s",
+			"/function\s+\w*option_(?:name|key)\w*\([^)]*\)[^{]*\{\s*return\s+'(lafka[a-z0-9_]*)'/",
 		);
-		foreach ( $known as $name ) {
-			$this->assertTrue(
-				Lafka_Uninstall::option_matches( $name ),
-				"Option {$name} must be covered by the uninstall inventory."
-			);
+		$names = array();
+		foreach ( $files as $file ) {
+			$src = (string) file_get_contents( $file );
+			foreach ( $patterns as $pattern ) {
+				if ( preg_match_all( $pattern, $src, $m ) ) {
+					$names = array_merge( $names, $m[1] );
+				}
+			}
+			// WooCommerce settings-page fields store under their id (the
+			// *_title / *_end ids are section markers, not stored values).
+			if ( str_contains( $file, 'class-lafka-wc-settings-restaurant.php' ) && preg_match_all( "/'id'\s*=>\s*'(lafka[a-z0-9_]*)'/", $src, $m ) ) {
+				foreach ( $m[1] as $id ) {
+					if ( ! preg_match( '/_(title|end)$/', $id ) ) {
+						$names[] = $id;
+					}
+				}
+			}
+		}
+		return array_values( array_unique( $names ) );
+	}
+
+	public function test_every_option_the_plugin_writes_is_removed_by_full_cleanup(): void {
+		$names = self::options_written_by_the_plugin();
+		$this->assertGreaterThan( 30, count( $names ), 'The option scan found suspiciously few names.' );
+
+		foreach ( $names as $name ) {
+			$this->assertTrue( Lafka_Uninstall::option_matches( $name ), "Option {$name} is written by the plugin but survives a full uninstall." );
+		}
+	}
+
+	public function test_full_cleanup_leaves_theme_owned_options_alone(): void {
+		foreach ( array( 'lafka_dynamic_css_version', 'lafka_legacy_migration_version', 'lafka_search_cache_version', 'lafka_github_token', 'theme_mods_lafka' ) as $name ) {
+			$this->assertFalse( Lafka_Uninstall::option_matches( $name ), "Theme-owned option {$name} must survive a plugin uninstall." );
 		}
 	}
 

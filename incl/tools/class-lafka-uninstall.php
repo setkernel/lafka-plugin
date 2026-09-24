@@ -143,6 +143,11 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 			return array(
 				'lafka',                          // the master flag/settings array
 				'lafka_last_processed_order_ids', // KDS poller cursor
+				'lafka_checkout_mode',            // classic vs block checkout choice
+				'lafka_email_unsub_list',         // marketing-email unsubscribe list
+				'lafka_security_options',         // security-header toggles
+				'lafka_block_cart_shim_done',     // block-cart page shim marker
+				'lafka_seed_demo_manifest',       // `wp lafka seed-demo` bookkeeping
 				self::DATA_TOGGLE_OPTION,         // the uninstall toggle itself
 			);
 		}
@@ -175,6 +180,7 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 				'lafka_github_updates_', // self-updater bookkeeping (defensive)
 				'lafka_contact_',        // contact-block options
 				'lafka_promotions_',     // promo knobs + migration-notice dismissal
+				'lafka_combo_deal_',     // combo-deal categories / amount / type
 			);
 		}
 
