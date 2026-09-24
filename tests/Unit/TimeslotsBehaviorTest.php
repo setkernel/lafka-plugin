@@ -64,6 +64,69 @@ final class TimeslotsBehaviorTest extends TestCase {
 		return $method->invoke( null, array() );
 	}
 
+	/**
+	 * Evaluate a WP meta_query (AND/OR nesting, '=', 'IN', 'NOT EXISTS')
+	 * against one order's meta map — a stand-in for the order datastore.
+	 *
+	 * @param array<string, string> $meta Order meta.
+	 */
+	private static function meta_query_matches( array $query, array $meta ): bool {
+		$relation = strtoupper( $query['relation'] ?? 'AND' );
+		unset( $query['relation'] );
+		$results = array();
+		foreach ( $query as $clause ) {
+			if ( ! isset( $clause['key'] ) ) {
+				$results[] = self::meta_query_matches( $clause, $meta );
+				continue;
+			}
+			$exists  = array_key_exists( $clause['key'], $meta );
+			$compare = $clause['compare'] ?? '=';
+			if ( 'NOT EXISTS' === $compare ) {
+				$results[] = ! $exists;
+			} elseif ( 'IN' === $compare ) {
+				$results[] = $exists && in_array( $meta[ $clause['key'] ], array_map( 'strval', $clause['value'] ), true );
+			} else {
+				$results[] = $exists && (string) $meta[ $clause['key'] ] === (string) $clause['value'];
+			}
+		}
+		return 'OR' === $relation ? in_array( true, $results, true ) : ! in_array( false, $results, true );
+	}
+
+	public function test_orders_stored_with_an_empty_branch_count_against_the_no_branch_slot(): void {
+		$slot   = array(
+			'lafka_checkout_date'     => '2031-01-15',
+			'lafka_checkout_timeslot' => '12:00 - 13:00',
+		);
+		$orders = array(
+			$slot,                                              // No branch meta.
+			$slot + array( 'lafka_selected_branch_id' => '' ),  // Legacy empty value.
+			$slot + array( 'lafka_selected_branch_id' => '5' ), // Branch 5.
+		);
+		Functions\when( 'apply_filters' )->returnArg( 2 );
+		Functions\when( 'wc_get_orders' )->alias(
+			static function ( $args ) use ( $orders ) {
+				return array_keys(
+					array_filter( $orders, static fn( $meta ) => self::meta_query_matches( $args['meta_query'], $meta ) )
+				);
+			}
+		);
+		$count = static function ( $branch_id ) {
+			$method = ( new ReflectionClass( Lafka_Timeslots::class ) )->getMethod( 'get_number_of_orders_per_timeslot' );
+			return $method->invoke(
+				null,
+				$branch_id,
+				new \DateTime( '2031-01-15' ),
+				array(
+					'start' => '12:00',
+					'end'   => '13:00',
+				)
+			);
+		};
+
+		$this->assertSame( 2, $count( null ), 'Both branch-less orders occupy the no-branch slot.' );
+		$this->assertSame( 1, $count( 5 ) );
+	}
+
 	public function test_saved_mandatory_is_inert_while_feature_is_off(): void {
 		$this->options['lafka_shipping_areas_datetime'] = array(
 			'enable_datetime_option' => '',

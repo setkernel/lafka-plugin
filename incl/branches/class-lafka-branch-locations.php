@@ -625,7 +625,12 @@ class Lafka_Branch_Locations {
 		$branch_location_session = WC()->session->get( 'lafka_branch_location' );
 		// woocommerce_checkout_create_order fires before save, so update_meta_data
 		// on the in-memory WC_Order is enough; HPOS and CPT paths converge.
-		$order->update_meta_data( 'lafka_selected_branch_id', sanitize_text_field( $branch_location_session['branch_id'] ?? null ) );
+		// Only a real branch is recorded: an empty value would read as "some
+		// branch" to meta queries and escape the no-branch timeslot count.
+		$session_branch_id = absint( $branch_location_session['branch_id'] ?? 0 );
+		if ( $session_branch_id > 0 ) {
+			$order->update_meta_data( 'lafka_selected_branch_id', (string) $session_branch_id );
+		}
 		if ( ! empty( $branch_location_session['order_type'] ) ) {
 			$order_type = $branch_location_session['order_type'];
 			$branch_id  = isset( $branch_location_session['branch_id'] ) ? (int) $branch_location_session['branch_id'] : 0;

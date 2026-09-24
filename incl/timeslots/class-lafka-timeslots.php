@@ -705,21 +705,27 @@ class Lafka_Timeslots {
 	}
 
 	private static function get_number_of_orders_per_timeslot( $branch_id, DateTime $order_date, $order_timeslot ): int {
-		// Branch clause: a numeric ID matches that branch's orders; anything else
-		// (empty/null/non-numeric) matches orders with NO branch assigned. Using
-		// `'value' => null` was a bug because SQL `meta_value = NULL` never
-		// matches — orders were silently undercounted, leading to overbooking.
-		// Use `compare => 'NOT EXISTS'` for the unset case.
-		if ( is_numeric( $branch_id ) ) {
+		// Branch clause: a branch ID matches that branch's orders; anything else
+		// matches orders with NO branch — the meta absent, or stored empty (older
+		// orders were written with an empty value), so neither escapes the count.
+		if ( is_numeric( $branch_id ) && (int) $branch_id > 0 ) {
 			$branch_clause = array(
 				'key'     => 'lafka_selected_branch_id',
-				'value'   => $branch_id,
+				'value'   => (string) (int) $branch_id,
 				'compare' => '=',
 			);
 		} else {
 			$branch_clause = array(
-				'key'     => 'lafka_selected_branch_id',
-				'compare' => 'NOT EXISTS',
+				'relation' => 'OR',
+				array(
+					'key'     => 'lafka_selected_branch_id',
+					'compare' => 'NOT EXISTS',
+				),
+				array(
+					'key'     => 'lafka_selected_branch_id',
+					'value'   => '',
+					'compare' => '=',
+				),
 			);
 		}
 
