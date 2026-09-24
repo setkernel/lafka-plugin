@@ -13,8 +13,12 @@ Thumbs.db
 node_modules/
 /vendor/
 
-# Test artefacts
+# Test / lint caches
 .phpunit.result.cache
+.phpunit.cache/
+.phpcs.cache
+.eslintcache
+.stylelintcache
 
 # wp-env uploads mapping (.wp-env.json) + per-developer override
 .wp-env-uploads/

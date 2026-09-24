@@ -2,10 +2,10 @@
 #
 # Pre-push hook for lafka-plugin.
 #
-# Runs the same gates CI runs: version SSOT check, PHPCS, PHPUnit, ESLint,
-# Stylelint.
-# Catches lint/test failures locally before they hit a stylelint-fail
-# CI cycle that costs a patch release to recover from.
+# Runs the gates CI runs — version SSOT check, PHPCS, PHPUnit, ESLint,
+# Stylelint, JS tests, minified-build freshness — but only the ones the pushed
+# commits can affect, and the independent ones in parallel. PHPCS / ESLint /
+# Stylelint use their on-disk caches, so unchanged files are not re-linted.
 #
 # Install (one-time per clone):
 #     git config core.hooksPath .githooks
@@ -14,39 +14,77 @@
 #     git push --no-verify
 #
 
-set -euo pipefail
+set -uo pipefail
 
-cd "$(git rev-parse --show-toplevel)"
+cd "$(git rev-parse --show-toplevel)" || exit 1
 
 red()   { printf '\033[31m%s\033[0m\n' "$1"; }
 green() { printf '\033[32m%s\033[0m\n' "$1"; }
 blue()  { printf '\033[36m%s\033[0m\n' "$1"; }
 
-fail() {
-	red "✖ pre-push: $1 FAILED"
-	red "   fix locally, or bypass with: git push --no-verify"
-	exit 1
+# Files changed by the pushed commits (git feeds "<local ref> <local sha>
+# <remote ref> <remote sha>" lines on stdin). Unknown range → check everything.
+zero=0000000000000000000000000000000000000000
+changed=""
+run_all=0
+while read -r _local_ref local_sha _remote_ref remote_sha; do
+	[ "$local_sha" = "$zero" ] && continue # branch deletion
+	if [ "$remote_sha" = "$zero" ]; then
+		base=$(git merge-base "$local_sha" origin/main 2>/dev/null) || { run_all=1; continue; }
+	else
+		base=$remote_sha
+	fi
+	changed+=$(git diff --name-only "$base" "$local_sha" 2>/dev/null)$'\n' || run_all=1
+done
+[ -z "$changed" ] && run_all=1
+
+touches() { [ "$run_all" = 1 ] || grep -Eq "$1" <<<"$changed"; }
+
+# Version SSOT guard first — cheapest gate, needs only node.
+blue "▸ pre-push: check-version"
+npm run check-version --silent >/dev/null 2>&1 || { red "✖ check-version failed — run: npm run check-version"; exit 1; }
+
+logdir=$(mktemp -d)
+trap 'rm -rf "$logdir"' EXIT
+pids=()
+names=()
+
+run() { # run <name> <command...> — in the background, output to a log
+	local name=$1; shift
+	blue "▸ pre-push: $name"
+	( "$@" >"$logdir/$name.log" 2>&1 ) &
+	pids+=($!)
+	names+=("$name")
 }
 
-# Version SSOT guard first — cheapest gate, and needs only node (no node_modules).
-blue "▸ pre-push: npm run check-version"
-npm run check-version --silent 2>&1 | tail -5 || fail "check-version"
-
-blue "▸ pre-push: composer phpcs"
-composer phpcs --quiet 2>&1 | tail -5 || fail "PHPCS"
-
-blue "▸ pre-push: composer test"
-composer test --quiet 2>&1 | tail -3 || fail "PHPUnit"
+if touches '\.php$|^composer\.|^phpunit\.xml|^\.phpcs\.xml|^tests/|^\.github/|\.md$|\.txt$'; then
+	run phpcs composer phpcs --quiet
+	run phpunit composer test --quiet
+fi
 
 if [ -d node_modules ]; then
-	blue "▸ pre-push: npm run lint:js"
-	npm run lint:js --silent 2>&1 | tail -5 || fail "ESLint"
-
-	blue "▸ pre-push: npm run lint:css"
-	npm run lint:css --silent 2>&1 | tail -5 || fail "Stylelint"
+	if touches '\.(js|mjs|css)$|^package|^eslint\.config|^\.stylelintrc'; then
+		run eslint npm run lint:js --silent
+		run stylelint npm run lint:css --silent
+		run js-tests npm test --silent
+		run min-build sh -c 'npm run build --silent >/dev/null && git diff --exit-code -- "*.min.js"'
+	fi
 else
-	red "⚠ pre-push: node_modules absent — skipping JS/CSS lint."
-	red "   run 'npm ci' to enable full local checks."
+	red "⚠ pre-push: node_modules absent — skipping JS/CSS checks (run 'npm ci')."
+fi
+
+failed=0
+for i in "${!pids[@]}"; do
+	if ! wait "${pids[$i]}"; then
+		red "✖ pre-push: ${names[$i]} FAILED"
+		tail -20 "$logdir/${names[$i]}.log"
+		failed=1
+	fi
+done
+
+if [ "$failed" = 1 ]; then
+	red "   fix locally, or bypass with: git push --no-verify"
+	exit 1
 fi
 
 green "✓ pre-push: all gates passed"

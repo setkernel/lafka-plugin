@@ -7,6 +7,12 @@
 
 	<!-- Show progress and sniff codes in all reports -->
 	<arg value="ps"/>
+
+	<!-- Speed: sniff files in parallel, and skip files unchanged since the last
+	     run (cache keyed on file content + ruleset; git-ignored, restored by
+	     actions/cache in CI). -->
+	<arg name="parallel" value="8"/>
+	<arg name="cache" value=".phpcs.cache"/>
 	<arg name="colors"/>
 	<arg name="extensions" value="php"/>
 

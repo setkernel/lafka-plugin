@@ -110,6 +110,16 @@ jobs:
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist --no-progress
 
+      # PHPCS result cache (.phpcs.cache): files unchanged since the cached run
+      # are not re-sniffed. Keyed on the ruleset + locked sniff versions; each
+      # run saves a fresh cache under its own SHA and restores the newest.
+      - uses: actions/cache@v6
+        with:
+          path: .phpcs.cache
+          key: ${{ runner.os }}-phpcs-${{ hashFiles('.phpcs.xml.dist', 'composer.lock') }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-phpcs-${{ hashFiles('.phpcs.xml.dist', 'composer.lock') }}-
+
       - name: PHPCS
         run: composer phpcs
 
