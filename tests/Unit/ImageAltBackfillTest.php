@@ -66,6 +66,7 @@ final class ImageAltBackfillTest extends TestCase {
 		Functions\when( 'get_post_type' )->alias( static fn( $id ) => $parents[ $id ][0] ?? 'attachment' );
 		Functions\when( 'get_the_title' )->alias( static fn( $id ) => $parents[ $id ][1] ?? '' );
 		Functions\when( 'WP_CLI\Utils\format_items' )->justReturn( null );
+		Functions\when( 'sanitize_key' )->returnArg();
 		$writes = array();
 		Functions\when( 'update_post_meta' )->alias(
 			static function ( $id, $key, $value ) use ( &$writes ) {
@@ -89,5 +90,11 @@ final class ImageAltBackfillTest extends TestCase {
 			),
 			$writes
 		);
+
+		// --post-type limits the run to images attached to that post type: the
+		// unattached image (2) and the page images (4, 5) are left alone.
+		$writes = array();
+		$command->apply( array(), array( 'post-type' => 'product' ) );
+		$this->assertSame( array( 1 => array( '_wp_attachment_image_alt', 'Garden Salad' ) ), $writes );
 	}
 }

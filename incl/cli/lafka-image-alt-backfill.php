@@ -64,11 +64,10 @@ class Lafka_Image_Alt_Backfill_Command {
 			$current_alt = (string) get_post_meta( $att_id, '_wp_attachment_image_alt', true );
 			$parent_id   = (int) wp_get_post_parent_id( $att_id );
 
-			if ( $post_type && $parent_id ) {
-				$parent_post_type = get_post_type( $parent_id );
-				if ( $parent_post_type !== $post_type ) {
-					continue;
-				}
+			// --post-type limits the run to images attached to that post type;
+			// unattached images belong to no post type and are skipped.
+			if ( $post_type && ( ! $parent_id || get_post_type( $parent_id ) !== $post_type ) ) {
+				continue;
 			}
 
 			$new_alt = $this->derive_alt( $att_id, $current_alt, $parent_id );
