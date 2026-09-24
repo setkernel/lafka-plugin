@@ -117,6 +117,10 @@ final class MetaDescriptionBoxTest extends TestCase {
 		Functions\when( 'esc_attr' )->returnArg();
 		Functions\when( 'esc_textarea' )->returnArg();
 		Functions\when( 'esc_html_e' )->justReturn( null );
+		if ( function_exists( 'lafka_resolve_meta_description' ) ) {
+			// Loaded by another test; its fallback preview is not under test here.
+			Functions\when( 'lafka_resolve_meta_description' )->justReturn( '' );
+		}
 		ob_start();
 		lafka_meta_description_render_box( (object) array( 'ID' => 42 ) );
 		$html = (string) ob_get_clean();

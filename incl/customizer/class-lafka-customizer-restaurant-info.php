@@ -7,7 +7,7 @@
  * (lafka-plugin/incl/schema/lafka-schema-helpers.php) — the W2-T1 resolver
  * — and consumed by:
  *   - JSON-LD schema generators (incl/schema/lafka-schema-*.php)
- *   - [lafka_nap] shortcode (lafka-plugin.php)
+ *   - [lafka_nap] shortcode (incl/schema/lafka-nap-shortcode.php)
  *   - Editorial templates (lafka-child/page-templates/template-editorial-*.php
  *     + partials/editorial-*.php)
  *

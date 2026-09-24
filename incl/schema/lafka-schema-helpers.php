@@ -4,7 +4,7 @@
  *
  * Single source-of-truth for all business facts used by:
  *  - JSON-LD generators (this module)
- *  - [lafka_nap] shortcode (lafka-plugin.php delegates here via
+ *  - [lafka_nap] shortcode (incl/schema/lafka-nap-shortcode.php, via
  *    lafka_schema_get_nap())
  *  - Editorial templates (lafka-child/page-templates/template-editorial-*.php
  *    + lafka-child/partials/editorial-*.php) read from

@@ -30,7 +30,7 @@ if ( ! function_exists( 'lafka_schema_yields_to_seo_plugin' ) ) {
 	 * @return bool
 	 */
 	function lafka_schema_yields_to_seo_plugin() {
-		// Detection lives in lafka_seo_plugin_active() (lafka-plugin.php), shared
+		// Detection lives in lafka_seo_plugin_active() (incl/seo/lafka-seo-plugin-detect.php), shared
 		// with the OpenGraph and meta-description emitters; the inline fallback
 		// keeps this module usable when loaded without the main plugin file.
 		$seo_plugin_active = function_exists( 'lafka_seo_plugin_active' )
