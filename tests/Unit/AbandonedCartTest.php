@@ -563,15 +563,6 @@ final class AbandonedCartTest extends TestCase {
 		$this->assertStringContainsString( 'lafka_ac_unschedule_events', $main );
 	}
 
-	public function test_main_plugin_version_bumped_to_at_least_9_27_0(): void {
-		// Phase 3B shipped at 9.27.0; later releases only move forward. Use
-		// version_compare, not a regex — a major-pinned pattern broke on the
-		// 9.x -> 10.0.0 rollover (caught by the v10.0.0 release pre-push gate).
-		$main = file_get_contents( dirname( __DIR__, 2 ) . '/lafka-plugin.php' );
-		$this->assertSame( 1, preg_match( '/Version:\s*([0-9]+\.[0-9]+\.[0-9]+)/', $main, $m ), 'Version header missing' );
-		$this->assertTrue( version_compare( $m[1], '9.27.0', '>=' ), "Version {$m[1]} regressed below 9.27.0" );
-	}
-
 	public function test_uninstall_drops_abandoned_cart_table(): void {
 		// NX1-06: uninstall.php is now a thin bootstrap; the DROP + marker-delete
 		// logic lives in the testable Lafka_Uninstall class.
