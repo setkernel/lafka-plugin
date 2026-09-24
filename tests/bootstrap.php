@@ -21,19 +21,22 @@ if ( ! defined( 'LAFKA_PLUGIN_FILE' ) ) {
 require_once dirname( __DIR__ ) . '/vendor/autoload.php';
 
 /**
- * Minimal WP function stubs for modules that call add_filter/add_action at
- * file-include time but whose logic is independently testable.
- * These are no-ops — actual filter invocation tests require Brain Monkey.
+ * add_filter()/add_action() for modules that register hooks at include time.
+ *
+ * They must exist before any module is required, so they are defined here —
+ * before Brain Monkey could — and Brain Monkey then leaves them alone. Every
+ * registration is recorded in $GLOBALS['lafka_test_hooks'] so tests can
+ * assert on what a module hooked (see tests/Unit/Support/Hooks.php).
  */
+$GLOBALS['lafka_test_hooks'] = array();
 if ( ! function_exists( 'add_filter' ) ) {
-	// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
 	function add_filter( $tag, $callback, $priority = 10, $accepted_args = 1 ): bool { // phpcs:ignore
+		$GLOBALS['lafka_test_hooks'][] = array( $tag, $callback, $priority, $accepted_args );
 		return true;
 	}
 }
 if ( ! function_exists( 'add_action' ) ) {
-	// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
 	function add_action( $tag, $callback, $priority = 10, $accepted_args = 1 ): bool { // phpcs:ignore
-		return true;
+		return add_filter( $tag, $callback, $priority, $accepted_args );
 	}
 }

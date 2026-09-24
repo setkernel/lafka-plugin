@@ -81,16 +81,15 @@ final class PrivacyExportEraseTest extends TestCase {
 	// ─── Registration ─────────────────────────────────────────────────────────
 
 	public function test_register_hooks_both_privacy_filters(): void {
-		// The only guard that core's Tools → Export/Erase Personal Data ever sees
-		// these callbacks. add_filter is a no-op defined by tests/bootstrap.php
-		// before Patchwork loads, so it can't be spied on: pin the two calls by
-		// source and prove register() runs cleanly.
-		$src = file_get_contents( dirname( __DIR__, 2 ) . '/incl/conversion/class-lafka-conversion-privacy.php' );
-		$this->assertStringContainsString( "add_filter( 'wp_privacy_personal_data_exporters'", $src );
-		$this->assertStringContainsString( "add_filter( 'wp_privacy_personal_data_erasers'", $src );
+		// Core's Tools → Export/Erase Personal Data only sees callbacks hooked here.
+		require_once __DIR__ . '/Support/Hooks.php';
+		\LafkaPlugin\Tests\Unit\Support\Hooks::reset();
 
 		( new Lafka_Conversion_Privacy() )->register();
-		$this->assertTrue( true );
+
+		$registered = \LafkaPlugin\Tests\Unit\Support\Hooks::registered();
+		$this->assertContains( 'wp_privacy_personal_data_exporters -> register_exporters', $registered );
+		$this->assertContains( 'wp_privacy_personal_data_erasers -> register_erasers', $registered );
 	}
 
 	public function test_register_exporters_adds_push_and_ac(): void {

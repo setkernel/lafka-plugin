@@ -188,13 +188,26 @@ final class SwatchesTest extends TestCase {
 	 * defines add_action() as a no-op before Brain Monkey loads.
 	 */
 	public function test_term_save_hooks_pass_the_taxonomy_argument(): void {
-		$src = (string) file_get_contents( dirname( __DIR__, 2 ) . '/incl/swatches/classes/class-admin.php' );
+		// save_term_meta() gates on its 3rd argument (the taxonomy); registered
+		// with fewer accepted args it would never see it and never save.
+		require_once __DIR__ . '/Support/Hooks.php';
+		Functions\when( 'wc_get_attribute_taxonomies' )->justReturn( array( (object) array( 'attribute_name' => 'size' ) ) );
+		\LafkaPlugin\Tests\Unit\Support\Hooks::reset();
 
-		foreach ( array( 'created_term', 'edit_term' ) as $hook ) {
-			self::assertMatchesRegularExpression(
-				"/add_action\\(\\s*'{$hook}'\\s*,\\s*array\\(\\s*\\\$this\\s*,\\s*'save_term_meta'\\s*\\)\\s*,\\s*10\\s*,\\s*3\\s*\\)/",
-				$src
-			);
+		( new ReflectionClass( Lafka_WC_Variation_Swatches_Admin::class ) )->newInstanceWithoutConstructor()->init_attribute_hooks();
+
+		$accepted = array();
+		foreach ( $GLOBALS['lafka_test_hooks'] as $registration ) {
+			if ( is_array( $registration[1] ) && 'save_term_meta' === $registration[1][1] ) {
+				$accepted[ $registration[0] ] = $registration[3];
+			}
 		}
+		self::assertSame(
+			array(
+				'created_term' => 3,
+				'edit_term'    => 3,
+			),
+			$accepted
+		);
 	}
 }
