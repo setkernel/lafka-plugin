@@ -252,17 +252,15 @@ if ( ! class_exists( 'Lafka_Store_Api' ) ) {
 		}
 
 		/**
-		 * Delivery geo-fence for the Store API path. Delivery orders only; only
-		 * when the operator turned pinpoint delivery on AND mandatory (identical
-		 * preconditions to the classic Lafka_Shipping_Areas::validate_checkout_field_process()).
-		 * The polygon membership test itself is the shared
-		 * Lafka_Shipping_Areas::is_point_in_delivery_zone() used by both paths.
+		 * Delivery geo-fence for the Store API path, with the classic
+		 * preconditions (Lafka_Shipping_Areas::checkout_requires_delivery_pinpoint():
+		 * pinpoint delivery on AND mandatory, a shipped cart, not a pickup order
+		 * type or pickup shipping method). The polygon membership test is the
+		 * shared Lafka_Shipping_Areas::is_point_in_delivery_zone().
 		 *
-		 * The pinpoint rides the checkout request (block field, wired by NX1-04b)
-		 * or the WC session. When no pinpoint is present yet, the polygon test is
-		 * skipped — the presence requirement is a UI concern that lands with the
-		 * block map field in NX1-04b; this item guarantees the polygon test HOLDS
-		 * whenever a pinpoint exists so an out-of-zone address cannot slip through.
+		 * The pinpoint rides the checkout request (`extensions.lafka.delivery_geocoded`)
+		 * or the WC session. A delivery order that must be pinpointed but carries
+		 * no valid pinpoint is rejected, exactly like the classic checkout.
 		 *
 		 * @param mixed $request WP_REST_Request for the checkout call.
 		 * @return void
@@ -272,19 +270,16 @@ if ( ! class_exists( 'Lafka_Store_Api' ) ) {
 				return;
 			}
 
-			$branch = self::get_branch_session();
-			if ( 'delivery' !== ( $branch['order_type'] ?? '' ) ) {
-				return; // Pickup / dine-in never carry a delivery pinpoint.
-			}
-
-			$options = get_option( 'lafka_shipping_areas_general' );
-			if ( empty( $options['pick_delivery_address'] ) || empty( $options['mandatory_pickup_delivery'] ) ) {
+			if ( ! Lafka_Shipping_Areas::checkout_requires_delivery_pinpoint() ) {
 				return;
 			}
 
 			$point = self::read_delivery_point( $request );
 			if ( null === $point ) {
-				return; // No pinpoint source yet (NX1-04b wires the block map field).
+				self::throw_store_api_error(
+					'lafka_delivery_location_required',
+					__( 'Please precise your address on the map.', 'lafka-plugin' )
+				);
 			}
 
 			$shipping_areas = Lafka_Shipping_Areas::instance();

@@ -52,6 +52,8 @@ class Lafka_Shipping_Areas {
 	private function includes() {
 		$options = get_option( 'lafka_shipping_areas_branches' );
 
+		require_once __DIR__ . '/../lafka-shipping-method-helpers.php';
+
 		// Map shortcode — extracted to incl/map-shortcode/ in v9.3.0 (Path A4).
 		require_once __DIR__ . '/../map-shortcode/shortcode-lafka-shipping-areas.php';
 
@@ -535,22 +537,78 @@ class Lafka_Shipping_Areas {
 		);
 	}
 
-	public function validate_checkout_field_process() {
-		$options = get_option( 'lafka_shipping_areas_general' );
-
-		// Geo-fencing only applies when pinpoint delivery is on AND mandatory.
-		if ( empty( $options['pick_delivery_address'] ) || empty( $options['mandatory_pickup_delivery'] ) ) {
-			return;
+	/**
+	 * Pure decision: must this checkout carry a pinpointed, in-zone delivery
+	 * location? Only when pinpoint delivery is on AND mandatory, the cart is
+	 * actually shipped, and the customer is not collecting the order — neither
+	 * a Lafka "pickup" order type nor a WooCommerce pickup shipping method
+	 * (classic `local_pickup` or blocks `pickup_location`).
+	 *
+	 * @param mixed    $options        The lafka_shipping_areas_general option.
+	 * @param string   $order_type     Session order type ('delivery', 'pickup' or '').
+	 * @param string[] $chosen_methods Chosen shipping rate ids.
+	 * @param bool     $needs_shipping Whether the cart needs shipping.
+	 * @return bool
+	 */
+	public static function delivery_pinpoint_required( $options, string $order_type, array $chosen_methods, bool $needs_shipping ): bool {
+		if ( ! is_array( $options ) || empty( $options['pick_delivery_address'] ) || empty( $options['mandatory_pickup_delivery'] ) ) {
+			return false;
+		}
+		if ( ! $needs_shipping || 'pickup' === $order_type ) {
+			return false;
+		}
+		foreach ( $chosen_methods as $method ) {
+			if ( lafka_is_pickup_shipping_method( (string) $method ) ) {
+				return false;
+			}
 		}
 
-		// Pickup orders are collected from the branch, so they never carry a
-		// delivery pinpoint — skip the whole gate for them, otherwise a legit
-		// pickup checkout would be blocked for the missing field.
-		if ( isset( WC()->session ) ) {
-			$branch_location_session = WC()->session->get( 'lafka_branch_location' );
-			if ( ! empty( $branch_location_session['order_type'] ) && 'pickup' === $branch_location_session['order_type'] ) {
-				return;
+		return true;
+	}
+
+	/**
+	 * delivery_pinpoint_required() for the current request: options, the WC
+	 * session's order type + chosen shipping methods, and the cart.
+	 *
+	 * @param string[]|null $chosen_methods Chosen rate ids from the request, or
+	 *                                      null to read the WC session's.
+	 * @return bool
+	 */
+	public static function checkout_requires_delivery_pinpoint( ?array $chosen_methods = null ): bool {
+		$order_type     = '';
+		$needs_shipping = true;
+		$wc             = function_exists( 'WC' ) ? WC() : null;
+
+		if ( is_object( $wc ) && isset( $wc->session ) && is_object( $wc->session ) ) {
+			$branch     = $wc->session->get( 'lafka_branch_location' );
+			$order_type = is_array( $branch ) ? (string) ( $branch['order_type'] ?? '' ) : '';
+			if ( null === $chosen_methods ) {
+				$chosen_methods = (array) $wc->session->get( 'chosen_shipping_methods' );
 			}
+		}
+		if ( is_object( $wc ) && isset( $wc->cart ) && is_object( $wc->cart ) ) {
+			$needs_shipping = (bool) $wc->cart->needs_shipping();
+		}
+
+		return self::delivery_pinpoint_required(
+			get_option( 'lafka_shipping_areas_general' ),
+			$order_type,
+			array_map( 'strval', (array) $chosen_methods ),
+			$needs_shipping
+		);
+	}
+
+	public function validate_checkout_field_process() {
+		// The classic form posts the chosen rates; WC only copies them into the
+		// session after woocommerce_checkout_process, so read the POST first.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- woocommerce_checkout_process context; WC core verifies the checkout nonce upstream.
+		$posted_methods = isset( $_POST['shipping_method'] ) ? array_map( 'sanitize_text_field', (array) wp_unslash( $_POST['shipping_method'] ) ) : null;
+
+		// Geo-fencing only applies to delivered orders when pinpoint delivery
+		// is on AND mandatory. Pickup orders (Lafka order type or a WC pickup
+		// method) are collected, so they never carry a delivery pinpoint.
+		if ( ! self::checkout_requires_delivery_pinpoint( $posted_methods ) ) {
+			return;
 		}
 
 		// (a) Missing OR blank must both fail. Omitting the hidden field from the

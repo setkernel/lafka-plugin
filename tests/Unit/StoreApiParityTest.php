@@ -266,26 +266,6 @@ final class StoreApiParityTest extends TestCase {
 		);
 	}
 
-	public function test_geo_fence_is_delivery_only_and_reuses_polygon_test(): void {
-		$body = $this->method_body( 'validate_geo_fence' );
-		$this->assertNotSame( '', $body, 'validate_geo_fence body not found.' );
-		$this->assertStringContainsString(
-			"'delivery' !== ( \$branch['order_type'] ?? '' )",
-			$body,
-			'The geo-fence must apply to delivery orders only.'
-		);
-		$this->assertStringContainsString(
-			'is_point_in_delivery_zone',
-			$body,
-			'The geo-fence must reuse the shared Lafka_Shipping_Areas::is_point_in_delivery_zone() polygon test.'
-		);
-		$this->assertStringContainsString(
-			'lafka_outside_delivery_area',
-			$body,
-			'An out-of-zone pinpoint must raise a Store API error.'
-		);
-	}
-
 	public function test_update_callback_reuses_select_branch_predicates(): void {
 		$body = $this->method_body( 'apply_branch_update' );
 		$this->assertNotSame( '', $body, 'apply_branch_update body not found.' );

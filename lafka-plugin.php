@@ -51,6 +51,9 @@ if ( ! function_exists( 'lafka_plugin_asset_version' ) ) {
 // Load shared options helper — available to both plugin and theme.
 require_once plugin_dir_path( __FILE__ ) . 'incl/class-lafka-options.php';
 
+// Pickup-vs-delivery shipping-method recognition shared across modules.
+require_once plugin_dir_path( __FILE__ ) . 'incl/lafka-shipping-method-helpers.php';
+
 // Typed feature-module registry (NX1-01) — the single list of gated modules
 // the Modules dashboard, Site Health and (later) the setup wizard read from.
 // Foundational: required before Site Health / the Modules page below.
