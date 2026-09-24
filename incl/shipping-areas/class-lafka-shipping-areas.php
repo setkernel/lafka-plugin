@@ -96,10 +96,11 @@ class Lafka_Shipping_Areas {
 		add_action( 'woocommerce_review_order_before_payment', array( $this, 'add_map_to_checkout' ) );
 		// Validate "mandatory to pick address"
 		add_action( 'woocommerce_checkout_process', array( $this, 'validate_checkout_field_process' ) );
-		// Store picked map location to order. `woocommerce_checkout_update_order_meta`
-		// was deprecated in WC 9.0; `woocommerce_checkout_create_order` fires before
-		// the order is saved on the classic checkout path, receives WC_Order directly,
-		// and is HPOS-safe without branching.
+		// Store picked map location to order. `woocommerce_checkout_create_order`
+		// (rather than `woocommerce_checkout_update_order_meta`, which only passes
+		// an order ID after the save) fires before the order is saved on the classic
+		// checkout path, receives WC_Order directly, and is HPOS-safe without
+		// branching or a second save.
 		add_action( 'woocommerce_checkout_create_order', array( $this, 'checkout_update_order_meta' ), 10, 2 );
 
 		// `lowest_cost_shipping`, `hide_shipping_cost_at_cart`,

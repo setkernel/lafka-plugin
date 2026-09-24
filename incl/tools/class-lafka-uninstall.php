@@ -35,7 +35,7 @@
  * rows by name.
  *
  * @package Lafka\Plugin\Tools
- * @since   9.36.0
+ * @since   10.0.0
  */
 
 defined( 'ABSPATH' ) || exit;

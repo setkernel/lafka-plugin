@@ -23,8 +23,7 @@ class Lafka_Product_Addons {
 	 * Initializes plugin classes.
 	 */
 	public function init_classes() {
-		// v2 engine bootstrap — declares all engine classes plus the
-		// WC_Product_Addons_Helper class_alias.
+		// v2 engine bootstrap — declares all engine classes.
 		require_once __DIR__ . '/engine/lafka-addons-engine-bootstrap.php';
 
 		if ( is_admin() ) {

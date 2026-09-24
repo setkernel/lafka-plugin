@@ -25,7 +25,7 @@
  * layer (NX5-03) all read this one list.
  *
  * @package Lafka
- * @since   9.36.0
+ * @since   10.0.0
  */
 
 defined( 'ABSPATH' ) || exit;

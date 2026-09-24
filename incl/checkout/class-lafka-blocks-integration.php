@@ -23,7 +23,7 @@
  * is present and only in blocks checkout mode.
  *
  * @package Lafka\Plugin\Checkout
- * @since   9.36.0
+ * @since   10.0.0
  */
 
 defined( 'ABSPATH' ) || exit;

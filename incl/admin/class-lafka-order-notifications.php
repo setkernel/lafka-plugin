@@ -24,7 +24,7 @@
  * `lafka_order_notifications_enabled`. Default preserves current behaviour.
  *
  * @package Lafka\Plugin\Admin
- * @since   9.36.0
+ * @since   10.0.0
  */
 
 defined( 'ABSPATH' ) || exit;

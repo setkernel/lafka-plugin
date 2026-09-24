@@ -14,7 +14,7 @@
  *   - order + order-item meta is documented as intentionally retained.
  *
  * @package Lafka\Plugin\Tests\Unit
- * @since   9.36.0
+ * @since   10.0.0
  */
 
 declare(strict_types=1);

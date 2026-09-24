@@ -18,7 +18,7 @@
  * stylesheet.
  *
  * @package Lafka
- * @since   9.36.0
+ * @since   10.0.0
  */
 
 // $_GET reads below are display-state only (which module was just updated, for

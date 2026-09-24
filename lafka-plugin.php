@@ -185,10 +185,9 @@ function is_lafka_kitchen_display( $lafka_options = null ) {
 /**
  * BOGO + delivery-minimum + promo banner (P2-01).
  *
- * When OFF (default), the legacy implementation in lafka-child/functions.php
- * stays active. When ON, that child code self-gates off and this plugin module
- * owns all promo behavior. Mutual-exclusion gate prevents double-applied hooks
- * during rollout.
+ * Default OFF. OFF means no promotions at all: the legacy lafka-child
+ * implementation was removed in lafka-child 6.0.0, so there is no fallback.
+ * Sites upgrading from lafka-child <= 5.x must enable this module explicitly.
  */
 function is_lafka_promotions( $lafka_options = null ) {
 	return Lafka_Options::is_enabled( 'promotions' );

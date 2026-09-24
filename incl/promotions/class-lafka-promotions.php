@@ -3,9 +3,8 @@
  * Lafka_Promotions — BOGO 50% + delivery-minimum + promo banner.
  *
  * Migrated from `lafka-child/functions.php` (P2-01). Math lifted from the
- * child's `inc/lafka-promotions.php` pure helpers (which remain there for
- * back-compat during rollout — the child file gates itself off when this
- * plugin module is enabled).
+ * child's former `inc/lafka-promotions.php` pure helpers; lafka-child 6.0.0
+ * removed its copy, so this module is the only implementation.
  *
  * GATING: hook wiring is conditional on `is_lafka_promotions()` (reads
  * `Lafka_Options::is_enabled('promotions')`). Default OFF. NOTE: the child
@@ -14,7 +13,8 @@
  * enable this module explicitly; Lafka_Promotions_Admin surfaces a migration
  * notice for the lafka-child cohort when the module is off.
  *
- * KNOBS (currently hardcoded — admin UI tracked as P2-01a):
+ * KNOBS (defaults below; Lafka_Promotions_Admin overrides them via the
+ * `lafka_promotions_options` option, read through knob()):
  *   - DELIVERY_MIN     = 30      cart subtotal threshold below which delivery
  *                                 rates get hidden (only local pickup remains).
  *   - BOGO_DISCOUNT    = 0.5     fraction off cheapest units. Half-off = 0.5.

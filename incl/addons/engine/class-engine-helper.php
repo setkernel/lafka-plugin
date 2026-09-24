@@ -2,10 +2,8 @@
 /**
  * Lafka_Engine_Helper — public utility surface for the addon engine.
  *
- * Replaces the legacy WC_Product_Addons_Helper. Same static-method shape so
- * call sites in the cart, display, and any third-party theme overrides
- * port with a class rename. WC_Product_Addons_Helper is class_aliased to
- * this class at the bottom of the file for back-compat.
+ * Replaces the legacy WC_Product_Addons_Helper (its back-compat class_alias
+ * was removed in v8.18.0; call sites use Lafka_Engine_Helper directly).
  *
  * The central read method, get_product_addons(), wraps Lafka_Engine_Resolver
  * (which returns Lafka_Addon_Group[] VOs) and converts back to the legacy

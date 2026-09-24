@@ -25,7 +25,7 @@
  * value can never place an order that violates the branch/order-type allow-list.
  *
  * @package Lafka\Plugin\Checkout
- * @since   9.36.0
+ * @since   10.0.0
  */
 
 defined( 'ABSPATH' ) || exit;

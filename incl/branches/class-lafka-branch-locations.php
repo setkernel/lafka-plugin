@@ -20,10 +20,10 @@ class Lafka_Branch_Locations {
 		add_action( 'wp_ajax_nopriv_lafka_change_branch', array( __CLASS__, 'change_branch' ) );
 		add_action( 'wp_ajax_lafka_change_branch', array( __CLASS__, 'change_branch' ) );
 
-		// Add meta fields to the order. `woocommerce_checkout_update_order_meta`
-		// was deprecated in WC 9.0; `woocommerce_checkout_create_order` fires
-		// before save and receives WC_Order directly so HPOS works without
-		// branching.
+		// Add meta fields to the order. `woocommerce_checkout_create_order`
+		// (rather than `woocommerce_checkout_update_order_meta`, which only
+		// passes an order ID after the save) fires before save and receives
+		// WC_Order directly so HPOS works without branching.
 		add_action( 'woocommerce_checkout_create_order', array( __CLASS__, 'checkout_field_update_order_meta_fields' ), 10, 2 );
 
 		// Alter Products meta query to get only the corresponding branch products

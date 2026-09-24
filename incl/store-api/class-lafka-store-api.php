@@ -33,11 +33,12 @@
  *
  * Loaded unconditionally whenever WooCommerce is active; every adapter guards on
  * class_exists()/function_exists() so a disabled feature module simply no-ops.
- * NX1-04b (block UI) builds on this contract; this item deliberately does NOT
- * declare cart_checkout_blocks compatibility.
+ * NX1-04b (block UI) builds on this contract. The cart_checkout_blocks
+ * compatibility declaration lives with the HPOS one in lafka-plugin.php
+ * (before_woocommerce_init).
  *
  * @package Lafka\Plugin\StoreApi
- * @since   9.36.0
+ * @since   10.0.0
  */
 
 defined( 'ABSPATH' ) || exit;

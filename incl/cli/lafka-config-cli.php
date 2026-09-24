@@ -11,7 +11,7 @@
  * when WP_CLI is not defined, so it is safe to require unconditionally.
  *
  * @package Lafka\Plugin\CLI
- * @since   9.36.0
+ * @since   10.0.0
  */
 
 defined( 'ABSPATH' ) || exit;

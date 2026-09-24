@@ -17,7 +17,7 @@
  *     assertions can hard-code expected values.
  *
  * @package Lafka\Plugin\CLI
- * @since   9.37.0
+ * @since   10.0.0
  */
 
 defined( 'ABSPATH' ) || exit;

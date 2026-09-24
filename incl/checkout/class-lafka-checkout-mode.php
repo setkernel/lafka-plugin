@@ -27,7 +27,7 @@
  * on-load migration and is exhaustively unit-tested (CheckoutModeDecisionTest).
  *
  * @package Lafka\Plugin\Checkout
- * @since   9.36.0
+ * @since   10.0.0
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -108,7 +108,7 @@ if ( ! class_exists( 'Lafka_Checkout_Mode' ) ) {
 			 * Wins over the option and the migration — lets a host/child plugin pin
 			 * classic without touching operator settings.
 			 *
-			 * @since 9.36.0
+			 * @since 10.0.0
 			 *
 			 * @param bool $force_classic Whether to force classic checkout.
 			 */

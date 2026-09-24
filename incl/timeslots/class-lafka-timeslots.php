@@ -94,10 +94,10 @@ class Lafka_Timeslots {
 		// WC_Checkout::process_checkout(); the create_order hook below fires
 		// after validation, so an error there cannot block the order.
 		add_action( 'woocommerce_checkout_process', array( $this, 'validate_datetime_fields' ) );
-		// Save datetime to order. `woocommerce_checkout_update_order_meta`
-		// was deprecated in WC 9.0; `woocommerce_checkout_create_order`
-		// fires before the order is saved, receives WC_Order directly,
-		// and is HPOS-safe without branching.
+		// Save datetime to order. `woocommerce_checkout_create_order`
+		// (rather than `woocommerce_checkout_update_order_meta`, which only
+		// passes an order ID after the save) fires before the order is saved,
+		// receives WC_Order directly, and is HPOS-safe without branching.
 		add_action( 'woocommerce_checkout_create_order', array( $this, 'checkout_datetime_update_order_meta' ), 10, 2 );
 
 		// Show datetime in admin order list — both legacy CPT + HPOS.
