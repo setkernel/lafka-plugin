@@ -22,6 +22,7 @@ final class AssetRegistrationTest extends TestCase {
 	private array $styles = array();
 	private string $template = 'twentytwentyfive';
 	private string $maps_key = '';
+	private string $theme_dir = '/nonexistent-theme';
 	private string $locale   = 'en_US';
 
 	protected function setUp(): void {
@@ -34,6 +35,7 @@ final class AssetRegistrationTest extends TestCase {
 		Functions\when( 'get_stylesheet_directory' )->justReturn( '/nonexistent' );
 		Functions\when( 'get_stylesheet_directory_uri' )->justReturn( 'https://example.test/theme' );
 		Functions\when( 'get_template_directory_uri' )->justReturn( 'https://example.test/theme' );
+		Functions\when( 'get_template_directory' )->alias( fn() => $this->theme_dir );
 		Functions\when( 'lafka_asset_version' )->justReturn( '1' );
 		Functions\when( 'lafka_get_option' )->alias( fn( $name ) => 'google_maps_api_key' === $name ? $this->maps_key : '' );
 		Functions\when( 'wp_get_theme' )->alias(
@@ -160,5 +162,22 @@ final class AssetRegistrationTest extends TestCase {
 		lafka_register_admin_plugin_scripts();
 
 		$this->assertArrayNotHasKey( 'lafka-google-maps', $this->scripts, 'No key must mean no (401-ing) Maps loader in wp-admin either.' );
+	}
+
+	public function test_dialog_fallback_uses_the_themes_min_build_only_when_it_exists(): void {
+		$this->template = 'lafka';
+		lafka_register_theme_script_fallbacks();
+		$this->assertSame( 'https://example.test/theme/js/lafka-dialog.js', $this->scripts['lafka-dialog']['src'], 'No .min on disk: the source.' );
+
+		$this->scripts   = array();
+		$this->theme_dir = sys_get_temp_dir() . '/lafka-theme-' . getmypid();
+		@mkdir( $this->theme_dir . '/js', 0777, true ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+		touch( $this->theme_dir . '/js/lafka-dialog.min.js' );
+		lafka_register_theme_script_fallbacks();
+		unlink( $this->theme_dir . '/js/lafka-dialog.min.js' );
+		rmdir( $this->theme_dir . '/js' );
+		rmdir( $this->theme_dir );
+
+		$this->assertSame( 'https://example.test/theme/js/lafka-dialog.min.js', $this->scripts['lafka-dialog']['src'] );
 	}
 }

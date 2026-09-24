@@ -155,8 +155,10 @@ if ( ! function_exists( 'lafka_register_theme_script_fallbacks' ) ) {
 			return function_exists( 'lafka_asset_version' ) ? lafka_asset_version( $relative ) : (string) wp_get_theme()->get( 'Version' );
 		};
 
-		// lafka-dialog (native <dialog> wrapper).
-		$dialog_suffix = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
+		// lafka-dialog (native <dialog> wrapper). The theme's .min is build
+		// output (present in release zips, maybe not in a git checkout): use it
+		// when it exists and SCRIPT_DEBUG is off, the source otherwise.
+		$dialog_suffix = ( ! ( defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ) && file_exists( get_template_directory() . '/js/lafka-dialog.min.js' ) ) ? '.min' : '';
 		$register_script( 'lafka-dialog', $theme_uri . '/js/lafka-dialog' . $dialog_suffix . '.js', array(), $theme_ver( '/js/lafka-dialog' . $dialog_suffix . '.js' ) );
 		$register_style( 'lafka-dialog', $theme_uri . '/styles/lafka-dialog.css', array(), $theme_ver( '/styles/lafka-dialog.css' ) );
 
