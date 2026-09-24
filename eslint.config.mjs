@@ -13,22 +13,12 @@ export default [
 				// Core WP / WC
 				wp: "readonly",
 				ajaxurl: "readonly",
-				wc_add_to_cart_params: "readonly",
 				wc_add_to_cart_variation_params: "readonly",
-				wc_composite_params: "readonly",
-				wc_cp_get_variation_data: "readonly",
-				woocommerce_params: "readonly",
 				// Lafka payloads (wp_localize_script)
-				lafka_ajax_object: "readonly",
-				lafka_plugin_ajax: "readonly",
 				lafka_addons_params: "readonly",
 				lafka_cat_ordering: "readonly",
-				wc_combo_params: "readonly",
-				wc_add_to_cart_combo_params: "readonly",
 				// Per-page-injected vars used in admin scripts
-				localise: "readonly",
 				accounting: "readonly",
-				plupload: "readonly",
 				// Third-party libs
 				google: "readonly",
 				flatpickr: "readonly",
@@ -82,8 +72,6 @@ export default [
 			"assets/js/schedule/jquery.schedule.min.js",
 			// Minified files
 			"**/*.min.js",
-			// Importer
-			"importer/**",
 		],
 	},
 ];
