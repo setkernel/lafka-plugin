@@ -353,5 +353,30 @@ final class StoreApiParityTest extends TestCase {
 		$this->assertSame( 5, $data['branch_id'] );
 		$this->assertSame( 'Downtown', $data['branch_name'] );
 		$this->assertTrue( $data['store_open_now'] );
+		$this->assertFalse( $data['delivery_address_required'] );
+		$this->assertSame( '', $data['delivery_address_message'] );
+	}
+
+	public function test_block_cart_is_told_when_delivery_waits_for_a_street_address(): void {
+		Functions\when( 'get_theme_mod' )->returnArg( 2 );
+		require_once dirname( __DIR__, 2 ) . '/incl/checkout/class-lafka-delivery-quote-guard.php';
+
+		// Same rate calculation the Store API cart runs: province-only destination.
+		\Lafka_Delivery_Quote_Guard::filter_package_rates(
+			array(
+				'local_pickup:1'  => (object) array( 'method_id' => 'local_pickup' ),
+				'distance_rate:2' => (object) array( 'method_id' => 'distance_rate' ),
+			),
+			array(
+				'destination' => array(
+					'country' => 'CA',
+					'state'   => 'NS',
+				),
+			)
+		);
+		$data = Lafka_Store_Api::extend_cart_data();
+
+		$this->assertTrue( $data['delivery_address_required'] );
+		$this->assertSame( 'Enter your street address to see the delivery cost.', $data['delivery_address_message'] );
 	}
 }

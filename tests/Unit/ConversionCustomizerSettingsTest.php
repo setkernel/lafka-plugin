@@ -24,6 +24,7 @@ use PHPUnit\Framework\TestCase;
 require_once dirname( __DIR__, 2 ) . '/incl/customizer/class-lafka-customizer-abandoned-cart.php';
 require_once dirname( __DIR__, 2 ) . '/incl/customizer/class-lafka-customizer-push.php';
 require_once dirname( __DIR__, 2 ) . '/incl/customizer/class-lafka-customizer-reviews.php';
+require_once dirname( __DIR__, 2 ) . '/incl/customizer/class-lafka-customizer-checkout.php';
 
 final class ConversionCustomizerSettingsTest extends TestCase {
 
@@ -51,6 +52,7 @@ final class ConversionCustomizerSettingsTest extends TestCase {
 			'abandoned cart' => array( 'Lafka_Customizer_Abandoned_Cart' ),
 			'web push'       => array( 'Lafka_Customizer_Push' ),
 			'reviews'        => array( 'Lafka_Customizer_Reviews' ),
+			'checkout'       => array( 'Lafka_Customizer_Checkout' ),
 		);
 	}
 

@@ -100,6 +100,40 @@
 	} );
 
 	/* ------------------------------------------------------------------ *
+	 *  Delivery quote guard notice (block cart + checkout)
+	 * ------------------------------------------------------------------ */
+
+	// While the destination lacks a street address + postcode the server
+	// withholds delivery rates (Lafka_Delivery_Quote_Guard) and flags it on the
+	// `lafka` cart extension; this tells the customer why delivery is missing.
+	function DeliveryAddressNotice( props ) {
+		var lafka = ( props && props.extensions && props.extensions.lafka ) || {};
+		if ( ! lafka.delivery_address_required || ! lafka.delivery_address_message ) {
+			return null;
+		}
+		return el(
+			'p',
+			{ className: 'lafka-block-delivery-quote-notice', role: 'status' },
+			String( lafka.delivery_address_message )
+		);
+	}
+
+	var ShippingSlot = wc.blocksCheckout.ExperimentalOrderShippingPackages || ExperimentalOrderMeta;
+
+	function renderDeliveryAddressNotice() {
+		return el( ShippingSlot, null, el( DeliveryAddressNotice ) );
+	}
+
+	registerPlugin( 'lafka-delivery-quote-cart', {
+		render: renderDeliveryAddressNotice,
+		scope: 'woocommerce-cart',
+	} );
+	registerPlugin( 'lafka-delivery-quote-checkout', {
+		render: renderDeliveryAddressNotice,
+		scope: 'woocommerce-checkout',
+	} );
+
+	/* ------------------------------------------------------------------ *
 	 *  Timeslot picker (block checkout)
 	 * ------------------------------------------------------------------ */
 

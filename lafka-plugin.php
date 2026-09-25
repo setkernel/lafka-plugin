@@ -741,6 +741,16 @@ if ( LAFKA_PLUGIN_IS_WOOCOMMERCE ) {
 	Lafka_Store_Api::init();
 
 	/*
+	 * Checkout conversion (GX0): the "Lafka — Checkout" Customizer section and
+	 * the modules it configures. Each works on the classic and the block
+	 * (Store API) checkout alike.
+	 *   · Lafka_Delivery_Quote_Guard — no delivery price from a partial address.
+	 */
+	require_once plugin_dir_path( __FILE__ ) . 'incl/customizer/class-lafka-customizer-checkout.php';
+	require_once plugin_dir_path( __FILE__ ) . 'incl/checkout/class-lafka-delivery-quote-guard.php';
+	Lafka_Delivery_Quote_Guard::init();
+
+	/*
 	 * Block Cart/Checkout UI (NX1-04b). Builds on the NX1-04a Store API contract:
 	 *   · Lafka_Checkout_Fields — order_type + branch selects via WooCommerce's
 	 *     Additional Checkout Fields API, wired back into the classic session/order
