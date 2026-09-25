@@ -472,7 +472,8 @@ if ( ! function_exists( 'lafka_emit_consent_banner' ) ) {
 .lafka-consent-banner.is-visible{display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between}
 .lafka-consent-banner__text{flex:1 1 320px;margin:0}
 .lafka-consent-banner__actions{display:flex;flex-wrap:wrap;gap:8px}
-.lafka-consent-banner__btn{appearance:none;border:0;border-radius:6px;padding:10px 18px;font:inherit;font-weight:600;cursor:pointer;line-height:1}
+.lafka-consent-banner__btn{appearance:none;border:0;border-radius:6px;padding:10px 18px;min-height:44px;font:inherit;font-weight:600;cursor:pointer;line-height:1}
+@media (max-width:600px){.lafka-consent-banner{padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));gap:10px;font-size:13px}.lafka-consent-banner__text{flex-basis:100%}.lafka-consent-banner__actions{width:100%}.lafka-consent-banner__btn{flex:1 1 auto}}
 .lafka-consent-banner__btn--accept{background:var(--lafka-consent-accept,#10b981);color:var(--lafka-consent-accept-fg,#fff)}
 .lafka-consent-banner__btn--reject{background:var(--lafka-consent-reject,#374151);color:var(--lafka-consent-reject-fg,#fff)}
 .lafka-consent-banner__btn--settings{background:transparent;color:var(--lafka-consent-fg,#fff);text-decoration:underline}
@@ -580,13 +581,40 @@ CSS;
 		}
 	}
 
+	// Fixed-bottom UI (the theme's sticky add-to-cart / cart bars) sits above
+	// the banner by adding --lafka-consent-banner-h to its bottom offset; the
+	// root class marks the banner as open.
+	var root = document.documentElement;
+	var resizeObserver = null;
+	function publishHeight(){
+		var rect = banner.getBoundingClientRect ? banner.getBoundingClientRect() : null;
+		var height = Math.ceil((rect && rect.height) || banner.offsetHeight || 0);
+		root.style.setProperty('--lafka-consent-banner-h', height + 'px');
+	}
 	function showBanner(){
 		banner.hidden = false;
 		banner.classList.add('is-visible');
+		root.classList.add('lafka-consent-open');
+		publishHeight();
+		if (window.ResizeObserver){
+			resizeObserver = new window.ResizeObserver(publishHeight);
+			resizeObserver.observe(banner);
+		} else {
+			window.addEventListener('resize', publishHeight);
+		}
 	}
 	function hideBanner(){
 		banner.classList.remove('is-visible');
 		banner.hidden = true;
+		root.classList.remove('lafka-consent-open');
+		root.style.setProperty('--lafka-consent-banner-h', '0px');
+		if (resizeObserver){
+			resizeObserver.disconnect();
+			resizeObserver = null;
+		}
+		if (window.removeEventListener){
+			window.removeEventListener('resize', publishHeight);
+		}
 	}
 	function showModal(prefill){
 		modal.querySelectorAll('[data-lafka-consent-cat]').forEach(function(input){

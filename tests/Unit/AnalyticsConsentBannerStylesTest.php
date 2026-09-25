@@ -87,6 +87,12 @@ final class AnalyticsConsentBannerStylesTest extends TestCase {
 		$this->assertSame( array(), $missing, 'Palette must be themable via --lafka-consent-* variables.' );
 	}
 
+	public function test_banner_buttons_keep_a_44px_tap_target(): void {
+		$out = $this->capture( 'lafka_emit_consent_banner' );
+
+		$this->assertMatchesRegularExpression( '/\.lafka-consent-banner__btn\{[^}]*min-height:44px/', $out );
+	}
+
 	// ────────────────────────────────────────────────────────────────────────
 	// lafka_consent_banner_styles filter can replace the inline CSS.
 	// ────────────────────────────────────────────────────────────────────────
