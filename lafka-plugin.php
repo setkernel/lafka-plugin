@@ -764,6 +764,9 @@ require_once __DIR__ . '/incl/perf/lcp-preload.php';
 // WebP auto-swap (v9.10.0). No-op until .webp siblings exist on disk;
 // generates them via `wp lafka images convert-webp`.
 require_once __DIR__ . '/incl/perf/webp-swap.php';
+// GX T-04: new JPEG/PNG uploads saved as WebP when the server supports it
+// (Lafka → Modules toggle + `lafka_webp_uploads_enabled` filter).
+require_once __DIR__ . '/incl/perf/lafka-webp-uploads.php';
 
 add_action(
 	'before_woocommerce_init',

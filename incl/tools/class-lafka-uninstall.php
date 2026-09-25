@@ -153,6 +153,7 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 				'lafka_security_options',         // security-header toggles
 				'lafka_block_cart_shim_done',     // block-cart page shim marker
 				'lafka_seed_demo_manifest',       // `wp lafka seed-demo` bookkeeping
+				'lafka_webp_uploads',             // WebP-for-new-uploads toggle
 				'woocommerce_lafka_error_digest_settings', // GX1 digest WC_Email settings
 				'woocommerce_lafka_weekly_insights_settings', // GX2 weekly Insights WC_Email settings
 				self::DATA_TOGGLE_OPTION,         // the uninstall toggle itself

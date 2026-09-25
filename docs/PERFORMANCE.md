@@ -44,6 +44,22 @@ there.
 
 ## Images (operator)
 - [ ] Upload product photos sized ~1200px max; let WP generate the responsive set.
+- [ ] **WebP for new uploads** is on by default when the server's image editor
+  (Imagick or GD) can write WebP: every generated size of a new JPEG/PNG upload
+  is saved as `.webp`. Turn it off under **Lafka → Modules → WebP images for new
+  uploads** (option `lafka_webp_uploads` = `no`) or with the
+  `lafka_webp_uploads_enabled` filter. It changes nothing on a server without
+  WebP support.
+- [ ] **Existing images** (uploaded before the switch) — run once, over SSH:
+  ```
+  wp lafka images convert-webp --dry-run   # preview
+  wp lafka images convert-webp             # write foo.webp next to every foo.png / foo.jpg (quality 80)
+  wp media regenerate --yes                # optional: rebuild every thumbnail size (new sizes come out as WebP)
+  ```
+  `convert-webp` is idempotent (`--force` re-converts, `--path=2026/01` limits it
+  to one folder, `--quality=85` raises quality). Pages switch to the `.webp`
+  sibling automatically (incl/perf/webp-swap.php; opt out with the
+  `lafka_disable_webp_swap` filter). Take a backup of `wp-content/uploads` first.
 - [ ] Any product with **no image** hurts both conversion and the merchant feed —
   audit your catalogue and add photos. Priorities: top sellers first.
 - [ ] If you use Cloudflare, consider **Polish** (WebP/AVIF auto-conversion) =
