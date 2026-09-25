@@ -32,6 +32,9 @@ final class Phase2SeoTest extends TestCase {
 	protected function setUp(): void {
 		parent::setUp();
 		Monkey\setUp();
+		// GX3: lafka_schema_faq() also serves product-category FAQs; these
+		// tests are about pages, never a category archive.
+		Functions\when( 'is_product_category' )->justReturn( false );
 	}
 
 	protected function tearDown(): void {

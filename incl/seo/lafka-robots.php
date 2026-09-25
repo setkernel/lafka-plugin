@@ -124,6 +124,65 @@ if ( ! function_exists( 'lafka_robots_filter' ) ) {
 	}
 }
 
+if ( ! function_exists( 'lafka_seo_should_noindex' ) ) {
+	/**
+	 * GX3: whether the current request is a thin / legacy / operator-hidden
+	 * URL that must carry `noindex` (it stays crawlable — robots.txt must
+	 * NOT block it, or the noindex would never be seen):
+	 *
+	 *   - attribute (`pa_*`) and legacy food-menu taxonomy archives;
+	 *   - legacy post types (the `lafka-foodmenu` demo CPT) — singles and archive;
+	 *   - author archives on a single-author site (filterable);
+	 *   - any post / page the operator marked "hide from search engines".
+	 *
+	 * Predicates shared with the sitemap exclusions (lafka-sitemap.php).
+	 *
+	 * @return bool
+	 */
+	function lafka_seo_should_noindex(): bool {
+		$noindex  = false;
+		$excluded = function_exists( 'lafka_seo_excluded_taxonomies' ) ? lafka_seo_excluded_taxonomies() : array();
+		$legacy   = function_exists( 'lafka_seo_legacy_post_types' ) ? lafka_seo_legacy_post_types() : array();
+
+		if ( ! empty( $excluded ) && is_tax( $excluded ) ) {
+			$noindex = true;
+		} elseif ( ! empty( $legacy ) && ( is_singular( $legacy ) || is_post_type_archive( $legacy ) ) ) {
+			$noindex = true;
+		} elseif ( is_author() && function_exists( 'lafka_seo_noindex_author_archives' ) && lafka_seo_noindex_author_archives() ) {
+			$noindex = true;
+		} elseif ( is_singular() && '1' === (string) get_post_meta( (int) get_queried_object_id(), '_lafka_seo_noindex', true ) ) {
+			$noindex = true;
+		}
+
+		/**
+		 * Filter whether the current request is noindexed by Lafka.
+		 *
+		 * @since 10.2.0
+		 * @param bool $noindex Computed decision.
+		 */
+		return (bool) apply_filters( 'lafka_seo_noindex', $noindex );
+	}
+}
+
+if ( ! function_exists( 'lafka_seo_wp_robots' ) ) {
+	/**
+	 * `wp_robots`: add `noindex, follow` where lafka_seo_should_noindex() says so.
+	 *
+	 * @param array<string,mixed> $robots Directives.
+	 * @return array<string,mixed>
+	 */
+	function lafka_seo_wp_robots( $robots ) {
+		$robots = is_array( $robots ) ? $robots : array();
+		if ( lafka_seo_should_noindex() ) {
+			unset( $robots['index'] );
+			$robots['noindex'] = true;
+			$robots['follow']  = true;
+		}
+		return $robots;
+	}
+}
+
 if ( function_exists( 'add_filter' ) ) {
 	add_filter( 'robots_txt', 'lafka_robots_filter', 10, 2 );
+	add_filter( 'wp_robots', 'lafka_seo_wp_robots', 20 );
 }

@@ -237,6 +237,8 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/security/class-lafka-security-a
  * Site Health diagnostics (P5-02). Self-gates to is_admin().
  */
 require_once plugin_dir_path( __FILE__ ) . 'incl/site-health/class-lafka-site-health.php';
+// GX3: "Search & AI" checks (NAP consistency, profile, indexing, content, IndexNow). Self-gates to is_admin().
+require_once plugin_dir_path( __FILE__ ) . 'incl/site-health/class-lafka-site-health-seo.php';
 
 /**
  * Feature Modules dashboard (NX1-01) — top-level "Lafka" menu → "Modules".
@@ -306,6 +308,13 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/compat/lafka-wpbakery-fallback.
  * description emitters; must load before the schema module below.
  */
 require_once plugin_dir_path( __FILE__ ) . 'incl/seo/lafka-seo-plugin-detect.php';
+
+/**
+ * GX3: Search & AI settings — option defaults/accessors and the title /
+ * description template engine shared by the schema, head-meta, llms.txt
+ * and IndexNow modules. Pure functions; must load before the schema module.
+ */
+require_once plugin_dir_path( __FILE__ ) . 'incl/seo/lafka-seo-settings.php';
 
 /**
  * P6-SEO-1/2/3/6: JSON-LD structured data — Restaurant, Menu, Product,
@@ -1609,6 +1618,14 @@ if ( ! function_exists( 'lafka_contact_form_generate_response' ) ) {
  */
 require_once plugin_dir_path( __FILE__ ) . 'incl/lafka-share-links.php';
 require_once plugin_dir_path( __FILE__ ) . 'incl/seo/lafka-head-meta.php';
+// GX3: <title> templates + per-post title override + templated fallback descriptions.
+require_once plugin_dir_path( __FILE__ ) . 'incl/seo/lafka-seo-titles.php';
+// GX3: optional per-category FAQ (term meta + admin rows; FAQPage via lafka_schema_faq()).
+require_once plugin_dir_path( __FILE__ ) . 'incl/seo/lafka-term-faq.php';
+// GX3: /llms.txt, /llms-full.txt, /menu.md, /menu.json from the JSON-LD data sources.
+require_once plugin_dir_path( __FILE__ ) . 'incl/seo/lafka-llms-txt.php';
+// GX3: IndexNow key file + debounced, batched pings (default off; production only).
+require_once plugin_dir_path( __FILE__ ) . 'incl/seo/lafka-indexnow.php';
 
 add_action( 'woocommerce_single_product_summary', 'lafka_show_custom_product_popup_link', 12 );
 if ( ! function_exists( 'lafka_show_custom_product_popup_link' ) ) {

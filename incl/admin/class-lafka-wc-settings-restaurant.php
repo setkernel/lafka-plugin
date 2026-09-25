@@ -89,6 +89,7 @@ if ( ! function_exists( 'lafka_define_wc_settings_restaurant_class' ) ) {
 						'cuisine'    => __( 'Cuisine & Payment', 'lafka-plugin' ),
 						'schema'     => __( 'Schema & Geo', 'lafka-plugin' ),
 						'social'     => __( 'Social Profiles', 'lafka-plugin' ),
+						'search'     => __( 'Search & AI', 'lafka-plugin' ),
 						'promotions' => __( 'Promotions', 'lafka-plugin' ),
 					)
 				);
@@ -102,6 +103,8 @@ if ( ! function_exists( 'lafka_define_wc_settings_restaurant_class' ) ) {
 						return $this->get_schema_settings();
 					case 'social':
 						return $this->get_social_settings();
+					case 'search':
+						return $this->get_search_settings();
 					case 'promotions':
 						return $this->get_promotions_settings();
 					default:
@@ -239,6 +242,30 @@ if ( ! function_exists( 'lafka_define_wc_settings_restaurant_class' ) ) {
 						'default'  => '',
 					),
 					array(
+						'title'    => __( 'Restaurant description', 'lafka-plugin' ),
+						'desc_tip' => __( 'Two or three factual sentences about the restaurant (what you serve, where, since when). Used as the schema.org description, the /llms.txt summary and the home-page meta-description fallback.', 'lafka-plugin' ),
+						'id'       => 'lafka_business_description',
+						'type'     => 'textarea',
+						'default'  => '',
+						'css'      => 'min-height: 80px;',
+					),
+					array(
+						'title'       => __( 'Map / Business Profile URL', 'lafka-plugin' ),
+						'desc_tip'    => __( 'Your Google Maps / Google Business Profile share link. Emitted as schema.org hasMap and listed in /llms.txt.', 'lafka-plugin' ),
+						'id'          => 'lafka_business_map_url',
+						'type'        => 'url',
+						'default'     => '',
+						'placeholder' => 'https://maps.google.com/?cid=…',
+					),
+					array(
+						'title'    => __( 'Service areas', 'lafka-plugin' ),
+						'desc_tip' => __( 'Neighbourhoods / towns you deliver to, one per line. Emitted as schema.org areaServed and listed in /llms.txt. Leave empty to advertise your own city only.', 'lafka-plugin' ),
+						'id'       => 'lafka_business_service_areas',
+						'type'     => 'textarea',
+						'default'  => '',
+						'css'      => 'min-height: 80px;',
+					),
+					array(
 						'title'    => __( 'Latitude', 'lafka-plugin' ),
 						'desc_tip' => __( 'Decimal degrees, e.g. 44.7711. For schema.org geo.latitude.', 'lafka-plugin' ),
 						'id'       => 'lafka_business_geo_lat',
@@ -279,6 +306,94 @@ if ( ! function_exists( 'lafka_define_wc_settings_restaurant_class' ) ) {
 					array(
 						'type' => 'sectionend',
 						'id'   => 'lafka_restaurant_social_end',
+					),
+				);
+			}
+
+			/**
+			 * Search & AI (GX3): title / description templates, where the full
+			 * menu schema is emitted, the diet map, /llms.txt and IndexNow.
+			 * Defaults live in lafka_seo_defaults() (incl/seo/lafka-seo-settings.php).
+			 *
+			 * @return array
+			 */
+			private function get_search_settings() {
+				$d      = function_exists( 'lafka_seo_defaults' ) ? lafka_seo_defaults() : array();
+				$tokens = __( 'Tokens: {name} {city} {region} {cuisines} {term} {product} {title} {price_from} {count} {phone} {sep}. Wrap a part in [square brackets] to drop it when a token inside is empty. Leave a field empty to restore the default.', 'lafka-plugin' );
+				$text   = static function ( $id, $title, $tip, $type = 'text' ) use ( $d ) {
+					return array(
+						'title'       => $title,
+						'desc_tip'    => $tip,
+						'id'          => $id,
+						'type'        => $type,
+						'default'     => '',
+						'placeholder' => (string) ( $d[ $id ] ?? '' ),
+						'css'         => 'min-width: 420px;',
+					);
+				};
+
+				$llms_urls = function_exists( 'home_url' )
+					? implode( ' · ', array_map( static fn( $p ) => home_url( '/' . $p ), array( 'llms.txt', 'llms-full.txt', 'menu.md', 'menu.json' ) ) )
+					: '';
+
+				return array(
+					array(
+						'title' => __( 'Search & AI visibility', 'lafka-plugin' ),
+						'type'  => 'title',
+						'desc'  => $this->intro_html(
+							__( 'How search engines and AI assistants see the restaurant. These settings are ignored while an SEO plugin (Yoast, Rank Math, SEOPress, All in One SEO) manages titles and descriptions.', 'lafka-plugin' )
+						),
+						'id'    => 'lafka_restaurant_search_title',
+					),
+					$text( 'lafka_seo_title_home', __( 'Home page title', 'lafka-plugin' ), $tokens ),
+					$text( 'lafka_seo_title_menu', __( 'Menu page title', 'lafka-plugin' ), $tokens ),
+					$text( 'lafka_seo_title_category', __( 'Menu category title', 'lafka-plugin' ), $tokens ),
+					$text( 'lafka_seo_title_product', __( 'Product title', 'lafka-plugin' ), $tokens ),
+					$text( 'lafka_seo_title_page', __( 'Page / post title', 'lafka-plugin' ), $tokens ),
+					array(
+						'title'    => __( 'Title separator', 'lafka-plugin' ),
+						'id'       => 'lafka_seo_title_sep',
+						'type'     => 'text',
+						'default'  => '–',
+						'css'      => 'width: 60px;',
+						'desc_tip' => __( 'The character {sep} renders as (spaces are added around it).', 'lafka-plugin' ),
+					),
+					$text( 'lafka_seo_desc_category', __( 'Category description fallback', 'lafka-plugin' ), __( 'Used for menu categories without a description. A category description (Products → Categories) always wins.', 'lafka-plugin' ) . ' ' . $tokens, 'textarea' ),
+					$text( 'lafka_seo_desc_product', __( 'Product description fallback', 'lafka-plugin' ), __( 'Used for products without a short description. The short description always wins.', 'lafka-plugin' ) . ' ' . $tokens, 'textarea' ),
+					array(
+						'title'   => __( 'Full menu schema on the home page', 'lafka-plugin' ),
+						'desc'    => __( 'Also emit the complete Menu structured data on the home page (it is always emitted on the menu page; category pages carry only their own section).', 'lafka-plugin' ),
+						'id'      => 'lafka_seo_menu_schema_on_home',
+						'type'    => 'checkbox',
+						'default' => 'no',
+					),
+					array(
+						'title'       => __( 'Dietary tag map', 'lafka-plugin' ),
+						'desc_tip'    => __( 'Extra "tag-or-category-slug = Diet" lines for schema.org suitableForDiet, e.g. "plant-based = VeganDiet". vegan, vegetarian, gluten-free, halal, kosher, dairy-free … are mapped already. Only items you tagged are ever labelled.', 'lafka-plugin' ),
+						'id'          => 'lafka_seo_diet_map',
+						'type'        => 'textarea',
+						'default'     => '',
+						'placeholder' => 'plant-based = VeganDiet',
+						'css'         => 'min-height: 60px;',
+					),
+					array(
+						'title'   => __( 'Machine-readable menu', 'lafka-plugin' ),
+						/* translators: %s: the four endpoint URLs. */
+						'desc'    => sprintf( __( 'Publish /llms.txt, /llms-full.txt, /menu.md and /menu.json — plain-text / JSON facts (hours, address, menu with prices) for AI assistants: %s', 'lafka-plugin' ), esc_html( $llms_urls ) ),
+						'id'      => 'lafka_seo_llms_enabled',
+						'type'    => 'checkbox',
+						'default' => 'yes',
+					),
+					array(
+						'title'   => __( 'IndexNow', 'lafka-plugin' ),
+						'desc'    => __( 'Notify Bing / IndexNow search engines within minutes when products, pages or prices change. Production sites only; nothing is sent from staging or local copies.', 'lafka-plugin' ),
+						'id'      => 'lafka_seo_indexnow_enabled',
+						'type'    => 'checkbox',
+						'default' => 'no',
+					),
+					array(
+						'type' => 'sectionend',
+						'id'   => 'lafka_restaurant_search_end',
 					),
 				);
 			}

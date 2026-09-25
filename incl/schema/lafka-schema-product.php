@@ -90,6 +90,11 @@ function lafka_schema_product(): ?array {
 	// Offer / AggregateOffer.
 	$offer = lafka_schema_build_product_offer( $product, $url );
 	if ( null !== $offer ) {
+		// GX3: tie the offer to the Restaurant node — only when that node is
+		// in the @graph, so the reference never dangles.
+		if ( function_exists( 'lafka_schema_has_restaurant_basics' ) && lafka_schema_has_restaurant_basics() ) {
+			$offer['seller'] = array( '@id' => trailingslashit( home_url( '/' ) ) . '#restaurant' );
+		}
 		$schema['offers'] = $offer;
 	}
 

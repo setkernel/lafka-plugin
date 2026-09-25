@@ -131,7 +131,7 @@ if ( ! function_exists( 'lafka_insert_og_tags' ) ) {
 		} elseif ( is_tax() || is_category() || is_tag() ) {
 			$term        = get_queried_object();
 			$title       = $term ? $term->name : get_bloginfo( 'name' );
-			$description = $term && ! empty( $term->description ) ? wp_strip_all_tags( $term->description ) : lafka_resolve_meta_description( null );
+			$description = lafka_resolve_meta_description( null );
 			$url         = $term ? get_term_link( $term ) : home_url( '/' );
 			$og_type     = 'website';
 		} else {
@@ -284,13 +284,32 @@ if ( ! function_exists( 'lafka_render_meta_description' ) ) {
 	}
 }
 
+if ( ! function_exists( 'lafka_resolve_meta_excerpt' ) ) {
+	/**
+	 * Plain-text, SERP-length excerpt of an auto-derived description (GX3).
+	 * Delegates to lafka_seo_excerpt() when the SEO settings module is loaded.
+	 *
+	 * @param string $text Source text (HTML allowed).
+	 * @return string
+	 */
+	function lafka_resolve_meta_excerpt( $text ) {
+		if ( function_exists( 'lafka_seo_excerpt' ) ) {
+			return lafka_seo_excerpt( (string) $text );
+		}
+		return wp_strip_all_tags( (string) $text );
+	}
+}
+
 if ( ! function_exists( 'lafka_resolve_meta_description' ) ) {
 	/**
 	 * Resolution order (first non-empty wins):
 	 *   1. Per-post `_lafka_meta_description` post meta (manual override).
-	 *   2. WC product short description (single product).
+	 *   2. WC product short description (single product), else (GX3) the
+	 *      fact-built product template — never the site-wide pitch.
 	 *   3. Post excerpt (any singular).
-	 *   4. WC term description (taxonomy archive).
+	 *   4. Term description (taxonomy archive), else (GX3) the fact-built
+	 *      category template on product category / tag archives.
+	 *   Auto-derived values are capped at ~160 characters on a word boundary.
 	 *   5. Site tagline (Settings → General → Tagline).
 	 *   6. Restaurant Information description (Customizer panel) — final fallback
 	 *      so the homepage gets a meaningful <meta name="description"> even when
@@ -307,17 +326,30 @@ if ( ! function_exists( 'lafka_resolve_meta_description' ) ) {
 			if ( function_exists( 'is_product' ) && is_product() ) {
 				$product = wc_get_product( $post_or_null->ID );
 				if ( $product && $product->get_short_description() ) {
-					return wp_strip_all_tags( $product->get_short_description() );
+					return lafka_resolve_meta_excerpt( $product->get_short_description() );
+				}
+				if ( $product && function_exists( 'lafka_seo_product_description' ) ) {
+					$templated = lafka_seo_product_description( $product );
+					if ( '' !== $templated ) {
+						return $templated;
+					}
 				}
 			}
 			if ( ! empty( $post_or_null->post_excerpt ) ) {
-				return wp_strip_all_tags( $post_or_null->post_excerpt );
+				return lafka_resolve_meta_excerpt( $post_or_null->post_excerpt );
 			}
 		}
 		if ( is_tax() || is_category() || is_tag() ) {
 			$term = get_queried_object();
 			if ( $term && ! empty( $term->description ) ) {
-				return wp_strip_all_tags( $term->description );
+				return lafka_resolve_meta_excerpt( $term->description );
+			}
+			$is_menu_term = isset( $term->taxonomy ) && in_array( $term->taxonomy, array( 'product_cat', 'product_tag' ), true );
+			if ( $term && $is_menu_term && function_exists( 'lafka_seo_term_description' ) ) {
+				$templated = lafka_seo_term_description( $term );
+				if ( '' !== $templated ) {
+					return $templated;
+				}
 			}
 		}
 		$tagline = get_bloginfo( 'description' );

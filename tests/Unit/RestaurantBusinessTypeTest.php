@@ -82,10 +82,12 @@ final class RestaurantBusinessTypeTest extends TestCase {
 	}
 
 	/**
-	 * Legacy Customizer value (theme_mod) is honored as fallback when no
-	 * wp_options value is stored.
+	 * GX3: a legacy Customizer theme_mod is no longer read at runtime — the
+	 * one-time migration (lafka_nap_migrate_theme_mods) copies it into the
+	 * option instead, so a stale theme_mod can never shadow or fight the
+	 * single store.
 	 */
-	public function test_business_type_resolves_from_theme_mod(): void {
+	public function test_legacy_theme_mod_is_not_read_at_runtime(): void {
 		$this->stub_wp(
 			array(),
 			array( 'lafka_business_business_type' => 'Bakery' )
@@ -93,7 +95,7 @@ final class RestaurantBusinessTypeTest extends TestCase {
 
 		$info = lafka_get_restaurant_info();
 
-		self::assertSame( array( 'Bakery' ), $info['business_type'] );
+		self::assertSame( array( 'Restaurant', 'LocalBusiness', 'FoodEstablishment' ), $info['business_type'] );
 	}
 
 	/**

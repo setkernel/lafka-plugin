@@ -300,7 +300,8 @@ if ( ! function_exists( 'lafka_schema_faq' ) ) {
 	 * Build and return the FAQPage schema array.
 	 *
 	 * Returns null when:
-	 *   - not on the contact page (slug + template gate)
+	 *   - not on the contact page (slug + template gate) or a product
+	 *     category archive with its own FAQ (GX3, term meta)
 	 *   - no FAQ items resolve from any source
 	 *
 	 * Output shape:
@@ -325,11 +326,17 @@ if ( ! function_exists( 'lafka_schema_faq' ) ) {
 	 * @return array<string, mixed>|null
 	 */
 	function lafka_schema_faq(): ?array {
-		if ( ! lafka_schema_is_contact_page() ) {
-			return null;
+		$items = array();
+		if ( lafka_schema_is_contact_page() ) {
+			$items = lafka_schema_faq_resolve_items();
+		} elseif ( function_exists( 'is_product_category' ) && is_product_category() && function_exists( 'lafka_seo_get_term_faqs' ) ) {
+			// GX3: a menu category's own FAQ (term meta), rendered visibly
+			// under the category grid by the theme — only when filled.
+			$term = get_queried_object();
+			if ( is_object( $term ) && isset( $term->term_id ) ) {
+				$items = lafka_seo_get_term_faqs( (int) $term->term_id );
+			}
 		}
-
-		$items = lafka_schema_faq_resolve_items();
 		if ( empty( $items ) ) {
 			return null;
 		}

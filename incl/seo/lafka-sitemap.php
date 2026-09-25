@@ -144,7 +144,237 @@ if ( ! function_exists( 'lafka_sitemap_drop_users_provider' ) ) {
 	}
 }
 
+// ─── GX3: indexing hygiene ───────────────────────────────────────────────
+//
+// Shared predicates (also used by the wp_robots filter in lafka-robots.php and
+// by Site Health): what must never be indexed or listed in the sitemap.
+
+if ( ! function_exists( 'lafka_seo_excluded_taxonomies' ) ) {
+	/**
+	 * Taxonomies whose archives are thin / duplicate for a restaurant:
+	 * WooCommerce attribute taxonomies (`pa_*`, e.g. /size/large/ listing
+	 * every product with that size) and the legacy food-menu categories.
+	 *
+	 * @return list<string>
+	 */
+	function lafka_seo_excluded_taxonomies(): array {
+		$taxonomies = array();
+		if ( function_exists( 'get_taxonomies' ) ) {
+			foreach ( (array) get_taxonomies( array(), 'names' ) as $name ) {
+				if ( 0 === strpos( (string) $name, 'pa_' ) ) {
+					$taxonomies[] = (string) $name;
+				}
+			}
+		}
+		if ( in_array( 'lafka-foodmenu', lafka_seo_legacy_post_types(), true ) ) {
+			$taxonomies[] = 'lafka_foodmenu_category';
+		}
+		/**
+		 * Filter the taxonomies kept out of the sitemap and noindexed.
+		 *
+		 * @since 10.2.0
+		 * @param list<string> $taxonomies Taxonomy names.
+		 */
+		return array_values( array_unique( array_map( 'strval', (array) apply_filters( 'lafka_seo_excluded_taxonomies', $taxonomies ) ) ) );
+	}
+}
+
+if ( ! function_exists( 'lafka_seo_legacy_post_types' ) ) {
+	/**
+	 * Post types superseded on this install: the theme's original
+	 * `lafka-foodmenu` CPT once WooCommerce products are the menu (demo
+	 * leftovers like "/restaurant-menu/angus-burger/" otherwise compete with
+	 * the real menu).
+	 *
+	 * @return list<string>
+	 */
+	function lafka_seo_legacy_post_types(): array {
+		$types = ( class_exists( 'WooCommerce' ) || function_exists( 'wc_get_products' ) ) ? array( 'lafka-foodmenu' ) : array();
+		/**
+		 * Filter the post types treated as legacy (not in sitemap, noindex).
+		 *
+		 * @since 10.2.0
+		 * @param list<string> $types Post type names.
+		 */
+		return array_values( array_map( 'strval', (array) apply_filters( 'lafka_seo_legacy_post_types', $types ) ) );
+	}
+}
+
+if ( ! function_exists( 'lafka_seo_noindex_author_archives' ) ) {
+	/**
+	 * Whether author archives are noindexed: by default when at most one
+	 * user has published posts (the archive then duplicates the blog).
+	 *
+	 * @return bool
+	 */
+	function lafka_seo_noindex_author_archives(): bool {
+		static $single = null;
+		if ( null === $single ) {
+			$authors = function_exists( 'get_users' )
+				? get_users(
+					array(
+						'has_published_posts' => true,
+						'fields'              => 'ID',
+						'number'              => 2,
+					)
+				)
+				: array();
+			$single  = count( (array) $authors ) <= 1;
+		}
+		/**
+		 * Filter whether author archives are noindexed.
+		 *
+		 * @since 10.2.0
+		 * @param bool $single Default: true on single-author sites.
+		 */
+		return (bool) apply_filters( 'lafka_seo_noindex_author_archives', $single );
+	}
+}
+
+if ( ! function_exists( 'lafka_sitemap_filter_taxonomies' ) ) {
+	/**
+	 * `wp_sitemaps_taxonomies`: drop attribute / legacy taxonomies.
+	 *
+	 * @param array<string,mixed> $taxonomies Taxonomy objects keyed by name.
+	 * @return array<string,mixed>
+	 */
+	function lafka_sitemap_filter_taxonomies( $taxonomies ) {
+		if ( ! is_array( $taxonomies ) ) {
+			return $taxonomies;
+		}
+		foreach ( lafka_seo_excluded_taxonomies() as $name ) {
+			unset( $taxonomies[ $name ] );
+		}
+		return $taxonomies;
+	}
+}
+
+if ( ! function_exists( 'lafka_sitemap_filter_post_types' ) ) {
+	/**
+	 * `wp_sitemaps_post_types`: drop legacy post types.
+	 *
+	 * @param array<string,mixed> $post_types Post type objects keyed by name.
+	 * @return array<string,mixed>
+	 */
+	function lafka_sitemap_filter_post_types( $post_types ) {
+		if ( ! is_array( $post_types ) ) {
+			return $post_types;
+		}
+		foreach ( lafka_seo_legacy_post_types() as $name ) {
+			unset( $post_types[ $name ] );
+		}
+		return $post_types;
+	}
+}
+
+if ( ! function_exists( 'lafka_sitemap_exclude_noindexed' ) ) {
+	/**
+	 * `wp_sitemaps_posts_query_args`: leave out posts the operator marked
+	 * "hide from search engines" (`_lafka_seo_noindex`).
+	 *
+	 * @param array<string,mixed> $args WP_Query args.
+	 * @return array<string,mixed>
+	 */
+	function lafka_sitemap_exclude_noindexed( $args ) {
+		if ( ! is_array( $args ) ) {
+			return $args;
+		}
+		$clause = array(
+			'key'     => '_lafka_seo_noindex',
+			'compare' => 'NOT EXISTS',
+		);
+		$existing           = isset( $args['meta_query'] ) && is_array( $args['meta_query'] ) ? $args['meta_query'] : array();
+		$combined           = array( $clause );
+		if ( ! empty( $existing ) ) {
+			$combined = array(
+				'relation' => 'AND',
+				$existing,
+				$clause,
+			);
+		}
+		$args['meta_query'] = $combined; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- sitemap sub-query only.
+		return $args;
+	}
+}
+
+// ─── GX3: product image entries ──────────────────────────────────────────
+
+if ( ! function_exists( 'lafka_sitemap_images_enabled' ) ) {
+	/**
+	 * @return bool
+	 */
+	function lafka_sitemap_images_enabled(): bool {
+		/**
+		 * Filter whether product sitemap entries carry <image:image> tags.
+		 *
+		 * @since 10.2.0
+		 * @param bool $enabled Default true.
+		 */
+		return (bool) apply_filters( 'lafka_sitemap_images_enabled', true );
+	}
+}
+
+if ( ! function_exists( 'lafka_sitemap_use_image_renderer' ) ) {
+	/**
+	 * `wp_sitemaps_init`: core's renderer only knows loc/lastmod/changefreq/
+	 * priority, so swap in a subclass that also writes image entries.
+	 *
+	 * @param object $wp_sitemaps WP_Sitemaps.
+	 * @return void
+	 */
+	function lafka_sitemap_use_image_renderer( $wp_sitemaps ) {
+		if ( ! lafka_sitemap_images_enabled() || ! is_object( $wp_sitemaps ) || ! class_exists( 'WP_Sitemaps_Renderer' ) ) {
+			return;
+		}
+		require_once __DIR__ . '/class-lafka-sitemaps-image-renderer.php';
+		$wp_sitemaps->renderer          = new Lafka_Sitemaps_Image_Renderer();
+		$GLOBALS['lafka_sitemap_images'] = true;
+	}
+}
+
+if ( ! function_exists( 'lafka_sitemap_product_images' ) ) {
+	/**
+	 * `wp_sitemaps_posts_entry`: add a product's featured + gallery images
+	 * (only when the image-aware renderer is active; core would reject the
+	 * unknown key).
+	 *
+	 * @param array<string,mixed> $entry     Sitemap entry.
+	 * @param object              $post      WP_Post.
+	 * @param string              $post_type Post type.
+	 * @return array<string,mixed>
+	 */
+	function lafka_sitemap_product_images( $entry, $post, $post_type = '' ) {
+		if ( empty( $GLOBALS['lafka_sitemap_images'] ) || 'product' !== $post_type || ! is_object( $post ) || ! isset( $post->ID ) ) {
+			return $entry;
+		}
+		$ids = array();
+		if ( function_exists( 'get_post_thumbnail_id' ) ) {
+			$ids[] = (int) get_post_thumbnail_id( $post->ID );
+		}
+		$gallery = (string) get_post_meta( (int) $post->ID, '_product_image_gallery', true );
+		foreach ( array_filter( array_map( 'absint', explode( ',', $gallery ) ) ) as $id ) {
+			$ids[] = $id;
+		}
+		$urls = array();
+		foreach ( array_slice( array_values( array_unique( array_filter( $ids ) ) ), 0, 10 ) as $id ) {
+			$url = (string) wp_get_attachment_image_url( $id, 'full' );
+			if ( '' !== $url ) {
+				$urls[] = $url;
+			}
+		}
+		if ( ! empty( $urls ) ) {
+			$entry['lafka_images'] = $urls;
+		}
+		return $entry;
+	}
+}
+
 if ( function_exists( 'add_filter' ) ) {
 	add_filter( 'wp_sitemaps_posts_query_args', 'lafka_sitemap_filter_page_args', 10, 2 );
 	add_filter( 'wp_sitemaps_add_provider', 'lafka_sitemap_drop_users_provider', 10, 2 );
+	add_filter( 'wp_sitemaps_posts_query_args', 'lafka_sitemap_exclude_noindexed', 20 );
+	add_filter( 'wp_sitemaps_taxonomies', 'lafka_sitemap_filter_taxonomies' );
+	add_filter( 'wp_sitemaps_post_types', 'lafka_sitemap_filter_post_types' );
+	add_filter( 'wp_sitemaps_posts_entry', 'lafka_sitemap_product_images', 10, 3 );
+	add_action( 'wp_sitemaps_init', 'lafka_sitemap_use_image_renderer' );
 }
