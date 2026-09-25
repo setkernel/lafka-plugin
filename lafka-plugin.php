@@ -1622,6 +1622,8 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/seo/lafka-seo-titles.php';
 require_once plugin_dir_path( __FILE__ ) . 'incl/seo/lafka-term-faq.php';
 // GX3: /llms.txt, /llms-full.txt, /menu.md, /menu.json from the JSON-LD data sources.
 require_once plugin_dir_path( __FILE__ ) . 'incl/seo/lafka-llms-txt.php';
+// GX3: IndexNow key file + debounced, batched pings (default off; production only).
+require_once plugin_dir_path( __FILE__ ) . 'incl/seo/lafka-indexnow.php';
 
 add_action( 'woocommerce_single_product_summary', 'lafka_show_custom_product_popup_link', 12 );
 if ( ! function_exists( 'lafka_show_custom_product_popup_link' ) ) {
