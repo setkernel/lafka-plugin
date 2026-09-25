@@ -293,8 +293,10 @@ if ( ! function_exists( 'lafka_ac_run_cleanup' ) ) {
 }
 
 if ( function_exists( 'add_action' ) ) {
-	add_action( 'lafka_check_abandoned_carts', 'lafka_ac_run_check' );
-	add_action( 'lafka_cleanup_abandoned_carts', 'lafka_ac_run_cleanup' );
+	// Cron entry points run inside Lafka_Log::guard() (GX1): an uncaught
+	// exception is logged to the `cron` channel instead of killing the cron run.
+	add_action( 'lafka_check_abandoned_carts', function_exists( 'lafka_guarded' ) ? lafka_guarded( 'lafka_ac_run_check' ) : 'lafka_ac_run_check' );
+	add_action( 'lafka_cleanup_abandoned_carts', function_exists( 'lafka_guarded' ) ? lafka_guarded( 'lafka_ac_run_cleanup' ) : 'lafka_ac_run_cleanup' );
 	// Self-heal — if either event got de-scheduled, re-register on plugins_loaded.
 	add_action( 'plugins_loaded', 'lafka_ac_schedule_events', 30 );
 }
