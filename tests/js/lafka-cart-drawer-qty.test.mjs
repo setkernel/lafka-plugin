@@ -141,3 +141,32 @@ test( 'without its config the script stays inert', async () => {
 
 	assert.equal( p.calls.length, 0 );
 } );
+
+test( 'rapid taps are all counted: the cart ends on the last quantity asked for (O-17)', async () => {
+	const p = page( [
+		{ fragments: { 'ul.lafka-cart-drawer__items': items( 3, 'n2' ) }, cart_hash: 'h3' },
+		{ fragments: { 'ul.lafka-cart-drawer__items': items( 5, 'n3' ) }, cart_hash: 'h5' },
+	] );
+
+	p.click( '[data-lafka-qty-step="1"]' );
+	p.click( '[data-lafka-qty-step="1"]' );
+	p.click( '[data-lafka-qty-step="1"]' );
+	assert.equal( p.document.querySelector( '.lafka-cart-drawer__qty' ).textContent, '5', 'Each tap shows at once.' );
+	await settle();
+
+	assert.deepEqual( p.calls.map( ( c ) => c.body ), [ 'cart_item_key=k1&quantity=3&nonce=n1', 'cart_item_key=k1&quantity=5&nonce=n2' ], 'One request at a time; taps made meanwhile are coalesced.' );
+	assert.equal( p.document.querySelector( '.lafka-cart-drawer__qty' ).textContent, '5' );
+	assert.equal( liveText( p ), 'Wings: 5' );
+} );
+
+test( 'taps never go below one or past the purchase limit', async () => {
+	const p = page( [ { fragments: { 'ul.lafka-cart-drawer__items': items( 3, 'n2', true ) }, cart_hash: 'h3' } ] );
+	p.document.querySelector( '[data-lafka-qty]' ).setAttribute( 'data-max', '3' );
+
+	p.click( '[data-lafka-qty-step="1"]' );
+	p.click( '[data-lafka-qty-step="1"]' );
+	await settle();
+
+	assert.deepEqual( p.calls.map( ( c ) => c.body ), [ 'cart_item_key=k1&quantity=3&nonce=n1' ] );
+	assert.equal( p.document.querySelector( '[data-lafka-qty-step="1"]' ).hasAttribute( 'disabled' ), true );
+} );
