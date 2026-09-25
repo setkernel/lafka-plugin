@@ -484,6 +484,38 @@ if ( ! class_exists( 'Lafka_Module_Registry' ) ) {
 				)
 			);
 
+			// ---- Diagnostics (GX1) — own option, default ON ----
+			// Core logging (WooCommerce logs + incident index) is always on;
+			// this flag gates the operator surfaces: Lafka → Diagnostics, the
+			// Site Health tests and the daily error digest email. Stored in
+			// `lafka_log_settings[diagnostics]` ('enabled' / 'disabled'; absent
+			// = enabled), read directly so the registry never depends on the
+			// observability classes being loaded.
+			self::register(
+				new Lafka_Module(
+					array(
+						'id'              => 'diagnostics',
+						'label'           => esc_html__( 'Diagnostics', 'lafka-plugin' ),
+						'description'     => esc_html__( 'Incident list, "why no order" checkout-failure reasons, Site Health checks and a daily error digest email. Logging to WooCommerce → Status → Logs stays on either way.', 'lafka-plugin' ),
+						'category'        => 'operations',
+						'storage'         => 'option',
+						'default_enabled' => true,
+						'get_enabled'     => static function () {
+							$settings = get_option( 'lafka_log_settings', array() );
+							return ! ( is_array( $settings ) && isset( $settings['diagnostics'] ) && 'disabled' === $settings['diagnostics'] );
+						},
+						'set_enabled'     => static function ( bool $enabled ) {
+							$settings                = get_option( 'lafka_log_settings', array() );
+							$settings                = is_array( $settings ) ? $settings : array();
+							$settings['diagnostics'] = $enabled ? 'enabled' : 'disabled';
+							update_option( 'lafka_log_settings', $settings );
+						},
+						'settings_path'   => 'admin.php?page=lafka-diagnostics',
+						'docs_slug'       => 'diagnostics',
+					)
+				)
+			);
+
 			// ---- Analytics (read-only — derived from configured destinations) ----
 			self::register(
 				new Lafka_Module(

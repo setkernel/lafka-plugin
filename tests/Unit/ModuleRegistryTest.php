@@ -56,6 +56,7 @@ final class ModuleRegistryTest extends TestCase {
 		'abandoned_cart',
 		'push',
 		'review_prompt',
+		'diagnostics',
 		'analytics',
 	);
 
@@ -120,6 +121,7 @@ final class ModuleRegistryTest extends TestCase {
 			'abandoned_cart'  => false,  // lafka_ac_enabled default '0'
 			'push'            => false,  // lafka_push_enabled default '0'
 			'review_prompt'   => false,  // lafka_review_email_enabled default '0'
+			'diagnostics'     => true,   // GX1: logging core always on; screens + digest default ON
 			'analytics'       => false,  // derived — no destination by default
 		);
 
@@ -231,6 +233,25 @@ final class ModuleRegistryTest extends TestCase {
 
 		self::assertSame( '1', $mods['lafka_push_enabled'] );
 		self::assertSame( '1', $mods['lafka_review_email_enabled'] );
+	}
+
+	// ─── Diagnostics (own option, default ON) ───────────────────────────────
+
+	public function test_diagnostics_is_on_until_explicitly_disabled_and_round_trips(): void {
+		$store = array();
+		$this->wire_option_store( $store );
+
+		$module = Lafka_Module_Registry::get( 'diagnostics' );
+
+		self::assertTrue( $module->is_enabled(), 'Absent option = enabled (default ON).' );
+		self::assertTrue( $module->set_enabled( false ) );
+		self::assertSame( 'disabled', $store['lafka_log_settings']['diagnostics'] );
+		self::assertFalse( $module->is_enabled() );
+
+		$store['lafka_log_settings']['min_level'] = 'error';
+		$module->set_enabled( true );
+		self::assertTrue( $module->is_enabled() );
+		self::assertSame( 'error', $store['lafka_log_settings']['min_level'], 'Toggling keeps the other log settings.' );
 	}
 
 	// ─── Analytics is read-only (derived from configured destinations) ──────
