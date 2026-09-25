@@ -1084,8 +1084,13 @@ function lafka_plugin_after_plugins_loaded() {
 	 *   · "Serves N" product field + `lafka_product_serves` + REST field.
 	 *   · lafka_product_has_required_addons() — listing quick-add probe.
 	 *   · Store API `extensions.lafka` on products (serves, required add-ons).
+	 *   · Lafka_Fulfilment — one pickup/delivery preference (cookie
+	 *     lafka_order_method) preselects the matching shipping rate on the
+	 *     classic and block checkout; never over the customer's own choice.
 	 */
 	if ( LAFKA_PLUGIN_IS_WOOCOMMERCE ) {
+		require_once plugin_dir_path( __FILE__ ) . 'incl/checkout/class-lafka-fulfilment.php';
+		Lafka_Fulfilment::init();
 		require_once plugin_dir_path( __FILE__ ) . 'incl/woocommerce/lafka-product-serves.php';
 		lafka_product_serves_init();
 		require_once plugin_dir_path( __FILE__ ) . 'incl/addons/lafka-required-addons.php';
