@@ -10,6 +10,8 @@
  *                                     checkout-refusal reason ('none' if none)
  *   device      dim = mobile|tablet|desktop|unknown
  *   source      dim = source type     (utm / organic / referral / typein / unknown)
+ *   source_order dim = source type    visits of that source that ordered (so
+ *                                     orders ≤ visits per source, by construction)
  *   source_name dim = source          (google.com, (direct), newsletter …)
  *   campaign    dim = utm_campaign
  *   landing     dim = landing page type
@@ -35,6 +37,13 @@ if ( ! class_exists( 'Lafka_Insights_Rollup' ) ) {
 		/** Last day (Y-m-d) whose sessions were rolled up. */
 		const ROLLED_OPTION = 'lafka_insights_rolled_through';
 
+		/**
+		 * Rollup schema version. Bump when rollup_rows() gains a metric: the next
+		 * catch-up then re-rolls every retained day (idempotent replace).
+		 */
+		const VERSION        = 2;
+		const VERSION_OPTION = 'lafka_insights_rollup_version';
+
 		/** Session retention (days) and counter retention (days ≈ 25 months). */
 		const SESSION_DAYS = 35;
 		const COUNTER_DAYS = 762;
@@ -45,7 +54,7 @@ if ( ! class_exists( 'Lafka_Insights_Rollup' ) ) {
 		 * @return array<int,string>
 		 */
 		public static function metrics(): array {
-			return array( 'funnel', 'abandon', 'device', 'source', 'source_name', 'campaign', 'landing', 'hour_dow', 'closed_hour_dow' );
+			return array( 'funnel', 'abandon', 'device', 'source', 'source_order', 'source_name', 'campaign', 'landing', 'hour_dow', 'closed_hour_dow' );
 		}
 
 		/**
@@ -98,7 +107,11 @@ if ( ! class_exists( 'Lafka_Insights_Rollup' ) ) {
 
 				$bump( 'device', $devices[ (int) ( $row['device'] ?? 0 ) ] ?? 'unknown' );
 				$type = (string) ( $row['source_type'] ?? '' );
-				$bump( 'source', '' !== $type ? $type : 'unknown' );
+				$type = '' !== $type ? $type : 'unknown';
+				$bump( 'source', $type );
+				if ( $stages & Lafka_Insights_DB::STAGE_ORDER ) {
+					$bump( 'source_order', $type );
+				}
 				if ( '' !== (string) ( $row['source'] ?? '' ) ) {
 					$bump( 'source_name', (string) $row['source'] );
 				}
@@ -141,6 +154,10 @@ if ( ! class_exists( 'Lafka_Insights_Rollup' ) ) {
 			$today     = null === $today ? Lafka_Insights_Session::today() : $today;
 			$yesterday = gmdate( 'Y-m-d', strtotime( $today . ' 00:00:00 UTC' ) - 86400 );
 			$last      = (string) get_option( self::ROLLED_OPTION, '' );
+			if ( self::VERSION !== (int) get_option( self::VERSION_OPTION, 1 ) ) {
+				$last = ''; // New rollup metrics: re-roll every retained day once.
+				update_option( self::VERSION_OPTION, self::VERSION, false );
+			}
 			$floor     = gmdate( 'Y-m-d', strtotime( $today . ' 00:00:00 UTC' ) - self::SESSION_DAYS * 86400 );
 			$start     = ( '' !== $last && $last >= $floor ) ? gmdate( 'Y-m-d', strtotime( $last . ' 00:00:00 UTC' ) + 86400 ) : $floor;
 

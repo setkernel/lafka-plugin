@@ -301,6 +301,8 @@ final class UninstallCleanupTest extends TestCase {
 				'lafka_insights_db_version',
 				'lafka_insights_secret',
 				'lafka_insights_rolled_through',
+				'lafka_insights_rollup_version',
+				'lafka_insights_collecting_since',
 			),
 			$deleted_options,
 			'Toggle OFF removes only the dropped tables\' markers.'

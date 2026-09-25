@@ -111,6 +111,7 @@ if ( ! class_exists( 'Lafka_Insights_Page' ) ) {
 		 * @return void
 		 */
 		public function render_report( array $report ): void {
+			self::render_coverage( $report );
 			$sentences = Lafka_Insights_Narrative::build( $report );
 			echo '<div class="notice notice-info inline lafka-insights__summary"><ul>';
 			foreach ( $sentences as $sentence ) {
@@ -211,7 +212,7 @@ if ( ! class_exists( 'Lafka_Insights_Page' ) ) {
 			foreach ( $items as $item ) {
 				$adds   = (int) $item['adds'];
 				$orders = (int) $item['orders'];
-				echo '<tr><td>' . esc_html( (string) $item['name'] ) . '</td><td>' . esc_html( (string) (int) $item['views'] ) . '</td><td>' . esc_html( (string) $adds ) . '</td><td>' . esc_html( (string) $orders ) . '</td><td>' . esc_html( $adds > 0 ? Lafka_Insights_Narrative::share( min( $orders, $adds ), $adds ) : '—' ) . '</td></tr>';
+				echo '<tr><td>' . esc_html( (string) $item['name'] ) . '</td><td>' . esc_html( (string) (int) $item['views'] ) . '</td><td>' . esc_html( (string) $adds ) . '</td><td>' . esc_html( (string) $orders ) . '</td><td>' . esc_html( Lafka_Insights_Narrative::ratio( $orders, $adds ) ) . '</td></tr>';
 				if ( (int) $item['views'] >= Lafka_Insights_Narrative::MIN_VIEWS_NOT_BOUGHT && 0 === $orders ) {
 					$not_bought[] = $item;
 				}
@@ -271,15 +272,26 @@ if ( ! class_exists( 'Lafka_Insights_Page' ) ) {
 
 			echo '<h3>' . esc_html__( 'Visits and orders by source', 'lafka-plugin' ) . '</h3>';
 			$sources = (array) ( $report['source'] ?? array() );
-			$orders  = (array) ( $report['orders_by_source'] ?? array() );
+			$orders  = (array) ( $report['orders_by_source'] ?? array() ); // Visits of that source that ordered (Insights).
 			echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Source', 'lafka-plugin' ) . '</th><th>' . esc_html__( 'Visits', 'lafka-plugin' ) . '</th><th>' . esc_html__( 'Orders', 'lafka-plugin' ) . '</th><th>' . esc_html__( 'Orders per visit', 'lafka-plugin' ) . '</th></tr></thead><tbody>';
 			foreach ( array_unique( array_merge( array_keys( $sources ), array_keys( $orders ) ) ) as $type ) {
 				$v = (int) ( $sources[ $type ] ?? 0 );
 				$o = (int) ( $orders[ $type ] ?? 0 );
-				echo '<tr><td>' . esc_html( self::source_label( (string) $type ) ) . '</td><td>' . esc_html( (string) $v ) . '</td><td>' . esc_html( (string) $o ) . '</td><td>' . esc_html( $v > 0 ? Lafka_Insights_Narrative::share( min( $o, $v ), $v ) : '—' ) . '</td></tr>';
+				echo '<tr><td>' . esc_html( self::source_label( (string) $type ) ) . '</td><td>' . esc_html( (string) $v ) . '</td><td>' . esc_html( (string) $o ) . '</td><td>' . esc_html( Lafka_Insights_Narrative::ratio( $o, $v ) ) . '</td></tr>';
 			}
 			echo '</tbody></table>';
-			echo '<p class="description">' . esc_html__( 'Orders by source come from WooCommerce Order Attribution; visits from Insights.', 'lafka-plugin' ) . '</p>';
+			echo '<p class="description">' . esc_html__( 'Visits and orders here are both Insights visits in the same period: "Orders" counts the visits from that source that placed an order.', 'lafka-plugin' ) . '</p>';
+
+			$wc_orders = (array) ( $report['wc_orders_by_source'] ?? array() );
+			if ( ! empty( $wc_orders ) ) {
+				echo '<h3>' . esc_html__( 'All orders by source (WooCommerce), incl. before Insights started', 'lafka-plugin' ) . '</h3>';
+				echo '<p class="description">' . esc_html__( 'Every order placed in the selected range, by WooCommerce Order Attribution — including orders from before Insights was collecting and from visitors Insights does not measure (staff, bots, browsers that opt out). Not comparable with the visit counts above.', 'lafka-plugin' ) . '</p>';
+				echo '<table class="widefat striped"><tbody>';
+				foreach ( $wc_orders as $type => $count ) {
+					echo '<tr><td>' . esc_html( self::source_label( (string) $type ) ) . '</td><td>' . esc_html( (string) (int) $count ) . '</td></tr>';
+				}
+				echo '</tbody></table>';
+			}
 
 			echo '<div class="lafka-insights__cols"><div><h3>' . esc_html__( 'Top sources', 'lafka-plugin' ) . '</h3>';
 			self::render_count_list( (array) ( $report['source_name'] ?? array() ) );
@@ -487,6 +499,28 @@ if ( ! class_exists( 'Lafka_Insights_Page' ) ) {
 			}
 			$url = admin_url( 'customize.php?autofocus[section]=lafka_analytics_insights' );
 			echo '<div class="notice notice-warning inline"><p>' . esc_html__( 'Collection is switched off (consent mode "Off"). Existing data is shown; nothing new is recorded.', 'lafka-plugin' ) . ' <a href="' . esc_url( $url ) . '">' . esc_html__( 'Change the consent mode', 'lafka-plugin' ) . '</a></p></div>';
+		}
+
+		/**
+		 * "Collecting since <date>" — and, when the range starts earlier, that
+		 * every visit-based number covers only the collected days.
+		 *
+		 * @param array<string,mixed> $report Report.
+		 * @return void
+		 */
+		private static function render_coverage( array $report ): void {
+			$since = (string) ( $report['since'] ?? '' );
+			if ( '' === $since ) {
+				return;
+			}
+			/* translators: %s: date. */
+			$text    = sprintf( __( 'Collecting since %s.', 'lafka-plugin' ), Lafka_Insights_Narrative::format_day( $since ) );
+			$covered = (int) ( $report['coverage_days'] ?? 0 );
+			if ( $covered > 0 && $covered < (int) ( $report['days'] ?? 0 ) ) {
+				/* translators: %d: days. */
+				$text .= ' ' . sprintf( _n( 'Figures below cover the %d day Insights has been collecting in this range.', 'Figures below cover the %d days Insights has been collecting in this range.', $covered, 'lafka-plugin' ), $covered );
+			}
+			echo '<p class="lafka-insights__since description">' . esc_html( $text ) . '</p>';
 		}
 
 		/**

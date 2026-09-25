@@ -92,6 +92,55 @@ final class InsightsNarrativeTest extends TestCase {
 		$this->assertSame( '0', Narrative::share( 0, 0 ) );
 	}
 
+	public function test_ratio_never_reads_as_more_than_everything(): void {
+		$this->assertSame( '—', Narrative::ratio( 4, 2 ), 'Ordered 4 of added 2 is not a conversion rate.' );
+		$this->assertSame( '—', Narrative::ratio( 1, 0 ) );
+		$this->assertSame( '2 of 4', Narrative::ratio( 2, 4 ) );
+		$this->assertSame( '25%', Narrative::ratio( 5, 20 ) );
+	}
+
+	public function test_partial_coverage_is_said_and_suppresses_trends(): void {
+		$this->options['date_format'] = 'Y-m-d';
+		$week                         = $this->week();
+		$week['since']                = '2026-09-22';
+		$week['coverage_days']        = 3;
+
+		$lines = Narrative::build( $week );
+
+		$this->assertSame( 'Insights has been collecting since 2026-09-22, so this covers 3 days.', $lines[0] );
+		foreach ( $lines as $line ) {
+			$this->assertStringNotContainsString( 'previous period', $line );
+		}
+
+		$lines = Narrative::build( array( 'days' => 7, 'since' => '2026-09-24', 'coverage_days' => 1, 'funnel' => array( 'visit' => 0 ) ) );
+		$this->assertStringContainsString( 'No visits were recorded in the last 1 day.', $lines[1] );
+	}
+
+	public function test_insights_page_never_shows_a_ratio_above_everything(): void {
+		$this->options['date_format']  = 'Y-m-d';
+		$this->options['start_of_week'] = 1;
+		$report                         = $this->week();
+		$report['days']                 = 30;
+		$report['since']                = '2026-09-20';
+		$report['coverage_days']        = 5;
+		// The reported case: an item ordered more often than it was added.
+		$report['items']                = array( '9' => array( 'name' => 'Marinara Pie', 'views' => 0, 'adds' => 2, 'orders' => 4 ) );
+		$report['source']               = array( 'typein' => 1 );
+		$report['orders_by_source']     = array( 'typein' => 1 );
+		$report['wc_orders_by_source']  = array( 'typein' => 9 );
+
+		ob_start();
+		( new \ReflectionClass( Lafka_Insights_Page::class ) )->newInstanceWithoutConstructor()->render_report( $report );
+		$html = (string) ob_get_clean();
+
+		$this->assertStringContainsString( 'Collecting since 2026-09-20. Figures below cover the 5 days Insights has been collecting in this range.', $html );
+		$this->assertStringContainsString( '<td>Marinara Pie</td><td>0</td><td>2</td><td>4</td><td>—</td>', $html );
+		$this->assertStringNotContainsString( '<td>4</td><td>2 of 2</td>', $html, 'The old min(ordered, added) clamp is gone.' );
+		$this->assertStringContainsString( 'All orders by source (WooCommerce), incl. before Insights started', $html );
+		$this->assertMatchesRegularExpression( '#<td>Direct \(typed in / bookmark\)</td><td>1</td><td>1</td><td>1 of 1</td>#', $html, 'Visits vs orders are both Insights visits.' );
+		$this->assertMatchesRegularExpression( '#<td>Direct \(typed in / bookmark\)</td><td>9</td></tr>#', $html, 'WooCommerce orders sit in their own labelled table.' );
+	}
+
 	public function test_the_week_in_plain_english(): void {
 		$lines = Narrative::build( $this->week() );
 

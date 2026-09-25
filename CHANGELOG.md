@@ -89,6 +89,14 @@ checkout; settings live in Customizer → **Lafka — Checkout** unless noted.
   order-hours clock error logs to WooCommerce logs instead of `error_log`.
 
 ### Fixed
+- **Insights**: numbers that combine visits with orders no longer mix
+  populations. Orders count only when a measured visit paid (not orders from
+  before Insights collected, or from staff / bots / opted-out browsers), so an
+  item can no longer be "ordered" more often than "added"; visits vs orders by
+  source both come from Insights, with every WooCommerce-attributed order in a
+  separate, labelled table; figures start at the day collection started
+  ("Collecting since …"), no trend against an uncovered period, and a ratio
+  whose part exceeds its whole shows "—". Retained days are re-rolled once.
 - **Order hours**: closed-store notices name the next opening ("STORE
   CLOSED. Opens Saturday at 11:00 AM."); adding to a cart while closed says
   so immediately; with date/time slots on, a closed store takes orders for a

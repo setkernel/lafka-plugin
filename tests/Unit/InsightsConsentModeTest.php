@@ -231,6 +231,7 @@ final class InsightsConsentModeTest extends TestCase {
 		$this->assertStringContainsString( 'PRIMARY KEY  (day,sid)', $sql[0] );
 		$this->assertStringContainsString( 'CREATE TABLE wp_lafka_insights_daily', $sql[1] );
 		$this->assertSame( '1.0.0', $this->options['lafka_insights_db_version'] );
+		$this->assertSame( '2026-09-24', $this->options['lafka_insights_collecting_since'], 'A new collection period starts on enable.' );
 		$this->assertSame( array( 'lafka_insights_nightly', 'lafka_insights_weekly_email' ), $scheduled );
 
 		$unscheduled = array();
