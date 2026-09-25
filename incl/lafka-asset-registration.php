@@ -51,6 +51,20 @@ if ( ! function_exists( 'lafka_google_maps_script_url' ) ) {
 	}
 }
 
+if ( ! function_exists( 'lafka_google_maps_script_args' ) ) {
+	/**
+	 * Loading args for the Google Maps loader: footer + the `defer` strategy.
+	 *
+	 * @return array{in_footer: bool, strategy: string}
+	 */
+	function lafka_google_maps_script_args() {
+		return array(
+			'in_footer' => true,
+			'strategy'  => 'defer',
+		);
+	}
+}
+
 if ( ! function_exists( 'lafka_register_flatpickr' ) ) {
 	/**
 	 * Register the bundled flatpickr script + stylesheet.
@@ -115,7 +129,9 @@ if ( ! function_exists( 'lafka_register_plugin_scripts' ) ) {
 
 		$maps_url = lafka_google_maps_script_url( 'geometry,places' );
 		if ( '' !== $maps_url ) {
-			wp_register_script( 'lafka-google-maps', $maps_url, array( 'jquery' ), null, true ); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion -- the Maps loader is versioned by its own `v=weekly` query arg.
+			// `defer` via the WP strategy API: WordPress keeps the loader blocking
+			// whenever a dependent (e.g. a map config with an inline script) needs it.
+			wp_register_script( 'lafka-google-maps', $maps_url, array( 'jquery' ), null, lafka_google_maps_script_args() ); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion -- the Maps loader is versioned by its own `v=weekly` query arg.
 		}
 	}
 }
@@ -215,7 +231,7 @@ if ( ! function_exists( 'lafka_register_admin_plugin_scripts' ) ) {
 		// Same fail-closed rule as the front end: no key, no handle.
 		$maps_url = lafka_google_maps_script_url( 'geometry' );
 		if ( '' !== $maps_url ) {
-			wp_register_script( 'lafka-google-maps', $maps_url, array( 'jquery' ), null, true ); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion -- versioned by `v=weekly`.
+			wp_register_script( 'lafka-google-maps', $maps_url, array( 'jquery' ), null, lafka_google_maps_script_args() ); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion -- versioned by `v=weekly`.
 		}
 	}
 }

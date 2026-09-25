@@ -1693,26 +1693,6 @@ if ( ! function_exists( 'lafka_after_setup_theme' ) ) {
 	}
 }
 
-add_filter( 'script_loader_tag', 'lafka_defer_script_loader_tags', 10, 3 );
-if ( ! function_exists( 'lafka_defer_script_loader_tags' ) ) {
-	/**
-	 * Add async to script tags with defined handles.
-	 *
-	 * @param string $tag HTML for the script tag.
-	 * @param string $handle Handle of script.
-	 * @param string $src Src of script.
-	 *
-	 * @return string
-	 */
-	function lafka_defer_script_loader_tags( $tag, $handle, $src ) {
-		if ( ! in_array( $handle, array( 'lafka-google-maps' ), true ) ) {
-			return $tag;
-		}
-
-		return str_replace( ' src', ' defer src', $tag );
-	}
-}
-
 add_filter( 'sgo_js_async_exclude', 'lafka_js_async_exclude' );
 if ( ! function_exists( 'lafka_js_async_exclude' ) ) {
 	function lafka_js_async_exclude( $exclude_list ) {
