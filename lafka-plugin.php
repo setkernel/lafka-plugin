@@ -228,6 +228,8 @@ function is_lafka_promotions( $lafka_options = null ) {
  * the module itself decides whether to attach hooks (see Lafka_Security_Headers::is_active()).
  */
 require_once plugin_dir_path( __FILE__ ) . 'incl/security/class-lafka-security-headers.php';
+// GX T-27: anonymous user enumeration (?author=N, /wp/v2/users) closed by default.
+require_once plugin_dir_path( __FILE__ ) . 'incl/security/lafka-user-enumeration.php';
 
 /**
  * Admin UI for the security-headers toggle (P2-05a). Self-gates to is_admin().
@@ -365,6 +367,8 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/seo/lafka-suppress-wc-breadcrum
  */
 require_once plugin_dir_path( __FILE__ ) . 'incl/seo/lafka-sitemap.php';
 require_once plugin_dir_path( __FILE__ ) . 'incl/seo/lafka-robots.php';
+// GX T-07 / T-36: legacy food-menu URLs 301 to the menu; no 404 permalink guessing.
+require_once plugin_dir_path( __FILE__ ) . 'incl/seo/lafka-url-hygiene.php';
 
 /**
  * v9.23.0 (Phase 1A — Analytics + SEO + Conversion plan):
