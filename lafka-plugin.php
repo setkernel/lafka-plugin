@@ -457,9 +457,14 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/analytics/lafka-clarity-tags.ph
  * analytics destination check consults it); boot() pulls in the collector,
  * server-side money events, tables, nightly rollup, Lafka → Insights and the
  * weekly owner email only when the module is on. See incl/insights/.
+ *
+ * A6 — front-end JS error beacon (inline head handler + POST /lafka/v1/diag),
+ * on with the `diagnostics` or `insights` module.
  */
 require_once plugin_dir_path( __FILE__ ) . 'incl/insights/class-lafka-insights.php';
 Lafka_Insights::boot();
+require_once plugin_dir_path( __FILE__ ) . 'incl/observability/class-lafka-diag-beacon.php';
+Lafka_Diag_Beacon::boot();
 
 /**
  * v9.27.0 (Phase 3B — Analytics + SEO + Conversion plan):
