@@ -490,8 +490,40 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 					'label'   => esc_html__( 'sameAs URLs (one per line)', 'lafka-plugin' ),
 					'section' => 'lafka_business_same_as',
 					'type'    => 'textarea',
-                ) 
+                )
             );
+
+			// GX3 — same options the WooCommerce → Settings → Restaurant →
+			// Schema & Geo section edits (single store; add_text() makes every
+			// lafka_business_* setting option-typed).
+			self::add_text(
+				$wp_customize,
+				'lafka_business_map_url',
+				'lafka_business_same_as',
+				esc_html__( 'Map / Business Profile URL', 'lafka-plugin' ),
+				'',
+				esc_html__( 'Your Google Maps / Business Profile link (schema.org hasMap).', 'lafka-plugin' ),
+				'url',
+				'esc_url_raw'
+			);
+			self::add_text(
+				$wp_customize,
+				'lafka_business_service_areas',
+				'lafka_business_same_as',
+				esc_html__( 'Service areas (one per line)', 'lafka-plugin' ),
+				'',
+				esc_html__( 'Neighbourhoods / towns you deliver to (schema.org areaServed, /llms.txt). Empty = your own city.', 'lafka-plugin' ),
+				'textarea'
+			);
+			self::add_text(
+				$wp_customize,
+				'lafka_business_description',
+				'lafka_business_same_as',
+				esc_html__( 'Restaurant description', 'lafka-plugin' ),
+				'',
+				esc_html__( 'Two or three factual sentences (schema.org description, /llms.txt summary).', 'lafka-plugin' ),
+				'textarea'
+			);
 		}
 
 		// ====================================================================

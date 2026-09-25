@@ -315,4 +315,80 @@ final class HeadMetaTest extends TestCase {
 		$this->assertSame( 'website', self::meta_content( $og, 'property', 'og:type' ) );
 		$this->assertSame( 'Stone-baked', lafka_resolve_meta_description( null ) );
 	}
+
+	/**
+	 * GX3: a product without a short description and a menu category without
+	 * a description get a fact-built line from the Search & AI templates
+	 * instead of the site-wide pitch; long descriptions are SERP-capped.
+	 */
+	private function load_templates(): void {
+		require_once dirname( __DIR__, 2 ) . '/incl/seo/lafka-seo-settings.php';
+		require_once dirname( __DIR__, 2 ) . '/incl/seo/lafka-seo-titles.php';
+		Functions\when( 'home_url' )->alias( static fn( $path = '' ) => 'https://example.test' . $path );
+		Functions\when( 'lafka_schema_menu_data' )->justReturn(
+			array(
+				'sections' => array( 5 => array( 'price_min' => '8.50' ) ),
+				'order'    => array( 5 ),
+			)
+		);
+		Functions\when( 'wc_price' )->alias( static fn( $p ) => '&#36;' . number_format( (float) $p, 2 ) );
+		$this->info = array(
+			'name'          => self::SITE,
+			'city'          => 'Testville',
+			'phone_display' => '',
+		);
+	}
+
+	public function test_a_menu_category_without_a_description_gets_the_category_template(): void {
+		$this->load_templates();
+		$this->is['is_tax'] = true;
+		Functions\when( 'get_queried_object' )->justReturn(
+			(object) array(
+				'term_id'     => 5,
+				'name'        => 'Wings',
+				'count'       => 6,
+				'taxonomy'    => 'product_cat',
+				'description' => '',
+			)
+		);
+		$this->assertSame( 'Order Wings online from Test Kitchen in Testville — 6 items from $8.50.', lafka_resolve_meta_description( null ) );
+	}
+
+	public function test_a_long_term_description_is_capped_for_the_serp(): void {
+		$this->load_templates();
+		$this->is['is_tax'] = true;
+		Functions\when( 'get_queried_object' )->justReturn(
+			(object) array(
+				'name'        => 'Wings',
+				'taxonomy'    => 'product_cat',
+				'description' => '<p>' . str_repeat( 'Crispy wings tossed in house sauce. ', 10 ) . '</p>',
+			)
+		);
+		$out = lafka_resolve_meta_description( null );
+		$this->assertLessThanOrEqual( 160, mb_strlen( $out ) );
+		$this->assertStringStartsWith( 'Crispy wings tossed', $out );
+	}
+
+	public function test_a_product_without_a_short_description_gets_the_product_template(): void {
+		$this->load_templates();
+		$post                   = $this->singular_post( array( 'post_title' => 'Donair' ) );
+		$this->is['is_product'] = true;
+		Functions\when( 'wc_get_product' )->justReturn(
+			new class() {
+				public function get_short_description() {
+					return '';
+				}
+				public function get_name() {
+					return 'Donair';
+				}
+				public function is_type( $t ) {
+					return false;
+				}
+				public function get_price() {
+					return '14';
+				}
+			}
+		);
+		$this->assertSame( 'Donair from $14.00 at Test Kitchen in Testville. Order online.', lafka_resolve_meta_description( $post ) );
+	}
 }

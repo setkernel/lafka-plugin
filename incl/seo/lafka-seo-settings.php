@@ -189,7 +189,7 @@ if ( ! function_exists( 'lafka_seo_render_template' ) ) {
 		$template = (string) preg_replace_callback(
 			'/\[([^\[\]]*)\]/',
 			static function ( $m ) use ( $value_of ) {
-				if ( preg_match_all( '/\{([a-z_]+)\}/', $m[1], $found ) ) {
+				if ( preg_match_all( '/\{([a-z0-9_]+)\}/', $m[1], $found ) ) {
 					foreach ( $found[1] as $token ) {
 						if ( 'sep' !== $token && '' === $value_of( $token ) ) {
 							return '';
@@ -202,7 +202,7 @@ if ( ! function_exists( 'lafka_seo_render_template' ) ) {
 		);
 
 		$out = (string) preg_replace_callback(
-			'/\{([a-z_]+)\}/',
+			'/\{([a-z0-9_]+)\}/',
 			static function ( $m ) use ( $tokens, $value_of ) {
 				// {sep} keeps its surrounding spaces; every other token is trimmed.
 				return 'sep' === $m[1] ? (string) ( $tokens['sep'] ?? ' ' ) : $value_of( $m[1] );

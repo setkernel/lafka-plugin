@@ -4,6 +4,12 @@
  *
  * Companion to lafka_resolve_meta_description() shipped in W1-T15.
  * Stores _lafka_meta_description post meta, which the resolver reads first.
+ *
+ * GX3 adds, in the same box:
+ *   - `_lafka_seo_title`   — per-post <title> override (tokens allowed, e.g.
+ *     "{title} in {city}{sep}{name}"), read by lafka_seo_resolve_title();
+ *   - `_lafka_seo_noindex` — "hide from search engines": noindex via
+ *     wp_robots and dropped from the XML sitemap (incl/seo/lafka-sitemap.php).
  */
 defined( 'ABSPATH' ) || exit;
 
@@ -16,7 +22,7 @@ if ( ! function_exists( 'lafka_meta_description_register_box' ) ) {
 		foreach ( $post_types as $pt ) {
 			add_meta_box(
 				'lafka_meta_description',
-				__( 'SEO Meta Description', 'lafka-plugin' ),
+				__( 'SEO: title & description', 'lafka-plugin' ),
 				'lafka_meta_description_render_box',
 				$pt,
 				'normal',
@@ -50,7 +56,24 @@ if ( ! function_exists( 'lafka_meta_description_render_box' ) ) {
 			)
 			: __( 'Leave empty to use the site tagline as fallback.', 'lafka-plugin' );
 
+		$seo_title   = (string) get_post_meta( $post->ID, '_lafka_seo_title', true );
+		$seo_noindex = '1' === (string) get_post_meta( $post->ID, '_lafka_seo_noindex', true );
 		?>
+		<input type="hidden" name="lafka_seo_fields" value="1">
+		<p>
+			<label for="lafka_seo_title_input"><strong><?php esc_html_e( 'SEO title', 'lafka-plugin' ); ?></strong></label>
+			<input
+				type="text"
+				id="lafka_seo_title_input"
+				name="lafka_seo_title"
+				value="<?php echo esc_attr( $seo_title ); ?>"
+				maxlength="160"
+				style="width:100%;"
+				placeholder="<?php esc_attr_e( 'Leave empty to use the site-wide title template', 'lafka-plugin' ); ?>"
+			>
+			<span class="description"><?php esc_html_e( 'Tokens: {title} {name} {city} {region} {cuisines} {sep} — [optional segments] are dropped when a token is empty. Aim for 50–60 characters.', 'lafka-plugin' ); ?></span>
+		</p>
+		<p><strong><?php esc_html_e( 'Meta description', 'lafka-plugin' ); ?></strong></p>
 		<p class="description">
 			<?php esc_html_e( 'Custom meta description for SEO. If empty, an automatic description will be used (post excerpt, WC short description, or site tagline). Recommended length: 120-160 characters.', 'lafka-plugin' ); ?>
 		</p>
@@ -66,6 +89,12 @@ if ( ! function_exists( 'lafka_meta_description_render_box' ) ) {
 		<p class="description" style="text-align:right; margin-top:4px;">
 			<span id="lafka-meta-desc-count">0</span> /
 			<span style="color:#5e5e5e;">160 recommended (320 max)</span>
+		</p>
+		<p>
+			<label>
+				<input type="checkbox" name="lafka_seo_noindex" value="1" <?php checked( $seo_noindex ); ?>>
+				<?php esc_html_e( 'Hide from search engines (noindex, and leave out of the sitemap) — for legacy, duplicate or utility pages.', 'lafka-plugin' ); ?>
+			</label>
 		</p>
 		<script>
 		( function () {
@@ -107,6 +136,25 @@ if ( ! function_exists( 'lafka_meta_description_save' ) ) {
 			delete_post_meta( $post_id, '_lafka_meta_description' );
 		} else {
 			update_post_meta( $post_id, '_lafka_meta_description', $value );
+		}
+
+		// GX3 fields — only when this box's form was submitted (the hidden
+		// marker), so a save from elsewhere never wipes them.
+		if ( empty( $_POST['lafka_seo_fields'] ) ) {
+			return;
+		}
+		$title = isset( $_POST['lafka_seo_title'] )
+			? sanitize_text_field( wp_unslash( $_POST['lafka_seo_title'] ) )
+			: '';
+		if ( '' === $title ) {
+			delete_post_meta( $post_id, '_lafka_seo_title' );
+		} else {
+			update_post_meta( $post_id, '_lafka_seo_title', $title );
+		}
+		if ( ! empty( $_POST['lafka_seo_noindex'] ) ) {
+			update_post_meta( $post_id, '_lafka_seo_noindex', '1' );
+		} else {
+			delete_post_meta( $post_id, '_lafka_seo_noindex' );
 		}
 	}
 	add_action( 'save_post', 'lafka_meta_description_save' );

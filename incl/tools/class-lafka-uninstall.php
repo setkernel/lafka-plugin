@@ -187,6 +187,7 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 				'lafka_combo_deal_',     // combo-deal categories / amount / type
 				'lafka_log_',            // diagnostics settings, checkout counters, daily-job bookkeeping
 				'lafka_incidents_',      // incident table schema version
+				'lafka_seo_',            // Search & AI settings, IndexNow key/queue (GX3)
 			);
 		}
 
@@ -243,6 +244,8 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 				'_lafka_product_allergens',
 				'_lafka_nutrition_panel_present',
 				'_lafka_meta_description',
+				'_lafka_seo_title',
+				'_lafka_seo_noindex',
 			);
 		}
 

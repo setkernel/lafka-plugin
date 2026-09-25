@@ -3,6 +3,8 @@
  * Per-post meta description meta box: registered on posts, pages and (when
  * WooCommerce is active) products; saved only with a valid nonce and the
  * edit_post capability, as single-line text under the key the resolver reads.
+ * GX3: the same box carries the SEO title override and the noindex flag,
+ * written only when the box's own form was submitted.
  *
  * @package Lafka\Plugin\Tests\Unit
  */
@@ -117,6 +119,8 @@ final class MetaDescriptionBoxTest extends TestCase {
 		Functions\when( 'esc_attr' )->returnArg();
 		Functions\when( 'esc_textarea' )->returnArg();
 		Functions\when( 'esc_html_e' )->justReturn( null );
+		Functions\when( 'esc_attr_e' )->justReturn( null );
+		Functions\when( 'checked' )->justReturn( '' );
 		if ( function_exists( 'lafka_resolve_meta_description' ) ) {
 			// Loaded by another test; its fallback preview is not under test here.
 			Functions\when( 'lafka_resolve_meta_description' )->justReturn( '' );
@@ -128,5 +132,42 @@ final class MetaDescriptionBoxTest extends TestCase {
 		$this->assertSame( 1, preg_match( '/<textarea\s+id="([^"]+)"/', $html, $field ) );
 		$this->assertNotSame( $metabox_id, $field[1] );
 		$this->assertStringContainsString( "getElementById( '{$field[1]}' )", $html );
+	}
+
+	public function test_seo_title_and_noindex_are_saved_with_the_box(): void {
+		$_POST = array(
+			'lafka_meta_description_nonce' => 'good-nonce',
+			'lafka_meta_description'       => '',
+			'lafka_seo_fields'             => '1',
+			'lafka_seo_title'              => "  {title} in {city}<script>x</script> ",
+			'lafka_seo_noindex'            => '1',
+		);
+		lafka_meta_description_save( 42 );
+		$this->assertSame(
+			array(
+				array( 'delete', 42, '_lafka_meta_description' ),
+				array( 'update', 42, '_lafka_seo_title', '{title} in {city}x' ),
+				array( 'update', 42, '_lafka_seo_noindex', '1' ),
+			),
+			$this->writes
+		);
+	}
+
+	public function test_cleared_seo_fields_are_deleted_but_only_from_this_form(): void {
+		$_POST = array(
+			'lafka_meta_description_nonce' => 'good-nonce',
+			'lafka_meta_description'       => 'Kept',
+			'lafka_seo_fields'             => '1',
+			'lafka_seo_title'              => '',
+		);
+		lafka_meta_description_save( 42 );
+		$this->assertSame(
+			array(
+				array( 'update', 42, '_lafka_meta_description', 'Kept' ),
+				array( 'delete', 42, '_lafka_seo_title' ),
+				array( 'delete', 42, '_lafka_seo_noindex' ),
+			),
+			$this->writes
+		);
 	}
 }
