@@ -237,6 +237,8 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/security/class-lafka-security-a
  * Site Health diagnostics (P5-02). Self-gates to is_admin().
  */
 require_once plugin_dir_path( __FILE__ ) . 'incl/site-health/class-lafka-site-health.php';
+// GX3: "Search & AI" checks (NAP consistency, profile, indexing, content, IndexNow). Self-gates to is_admin().
+require_once plugin_dir_path( __FILE__ ) . 'incl/site-health/class-lafka-site-health-seo.php';
 
 /**
  * Feature Modules dashboard (NX1-01) — top-level "Lafka" menu → "Modules".
