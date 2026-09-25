@@ -165,9 +165,20 @@ if ( ! function_exists( 'lafka_pdp_render_prep_time' ) ) {
 			return;
 		}
 		$minutes = lafka_pdp_get_prep_time( $product_id );
+		/* translators: %d: minutes until the order is ready. */
+		$text = sprintf( __( 'Ready in ~%d min', 'lafka-plugin' ), $minutes );
+		/**
+		 * Filter the PDP ready-time line, e.g. so a theme's store-wide ETA
+		 * ("20–30 min") is the one source the whole storefront quotes.
+		 *
+		 * @param string $text       "Ready in ~25 min".
+		 * @param int    $minutes    Resolved prep minutes.
+		 * @param int    $product_id Product.
+		 */
+		$text = (string) apply_filters( 'lafka_pdp_prep_time_text', $text, $minutes, $product_id );
 		printf(
 			'<span class="lafka-pdp-trust lafka-pdp-trust--open">⏱ %s</span>',
-			esc_html( sprintf( __( 'Ready in ~%d min', 'lafka-plugin' ), $minutes ) )
+			esc_html( $text )
 		);
 	}
 }

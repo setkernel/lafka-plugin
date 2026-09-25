@@ -402,4 +402,20 @@ final class PrepTimeFunctionalTest extends TestCase {
 		$this->assertStringContainsString( 'lafka-pdp-trust--open', $html );
 		$this->assertStringNotContainsString( 'Closed', $html );
 	}
+
+	public function test_ready_line_is_filterable_for_a_single_storefront_eta(): void {
+		$this->stub_resolver_inputs( array() );
+		$this->clock( 5, '15:30' );
+		Functions\when( 'esc_html' )->returnArg();
+		Functions\when( '__' )->returnArg();
+		Functions\when( 'wp_get_post_terms' )->justReturn( array() );
+		Functions\when( 'is_wp_error' )->justReturn( false );
+		Functions\when( 'apply_filters' )->alias(
+			static fn( $hook, $value ) => 'lafka_pdp_prep_time_text' === $hook ? 'Ready in 20–30 min' : $value
+		);
+
+		ob_start();
+		\lafka_pdp_render_prep_time( 42 );
+		$this->assertStringContainsString( 'Ready in 20–30 min', (string) ob_get_clean() );
+	}
 }
