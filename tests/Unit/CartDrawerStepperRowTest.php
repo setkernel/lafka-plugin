@@ -150,4 +150,89 @@ final class CartDrawerStepperRowTest extends TestCase {
 
 		self::assertStringContainsString( 'lafka-cart-drawer__stepper', self::row( self::item( 2 ) ) );
 	}
+
+	public function test_the_text_column_is_not_the_drawer_scroll_container(): void {
+		$html = self::row( self::item( 2 ) );
+
+		self::assertStringContainsString( '<div class="lafka-cart-drawer__info">', $html, 'O-01: its own class, so it inherits no scroll-container padding/overflow.' );
+		self::assertStringNotContainsString( 'lafka-cart-drawer__body', $html );
+	}
+
+	public function test_the_stepper_tells_the_script_its_purchase_limit(): void {
+		self::assertStringContainsString( 'data-max="3"', self::row( self::item( 2, array(), 3 ) ) );
+		self::assertStringNotContainsString( 'data-max', self::row( self::item( 2 ) ), 'No limit, no attribute.' );
+	}
+
+	/** A calculated cart line (as WooCommerce stores it after calculate_totals). */
+	private static function calculated( array $item, float $subtotal, float $total, array $extra = array() ): array {
+		return array_merge(
+			$item,
+			array(
+				'line_subtotal'     => $subtotal,
+				'line_subtotal_tax' => 0.0,
+				'line_total'        => $total,
+				'line_tax'          => 0.0,
+			),
+			$extra
+		);
+	}
+
+	private function money(): void {
+		Functions\when( 'wc_price' )->alias( static fn( $v ) => '$' . number_format( (float) $v, 2 ) );
+		Functions\when( 'wc_format_sale_price' )->alias( static fn( $from, $to ) => '<del>$' . number_format( (float) $from, 2 ) . '</del> <ins>$' . number_format( (float) $to, 2 ) . '</ins>' );
+	}
+
+	public function test_line_prices_come_from_the_calculated_line_totals(): void {
+		$this->money();
+		// get_product_subtotal() would say $19.00 (the stub's 9.50 × 2).
+		$html = self::row( self::calculated( self::item( 2 ), 17.0, 17.0 ) );
+
+		self::assertStringContainsString( '<span class="lafka-cart-drawer__price">$17.00</span>', $html );
+	}
+
+	public function test_a_bogo_line_shows_the_original_struck_through_before_the_price_paid(): void {
+		$this->money();
+		// Pop $3.99: BOGO blends the unit price (one of one unit at 50%) → $2.00.
+		$item = self::calculated(
+			self::item( 1 ),
+			2.0,
+			2.0,
+			array(
+				'_bogo_50'             => true,
+				'_bogo_original_price' => 3.99,
+			)
+		);
+
+		self::assertStringContainsString( '<del>$3.99</del> <ins>$2.00</ins>', self::row( $item ) );
+	}
+
+	public function test_a_coupon_discount_shows_on_the_line_too(): void {
+		$this->money();
+
+		self::assertStringContainsString( '<del>$20.00</del> <ins>$18.00</ins>', self::row( self::calculated( self::item( 2 ), 20.0, 18.0 ) ) );
+	}
+
+	public function test_prices_including_tax_add_the_line_taxes(): void {
+		$this->money();
+		Functions\when( 'WC' )->justReturn(
+			(object) array(
+				'cart' => new class() {
+					public function display_prices_including_tax() {
+						return true;
+					}
+				},
+			)
+		);
+		$item = self::calculated(
+			self::item( 1 ),
+			10.0,
+			10.0,
+			array(
+				'line_subtotal_tax' => 1.4,
+				'line_tax'          => 1.4,
+			)
+		);
+
+		self::assertStringContainsString( '$11.40', self::row( $item ) );
+	}
 }
