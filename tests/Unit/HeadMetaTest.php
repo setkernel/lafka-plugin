@@ -325,6 +325,7 @@ final class HeadMetaTest extends TestCase {
 		require_once dirname( __DIR__, 2 ) . '/incl/seo/lafka-seo-settings.php';
 		require_once dirname( __DIR__, 2 ) . '/incl/seo/lafka-seo-titles.php';
 		Functions\when( 'home_url' )->alias( static fn( $path = '' ) => 'https://example.test' . $path );
+		require_once dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-menu.php';
 		Functions\when( 'lafka_schema_menu_data' )->justReturn(
 			array(
 				'sections' => array( 5 => array( 'price_min' => '8.50' ) ),

@@ -94,6 +94,9 @@ namespace LafkaPlugin\Tests\Unit {
 			Functions\when( 'get_queried_object' )->alias( fn() => $this->queried );
 			Functions\when( 'get_post_meta' )->alias( fn( $id, $key ) => $this->meta[ $key ] ?? '' );
 			Functions\when( 'lafka_seo_plugin_active' )->alias( fn() => $this->seo_plugin );
+			// Real module first, then stub its data accessor (a function
+			// stubbed before its file loads would collide with the declaration).
+			require_once dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-menu.php';
 			Functions\when( 'lafka_schema_menu_data' )->justReturn(
 				array(
 					'sections' => array(
@@ -102,7 +105,7 @@ namespace LafkaPlugin\Tests\Unit {
 					'order'    => array( 5 ),
 				)
 			);
-			foreach ( array( 'is_admin', 'is_feed', 'is_404', 'is_search', 'is_front_page', 'is_singular', 'is_product', 'is_shop', 'is_product_category', 'is_product_tag', 'is_tax', 'is_category', 'is_tag', 'is_home', 'lafka_schema_is_menu_page' ) as $tag ) {
+			foreach ( array( 'is_admin', 'is_feed', 'is_404', 'is_search', 'is_front_page', 'is_singular', 'is_product', 'is_shop', 'is_product_category', 'is_product_tag', 'is_tax', 'is_category', 'is_tag', 'is_home', 'is_post_type_archive' ) as $tag ) {
 				Functions\when( $tag )->alias( fn() => $this->is[ $tag ] ?? false );
 			}
 
@@ -181,9 +184,8 @@ namespace LafkaPlugin\Tests\Unit {
 		}
 
 		public function test_menu_product_and_page_titles(): void {
-			$this->is['lafka_schema_is_menu_page'] = true;
-			$this->is['is_singular']               = true;
-			$this->queried                         = (object) array( 'ID' => 3, 'post_title' => 'Menu' );
+			$this->is['is_singular'] = true;
+			$this->queried           = new \WP_Post( (object) array( 'ID' => 3, 'post_name' => 'menu' ) );
 			self::assertSame( 'Menu – Pizza & Poutine in Springfield – Acme Kitchen', lafka_seo_resolve_title() );
 
 			$this->is = array(
