@@ -45,6 +45,8 @@ final class DeliveryQuoteGuardTest extends TestCase {
 		Functions\when( '__' )->returnArg();
 		Functions\when( 'esc_html' )->returnArg();
 		Functions\when( 'wp_kses_post' )->returnArg();
+		Functions\when( 'wp_unslash' )->returnArg();
+		Functions\when( 'sanitize_text_field' )->returnArg();
 		Functions\when( 'get_theme_mod' )->alias( fn( $key, $fallback = false ) => $this->theme_mods[ $key ] ?? $fallback );
 		Functions\when( 'apply_filters' )->alias(
 			function ( $hook, $value, ...$args ) {
@@ -74,9 +76,14 @@ final class DeliveryQuoteGuardTest extends TestCase {
 		);
 		require_once dirname( __DIR__, 2 ) . '/incl/lafka-shipping-method-helpers.php';
 		require_once dirname( __DIR__, 2 ) . '/incl/checkout/class-lafka-delivery-quote-guard.php';
+		require_once __DIR__ . '/Stubs/wc-shipping-rate-stub.php';
+		// The "Delivery" placeholder has its own tests below; the rest pin it off.
+		$this->filters['lafka_delivery_placeholder_rate_enabled'] = static fn() => false;
+		unset( $_SERVER['REQUEST_URI'] );
 	}
 
 	protected function tearDown(): void {
+		unset( $_SERVER['REQUEST_URI'] );
 		Monkey\tearDown();
 		parent::tearDown();
 	}
@@ -257,12 +264,112 @@ final class DeliveryQuoteGuardTest extends TestCase {
 		$this->assertSame(
 			array(
 				'woocommerce_package_rates -> filter_package_rates',
+				'woocommerce_cart_shipping_packages -> tag_packages',
 				'woocommerce_cart_totals_after_shipping -> render_notice_row',
 				'woocommerce_review_order_after_shipping -> render_notice_row',
 				'woocommerce_no_shipping_available_html -> filter_no_shipping_html',
 				'woocommerce_cart_no_shipping_available_html -> filter_no_shipping_html',
+				'woocommerce_after_checkout_validation -> validate_classic_checkout',
+				'woocommerce_store_api_checkout_update_order_from_request -> validate_store_api_checkout',
 			),
 			Hooks::registered()
 		);
+	}
+
+	/* ------------------------------------------------------------ *
+	 *  "Delivery" stays a choice while its price waits (O-07)
+	 * ------------------------------------------------------------ */
+
+	/** Classic checkout store (option + no page) with the placeholder on (its default). */
+	private function classic_store_with_placeholder(): void {
+		unset( $this->filters['lafka_delivery_placeholder_rate_enabled'] );
+		require_once dirname( __DIR__, 2 ) . '/incl/checkout/class-lafka-checkout-mode.php';
+		Functions\when( 'get_option' )->alias( static fn( $key, $fallback = false ) => 'lafka_checkout_mode' === $key ? 'classic' : $fallback );
+	}
+
+	public function test_a_withheld_delivery_is_replaced_by_a_zero_cost_delivery_choice(): void {
+		$this->classic_store_with_placeholder();
+
+		$rates = Lafka_Delivery_Quote_Guard::filter_package_rates( self::rates(), array( 'destination' => array( 'country' => 'CA' ) ) );
+
+		$this->assertSame( array( 'local_pickup:9', 'pickup_location:0', 'lafka_delivery_pending' ), array_keys( $rates ) );
+		$this->assertSame( 'lafka_delivery_pending', $rates['lafka_delivery_pending']->get_method_id() );
+		$this->assertSame( 'Delivery', $rates['lafka_delivery_pending']->get_label() );
+		$this->assertEquals( 0, $rates['lafka_delivery_pending']->get_cost() );
+		$this->assertFalse( lafka_is_pickup_shipping_method( 'lafka_delivery_pending' ), 'It counts as delivery.' );
+	}
+
+	public function test_a_complete_address_quotes_the_real_rates_only(): void {
+		$this->classic_store_with_placeholder();
+
+		$kept = $this->quote(
+			array(
+				'country'   => 'CA',
+				'address_1' => '1 Example St',
+				'postcode'  => 'A1A 1A1',
+			)
+		);
+
+		$this->assertNotContains( 'lafka_delivery_pending', $kept );
+	}
+
+	public function test_no_delivery_choice_on_the_store_api_or_a_block_checkout_page_or_when_switched_off(): void {
+		$this->classic_store_with_placeholder();
+		$_SERVER['REQUEST_URI'] = '/wp-json/wc/store/v1/cart';
+		$this->assertNotContains( 'lafka_delivery_pending', $this->quote( array( 'country' => 'CA' ) ), 'Store API request.' );
+
+		unset( $_SERVER['REQUEST_URI'] );
+		Functions\when( 'get_option' )->alias( static fn( $key, $fallback = false ) => 'woocommerce_checkout_page_id' === $key ? 9 : ( 'lafka_checkout_mode' === $key ? 'classic' : $fallback ) );
+		Functions\when( 'get_post' )->justReturn( (object) array( 'post_content' => '<!-- wp:woocommerce/checkout /-->' ) );
+		$this->assertNotContains( 'lafka_delivery_pending', $this->quote( array( 'country' => 'CA' ) ), 'Block checkout page.' );
+
+		$this->classic_store_with_placeholder();
+		$this->filters['lafka_delivery_placeholder_rate_enabled'] = static fn() => false;
+		$this->assertNotContains( 'lafka_delivery_pending', $this->quote( array( 'country' => 'CA' ) ), 'Operator filter.' );
+	}
+
+	public function test_the_hint_row_shows_only_while_the_delivery_choice_is_selected(): void {
+		$this->classic_store_with_placeholder();
+		$this->quote( array( 'country' => 'CA' ) );
+
+		$this->session['chosen_shipping_methods'] = array( 'local_pickup:9' );
+		$this->assertSame( '', $this->render_row(), 'Pickup chosen: no delivery hint (O-16).' );
+
+		$this->session['chosen_shipping_methods'] = array( 'lafka_delivery_pending' );
+		$this->assertStringContainsString( self::MESSAGE, $this->render_row() );
+	}
+
+	public function test_an_order_can_never_be_placed_on_the_delivery_choice(): void {
+		$errors = new class() {
+			/** @var array<string, string> */
+			public array $added = array();
+			public function add( $code, $message ) {
+				$this->added[ $code ] = $message;
+			}
+		};
+
+		$this->session['chosen_shipping_methods'] = array( 'local_pickup:9' );
+		Lafka_Delivery_Quote_Guard::validate_classic_checkout( array(), $errors );
+		$this->assertSame( array(), $errors->added );
+
+		$this->session['chosen_shipping_methods'] = array( 'lafka_delivery_pending' );
+		Lafka_Delivery_Quote_Guard::validate_classic_checkout( array(), $errors );
+		$this->assertSame( array( 'shipping' ), array_keys( $errors->added ) );
+
+		try {
+			Lafka_Delivery_Quote_Guard::validate_store_api_checkout( null );
+			$this->fail( 'The Store API place-order must refuse the placeholder.' );
+		} catch ( \RuntimeException $e ) {
+			$this->assertStringContainsString( 'delivery address', $e->getMessage() );
+		}
+	}
+
+	public function test_store_api_and_classic_rates_are_cached_apart(): void {
+		$packages = Lafka_Delivery_Quote_Guard::tag_packages( array( array( 'contents' => array() ) ) );
+		$this->assertSame( 'classic', $packages[0]['lafka_rate_context'] );
+
+		$_SERVER['REQUEST_URI'] = '/wp-json/wc/store/v1/checkout';
+		$packages               = Lafka_Delivery_Quote_Guard::tag_packages( array( array( 'contents' => array() ) ) );
+		$this->assertSame( 'store_api', $packages[0]['lafka_rate_context'] );
 	}
 }
