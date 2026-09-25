@@ -173,6 +173,50 @@ final class CheckoutDeliveryFlowTest extends TestCase {
 		$this->assertTrue( Lafka_Pickup_Checkout::delivery_possible() );
 	}
 
+	/** A minimal order double with the address accessors restore_order_street() uses. */
+	private static function order_double( string $billing, string $shipping ): object {
+		return new class( $billing, $shipping ) {
+			public array $a;
+			public int $saved = 0;
+			public function __construct( string $b, string $s ) {
+				$this->a = array(
+					'billing_address_1'  => $b,
+					'shipping_address_1' => $s,
+				);
+			}
+			public function get_billing_address_1() {
+				return $this->a['billing_address_1'];
+			}
+			public function get_shipping_address_1() {
+				return $this->a['shipping_address_1'];
+			}
+			public function set_billing_address_1( $v ) {
+				$this->a['billing_address_1'] = $v;
+			}
+			public function set_shipping_address_1( $v ) {
+				$this->a['shipping_address_1'] = $v;
+			}
+			public function save() {
+				++$this->saved;
+			}
+		};
+	}
+
+	public function test_the_saved_order_is_repaired_even_when_the_hook_instance_is_stale(): void {
+		// Real sequence on the prod clone: WooCommerce passes its own instance
+		// (street still set), the map plugin loaded a fresh one, blanked the
+		// street and saved it. The restore must read and repair the SAVED order.
+		$stale = self::order_double( '100 Example Rd', '100 Example Rd' );
+		$saved = self::order_double( '', '' );
+		\Brain\Monkey\Functions\when( 'wc_get_order' )->justReturn( $saved );
+
+		Lafka_Order_Path::restore_order_street( 1, array( 'billing_address_1' => '100 Example Rd' ), $stale );
+
+		$this->assertSame( '100 Example Rd', $saved->a['billing_address_1'] );
+		$this->assertSame( '100 Example Rd', $saved->a['shipping_address_1'] );
+		$this->assertSame( 1, $saved->saved, 'The saved order is written back once.' );
+	}
+
 	public function test_a_typed_street_survives_a_map_plugin_that_blanks_it(): void {
 		$order = new class() {
 			public array $a = array(
@@ -196,6 +240,8 @@ final class CheckoutDeliveryFlowTest extends TestCase {
 				++$this->saved;
 			}
 		};
+
+		Functions\when( 'wc_get_order' )->justReturn( $order );
 
 		Lafka_Order_Path::restore_order_street( 1, array( 'billing_address_1' => '100 Example Rd' ), $order );
 

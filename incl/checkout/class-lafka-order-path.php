@@ -69,8 +69,15 @@ if ( ! class_exists( 'Lafka_Order_Path' ) ) {
 			if ( ! is_array( $posted_data ) || ! apply_filters( 'lafka_restore_order_street', true ) ) {
 				return;
 			}
-			if ( ! is_object( $order ) && function_exists( 'wc_get_order' ) ) {
-				$order = wc_get_order( $order_id );
+			// Always re-read the saved order: the plugin that blanks the street
+			// (address-field-autocomplete) loads its own instance, sets an empty
+			// address_1 and saves it, so the instance WooCommerce passes to this
+			// hook is stale and still shows the typed street.
+			if ( function_exists( 'wc_get_order' ) ) {
+				$fresh = wc_get_order( $order_id );
+				if ( is_object( $fresh ) ) {
+					$order = $fresh;
+				}
 			}
 			if ( ! is_object( $order ) || ! method_exists( $order, 'get_billing_address_1' ) ) {
 				return;
