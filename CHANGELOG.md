@@ -12,6 +12,16 @@ All new checkout behaviour works on the classic and the block (Store API)
 checkout; settings live in Customizer → **Lafka — Checkout** unless noted.
 
 ### Added
+- **Menu items that skip pickup and delivery**: a WooCommerce order made only
+  of Virtual items needs no shipping, so it never asks pickup or delivery,
+  keeps the billing address required and charges no delivery fee. While the
+  store offers pickup or delivery: a Site Health check (count, up to ten
+  linked titles, guidance), a one-line warning on a flagged product's edit
+  screen with a per-product "This item is meant to be virtual" link (post
+  meta `_lafka_virtual_ok`), and `wp lafka products unvirtual [--ids=…]`
+  (dry run unless `--yes`). Downloadable items are exempt; filters
+  `lafka_virtual_ok_product_ids`, `lafka_virtual_ok_terms` (taxonomy ⇒
+  terms), `lafka_virtual_items_check_enabled`.
 - **The counter (GX4, plugin part)** — behaviour the theme's counter layouts
   read; inert until a theme calls it or opts in:
   - **Serves N**: Product data → General → "Serves (people)" (`_lafka_serves`,
