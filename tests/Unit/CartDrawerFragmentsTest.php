@@ -52,6 +52,8 @@ final class CartDrawerFragmentsTest extends TestCase {
 			fn( $key, $default = false ) => 'lafka_free_delivery_threshold' === $key ? $this->option_threshold : $default
 		);
 		Functions\when( 'get_theme_mod' )->alias( static fn( $key, $default = false ) => $default );
+		// No theme opted in to the GX4 stepper row: today's row.
+		Functions\when( 'current_theme_supports' )->justReturn( false );
 	}
 
 	protected function tearDown(): void {

@@ -1096,6 +1096,10 @@ function lafka_plugin_after_plugins_loaded() {
 		require_once plugin_dir_path( __FILE__ ) . 'incl/addons/lafka-required-addons.php';
 		require_once plugin_dir_path( __FILE__ ) . 'incl/store-api/lafka-store-api-product.php';
 		add_action( 'woocommerce_init', 'lafka_store_api_product_register' );
+		// Drawer quantity stepper: wc-ajax=lafka_cart_set_qty + client, live only
+		// for a theme that declares add_theme_support( 'lafka-drawer-stepper' ).
+		require_once plugin_dir_path( __FILE__ ) . 'incl/woocommerce/lafka-cart-drawer-qty.php';
+		lafka_cart_drawer_qty_init();
 	}
 }
 

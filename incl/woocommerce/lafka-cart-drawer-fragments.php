@@ -66,6 +66,12 @@ if ( ! function_exists( 'lafka_cart_drawer_render_item' ) ) {
 		$name  = apply_filters( 'woocommerce_cart_item_name', $product->get_name(), $cart_item, $cart_item_key );
 		$thumb = $product->get_image( 'woocommerce_gallery_thumbnail', array( 'loading' => 'lazy' ) );
 		$price = WC()->cart->get_product_subtotal( $product, $cart_item['quantity'] );
+
+		// GX4: the theme opted in to the stepper row (theme support / filter).
+		if ( lafka_cart_drawer_stepper_enabled() ) {
+			lafka_cart_drawer_render_stepper_item( $cart_item_key, $cart_item, (string) $name, (string) $thumb, (string) $price );
+			return;
+		}
 		?>
 		<li class="lafka-cart-drawer__item" data-cart-key="<?php echo esc_attr( $cart_item_key ); ?>">
 			<span class="lafka-cart-drawer__thumb">
@@ -78,6 +84,104 @@ if ( ! function_exists( 'lafka_cart_drawer_render_item' ) ) {
 			<span class="lafka-cart-drawer__qty">×<?php echo esc_html( (string) (int) $cart_item['quantity'] ); ?></span>
 			<span class="lafka-cart-drawer__price"><?php echo wp_kses_post( $price ); ?></span>
 			<a href="<?php echo esc_url( wc_get_cart_remove_url( $cart_item_key ) ); ?>" class="lafka-cart-drawer__remove remove_from_cart_button" role="button" data-product_id="<?php echo esc_attr( (string) ( $cart_item['product_id'] ?? '' ) ); ?>" data-cart_item_key="<?php echo esc_attr( $cart_item_key ); ?>" aria-label="<?php echo esc_attr( sprintf( /* translators: %s product name */ __( 'Remove %s from cart', 'lafka-plugin' ), wp_strip_all_tags( $name ) ) ); ?>">×</a>
+		</li>
+		<?php
+	}
+}
+
+if ( ! function_exists( 'lafka_cart_drawer_stepper_enabled' ) ) {
+	/**
+	 * Whether drawer rows carry the quantity stepper (GX4). A theme opts in
+	 * with add_theme_support( 'lafka-drawer-stepper' ); the filter can force
+	 * it either way. Off by default, so other themes keep today's row.
+	 *
+	 * @return bool
+	 */
+	function lafka_cart_drawer_stepper_enabled(): bool {
+		$enabled = function_exists( 'current_theme_supports' ) && (bool) current_theme_supports( 'lafka-drawer-stepper' );
+
+		/**
+		 * Filter whether cart-drawer rows carry the quantity stepper.
+		 *
+		 * @since 10.2.0
+		 * @param bool $enabled Theme support for 'lafka-drawer-stepper'.
+		 */
+		return (bool) apply_filters( 'lafka_cart_drawer_stepper_enabled', $enabled );
+	}
+}
+
+if ( ! function_exists( 'lafka_cart_drawer_item_details' ) ) {
+	/**
+	 * One line of the item's chosen options (size, crust, add-ons), joined
+	 * with " · ". Plain text; '' when the item has none.
+	 *
+	 * @param array<string,mixed> $cart_item WC cart-item array.
+	 * @return string
+	 */
+	function lafka_cart_drawer_item_details( array $cart_item ): string {
+		$flat  = function_exists( 'wc_get_formatted_cart_item_data' ) ? (string) wc_get_formatted_cart_item_data( $cart_item, true ) : '';
+		$lines = array();
+		foreach ( preg_split( '/\R/', $flat ) as $line ) {
+			$line = trim( html_entity_decode( wp_strip_all_tags( (string) $line ), ENT_QUOTES, 'UTF-8' ) );
+			if ( '' !== $line ) {
+				$lines[] = $line;
+			}
+		}
+
+		/**
+		 * Filter the cart-drawer options line of an item (plain text).
+		 *
+		 * @since 10.2.0
+		 * @param string              $details   Options joined with " · ".
+		 * @param array<string,mixed> $cart_item Cart item.
+		 */
+		return (string) apply_filters( 'lafka_cart_drawer_item_details', implode( ' · ', $lines ), $cart_item );
+	}
+}
+
+if ( ! function_exists( 'lafka_cart_drawer_render_stepper_item' ) ) {
+	/**
+	 * The stepper variant of a drawer row: thumbnail, name + options line,
+	 * line price, a labelled − / count / + group (wc-ajax=lafka_cart_set_qty,
+	 * see lafka-cart-drawer-qty.php) and a worded Remove that keeps
+	 * WooCommerce's remove_from_cart_button AJAX. The count keeps the
+	 * .lafka-cart-drawer__qty class the theme's cart-count sync reads.
+	 *
+	 * @param string              $cart_item_key Cart-item key.
+	 * @param array<string,mixed> $cart_item     Cart item.
+	 * @param string              $name          Item name (woocommerce_cart_item_name, may hold HTML).
+	 * @param string              $thumb         Thumbnail HTML (WC core).
+	 * @param string              $price         Line price HTML.
+	 * @return void
+	 */
+	function lafka_cart_drawer_render_stepper_item( string $cart_item_key, array $cart_item, string $name, string $thumb, string $price ): void {
+		$product    = $cart_item['data'];
+		$qty        = (int) $cart_item['quantity'];
+		$plain_name = wp_strip_all_tags( $name );
+		$details    = lafka_cart_drawer_item_details( $cart_item );
+		$max        = is_object( $product ) && method_exists( $product, 'get_max_purchase_quantity' ) ? (int) $product->get_max_purchase_quantity() : -1;
+		$at_max     = $max > 0 && $qty >= $max;
+		?>
+		<li class="lafka-cart-drawer__item lafka-cart-drawer__item--stepper" data-cart-key="<?php echo esc_attr( $cart_item_key ); ?>">
+			<span class="lafka-cart-drawer__thumb">
+				<?php
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- WC_Product::get_image() returns trusted WC-core HTML with attributes pre-escaped.
+				echo $thumb;
+				?>
+			</span>
+			<div class="lafka-cart-drawer__body">
+				<h3 class="lafka-cart-drawer__name"><?php echo wp_kses_post( $name ); ?></h3>
+				<?php if ( '' !== $details ) : ?>
+					<p class="lafka-cart-drawer__details"><?php echo esc_html( $details ); ?></p>
+				<?php endif; ?>
+				<span class="lafka-cart-drawer__price"><?php echo wp_kses_post( $price ); ?></span>
+			</div>
+			<div class="lafka-cart-drawer__stepper" role="group" aria-label="<?php echo esc_attr( sprintf( /* translators: %s: product name */ __( 'Quantity of %s', 'lafka-plugin' ), $plain_name ) ); ?>" data-lafka-qty data-cart-key="<?php echo esc_attr( $cart_item_key ); ?>" data-name="<?php echo esc_attr( $plain_name ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'lafka-cart-qty' ) ); ?>">
+				<button type="button" class="lafka-cart-drawer__step lafka-cart-drawer__step--less" data-lafka-qty-step="-1" aria-label="<?php echo esc_attr( sprintf( /* translators: %s: product name */ __( 'One less %s', 'lafka-plugin' ), $plain_name ) ); ?>"<?php echo $qty <= 1 ? ' disabled' : ''; ?>><span aria-hidden="true">−</span></button>
+				<output class="lafka-cart-drawer__qty" aria-live="polite"><?php echo esc_html( (string) $qty ); ?></output>
+				<button type="button" class="lafka-cart-drawer__step lafka-cart-drawer__step--more" data-lafka-qty-step="1" aria-label="<?php echo esc_attr( sprintf( /* translators: %s: product name */ __( 'One more %s', 'lafka-plugin' ), $plain_name ) ); ?>"<?php echo $at_max ? ' disabled' : ''; ?>><span aria-hidden="true">+</span></button>
+			</div>
+			<a href="<?php echo esc_url( wc_get_cart_remove_url( $cart_item_key ) ); ?>" class="lafka-cart-drawer__remove remove_from_cart_button" role="button" data-product_id="<?php echo esc_attr( (string) ( $cart_item['product_id'] ?? '' ) ); ?>" data-cart_item_key="<?php echo esc_attr( $cart_item_key ); ?>" aria-label="<?php echo esc_attr( sprintf( /* translators: %s product name */ __( 'Remove %s from cart', 'lafka-plugin' ), $plain_name ) ); ?>"><?php esc_html_e( 'Remove', 'lafka-plugin' ); ?></a>
 		</li>
 		<?php
 	}
