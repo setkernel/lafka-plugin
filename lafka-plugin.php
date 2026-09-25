@@ -1100,6 +1100,9 @@ function lafka_plugin_after_plugins_loaded() {
 		// for a theme that declares add_theme_support( 'lafka-drawer-stepper' ).
 		require_once plugin_dir_path( __FILE__ ) . 'incl/woocommerce/lafka-cart-drawer-qty.php';
 		lafka_cart_drawer_qty_init();
+		// Category tagline: term meta lafka_tagline + Products → Categories field.
+		require_once plugin_dir_path( __FILE__ ) . 'incl/woocommerce/lafka-category-tagline.php';
+		lafka_category_tagline_init();
 	}
 }
 
