@@ -354,13 +354,15 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 		}
 
 		/**
-		 * Remove Lafka's Action Scheduler jobs (the daily Diagnostics job).
+		 * Remove Lafka's Action Scheduler jobs (the daily Diagnostics job and a
+		 * pending IndexNow flush).
 		 *
 		 * @return void
 		 */
 		public static function unschedule_actions(): void {
 			if ( function_exists( 'as_unschedule_all_actions' ) ) {
 				as_unschedule_all_actions( 'lafka_diagnostics_daily', array(), 'lafka' );
+				as_unschedule_all_actions( 'lafka_indexnow_flush', array(), 'lafka' );
 			}
 		}
 
