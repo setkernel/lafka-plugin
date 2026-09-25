@@ -87,6 +87,37 @@ if ( ! function_exists( 'lafka_current_fulfilment_type' ) ) {
 	}
 }
 
+if ( ! function_exists( 'lafka_settled_fulfilment_type' ) ) {
+	/**
+	 * lafka_current_fulfilment_type() once the cart totals are calculated:
+	 * the WC session's chosen rates, which WooCommerce may have re-defaulted
+	 * during the calculation (e.g. delivery preselected the moment an address
+	 * unlocks the delivery rates). Before any calculation in this request it
+	 * is the same as lafka_current_fulfilment_type().
+	 *
+	 * For output rendered after the totals (payment titles on the order-review
+	 * refresh, the title saved on the order). Field requirements keep reading
+	 * the posted choice (lafka_current_fulfilment_type).
+	 *
+	 * @return string 'pickup', 'delivery' or ''.
+	 */
+	function lafka_settled_fulfilment_type(): string {
+		$wc      = function_exists( 'WC' ) ? WC() : null;
+		$session = ( is_object( $wc ) && isset( $wc->session ) && is_object( $wc->session ) ) ? $wc->session : null;
+
+		if ( null !== $session && function_exists( 'did_action' ) && did_action( 'woocommerce_after_calculate_totals' ) ) {
+			$chosen = array_filter( array_map( 'strval', (array) $session->get( 'chosen_shipping_methods' ) ) );
+			if ( array() !== $chosen ) {
+				$branch = $session->get( 'lafka_branch_location' );
+
+				return lafka_fulfilment_type_for( $chosen, is_array( $branch ) ? (string) ( $branch['order_type'] ?? '' ) : '' );
+			}
+		}
+
+		return lafka_current_fulfilment_type();
+	}
+}
+
 if ( ! function_exists( 'lafka_order_fulfilment_type' ) ) {
 	/**
 	 * How an order is fulfilled: 'pickup' or 'delivery' (or the Lafka order

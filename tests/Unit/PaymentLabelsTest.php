@@ -32,6 +32,9 @@ final class PaymentLabelsTest extends TestCase {
 
 	private bool $admin = false;
 
+	/** Whether the cart totals were calculated in this "request". */
+	private bool $calculated = false;
+
 	protected function setUp(): void {
 		parent::setUp();
 		Monkey\setUp();
@@ -41,6 +44,8 @@ final class PaymentLabelsTest extends TestCase {
 		Functions\when( 'sanitize_text_field' )->returnArg();
 		Functions\when( 'is_admin' )->alias( fn() => $this->admin );
 		Functions\when( 'wp_doing_ajax' )->justReturn( false );
+		$this->calculated = false;
+		Functions\when( 'did_action' )->alias( fn( $hook ) => ( $this->calculated && 'woocommerce_after_calculate_totals' === $hook ) ? 1 : 0 );
 		Functions\when( 'get_theme_mod' )->alias( fn( $key, $fallback = false ) => $this->theme_mods[ $key ] ?? $fallback );
 		Functions\when( 'apply_filters' )->alias(
 			function ( $hook, $value, ...$args ) {
@@ -93,6 +98,17 @@ final class PaymentLabelsTest extends TestCase {
 		$_POST['shipping_method'] = array( 'local_pickup:9' );
 
 		$this->assertSame( 'Pay at pickup', Lafka_Payment_Labels::filter_title( 'Cash on delivery', 'cod' ) );
+	}
+
+	public function test_after_the_totals_the_label_follows_the_rate_woocommerce_settled_on(): void {
+		// The refresh posted the pickup radio, but typing the address unlocked
+		// the delivery rates and the preference re-defaulted to delivery (O-05).
+		$_POST['shipping_method'] = array( 'local_pickup:9' );
+		$this->ship( 'distance_rate:8' );
+		$this->calculated = true;
+
+		$this->assertSame( 'Pay on delivery', Lafka_Payment_Labels::filter_title( 'Cash on delivery', 'cod' ) );
+		$this->assertSame( 'Pay when your order arrives.', Lafka_Payment_Labels::filter_description( 'x', 'cod' ) );
 	}
 
 	public function test_customizer_strings_override_the_defaults(): void {

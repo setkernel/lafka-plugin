@@ -130,7 +130,10 @@ if ( ! class_exists( 'Lafka_Payment_Labels' ) ) {
 				return '';
 			}
 
-			return lafka_current_fulfilment_type();
+			// After the totals: the rate WooCommerce actually settled on (it can
+			// switch to delivery during the refresh that unlocked the delivery
+			// rates, while the posted radio still says pickup).
+			return lafka_settled_fulfilment_type();
 		}
 
 		/**
