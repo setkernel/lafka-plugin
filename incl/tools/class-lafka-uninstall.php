@@ -251,6 +251,7 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 				'_lafka_seo_title',
 				'_lafka_seo_noindex',
 				'_lafka_serves', // GX4 "serves N" product field.
+				'_lafka_virtual_ok', // "meant to be virtual" mark (virtual menu-items check).
 			);
 		}
 

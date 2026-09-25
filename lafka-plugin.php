@@ -729,6 +729,15 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/cli/lafka-webp-convert.php';
 require_once plugin_dir_path( __FILE__ ) . 'incl/cli/lafka-config-cli.php';
 
 /**
+ * WP-CLI: untick Virtual on menu items so they offer pickup/delivery.
+ * Self-gates: returns when WP_CLI is not defined.
+ *
+ *   wp lafka products unvirtual              (dry run)
+ *   wp lafka products unvirtual --ids=12,34 --yes
+ */
+require_once plugin_dir_path( __FILE__ ) . 'incl/cli/lafka-products-cli.php';
+
+/**
  * WP-CLI: provision a deterministic demo restaurant for e2e/CI + preset QA (NX1-09a).
  * The class is always defined (pure helpers are unit-tested); only the command
  * registration self-gates on WP_CLI.
@@ -1103,6 +1112,10 @@ function lafka_plugin_after_plugins_loaded() {
 		// Category tagline: term meta lafka_tagline + Products → Categories field.
 		require_once plugin_dir_path( __FILE__ ) . 'incl/woocommerce/lafka-category-tagline.php';
 		lafka_category_tagline_init();
+		// Menu items marked Virtual skip pickup/delivery: Site Health check,
+		// product-screen notice, cache busting on product save.
+		require_once plugin_dir_path( __FILE__ ) . 'incl/site-health/class-lafka-virtual-menu-items.php';
+		Lafka_Virtual_Menu_Items::init();
 	}
 }
 
