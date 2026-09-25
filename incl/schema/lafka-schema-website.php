@@ -49,7 +49,9 @@ if ( ! function_exists( 'lafka_schema_website' ) ) {
 			return null;
 		}
 		$home = function_exists( 'trailingslashit' ) ? trailingslashit( home_url( '/' ) ) : home_url( '/' );
-		$name = function_exists( 'get_bloginfo' ) ? (string) get_bloginfo( 'name' ) : '';
+		// get_bloginfo() returns display-filtered text ("Pizza &amp; Poutine").
+		// JSON-LD is JSON, not HTML: decode entities so crawlers read "&".
+		$name = function_exists( 'get_bloginfo' ) ? html_entity_decode( (string) get_bloginfo( 'name' ), ENT_QUOTES | ENT_HTML5, 'UTF-8' ) : '';
 
 		$node = array(
 			'@type' => 'WebSite',
@@ -59,7 +61,7 @@ if ( ! function_exists( 'lafka_schema_website' ) ) {
 		if ( '' !== $name ) {
 			$node['name'] = $name;
 		}
-		$desc = function_exists( 'get_bloginfo' ) ? (string) get_bloginfo( 'description' ) : '';
+		$desc = function_exists( 'get_bloginfo' ) ? html_entity_decode( (string) get_bloginfo( 'description' ), ENT_QUOTES | ENT_HTML5, 'UTF-8' ) : '';
 		if ( '' !== $desc ) {
 			$node['description'] = $desc;
 		}

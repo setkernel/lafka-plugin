@@ -115,12 +115,32 @@ if ( ! function_exists( 'lafka_robots_filter' ) ) {
 			return $output;
 		}
 
-		// Append under the existing User-agent: * directive that WP core emits.
-		// We don't emit a new User-agent: * header because the existing one
-		// already scopes our additions correctly.
-		$output .= implode( "\n", $lines ) . "\n";
-
-		return $output;
+		// Insert INSIDE the `User-agent: *` group WP core emits — before the
+		// blank line / `Sitemap:` line that closes it (core's sitemap filter
+		// runs first, at priority 0). Appended after `Sitemap:` the rules sat
+		// outside any group (GX QA M-43). No group found: append.
+		$body   = explode( "\n", rtrim( $output, "\n" ) );
+		$in_ua  = false;
+		$insert = null;
+		foreach ( $body as $i => $row ) {
+			$row = trim( $row );
+			if ( 0 === stripos( $row, 'user-agent:' ) ) {
+				if ( $in_ua ) {
+					continue; // Consecutive User-agent lines share one group.
+				}
+				$in_ua = '*' === trim( substr( $row, strlen( 'user-agent:' ) ) );
+				continue;
+			}
+			if ( $in_ua && ( '' === $row || 0 === stripos( $row, 'sitemap:' ) ) ) {
+				$insert = $i;
+				break;
+			}
+		}
+		if ( null === $insert ) {
+			return $output . implode( "\n", $lines ) . "\n";
+		}
+		array_splice( $body, $insert, 0, $lines );
+		return implode( "\n", $body ) . "\n";
 	}
 }
 

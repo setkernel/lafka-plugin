@@ -174,7 +174,9 @@ if ( ! function_exists( 'lafka_get_restaurant_info' ) ) {
 			return $default;
 		};
 
-		$name_default  = function_exists( 'get_bloginfo' ) ? (string) get_bloginfo( 'name' ) : '';
+		// Decoded: get_bloginfo() is display-filtered ("&amp;"), and this name
+		// feeds JSON-LD / llms.txt (plain text) as well as escaped HTML.
+		$name_default  = function_exists( 'get_bloginfo' ) ? html_entity_decode( (string) get_bloginfo( 'name' ), ENT_QUOTES | ENT_HTML5, 'UTF-8' ) : '';
 		$email_default = function_exists( 'get_bloginfo' ) ? (string) get_bloginfo( 'admin_email' ) : '';
 		$logo_url      = '';
 		if ( function_exists( 'get_site_icon_url' ) ) {

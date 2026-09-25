@@ -377,4 +377,14 @@ HTML;
 		$this->assertDoesNotMatchRegularExpression( '/\n{3,}/', $out, 'Output must not contain triple-newlines.' );
 	}
 
+	public function test_robots_rules_stay_inside_the_user_agent_group_before_the_sitemap(): void {
+		Functions\when( 'apply_filters' )->returnArg( 2 );
+		// WP core's sitemap filter (priority 0) has already appended its line.
+		$default = "User-agent: *\nDisallow: /wp-admin/\nAllow: /wp-admin/admin-ajax.php\n\nSitemap: https://example.test/wp-sitemap.xml\n";
+		$out     = \lafka_robots_filter( $default, 1 );
+
+		$this->assertLessThan( strpos( $out, "\n\nSitemap:" ), strpos( $out, 'Disallow: /cart/' ), 'Disallow rules must precede the blank line + Sitemap.' );
+		$this->assertStringEndsWith( "Sitemap: https://example.test/wp-sitemap.xml\n", $out );
+		$this->assertSame( $out, \lafka_robots_filter( $out, 1 ), 'idempotent' );
+	}
 }

@@ -66,14 +66,49 @@ final class UpsellRowTest extends TestCase {
 		self::assertSame( array( 21, 23 ), lafka_pdp_get_upsell_ids( 42 ) );
 	}
 
+	/**
+	 * Per-product categories: product id => [ slug, term_id ] (all top level).
+	 *
+	 * @param array<int, array{0:string,1:int}> $map
+	 */
+	private function catalogue( array $map ): void {
+		Functions\when( 'wp_get_post_terms' )->alias(
+			static function ( $id ) use ( $map ) {
+				$row = $map[ (int) $id ] ?? array( 'misc', 99 );
+				return array(
+					(object) array(
+						'slug'    => $row[0],
+						'term_id' => $row[1],
+					),
+				);
+			}
+		);
+		Functions\when( 'get_ancestors' )->justReturn( array() );
+	}
+
 	public function test_falls_back_to_best_sellers_topped_up_with_recent_products(): void {
-		$this->product_in_category( 'wings' );
+		$this->catalogue( array( 42 => array( 'wings', 50 ) ) );
 
 		self::assertSame( array( 5, 9, 30, 31, 32, 33 ), lafka_pdp_get_upsell_ids( 42 ) );
 	}
 
+	public function test_fallback_skips_the_products_own_top_category(): void {
+		// M-17: a poutine page must not offer four poutines.
+		$this->catalogue(
+			array(
+				42 => array( 'poutine', 60 ),
+				5  => array( 'poutine', 60 ),
+				9  => array( 'drinks', 61 ),
+				30 => array( 'poutine', 60 ),
+				31 => array( 'sides', 62 ),
+			)
+		);
+
+		self::assertSame( array( 9, 31, 32, 33 ), lafka_pdp_get_upsell_ids( 42 ) );
+	}
+
 	public function test_row_skips_the_current_product_and_hidden_products_and_shows_at_most_four(): void {
-		$this->product_in_category( 'wings' );
+		$this->catalogue( array( 9 => array( 'wings', 50 ) ) );
 		Functions\when( 'wc_get_product' )->alias(
 			static fn( $id ) => new class( $id ) {
 				public function __construct( private int $id ) {}

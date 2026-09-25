@@ -33,6 +33,8 @@ namespace LafkaPlugin\Tests\Unit {
 	require_once dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-restaurant.php';
 	require_once dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-website.php';
 	require_once dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-breadcrumb.php';
+	require_once __DIR__ . '/Stubs/wp-term-stub.php';
+	require_once __DIR__ . '/Stubs/wp-post-stub.php';
 	require_once dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-product.php';
 
 	final class JsonLdSchemaTest extends TestCase {
@@ -113,6 +115,27 @@ namespace LafkaPlugin\Tests\Unit {
 			self::assertSame( 'SearchAction', $node['potentialAction']['@type'] );
 			self::assertSame( 'https://example.test/?s={search_term_string}', $node['potentialAction']['target']['urlTemplate'] );
 			self::assertSame( 'https://example.test/#website', $node['@id'] );
+		}
+
+		public function test_website_name_and_description_are_entity_decoded(): void {
+			// get_bloginfo() is display-filtered: "Pizza &amp; Poutine". The
+			// JSON-LD must carry the literal "&" (H-19).
+			$this->stub_populated_install();
+			Functions\when( 'get_bloginfo' )->alias(
+				static fn( $k = '' ) => array(
+					'name'        => 'Pizza &amp; Poutine',
+					'description' => 'Fresh &#8211; &quot;fast&quot;',
+				)[ $k ] ?? ''
+			);
+			$node = lafka_schema_website();
+			self::assertSame( 'Pizza & Poutine', $node['name'] );
+			self::assertSame( 'Fresh – "fast"', $node['description'] );
+		}
+
+		public function test_restaurant_name_fallback_is_entity_decoded(): void {
+			$this->stub_unconfigured_install();
+			Functions\when( 'get_bloginfo' )->alias( static fn( $k = '' ) => 'name' === $k ? 'Pizza &amp; Poutine' : '' );
+			self::assertSame( 'Pizza & Poutine', lafka_get_restaurant_info()['name'] );
 		}
 
 		public function test_website_links_restaurant_as_publisher_when_configured(): void {
@@ -358,6 +381,49 @@ namespace LafkaPlugin\Tests\Unit {
 				),
 				lafka_schema_breadcrumb()
 			);
+		}
+
+		/**
+		 * Pizza (1) > Classic pizzas (2); get_ancestors / get_term over that tree.
+		 */
+		private function stub_category_tree(): array {
+			$pizza   = new \WP_Term( array( 'term_id' => 1, 'name' => 'Pizza', 'slug' => 'pizza', 'taxonomy' => 'product_cat' ) );
+			$classic = new \WP_Term( array( 'term_id' => 2, 'name' => 'Classic pizzas', 'slug' => 'classic', 'taxonomy' => 'product_cat', 'parent' => 1 ) );
+			Functions\when( 'get_ancestors' )->alias( static fn( $id ) => 2 === (int) $id ? array( 1 ) : array() );
+			Functions\when( 'get_term' )->alias( static fn( $id ) => 1 === (int) $id ? $pizza : ( 2 === (int) $id ? $classic : null ) );
+			Functions\when( 'get_term_link' )->alias( static fn( $t ) => 'https://example.test/order/' . $t->slug . '/' );
+			Functions\when( 'is_wp_error' )->justReturn( false );
+			Functions\when( 'is_front_page' )->justReturn( false );
+			Functions\when( '__' )->returnArg();
+			return array( $pizza, $classic );
+		}
+
+		public function test_product_breadcrumb_follows_the_wc_primary_term_and_its_ancestors(): void {
+			$this->stub_unconfigured_install();
+			list( $pizza, $classic ) = $this->stub_category_tree();
+			$post     = new \WP_Post();
+			$post->ID = 77;
+			Functions\when( 'get_queried_object' )->justReturn( $post );
+			Functions\when( 'is_product' )->justReturn( true );
+			// WooCommerce's own pick: parent DESC puts the subcategory first.
+			Functions\when( 'wc_get_product_terms' )->justReturn( array( $classic, $pizza ) );
+			Functions\when( 'get_the_title' )->justReturn( 'Works' );
+			Functions\when( 'get_permalink' )->justReturn( 'https://example.test/order/pizza/classic/works/' );
+
+			$names = array_column( lafka_schema_breadcrumb()['itemListElement'], 'name' );
+			self::assertSame( array( 'Home', 'Menu', 'Pizza', 'Classic pizzas', 'Works' ), $names );
+		}
+
+		public function test_subcategory_archive_breadcrumb_includes_its_parent(): void {
+			$this->stub_unconfigured_install();
+			list( , $classic ) = $this->stub_category_tree();
+			Functions\when( 'get_queried_object' )->justReturn( $classic );
+			Functions\when( 'is_product' )->justReturn( false );
+			Functions\when( 'is_product_category' )->justReturn( true );
+
+			$items = lafka_schema_breadcrumb()['itemListElement'];
+			self::assertSame( array( 'Home', 'Menu', 'Pizza', 'Classic pizzas' ), array_column( $items, 'name' ) );
+			self::assertSame( array( 1, 2, 3, 4 ), array_column( $items, 'position' ) );
 		}
 
 		// ── Price currency ──────────────────────────────────────────────────
