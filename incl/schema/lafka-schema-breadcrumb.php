@@ -17,8 +17,8 @@ defined( 'ABSPATH' ) || exit;
  *
  * Logic:
  *  - Homepage is always position 1.
- *  - Single products: Home → Menu → Category → Product.
- *  - Product categories: Home → Menu → Category.
+ *  - Single products: Home → Menu → [Parent categories →] Category → Product.
+ *  - Product categories: Home → Menu → [Parent categories →] Category.
  *  - Shop / menu page: Home → Menu.
  *  - Standard pages: Home → Page Title.
  *  - Posts / archives: Home → Blog → Post.
@@ -46,14 +46,17 @@ function lafka_schema_breadcrumb(): ?array {
 		$menu_url = lafka_get_menu_url();
 		$items[]  = lafka_schema_breadcrumb_item( $position++, __( 'Menu', 'lafka-plugin' ), $menu_url );
 
-		// Primary category (first term).
-		$terms = get_the_terms( $obj->ID, 'product_cat' );
-		if ( is_array( $terms ) && ! empty( $terms ) ) {
-			$primary = reset( $terms );
-			if ( $primary instanceof WP_Term ) {
-				$cat_url = get_term_link( $primary );
+		// Category trail: the same primary term WooCommerce's visible
+		// breadcrumb picks (deepest term first — orderby parent DESC, through
+		// the same `woocommerce_breadcrumb_product_terms_args` filter), then
+		// its ancestors top-down, so structured and visible trails match
+		// (Home / Menu / Pizza / Classic pizzas / Works).
+		$primary = lafka_schema_breadcrumb_primary_term( (int) $obj->ID );
+		if ( $primary instanceof WP_Term ) {
+			foreach ( lafka_schema_breadcrumb_term_trail( $primary ) as $trail_term ) {
+				$cat_url = get_term_link( $trail_term );
 				if ( ! is_wp_error( $cat_url ) ) {
-					$items[] = lafka_schema_breadcrumb_item( $position++, $primary->name, $cat_url );
+					$items[] = lafka_schema_breadcrumb_item( $position++, $trail_term->name, $cat_url );
 				}
 			}
 		}
@@ -64,10 +67,12 @@ function lafka_schema_breadcrumb(): ?array {
 		// Product category archive: Home → Menu → Category.
 		$menu_url = lafka_get_menu_url();
 		$items[]  = lafka_schema_breadcrumb_item( $position++, __( 'Menu', 'lafka-plugin' ), $menu_url );
-		$cat_url  = get_term_link( $obj );
-		if ( ! is_wp_error( $cat_url ) ) {
-			$items[] = lafka_schema_breadcrumb_item( $position++, $obj->name, $cat_url );
-		}   
+		foreach ( lafka_schema_breadcrumb_term_trail( $obj ) as $trail_term ) {
+			$cat_url = get_term_link( $trail_term );
+			if ( ! is_wp_error( $cat_url ) ) {
+				$items[] = lafka_schema_breadcrumb_item( $position++, $trail_term->name, $cat_url );
+			}
+		}
 	} elseif ( function_exists( 'is_shop' ) && is_shop() ) {
 		// Shop archive: Home → Menu. The "Menu" crumb resolves to the canonical
 		// /menu/ browse page (f104) — the SAME target as the product/category
@@ -132,4 +137,56 @@ function lafka_schema_breadcrumb_item( int $position, string $name, string $url 
 		'name'     => $name,
 		'item'     => $url,
 	);
+}
+
+/**
+ * The product's primary category, chosen exactly as WooCommerce's visible
+ * breadcrumb chooses it (WC_Breadcrumb::add_crumbs_single(): the first of the
+ * product's terms ordered by parent DESC — i.e. a subcategory before its
+ * parent — through the `woocommerce_breadcrumb_product_terms_args` filter).
+ *
+ * @param int $product_id Product id.
+ * @return WP_Term|null
+ */
+function lafka_schema_breadcrumb_primary_term( int $product_id ): ?WP_Term {
+	if ( function_exists( 'wc_get_product_terms' ) ) {
+		$terms = wc_get_product_terms(
+			$product_id,
+			'product_cat',
+			(array) apply_filters(
+				'woocommerce_breadcrumb_product_terms_args',
+				array(
+					'orderby' => 'parent',
+					'order'   => 'DESC',
+				)
+			)
+		);
+	} else {
+		$terms = get_the_terms( $product_id, 'product_cat' );
+	}
+	if ( ! is_array( $terms ) || empty( $terms ) ) {
+		return null;
+	}
+	$primary = reset( $terms );
+	return $primary instanceof WP_Term ? $primary : null;
+}
+
+/**
+ * A category and its ancestors, top-level first.
+ *
+ * @param WP_Term $term Category.
+ * @return list<WP_Term>
+ */
+function lafka_schema_breadcrumb_term_trail( WP_Term $term ): array {
+	$trail = array();
+	if ( function_exists( 'get_ancestors' ) && ! empty( $term->term_id ) ) {
+		foreach ( array_reverse( (array) get_ancestors( (int) $term->term_id, (string) $term->taxonomy, 'taxonomy' ) ) as $ancestor_id ) {
+			$ancestor = get_term( (int) $ancestor_id, (string) $term->taxonomy );
+			if ( $ancestor instanceof WP_Term ) {
+				$trail[] = $ancestor;
+			}
+		}
+	}
+	$trail[] = $term;
+	return $trail;
 }
