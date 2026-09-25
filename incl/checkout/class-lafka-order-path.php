@@ -14,6 +14,12 @@
  *  - O-31: the classic checkout refuses a phone number with fewer digits than
  *    `lafka_checkout_phone_min_digits` (default 7), with an inline error on
  *    the field (WooCommerce only checks the characters, so "12" passed).
+ *  - A third-party map-autocomplete plugin (address-field-autocomplete)
+ *    overwrites the order's street address with its own map search box on
+ *    `woocommerce_checkout_order_processed`; a customer who typed the street
+ *    in WooCommerce's own field got a delivery order with NO street. The
+ *    street the customer submitted is put back when the order ended up
+ *    without one (filter `lafka_restore_order_street`).
  *  - O-37: WordPress speculative loading must not prefetch the cart,
  *    checkout or account pages (session-bound, uncacheable; the live CDN
  *    answered the prefetches with 503s), nor add/remove-item links.
@@ -47,6 +53,43 @@ if ( ! class_exists( 'Lafka_Order_Path' ) ) {
 			add_filter( 'woocommerce_form_field_args', array( __CLASS__, 'card_field_args' ), 20, 3 );
 			add_action( 'woocommerce_after_checkout_validation', array( __CLASS__, 'validate_phone' ), 20, 2 );
 			add_filter( 'wp_speculation_rules_href_exclude_paths', array( __CLASS__, 'speculation_exclusions' ) );
+			add_action( 'woocommerce_checkout_order_processed', array( __CLASS__, 'restore_order_street' ), 99, 3 );
+		}
+
+		/**
+		 * woocommerce_checkout_order_processed (late): put back a street address
+		 * the customer submitted that another plugin blanked on the order.
+		 *
+		 * @param mixed $order_id    Order id.
+		 * @param mixed $posted_data Posted checkout data (WC_Checkout::get_posted_data()).
+		 * @param mixed $order       WC_Order.
+		 * @return void
+		 */
+		public static function restore_order_street( $order_id, $posted_data = array(), $order = null ) {
+			if ( ! is_array( $posted_data ) || ! apply_filters( 'lafka_restore_order_street', true ) ) {
+				return;
+			}
+			if ( ! is_object( $order ) && function_exists( 'wc_get_order' ) ) {
+				$order = wc_get_order( $order_id );
+			}
+			if ( ! is_object( $order ) || ! method_exists( $order, 'get_billing_address_1' ) ) {
+				return;
+			}
+			$billing  = trim( (string) ( $posted_data['billing_address_1'] ?? '' ) );
+			$separate = ! empty( $posted_data['ship_to_different_address'] );
+			$shipping = trim( (string) ( $posted_data[ $separate ? 'shipping_address_1' : 'billing_address_1' ] ?? '' ) );
+			$changed  = false;
+			if ( '' !== $billing && '' === trim( (string) $order->get_billing_address_1() ) ) {
+				$order->set_billing_address_1( $billing );
+				$changed = true;
+			}
+			if ( '' !== $shipping && method_exists( $order, 'get_shipping_address_1' ) && '' === trim( (string) $order->get_shipping_address_1() ) ) {
+				$order->set_shipping_address_1( $shipping );
+				$changed = true;
+			}
+			if ( $changed ) {
+				$order->save();
+			}
 		}
 
 		/**
