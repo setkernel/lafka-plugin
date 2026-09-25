@@ -333,15 +333,44 @@ HTML;
 		foreach ( array(
 			'Disallow: /cart/',
 			'Disallow: /checkout/',
-			'Disallow: /my-account/',
-			'Disallow: /?add-to-cart=',
-			'Disallow: /?wc-ajax=',
-			'Disallow: /?orderby=',
-			'Disallow: /?min_price=',
-			'Disallow: /?max_price=',
+			'Disallow: /*?*add-to-cart=',
+			'Disallow: /*?*wc-ajax=',
+			'Disallow: /*?*orderby=',
+			'Disallow: /*?*min_price=',
+			'Disallow: /*?*max_price=',
+			'Disallow: /*?*filter_',
+			'Disallow: /*?*rating_filter=',
 		) as $directive ) {
-			$this->assertStringContainsString( $directive, $out, "robots.txt must contain '{$directive}'." );
+			$this->assertStringContainsString( $directive . "\n", $out, "robots.txt must contain '{$directive}'." );
 		}
+		// T-29: the account area is noindexed instead (a robots block would hide the noindex).
+		$this->assertStringNotContainsString( 'Disallow: /my-account/', $out );
+	}
+
+	/**
+	 * T-29: WordPress core appends "\nSitemap: …" before this filter runs, so
+	 * appending rules after it left them outside any User-agent group. Every
+	 * rule now sits inside the single `User-agent: *` group, and the Sitemap
+	 * line(s) close the file after one blank line.
+	 */
+	public function test_robots_rules_stay_in_one_user_agent_group_before_the_sitemap(): void {
+		Functions\when( 'apply_filters' )->returnArg( 2 );
+		$core = "User-agent: *\nDisallow: /*?add-to-cart=\nDisallow: /wp-admin/\nAllow: /wp-admin/admin-ajax.php\n\nSitemap: https://example.test/wp-sitemap.xml\n";
+		$out  = \lafka_robots_filter( $core, 1 );
+
+		$groups = preg_split( '/\n\s*\n/', trim( $out ) );
+		$this->assertCount( 2, $groups, $out );
+		$this->assertStringStartsWith( "User-agent: *\nDisallow: /*?add-to-cart=\nDisallow: /wp-admin/\nAllow: /wp-admin/admin-ajax.php\nDisallow: /cart/", $groups[0] );
+		$this->assertStringNotContainsString( 'Sitemap:', $groups[0] );
+		$this->assertSame( 'Sitemap: https://example.test/wp-sitemap.xml', $groups[1] );
+		$this->assertSame( $out, \lafka_robots_filter( $out, 1 ), 'Idempotent with a sitemap line too.' );
+	}
+
+	public function test_robots_rules_get_a_group_when_the_body_has_none(): void {
+		Functions\when( 'apply_filters' )->returnArg( 2 );
+		$out = \lafka_robots_filter( "Sitemap: https://example.test/s.xml\n", 1 );
+		$this->assertStringStartsWith( "User-agent: *\nDisallow: /cart/", $out );
+		$this->assertStringEndsWith( "\n\nSitemap: https://example.test/s.xml\n", $out );
 	}
 
 	public function test_robots_filter_preserves_default_wp_admin_ajax_allow(): void {

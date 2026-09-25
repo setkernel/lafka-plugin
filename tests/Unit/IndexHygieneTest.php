@@ -63,6 +63,8 @@ namespace LafkaPlugin\Tests\Unit {
 			Functions\when( 'is_singular' )->alias( fn( $types = '' ) => ! empty( $this->is['singular'] ) && ( '' === $types || in_array( $this->is['singular'], (array) $types, true ) ) );
 			Functions\when( 'is_post_type_archive' )->alias( fn( $types = '' ) => ! empty( $this->is['archive'] ) && in_array( $this->is['archive'], (array) $types, true ) );
 			Functions\when( 'is_author' )->alias( fn() => ! empty( $this->is['author'] ) );
+			Functions\when( 'is_account_page' )->alias( fn() => ! empty( $this->is['account'] ) );
+			Functions\when( 'get_post' )->alias( fn() => (object) array( 'post_content' => $this->is['content'] ?? '' ) );
 
 			require_once dirname( __DIR__, 2 ) . '/incl/seo/lafka-sitemap.php';
 			require_once dirname( __DIR__, 2 ) . '/incl/seo/lafka-robots.php';
@@ -133,6 +135,25 @@ namespace LafkaPlugin\Tests\Unit {
 			self::assertTrue( $this->robots()['noindex'] ?? false );
 
 			$this->is = array( 'tax' => 'product_cat' );
+			self::assertArrayNotHasKey( 'noindex', $this->robots() );
+		}
+
+		public function test_the_account_area_is_noindexed(): void {
+			$this->is = array( 'account' => true );
+			self::assertTrue( $this->robots()['noindex'] ?? false, 'is_account_page()' );
+
+			// A page carrying the account shortcode while WooCommerce's
+			// "My account page" setting is unset still is the account area.
+			$this->is = array(
+				'singular' => 'page',
+				'content'  => '[vc_row][vc_column][woocommerce_my_account][/vc_column][/vc_row]',
+			);
+			self::assertTrue( $this->robots()['noindex'] ?? false, 'shortcode page' );
+
+			$this->is = array(
+				'singular' => 'page',
+				'content'  => '<p>About us</p>',
+			);
 			self::assertArrayNotHasKey( 'noindex', $this->robots() );
 		}
 
