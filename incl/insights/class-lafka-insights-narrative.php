@@ -55,6 +55,37 @@ if ( ! class_exists( 'Lafka_Insights_Narrative' ) ) {
 		}
 
 		/**
+		 * A share that can never read as more than everything: "—" when the
+		 * part exceeds the whole (the two numbers then count different
+		 * populations or periods) or there is no whole; share() otherwise.
+		 *
+		 * @param int $part  Numerator.
+		 * @param int $whole Denominator.
+		 * @return string
+		 */
+		public static function ratio( int $part, int $whole ): string {
+			if ( $whole <= 0 || $part < 0 || $part > $whole ) {
+				return '—';
+			}
+			return self::share( $part, $whole );
+		}
+
+		/**
+		 * A site-local Y-m-d day in the site's date format.
+		 *
+		 * @param string $day Y-m-d.
+		 * @return string
+		 */
+		public static function format_day( string $day ): string {
+			$ts = strtotime( $day . ' 12:00:00 UTC' );
+			if ( false === $ts || ! function_exists( 'wp_date' ) ) {
+				return $day;
+			}
+			$format = function_exists( 'get_option' ) ? (string) get_option( 'date_format', 'F j, Y' ) : 'F j, Y';
+			return (string) wp_date( '' !== $format ? $format : 'F j, Y', $ts, new DateTimeZone( 'UTC' ) );
+		}
+
+		/**
 		 * Whether a period-over-period trend may be shown.
 		 *
 		 * @param int $visits      Visits this period.
@@ -176,18 +207,34 @@ if ( ! class_exists( 'Lafka_Insights_Narrative' ) ) {
 			$funnel = (array) ( $report['funnel'] ?? array() );
 			$visits = (int) ( $funnel['visit'] ?? 0 );
 			$days   = (int) ( $report['days'] ?? 7 );
+			$covered = (int) ( $report['coverage_days'] ?? $days );
+			$covered = $covered > 0 ? min( $covered, $days ) : $days;
+			$partial = $covered < $days && ! empty( $report['since'] );
+			$note    = $partial
+				? sprintf(
+					/* translators: 1: date Insights started collecting, 2: days covered. */
+					_n( 'Insights has been collecting since %1$s, so this covers %2$d day.', 'Insights has been collecting since %1$s, so this covers %2$d days.', $covered, 'lafka-plugin' ),
+					self::format_day( (string) $report['since'] ),
+					$covered
+				)
+				: '';
 
 			if ( 0 === $visits ) {
-				return array(
-					sprintf(
-						/* translators: %d: number of days. */
-						_n( 'No visits were recorded in the last %d day.', 'No visits were recorded in the last %d days.', $days, 'lafka-plugin' ),
-						$days
-					) . ' ' . __( 'Tracking may be broken: check Tools → Site Health, and that nothing (a cache, a security plugin or a content-security policy) blocks the Insights beacon.', 'lafka-plugin' ),
+				$days  = $covered;
+				$lines = '' !== $note ? array( $note ) : array();
+				return array_merge(
+					$lines,
+					array(
+						sprintf(
+							/* translators: %d: number of days. */
+							_n( 'No visits were recorded in the last %d day.', 'No visits were recorded in the last %d days.', $days, 'lafka-plugin' ),
+							$days
+						) . ' ' . __( 'Tracking may be broken: check Tools → Site Health, and that nothing (a cache, a security plugin or a content-security policy) blocks the Insights beacon.', 'lafka-plugin' ),
+					)
 				);
 			}
 
-			$out = array();
+			$out = '' !== $note ? array( $note ) : array();
 
 			$parts = array(
 				/* translators: %d: visitors. */
@@ -308,7 +355,7 @@ if ( ! class_exists( 'Lafka_Insights_Narrative' ) ) {
 
 			$prev = (array) ( $report['prev'] ?? array() );
 			$prev_visits = (int) ( $prev['visit'] ?? 0 );
-			if ( self::trend_allowed( $visits, $prev_visits, $days ) ) {
+			if ( ! $partial && false !== ( $prev['covered'] ?? true ) && self::trend_allowed( $visits, $prev_visits, $days ) ) {
 				$change = (int) round( 100 * ( $visits - $prev_visits ) / $prev_visits );
 				if ( 0 !== $change ) {
 					$out[] = $change > 0

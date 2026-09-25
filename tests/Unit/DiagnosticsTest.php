@@ -153,6 +153,9 @@ LOG;
 	}
 
 	public function test_only_stale_unseen_traces_are_indexed_as_checkout_incidents(): void {
+		// No order behind the trace is known (stub it: any earlier test that
+		// defined wc_get_order through Brain Monkey would otherwise be called).
+		Functions\when( 'wc_get_order' )->justReturn( false );
 		$stale = array_merge(
 			Lafka_Diagnostics::parse_trace( self::TRACE ),
 			array(

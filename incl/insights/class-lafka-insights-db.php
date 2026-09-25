@@ -298,6 +298,24 @@ if ( ! class_exists( 'Lafka_Insights_DB' ) ) {
 		}
 
 		/**
+		 * The earliest day any Insights data exists for ('' when none).
+		 *
+		 * @return string Y-m-d or ''.
+		 */
+		public static function first_day(): string {
+			global $wpdb;
+			if ( ! isset( $wpdb ) || ! is_object( $wpdb ) ) {
+				return '';
+			}
+			$sessions = self::sessions_table_name();
+			$daily    = self::daily_table_name();
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- code-controlled table names, no input; one-off fallback, then persisted.
+			$day = $wpdb->get_var( "SELECT LEAST( COALESCE( (SELECT MIN(day) FROM {$sessions}), '9999-12-31' ), COALESCE( (SELECT MIN(day) FROM {$daily}), '9999-12-31' ) )" );
+			$day = is_string( $day ) ? substr( $day, 0, 10 ) : '';
+			return ( 1 === preg_match( '/^\d{4}-\d{2}-\d{2}$/', $day ) && '9999-12-31' !== $day ) ? $day : '';
+		}
+
+		/**
 		 * Session rows for one day (the rollup input).
 		 *
 		 * @param string $day Y-m-d.

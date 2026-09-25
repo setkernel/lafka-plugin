@@ -360,6 +360,8 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 			delete_option( 'lafka_insights_db_version' );
 			delete_option( 'lafka_insights_secret' );
 			delete_option( 'lafka_insights_rolled_through' );
+			delete_option( 'lafka_insights_rollup_version' );
+			delete_option( 'lafka_insights_collecting_since' );
 		}
 
 		/**

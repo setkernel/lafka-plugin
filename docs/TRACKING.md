@@ -58,8 +58,21 @@ visitor IP (`CF-Connecting-IP`) is used; other proxies: filter
 furthest funnel stage, refusal reasons, device, source, landing page type,
 hour/weekday — kept 35 days) and `{prefix}lafka_insights_daily` (aggregate
 counters, 25 months). A nightly Action Scheduler job (03:10 site time) rolls up,
-prunes and rotates the secret. Orders by source come straight from
-WooCommerce Order Attribution.
+prunes and rotates the secret.
+
+**Honest comparisons.** Only measured visits count: an order is counted (per
+item, per source, in the funnel) only when its payment attempt came from a
+visit Insights measured — never orders placed before it started collecting or by
+staff, bots or opted-out browsers. Every number that combines visits with orders
+starts at max(range start, the day collection started —
+option `lafka_insights_collecting_since`, reset when the module is switched on);
+the page says "Collecting since …" and the weekly email says when a period is
+only partly covered, and no trend is shown against an uncovered period. A share
+whose numerator could exceed its denominator is shown as "—". *Visits and orders
+by source* compares Insights visits with the visits of that source that ordered;
+**all** placed orders by WooCommerce Order Attribution are listed separately
+("All orders by source (WooCommerce), incl. before Insights started") and never
+divided by visits.
 
 **Consent** (Customizer → Lafka — Analytics → *Insights (first-party)*,
 theme_mod `lafka_insights_consent_mode`):

@@ -43,6 +43,9 @@ if ( ! class_exists( 'Lafka_Insights' ) ) {
 		/** First-party cookie the consent banner mirrors analytics consent into. */
 		const CONSENT_COOKIE = 'lafka_consent';
 
+		/** First local day (Y-m-d) of the current collection period. */
+		const SINCE_OPTION = 'lafka_insights_collecting_since';
+
 		/** REST namespace shared with the other lafka/v1 routes. */
 		const REST_NS = 'lafka/v1';
 
@@ -191,11 +194,34 @@ if ( ! class_exists( 'Lafka_Insights' ) ) {
 			}
 			self::load();
 			if ( $now ) {
+				// A new collection period starts today: numbers that combine visits
+				// with orders never reach back into the time Insights was off.
+				update_option( self::SINCE_OPTION, Lafka_Insights_Session::today(), false );
 				Lafka_Insights_DB::install();
 				Lafka_Insights_Scheduler::ensure_scheduled();
 			} else {
 				Lafka_Insights_Scheduler::unschedule_all();
 			}
+		}
+
+		/**
+		 * First local day (Y-m-d) of the current collection period. Installs that
+		 * switched Insights on before this was recorded fall back to the first
+		 * day with data (then persisted), else today.
+		 *
+		 * @return string
+		 */
+		public static function collecting_since(): string {
+			$since = (string) get_option( self::SINCE_OPTION, '' );
+			if ( 1 === preg_match( '/^\d{4}-\d{2}-\d{2}$/', $since ) ) {
+				return $since;
+			}
+			$since = class_exists( 'Lafka_Insights_DB' ) ? Lafka_Insights_DB::first_day() : '';
+			if ( '' === $since ) {
+				return Lafka_Insights_Session::today();
+			}
+			update_option( self::SINCE_OPTION, $since, false );
+			return $since;
 		}
 
 		/**

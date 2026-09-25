@@ -8,9 +8,16 @@
  *   - finished days: rollup rows in {prefix}lafka_insights_daily
  *   - today: the same rollup computed live from today's session rows
  *   - live counters (items, search, refusals, payment failures): the daily table
- *   - orders by source: WooCommerce Order Attribution meta
- *     (`_wc_order_attribution_source_type`) read straight off the orders
- *     through wc_get_orders() — HPOS-safe, nothing duplicated.
+ *   - orders by source, two different questions kept apart:
+ *       orders_by_source     visits of each source that ordered (Insights'
+ *                            own sessions — never more than the visits);
+ *       wc_orders_by_source  every placed order in the range by WooCommerce
+ *                            Order Attribution meta, incl. orders from before
+ *                            Insights collected and from visitors it does not
+ *                            measure — shown separately, never divided by visits.
+ *
+ * Coverage window: every number that combines visits with orders starts at
+ * max( range start, the day Insights started collecting ) — `coverage_from`.
  *
  * @package Lafka\Plugin\Insights
  * @since   10.2.0
@@ -82,21 +89,26 @@ if ( ! class_exists( 'Lafka_Insights_Queries' ) ) {
 		 * @param string $today Y-m-d.
 		 * @return array<string,mixed>
 		 */
-		public static function build( int $days, string $today ): array {
+		public static function build( int $days, string $today, ?string $since = null ): array {
+			$since     = null === $since ? Lafka_Insights::collecting_since() : $since;
 			$base      = strtotime( $today . ' 00:00:00 UTC' );
 			$from      = gmdate( 'Y-m-d', $base - ( $days - 1 ) * 86400 );
 			$yesterday = gmdate( 'Y-m-d', $base - 86400 );
 			$prev_to   = gmdate( 'Y-m-d', $base - $days * 86400 );
 			$prev_from = gmdate( 'Y-m-d', $base - ( 2 * $days - 1 ) * 86400 );
+			$coverage  = min( $today, max( $from, $since ) );
+			$covered   = (int) round( ( $base - strtotime( $coverage . ' 00:00:00 UTC' ) ) / 86400 ) + 1;
 
-			$m = self::group( Lafka_Insights_DB::counters( $from, $yesterday, Lafka_Insights_Rollup::metrics() ) );
+			$m = self::group( Lafka_Insights_DB::counters( $coverage, $yesterday, Lafka_Insights_Rollup::metrics() ) );
 			foreach ( Lafka_Insights_Rollup::rollup_rows( Lafka_Insights_DB::sessions_for_day( $today ) ) as $metric => $dims ) {
 				foreach ( $dims as $dim => $value ) {
 					$m[ $metric ][ $dim ] = ( $m[ $metric ][ $dim ] ?? 0 ) + $value;
 				}
 			}
-			$live = self::group( Lafka_Insights_DB::counters( $from, $today, self::LIVE_METRICS ) );
-			$prev = self::group( Lafka_Insights_DB::counters( $prev_from, $prev_to, array( 'funnel' ) ) );
+			$live = self::group( Lafka_Insights_DB::counters( $coverage, $today, self::LIVE_METRICS ) );
+			// A previous period is only comparable when Insights covered all of it.
+			$prev_covered = $prev_from >= $since;
+			$prev         = $prev_covered ? self::group( Lafka_Insights_DB::counters( $prev_from, $prev_to, array( 'funnel' ) ) ) : array();
 
 			$funnel = array();
 			foreach ( array_keys( Lafka_Insights_DB::funnel_stages() ) as $stage ) {
@@ -107,6 +119,9 @@ if ( ! class_exists( 'Lafka_Insights_Queries' ) ) {
 				'days'            => $days,
 				'from'            => $from,
 				'to'              => $today,
+				'since'           => $since,
+				'coverage_from'   => $coverage,
+				'coverage_days'   => $covered,
 				'funnel'          => $funnel,
 				'closed_visits'   => (int) ( $m['funnel']['closed'] ?? 0 ),
 				'pay_failed'      => (int) ( $m['funnel']['pay_failed'] ?? 0 ),
@@ -125,10 +140,12 @@ if ( ! class_exists( 'Lafka_Insights_Queries' ) ) {
 				'pay_fail'        => self::sorted( $live['pay_fail'] ?? array() ),
 				'fulfilment'      => self::sorted( $live['fulfilment'] ?? array() ),
 				'order_channel'   => self::sorted( $live['order_channel'] ?? array() ),
-				'orders_by_source' => self::orders_by_source( $from, $today ),
+				'orders_by_source' => self::sorted( $m['source_order'] ?? array() ),
+				'wc_orders_by_source' => self::orders_by_source( $from, $today ),
 				'prev'            => array(
-					'visit' => (int) ( $prev['funnel']['visit'] ?? 0 ),
-					'order' => (int) ( $prev['funnel']['order'] ?? 0 ),
+					'covered' => $prev_covered,
+					'visit'   => (int) ( $prev['funnel']['visit'] ?? 0 ),
+					'order'   => (int) ( $prev['funnel']['order'] ?? 0 ),
 				),
 			);
 			$report['leak'] = self::biggest_leak( $funnel );

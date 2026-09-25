@@ -95,7 +95,8 @@ final class InsightsRollupTest extends TestCase {
 	}
 
 	public function test_catch_up_rolls_every_unrolled_finished_day_idempotently(): void {
-		$this->options[ Lafka_Insights_Rollup::ROLLED_OPTION ] = '2026-09-21';
+		$this->options[ Lafka_Insights_Rollup::ROLLED_OPTION ]  = '2026-09-21';
+		$this->options[ Lafka_Insights_Rollup::VERSION_OPTION ] = Lafka_Insights_Rollup::VERSION;
 		$this->wpdb->results['FROM wp_lafka_insights_sessions'] = $this->sessions();
 
 		$rolled = Lafka_Insights_Rollup::catch_up( '2026-09-24' );
@@ -167,6 +168,63 @@ final class InsightsRollupTest extends TestCase {
 		$this->addToAssertionCount( 1 );
 	}
 
+	public function test_orders_by_source_never_exceed_visits_by_source(): void {
+		$out = Lafka_Insights_Rollup::rollup_rows( $this->sessions() );
+		$this->assertSame( array( 'utm' => 1 ), $out['source_order'] );
+		foreach ( $out['source_order'] as $type => $orders ) {
+			$this->assertLessThanOrEqual( $out['source'][ $type ], $orders );
+		}
+	}
+
+	public function test_a_rollup_version_bump_rerolls_the_retained_days_once(): void {
+		$this->options[ Lafka_Insights_Rollup::ROLLED_OPTION ] = '2026-09-23';
+
+		$rolled = Lafka_Insights_Rollup::catch_up( '2026-09-24' );
+
+		$this->assertCount( 35, $rolled, 'Every retained day (35 back) through yesterday.' );
+		$this->assertSame( '2026-08-20', $rolled[0] );
+		$this->assertSame( Lafka_Insights_Rollup::VERSION, $this->options[ Lafka_Insights_Rollup::VERSION_OPTION ] );
+		$this->assertSame( array(), Lafka_Insights_Rollup::catch_up( '2026-09-24' ) );
+	}
+
+	public function test_coverage_window_starts_when_insights_started_collecting(): void {
+		$wc_args = null;
+		Functions\when( 'wc_get_orders' )->alias(
+			static function ( $args ) use ( &$wc_args ) {
+				$wc_args = $args;
+				return array();
+			}
+		);
+		Functions\when( 'wc_get_product' )->justReturn( null );
+
+		$report = Lafka_Insights_Queries::build( 30, '2026-09-24', '2026-09-20' );
+
+		$this->assertSame( '2026-08-26', $report['from'] );
+		$this->assertSame( '2026-09-20', $report['coverage_from'] );
+		$this->assertSame( 5, $report['coverage_days'] );
+		$this->assertFalse( $report['prev']['covered'], 'No trend against a period Insights did not cover.' );
+		foreach ( $this->wpdb->reads as $sql ) {
+			if ( false !== strpos( $sql, 'wp_lafka_insights_daily' ) ) {
+				$this->assertStringContainsString( "BETWEEN '2026-09-20'", $sql, 'Visit/order counters start at the coverage window.' );
+			}
+		}
+		$this->assertSame( '2026-08-26...2026-09-24', $wc_args['date_created'], 'The labelled WooCommerce table keeps the full range.' );
+	}
+
+	public function test_collecting_since_is_recorded_or_derived_from_the_first_data_day(): void {
+		$this->wpdb->var = '2026-09-10';
+		$this->assertSame( '2026-09-10', \Lafka_Insights::collecting_since() );
+		$this->assertSame( '2026-09-10', $this->options[ \Lafka_Insights::SINCE_OPTION ], 'Derived once, then persisted.' );
+
+		$this->options[ \Lafka_Insights::SINCE_OPTION ] = '2026-09-15';
+		$this->assertSame( '2026-09-15', \Lafka_Insights::collecting_since() );
+
+		unset( $this->options[ \Lafka_Insights::SINCE_OPTION ] );
+		$this->wpdb->var = '9999-12-31';
+		$this->assertSame( '2026-09-24', \Lafka_Insights::collecting_since(), 'No data yet: today.' );
+		$this->assertArrayNotHasKey( \Lafka_Insights::SINCE_OPTION, $this->options );
+	}
+
 	public function test_biggest_leak_is_the_largest_step_to_step_loss(): void {
 		$leak = Lafka_Insights_Queries::biggest_leak(
 			array(
@@ -212,14 +270,15 @@ final class InsightsRollupTest extends TestCase {
 			'FROM wp_lafka_insights_sessions' => $this->sessions(),
 		);
 
-		$report = Lafka_Insights_Queries::build( 7, '2026-09-24' );
+		$report = Lafka_Insights_Queries::build( 7, '2026-09-24', '2026-01-01' );
 
 		$this->assertSame( '2026-09-18', $report['from'] );
 		$this->assertSame( 15, $report['funnel']['visit'], '10 rolled + 5 live today.' );
 		$this->assertSame( 2, $report['funnel']['order'] );
 		$this->assertSame( array( 'avs' => 2 ), $report['pay_fail'] );
 		$this->assertSame( 6, $report['items']['42']['views'] );
-		$this->assertSame( array( 'organic' => 1 ), $report['orders_by_source'] );
+		$this->assertSame( array( 'organic' => 1 ), $report['wc_orders_by_source'] );
+		$this->assertSame( array( 'utm' => 1 ), $report['orders_by_source'], 'Insights visits that ordered, by their source.' );
 		$this->assertIsArray( $report['leak'] );
 	}
 }

@@ -69,6 +69,14 @@ final class FakeInsightsWpdb {
 		return 1;
 	}
 
+	/** @var mixed Canned get_var() result. */
+	public $var = null;
+
+	public function get_var( $sql ) {
+		$this->reads[] = (string) $sql;
+		return $this->var;
+	}
+
 	public function get_row( $sql, $output = null ) {
 		$this->reads[] = (string) $sql;
 		return $this->row;

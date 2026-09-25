@@ -245,6 +245,32 @@ final class InsightsServerEventsTest extends TestCase {
 		$this->assertSame( array(), $this->wpdb->writes(), 'processing → completed does not count the order twice.' );
 	}
 
+	public function test_an_order_placed_before_insights_collected_is_not_counted_when_completed_later(): void {
+		// No payment attempt was ever parked for this order: it predates Insights.
+		$order = new FakeInsightsOrder( 4001, array( 42 ) );
+
+		// The shop manager completes it from the admin…
+		$this->logged_in  = true;
+		$this->can_manage = true;
+		Lafka_Insights_Server_Events::on_order_status_changed( 4001, 'processing', 'completed', $order );
+		// …or a customer-facing request moves it on.
+		$this->logged_in  = false;
+		$this->can_manage = false;
+		Lafka_Insights_Server_Events::on_order_status_changed( 4002, 'pending', 'processing', new FakeInsightsOrder( 4002, array( 42 ) ) );
+
+		$this->assertSame( array(), $this->wpdb->writes(), 'No "ordered" without a measured visit: it would exceed "added".' );
+	}
+
+	public function test_orders_from_visitors_insights_does_not_measure_count_nowhere(): void {
+		$_SERVER['HTTP_USER_AGENT'] = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 HeadlessChrome/130.0 Safari/537.36';
+		Lafka_Insights_Server_Events::on_checkout_order_processed( 5001 );
+		Lafka_Insights_Server_Events::on_order_status_changed( 5001, 'pending', 'processing', new FakeInsightsOrder( 5001, array( 42 ) ) );
+		$this->fire( 'lafka_checkout_blocked', 'payment_avs', array( 'class' => 'avs', 'order_id' => 5002 ) );
+
+		$this->assertArrayNotHasKey( 'lafka_ins_o_5001', $this->transients );
+		$this->assertSame( array(), $this->wpdb->writes(), 'Bots, staff and opted-out browsers add no orders and no failures.' );
+	}
+
 	public function test_admin_created_orders_and_non_placed_statuses_are_ignored(): void {
 		Lafka_Insights_Server_Events::on_order_status_changed( 9, 'pending', 'processing', new FakeInsightsOrder( 9, array( 1 ), 'admin' ) );
 		Lafka_Insights_Server_Events::on_order_status_changed( 9, 'pending', 'cancelled', new FakeInsightsOrder( 9 ) );
