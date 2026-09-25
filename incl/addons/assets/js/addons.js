@@ -431,3 +431,31 @@ jQuery( document ).ready( function($) {
 		});
 	});
 });
+/*
+ * T-19 (GX): add-on group disclosure. When the theme opts in
+ * (add_theme_support( 'lafka-addon-group-toggle' )), group headings render as
+ * <h3 class="addon-name"><button class="lafka-addon-toggle" aria-expanded
+ * aria-controls>. A native button already handles Enter / Space; this keeps
+ * aria-expanded and the group's data-collapsed (which the theme styles) in
+ * sync. Delegated on document so groups re-rendered by WooCommerce's
+ * variation form keep working.
+ */
+( function () {
+	if ( typeof document === 'undefined' || ! document.addEventListener ) {
+		return;
+	}
+	document.addEventListener( 'click', function ( event ) {
+		var target = event.target;
+		var button = target && target.closest ? target.closest( '.lafka-addon-toggle' ) : null;
+		if ( ! button ) {
+			return;
+		}
+		event.preventDefault();
+		var expanded = 'false' !== button.getAttribute( 'aria-expanded' );
+		button.setAttribute( 'aria-expanded', expanded ? 'false' : 'true' );
+		var group = button.closest( '.product-addon' );
+		if ( group ) {
+			group.setAttribute( 'data-collapsed', expanded ? 'true' : 'false' );
+		}
+	} );
+}() );

@@ -7,7 +7,12 @@
  * @var string $description
  * @var string $type
  * @var string $has_options_with_images
+ * @var bool   $toggle  (T-19) Render the heading as a disclosure button.
+ * @var string $body_id (T-19) Id of the collapsible body the button controls.
  */
+
+$toggle  = ! empty( $toggle ) && $name && ! empty( $body_id );
+$body_id = $toggle ? (string) $body_id : '';
 
 $classes = array( 'product-addon', sanitize_html_class( 'product-addon-' . $name ) );
 if ( 1 == $required ) {
@@ -31,7 +36,15 @@ if ( $has_options_with_images ) {
 	>
 	<?php do_action( 'wc_product_addon_start', $addon ); ?>
 
-	<?php if ( $name ) : ?>
+	<?php if ( $toggle ) : ?>
+		<h3 class="addon-name"><button type="button" class="lafka-addon-toggle" aria-expanded="true" aria-controls="<?php echo esc_attr( $body_id ); ?>"><?php echo esc_html( wptexturize( $name ) ); ?>
+		<?php
+		if ( 1 == $required ) {
+			echo '<abbr class="required" title="' . esc_html__( 'Required field', 'lafka-plugin' ) . '">*</abbr>';}
+		?>
+		</button></h3>
+		<div class="lafka-addon-body" id="<?php echo esc_attr( $body_id ); ?>">
+	<?php elseif ( $name ) : ?>
 		<h3 class="addon-name"><?php echo esc_html( wptexturize( $name ) ); ?>
 		<?php
 		if ( 1 == $required ) {

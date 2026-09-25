@@ -27,6 +27,28 @@ defined( 'ABSPATH' ) || exit;
 
 class Lafka_Engine_Display {
 
+	/** @var int Per-request sequence for add-on group body ids. */
+	private static $toggle_seq = 0;
+
+	/**
+	 * T-19 (GX): whether add-on group headings render a real disclosure
+	 * button (`<h3><button aria-expanded aria-controls>`) instead of a bare
+	 * heading. A theme that collapses add-on groups opts in with
+	 * add_theme_support( 'lafka-addon-group-toggle' ) — it then owns the
+	 * collapsed styling ([data-collapsed="true"] on .product-addon) while the
+	 * plugin's addons.js keeps aria-expanded and data-collapsed in sync. Any
+	 * other theme keeps today's plain heading (no inert button).
+	 *
+	 * Filter: `lafka_addon_group_toggle` (bool, array $addon).
+	 *
+	 * @param array $addon Add-on group.
+	 * @return bool
+	 */
+	public static function group_toggle_enabled( array $addon ): bool {
+		$supported = function_exists( 'current_theme_supports' ) && current_theme_supports( 'lafka-addon-group-toggle' );
+		return (bool) apply_filters( 'lafka_addon_group_toggle', $supported, $addon );
+	}
+
 	public function __construct() {
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 
@@ -154,6 +176,9 @@ class Lafka_Engine_Display {
 				}
 			}
 
+			$toggle  = '' !== (string) $addon['name'] && self::group_toggle_enabled( $addon );
+			$body_id = $toggle ? 'lafka-addon-body-' . ( ++self::$toggle_seq ) : '';
+
 			wc_get_template(
 				'addon-start.php',
 				array(
@@ -163,6 +188,8 @@ class Lafka_Engine_Display {
 					'description'             => $addon['description'],
 					'type'                    => $addon['type'],
 					'has_options_with_images' => $has_options_with_images,
+					'toggle'                  => $toggle,
+					'body_id'                 => $body_id,
 				),
 				'lafka-plugin',
 				$this->plugin_path() . '/templates/'
@@ -172,7 +199,10 @@ class Lafka_Engine_Display {
 
 			wc_get_template(
 				'addon-end.php',
-				array( 'addon' => $addon ),
+				array(
+					'addon'  => $addon,
+					'toggle' => $toggle,
+				),
 				'lafka-plugin',
 				$this->plugin_path() . '/templates/'
 			);
