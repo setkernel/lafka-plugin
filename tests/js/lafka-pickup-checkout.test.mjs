@@ -21,27 +21,54 @@ const CONFIG = {
 	i18n: { required: 'required', optional: '(optional)', addAddress: 'Want delivery? Add your address' },
 };
 
-function page( { shipping = 'local_pickup:9', gateway = 'cod', config = CONFIG } = {} ) {
+/**
+ * A stand-in for jQuery( document.body ): records bound handlers and the
+ * events the script triggers (update_checkout).
+ */
+function fakeJQuery() {
+	const handlers = {};
+	const triggered = [];
+	const jq = () => ( {
+		on( events, fn ) {
+			events.split( ' ' ).forEach( ( e ) => ( handlers[ e ] = handlers[ e ] || [] ).push( fn ) );
+			return this;
+		},
+		trigger( e ) {
+			triggered.push( e );
+		},
+	} );
+	return { jq, handlers, triggered, fire: ( e ) => ( handlers[ e ] || [] ).forEach( ( fn ) => fn() ) };
+}
+
+function page( { shipping = 'local_pickup:9', gateway = 'cod', config = CONFIG, rates = [ 'local_pickup:9', 'distance_rate:8' ], jquery = null } = {} ) {
+	const radios =
+		rates.length === 1
+			? `<input type="hidden" name="shipping_method[0]" id="only" value="${ rates[ 0 ] }">`
+			: rates
+					.map( ( r ) => `<li><input type="radio" name="shipping_method[0]" id="${ r.startsWith( 'local' ) ? 'pickup' : 'delivery' }" value="${ r }" ${ r === shipping ? 'checked' : '' }></li>` )
+					.join( '' );
+	const globals = { lafkaPickupCheckout: config, setTimeout: ( fn ) => fn(), clearTimeout: () => {} };
+	if ( jquery ) {
+		globals.jQuery = jquery.jq;
+	}
 	return loadScript(
 		SCRIPT,
 		`<form class="checkout">
-			<p id="billing_first_name_field" class="form-row validate-required"><label>First name <abbr class="required">*</abbr></label><input id="billing_first_name"></p>
-			<p id="billing_address_1_field" class="form-row validate-required lafka-pickup-slim-field"><label>Street address <abbr class="required">*</abbr></label><input id="billing_address_1"></p>
-			<p id="billing_address_2_field" class="form-row lafka-pickup-slim-field"><label>Apartment <span class="optional">(optional)</span></label><input id="billing_address_2"></p>
-			<ul>
-				<li><input type="radio" name="shipping_method[0]" id="pickup" value="local_pickup:9" ${ 'local_pickup:9' === shipping ? 'checked' : '' }></li>
-				<li><input type="radio" name="shipping_method[0]" id="delivery" value="distance_rate:8" ${ 'distance_rate:8' === shipping ? 'checked' : '' }></li>
-			</ul>
+			<p id="billing_first_name_field" class="form-row validate-required"><label>First name <abbr class="required">*</abbr></label><input id="billing_first_name" name="billing_first_name"></p>
+			<p id="billing_address_1_field" class="form-row validate-required lafka-pickup-slim-field"><label>Street address <abbr class="required">*</abbr></label><input id="billing_address_1" name="billing_address_1"></p>
+			<p id="billing_address_2_field" class="form-row lafka-pickup-slim-field"><label>Apartment <span class="optional">(optional)</span></label><input id="billing_address_2" name="billing_address_2"></p>
+			<ul id="shipping_method">${ radios }</ul>
 			<input type="radio" name="payment_method" id="cod" value="cod" ${ 'cod' === gateway ? 'checked' : '' }>
 			<input type="radio" name="payment_method" id="card" value="card_gateway" ${ 'card_gateway' === gateway ? 'checked' : '' }>
 		</form>`,
-		{ lafkaPickupCheckout: config }
+		globals
 	);
 }
 
 const row = ( p, id ) => p.document.getElementById( id + '_field' );
 const hidden = ( p, id ) => 'none' === row( p, id ).style.display;
-const mark = ( p, id ) => row( p, id ).querySelector( 'label abbr.required, label span.optional' ).textContent;
+// Every required/optional marker in the label, joined — exactly one is expected.
+const mark = ( p, id ) => [ ...row( p, id ).querySelectorAll( 'label .required, label .optional' ) ].map( ( m ) => m.textContent ).join( '' );
 
 // linkedom tracks checkedness through the `checked` attribute (what :checked
 // matches), so a click on a radio is modelled by moving the attribute.
@@ -108,4 +135,75 @@ test( 'without config nothing changes', () => {
 
 	assert.ok( ! hidden( p, 'billing_address_1' ) );
 	assert.equal( mark( p, 'billing_address_1' ), '*' );
+} );
+
+/* ---------------------------------------------------------------------- *
+ *  Click-test regressions (classic checkout, 375px)
+ * ---------------------------------------------------------------------- */
+
+test( 'a revealed field never shows both the star and "(optional)"', () => {
+	const jquery = fakeJQuery();
+	const p = page( { jquery, rates: [ 'local_pickup:9' ] } );
+	p.click( '.lafka-pickup-address-toggle__button' );
+
+	// WooCommerce's address-i18n.js re-marks locale-required fields with the
+	// WC 9 marker <span class="required" aria-hidden="true">, then fires
+	// country_to_state_changed.
+	const label = row( p, 'billing_address_1' ).querySelector( 'label' );
+	label.insertAdjacentHTML( 'beforeend', '<span class="required" aria-hidden="true">*</span>' );
+	jquery.fire( 'country_to_state_changed' );
+
+	assert.equal( mark( p, 'billing_address_1' ), '(optional)' );
+} );
+
+test( 'a required field gets exactly the WooCommerce star', () => {
+	const p = page( { shipping: 'distance_rate:8' } );
+
+	assert.equal( mark( p, 'billing_address_1' ), '*' );
+	const star = row( p, 'billing_address_1' ).querySelector( 'label .required' );
+	assert.equal( star.getAttribute( 'aria-hidden' ), 'true' );
+} );
+
+test( 'an address filled without keystrokes (autofill, paste) still refreshes the rates', () => {
+	const jquery = fakeJQuery();
+	const p = page( { jquery, rates: [ 'local_pickup:9' ] } );
+	p.click( '.lafka-pickup-address-toggle__button' );
+
+	p.change( '#billing_address_1' );
+
+	assert.deepEqual( jquery.triggered, [ 'update_checkout' ] );
+} );
+
+test( '"Want delivery?" picks the delivery rate once it appears, only once', () => {
+	const jquery = fakeJQuery();
+	const p = page( { jquery, rates: [ 'local_pickup:9' ] } );
+	p.click( '.lafka-pickup-address-toggle__button' );
+
+	// The order review comes back with a delivery rate for the new address.
+	p.document.getElementById( 'shipping_method' ).innerHTML =
+		'<li><input type="radio" name="shipping_method[0]" id="pickup" value="local_pickup:9" checked></li>' +
+		'<li><input type="radio" name="shipping_method[0]" id="delivery" value="distance_rate:8"></li>';
+	let changed = 0;
+	p.document.getElementById( 'delivery' ).addEventListener( 'change', () => changed++ );
+	jquery.fire( 'updated_checkout' );
+
+	assert.ok( p.document.getElementById( 'delivery' ).hasAttribute( 'checked' ) );
+	assert.ok( ! p.document.getElementById( 'pickup' ).hasAttribute( 'checked' ) );
+	assert.equal( changed, 1, 'WooCommerce hears the change and refreshes totals.' );
+	assert.equal( mark( p, 'billing_address_1' ), '*', 'Delivery needs the address.' );
+
+	// The customer switches back to pickup: no second auto-pick.
+	choose( p, 'pickup' );
+	jquery.fire( 'updated_checkout' );
+	assert.ok( p.document.getElementById( 'pickup' ).hasAttribute( 'checked' ) );
+} );
+
+test( 'without "Want delivery?" a pickup customer is never switched to delivery', () => {
+	const jquery = fakeJQuery();
+	const p = page( { jquery } );
+
+	jquery.fire( 'updated_checkout' );
+
+	assert.ok( p.document.getElementById( 'pickup' ).hasAttribute( 'checked' ) );
+	assert.ok( hidden( p, 'billing_address_1' ) );
 } );
