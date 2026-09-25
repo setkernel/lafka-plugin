@@ -156,23 +156,7 @@ if ( ! class_exists( 'Lafka_Pickup_Checkout' ) ) {
 		 * @return bool
 		 */
 		public static function is_pickup( array $chosen_methods, string $order_type ): bool {
-			if ( 'pickup' === $order_type ) {
-				return true;
-			}
-			if ( 'delivery' === $order_type ) {
-				return false;
-			}
-			$chosen_methods = array_filter( array_map( 'strval', $chosen_methods ) );
-			if ( empty( $chosen_methods ) ) {
-				return false;
-			}
-			foreach ( $chosen_methods as $method ) {
-				if ( ! lafka_is_pickup_shipping_method( $method ) ) {
-					return false;
-				}
-			}
-
-			return true;
+			return 'pickup' === lafka_fulfilment_type_for( $chosen_methods, $order_type );
 		}
 
 		/**
@@ -488,16 +472,7 @@ if ( ! class_exists( 'Lafka_Pickup_Checkout' ) ) {
 		 * @return bool
 		 */
 		private static function current_is_pickup(): bool {
-			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- read-only decision; WooCommerce verifies the checkout nonce before it validates or saves these fields.
-			if ( isset( $_POST['shipping_method'] ) ) {
-				// phpcs:ignore WordPress.Security.NonceVerification.Missing -- see above.
-				$chosen = array_map( 'sanitize_text_field', (array) wp_unslash( $_POST['shipping_method'] ) );
-			} else {
-				$session = self::session();
-				$chosen  = null === $session ? array() : (array) $session->get( 'chosen_shipping_methods' );
-			}
-
-			return self::is_pickup( $chosen, self::current_order_type() );
+			return 'pickup' === lafka_current_fulfilment_type();
 		}
 
 		/**

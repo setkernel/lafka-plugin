@@ -77,6 +77,16 @@ if ( ! class_exists( 'Lafka_Customizer_Checkout' ) ) {
 				esc_html__( 'Short checkout for pickup orders', 'lafka-plugin' ),
 				esc_html__( 'Pickup orders paid in cash (or another offline method) ask only for name, phone and email. Card payments keep the billing address, which card processors verify. On the block checkout the address fields are shown as optional and checked when the order is placed.', 'lafka-plugin' )
 			);
+			self::checkbox(
+				$wp_customize,
+				'lafka_cod_contextual_title',
+				esc_html__( 'Name "cash on delivery" after the order type', 'lafka-plugin' ),
+				esc_html__( 'The cash on delivery payment option reads "Pay at pickup" on pickup orders and "Pay on delivery" on delivery orders. The texts below override those defaults.', 'lafka-plugin' )
+			);
+			self::text( $wp_customize, 'lafka_cod_title_pickup', esc_html__( 'Pickup: payment option title', 'lafka-plugin' ), esc_html__( 'Default: "Pay at pickup".', 'lafka-plugin' ) );
+			self::text( $wp_customize, 'lafka_cod_description_pickup', esc_html__( 'Pickup: payment option description', 'lafka-plugin' ), esc_html__( 'Default: "Pay when you collect your order."', 'lafka-plugin' ) );
+			self::text( $wp_customize, 'lafka_cod_title_delivery', esc_html__( 'Delivery: payment option title', 'lafka-plugin' ), esc_html__( 'Default: "Pay on delivery".', 'lafka-plugin' ) );
+			self::text( $wp_customize, 'lafka_cod_description_delivery', esc_html__( 'Delivery: payment option description', 'lafka-plugin' ), esc_html__( 'Default: "Pay when your order arrives."', 'lafka-plugin' ) );
 		}
 
 		/**

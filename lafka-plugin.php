@@ -746,12 +746,15 @@ if ( LAFKA_PLUGIN_IS_WOOCOMMERCE ) {
 	 * (Store API) checkout alike.
 	 *   · Lafka_Delivery_Quote_Guard — no delivery price from a partial address.
 	 *   · Lafka_Pickup_Checkout — pickup orders ask for name/phone/email only.
+	 *   · Lafka_Payment_Labels — COD reads "Pay at pickup" / "Pay on delivery".
 	 */
 	require_once plugin_dir_path( __FILE__ ) . 'incl/customizer/class-lafka-customizer-checkout.php';
 	require_once plugin_dir_path( __FILE__ ) . 'incl/checkout/class-lafka-delivery-quote-guard.php';
 	Lafka_Delivery_Quote_Guard::init();
 	require_once plugin_dir_path( __FILE__ ) . 'incl/checkout/class-lafka-pickup-checkout.php';
 	Lafka_Pickup_Checkout::init();
+	require_once plugin_dir_path( __FILE__ ) . 'incl/checkout/class-lafka-payment-labels.php';
+	Lafka_Payment_Labels::init();
 
 	/*
 	 * Block Cart/Checkout UI (NX1-04b). Builds on the NX1-04a Store API contract:

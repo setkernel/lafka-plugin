@@ -30,6 +30,63 @@ if ( ! function_exists( 'lafka_is_pickup_shipping_method' ) ) {
 	}
 }
 
+if ( ! function_exists( 'lafka_fulfilment_type_for' ) ) {
+	/**
+	 * How a cart will be fulfilled: 'pickup', 'delivery', or '' when nothing
+	 * is chosen yet. The Lafka order type (branch/order-type selector) decides
+	 * when set; otherwise the order is a pickup only when every chosen
+	 * shipping rate is a pickup method.
+	 *
+	 * @param string[] $chosen_methods Chosen shipping rate ids.
+	 * @param string   $order_type     Lafka order type ('pickup', 'delivery' or '').
+	 * @return string
+	 */
+	function lafka_fulfilment_type_for( array $chosen_methods, string $order_type ): string {
+		if ( 'pickup' === $order_type || 'delivery' === $order_type ) {
+			return $order_type;
+		}
+		$chosen_methods = array_filter( array_map( 'strval', $chosen_methods ) );
+		if ( empty( $chosen_methods ) ) {
+			return '';
+		}
+		foreach ( $chosen_methods as $method ) {
+			if ( ! lafka_is_pickup_shipping_method( $method ) ) {
+				return 'delivery';
+			}
+		}
+
+		return 'pickup';
+	}
+}
+
+if ( ! function_exists( 'lafka_current_fulfilment_type' ) ) {
+	/**
+	 * lafka_fulfilment_type_for() for the current request: the shipping
+	 * choice posted with a classic checkout submit / order-review refresh
+	 * when present, else the WC session's chosen rates, plus the session's
+	 * Lafka order type.
+	 *
+	 * @return string 'pickup', 'delivery' or ''.
+	 */
+	function lafka_current_fulfilment_type(): string {
+		$wc      = function_exists( 'WC' ) ? WC() : null;
+		$session = ( is_object( $wc ) && isset( $wc->session ) && is_object( $wc->session ) ) ? $wc->session : null;
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- read-only decision; WooCommerce verifies its own nonce before it acts on a checkout / order-review request.
+		if ( isset( $_POST['shipping_method'] ) ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- see above.
+			$chosen = array_map( 'sanitize_text_field', (array) wp_unslash( $_POST['shipping_method'] ) );
+		} else {
+			$chosen = null === $session ? array() : (array) $session->get( 'chosen_shipping_methods' );
+		}
+
+		$branch     = null === $session ? null : $session->get( 'lafka_branch_location' );
+		$order_type = is_array( $branch ) ? (string) ( $branch['order_type'] ?? '' ) : '';
+
+		return lafka_fulfilment_type_for( $chosen, $order_type );
+	}
+}
+
 if ( ! function_exists( 'lafka_order_fulfilment_type' ) ) {
 	/**
 	 * How an order is fulfilled: 'pickup' or 'delivery' (or the Lafka order
