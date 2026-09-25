@@ -132,6 +132,7 @@ final class OrderPathTest extends TestCase {
 				'woocommerce_form_field_args -> card_field_args',
 				'woocommerce_after_checkout_validation -> validate_phone',
 				'wp_speculation_rules_href_exclude_paths -> speculation_exclusions',
+				'woocommerce_checkout_order_processed -> restore_order_street',
 			),
 			Hooks::registered()
 		);

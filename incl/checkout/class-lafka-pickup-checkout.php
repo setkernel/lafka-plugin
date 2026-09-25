@@ -339,6 +339,7 @@ if ( ! class_exists( 'Lafka_Pickup_Checkout' ) ) {
 				'orderType'       => self::current_order_type(),
 				'pickupMethods'   => array_values( array_map( 'strval', (array) apply_filters( 'lafka_pickup_shipping_method_ids', array( 'local_pickup', 'pickup_location' ) ) ) ),
 				'addressGateways' => $address_gateways,
+				'addressToggle'   => self::delivery_possible(),
 				'fields'          => $fields,
 				'i18n'            => array(
 					'required'   => __( 'required', 'lafka-plugin' ),
@@ -346,6 +347,31 @@ if ( ! class_exists( 'Lafka_Pickup_Checkout' ) ) {
 					'addAddress' => __( 'Want delivery? Add your address', 'lafka-plugin' ),
 				),
 			);
+		}
+
+		/**
+		 * Whether this cart can be delivered at all, i.e. whether "Want
+		 * delivery? Add your address" can lead anywhere. False while the cart is
+		 * under the delivery minimum (Promotions): an address would never bring
+		 * a delivery rate, and the minimum notice already says what to add.
+		 *
+		 * @return bool
+		 */
+		public static function delivery_possible(): bool {
+			$possible = true;
+			$minimum  = function_exists( 'lafka_delivery_minimum' ) ? (float) lafka_delivery_minimum() : 0.0;
+			$wc       = function_exists( 'WC' ) ? WC() : null;
+			if ( $minimum > 0 && is_object( $wc ) && isset( $wc->cart ) && is_object( $wc->cart ) && method_exists( $wc->cart, 'get_cart_contents_total' ) ) {
+				$possible = (float) $wc->cart->get_cart_contents_total() >= $minimum;
+			}
+
+			/**
+			 * Filter whether the pickup form offers "Want delivery? Add your address".
+			 *
+			 * @since 10.3.0
+			 * @param bool $possible Default: false under the delivery minimum.
+			 */
+			return (bool) apply_filters( 'lafka_pickup_checkout_offer_delivery', $possible );
 		}
 
 		/* ------------------------------------------------------------------ *

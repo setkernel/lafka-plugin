@@ -207,3 +207,28 @@ test( 'without "Want delivery?" a pickup customer is never switched to delivery'
 	assert.ok( p.document.getElementById( 'pickup' ).hasAttribute( 'checked' ) );
 	assert.ok( hidden( p, 'billing_address_1' ) );
 } );
+
+// Regression (post-GX order-path merge, live click-test): a $25.99 cart under a
+// $30 delivery minimum offered "Want delivery? Add your address"; the customer
+// typed a full address, the delivery rate never came (the minimum removes it
+// server-side) and the order went through as pickup. The server now says when
+// delivery is impossible (addressToggle: false) and the promise is not shown.
+test( 'no "Want delivery?" when the order cannot be delivered (under the delivery minimum)', () => {
+	const p = page( { config: { ...CONFIG, addressToggle: false }, rates: [ 'local_pickup:9' ] } );
+
+	assert.ok( hidden( p, 'billing_address_1' ), 'Pickup still hides the address.' );
+	assert.equal( p.document.querySelector( '.lafka-pickup-address-toggle' ), null );
+} );
+
+test( 'above the minimum the promise stands: reveal, address, the delivery rate is chosen', () => {
+	const jquery = fakeJQuery();
+	const p = page( { config: { ...CONFIG, addressToggle: true }, jquery } );
+
+	p.click( '.lafka-pickup-address-toggle__button' );
+	assert.ok( ! hidden( p, 'billing_address_1' ) );
+	// WooCommerce refreshes the review with the delivery rate for the address.
+	jquery.fire( 'updated_checkout' );
+
+	assert.ok( p.document.getElementById( 'delivery' ).hasAttribute( 'checked' ), 'Delivery is chosen for the customer who asked for it.' );
+	assert.equal( mark( p, 'billing_address_1' ), '*', 'The street is required again.' );
+} );
