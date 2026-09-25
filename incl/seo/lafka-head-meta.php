@@ -23,8 +23,11 @@ if ( ! function_exists( 'lafka_insert_og_tags' ) ) {
 	 * v9.22.2 image fallback chain (first non-empty wins):
 	 *   1. Per-post `_lafka_og_image` post meta (manual override on any page).
 	 *   2. Featured image of the singular post/product.
+	 *   2b. (T-16) Menu-category thumbnail on a product-category archive.
 	 *   3. Customizer `lafka_og_image_default` (operator-pinned hero photo).
-	 *   4. Site icon (last-resort fallback).
+	 *   3b. (T-16) The homepage hero photo (lafka_lcp_hero()).
+	 *   4. Site icon (last-resort fallback) — always with the small
+	 *      `summary` card; the card type follows the image's shape.
 	 *
 	 * Without the Customizer default, archive pages like /menu/ and
 	 * /contact-us/ emitted no `og:image` at all — bad social-share previews.
@@ -114,8 +117,11 @@ if ( ! function_exists( 'lafka_insert_og_tags' ) ) {
 			$image_height = (int) ( $src[2] ?? 0 );
 		};
 
+		$site_name = (string) get_bloginfo( 'name' );
+		$is_icon   = false;
+
 		if ( is_front_page() || is_home() ) {
-			$title       = get_bloginfo( 'name' );
+			$title       = $site_name;
 			$description = lafka_resolve_meta_description( ( is_singular() && $post ) ? $post : null );
 			$url         = home_url( '/' );
 			if ( is_singular() && $post ) {
@@ -123,17 +129,35 @@ if ( ! function_exists( 'lafka_insert_og_tags' ) ) {
 			}
 			$og_type     = 'restaurant.restaurant';
 		} elseif ( is_singular() && $post ) {
-			$title       = get_the_title( $post );
+			$title       = lafka_og_title_with_site( (string) get_the_title( $post ), $site_name );
 			$description = lafka_resolve_meta_description( $post );
 			$url         = get_permalink( $post );
 			$resolve_post_image( $post->ID );
-			$og_type     = ( function_exists( 'is_product' ) && is_product() ) ? 'product' : 'article';
+			// T-16: products are `product`, blog posts `article`, every
+			// other page (menu, contact, about …) a `website`.
+			if ( function_exists( 'is_product' ) && is_product() ) {
+				$og_type = 'product';
+			} else {
+				$og_type = 'post' === (string) ( $post->post_type ?? 'post' ) ? 'article' : 'website';
+			}
 		} elseif ( is_tax() || is_category() || is_tag() ) {
 			$term        = get_queried_object();
-			$title       = $term ? $term->name : get_bloginfo( 'name' );
+			$title       = $term ? lafka_og_title_with_site( (string) $term->name, $site_name ) : $site_name;
 			$description = lafka_resolve_meta_description( null );
 			$url         = $term ? get_term_link( $term ) : home_url( '/' );
 			$og_type     = 'website';
+			// T-16: a menu category shares its own photo (category thumbnail).
+			if ( $term && isset( $term->term_id ) && function_exists( 'get_term_meta' ) ) {
+				$thumb_id = (int) get_term_meta( (int) $term->term_id, 'thumbnail_id', true );
+				if ( $thumb_id > 0 ) {
+					$src = wp_get_attachment_image_src( $thumb_id, 'large' );
+					if ( is_array( $src ) && ! empty( $src[0] ) ) {
+						$image        = (string) $src[0];
+						$image_width  = (int) ( $src[1] ?? 0 );
+						$image_height = (int) ( $src[2] ?? 0 );
+					}
+				}
+			}
 		} else {
 			$title       = wp_get_document_title();
 			$description = lafka_resolve_meta_description( null );
@@ -161,6 +185,22 @@ if ( ! function_exists( 'lafka_insert_og_tags' ) ) {
 			}
 		}
 
+		// Tier 3b (T-16): the homepage hero photo — a real, wide restaurant
+		// image — before falling back to the square logo.
+		if ( '' === $image && function_exists( 'lafka_lcp_hero' ) ) {
+			$hero = lafka_lcp_hero();
+			if ( ! empty( $hero['id'] ) ) {
+				$src = wp_get_attachment_image_src( (int) $hero['id'], 'large' );
+				if ( is_array( $src ) && ! empty( $src[0] ) ) {
+					$image        = (string) $src[0];
+					$image_width  = (int) ( $src[1] ?? 0 );
+					$image_height = (int) ( $src[2] ?? 0 );
+				}
+			} elseif ( ! empty( $hero['url'] ) ) {
+				$image = (string) $hero['url'];
+			}
+		}
+
 		// Tier 4 (last resort): site icon. Square, low resolution — still
 		// better than no preview at all.
 		if ( '' === $image && function_exists( 'get_site_icon_url' ) ) {
@@ -169,10 +209,9 @@ if ( ! function_exists( 'lafka_insert_og_tags' ) ) {
 				$image        = $icon;
 				$image_width  = 1200; // site icons are always square at the requested size.
 				$image_height = 1200;
+				$is_icon      = true;
 			}
 		}
-
-		$site_name = get_bloginfo( 'name' );
 
 		// Locale: Customizer default (operator-pinned) takes precedence over
 		// WP Settings → General → Site Language. Output normalized to "xx_YY"
@@ -203,12 +242,72 @@ if ( ! function_exists( 'lafka_insert_og_tags' ) ) {
 			}
 		}
 
-		printf( '<meta name="twitter:card" content="%s">' . "\n", $image ? 'summary_large_image' : 'summary' );
+		printf( '<meta name="twitter:card" content="%s">' . "\n", esc_attr( lafka_og_twitter_card( $image, $image_width, $image_height, $is_icon ) ) );
 		printf( '<meta name="twitter:title" content="%s">' . "\n", esc_attr( $title ) );
 		printf( '<meta name="twitter:description" content="%s">' . "\n", esc_attr( $description ) );
 		if ( $image ) {
 			printf( '<meta name="twitter:image" content="%s">' . "\n", esc_url( $image ) );
 		}
+	}
+}
+
+if ( ! function_exists( 'lafka_og_title_with_site' ) ) {
+	/**
+	 * T-16: og:title / twitter:title of an inner page carry the site name
+	 * ("Wings – Acme Kitchen"), with the Search & AI title separator, unless
+	 * the title already names the site.
+	 *
+	 * @param string $title     Page / term title.
+	 * @param string $site_name Site name.
+	 * @return string
+	 */
+	function lafka_og_title_with_site( string $title, string $site_name ): string {
+		$title = trim( $title );
+		if ( '' === $site_name || '' === $title ) {
+			return '' === $title ? $site_name : $title;
+		}
+		if ( false !== stripos( $title, $site_name ) ) {
+			return $title;
+		}
+		$sep = function_exists( 'lafka_seo_get' ) ? trim( lafka_seo_get( 'lafka_seo_title_sep' ) ) : '–';
+		return $title . ' ' . ( '' === $sep ? '–' : $sep ) . ' ' . $site_name;
+	}
+}
+
+if ( ! function_exists( 'lafka_og_twitter_card' ) ) {
+	/**
+	 * T-16: pick the Twitter/X card by the share image's shape. The large
+	 * card crops to ~2:1, so a square logo or a product square would be cut
+	 * — those get `summary` (small square thumbnail). `summary_large_image`
+	 * only for a landscape image ≥ 600px wide and ≥ 1.5× as wide as tall, or
+	 * an operator-chosen image URL of unknown size. Filter: `lafka_twitter_card`.
+	 *
+	 * @param string $image   Image URL ('' = none).
+	 * @param int    $width   Width in px (0 = unknown).
+	 * @param int    $height  Height in px (0 = unknown).
+	 * @param bool   $is_icon Whether the image is the site icon fallback.
+	 * @return string `summary` | `summary_large_image`.
+	 */
+	function lafka_og_twitter_card( string $image, int $width = 0, int $height = 0, bool $is_icon = false ): string {
+		if ( '' === $image || $is_icon ) {
+			$card = 'summary';
+		} elseif ( $width <= 0 || $height <= 0 ) {
+			$card = 'summary_large_image';
+		} else {
+			$card = ( $width >= 600 && $width >= 1.5 * $height ) ? 'summary_large_image' : 'summary';
+		}
+
+		/**
+		 * Filter the twitter:card type.
+		 *
+		 * @since 10.3.0
+		 * @param string $card   `summary` | `summary_large_image`.
+		 * @param string $image  Image URL.
+		 * @param int    $width  Width (0 = unknown).
+		 * @param int    $height Height (0 = unknown).
+		 */
+		$card = (string) apply_filters( 'lafka_twitter_card', $card, $image, $width, $height );
+		return in_array( $card, array( 'summary', 'summary_large_image' ), true ) ? $card : 'summary';
 	}
 }
 
