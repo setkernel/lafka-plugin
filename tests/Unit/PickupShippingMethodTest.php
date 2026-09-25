@@ -24,6 +24,9 @@ final class PickupShippingMethodTest extends TestCase {
 		parent::setUp();
 		Monkey\setUp();
 		Functions\when( 'get_option' )->justReturn( array() );
+		if ( class_exists( 'Lafka_Promotions' ) ) {
+			Lafka_Promotions::flush_knobs(); // No knob values leaked from other tests.
+		}
 		Functions\when( 'get_theme_mod' )->alias(
 			static fn( $k, $d = false ) => 'lafka_pdp_free_delivery_threshold' === $k ? 45 : $d
 		);

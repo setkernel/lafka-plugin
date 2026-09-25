@@ -34,6 +34,9 @@ final class DeliveryNoticePostCouponBaseTest extends TestCase {
 		Monkey\setUp();
 		// knob() falls back to constants (DELIVERY_MIN = 30) when option empty.
 		Functions\when( 'get_option' )->justReturn( array() );
+		// knob() memoises the options; another test's delivery_min (e.g. 45)
+		// must not leak in (CI reverse-order failure, 10.3.0).
+		Lafka_Promotions::flush_knobs();
 		// Output helpers — passthrough so we can assert on the rendered markup.
 		Functions\when( 'esc_html__' )->returnArg( 1 );
 		Functions\when( 'wp_kses_post' )->returnArg( 1 );
