@@ -302,6 +302,14 @@ namespace LafkaPlugin\Tests\Unit {
 			$menu          = lafka_schema_menu();
 			self::assertSame( array( 'Sides' ), array_keys( self::section_items( $menu ) ) );
 			self::assertSame( 'https://example.test/menu/sides/#menusection', $menu['hasMenuSection'][0]['@id'] );
+			// T-18: the category slice is its own Menu node, never a second
+			// (partial) definition of the full menu's /menu/#menu.
+			self::assertSame( 'https://example.test/menu/sides/#menu', $menu['@id'] );
+			self::assertSame( 'https://example.test/menu/sides/', $menu['url'] );
+
+			$this->is      = array();
+			$this->queried = null;
+			self::assertSame( 'https://example.test/menu/#menu', lafka_schema_menu()['@id'], 'The full menu keeps the canonical @id.' );
 		}
 
 		public function test_section_price_range_is_recorded_for_the_price_from_token(): void {
