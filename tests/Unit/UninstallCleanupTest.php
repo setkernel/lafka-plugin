@@ -87,9 +87,19 @@ class FakeUninstallWpdb {
 
 final class UninstallCleanupTest extends TestCase {
 
+	/** @var array<int,array<int,mixed>> as_unschedule_all_actions() calls. */
+	private array $unscheduled = array();
+
 	protected function setUp(): void {
 		parent::setUp();
 		Monkey\setUp();
+		$this->unscheduled = array();
+		// Action Scheduler (bundled with WooCommerce) is present on a real uninstall.
+		Functions\when( 'as_unschedule_all_actions' )->alias(
+			function ( ...$args ) {
+				$this->unscheduled[] = $args;
+			}
+		);
 	}
 
 	protected function tearDown(): void {
@@ -277,12 +287,25 @@ final class UninstallCleanupTest extends TestCase {
 		$this->assertStringContainsString( 'DROP TABLE IF EXISTS wp_lafka_abandoned_carts', $joined );
 		$this->assertStringContainsString( 'DROP TABLE IF EXISTS wp_lafka_push_subscriptions', $joined );
 		$this->assertStringContainsString( 'DROP TABLE IF EXISTS wp_lafka_incidents', $joined );
+		$this->assertStringContainsString( 'DROP TABLE IF EXISTS wp_lafka_insights_sessions', $joined );
+		$this->assertStringContainsString( 'DROP TABLE IF EXISTS wp_lafka_insights_daily', $joined );
 		$this->assertStringNotContainsString( 'DELETE FROM', $joined, 'Toggle OFF must not delete option/meta rows.' );
 		$this->assertSame(
-			array( 'lafka_abandoned_cart_db_version', 'lafka_push_db_version', 'lafka_push_activity_log', 'lafka_incidents_db_version' ),
+			array(
+				'lafka_abandoned_cart_db_version',
+				'lafka_push_db_version',
+				'lafka_push_activity_log',
+				'lafka_incidents_db_version',
+				// Insights: dropped tables' markers + the visit-id secret, which
+				// must never outlive the data it pseudonymised.
+				'lafka_insights_db_version',
+				'lafka_insights_secret',
+				'lafka_insights_rolled_through',
+			),
 			$deleted_options,
 			'Toggle OFF removes only the dropped tables\' markers.'
 		);
+		$this->assertContains( array( '', array(), 'lafka-insights' ), $this->unscheduled, 'Pending Insights jobs are cancelled with the tables.' );
 	}
 
 	public function test_revert_attribute_types_scopes_to_lafka_swatch_types_only(): void {

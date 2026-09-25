@@ -517,6 +517,24 @@ if ( ! class_exists( 'Lafka_Module_Registry' ) ) {
 				)
 			);
 
+			// ---- Insights (GX2) — first-party funnel analytics, a 'lafka' flag ----
+			self::register(
+				new Lafka_Module(
+					array(
+						'id'              => 'insights',
+						'label'           => esc_html__( 'Insights', 'lafka-plugin' ),
+						'description'     => esc_html__( 'First-party, cookieless funnel analytics: where visitors drop out and why no order was placed, plus a weekly plain-English email. No Google account needed.', 'lafka-plugin' ),
+						'category'        => 'analytics',
+						'storage'         => 'lafka_option',
+						'default_enabled' => false,
+						'get_enabled'     => self::flag_getter( 'insights' ),
+						'set_enabled'     => self::flag_setter( 'insights' ),
+						'settings_path'   => 'admin.php?page=lafka-insights',
+						'docs_slug'       => 'insights',
+					)
+				)
+			);
+
 			// ---- Analytics (read-only — derived from configured destinations) ----
 			self::register(
 				new Lafka_Module(
