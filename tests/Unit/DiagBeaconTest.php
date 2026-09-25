@@ -17,6 +17,8 @@ use Brain\Monkey\Functions;
 use Lafka_Beacon_Guard;
 use Lafka_Diag_Beacon;
 use LafkaPlugin\Tests\Unit\Support\InsightsHarness;
+use PHPUnit\Framework\Attributes\PreserveGlobalState;
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\TestCase;
 use WP_Error;
 
@@ -45,16 +47,17 @@ final class DiagBeaconTest extends TestCase {
 		$this->set_up_insights();
 		$this->logged = array();
 		Functions\when( 'wp_salt' )->justReturn( 'salt' );
-		$logged = &$this->logged;
-		Functions\when( 'wc_get_logger' )->justReturn(
-			new class( $logged ) {
-				public function __construct( private array &$sink ) {}
-				public function warning( $message, $context ) {
-					$this->sink[] = array(
-						'message' => $message,
-						'context' => $context,
-					);
-				}
+	}
+
+	/**
+	 * Capture writes through the Lafka logging facade's procedural helper
+	 * (defined by the GX1 observability bootstrap in production).
+	 */
+	private function capture_lafka_log(): void {
+		Functions\when( 'lafka_log' )->alias(
+			function ( $level, $channel, $message, $context = array() ) {
+				$this->logged[] = compact( 'level', 'channel', 'message', 'context' );
+				return true;
 			}
 		);
 	}
@@ -95,30 +98,42 @@ final class DiagBeaconTest extends TestCase {
 		$this->assertInstanceOf( WP_Error::class, Lafka_Diag_Beacon::permission( $this->beacon( self::REPORT, array( 'origin' => 'https://evil.example' ) ) ) );
 	}
 
-	public function test_report_is_logged_through_woocommerce_when_lafka_log_is_absent(): void {
+	public function test_report_is_logged_on_the_js_channel(): void {
+		$this->capture_lafka_log();
 		$reply = Lafka_Diag_Beacon::handle( $this->beacon( self::REPORT ) );
 
 		$this->assertSame( 204, $this->status_of( $reply ) );
 		$this->assertCount( 1, $this->logged );
+		$this->assertSame( 'warning', $this->logged[0]['level'] );
+		$this->assertSame( 'js', $this->logged[0]['channel'] );
 		$this->assertSame( 'TypeError: cart is undefined', $this->logged[0]['message'] );
-		$this->assertSame( 'lafka-js', $this->logged[0]['context']['source'] );
+		$this->assertSame( 'js_error', $this->logged[0]['context']['code'] );
 		$this->assertSame( '/wp-content/plugins/lafka-plugin/assets/js/x.js', $this->logged[0]['context']['file'], 'Path only; query string dropped.' );
 		$this->assertSame( 12, $this->logged[0]['context']['line'] );
 		$this->assertSame( 'safari-ios', $this->logged[0]['context']['ua'], 'UA family, never the raw UA.' );
 	}
 
-	public function test_report_goes_to_lafka_log_when_the_facade_is_loaded(): void {
-		if ( ! function_exists( 'lafka_log' ) ) {
-			$this->markTestSkipped( 'lafka_log() (the GX1 logging facade) is not loaded in this suite; the WooCommerce fallback is covered above.' );
-		}
-		Functions\expect( 'lafka_log' )
-			->once()
-			->with( 'warning', 'js', 'TypeError: cart is undefined', \Mockery::on( static fn( $ctx ) => 'js_error' === $ctx['code'] ) );
+	#[RunInSeparateProcess]
+	#[PreserveGlobalState( false )]
+	public function test_without_the_logging_facade_it_falls_back_to_woocommerce_logs(): void {
+		$this->assertFalse( function_exists( 'lafka_log' ), 'Fresh process: no logging facade.' );
+		$sink = array();
+		Functions\when( 'wc_get_logger' )->justReturn(
+			new class( $sink ) {
+				public function __construct( private array &$sink ) {}
+				public function warning( $message, $context ) {
+					$this->sink[] = array( $message, $context );
+				}
+			}
+		);
 		Lafka_Diag_Beacon::handle( $this->beacon( self::REPORT ) );
-		$this->assertSame( array(), $this->logged, 'The facade owns the write; no double log.' );
+		$this->assertCount( 1, $sink );
+		$this->assertSame( 'TypeError: cart is undefined', $sink[0][0] );
+		$this->assertSame( 'lafka-js', $sink[0][1]['source'] );
 	}
 
 	public function test_invalid_reports_are_400_and_not_logged(): void {
+		$this->capture_lafka_log();
 		$cases = array(
 			'third-party file' => array_merge( self::REPORT, array( 'f' => 'https://cdn.other.example/lib.js' ) ),
 			'extension frame'  => array_merge( self::REPORT, array( 'f' => 'chrome-extension://abc/content.js' ) ),
@@ -134,6 +149,7 @@ final class DiagBeaconTest extends TestCase {
 	}
 
 	public function test_bots_are_ignored_and_floods_are_rate_limited(): void {
+		$this->capture_lafka_log();
 		$_SERVER['HTTP_USER_AGENT'] = 'HeadlessChrome/120';
 		$this->assertSame( 204, $this->status_of( Lafka_Diag_Beacon::handle( $this->beacon( self::REPORT ) ) ) );
 		$this->assertSame( array(), $this->logged );

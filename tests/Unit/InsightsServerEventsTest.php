@@ -140,11 +140,35 @@ final class InsightsServerEventsTest extends TestCase {
 			'woocommerce_checkout_order_processed -> on_checkout_order_processed',
 			'woocommerce_store_api_checkout_order_processed -> on_store_api_order_processed',
 			'woocommerce_order_status_changed -> on_order_status_changed',
-			'woocommerce_order_status_failed -> on_order_failed',
 			'lafka_checkout_blocked -> on_checkout_blocked',
 		) as $expected ) {
 			$this->assertContains( $expected, $registered );
 		}
+		// Payment failures arrive through lafka_checkout_blocked when GX1's
+		// classifier is loaded; Insights observes the status itself otherwise.
+		$this->assertSame(
+			! class_exists( 'Lafka_Checkout_Failures' ),
+			in_array( 'woocommerce_order_status_failed -> on_order_failed', $registered, true )
+		);
+	}
+
+	public function test_gx1_payment_refusal_is_recorded_on_the_visit_that_paid(): void {
+		Lafka_Insights_Server_Events::on_checkout_order_processed( 314 );
+		$sid = substr( (string) $this->transients['lafka_ins_o_314'], 11 );
+
+		// Lafka_Checkout_Failures fires this from the gateway's webhook request.
+		$_SERVER['REMOTE_ADDR'] = '192.0.2.10';
+		$this->wpdb->queries    = array();
+		$this->fire( 'lafka_checkout_blocked', 'payment_cvv', array( 'path' => 'order', 'stage' => 'payment', 'class' => 'cvv', 'order_id' => 314 ) );
+		$this->fire( 'lafka_checkout_blocked', 'payment_cvv', array( 'path' => 'order', 'class' => 'cvv', 'order_id' => 314 ) );
+
+		$write = $this->session_write();
+		$this->assertStringContainsString( "UNHEX('{$sid}')", $write );
+		$this->assertStringContainsString( ',' . ( Lafka_Insights_DB::STAGE_VISIT | Lafka_Insights_DB::STAGE_PAY_FAILED ) . ',512,', $write );
+		$this->assertStringContainsString( "'payment_cvv'", $write );
+		$this->assertStringContainsString( "'pay_fail','cvv',1", $this->counter_writes() );
+		$this->assertStringContainsString( "'block','payment_cvv',1", $this->counter_writes() );
+		$this->assertCount( 2, $this->wpdb->writes(), 'Once per order per request.' );
 	}
 
 	public function test_add_to_cart_records_the_add_stage_and_the_item(): void {
@@ -240,7 +264,7 @@ final class InsightsServerEventsTest extends TestCase {
 		$this->assertStringContainsString( ',' . ( Lafka_Insights_DB::STAGE_VISIT | Lafka_Insights_DB::STAGE_PAY_FAILED ) . ',', $write );
 		$this->assertStringContainsString( "'payment_avs'", $write );
 		$this->assertStringContainsString( "'pay_fail','avs',1", $this->counter_writes() );
-		$this->assertStringContainsString( "'block','payment_failed',1", $this->counter_writes() );
+		$this->assertStringContainsString( "'block','payment_avs',1", $this->counter_writes() );
 	}
 
 	public function test_failure_classifier_buckets(): void {
@@ -271,7 +295,9 @@ final class InsightsServerEventsTest extends TestCase {
 	public function test_reason_bits_cover_known_payment_validation_and_unknown_reasons(): void {
 		$this->assertSame( 1, Lafka_Insights_Server_Events::reason_bit( 'store_closed' ) );
 		$this->assertSame( 512, Lafka_Insights_Server_Events::reason_bit( 'payment_cvv' ) );
-		$this->assertSame( 128, Lafka_Insights_Server_Events::reason_bit( 'validation_billing_phone' ) );
+		$this->assertSame( 128, Lafka_Insights_Server_Events::reason_bit( 'field_validation' ) );
+		$this->assertSame( 1024, Lafka_Insights_Server_Events::reason_bit( 'order_type_unavailable' ) );
+		$this->assertSame( 2048, Lafka_Insights_Server_Events::reason_bit( 'store_api_error' ) );
 		$this->assertSame( 1 << 30, Lafka_Insights_Server_Events::reason_bit( 'something_new' ) );
 		$this->assertSame( 'timeslot_invalid', Lafka_Insights_Server_Events::normalize_reason( 'Timeslot-Invalid' ) );
 	}

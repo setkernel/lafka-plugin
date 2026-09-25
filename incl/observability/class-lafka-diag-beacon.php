@@ -13,7 +13,8 @@
  *     else straight to WooCommerce's logger (source `lafka-js`), so it shows up
  *     in WooCommerce → Status → Logs either way.
  *
- * On when the `diagnostics` or `insights` module is enabled; filter
+ * On when the `diagnostics` module (GX1, default on) or the `insights`
+ * module is enabled; filter
  * `lafka_diag_js_beacon_enabled` overrides. Never printed on admin screens or
  * the kitchen display.
  *
@@ -35,7 +36,8 @@ if ( ! class_exists( 'Lafka_Diag_Beacon' ) ) {
 		 * @return bool
 		 */
 		public static function is_enabled(): bool {
-			$on = class_exists( 'Lafka_Options' ) && ( Lafka_Options::is_enabled( 'diagnostics' ) || Lafka_Options::is_enabled( 'insights' ) );
+			$diagnostics = class_exists( 'Lafka_Diagnostics' ) && method_exists( 'Lafka_Diagnostics', 'is_enabled' ) && Lafka_Diagnostics::is_enabled();
+			$on          = $diagnostics || ( class_exists( 'Lafka_Options' ) && Lafka_Options::is_enabled( 'insights' ) );
 			if ( function_exists( 'apply_filters' ) ) {
 				$on = (bool) apply_filters( 'lafka_diag_js_beacon_enabled', $on );
 			}

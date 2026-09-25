@@ -13,9 +13,13 @@
  *                      woocommerce_store_api_checkout_order_processed (blocks)
  *   order placed       first transition to processing / on-hold / completed,
  *                      once per order (order meta `_lafka_insights_counted`)
- *   payment failed     woocommerce_order_status_failed, classified from the
- *                      newest order note (declined / avs / cvv / gateway_error / other)
- *   checkout refused   do_action( 'lafka_checkout_blocked', $reason, $context )
+ *   checkout refused   do_action( 'lafka_checkout_blocked', $reason, $context ) —
+ *                      the GX1 vocabulary (Lafka_Checkout_Block_Reasons), incl.
+ *                      payment_declined / _avs / _cvv / _gateway_error / _other
+ *                      with the order id, fired by Lafka_Checkout_Failures
+ *   payment failed     from those payment_* refusals; standalone (no GX1
+ *                      observer loaded) from woocommerce_order_status_failed,
+ *                      classified from the newest order note
  *
  * A gateway webhook runs in the gateway's request, not the visitor's, so the
  * payment-attempt hook parks the visit id in a 2-day transient keyed by order
@@ -41,6 +45,9 @@ if ( ! class_exists( 'Lafka_Insights_Server_Events' ) ) {
 		/** @var array<string,bool> Reasons already recorded in this request. */
 		private static $seen_reasons = array();
 
+		/** @var array<int,bool> Orders whose payment failure was recorded in this request. */
+		private static $failed_orders = array();
+
 		/**
 		 * Hook everything (only when the module is collecting).
 		 *
@@ -53,8 +60,13 @@ if ( ! class_exists( 'Lafka_Insights_Server_Events' ) ) {
 			add_action( 'woocommerce_checkout_order_processed', array( __CLASS__, 'on_checkout_order_processed' ), 20, 3 );
 			add_action( 'woocommerce_store_api_checkout_order_processed', array( __CLASS__, 'on_store_api_order_processed' ), 20, 1 );
 			add_action( 'woocommerce_order_status_changed', array( __CLASS__, 'on_order_status_changed' ), 20, 4 );
-			add_action( 'woocommerce_order_status_failed', array( __CLASS__, 'on_order_failed' ), 20, 2 );
 			add_action( 'lafka_checkout_blocked', array( __CLASS__, 'on_checkout_blocked' ), 10, 2 );
+			// Lafka_Checkout_Failures (GX1) classifies failed orders and fires
+			// lafka_checkout_blocked( 'payment_*', { order_id, class } ), which the
+			// listener above records; observe the status ourselves only without it.
+			if ( ! class_exists( 'Lafka_Checkout_Failures' ) ) {
+				add_action( 'woocommerce_order_status_failed', array( __CLASS__, 'on_order_failed' ), 20, 2 );
+			}
 		}
 
 		/**
@@ -63,7 +75,8 @@ if ( ! class_exists( 'Lafka_Insights_Server_Events' ) ) {
 		 * @return void
 		 */
 		public static function reset(): void {
-			self::$seen_reasons = array();
+			self::$seen_reasons  = array();
+			self::$failed_orders = array();
 		}
 
 		// ─── Handlers ────────────────────────────────────────────────────────
@@ -197,7 +210,8 @@ if ( ! class_exists( 'Lafka_Insights_Server_Events' ) ) {
 		}
 
 		/**
-		 * Payment failed: stage + class counter + a "payment_failed" refusal.
+		 * Standalone payment-failure observer (only hooked when GX1's
+		 * Lafka_Checkout_Failures is not loaded): classify the newest note.
 		 *
 		 * @param int   $order_id Order id.
 		 * @param mixed $order    WC_Order.
@@ -208,30 +222,63 @@ if ( ! class_exists( 'Lafka_Insights_Server_Events' ) ) {
 			if ( ! is_object( $order ) || ! self::is_customer_order( $order ) ) {
 				return;
 			}
-			$note  = self::latest_order_note( (int) $order->get_id() );
-			$class = self::classify_payment_failure( $note );
-			self::record_for_order(
-				(int) $order->get_id(),
-				Lafka_Insights_DB::STAGE_PAY_FAILED,
-				array( 'pay_fail' => array( $class => 1 ) ),
-				'payment_' . $class
-			);
+			$class = self::classify_payment_failure( self::latest_order_note( (int) $order->get_id() ) );
+			self::record_payment_failure( (int) $order->get_id(), $class );
 		}
 
 		/**
-		 * `lafka_checkout_blocked` listener: one refusal per reason per request.
+		 * `lafka_checkout_blocked` listener. Payment refusals that carry an
+		 * order id are recorded on the visit that paid (a gateway webhook is not
+		 * the visitor's request); every other refusal once per reason per
+		 * request on the current visit.
 		 *
-		 * @param string $reason  Reason slug (see Lafka_Insights::block_reasons()).
-		 * @param array  $context Context (unused beyond the reason).
+		 * @param string $reason  Reason (Lafka_Checkout_Block_Reasons vocabulary).
+		 * @param array  $context Context: order_id + class for payment_* reasons.
 		 * @return void
 		 */
 		public static function on_checkout_blocked( $reason = '', $context = array() ): void {
-			$reason = self::normalize_reason( (string) $reason );
-			if ( '' === $reason || isset( self::$seen_reasons[ $reason ] ) ) {
+			$reason  = self::normalize_reason( (string) $reason );
+			$context = is_array( $context ) ? $context : array();
+			if ( '' === $reason ) {
+				return;
+			}
+			$order_id = (int) ( $context['order_id'] ?? 0 );
+			if ( 0 === strpos( $reason, 'payment_' ) && $order_id > 0 ) {
+				$class = isset( $context['class'] ) && is_string( $context['class'] ) ? $context['class'] : substr( $reason, 8 );
+				self::record_payment_failure( $order_id, $class );
+				return;
+			}
+			if ( isset( self::$seen_reasons[ $reason ] ) ) {
 				return;
 			}
 			self::$seen_reasons[ $reason ] = true;
 			self::record( 0, array( 'block' => array( $reason => 1 ) ), $reason );
+		}
+
+		/**
+		 * One payment failure: the pay_failed stage + last reason on the paying
+		 * visit, and the class / reason counters. Once per order per request.
+		 *
+		 * @param int    $order_id Order id.
+		 * @param string $class    declined | avs | cvv | gateway_error | other.
+		 * @return void
+		 */
+		private static function record_payment_failure( int $order_id, string $class ): void {
+			if ( isset( self::$failed_orders[ $order_id ] ) ) {
+				return;
+			}
+			self::$failed_orders[ $order_id ] = true;
+			$class  = in_array( $class, array( 'declined', 'avs', 'cvv', 'gateway_error' ), true ) ? $class : 'other';
+			$reason = 'payment_' . $class;
+			self::record_for_order(
+				$order_id,
+				Lafka_Insights_DB::STAGE_PAY_FAILED,
+				array(
+					'pay_fail' => array( $class => 1 ),
+					'block'    => array( $reason => 1 ),
+				),
+				$reason
+			);
 		}
 
 		// ─── Recording ───────────────────────────────────────────────────────
@@ -281,7 +328,7 @@ if ( ! class_exists( 'Lafka_Insights_Server_Events' ) ) {
 				$sid = Lafka_Insights_Session::current_visitor_id();
 			}
 			if ( '' === $sid ) {
-				Lafka_Insights_DB::add_counters( Lafka_Insights_Session::today(), self::with_block_counter( $counters, $reason ) );
+				Lafka_Insights_DB::add_counters( Lafka_Insights_Session::today(), $counters );
 				return;
 			}
 			self::write( $day, $sid, $stages, $counters, $reason );
@@ -309,22 +356,9 @@ if ( ! class_exists( 'Lafka_Insights_Server_Events' ) ) {
 					'dow'        => function_exists( 'wp_date' ) ? (int) wp_date( 'w' ) : (int) gmdate( 'w' ),
 				)
 			);
-			$counters = self::with_block_counter( $counters, $reason );
 			if ( $counters ) {
 				Lafka_Insights_DB::add_counters( Lafka_Insights_Session::today(), $counters );
 			}
-		}
-
-		/**
-		 * @param array<string,array<string,int>> $counters Counters.
-		 * @param string                          $reason   Refusal reason.
-		 * @return array<string,array<string,int>>
-		 */
-		private static function with_block_counter( array $counters, string $reason ): array {
-			if ( '' !== $reason && ! isset( $counters['block'] ) && 0 === strpos( $reason, 'payment_' ) ) {
-				$counters['block'] = array( 'payment_failed' => 1 );
-			}
-			return $counters;
 		}
 
 		// ─── Classification helpers (pure) ───────────────────────────────────
@@ -348,6 +382,8 @@ if ( ! class_exists( 'Lafka_Insights_Server_Events' ) ) {
 		 * @return int
 		 */
 		public static function reason_bit( string $reason ): int {
+			// The Lafka_Checkout_Block_Reasons vocabulary (GX1). Bits are stored,
+			// so never renumber — only append.
 			$bits = array(
 				'store_closed'           => 1,
 				'outside_delivery_zone'  => 2,
@@ -356,9 +392,11 @@ if ( ! class_exists( 'Lafka_Insights_Server_Events' ) ) {
 				'timeslot_invalid'       => 16,
 				'branch_invalid'         => 32,
 				'addon_invalid'          => 64,
-				'validation'             => 128,
+				'field_validation'       => 128,
 				'no_shipping_method'     => 256,
 				'payment_failed'         => 512,
+				'order_type_unavailable' => 1024,
+				'store_api_error'        => 2048,
 			);
 			if ( function_exists( 'apply_filters' ) ) {
 				$bits = (array) apply_filters( 'lafka_insights_block_reason_bits', $bits );
@@ -369,20 +407,26 @@ if ( ! class_exists( 'Lafka_Insights_Server_Events' ) ) {
 			if ( 0 === strpos( $reason, 'payment' ) ) {
 				return (int) ( $bits['payment_failed'] ?? 512 );
 			}
-			if ( 0 === strpos( $reason, 'validation' ) || 0 === strpos( $reason, 'field' ) ) {
-				return (int) ( $bits['validation'] ?? 128 );
+			if ( false !== strpos( $reason, 'validation' ) || 0 === strpos( $reason, 'field' ) ) {
+				return (int) ( $bits['field_validation'] ?? 128 );
 			}
 			return 1 << 30;
 		}
 
 		/**
 		 * Classify a gateway failure note: avs / cvv / declined / gateway_error / other.
-		 * Keyword map filterable via `lafka_insights_payment_failure_keywords`.
+		 * Delegates to Lafka_Checkout_Failures (GX1; filter
+		 * `lafka_payment_failure_keywords`) when loaded, so Diagnostics and
+		 * Insights agree; the standalone fallback map is filterable via
+		 * `lafka_insights_payment_failure_keywords`.
 		 *
 		 * @param string $note Order note text.
 		 * @return string
 		 */
 		public static function classify_payment_failure( string $note ): string {
+			if ( class_exists( 'Lafka_Checkout_Failures' ) && method_exists( 'Lafka_Checkout_Failures', 'classify_payment_failure' ) ) {
+				return (string) Lafka_Checkout_Failures::classify_payment_failure( $note ); // One classifier for Diagnostics and Insights.
+			}
 			$map = array(
 				'avs'           => '/\bavs\b|address verification|address (?:did not match|mismatch)/i',
 				'cvv'           => '/\bcvv2?\b|\bcvc\b|card code|security code/i',

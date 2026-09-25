@@ -89,35 +89,43 @@ if ( ! class_exists( 'Lafka_Insights_Narrative' ) ) {
 		}
 
 		/**
-		 * Human label for a checkout-refusal reason. Filterable through
-		 * `lafka_checkout_block_reasons` (the shared reason → label map).
+		 * Operator-facing label for a checkout-refusal reason: the shared
+		 * Lafka_Checkout_Block_Reasons labels (GX1, filterable through
+		 * `lafka_checkout_block_reasons`) when loaded, else the same wording here.
 		 *
-		 * @param string $reason Reason slug.
+		 * @param string $reason Reason slug ('none' = no refusal was shown).
 		 * @return string
 		 */
 		public static function reason_label( string $reason ): string {
+			if ( 'none' === $reason ) {
+				return __( 'No error was shown', 'lafka-plugin' );
+			}
+			if ( class_exists( 'Lafka_Checkout_Block_Reasons' ) && method_exists( 'Lafka_Checkout_Block_Reasons', 'label' ) ) {
+				return (string) Lafka_Checkout_Block_Reasons::label( $reason );
+			}
 			$labels = array(
-				'store_closed'           => __( 'the store was closed', 'lafka-plugin' ),
-				'outside_delivery_zone'  => __( 'the address was outside the delivery zone', 'lafka-plugin' ),
-				'address_unpinned'       => __( 'the delivery location was not pinned', 'lafka-plugin' ),
-				'below_delivery_minimum' => __( 'the order was below the delivery minimum', 'lafka-plugin' ),
-				'timeslot_invalid'       => __( 'the chosen time slot was not available', 'lafka-plugin' ),
-				'branch_invalid'         => __( 'the chosen branch was not available', 'lafka-plugin' ),
-				'addon_invalid'          => __( 'an item option was invalid', 'lafka-plugin' ),
-				'validation'             => __( 'a checkout field was rejected', 'lafka-plugin' ),
-				'no_shipping_method'     => __( 'no delivery method was available', 'lafka-plugin' ),
-				'payment_failed'         => __( 'the payment failed', 'lafka-plugin' ),
-				'payment_declined'       => __( 'the card was declined', 'lafka-plugin' ),
-				'payment_avs'            => __( 'the card address did not match (AVS)', 'lafka-plugin' ),
-				'payment_cvv'            => __( 'the card security code did not match', 'lafka-plugin' ),
-				'payment_gateway_error'  => __( 'the payment gateway had an error', 'lafka-plugin' ),
-				'payment_other'          => __( 'the payment failed', 'lafka-plugin' ),
-				'none'                   => __( 'no error was shown', 'lafka-plugin' ),
+				'store_closed'           => __( 'Store closed', 'lafka-plugin' ),
+				'outside_delivery_zone'  => __( 'Outside the delivery area', 'lafka-plugin' ),
+				'address_unpinned'       => __( 'Delivery address not pinpointed', 'lafka-plugin' ),
+				'timeslot_invalid'       => __( 'Time slot unavailable', 'lafka-plugin' ),
+				'branch_invalid'         => __( 'Branch not available', 'lafka-plugin' ),
+				'order_type_unavailable' => __( 'Order type not offered by the branch', 'lafka-plugin' ),
+				'addon_invalid'          => __( 'Invalid add-on selection', 'lafka-plugin' ),
+				'below_delivery_minimum' => __( 'Below the delivery minimum', 'lafka-plugin' ),
+				'no_shipping_method'     => __( 'No delivery/pickup method', 'lafka-plugin' ),
+				'field_validation'       => __( 'Checkout form errors', 'lafka-plugin' ),
+				'store_api_error'        => __( 'Other checkout error', 'lafka-plugin' ),
+				'payment_declined'       => __( 'Card declined', 'lafka-plugin' ),
+				'payment_avs'            => __( 'Card declined: address mismatch (AVS)', 'lafka-plugin' ),
+				'payment_cvv'            => __( 'Card declined: security code (CVV)', 'lafka-plugin' ),
+				'payment_gateway_error'  => __( 'Payment gateway error', 'lafka-plugin' ),
+				'payment_other'          => __( 'Payment failed (other)', 'lafka-plugin' ),
 			);
 			if ( function_exists( 'apply_filters' ) ) {
-				$labels = (array) apply_filters( 'lafka_checkout_block_reasons', $labels );
+				$filtered = apply_filters( 'lafka_checkout_block_reasons', $labels );
+				$labels   = is_array( $filtered ) ? array_merge( $labels, $filtered ) : $labels;
 			}
-			return isset( $labels[ $reason ] ) && is_string( $labels[ $reason ] ) ? $labels[ $reason ] : str_replace( '_', ' ', $reason );
+			return isset( $labels[ $reason ] ) && is_scalar( $labels[ $reason ] ) ? (string) $labels[ $reason ] : str_replace( '_', ' ', $reason );
 		}
 
 		/**
@@ -213,11 +221,11 @@ if ( ! class_exists( 'Lafka_Insights_Narrative' ) ) {
 			if ( $left > 0 && ! empty( $abandon ) ) {
 				$reason = (string) array_key_first( $abandon );
 				$out[]  = sprintf(
-					/* translators: 1: number of visitors who left with a cart, 2: share ("4 of 9"), 3: reason. */
-					_n( '%1$d visitor left with food in the cart; for %2$s of them, %3$s.', '%1$d visitors left with food in the cart; for %2$s of them, %3$s.', $left, 'lafka-plugin' ),
+					/* translators: 1: number of visitors who left with a cart, 2: reason label, 3: share ("4 of 9" or "44%"). */
+					_n( '%1$d visitor left with food in the cart. Most common reason: %2$s (%3$s).', '%1$d visitors left with food in the cart. Most common reason: %2$s (%3$s).', $left, 'lafka-plugin' ),
 					$left,
-					self::share( (int) $abandon[ $reason ], $left ),
-					self::reason_label( $reason )
+					self::reason_label( $reason ),
+					self::share( (int) $abandon[ $reason ], $left )
 				);
 			}
 

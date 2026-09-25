@@ -106,7 +106,7 @@ final class InsightsNarrativeTest extends TestCase {
 
 	public function test_abandon_sentence_uses_counts_under_twenty(): void {
 		$lines = Narrative::build( $this->week() );
-		$this->assertContains( '8 visitors left with food in the cart; for 4 of 8 of them, the address was outside the delivery zone.', $lines );
+		$this->assertContains( '8 visitors left with food in the cart. Most common reason: Outside the delivery area (4 of 8).', $lines );
 	}
 
 	public function test_zero_visits_says_tracking_may_be_broken(): void {
