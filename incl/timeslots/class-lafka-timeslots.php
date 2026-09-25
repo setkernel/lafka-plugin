@@ -39,6 +39,9 @@
 
 defined( 'ABSPATH' ) || exit;
 
+// `lafka_checkout_blocked` vocabulary (GX1) — the checkout gate reports refusals.
+require_once dirname( __DIR__ ) . '/observability/class-lafka-checkout-block-reasons.php';
+
 class Lafka_Timeslots {
 
 	/**
@@ -240,6 +243,13 @@ class Lafka_Timeslots {
 		$error = $this->evaluate_datetime_selection( $raw_date, $raw_slot, $mandatory );
 		if ( null !== $error ) {
 			wc_add_notice( esc_html( $error ), 'error' );
+			Lafka_Checkout_Block_Reasons::emit_code(
+				'lafka_invalid_timeslot',
+				array(
+					'path'  => 'classic',
+					'stage' => 'checkout',
+				)
+			);
 		}
 	}
 
