@@ -54,18 +54,25 @@ class Lafka_Engine_Display {
 	public function enqueue_scripts(): void {
 		$suffix = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
 
-		wp_register_script(
-			'accounting',
-			WC()->plugin_url() . '/assets/js/accounting/accounting' . $suffix . '.js',
-			array( 'jquery' ),
-			'0.4.2'
-		);
+		// accounting.js under WooCommerce's canonical handle. `accounting` is WC's
+		// deprecated alias (registered by its price-filter widget as a src-less
+		// dependant of `wc-accounting`), so it is never claimed here; the same
+		// file is registered only when WooCommerce has not done so already.
+		if ( ! wp_script_is( 'wc-accounting', 'registered' ) ) {
+			wp_register_script(
+				'wc-accounting',
+				WC()->plugin_url() . '/assets/js/accounting/accounting' . $suffix . '.js',
+				array( 'jquery' ),
+				'0.4.2',
+				true
+			);
+		}
 
 		$addons_rel = 'incl/addons/assets/js/addons' . $suffix . '.js';
 		wp_enqueue_script(
 			'lafka-addons',
 			plugins_url( '../assets/js/addons' . $suffix . '.js', LAFKA_ADDONS_ENGINE_PATH . '/.' ),
-			array( 'jquery', 'accounting' ),
+			array( 'jquery', 'wc-accounting' ),
 			function_exists( 'lafka_plugin_asset_version' ) ? lafka_plugin_asset_version( $addons_rel ) : '8.15.0',
 			true
 		);
