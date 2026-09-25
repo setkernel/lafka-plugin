@@ -40,3 +40,6 @@ if ( ! function_exists( 'add_action' ) ) {
 		return add_filter( $tag, $callback, $priority, $accepted_args );
 	}
 }
+
+// Order independence for function_exists() (registered in phpunit.xml.dist).
+require_once __DIR__ . '/Unit/Support/LeftoverStubsExtension.php';
