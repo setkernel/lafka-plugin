@@ -49,9 +49,14 @@ function lafka_shipping_areas_shortcode( $atts = [], $content = null, $tag = '' 
 		}
 	}
 
-	$options            = get_option( 'lafka_shipping_areas_advanced' );
-	$set_store_location = empty( $options['set_store_location'] ) ? 'geo_woo_store' : $options['set_store_location'];
-	$store_map_location = empty( $options['store_map_location'] ) ? '' : $options['store_map_location'];
+	// A missing/placeholder picked location falls back to geocoding the
+	// WooCommerce store address (see lafka_store_location_settings()).
+	$store_location     = function_exists( 'lafka_store_location_settings' ) ? lafka_store_location_settings() : array(
+		'mode'     => 'geo_woo_store',
+		'location' => '',
+	);
+	$set_store_location = $store_location['mode'];
+	$store_map_location = $store_location['location'];
 	$shortcode_id       = wp_unique_id( 'lafka_shipping_areas_shortcode' );
 	// `[lafka_shipping_areas]` renders an interactive map of delivery zones,
 	// which is meaningless without Google Maps. Show a polite admin-only

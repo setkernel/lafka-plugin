@@ -238,21 +238,30 @@ class Lafka_Shipping_Areas_Admin {
 
 	public static function store_map_location_cb( $args ) {
 		$options = get_option( 'lafka_shipping_areas_advanced' );
+		// Only a usable pinned location round-trips: a malformed value or the
+		// old Sydney placeholder renders empty, so saving the page can never
+		// re-persist it. The map writes the field only when the operator pins.
+		$saved = $options[ $args['label_for'] ] ?? '';
+		$saved = ( function_exists( 'lafka_parse_store_map_location' ) && null === lafka_parse_store_map_location( $saved ) ) ? '' : (string) $saved;
 		wp_add_inline_script(
 			'lafka-shipping-areas-admin-store-map',
-			'const lafka_admin_map_params = ' . json_encode(
+			'const lafka_admin_map_params = ' . wp_json_encode(
 				array(
-					'saved_store_address_lat_long' => $options[ $args['label_for'] ] ?? '',
-					'store_address'                => Lafka_Shipping_Areas::get_store_address(),
+					'saved_store_address_lat_long' => $saved,
+					'store_address'                => trim( Lafka_Shipping_Areas::get_store_address() ),
 				)
 			),
 			'before'
 		);
+		$problem = function_exists( 'lafka_store_location_problem' ) ? lafka_store_location_problem() : '';
+		if ( '' !== $problem ) {
+			echo '<p class="notice notice-warning inline">' . esc_html( $problem ) . '</p>';
+		}
 		?>
 		<input id="<?php echo esc_attr( $args['label_for'] ); ?>"
 				name="lafka_shipping_areas_advanced[<?php echo esc_attr( $args['label_for'] ); ?>]"
 				type="hidden"
-				value="<?php echo ! empty( $options[ $args['label_for'] ] ) ? esc_attr( $options[ $args['label_for'] ] ) : ''; ?>"
+				value="<?php echo esc_attr( $saved ); ?>"
 		>
 		<button type="button" class="button-secondary"
 				id="lafka_shipping_store_map_locate"><?php esc_html_e( 'Try to Geocode WooCommerce Store Address and save the coordinates', 'lafka-plugin' ); ?></button>
@@ -260,7 +269,7 @@ class Lafka_Shipping_Areas_Admin {
 			<?php esc_html_e( 'Or click on the map to pinpoint the exact store location. Note that this will not change the address set in WooCommerce settings.', 'lafka-plugin' ); ?>
 		</p>
 		<span id="lafka-shipping-areas-floating-search-panel">
-			<input id="lafka-shipping-areas-search-address" type="textbox" placeholder="<?php esc_html_e( 'Sydney, NSW', 'lafka-plugin' ); ?>"/>
+			<input id="lafka-shipping-areas-search-address" type="textbox" placeholder="<?php esc_attr_e( 'Search an address', 'lafka-plugin' ); ?>"/>
 			<input id="lafka-shipping-areas-floating-search-panel-submit" type="button" value="<?php esc_html_e( 'Geocode', 'lafka-plugin' ); ?>"/>
 		</span>
 		<div id="lafka-shipping-areas-admin-store-map"></div>
