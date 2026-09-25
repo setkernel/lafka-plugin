@@ -308,6 +308,13 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/compat/lafka-wpbakery-fallback.
 require_once plugin_dir_path( __FILE__ ) . 'incl/seo/lafka-seo-plugin-detect.php';
 
 /**
+ * GX3: Search & AI settings — option defaults/accessors and the title /
+ * description template engine shared by the schema, head-meta, llms.txt
+ * and IndexNow modules. Pure functions; must load before the schema module.
+ */
+require_once plugin_dir_path( __FILE__ ) . 'incl/seo/lafka-seo-settings.php';
+
+/**
  * P6-SEO-1/2/3/6: JSON-LD structured data — Restaurant, Menu, Product,
  * BreadcrumbList. Loads on both frontend and admin (admin is gated inside the
  * class). The helpers file also provides lafka_schema_get_nap() which is the

@@ -31,7 +31,7 @@ function lafka_schema_restaurant(): ?array {
 	$home_url = function_exists( 'home_url' ) && function_exists( 'trailingslashit' )
 		? trailingslashit( home_url( '/' ) )
 		: '/';
-	$logo_url = lafka_schema_get_logo_url();
+	$logo_url = lafka_schema_get_brand_logo_url();
 
 	$business_type = ! empty( $info['business_type'] ) && is_array( $info['business_type'] )
 		? array_values( $info['business_type'] )
@@ -52,6 +52,9 @@ function lafka_schema_restaurant(): ?array {
 	}
 	if ( ! empty( $info['email'] ) ) {
 		$schema['email'] = (string) $info['email'];
+	}
+	if ( ! empty( $info['description'] ) ) {
+		$schema['description'] = wp_strip_all_tags( (string) $info['description'] );
 	}
 	if ( ! empty( $info['price_range'] ) ) {
 		$schema['priceRange'] = (string) $info['price_range'];
@@ -80,9 +83,21 @@ function lafka_schema_restaurant(): ?array {
 
 	$schema['acceptsReservations'] = false;
 
-	// Menu URL — only when configured.
+	// Menu — a Menu reference with the same @id the full Menu node carries
+	// (lafka-schema-menu.php), so on the menu page / category pages the two
+	// nodes join into one graph and elsewhere the reference still names the
+	// menu URL.
 	if ( ! empty( $info['menu_url'] ) ) {
-		$schema['hasMenu'] = (string) $info['menu_url'];
+		$schema['hasMenu'] = array(
+			'@type' => 'Menu',
+			'@id'   => (string) $info['menu_url'] . '#menu',
+			'url'   => (string) $info['menu_url'],
+		);
+	}
+
+	// Map — the operator's Google Maps / Business Profile link (GX3).
+	if ( ! empty( $info['map_url'] ) ) {
+		$schema['hasMap'] = (string) $info['map_url'];
 	}
 
 	// Payment methods — schema.org expects comma-separated string.
@@ -104,11 +119,18 @@ function lafka_schema_restaurant(): ?array {
 		$schema['sameAs'] = $same_as;
 	}
 
-	// areaServed — the locality the business serves. Honest default: its own
-	// city/region (where it operates). Operators serving more areas can extend
-	// via the `lafka_schema_area_served` filter. Skipped when no city is set.
+	// areaServed — the operator's service-area list (WooCommerce → Settings →
+	// Restaurant → Schema & Geo, one place per line). Honest default when the
+	// list is empty: its own city/region (where it operates). Extend via the
+	// `lafka_schema_area_served` filter. Skipped when nothing is known.
 	$area_served = array();
-	if ( ! empty( $info['city'] ) ) {
+	foreach ( (array) ( $info['service_areas'] ?? array() ) as $place ) {
+		$area_served[] = array(
+			'@type' => 'Place',
+			'name'  => (string) $place,
+		);
+	}
+	if ( empty( $area_served ) && ! empty( $info['city'] ) ) {
 		$area_served[] = array(
 			'@type' => 'City',
 			'name'  => (string) $info['city'] . ( ! empty( $info['region'] ) ? ', ' . (string) $info['region'] : '' ),
@@ -133,7 +155,11 @@ function lafka_schema_restaurant(): ?array {
 	// real WooCommerce reviews.
 
 	if ( '' !== $logo_url ) {
-		$schema['image'] = $logo_url;
+		$schema['logo'] = $logo_url;
+	}
+	$images = lafka_schema_get_restaurant_images();
+	if ( ! empty( $images ) ) {
+		$schema['image'] = 1 === count( $images ) ? $images[0] : $images;
 	}
 
 	/**
