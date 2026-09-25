@@ -493,6 +493,15 @@ class Lafka_Order_Hours {
 			// Add classes to body
 			add_filter( 'body_class', array( $this, 'add_body_class' ) );
 
+			// Order ahead (date/time slots on, a later slot on offer): closed
+			// means "schedule for when we open", not "stop". Keep the cart,
+			// checkout and place-order buttons; the checkout gate requires a
+			// slot instead. The closed card still tells the customer when we open.
+			if ( self::can_order_ahead() ) {
+				add_action( 'woocommerce_after_add_to_cart_button', array( $this, 'echo_closed_store_message' ), 99 );
+				return;
+			}
+
 			remove_action( 'woocommerce_proceed_to_checkout', 'woocommerce_button_proceed_to_checkout', 20 );
 			add_action( 'woocommerce_proceed_to_checkout', array( $this, 'echo_closed_store_message' ), 20 );
 
@@ -539,6 +548,104 @@ class Lafka_Order_Hours {
 	}
 
 	/**
+	 * The closed notice with the next opening appended when it is known, e.g.
+	 * "Sorry, we're closed. Opens Saturday at 11:00 AM."
+	 *
+	 * @return string
+	 */
+	public static function get_closed_notice_with_next_open(): string {
+		return self::compose_closed_notice(
+			self::get_closed_notice_message(),
+			self::format_next_open_time_human( self::resolve_next_opening() )
+		);
+	}
+
+	/**
+	 * Join the closed message and the next-opening text (pure).
+	 *
+	 * @param string $message   Closed message (operator or default).
+	 * @param string $next_open Human next-opening text ('' when unknown).
+	 * @return string
+	 */
+	public static function compose_closed_notice( string $message, string $next_open ): string {
+		if ( '' === $next_open ) {
+			return $message;
+		}
+		$message = rtrim( $message );
+		if ( '' !== $message && ! preg_match( '/[.!?…]$/u', $message ) ) {
+			$message .= '.';
+		}
+
+		/* translators: 1: store-closed message, 2: next opening, e.g. "Saturday at 11:00 AM". */
+		return trim( sprintf( __( '%1$s Opens %2$s.', 'lafka-plugin' ), $message, $next_open ) );
+	}
+
+	/**
+	 * The next opening for the customer's context: the session branch's clock
+	 * when a branch is chosen, the earliest opening across branches when the
+	 * shipping-areas module is on, else the main store's schedule.
+	 *
+	 * @return DateTime|null
+	 */
+	public static function resolve_next_opening() {
+		$branch_id = null;
+		if ( function_exists( 'WC' ) && isset( WC()->session ) ) {
+			$branch_id = WC()->session->get( 'lafka_branch_location' )['branch_id'] ?? null;
+		}
+		if ( null !== $branch_id ) {
+			$timezone_object = empty( self::$timezone ) ? null : self::resolve_timezone( (string) self::$timezone );
+			$opening         = self::get_next_opening_time( $timezone_object );
+		} elseif ( class_exists( 'Lafka_Shipping_Areas' ) ) {
+			$opening = self::get_first_opening_branch_datetime( Lafka_Shipping_Areas::get_all_legit_branch_locations() );
+		} else {
+			$opening = self::get_next_opening_time();
+		}
+
+		return $opening instanceof DateTime ? $opening : null;
+	}
+
+	/**
+	 * Whether a closed store can still take orders for later: the delivery/
+	 * pickup date-time feature is on and offers at least one slot date. A
+	 * force-closed store (operator override) never takes orders.
+	 *
+	 * @return bool
+	 */
+	public static function can_order_ahead(): bool {
+		$forced_closed = self::$lafka_order_hours_force_override_check && ! self::$lafka_order_hours_force_override_status;
+
+		$can = false;
+		if ( ! $forced_closed && class_exists( 'Lafka_Timeslots' ) && Lafka_Timeslots::is_feature_enabled() ) {
+			$timeslots = Lafka_Timeslots::instance();
+			if ( $timeslots instanceof Lafka_Timeslots ) {
+				$can = empty( self::$lafka_order_hours_schedule )
+					|| array() !== Lafka_Timeslots::get_enabled_dates_for_days_ahead( $timeslots->get_days_ahead(), $timeslots->get_timeslot_duration() );
+			}
+		}
+
+		/**
+		 * Filter whether a closed store accepts orders scheduled for later.
+		 *
+		 * @param bool $can Default: date/time slots on and a slot date on offer.
+		 */
+		return (bool) apply_filters( 'lafka_order_hours_can_order_ahead', $can );
+	}
+
+	/**
+	 * Whether add-to-cart is blocked right now: closed, the operator opted
+	 * into lafka_order_hours_disable_add_to_cart, and ordering ahead is not
+	 * possible. Theme templates that render their own add-to-cart form read
+	 * this so they agree with the server gates.
+	 *
+	 * @return bool
+	 */
+	public static function is_add_to_cart_blocked(): bool {
+		return ! self::is_shop_open()
+			&& ! empty( self::$lafka_order_hours_options['lafka_order_hours_disable_add_to_cart'] )
+			&& ! self::can_order_ahead();
+	}
+
+	/**
 	 * Whether add-to-cart must be blocked while the store is closed.
 	 *
 	 * Mirrors the UI contract: add-to-cart is only disabled when the operator
@@ -565,7 +672,27 @@ class Lafka_Order_Hours {
 		if ( self::is_shop_open() ) {
 			return;
 		}
-		wc_add_notice( esc_html( self::get_closed_notice_message() ), 'error' );
+		if ( self::can_order_ahead() ) {
+			// A chosen slot is validated (offered, in the future, not full) by
+			// Lafka_Timeslots::validate_datetime_fields() on this same hook.
+			// phpcs:disable WordPress.Security.NonceVerification.Missing -- woocommerce_checkout_process: WC core verified the checkout nonce.
+			$date = isset( $_POST['lafka_checkout_date'] ) ? sanitize_text_field( wp_unslash( $_POST['lafka_checkout_date'] ) ) : '';
+			$slot = isset( $_POST['lafka_checkout_timeslot'] ) ? sanitize_text_field( wp_unslash( $_POST['lafka_checkout_timeslot'] ) ) : '';
+			// phpcs:enable WordPress.Security.NonceVerification.Missing
+			if ( '' !== $date && '' !== $slot ) {
+				return;
+			}
+			wc_add_notice( esc_html( self::get_closed_notice_with_next_open() . ' ' . self::choose_time_hint() ), 'error' );
+			Lafka_Checkout_Block_Reasons::emit_code(
+				'lafka_store_closed',
+				array(
+					'path'  => 'classic',
+					'stage' => 'checkout',
+				)
+			);
+			return;
+		}
+		wc_add_notice( esc_html( self::get_closed_notice_with_next_open() ), 'error' );
 		Lafka_Checkout_Block_Reasons::emit_code(
 			'lafka_store_closed',
 			array(
@@ -573,6 +700,15 @@ class Lafka_Order_Hours {
 				'stage' => 'checkout',
 			)
 		);
+	}
+
+	/**
+	 * "Choose a time" hint appended to the closed notice when ordering ahead.
+	 *
+	 * @return string
+	 */
+	public static function choose_time_hint(): string {
+		return __( 'Please choose a delivery or pickup time for when we are open.', 'lafka-plugin' );
 	}
 
 	/**
@@ -586,8 +722,12 @@ class Lafka_Order_Hours {
 	 * @return bool
 	 */
 	public function gate_add_to_cart_when_closed( $passed ) {
-		if ( $passed && ! self::is_shop_open() && $this->is_add_to_cart_disabled_when_closed() ) {
-			wc_add_notice( esc_html( self::get_closed_notice_message() ), 'error' );
+		if ( ! $passed || self::is_shop_open() ) {
+			return $passed;
+		}
+
+		if ( $this->is_add_to_cart_disabled_when_closed() && ! self::can_order_ahead() ) {
+			wc_add_notice( esc_html( self::get_closed_notice_with_next_open() ), 'error' );
 			Lafka_Checkout_Block_Reasons::emit_code(
 				'lafka_store_closed',
 				array(
@@ -597,6 +737,16 @@ class Lafka_Order_Hours {
 			);
 
 			return false;
+		}
+
+		// The item may go in the cart, but say now — not at the place-order
+		// button — that we are closed and when checkout works.
+		$hint   = self::can_order_ahead()
+			? __( 'You can order now and choose a time at checkout.', 'lafka-plugin' )
+			: __( 'You can fill your cart now and check out once we are open.', 'lafka-plugin' );
+		$notice = esc_html( self::get_closed_notice_with_next_open() . ' ' . $hint );
+		if ( ! function_exists( 'wc_has_notice' ) || ! wc_has_notice( $notice, 'notice' ) ) {
+			wc_add_notice( $notice, 'notice' );
 		}
 
 		return $passed;
@@ -614,7 +764,7 @@ class Lafka_Order_Hours {
 	 * @throws \Automattic\WooCommerce\StoreApi\Exceptions\RouteException When closed and add-to-cart is disabled.
 	 */
 	public function gate_store_api_add_to_cart_when_closed() {
-		if ( self::is_shop_open() || ! $this->is_add_to_cart_disabled_when_closed() ) {
+		if ( ! self::is_add_to_cart_blocked() ) {
 			return;
 		}
 		if ( ! class_exists( '\Automattic\WooCommerce\StoreApi\Exceptions\RouteException' ) ) {
@@ -629,7 +779,7 @@ class Lafka_Order_Hours {
 		);
 		throw new \Automattic\WooCommerce\StoreApi\Exceptions\RouteException(
 			'lafka_store_closed',
-			esc_html( self::get_closed_notice_message() ),
+			esc_html( self::get_closed_notice_with_next_open() ),
 			409
 		);
 	}
@@ -637,7 +787,11 @@ class Lafka_Order_Hours {
 	public function add_body_class( $classes ) {
 		$classes[] = 'lafka-store-closed';
 
-		if ( isset( self::$lafka_order_hours_options['lafka_order_hours_disable_add_to_cart'] ) && self::$lafka_order_hours_options['lafka_order_hours_disable_add_to_cart'] ) {
+		if ( self::can_order_ahead() ) {
+			// Themes keep add-to-cart usable (no "disabled" styling) while
+			// customers can still order for later.
+			$classes[] = 'lafka-order-ahead';
+		} elseif ( isset( self::$lafka_order_hours_options['lafka_order_hours_disable_add_to_cart'] ) && self::$lafka_order_hours_options['lafka_order_hours_disable_add_to_cart'] ) {
 			$classes[] = 'lafka-disabled-cart-buttons';
 		}
 
@@ -661,18 +815,7 @@ class Lafka_Order_Hours {
 		$operator_message = self::$lafka_order_hours_options['lafka_order_hours_message'] ?? '';
 		$title            = '' !== $operator_message ? $operator_message : __( 'Closed right now', 'lafka-plugin' );
 
-		$lafka_branch_location_id_in_session = null;
-		$opening_datetime                    = null;
-		if ( isset( WC()->session ) ) {
-			$lafka_branch_location_id_in_session = WC()->session->get( 'lafka_branch_location' )['branch_id'] ?? null;
-		}
-		if ( null !== $lafka_branch_location_id_in_session ) {
-			$timezone_object  = empty( self::$timezone ) ? null : new DateTimeZone( self::$timezone );
-			$opening_datetime = self::get_next_opening_time( $timezone_object );
-		} elseif ( class_exists( 'Lafka_Shipping_Areas' ) ) {
-			$all_legit_branch_locations = Lafka_Shipping_Areas::get_all_legit_branch_locations();
-			$opening_datetime           = self::get_first_opening_branch_datetime( $all_legit_branch_locations );
-		}
+		$opening_datetime = self::resolve_next_opening();
 
 		$subtitle_human = self::format_next_open_time_human( $opening_datetime );
 		?>

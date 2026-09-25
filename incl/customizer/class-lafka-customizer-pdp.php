@@ -139,7 +139,31 @@ if ( ! class_exists( 'Lafka_Customizer_PDP' ) ) {
 					'description' => esc_html__( 'Headline shown above the optional email-capture field at checkout. Leave blank to hide the field entirely. Example: "Save 10% on your next order".', 'lafka-plugin' ),
 					'section'     => 'lafka_pdp',
 					'type'        => 'text',
-                ) 
+                )
+            );
+
+            // Variation options (sizes) without an explicit order are listed
+            // cheapest first — see incl/woocommerce/lafka-variation-order.php.
+            $wp_customize->add_setting(
+                'lafka_sort_variation_options',
+                array(
+					'default'           => 'yes',
+					'sanitize_callback' => array( __CLASS__, 'sanitize_yes_no' ),
+					'transport'         => 'refresh',
+                )
+            );
+            $wp_customize->add_control(
+                'lafka_sort_variation_options',
+                array(
+					'label'       => esc_html__( 'Order size options by price', 'lafka-plugin' ),
+					'description' => esc_html__( 'Variation options without their own order (no custom term order set under Products → Attributes) are listed cheapest first, e.g. Small, Medium, Large. A custom or name order you set always wins.', 'lafka-plugin' ),
+					'section'     => 'lafka_pdp',
+					'type'        => 'select',
+					'choices'     => array(
+						'yes' => esc_html__( 'Yes', 'lafka-plugin' ),
+						'no'  => esc_html__( 'No', 'lafka-plugin' ),
+					),
+                )
             );
         }
 

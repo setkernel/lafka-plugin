@@ -22,6 +22,8 @@
 
 defined( 'ABSPATH' ) || exit;
 
+require_once __DIR__ . '/lafka-phone-format.php';
+
 if ( ! function_exists( 'lafka_get_menu_url' ) ) {
 	/**
 	 * Canonical "browse the menu" URL — single source of truth for every
@@ -226,9 +228,14 @@ if ( ! function_exists( 'lafka_get_restaurant_info' ) ) {
 
 		// Phone fallbacks — handle both directions so operators only need to fill one field.
 		//
-		// Forward: display falls back to e164 (raw +15551234567) if no separate display set.
-		if ( '' === $info['phone_display'] && '' !== $info['phone_e164'] ) {
-			$info['phone_display'] = $info['phone_e164'];
+		// Forward: with no separate display value — or one stored as a bare
+		// number (a raw "+15551234567" reads like a code, not a phone) — show
+		// the national format. tel: links keep phone_e164.
+		if ( '' !== $info['phone_e164'] && ( '' === $info['phone_display'] || lafka_phone_is_bare_number( (string) $info['phone_display'] ) ) ) {
+			$info['phone_display'] = lafka_format_phone_display(
+				'' !== $info['phone_display'] ? (string) $info['phone_display'] : (string) $info['phone_e164'],
+				isset( $wc_country ) ? (string) $wc_country : ''
+			);
 		}
 		// Reverse (v9.22.3): when e164 is blank but display has digits, derive an E.164
 		// by stripping all non-digit characters and prepending "+". Without this, the

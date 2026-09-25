@@ -764,6 +764,22 @@ if ( LAFKA_PLUGIN_IS_WOOCOMMERCE ) {
 	Lafka_Store_Api::init();
 
 	/*
+	 * Checkout conversion (GX0): the "Lafka — Checkout" Customizer section and
+	 * the modules it configures. Each works on the classic and the block
+	 * (Store API) checkout alike.
+	 *   · Lafka_Delivery_Quote_Guard — no delivery price from a partial address.
+	 *   · Lafka_Pickup_Checkout — pickup orders ask for name/phone/email only.
+	 *   · Lafka_Payment_Labels — COD reads "Pay at pickup" / "Pay on delivery".
+	 */
+	require_once plugin_dir_path( __FILE__ ) . 'incl/customizer/class-lafka-customizer-checkout.php';
+	require_once plugin_dir_path( __FILE__ ) . 'incl/checkout/class-lafka-delivery-quote-guard.php';
+	Lafka_Delivery_Quote_Guard::init();
+	require_once plugin_dir_path( __FILE__ ) . 'incl/checkout/class-lafka-pickup-checkout.php';
+	Lafka_Pickup_Checkout::init();
+	require_once plugin_dir_path( __FILE__ ) . 'incl/checkout/class-lafka-payment-labels.php';
+	Lafka_Payment_Labels::init();
+
+	/*
 	 * Block Cart/Checkout UI (NX1-04b). Builds on the NX1-04a Store API contract:
 	 *   · Lafka_Checkout_Fields — order_type + branch selects via WooCommerce's
 	 *     Additional Checkout Fields API, wired back into the classic session/order
@@ -1007,6 +1023,9 @@ function lafka_plugin_after_plugins_loaded() {
 	require_once plugin_dir_path( __FILE__ ) . 'incl/woocommerce/lafka-cart-drawer-upsell.php';
 	// Free delivery over $X — standalone (NOT behind the promotions/BOGO gate).
 	require_once plugin_dir_path( __FILE__ ) . 'incl/woocommerce/lafka-free-delivery.php';
+	// Variation options (sizes) in a sensible order: explicit order, else cheapest first.
+	require_once plugin_dir_path( __FILE__ ) . 'incl/woocommerce/lafka-variation-order.php';
+	lafka_variation_order_init();
 	// First-order discount — standalone (logged-in first-timers; abuse-resistant).
 	require_once plugin_dir_path( __FILE__ ) . 'incl/woocommerce/lafka-first-order.php';
 	// Slow-day discount — standalone (operator-chosen weekdays, site timezone).

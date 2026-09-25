@@ -55,6 +55,12 @@ class Lafka_Shipping_Areas {
 		require_once __DIR__ . '/../lafka-shipping-method-helpers.php';
 		require_once __DIR__ . '/../lafka-asset-helpers.php';
 
+		// The store location delivery maths measures from (+ a notice / Site
+		// Health check while the picked location is missing or the old Sydney
+		// placeholder).
+		require_once __DIR__ . '/lafka-store-location.php';
+		lafka_store_location_init();
+
 		// Map shortcode — extracted to incl/map-shortcode/ in v9.3.0 (Path A4).
 		require_once __DIR__ . '/../map-shortcode/shortcode-lafka-shipping-areas.php';
 
@@ -249,6 +255,9 @@ class Lafka_Shipping_Areas {
 			$options                 = get_option( 'lafka_shipping_areas_general' );
 			$options_advanced        = get_option( 'lafka_shipping_areas_advanced' );
 			$branch_location_session = WC()->session->get( 'lafka_branch_location' );
+			// A missing/placeholder picked location falls back to geocoding the
+			// WooCommerce store address rather than measuring from a wrong point.
+			$store_location = lafka_store_location_settings();
 
 			// Init a properties variable
 			wp_add_inline_script(
@@ -259,8 +268,8 @@ class Lafka_Shipping_Areas {
 				const lafka_debug_mode = ' . ( empty( $options_advanced['debug_mode'] ) ? 'false' : 'true' ) . ';
 				const lafka_lowest_cost_shipping = ' . ( empty( $options['lowest_cost_shipping'] ) ? 'false' : 'true' ) . ';
 				const lafka_store_address = ' . wp_json_encode( self::get_store_address() ) . ';
-				const lafka_set_store_location = ' . wp_json_encode( empty( $options_advanced['set_store_location'] ) ? 'geo_woo_store' : $options_advanced['set_store_location'] ) . ';
-				const lafka_store_map_location = ' . wp_json_encode( empty( $options_advanced['store_map_location'] ) ? '' : $options_advanced['store_map_location'] ) . ';
+				const lafka_set_store_location = ' . wp_json_encode( $store_location['mode'] ) . ';
+				const lafka_store_map_location = ' . wp_json_encode( $store_location['location'] ) . ';
 				const lafka_order_type = ' . wp_json_encode( empty( $branch_location_session['order_type'] ) ? '' : $branch_location_session['order_type'] ) . ';
 				',
 				'before'

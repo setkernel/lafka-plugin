@@ -54,6 +54,8 @@ namespace LafkaPlugin\Tests\Unit {
 			Functions\when( 'esc_html' )->returnArg();
 			Functions\when( 'esc_attr' )->returnArg();
 			Functions\when( 'esc_html__' )->returnArg();
+			Functions\when( 'sanitize_text_field' )->returnArg();
+			Functions\when( 'wp_unslash' )->returnArg();
 			Functions\when( 'apply_filters' )->returnArg( 2 );
 			Functions\when( 'wp_timezone' )->justReturn( new DateTimeZone( 'UTC' ) );
 			Functions\when( 'WC' )->justReturn( (object) array( 'session' => null ) );
@@ -172,12 +174,167 @@ namespace LafkaPlugin\Tests\Unit {
 
 		public function test_classic_add_to_cart_is_blocked_only_when_closed_and_opted_in(): void {
 			$this->assertTrue( $this->store_is( true, true )->gate_add_to_cart_when_closed( true ), 'Open store.' );
-			$this->assertTrue( $this->store_is( false, false )->gate_add_to_cart_when_closed( true ), 'Closed, not opted in: cart may still be built.' );
 			$this->assertFalse( $this->store_is( false, true )->gate_add_to_cart_when_closed( false ), 'An earlier rejection is kept.' );
 			$this->assertSame( array(), $this->notices );
 
 			$this->assertFalse( $this->store_is( false, true )->gate_add_to_cart_when_closed( true ), 'Closed and opted in.' );
 			$this->assertSame( array( array( self::DEFAULT_CLOSED, 'error' ) ), $this->notices );
+		}
+
+		public function test_a_cart_built_while_closed_is_told_when_it_can_check_out(): void {
+			$this->assertTrue( $this->store_is( false, false )->gate_add_to_cart_when_closed( true ), 'Closed, not opted in: cart may still be built.' );
+
+			$this->assertSame(
+				array( array( self::DEFAULT_CLOSED . ' You can fill your cart now and check out once we are open.', 'notice' ) ),
+				$this->notices
+			);
+		}
+
+		/* -------------------------------------------------------------- *
+		 *  Closed notice carries the next opening (GX0)
+		 * -------------------------------------------------------------- */
+
+		/** A real (unforced) closure whose next opening is known. */
+		private function closed_until_nine( bool $disable_add_to_cart = false ): Lafka_Order_Hours {
+			Functions\when( 'wp_date' )->justReturn( 'Saturday at 9:00 AM' );
+			Lafka_Order_Hours::$lafka_order_hours_schedule = self::schedule_opening_at( '09:00' );
+			Lafka_Order_Hours::$lafka_order_hours_options  = $disable_add_to_cart
+				? array(
+					'lafka_order_hours_message'             => 'STORE CLOSED',
+					'lafka_order_hours_disable_add_to_cart' => '1',
+				)
+				: array( 'lafka_order_hours_message' => 'STORE CLOSED' );
+
+			return ( new ReflectionClass( Lafka_Order_Hours::class ) )->newInstanceWithoutConstructor();
+		}
+
+		public function test_closed_checkout_names_the_next_opening(): void {
+			$this->closed_until_nine()->gate_checkout_when_closed();
+
+			$this->assertSame( array( array( 'STORE CLOSED. Opens Saturday at 9:00 AM.', 'error' ) ), $this->notices );
+		}
+
+		public function test_blocked_add_to_cart_names_the_next_opening(): void {
+			$this->assertFalse( $this->closed_until_nine( true )->gate_add_to_cart_when_closed( true ) );
+
+			$this->assertSame( array( array( 'STORE CLOSED. Opens Saturday at 9:00 AM.', 'error' ) ), $this->notices );
+		}
+
+		public function test_notice_composition_keeps_the_operator_punctuation(): void {
+			$this->assertSame( 'Back soon! Opens Monday at 11:00 AM.', Lafka_Order_Hours::compose_closed_notice( 'Back soon!', 'Monday at 11:00 AM' ) );
+			$this->assertSame( 'Closed', Lafka_Order_Hours::compose_closed_notice( 'Closed', '' ), 'Unknown opening: message alone.' );
+		}
+
+		/* -------------------------------------------------------------- *
+		 *  Order ahead (timeslots on): closed means "schedule", not "stop"
+		 * -------------------------------------------------------------- */
+
+		private function order_ahead( bool $possible ): void {
+			Functions\when( 'apply_filters' )->alias(
+				static fn( $hook, $value ) => 'lafka_order_hours_can_order_ahead' === $hook ? $possible : $value
+			);
+		}
+
+		public function test_order_ahead_needs_the_timeslot_feature_and_an_offered_date(): void {
+			$this->closed_until_nine();
+			$this->assertFalse( Lafka_Order_Hours::can_order_ahead(), 'Timeslots off.' );
+
+			Functions\when( 'get_option' )->alias(
+				static fn( $key, $fallback = false ) => 'lafka_shipping_areas_datetime' === $key
+					? array(
+						'enable_datetime_option' => '1',
+						'days_ahead'             => 2,
+						'timeslot_duration'      => 30,
+					)
+					: $fallback
+			);
+			require_once dirname( __DIR__, 2 ) . '/incl/timeslots/class-lafka-timeslots.php';
+			$timeslots = ( new ReflectionClass( \Lafka_Timeslots::class ) )->newInstanceWithoutConstructor();
+			$timeslots->init_order_date_time_options();
+			( new ReflectionClass( \Lafka_Timeslots::class ) )->getProperty( '_instance' )->setValue( null, $timeslots );
+
+			try {
+				$this->assertTrue( Lafka_Order_Hours::can_order_ahead(), 'Timeslots on, later days open.' );
+
+				$this->store_is( false );
+				$this->assertFalse( Lafka_Order_Hours::can_order_ahead(), 'A force-closed store takes no orders at all.' );
+			} finally {
+				( new ReflectionClass( \Lafka_Timeslots::class ) )->getProperty( '_instance' )->setValue( null, null );
+			}
+		}
+
+		public function test_order_ahead_checkout_needs_a_time_and_then_passes(): void {
+			$gate = $this->closed_until_nine( true );
+			$this->order_ahead( true );
+
+			$_POST = array();
+			$gate->gate_checkout_when_closed();
+			$this->assertSame(
+				array( array( 'STORE CLOSED. Opens Saturday at 9:00 AM. Please choose a delivery or pickup time for when we are open.', 'error' ) ),
+				$this->notices
+			);
+
+			$this->notices = array();
+			$_POST         = array(
+				'lafka_checkout_date'     => '2031-01-18',
+				'lafka_checkout_timeslot' => '09:00 - 09:30',
+			);
+			$gate->gate_checkout_when_closed();
+			$_POST = array();
+			$this->assertSame( array(), $this->notices, 'The timeslot gate validates the chosen slot itself.' );
+		}
+
+		public function test_order_ahead_keeps_add_to_cart_open_even_when_opted_out(): void {
+			$gate = $this->closed_until_nine( true );
+			$this->order_ahead( true );
+
+			$this->assertTrue( $gate->gate_add_to_cart_when_closed( true ) );
+			$gate->gate_store_api_add_to_cart_when_closed();
+			$this->assertFalse( Lafka_Order_Hours::is_add_to_cart_blocked() );
+			$this->assertSame(
+				array( array( 'STORE CLOSED. Opens Saturday at 9:00 AM. You can order now and choose a time at checkout.', 'notice' ) ),
+				$this->notices
+			);
+		}
+
+		public function test_add_to_cart_is_blocked_for_templates_only_when_closed_opted_in_and_no_order_ahead(): void {
+			$this->closed_until_nine( true );
+			$this->order_ahead( false );
+			$this->assertTrue( Lafka_Order_Hours::is_add_to_cart_blocked() );
+
+			$this->closed_until_nine( false );
+			$this->assertFalse( Lafka_Order_Hours::is_add_to_cart_blocked() );
+
+			$this->store_is( true, true );
+			$this->assertFalse( Lafka_Order_Hours::is_add_to_cart_blocked() );
+		}
+
+		public function test_closed_ui_keeps_ordering_open_when_order_ahead_is_possible(): void {
+			require_once __DIR__ . '/Support/Hooks.php';
+			$gate = $this->closed_until_nine( true );
+			$this->order_ahead( true );
+			\LafkaPlugin\Tests\Unit\Support\Hooks::reset();
+
+			$gate->handle_shop_status();
+			$hooked = \LafkaPlugin\Tests\Unit\Support\Hooks::registered();
+
+			$this->assertNotContains( 'woocommerce_order_button_html -> get_closed_store_message', $hooked, 'Place order stays.' );
+			$this->assertNotContains( 'woocommerce_is_purchasable -> __return_false', $hooked, 'Products stay purchasable.' );
+			$this->assertSame( array( 'lafka-store-closed', 'lafka-order-ahead' ), $gate->add_body_class( array() ) );
+		}
+
+		public function test_closed_ui_without_order_ahead_swaps_the_buttons(): void {
+			require_once __DIR__ . '/Support/Hooks.php';
+			$gate = $this->closed_until_nine( true );
+			$this->order_ahead( false );
+			\LafkaPlugin\Tests\Unit\Support\Hooks::reset();
+
+			$gate->handle_shop_status();
+			$hooked = \LafkaPlugin\Tests\Unit\Support\Hooks::registered();
+
+			$this->assertContains( 'woocommerce_order_button_html -> get_closed_store_message', $hooked );
+			$this->assertContains( 'woocommerce_is_purchasable -> __return_false', $hooked );
+			$this->assertSame( array( 'lafka-store-closed', 'lafka-disabled-cart-buttons' ), $gate->add_body_class( array() ) );
 		}
 
 		public function test_store_api_add_to_cart_throws_only_when_closed_and_opted_in(): void {

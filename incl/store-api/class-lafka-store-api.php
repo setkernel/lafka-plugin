@@ -137,12 +137,19 @@ if ( ! class_exists( 'Lafka_Store_Api' ) ) {
 				return;
 			}
 
-			// order-hours: store closed → block checkout (always, like the classic gate).
-			if ( class_exists( 'Lafka_Order_Hours' ) ) {
-				$closed = self::evaluate_order_hours(
-					Lafka_Order_Hours::is_shop_open(),
-					Lafka_Order_Hours::get_closed_notice_message()
-				);
+			$datetime = self::get_datetime_session();
+
+			// order-hours: store closed → block checkout, like the classic gate —
+			// unless the store takes orders ahead and a slot is chosen (the
+			// timeslot gate below validates that slot).
+			if ( class_exists( 'Lafka_Order_Hours' ) && ! Lafka_Order_Hours::is_shop_open() ) {
+				$order_ahead = Lafka_Order_Hours::can_order_ahead();
+				$scheduled   = $order_ahead && ! empty( $datetime['date'] ) && ! empty( $datetime['timeslot'] );
+				$message     = Lafka_Order_Hours::get_closed_notice_with_next_open();
+				if ( $order_ahead ) {
+					$message .= ' ' . Lafka_Order_Hours::choose_time_hint();
+				}
+				$closed = self::evaluate_order_hours( $scheduled, $message );
 				if ( null !== $closed ) {
 					$errors->add( 'lafka_store_closed', $closed );
 				}
@@ -167,7 +174,7 @@ if ( ! class_exists( 'Lafka_Store_Api' ) ) {
 			}
 
 			// timeslot validity + capacity: route through the shared classic gate.
-			$timeslot_error = self::timeslot_error( self::get_datetime_session() );
+			$timeslot_error = self::timeslot_error( $datetime );
 			if ( null !== $timeslot_error ) {
 				$errors->add( 'lafka_invalid_timeslot', $timeslot_error );
 			}
@@ -403,6 +410,13 @@ if ( ! class_exists( 'Lafka_Store_Api' ) ) {
 				'free_delivery_remaining'    => $number_prop( __( 'Amount remaining to reach the free-delivery threshold.', 'lafka-plugin' ) ),
 				'delivery_minimum'           => $number_prop( __( 'Minimum cart total required for delivery (0 = off).', 'lafka-plugin' ) ),
 				'delivery_minimum_remaining' => $number_prop( __( 'Amount remaining to reach the delivery minimum.', 'lafka-plugin' ) ),
+				'delivery_address_required'  => array(
+					'description' => __( 'Whether delivery prices are withheld until a street address and postcode are entered.', 'lafka-plugin' ),
+					'type'        => 'boolean',
+					'context'     => array( 'view', 'edit' ),
+					'readonly'    => true,
+				),
+				'delivery_address_message'   => $string_prop( __( 'Customer-facing explanation shown while delivery prices are withheld.', 'lafka-plugin' ) ),
 			);
 		}
 
@@ -441,6 +455,10 @@ if ( ! class_exists( 'Lafka_Store_Api' ) ) {
 				: 0.0;
 			$delivery_remaining = $delivery_minimum > 0 ? max( 0.0, $delivery_minimum - $contents ) : 0.0;
 
+			// Delivery quote guard: rates that need an address are withheld until
+			// a street address + postcode exist; the block UI explains why.
+			$address_required = class_exists( 'Lafka_Delivery_Quote_Guard' ) && Lafka_Delivery_Quote_Guard::is_withholding();
+
 			return array(
 				'order_type'                 => isset( $branch['order_type'] ) ? (string) $branch['order_type'] : '',
 				'branch_id'                  => $branch_id,
@@ -453,6 +471,8 @@ if ( ! class_exists( 'Lafka_Store_Api' ) ) {
 				'free_delivery_remaining'    => $free_remaining,
 				'delivery_minimum'           => $delivery_minimum,
 				'delivery_minimum_remaining' => $delivery_remaining,
+				'delivery_address_required'  => $address_required,
+				'delivery_address_message'   => $address_required ? Lafka_Delivery_Quote_Guard::message() : '',
 			);
 		}
 

@@ -194,6 +194,34 @@ final class StoreApiParityTest extends TestCase {
 		$this->assertSame( array( array( 'lafka_store_closed', 'Back at noon.' ) ), $this->cart_errors() );
 	}
 
+	public function test_a_closed_store_that_takes_orders_ahead_needs_a_chosen_slot(): void {
+		Lafka_Order_Hours::$lafka_order_hours_force_override_check = false;
+		Lafka_Order_Hours::$lafka_order_hours_schedule             = (string) json_encode(
+			array_fill(
+				0,
+				7,
+				array( 'periods' => array( array( 'start' => '09:00', 'end' => '09:00' ) ) )
+			)
+		);
+		Lafka_Order_Hours::$lafka_order_hours_options = array( 'lafka_order_hours_message' => 'Back at nine.' );
+		Functions\when( 'wp_date' )->justReturn( 'Saturday at 9:00 AM' );
+		Functions\when( '_x' )->returnArg();
+		Functions\when( 'apply_filters' )->alias(
+			static fn( $hook, $value ) => 'lafka_order_hours_can_order_ahead' === $hook ? true : $value
+		);
+
+		$this->assertSame(
+			array( array( 'lafka_store_closed', 'Back at nine. Opens Saturday at 9:00 AM. Please choose a delivery or pickup time for when we are open.' ) ),
+			$this->cart_errors()
+		);
+
+		$this->session[ Lafka_Store_Api::DATETIME_SESSION_KEY ] = array(
+			'date'     => '2031-01-18',
+			'timeslot' => '09:00 - 10:00',
+		);
+		$this->assertSame( array(), $this->cart_errors(), 'Scheduled for when the store is open.' );
+	}
+
 	public function test_checkout_is_blocked_for_an_order_type_the_branch_does_not_offer(): void {
 		$this->pickup_only_branch();
 		$this->session['lafka_branch_location'] = array(
@@ -353,5 +381,30 @@ final class StoreApiParityTest extends TestCase {
 		$this->assertSame( 5, $data['branch_id'] );
 		$this->assertSame( 'Downtown', $data['branch_name'] );
 		$this->assertTrue( $data['store_open_now'] );
+		$this->assertFalse( $data['delivery_address_required'] );
+		$this->assertSame( '', $data['delivery_address_message'] );
+	}
+
+	public function test_block_cart_is_told_when_delivery_waits_for_a_street_address(): void {
+		Functions\when( 'get_theme_mod' )->returnArg( 2 );
+		require_once dirname( __DIR__, 2 ) . '/incl/checkout/class-lafka-delivery-quote-guard.php';
+
+		// Same rate calculation the Store API cart runs: province-only destination.
+		\Lafka_Delivery_Quote_Guard::filter_package_rates(
+			array(
+				'local_pickup:1'  => (object) array( 'method_id' => 'local_pickup' ),
+				'distance_rate:2' => (object) array( 'method_id' => 'distance_rate' ),
+			),
+			array(
+				'destination' => array(
+					'country' => 'CA',
+					'state'   => 'NS',
+				),
+			)
+		);
+		$data = Lafka_Store_Api::extend_cart_data();
+
+		$this->assertTrue( $data['delivery_address_required'] );
+		$this->assertSame( 'Enter your street address to see the delivery cost.', $data['delivery_address_message'] );
 	}
 }

@@ -90,7 +90,8 @@ final class ContactsWidgetNapInheritanceTest extends TestCase {
 		$html = $this->render( array() );
 
 		$this->assertStringContainsString( '<span class="footer_address">1 Example Street, Exampleville</span>', $html );
-		$this->assertStringContainsString( '<a href="tel:+15550100">+15550100</a>', $html );
+		// Visible text in display format; the tel: link keeps E.164.
+		$this->assertStringContainsString( '<a href="tel:+15550100">+1 555 0100</a>', $html );
 		$this->assertStringContainsString( '<a href="mailto:hello@example.test">hello@example.test</a>', $html );
 	}
 
@@ -106,7 +107,7 @@ final class ContactsWidgetNapInheritanceTest extends TestCase {
 
 		$this->assertStringContainsString( '<span class="footer_address">Widget Address</span>', $html );
 		$this->assertStringNotContainsString( 'Exampleville', $html );
-		$this->assertStringContainsString( '<a href="tel:+15550100">+15550100</a>', $html, 'A whitespace-only override must not suppress the canonical phone.' );
+		$this->assertStringContainsString( '<a href="tel:+15550100">+1 555 0100</a>', $html, 'A whitespace-only override must not suppress the canonical phone.' );
 	}
 
 	public function test_worktime_and_fax_have_no_canonical_fallback(): void {
