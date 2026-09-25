@@ -52,7 +52,10 @@ final class PrepTimeFunctionalTest extends TestCase {
 	 */
 	private function reset_order_hours_static(): void {
 		if ( class_exists( '\Lafka_Order_Hours' ) ) {
-			\Lafka_Order_Hours::$lafka_order_hours_options = null;
+			\Lafka_Order_Hours::$lafka_order_hours_options               = null;
+			\Lafka_Order_Hours::$lafka_order_hours_schedule              = null;
+			\Lafka_Order_Hours::$lafka_order_hours_force_override_check  = false;
+			\Lafka_Order_Hours::$lafka_order_hours_force_override_status = '';
 		}
 	}
 
@@ -185,7 +188,7 @@ final class PrepTimeFunctionalTest extends TestCase {
 	public function test_closed_when_today_marked_closed(): void {
 		$this->stub_resolver_inputs( array( 'mon' => 'closed' ) );
 		Functions\when( 'wp_date' )->alias(
-			static fn( $fmt ) => 'l' === $fmt ? 'Monday' : '14:00'
+			static fn( $fmt ) => 'N' === $fmt ? '1' : '14:00'
 		);
 
 		$this->assertFalse( \lafka_pdp_is_store_open() );
@@ -194,7 +197,7 @@ final class PrepTimeFunctionalTest extends TestCase {
 	public function test_open_during_today_window(): void {
 		$this->stub_resolver_inputs( array( 'mon' => '11:00-23:00' ) );
 		Functions\when( 'wp_date' )->alias(
-			static fn( $fmt ) => 'l' === $fmt ? 'Monday' : '14:00'
+			static fn( $fmt ) => 'N' === $fmt ? '1' : '14:00'
 		);
 
 		$this->assertTrue( \lafka_pdp_is_store_open() );
@@ -203,7 +206,7 @@ final class PrepTimeFunctionalTest extends TestCase {
 	public function test_closed_before_open_time(): void {
 		$this->stub_resolver_inputs( array( 'mon' => '11:00-23:00' ) );
 		Functions\when( 'wp_date' )->alias(
-			static fn( $fmt ) => 'l' === $fmt ? 'Monday' : '09:00'
+			static fn( $fmt ) => 'N' === $fmt ? '1' : '09:00'
 		);
 
 		$this->assertFalse( \lafka_pdp_is_store_open() );
@@ -214,7 +217,7 @@ final class PrepTimeFunctionalTest extends TestCase {
 		// 23:00 with a window of 11:00-23:00 means closed.
 		$this->stub_resolver_inputs( array( 'mon' => '11:00-23:00' ) );
 		Functions\when( 'wp_date' )->alias(
-			static fn( $fmt ) => 'l' === $fmt ? 'Monday' : '23:00'
+			static fn( $fmt ) => 'N' === $fmt ? '1' : '23:00'
 		);
 
 		$this->assertFalse( \lafka_pdp_is_store_open() );
@@ -223,9 +226,180 @@ final class PrepTimeFunctionalTest extends TestCase {
 	public function test_open_one_minute_before_close(): void {
 		$this->stub_resolver_inputs( array( 'mon' => '11:00-23:00' ) );
 		Functions\when( 'wp_date' )->alias(
-			static fn( $fmt ) => 'l' === $fmt ? 'Monday' : '22:59'
+			static fn( $fmt ) => 'N' === $fmt ? '1' : '22:59'
 		);
 
 		$this->assertTrue( \lafka_pdp_is_store_open() );
+	}
+
+	/**
+	 * Stub the store clock: ISO day number (1 = Monday … 7 = Sunday) + "H:i".
+	 */
+	private function clock( int $iso_day, string $hhmm ): void {
+		Functions\when( 'wp_date' )->alias(
+			static fn( $fmt ) => 'N' === $fmt ? (string) $iso_day : $hhmm
+		);
+	}
+
+	// ── M-05: a midnight close ("00:00") is the END of the day, not 00:00 ──
+
+	public function test_open_mid_afternoon_when_close_is_midnight(): void {
+		// Friday 11:00-00:00 at 15:30 used to string-compare "15:30" < "00:00"
+		// (always false) and print "Closed — order ahead" all Friday.
+		$this->stub_resolver_inputs( array( 'fri' => '11:00-00:00' ) );
+		$this->clock( 5, '15:30' );
+
+		$this->assertTrue( \lafka_pdp_is_store_open() );
+	}
+
+	public function test_open_one_minute_before_a_midnight_close(): void {
+		$this->stub_resolver_inputs( array( 'sat' => '11:00-00:00' ) );
+		$this->clock( 6, '23:59' );
+
+		$this->assertTrue( \lafka_pdp_is_store_open() );
+	}
+
+	public function test_midnight_close_does_not_leak_into_the_next_morning(): void {
+		// Saturday 11:00-00:00 then Sunday 11:00-22:00: Sunday 00:30 is closed.
+		$this->stub_resolver_inputs( array( 'sat' => '11:00-00:00', 'sun' => '11:00-22:00' ) );
+		$this->clock( 7, '00:30' );
+
+		$this->assertFalse( \lafka_pdp_is_store_open() );
+	}
+
+	public function test_24_00_close_is_accepted_as_end_of_day(): void {
+		$this->stub_resolver_inputs( array( 'fri' => '11:00-24:00' ) );
+		$this->clock( 5, '22:00' );
+
+		$this->assertTrue( \lafka_pdp_is_store_open() );
+	}
+
+	// ── Overnight windows (close before open) run past midnight ──
+
+	public function test_overnight_window_is_open_in_the_evening(): void {
+		$this->stub_resolver_inputs( array( 'fri' => '17:00-02:00' ) );
+		$this->clock( 5, '23:15' );
+
+		$this->assertTrue( \lafka_pdp_is_store_open() );
+	}
+
+	public function test_overnight_window_spills_into_the_next_day(): void {
+		// Friday 17:00-02:00 keeps the store open at Saturday 01:00 even
+		// though Saturday itself is closed.
+		$this->stub_resolver_inputs( array( 'fri' => '17:00-02:00', 'sat' => 'closed' ) );
+		$this->clock( 6, '01:00' );
+
+		$this->assertTrue( \lafka_pdp_is_store_open() );
+	}
+
+	public function test_overnight_spill_wraps_sunday_into_monday(): void {
+		$this->stub_resolver_inputs( array( 'sun' => '17:00-02:00', 'mon' => '11:00-22:00' ) );
+		$this->clock( 1, '01:30' );
+
+		$this->assertTrue( \lafka_pdp_is_store_open() );
+	}
+
+	public function test_overnight_window_closed_after_the_spill_ends(): void {
+		$this->stub_resolver_inputs( array( 'fri' => '17:00-02:00', 'sat' => '17:00-02:00' ) );
+		$this->clock( 6, '03:00' );
+
+		$this->assertFalse( \lafka_pdp_is_store_open() );
+	}
+
+	public function test_overnight_window_closed_before_it_opens(): void {
+		$this->stub_resolver_inputs( array( 'fri' => '17:00-02:00' ) );
+		$this->clock( 5, '16:00' );
+
+		$this->assertFalse( \lafka_pdp_is_store_open() );
+	}
+
+	public function test_day_is_resolved_by_number_not_translated_name(): void {
+		// wp_date( 'l' ) is locale-translated ("vendredi"); the lookup must
+		// not depend on it.
+		$this->stub_resolver_inputs( array( 'fri' => '11:00-23:00' ) );
+		Functions\when( 'wp_date' )->alias(
+			static function ( $fmt ) {
+				$map = array(
+					'N'   => '5',
+					'H:i' => '14:00',
+					'l'   => 'vendredi',
+				);
+				return $map[ $fmt ] ?? '';
+			}
+		);
+
+		$this->assertTrue( \lafka_pdp_is_store_open() );
+	}
+
+	// ── One source with the header badge: a configured order gate wins ──
+
+	private function load_order_gate(): void {
+		Functions\when( 'get_option' )->justReturn( array() );
+		Functions\when( 'wp_timezone' )->justReturn( new \DateTimeZone( 'UTC' ) );
+		Functions\when( 'WC' )->justReturn( (object) array( 'session' => null ) );
+		require_once dirname( __DIR__, 2 ) . '/incl/order-hours/Lafka_Order_Hours.php';
+	}
+
+	public function test_configured_order_gate_forced_closed_wins_over_open_hours(): void {
+		$this->load_order_gate();
+		$this->stub_resolver_inputs( array( 'fri' => '11:00-00:00' ) );
+		$this->clock( 5, '15:30' );
+		\Lafka_Order_Hours::$lafka_order_hours_force_override_check  = true;
+		\Lafka_Order_Hours::$lafka_order_hours_force_override_status = '';
+
+		$this->assertFalse( \lafka_pdp_is_store_open() );
+	}
+
+	public function test_configured_order_gate_forced_open_wins_over_closed_hours(): void {
+		$this->load_order_gate();
+		$this->stub_resolver_inputs( array( 'fri' => 'closed' ) );
+		$this->clock( 5, '15:30' );
+		\Lafka_Order_Hours::$lafka_order_hours_force_override_check  = true;
+		\Lafka_Order_Hours::$lafka_order_hours_force_override_status = '1';
+
+		$this->assertTrue( \lafka_pdp_is_store_open() );
+	}
+
+	public function test_unconfigured_order_gate_falls_back_to_hours_map(): void {
+		$this->load_order_gate();
+		\Lafka_Order_Hours::$lafka_order_hours_schedule = '';
+		$this->stub_resolver_inputs( array( 'fri' => 'closed' ) );
+		$this->clock( 5, '15:30' );
+
+		$this->assertFalse( \lafka_pdp_is_store_open() );
+	}
+
+	// ── The render never pairs "Ready in" with "Closed" ──
+
+	public function test_render_prints_closed_copy_without_ready_in_when_closed(): void {
+		$this->stub_resolver_inputs( array( 'fri' => 'closed' ) );
+		$this->clock( 5, '15:30' );
+		Functions\when( 'esc_html__' )->returnArg();
+		Functions\when( 'esc_html' )->returnArg();
+		Functions\when( '__' )->returnArg();
+
+		ob_start();
+		\lafka_pdp_render_prep_time( 42 );
+		$html = (string) ob_get_clean();
+
+		$this->assertStringContainsString( 'lafka-pdp-trust--closed', $html );
+		$this->assertStringNotContainsString( 'Ready in', $html );
+	}
+
+	public function test_render_prints_ready_in_on_a_friday_afternoon_with_midnight_close(): void {
+		$this->stub_resolver_inputs( array( 'fri' => '11:00-00:00' ) );
+		$this->clock( 5, '15:30' );
+		Functions\when( 'esc_html__' )->returnArg();
+		Functions\when( 'esc_html' )->returnArg();
+		Functions\when( '__' )->returnArg();
+		Functions\when( 'wp_get_post_terms' )->justReturn( array() );
+		Functions\when( 'is_wp_error' )->justReturn( false );
+
+		ob_start();
+		\lafka_pdp_render_prep_time( 42 );
+		$html = (string) ob_get_clean();
+
+		$this->assertStringContainsString( 'lafka-pdp-trust--open', $html );
+		$this->assertStringNotContainsString( 'Closed', $html );
 	}
 }

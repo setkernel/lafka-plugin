@@ -34,25 +34,124 @@ if ( ! function_exists( 'lafka_pdp_get_prep_time' ) ) {
 	}
 }
 
-if ( ! function_exists( 'lafka_pdp_is_store_open' ) ) {
-	function lafka_pdp_is_store_open(): bool {
-		if ( ! function_exists( 'lafka_get_restaurant_info' ) ) {
+if ( ! function_exists( 'lafka_pdp_hours_to_minutes' ) ) {
+	/**
+	 * "HH:MM" → minutes since midnight (0..1440), or -1 when unparseable.
+	 *
+	 * "24:00" is accepted as end-of-day (1440).
+	 *
+	 * @param string $hhmm Clock time.
+	 * @return int
+	 */
+	function lafka_pdp_hours_to_minutes( string $hhmm ): int {
+		if ( ! preg_match( '/^(\d{1,2}):(\d{2})$/', trim( $hhmm ), $m ) ) {
+			return -1;
+		}
+		$minutes = ( (int) $m[1] * 60 ) + (int) $m[2];
+		return ( (int) $m[2] > 59 || $minutes > 1440 ) ? -1 : $minutes;
+	}
+}
+
+if ( ! function_exists( 'lafka_pdp_hours_window_is_open' ) ) {
+	/**
+	 * Whether a store-clock minute falls inside today's opening window, or
+	 * inside the after-midnight spill of yesterday's overnight window.
+	 *
+	 * Windows are "HH:MM-HH:MM" (the lafka_get_restaurant_info() display map
+	 * shape). A close of "00:00" (or "24:00") means end of day, and a close at
+	 * or before the open time is an overnight window (e.g. "17:00-02:00") that
+	 * runs past midnight into the next day. The close minute is exclusive.
+	 *
+	 * An unparseable, non-"closed" today value is treated as open (the helper
+	 * never invents a closure from data it cannot read).
+	 *
+	 * @param string $today     Today's window, "Closed", or ''.
+	 * @param string $yesterday Yesterday's window, "Closed", or ''.
+	 * @param int    $now_min   Minutes since midnight on the store clock.
+	 * @return bool
+	 */
+	function lafka_pdp_hours_window_is_open( string $today, string $yesterday, int $now_min ): bool {
+		$parse = static function ( string $window ): ?array {
+			if ( ! preg_match( '/^\s*(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})\s*$/', $window, $m ) ) {
+				return null;
+			}
+			$open  = lafka_pdp_hours_to_minutes( $m[1] );
+			$close = lafka_pdp_hours_to_minutes( $m[2] );
+			if ( $open < 0 || $close < 0 ) {
+				return null;
+			}
+			if ( 0 === $close || 1440 === $close ) {
+				$close = 1440; // Midnight close = end of the same day.
+			}
+			return array( $open, $close );
+		};
+
+		// After-midnight spill of yesterday's overnight window.
+		$prev = $parse( $yesterday );
+		if ( null !== $prev && $prev[1] <= $prev[0] && $now_min < $prev[1] ) {
 			return true;
 		}
-		$info = lafka_get_restaurant_info();
-		if ( empty( $info['hours'] ) || ! is_array( $info['hours'] ) ) {
-			return true;
-		}
-		$today = wp_date( 'l' );
-		$today_hours = $info['hours'][ $today ] ?? '';
-		if ( '' === $today_hours || strtolower( $today_hours ) === 'closed' ) {
+
+		$today = trim( $today );
+		if ( '' === $today || 'closed' === strtolower( $today ) ) {
 			return false;
 		}
-		if ( ! preg_match( '/^(\d{2}:\d{2})-(\d{2}:\d{2})$/', $today_hours, $m ) ) {
+		$win = $parse( $today );
+		if ( null === $win ) {
 			return true;
 		}
-		$now = wp_date( 'H:i' );
-		return $now >= $m[1] && $now < $m[2];
+		list( $open, $close ) = $win;
+		if ( $close <= $open ) {
+			// Overnight: open from $open until midnight (the spill is checked above).
+			return $now_min >= $open;
+		}
+		return $now_min >= $open && $now_min < $close;
+	}
+}
+
+if ( ! function_exists( 'lafka_pdp_is_store_open' ) ) {
+	/**
+	 * Whether the store is open right now, for the PDP trust line.
+	 *
+	 * One source with the header "Open now" badge: when the order-hours gate
+	 * (Lafka_Order_Hours) is configured — a schedule or a force open/closed
+	 * override — it is authoritative, exactly as the theme's header status
+	 * defers to it. Otherwise the display hours map from
+	 * lafka_get_restaurant_info() is read on the store clock (WP timezone),
+	 * with midnight and overnight closes handled.
+	 *
+	 * Filter `lafka_pdp_is_store_open` (bool $open) adjusts the result.
+	 *
+	 * @return bool
+	 */
+	function lafka_pdp_is_store_open(): bool {
+		$open = true;
+
+		$gate_configured = class_exists( 'Lafka_Order_Hours' )
+			&& method_exists( 'Lafka_Order_Hours', 'is_shop_open' )
+			&& ( ! empty( Lafka_Order_Hours::$lafka_order_hours_schedule ) || ! empty( Lafka_Order_Hours::$lafka_order_hours_force_override_check ) );
+
+		if ( $gate_configured ) {
+			$open = (bool) Lafka_Order_Hours::is_shop_open();
+		} elseif ( function_exists( 'lafka_get_restaurant_info' ) ) {
+			$info  = lafka_get_restaurant_info();
+			$hours = ( ! empty( $info['hours'] ) && is_array( $info['hours'] ) ) ? $info['hours'] : array();
+			if ( ! empty( $hours ) ) {
+				// ISO-8601 day number, not the (locale-translated) day name.
+				$days    = array( 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday' );
+				$today_n = (int) wp_date( 'N' );
+				$today_n = ( $today_n >= 1 && $today_n <= 7 ) ? $today_n - 1 : 0;
+				$prev_n  = 0 === $today_n ? 6 : $today_n - 1;
+				$now_min = lafka_pdp_hours_to_minutes( (string) wp_date( 'H:i' ) );
+				$open    = lafka_pdp_hours_window_is_open(
+					(string) ( $hours[ $days[ $today_n ] ] ?? '' ),
+					(string) ( $hours[ $days[ $prev_n ] ] ?? '' ),
+					max( 0, $now_min )
+				);
+			}
+		}
+
+		return (bool) apply_filters( 'lafka_pdp_is_store_open', $open );
 	}
 }
 
