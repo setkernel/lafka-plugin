@@ -133,6 +133,13 @@ namespace LafkaPlugin\Tests\Unit {
 			$tz    = new DateTimeZone( 'Pacific/Kiritimati' ); // UTC+14.
 			$at    = ( new DateTime( 'now', $tz ) )->modify( '+2 hours' );
 			$at->setTime( (int) $at->format( 'H' ), (int) $at->format( 'i' ) );
+			if ( '00:00' === $at->format( 'H:i' ) ) {
+				// An end of '00:00' means midnight (24:00), which would turn the
+				// zero-length period into "open all day" — the store clock would
+				// then have no next opening. Keep the fixture closed at every
+				// wall-clock time by opening a minute later.
+				$at->modify( '+1 minute' );
+			}
 			$slot  = $at->format( 'H:i' );
 			$day   = array(
 				'periods' => array(
