@@ -107,6 +107,64 @@ if ( ! function_exists( 'lafka_analytics_banner_enabled' ) ) {
 	}
 }
 
+if ( ! function_exists( 'lafka_analytics_needs_consent_banner' ) ) {
+	/**
+	 * Whether anything on the page needs the visitor's consent decision: a
+	 * third-party destination (GTM / GA4 / Clarity / Meta Pixel), the
+	 * Cloudflare beacon, or Lafka Insights in its consent_required mode.
+	 *
+	 * Insights in the default aggregate mode is deliberately NOT a reason: it
+	 * sets no cookie and stores no identifier, so a cookie banner for it would
+	 * be misleading and a needless conversion drag.
+	 *
+	 * @return bool
+	 */
+	function lafka_analytics_needs_consent_banner(): bool {
+		foreach ( array( 'lafka_analytics_gtm_id', 'lafka_analytics_ga4_id', 'lafka_analytics_clarity_id', 'lafka_analytics_meta_pixel_id', 'lafka_analytics_cf_beacon_token' ) as $accessor ) {
+			if ( function_exists( $accessor ) && '' !== (string) call_user_func( $accessor ) ) {
+				return true;
+			}
+		}
+		return lafka_analytics_insights_needs_consent();
+	}
+}
+
+if ( ! function_exists( 'lafka_analytics_insights_needs_consent' ) ) {
+	/**
+	 * True when Lafka Insights runs in consent_required mode: the banner is
+	 * required and lafka_emit_consent_mirror() mirrors the analytics decision
+	 * into the first-party `lafka_consent` cookie (so server-side events can
+	 * respect it) and WooCommerce Order Attribution.
+	 *
+	 * @return bool
+	 */
+	function lafka_analytics_insights_needs_consent(): bool {
+		return function_exists( 'lafka_insights_needs_consent_banner' ) && lafka_insights_needs_consent_banner();
+	}
+}
+
+if ( ! function_exists( 'lafka_emit_consent_mirror' ) ) {
+	/**
+	 * Mirror every consent decision for Lafka Insights' consent_required mode:
+	 * inlines assets/js/lafka-consent-mirror.min.js first in <head>
+	 * (priority 0). It watches the dataLayer for the `consent_update` pushes
+	 * the head replay and the banner already make and mirrors the analytics
+	 * choice into the first-party `lafka_consent` cookie (read by the
+	 * server-side Insights events) and WooCommerce Order Attribution.
+	 * Nothing is printed unless Insights needs consent and the banner is on.
+	 */
+	function lafka_emit_consent_mirror(): void {
+		if ( ! lafka_analytics_banner_enabled() || ! lafka_analytics_insights_needs_consent() ) {
+			return;
+		}
+		$file = dirname( __DIR__, 2 ) . '/assets/js/lafka-consent-mirror.min.js';
+		$code = is_readable( $file ) ? (string) file_get_contents( $file ) : ''; // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local, plugin-owned build file.
+		if ( '' !== $code ) {
+			echo '<script id="lafka-consent-mirror">' . $code . "</script>\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- the plugin's own built script, no interpolated values.
+		}
+	}
+}
+
 // ============================================================================
 // Emit functions.
 // ============================================================================
@@ -451,7 +509,10 @@ if ( ! function_exists( 'lafka_emit_consent_banner' ) ) {
 		// function_exists guard is defensive: the gate lives in
 		// lafka-page-context.php, required at bootstrap well before this fires on
 		// wp_footer:100, so on a real request the function is always present.
-		if ( ! function_exists( 'lafka_analytics_is_active' ) || ! lafka_analytics_is_active() ) {
+		// Lafka Insights counts as "active" (it feeds on the dataLayer) but in its
+		// default aggregate mode it sets no cookie, so it only calls for the
+		// banner in consent_required mode (lafka_analytics_needs_consent_banner()).
+		if ( ! function_exists( 'lafka_analytics_is_active' ) || ! lafka_analytics_is_active() || ! lafka_analytics_needs_consent_banner() ) {
 			return;
 		}
 
@@ -698,6 +759,7 @@ if ( function_exists( 'add_action' ) ) {
 	// then immediately replay any stored decision so returning visitors are
 	// restored to their granted/denied state inside the wait_for_update window
 	// (registered right after defaults so it fires after gtag is defined).
+	add_action( 'wp_head', 'lafka_emit_consent_mirror', 0 );
 	add_action( 'wp_head', 'lafka_emit_consent_mode_defaults', 1 );
 	add_action( 'wp_head', 'lafka_emit_consent_replay', 1 );
 	add_action( 'wp_head', 'lafka_emit_gsc_verification', 1 );
