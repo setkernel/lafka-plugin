@@ -66,6 +66,11 @@ PHP, plus `npm run check-version`. JS is linted (ESLint), CSS linted
 committed `.min.js` builds are checked against their sources (`npm run build`)
 on Node 24.
 
+The official WordPress.org **Plugin Check** runs in `.github/workflows/plugin-check.yml`
+(non-blocking for now, outside `ci-passed`) against exactly the tree release.yml
+zips, on a wp-env stack (WP 7.1.2 + WC 11.1.2) started from npm — no community
+actions; errors fail that job, the CSV report is uploaded as an artifact.
+
 The security sniff families — `WordPress.Security.EscapeOutput.*`,
 `WordPress.Security.NonceVerification.*`, `WordPress.DB.PreparedSQL.*` —
 are **enforced as errors** (re-enabled in the 2026-05-14 P5-Sec pass). Only
