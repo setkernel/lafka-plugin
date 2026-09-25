@@ -204,6 +204,9 @@ complete, authoritative changelog and downloadable releases, see:
 
 https://github.com/setkernel/lafka-plugin/releases
 
+= 10.3.0 =
+* Live-site QA sharpening: checkout mode follows the Checkout page (addresses required for delivery/card on classic), delivery orders keep the typed street, pickup → delivery flow, Friday/Saturday "closed" fix, drawer prices with BOGO, BOGO banner that never covers the header, no layout shift, lighter pages, cleaner SEO (canonicals, titles, descriptions, OG), closed user enumeration.
+
 = 10.2.1 =
 * Promotions: the BOGO banner sits at the top of the page instead of covering the header.
 
@@ -245,6 +248,9 @@ https://github.com/setkernel/lafka-plugin/releases
 * See the GitHub releases page for the full history.
 
 == Upgrade Notice ==
+
+= 10.3.0 =
+Pairs with Lafka theme 7.3.0. Click-test pickup and delivery checkout after upgrading. Anonymous /wp-json/wp/v2/users now returns 401.
 
 = 10.2.0 =
 Pairs with Lafka theme 7.2.0. Title templates are on by default when no SEO plugin is active,

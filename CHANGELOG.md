@@ -7,6 +7,36 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
 
 ## [Unreleased]
 
+## [10.3.0] — 2026-09-25
+
+Live-site QA sharpening (2026-09-25): 153 findings from four anonymous QA
+passes on the production store; every code finding fixed here or in the theme.
+
+### Fixed
+- **Checkout mode follows the Checkout page**: classic (`[woocommerce_checkout]`) vs
+  checkout block is read from the page itself, not only the stored option, so the
+  classic form never has street/city/postcode relaxed for delivery or card orders,
+  and the short pickup form loads. Site Health warns when option and page disagree.
+- **Delivery orders keep the typed street** when a map plugin (address-field-
+  autocomplete) blanks `address_1` on the saved order.
+- **Pickup → Delivery**: a "Delivery" choice stays selectable while its price waits
+  for an address; the header/drawer/cart preference drives the shipping rate; the
+  COD label follows the rate WooCommerce settled on; "Want delivery?" is hidden when
+  the cart is under the delivery minimum.
+- **"Closed — order ahead" all Friday/Saturday** on product pages (midnight close
+  compared as a string); ready-time now follows the order gate and the store clock.
+- **Cart drawer**: line prices from the calculated line totals (BOGO/coupon with the
+  original struck through); rapid stepper taps queued; focus kept after Remove;
+  upsell suggests varied little extras (no combos, nothing already in the cart).
+- **BOGO banner**: in the page flow (never over the header), closes on ×, no layout
+  shift (pre-paint dismissal check), plain wording, 44px close, links to the menu.
+- Delivery-minimum note is one readable paragraph; phone numbers under 7 digits are
+  refused with an inline error; card security code gets `cc-csc`; speculative
+  loading never prefetches cart/checkout/remove links; shipping row heading reads
+  "Pickup or delivery".
+- JSON-LD WebSite name/description no longer show `&amp;`; category-page Menu nodes
+  get their own `@id`; add-on multi-choices read as one line.
+
 ### Added
 - **WebP for new uploads**: new JPEG/PNG uploads are saved as WebP (every
   generated size) when the server's image editor can write WebP. Toggle on
