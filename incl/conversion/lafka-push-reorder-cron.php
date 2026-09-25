@@ -244,8 +244,9 @@ if ( ! function_exists( 'lafka_push_cleanup_run' ) ) {
 }
 
 if ( function_exists( 'add_action' ) ) {
-	add_action( 'lafka_push_reorder_reminder', 'lafka_push_reorder_run' );
-	add_action( 'lafka_push_cleanup_subscriptions', 'lafka_push_cleanup_run' );
+	// Cron entry points run inside Lafka_Log::guard() (GX1).
+	add_action( 'lafka_push_reorder_reminder', function_exists( 'lafka_guarded' ) ? lafka_guarded( 'lafka_push_reorder_run' ) : 'lafka_push_reorder_run' );
+	add_action( 'lafka_push_cleanup_subscriptions', function_exists( 'lafka_guarded' ) ? lafka_guarded( 'lafka_push_cleanup_run' ) : 'lafka_push_cleanup_run' );
 	// Self-heal: re-register on every plugins_loaded so a missed activation
 	// hook (e.g. WP-CLI deploy) still gets the schedule.
 	add_action( 'plugins_loaded', 'lafka_push_reorder_schedule_event', 30 );

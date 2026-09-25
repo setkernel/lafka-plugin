@@ -276,9 +276,10 @@ final class UninstallCleanupTest extends TestCase {
 		$this->assertStringContainsString( 'woocommerce_attribute_taxonomies', $joined );
 		$this->assertStringContainsString( 'DROP TABLE IF EXISTS wp_lafka_abandoned_carts', $joined );
 		$this->assertStringContainsString( 'DROP TABLE IF EXISTS wp_lafka_push_subscriptions', $joined );
+		$this->assertStringContainsString( 'DROP TABLE IF EXISTS wp_lafka_incidents', $joined );
 		$this->assertStringNotContainsString( 'DELETE FROM', $joined, 'Toggle OFF must not delete option/meta rows.' );
 		$this->assertSame(
-			array( 'lafka_abandoned_cart_db_version', 'lafka_push_db_version', 'lafka_push_activity_log' ),
+			array( 'lafka_abandoned_cart_db_version', 'lafka_push_db_version', 'lafka_push_activity_log', 'lafka_incidents_db_version' ),
 			$deleted_options,
 			'Toggle OFF removes only the dropped tables\' markers.'
 		);

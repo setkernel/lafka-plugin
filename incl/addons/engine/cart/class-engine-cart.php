@@ -26,6 +26,9 @@
 
 defined( 'ABSPATH' ) || exit;
 
+// `lafka_checkout_blocked` vocabulary (GX1) — add-on validation reports refusals.
+require_once dirname( __DIR__, 3 ) . '/observability/class-lafka-checkout-block-reasons.php';
+
 class Lafka_Engine_Cart {
 
 	public function __construct() {
@@ -217,6 +220,13 @@ class Lafka_Engine_Cart {
 			$result = $field->validate();
 			if ( is_wp_error( $result ) ) {
 				wc_add_notice( $result->get_error_message(), 'error' );
+				Lafka_Checkout_Block_Reasons::emit_code(
+					'lafka_invalid_addon',
+					array(
+						'path'  => 'classic',
+						'stage' => 'add_to_cart',
+					)
+				);
 				return false;
 			}
 

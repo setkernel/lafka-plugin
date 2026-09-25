@@ -294,6 +294,17 @@ if ( ! class_exists( 'Lafka_Engine_Store_Api' ) ) {
 		 * @throws \RuntimeException Fallback when the Store API is unavailable.
 		 */
 		private static function throw_store_api_error( string $code, string $message ): void {
+			if ( ! class_exists( 'Lafka_Checkout_Block_Reasons' ) ) {
+				require_once dirname( __DIR__, 3 ) . '/observability/class-lafka-checkout-block-reasons.php';
+			}
+			Lafka_Checkout_Block_Reasons::emit_code(
+				$code,
+				array(
+					'path'  => 'store_api',
+					'stage' => 'add_to_cart',
+				)
+			);
+
 			if ( class_exists( '\Automattic\WooCommerce\StoreApi\Exceptions\RouteException' ) ) {
 				throw new \Automattic\WooCommerce\StoreApi\Exceptions\RouteException( esc_html( $code ), esc_html( $message ), 400 );
 			}

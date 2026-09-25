@@ -11,8 +11,9 @@
  * option (a checkbox on Lafka → Modules, default OFF):
  *
  *   - Toggle OFF (default) — the historical "minimal cleanup": revert custom
- *     product-attribute types back to 'select', drop the two conversion tables
- *     (abandoned carts + push subscriptions), and delete their version/marker
+ *     product-attribute types back to 'select', drop the custom tables
+ *     (abandoned carts, push subscriptions, diagnostics incidents), unschedule
+ *     the daily diagnostics job, and delete the tables' version/marker
  *     options. Everything else the plugin ever wrote is left in place, so a
  *     re-install picks up exactly where the operator left off.
  *
@@ -74,6 +75,7 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 			self::revert_attribute_types();
 			self::drop_tables();
 			self::delete_conversion_markers();
+			self::unschedule_actions();
 
 			if ( $delete_all ) {
 				self::full_cleanup();
@@ -104,6 +106,7 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 			return array(
 				'lafka_abandoned_carts',
 				'lafka_push_subscriptions',
+				'lafka_incidents', // GX1 diagnostics incident index.
 			);
 		}
 
@@ -148,6 +151,7 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 				'lafka_security_options',         // security-header toggles
 				'lafka_block_cart_shim_done',     // block-cart page shim marker
 				'lafka_seed_demo_manifest',       // `wp lafka seed-demo` bookkeeping
+				'woocommerce_lafka_error_digest_settings', // GX1 digest WC_Email settings
 				self::DATA_TOGGLE_OPTION,         // the uninstall toggle itself
 			);
 		}
@@ -181,6 +185,8 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 				'lafka_contact_',        // contact-block options
 				'lafka_promotions_',     // promo knobs + migration-notice dismissal
 				'lafka_combo_deal_',     // combo-deal categories / amount / type
+				'lafka_log_',            // diagnostics settings, checkout counters, daily-job bookkeeping
+				'lafka_incidents_',      // incident table schema version
 			);
 		}
 
@@ -271,6 +277,7 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 				'_lafka_review_email_sent', // order-level send guard
 				'_lafka_push_reorder_sent_', // order-level send guard
 				'_lafka_winback_email',     // win-back address captured at checkout
+				'_lafka_request_id',        // request id of the checkout that created the order (diagnostics correlation)
 			);
 		}
 
@@ -306,7 +313,7 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 		}
 
 		/**
-		 * Drop the two custom conversion tables. Runs on every uninstall (matches
+		 * Drop the custom tables (see tables()). Runs on every uninstall (matches
 		 * pre-NX1-06 behaviour: deactivation keeps the tables, uninstall drops
 		 * the schema).
 		 *
@@ -338,6 +345,20 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 			delete_option( 'lafka_abandoned_cart_db_version' );
 			delete_option( 'lafka_push_db_version' );
 			delete_option( 'lafka_push_activity_log' );
+			// The incident table is dropped on every uninstall, so its schema
+			// marker must go too (else a re-install would skip creating it).
+			delete_option( 'lafka_incidents_db_version' );
+		}
+
+		/**
+		 * Remove Lafka's Action Scheduler jobs (the daily Diagnostics job).
+		 *
+		 * @return void
+		 */
+		public static function unschedule_actions(): void {
+			if ( function_exists( 'as_unschedule_all_actions' ) ) {
+				as_unschedule_all_actions( 'lafka_diagnostics_daily', array(), 'lafka' );
+			}
 		}
 
 		/**

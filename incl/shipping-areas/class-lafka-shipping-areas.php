@@ -629,6 +629,7 @@ class Lafka_Shipping_Areas {
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- woocommerce_checkout_process context; WC core verifies the checkout nonce upstream.
 		if ( empty( $_POST['lafka_picked_delivery_geocoded'] ) ) {
 			wc_add_notice( esc_html__( 'Please precise your address on the map.', 'lafka-plugin' ), 'error' );
+			self::report_checkout_block( 'lafka_delivery_location_required' );
 
 			return;
 		}
@@ -638,6 +639,7 @@ class Lafka_Shipping_Areas {
 		$decoded = json_decode( sanitize_text_field( wp_unslash( $_POST['lafka_picked_delivery_geocoded'] ) ) );
 		if ( null === $decoded || ! isset( $decoded->lat, $decoded->lng ) || ! is_numeric( $decoded->lat ) || ! is_numeric( $decoded->lng ) ) {
 			wc_add_notice( esc_html__( 'Please precise your address on the map.', 'lafka-plugin' ), 'error' );
+			self::report_checkout_block( 'lafka_delivery_location_required' );
 
 			return;
 		}
@@ -646,6 +648,7 @@ class Lafka_Shipping_Areas {
 		$lng = (float) $decoded->lng;
 		if ( $lat < -90 || $lat > 90 || $lng < -180 || $lng > 180 ) {
 			wc_add_notice( esc_html__( 'Please precise your address on the map.', 'lafka-plugin' ), 'error' );
+			self::report_checkout_block( 'lafka_delivery_location_required' );
 
 			return;
 		}
@@ -659,7 +662,28 @@ class Lafka_Shipping_Areas {
 		// checkout paths can never disagree on the delivery area.
 		if ( ! $this->is_point_in_delivery_zone( $lat, $lng ) ) {
 			wc_add_notice( esc_html__( 'The selected location is outside our delivery area. Please pinpoint an address inside the delivery zone.', 'lafka-plugin' ), 'error' );
+			self::report_checkout_block( 'lafka_outside_delivery_area' );
 		}
+	}
+
+	/**
+	 * Report a classic-checkout geo-fence refusal as `lafka_checkout_blocked`
+	 * (address_unpinned / outside_delivery_zone), same codes as the Store API.
+	 *
+	 * @param string $code Lafka error code.
+	 * @return void
+	 */
+	private static function report_checkout_block( string $code ): void {
+		if ( ! class_exists( 'Lafka_Checkout_Block_Reasons' ) ) {
+			require_once dirname( __DIR__ ) . '/observability/class-lafka-checkout-block-reasons.php';
+		}
+		Lafka_Checkout_Block_Reasons::emit_code(
+			$code,
+			array(
+				'path'  => 'classic',
+				'stage' => 'checkout',
+			)
+		);
 	}
 
 	/**

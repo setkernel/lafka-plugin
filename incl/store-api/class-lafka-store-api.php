@@ -43,6 +43,9 @@
 
 defined( 'ABSPATH' ) || exit;
 
+// `lafka_checkout_blocked` vocabulary (GX1) — every rejection below is reported.
+require_once dirname( __DIR__ ) . '/observability/class-lafka-checkout-block-reasons.php';
+
 if ( ! class_exists( 'Lafka_Store_Api' ) ) {
 
 	/**
@@ -167,6 +170,32 @@ if ( ! class_exists( 'Lafka_Store_Api' ) ) {
 			$timeslot_error = self::timeslot_error( self::get_datetime_session() );
 			if ( null !== $timeslot_error ) {
 				$errors->add( 'lafka_invalid_timeslot', $timeslot_error );
+			}
+
+			self::report_cart_errors( $errors );
+		}
+
+		/**
+		 * Report the Lafka cart errors as `lafka_checkout_blocked` — only on a
+		 * Store API place-order request. validate_cart() also runs on every cart
+		 * read (the cart schema lists its errors), which is not an attempt.
+		 *
+		 * @param object $errors WP_Error cart error bag.
+		 * @return void
+		 */
+		private static function report_cart_errors( $errors ): void {
+			if ( ! class_exists( 'Lafka_Checkout_Failures' ) || ! Lafka_Checkout_Failures::in_store_api_checkout()
+				|| ! method_exists( $errors, 'get_error_codes' ) ) {
+				return;
+			}
+			foreach ( (array) $errors->get_error_codes() as $code ) {
+				Lafka_Checkout_Block_Reasons::emit_code(
+					(string) $code,
+					array(
+						'path'  => 'store_api',
+						'stage' => 'checkout',
+					)
+				);
 			}
 		}
 
@@ -732,6 +761,14 @@ if ( ! class_exists( 'Lafka_Store_Api' ) ) {
 		 * @throws \RuntimeException Fallback when the Store API is unavailable.
 		 */
 		private static function throw_store_api_error( string $code, string $message, int $status = 400 ): void {
+			Lafka_Checkout_Block_Reasons::emit_code(
+				$code,
+				array(
+					'path'  => 'store_api',
+					'stage' => class_exists( 'Lafka_Checkout_Failures' ) && Lafka_Checkout_Failures::in_store_api_checkout() ? 'checkout' : 'cart',
+				)
+			);
+
 			if ( class_exists( '\Automattic\WooCommerce\StoreApi\Exceptions\RouteException' ) ) {
 				throw new \Automattic\WooCommerce\StoreApi\Exceptions\RouteException( esc_html( $code ), esc_html( $message ), $status );
 			}

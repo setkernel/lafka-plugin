@@ -330,7 +330,8 @@ if ( ! function_exists( 'lafka_review_email_run_cron' ) ) {
 }
 
 if ( function_exists( 'add_action' ) ) {
-	add_action( 'lafka_send_review_email', 'lafka_review_email_run_cron', 10, 1 );
+	// Cron entry point runs inside Lafka_Log::guard() (GX1).
+	add_action( 'lafka_send_review_email', function_exists( 'lafka_guarded' ) ? lafka_guarded( 'lafka_review_email_run_cron' ) : 'lafka_review_email_run_cron', 10, 1 );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

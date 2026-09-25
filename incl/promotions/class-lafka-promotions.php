@@ -28,6 +28,8 @@
 defined( 'ABSPATH' ) || exit;
 
 require_once __DIR__ . '/../lafka-shipping-method-helpers.php';
+// `lafka_checkout_blocked` vocabulary (GX1) — the delivery minimum reports refusals.
+require_once __DIR__ . '/../observability/class-lafka-checkout-block-reasons.php';
 
 if ( ! class_exists( 'Lafka_Promotions' ) ) {
 
@@ -218,12 +220,44 @@ if ( ! class_exists( 'Lafka_Promotions' ) ) {
 			if ( ! self::should_block_delivery( $package['contents_cost'] ) ) {
 				return $rates;
 			}
+			$withheld = false;
 			foreach ( $rates as $rate_id => $rate ) {
 				if ( ! lafka_is_pickup_shipping_method( $rate->method_id ) ) {
 					unset( $rates[ $rate_id ] );
+					$withheld = true;
 				}
 			}
+			if ( $withheld ) {
+				self::report_below_minimum();
+			}
 			return $rates;
+		}
+
+		/**
+		 * Report `below_delivery_minimum` once per customer session per day —
+		 * package rates are recalculated many times while a cart is edited, and
+		 * one customer seeing "delivery unavailable" is one refusal.
+		 *
+		 * @return void
+		 */
+		private static function report_below_minimum(): void {
+			$session = function_exists( 'did_action' ) && did_action( 'woocommerce_init' ) && function_exists( 'WC' )
+				&& is_object( WC() ) && isset( WC()->session ) && is_object( WC()->session ) ? WC()->session : null;
+			$today   = gmdate( 'Y-m-d' );
+			if ( $session && method_exists( $session, 'get' ) && $today === $session->get( 'lafka_below_min_reported' ) ) {
+				return;
+			}
+			if ( $session && method_exists( $session, 'set' ) ) {
+				$session->set( 'lafka_below_min_reported', $today );
+			}
+			Lafka_Checkout_Block_Reasons::emit(
+				Lafka_Checkout_Block_Reasons::BELOW_DELIVERY_MINIMUM,
+				array(
+					'path'  => defined( 'REST_REQUEST' ) && REST_REQUEST ? 'store_api' : 'classic',
+					'stage' => 'cart',
+					'code'  => 'delivery_minimum',
+				)
+			);
 		}
 
 		public function render_delivery_notice() {

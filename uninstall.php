@@ -8,9 +8,10 @@
  * WordPress. Behaviour:
  *
  *   - Toggle OFF (default): minimal cleanup — revert custom product-attribute
- *     types to 'select', DROP the abandoned-cart + push-subscription tables, and
+ *     types to 'select', DROP the abandoned-cart, push-subscription and incident tables, and
  *     delete their version/marker options (lafka_abandoned_cart_db_version,
- *     lafka_push_db_version, lafka_push_activity_log). Everything else is kept.
+ *     lafka_push_db_version, lafka_push_activity_log, lafka_incidents_db_version),
+ *     and unschedule the daily diagnostics job. Everything else is kept.
  *   - Toggle ON ('Remove all data on uninstall', set on Lafka → Modules): full
  *     inventory-driven cleanup on top of the minimal pass — every lafka* option,
  *     the three Lafka CPTs' posts, lafka_branch_location + lafka_foodmenu_category

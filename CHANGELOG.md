@@ -5,6 +5,31 @@ All notable changes to lafka-plugin are documented here. The format follows
 semver (`npm version` is the single source of truth — see the Releases section
 of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
 
+## [Unreleased]
+
+### Added
+- **Diagnostics (GX1)**: `Lafka_Log` / `lafka_log()` logging facade on
+  WooCommerce's logger — one WC log source per channel (`lafka-{channel}`),
+  personal data scrubbed, a request id on Lafka REST / Store API / checkout
+  responses (`X-Lafka-Request-Id`) and on checkout orders (`_lafka_request_id`).
+  Theme/child log through the `lafka_log` action.
+- **Diagnostics**: deduplicated incident table (warnings and errors, 90-day
+  retention), Lafka-scoped PHP fatal capture, and guarded Lafka REST + cron
+  entry points.
+- **Checkout**: `lafka_checkout_blocked( $reason, $context )` fired at every
+  refusal point — store closed, outside the delivery area, address not
+  pinpointed, time slot, branch/order type, add-ons, delivery minimum, no
+  shipping method, checkout field errors (codes only), other Store API errors
+  and payment failures classified declined / AVS / CVV / gateway error.
+  Vocabulary: `Lafka_Checkout_Block_Reasons`. See `docs/DIAGNOSTICS.md`.
+- **Lafka → Diagnostics** screen (incidents, checkout failures incl.
+  WooCommerce place-order traces, health, settings), three Site Health checks
+  and a daily error digest email — module `diagnostics`, on by default.
+
+### Changed
+- `lafka_write_log()` is deprecated and now writes through `Lafka_Log`; the
+  order-hours clock error logs to WooCommerce logs instead of `error_log`.
+
 ## [10.1.0] — 2026-09-24
 
 ### Fixed

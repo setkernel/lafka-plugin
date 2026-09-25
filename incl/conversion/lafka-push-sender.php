@@ -1186,5 +1186,6 @@ if ( ! function_exists( 'lafka_push_run_broadcast_batch' ) ) {
 }
 
 if ( function_exists( 'add_action' ) ) {
-	add_action( 'lafka_push_broadcast_batch', 'lafka_push_run_broadcast_batch', 10, 1 );
+	// Cron entry point runs inside Lafka_Log::guard() (GX1).
+	add_action( 'lafka_push_broadcast_batch', function_exists( 'lafka_guarded' ) ? lafka_guarded( 'lafka_push_run_broadcast_batch' ) : 'lafka_push_run_broadcast_batch', 10, 1 );
 }

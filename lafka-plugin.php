@@ -78,13 +78,36 @@ if ( function_exists( 'register_activation_hook' ) ) {
 	register_activation_hook( __FILE__, array( 'Lafka_Checkout_Mode', 'on_activation' ) );
 }
 
+/**
+ * Observability (GX1 · Diagnostics): Lafka_Log facade on wc_get_logger() with
+ * per-channel WC sources, PII scrubbing, request ids on REST/Store API
+ * responses + checkout orders, the deduplicated incident table, Lafka-scoped
+ * fatal capture, the `lafka_checkout_blocked` "why no order" feed and the
+ * daily Action Scheduler job. Logging is core (always on); the Diagnostics
+ * screen, Site Health tests and error digest email are the `diagnostics`
+ * module (default ON). Required early so every module below can log.
+ */
+require_once plugin_dir_path( __FILE__ ) . 'incl/observability/lafka-observability.php';
+if ( function_exists( 'register_activation_hook' ) ) {
+	register_activation_hook( __FILE__, array( 'Lafka_Incidents', 'install' ) );
+}
+if ( function_exists( 'register_deactivation_hook' ) ) {
+	register_deactivation_hook( __FILE__, array( 'Lafka_Diagnostics', 'unschedule' ) );
+}
+
 if ( ! function_exists( 'lafka_write_log' ) ) {
+	/**
+	 * Legacy debug logger, kept for back-compat.
+	 *
+	 * @deprecated 10.2.0 Use Lafka_Log::{level}( $channel, $message, $context ) or lafka_log().
+	 *
+	 * @param mixed $log Message, array or object.
+	 * @return void
+	 */
 	function lafka_write_log( $log ) {
-		if ( is_array( $log ) || is_object( $log ) ) {
-			error_log( print_r( $log, true ) );
-		} else {
-			error_log( $log );
-		}
+		$message = is_scalar( $log ) ? (string) $log : 'lafka_write_log';
+		$context = is_scalar( $log ) ? array() : array( 'value' => is_object( $log ) ? get_object_vars( $log ) : $log );
+		lafka_log( 'debug', 'core', $message, $context );
 	}
 }
 

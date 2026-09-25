@@ -3,6 +3,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+// `lafka_checkout_blocked` vocabulary (GX1) — the gates below report refusals.
+require_once dirname( __DIR__ ) . '/observability/class-lafka-checkout-block-reasons.php';
+
 class Lafka_Order_Hours {
 	public static $lafka_order_hours_options;
 	public static $timezone;
@@ -99,7 +102,16 @@ class Lafka_Order_Hours {
 
 			return new DateTime( 'now', $temp_timezone );
 		} catch ( Exception $e ) {
-			error_log( '[Lafka Order Hours] DateTime error: ' . $e->getMessage() );
+			if ( class_exists( 'Lafka_Log' ) ) {
+				Lafka_Log::error(
+					'order-hours',
+					'Could not read the store clock: ' . $e->getMessage(),
+					array(
+						'code'      => 'datetime_error',
+						'exception' => $e,
+					)
+				);
+			}
 			return new DateTime( '@0' );
 		}
 	}
@@ -554,6 +566,13 @@ class Lafka_Order_Hours {
 			return;
 		}
 		wc_add_notice( esc_html( self::get_closed_notice_message() ), 'error' );
+		Lafka_Checkout_Block_Reasons::emit_code(
+			'lafka_store_closed',
+			array(
+				'path'  => 'classic',
+				'stage' => 'checkout',
+			)
+		);
 	}
 
 	/**
@@ -569,6 +588,13 @@ class Lafka_Order_Hours {
 	public function gate_add_to_cart_when_closed( $passed ) {
 		if ( $passed && ! self::is_shop_open() && $this->is_add_to_cart_disabled_when_closed() ) {
 			wc_add_notice( esc_html( self::get_closed_notice_message() ), 'error' );
+			Lafka_Checkout_Block_Reasons::emit_code(
+				'lafka_store_closed',
+				array(
+					'path'  => 'classic',
+					'stage' => 'add_to_cart',
+				)
+			);
 
 			return false;
 		}
@@ -594,6 +620,13 @@ class Lafka_Order_Hours {
 		if ( ! class_exists( '\Automattic\WooCommerce\StoreApi\Exceptions\RouteException' ) ) {
 			return;
 		}
+		Lafka_Checkout_Block_Reasons::emit_code(
+			'lafka_store_closed',
+			array(
+				'path'  => 'store_api',
+				'stage' => 'add_to_cart',
+			)
+		);
 		throw new \Automattic\WooCommerce\StoreApi\Exceptions\RouteException(
 			'lafka_store_closed',
 			esc_html( self::get_closed_notice_message() ),
