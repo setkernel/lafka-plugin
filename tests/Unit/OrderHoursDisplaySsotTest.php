@@ -205,12 +205,12 @@ final class OrderHoursDisplaySsotTest extends TestCase {
 
 	public function test_resolver_display_store_overrides_schedule(): void {
 		// Operator populated the dedicated display store for Monday only.
-		Functions\when( 'get_theme_mod' )->alias(
-			static function ( $key, $default = null ) {
+		$this->stub_resolver_wp_functions();
+		Functions\when( 'get_option' )->alias(
+			static function ( $key, $default = false ) {
 				return 'lafka_business_hours_mon' === $key ? '09:00-17:00' : $default;
 			}
 		);
-		$this->stub_resolver_wp_functions( false );
 		// A DIFFERENT schedule in the order-hours store must be ignored because
 		// the display store is explicitly populated (deliberate override wins).
 		\Lafka_Order_Hours::$lafka_order_hours_options = array(

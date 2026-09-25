@@ -84,6 +84,10 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 			$wp_customize->add_setting(
                 $id,
                 array(
+					// GX3: business facts live in ONE store — wp_options
+					// `lafka_business_*`, the same option the WooCommerce →
+					// Settings → Restaurant tab writes (see lafka-nap-migration.php).
+					'type'              => 0 === strpos( (string) $id, 'lafka_business_' ) ? 'option' : 'theme_mod',
 					'default'           => $default,
 					'transport'         => 'refresh',
 					'sanitize_callback' => $sanitize,
@@ -229,6 +233,7 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 			$wp_customize->add_setting(
                 'lafka_business_business_type',
                 array(
+					'type'              => 'option', // GX3: single NAP store (wp_options).
 					'default'           => 'Restaurant, LocalBusiness, FoodEstablishment',
 					'transport'         => 'refresh',
 					'sanitize_callback' => array( __CLASS__, 'sanitize_business_type' ),
@@ -247,6 +252,7 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 			$wp_customize->add_setting(
                 'lafka_business_price_range',
                 array(
+					'type'              => 'option', // GX3: single NAP store (wp_options).
 					'default'           => '$$',
 					'transport'         => 'refresh',
 					'sanitize_callback' => array( __CLASS__, 'sanitize_price_range' ),
@@ -304,6 +310,7 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 			$wp_customize->add_setting(
                 'lafka_business_geo_lat',
                 array(
+					'type'              => 'option', // GX3: single NAP store (wp_options).
 					'default'           => '',
 					'transport'         => 'refresh',
 					'sanitize_callback' => array( __CLASS__, 'sanitize_geo' ),
@@ -322,6 +329,7 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 			$wp_customize->add_setting(
                 'lafka_business_geo_lng',
                 array(
+					'type'              => 'option', // GX3: single NAP store (wp_options).
 					'default'           => '',
 					'transport'         => 'refresh',
 					'sanitize_callback' => array( __CLASS__, 'sanitize_geo' ),
@@ -399,6 +407,7 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 				$wp_customize->add_setting(
                     'lafka_business_hours_' . $key,
                     array(
+						'type'              => 'option', // GX3: single NAP store (wp_options).
 						'default'           => '',
 						'transport'         => 'refresh',
 						'sanitize_callback' => array( __CLASS__, 'sanitize_hours' ),
@@ -469,6 +478,7 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 			$wp_customize->add_setting(
                 'lafka_business_same_as',
                 array(
+					'type'              => 'option', // GX3: single NAP store (wp_options).
 					'default'           => '',
 					'transport'         => 'refresh',
 					'sanitize_callback' => array( __CLASS__, 'sanitize_url_list' ),

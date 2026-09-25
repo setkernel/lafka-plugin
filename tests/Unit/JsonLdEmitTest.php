@@ -31,8 +31,8 @@ final class JsonLdEmitTest extends TestCase {
 		'lafka_business_phone_e164' => '+15551234567',
 	);
 
-	/** @var array<string, mixed> */
-	private array $theme_mods = array();
+	/** @var array<string, mixed> The lafka_business_* option store (GX3: the single NAP store). */
+	private array $options = array();
 
 	/** @var array<string, mixed> Filter name => forced return value. */
 	private array $filters = array();
@@ -40,7 +40,7 @@ final class JsonLdEmitTest extends TestCase {
 	protected function setUp(): void {
 		parent::setUp();
 		Monkey\setUp();
-		$this->theme_mods = array();
+		$this->options    = array();
 		$this->filters    = array();
 
 		foreach ( array( 'is_admin', 'is_feed', 'is_404', 'is_product', 'is_shop', 'is_product_category', 'is_page', 'lafka_seo_plugin_active' ) as $false ) {
@@ -48,8 +48,8 @@ final class JsonLdEmitTest extends TestCase {
 		}
 		// Front page: no breadcrumb / menu nodes, keeping the graph to WebSite (+ Restaurant).
 		Functions\when( 'is_front_page' )->justReturn( true );
-		Functions\when( 'get_theme_mod' )->alias( fn( $key, $default = null ) => $this->theme_mods[ $key ] ?? $default );
-		Functions\when( 'get_option' )->alias( static fn( $key, $default = false ) => $default );
+		Functions\when( 'get_theme_mod' )->alias( static fn( $key, $default = null ) => $default );
+		Functions\when( 'get_option' )->alias( fn( $key, $default = false ) => $this->options[ $key ] ?? $default );
 		Functions\when( 'get_bloginfo' )->justReturn( '' );
 		Functions\when( 'get_site_icon_url' )->justReturn( '' );
 		Functions\when( 'home_url' )->justReturn( 'https://example.test' );
@@ -129,7 +129,7 @@ final class JsonLdEmitTest extends TestCase {
 	}
 
 	public function test_configured_nap_adds_the_restaurant_node_and_links_it_as_publisher(): void {
-		$this->theme_mods = self::NAP;
+		$this->options = self::NAP;
 
 		$graph = $this->emitted_payload()['@graph'];
 

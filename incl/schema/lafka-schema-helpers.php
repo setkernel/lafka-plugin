@@ -70,8 +70,10 @@ if ( ! function_exists( 'lafka_get_restaurant_info' ) ) {
 	 * hours, cuisine, payment, social profiles, and brand identity.
 	 *
 	 * Resolution order per field:
-	 *   1. Explicit theme_mod  (`lafka_business_<field>`) — operator sets via Customizer
-	 *   2. Explicit option     (`lafka_business_<field>`)  — programmatic / migrations
+	 *   1. Option (`lafka_business_<field>`) — the single store, written by
+	 *      WooCommerce → Settings → Restaurant AND the Customizer panel
+	 *      (GX3: legacy theme_mods are migrated in once, never read here)
+	 *   2. WooCommerce store option (address / city / postcode / country / phone)
 	 *   3. WP-core fallback    (e.g. get_bloginfo('name') for name)
 	 *   4. Empty               — schema generator will skip the field
 	 *
@@ -143,30 +145,27 @@ if ( ! function_exists( 'lafka_get_restaurant_info' ) ) {
 			'phone_display' => function_exists( 'get_option' ) ? (string) get_option( 'woocommerce_store_phone', '' ) : '',
 		);
 
-		// Helper: wp_options → theme_mod → WC store fallback → default.
+		// Helper: wp_options → WC store fallback → default.
 		//
-		// v9.18.0 flipped option/theme_mod precedence: as of this version
-		// the canonical write surface is the new "Restaurant" tab under
-		// WooCommerce → Settings (uses standard WC_Settings_Page API),
-		// which writes to wp_options. Legacy Customizer-stored theme_mods
-		// remain readable as fallback so existing operator data still
-		// flows through if WC Settings hasn't been touched yet.
+		// GX3 (single NAP store): wp_options `lafka_business_*` is the ONE
+		// store. Both write surfaces — the WooCommerce → Settings →
+		// Restaurant tab and the Customizer "Restaurant Information" panel
+		// (whose settings are now `type => option`) — write it. Legacy
+		// Customizer theme_mods are copied in once by
+		// lafka_nap_migrate_theme_mods() (incl/schema/lafka-nap-migration.php)
+		// where the option is empty, and are never read here again: two
+		// stores with "options win" silently shadowed operator edits (a
+		// phone typed in the Customizer never reached the site).
 		//
-		// Empty strings are treated as "not set" so the next resolver
-		// step takes over. WC store options (woocommerce_store_address
-		// etc.) remain the third-priority canonical source for shared
-		// NAP fields that operators don't bother re-entering.
+		// Empty strings — and the literal "Array" a pre-9.11 cast bug stored
+		// for list fields — are treated as "not set" so the next resolver
+		// step takes over. WC store options (woocommerce_store_address etc.)
+		// remain the fallback for shared NAP fields.
 		$get = function ( $key, $default = '' ) use ( $wc_fallbacks ) {
 			if ( function_exists( 'get_option' ) ) {
 				$option = get_option( 'lafka_business_' . $key, null );
-				if ( null !== $option && '' !== $option ) {
+				if ( lafka_schema_is_set_value( $option ) ) {
 					return $option;
-				}
-			}
-			if ( function_exists( 'get_theme_mod' ) ) {
-				$theme_mod = get_theme_mod( 'lafka_business_' . $key, null );
-				if ( null !== $theme_mod && '' !== $theme_mod ) {
-					return $theme_mod;
 				}
 			}
 			if ( isset( $wc_fallbacks[ $key ] ) && '' !== $wc_fallbacks[ $key ] ) {
@@ -185,6 +184,11 @@ if ( ! function_exists( 'lafka_get_restaurant_info' ) ) {
 		// "Browse the menu" CTA uses, so hasMenu (schema-restaurant.php) can
 		// never point somewhere the on-page buttons don't.
 		$menu_url = lafka_get_menu_url();
+
+		$map_url = trim( (string) $get( 'map_url' ) );
+		if ( '' !== $map_url && false === filter_var( $map_url, FILTER_VALIDATE_URL ) ) {
+			$map_url = '';
+		}
 
 		$info = array(
 			'name'            => $get( 'name', $name_default ),
@@ -216,14 +220,21 @@ if ( ! function_exists( 'lafka_get_restaurant_info' ) ) {
 			'business_type'   => lafka_schema_normalize_csv_list( $get( 'business_type' ) ) ?: array( 'Restaurant', 'LocalBusiness', 'FoodEstablishment' ),
 			'same_as'         => array_values(
 				array_filter(
-					array_map( 'trim', explode( "\n", (string) $get( 'same_as' ) ) ),
+					lafka_schema_normalize_line_list( $get( 'same_as' ) ),
 					static function ( $url ) {
-						return '' !== $url && false !== filter_var( $url, FILTER_VALIDATE_URL );
+						return false !== filter_var( $url, FILTER_VALIDATE_URL );
 					}
 				)
 			),
 			'logo_url'        => $logo_url,
 			'menu_url'        => $menu_url,
+			// GX3: free-text restaurant description (llms.txt summary + the
+			// meta-description fallback), Google Maps / Business Profile URL
+			// (schema hasMap), and the operator's service-area list (one
+			// place per line → schema areaServed + llms.txt).
+			'description'     => trim( (string) $get( 'description' ) ),
+			'map_url'         => $map_url,
+			'service_areas'   => lafka_schema_normalize_line_list( $get( 'service_areas' ) ),
 		);
 
 		// Phone fallbacks — handle both directions so operators only need to fill one field.
@@ -523,6 +534,123 @@ function lafka_schema_get_logo_url(): string {
 	return '';
 }
 
+if ( ! function_exists( 'lafka_schema_get_brand_logo_url' ) ) {
+	/**
+	 * GX3: the brand logo for Restaurant.logo — the theme's Custom Logo
+	 * (Customizer → Site Identity) when set, else the site icon.
+	 *
+	 * @return string Absolute URL or ''.
+	 */
+	function lafka_schema_get_brand_logo_url(): string {
+		$url = '';
+		if ( function_exists( 'get_theme_mod' ) && function_exists( 'wp_get_attachment_image_url' ) ) {
+			$logo_id = (int) get_theme_mod( 'custom_logo', 0 );
+			if ( $logo_id > 0 ) {
+				$url = (string) wp_get_attachment_image_url( $logo_id, 'full' );
+			}
+		}
+		if ( '' === $url ) {
+			$url = lafka_schema_get_logo_url();
+		}
+		if ( function_exists( 'apply_filters' ) ) {
+			$url = (string) apply_filters( 'lafka_schema_logo_url', $url );
+		}
+		return $url;
+	}
+}
+
+if ( ! function_exists( 'lafka_schema_get_restaurant_images' ) ) {
+	/**
+	 * GX3: photos for Restaurant.image — the operator's default share image
+	 * and the homepage hero (both real, operator-chosen photos), falling back
+	 * to the brand logo so the node always carries an image when one exists.
+	 *
+	 * @return list<string> Absolute, de-duplicated URLs.
+	 */
+	function lafka_schema_get_restaurant_images(): array {
+		$images = array();
+
+		$og_default = function_exists( 'get_theme_mod' ) ? get_theme_mod( 'lafka_og_image_default', '' ) : '';
+		if ( is_numeric( $og_default ) && (int) $og_default > 0 && function_exists( 'wp_get_attachment_image_url' ) ) {
+			$images[] = (string) wp_get_attachment_image_url( (int) $og_default, 'large' );
+		} elseif ( is_string( $og_default ) && false !== filter_var( $og_default, FILTER_VALIDATE_URL ) ) {
+			$images[] = $og_default;
+		}
+
+		if ( function_exists( 'lafka_lcp_hero' ) ) {
+			$hero = lafka_lcp_hero();
+			if ( ! empty( $hero['url'] ) ) {
+				$images[] = (string) $hero['url'];
+			}
+		}
+
+		$images = array_values( array_unique( array_filter( $images ) ) );
+		if ( empty( $images ) ) {
+			$logo = lafka_schema_get_brand_logo_url();
+			if ( '' !== $logo ) {
+				$images[] = $logo;
+			}
+		}
+
+		if ( function_exists( 'apply_filters' ) ) {
+			$images = (array) apply_filters( 'lafka_schema_restaurant_images', $images );
+		}
+		return array_values( array_filter( array_map( 'strval', $images ) ) );
+	}
+}
+
+if ( ! function_exists( 'lafka_schema_is_set_value' ) ) {
+	/**
+	 * Whether a stored NAP value counts as "set": not null, not '', not an
+	 * empty array, and not the literal "Array" a pre-9.11 cast bug persisted
+	 * for list fields (cuisines / payment methods / sameAs).
+	 *
+	 * @param mixed $value Raw stored value.
+	 * @return bool
+	 */
+	function lafka_schema_is_set_value( $value ): bool {
+		if ( null === $value || false === $value ) {
+			return false;
+		}
+		if ( is_array( $value ) ) {
+			return ! empty( $value );
+		}
+		if ( ! is_scalar( $value ) ) {
+			return false;
+		}
+		$value = trim( (string) $value );
+		return '' !== $value && 0 !== strcasecmp( $value, 'Array' );
+	}
+}
+
+if ( ! function_exists( 'lafka_schema_normalize_line_list' ) ) {
+	/**
+	 * Normalise a one-entry-per-line textarea value (or an array) into a clean
+	 * list of trimmed, non-empty, unique strings, dropping the "Array" sentinel.
+	 *
+	 * @param mixed $value Raw stored value.
+	 * @return list<string>
+	 */
+	function lafka_schema_normalize_line_list( $value ): array {
+		if ( is_array( $value ) ) {
+			$items = array_map( static fn( $v ) => is_scalar( $v ) ? (string) $v : '', $value );
+		} elseif ( is_scalar( $value ) ) {
+			$items = preg_split( '/\r\n|\r|\n/', (string) $value );
+		} else {
+			return array();
+		}
+		$out = array();
+		foreach ( (array) $items as $item ) {
+			$item = trim( (string) $item );
+			if ( '' === $item || 0 === strcasecmp( $item, 'Array' ) || in_array( $item, $out, true ) ) {
+				continue;
+			}
+			$out[] = $item;
+		}
+		return $out;
+	}
+}
+
 /**
  * Return the currency code to emit in JSON-LD Offer/AggregateOffer blocks.
  *
@@ -552,6 +680,92 @@ function lafka_schema_get_price_currency(): string {
 	return $currency;
 }
 
+if ( ! function_exists( 'lafka_schema_diet_map' ) ) {
+	/**
+	 * Map of product_tag / product_cat slug → schema.org RestrictedDiet URL.
+	 *
+	 * Defaults cover the conventional slugs (the dietary-tag seeder creates
+	 * `vegan` and `vegetarian`); the operator adds or overrides lines under
+	 * WooCommerce → Settings → Restaurant → Search & AI ("slug = Diet", e.g.
+	 * `plant-based = VeganDiet`), and `lafka_schema_diet_map` has the last
+	 * word. A diet is only ever claimed for items the operator tagged.
+	 *
+	 * @return array<string,string> slug => https://schema.org/<Diet>
+	 */
+	function lafka_schema_diet_map(): array {
+		$map = array(
+			'vegan'        => 'VeganDiet',
+			'vegetarian'   => 'VegetarianDiet',
+			'gluten-free'  => 'GlutenFreeDiet',
+			'glutenfree'   => 'GlutenFreeDiet',
+			'halal'        => 'HalalDiet',
+			'kosher'       => 'KosherDiet',
+			'lactose-free' => 'LowLactoseDiet',
+			'dairy-free'   => 'LowLactoseDiet',
+			'low-fat'      => 'LowFatDiet',
+			'low-salt'     => 'LowSaltDiet',
+			'low-calorie'  => 'LowCalorieDiet',
+			'diabetic'     => 'DiabeticDiet',
+			'hindu'        => 'HinduDiet',
+		);
+
+		$raw = function_exists( 'lafka_seo_get' ) ? lafka_seo_get( 'lafka_seo_diet_map' ) : '';
+		foreach ( preg_split( '/\r\n|\r|\n/', (string) $raw ) as $line ) {
+			if ( ! preg_match( '/^\s*([a-z0-9_-]+)\s*[:=]\s*([A-Za-z]+)\s*$/', (string) $line, $m ) ) {
+				continue;
+			}
+			$map[ strtolower( $m[1] ) ] = $m[2];
+		}
+
+		$out = array();
+		foreach ( $map as $slug => $diet ) {
+			$diet = (string) preg_replace( '#^https?://schema\.org/#', '', (string) $diet );
+			if ( '' === $diet ) {
+				continue;
+			}
+			$out[ (string) $slug ] = 'https://schema.org/' . ( str_ends_with( $diet, 'Diet' ) ? $diet : $diet . 'Diet' );
+		}
+
+		if ( function_exists( 'apply_filters' ) ) {
+			/**
+			 * Filter the slug → schema.org RestrictedDiet map.
+			 *
+			 * @since 10.2.0
+			 * @param array<string,string> $out slug => diet URL.
+			 */
+			$out = (array) apply_filters( 'lafka_schema_diet_map', $out );
+		}
+		return $out;
+	}
+}
+
+if ( ! function_exists( 'lafka_schema_product_diets' ) ) {
+	/**
+	 * schema.org diets a product is tagged/categorised for.
+	 *
+	 * @param WC_Product $product Product.
+	 * @return list<string> Diet URLs (unique, map order).
+	 */
+	function lafka_schema_product_diets( WC_Product $product ): array {
+		$map = lafka_schema_diet_map();
+		if ( empty( $map ) || ! function_exists( 'wp_get_post_terms' ) ) {
+			return array();
+		}
+		$slugs = wp_get_post_terms( $product->get_id(), array( 'product_tag', 'product_cat' ), array( 'fields' => 'slugs' ) );
+		if ( ! is_array( $slugs ) ) {
+			return array();
+		}
+		$slugs = array_map( 'strtolower', array_map( 'strval', $slugs ) );
+		$diets = array();
+		foreach ( $map as $slug => $diet ) {
+			if ( in_array( (string) $slug, $slugs, true ) && ! in_array( $diet, $diets, true ) ) {
+				$diets[] = $diet;
+			}
+		}
+		return $diets;
+	}
+}
+
 /**
  * Build a single MenuItem schema array from a WC_Product.
  *
@@ -565,6 +779,20 @@ function lafka_schema_build_menu_item( WC_Product $product ): ?array {
 		'@type' => 'MenuItem',
 		'name'  => $product->get_name(),
 	);
+
+	// GX3: link every MenuItem to its product page, so answer engines can
+	// cite the orderable URL and a MenuItem listed in two sections resolves
+	// to one entity.
+	$url = function_exists( 'get_permalink' ) ? (string) get_permalink( $product->get_id() ) : '';
+	if ( '' !== $url ) {
+		$item['@id'] = $url . '#menuitem';
+		$item['url'] = $url;
+	}
+
+	$diets = lafka_schema_product_diets( $product );
+	if ( ! empty( $diets ) ) {
+		$item['suitableForDiet'] = 1 === count( $diets ) ? $diets[0] : $diets;
+	}
 
 	$short_desc = wp_strip_all_tags( $product->get_short_description() );
 	if ( '' !== $short_desc ) {

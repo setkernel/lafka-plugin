@@ -1,12 +1,12 @@
 <?php
 /**
- * RestaurantInfoResolverTest — exercises the four-layer resolution chain in
+ * RestaurantInfoResolverTest — exercises the resolution chain in
  * `lafka_get_restaurant_info()`:
  *
- *   1. Customizer theme_mod  (`lafka_business_<key>`)
- *   2. Programmatic option   (`lafka_business_<key>`)
- *   3. WooCommerce store option (`woocommerce_store_*` / `woocommerce_default_country`)
- *   4. Sensible default      (or empty for fields that are skipped from schema)
+ *   1. The single business store — option `lafka_business_<key>` (GX3: the
+ *      Customizer writes it too; legacy theme_mods are migrated, never read)
+ *   2. WooCommerce store option (`woocommerce_store_*` / `woocommerce_default_country`)
+ *   3. Sensible default      (or empty for fields that are skipped from schema)
  *
  * plus the WP-core fallbacks and the lafka_restaurant_info filter.
  *
@@ -117,19 +117,64 @@ final class RestaurantInfoResolverTest extends TestCase {
 		$this->assertSame( '555-123-4567 ext. 2', \lafka_get_restaurant_info()['phone_display'] );
 	}
 
-	public function test_customizer_value_overrides_wc_store_value(): void {
-		// Multi-location use case: WC checkout/email branding stays at HQ
-		// address; schema/JSON-LD uses the per-location Customizer value.
-		$this->stub_wc_options( array( 'woocommerce_store_address' => 'WC HQ Address' ) );
+	public function test_a_stale_legacy_theme_mod_is_never_read(): void {
+		// GX3: two stores with "options win" hid operator edits. The legacy
+		// theme_mod is migrated into the option once, then ignored.
+		$this->stub_wc_options(
+			array(
+				'woocommerce_store_address' => 'WC HQ Address',
+				'lafka_business_phone_e164' => '+15551230000',
+			)
+		);
 		Functions\when( 'get_theme_mod' )->alias(
 			static function ( $key, $default = null ) {
-				return 'lafka_business_street' === $key ? 'Schema Override Street' : $default;
+				$mods = array(
+					'lafka_business_street'     => 'Stale Customizer Street',
+					'lafka_business_phone_e164' => '+15559999999',
+				);
+				return $mods[ $key ] ?? $default;
 			}
 		);
 
 		$info = \lafka_get_restaurant_info();
 
-		$this->assertSame( 'Schema Override Street', $info['street'], 'theme_mod must take precedence over WC store option' );
+		$this->assertSame( 'WC HQ Address', $info['street'] );
+		$this->assertSame( '+15551230000', $info['phone_e164'] );
+	}
+
+	public function test_literal_array_sentinel_counts_as_unset(): void {
+		// A pre-9.11 cast bug stored the string "Array" for list fields.
+		$this->stub_wc_options(
+			array(
+				'lafka_business_cuisines' => 'Array',
+				'lafka_business_same_as'  => 'Array',
+				'lafka_business_street'   => 'Array',
+				'woocommerce_store_address' => '1 Real Road',
+			)
+		);
+
+		$info = \lafka_get_restaurant_info();
+
+		$this->assertSame( array(), $info['cuisines'] );
+		$this->assertSame( array(), $info['same_as'] );
+		$this->assertSame( '1 Real Road', $info['street'], '"Array" must fall through to the next layer' );
+	}
+
+	public function test_description_map_url_and_service_areas_are_resolved(): void {
+		$this->stub_wc_options(
+			array(
+				'lafka_business_description'   => '  Wood-fired pizza since 1999.  ',
+				'lafka_business_map_url'       => 'https://maps.example.test/place/1',
+				'lafka_business_service_areas' => "Northside\r\n\nRiverside\nNorthside\n",
+			)
+		);
+		$info = \lafka_get_restaurant_info();
+		$this->assertSame( 'Wood-fired pizza since 1999.', $info['description'] );
+		$this->assertSame( 'https://maps.example.test/place/1', $info['map_url'] );
+		$this->assertSame( array( 'Northside', 'Riverside' ), $info['service_areas'] );
+
+		$this->stub_wc_options( array( 'lafka_business_map_url' => 'not a url' ) );
+		$this->assertSame( '', \lafka_get_restaurant_info()['map_url'] );
 	}
 
 	public function test_lafka_business_option_overrides_wc_store_value(): void {
@@ -182,9 +227,9 @@ final class RestaurantInfoResolverTest extends TestCase {
 		$this->assertSame( '123 Main, Smalltown', $info['address_short'] );
 	}
 
-	public function test_customizer_values_feed_the_composites_and_hours(): void {
+	public function test_stored_values_feed_the_composites_and_hours(): void {
 		$this->stub_wc_options( array() );
-		$mods = array(
+		$options = array(
 			'lafka_business_name'       => 'Test Cafe',
 			'lafka_business_street'     => '123 Main St',
 			'lafka_business_city'       => 'Springfield',
@@ -195,7 +240,7 @@ final class RestaurantInfoResolverTest extends TestCase {
 			'lafka_business_geo_lat'    => '39.78',
 			'lafka_business_hours_mon'  => '11:00-23:00',
 		);
-		Functions\when( 'get_theme_mod' )->alias( static fn( $key, $default = null ) => $mods[ $key ] ?? $default );
+		$this->stub_wc_options( $options );
 
 		$info = \lafka_get_restaurant_info();
 

@@ -143,7 +143,8 @@ final class PrepTimeFunctionalTest extends TestCase {
 	//
 	// Reads via the real `lafka_get_restaurant_info()` resolver (loaded at the
 	// top of this file, can't be Brain-Monkey'd). We stub the resolver's
-	// underlying inputs (`get_theme_mod` for `lafka_business_hours_*`) so the
+	// underlying inputs (the `lafka_business_hours_*` options — GX3's single
+	// NAP store) so the
 	// real resolver computes the hours map under test conditions.
 	// ────────────────────────────────────────────────────────────────────────
 
@@ -151,23 +152,19 @@ final class PrepTimeFunctionalTest extends TestCase {
 	 * @param array<string, string> $hours_by_day_key e.g. ['mon' => '11:00-23:00']
 	 */
 	private function stub_resolver_inputs( array $hours_by_day_key ): void {
-		Functions\when( 'get_theme_mod' )->alias(
-			static function ( $key, $default = null ) use ( $hours_by_day_key ) {
-				if ( str_starts_with( (string) $key, 'lafka_business_hours_' ) ) {
-					$day_key = substr( (string) $key, strlen( 'lafka_business_hours_' ) );
-					return $hours_by_day_key[ $day_key ] ?? '';
-				}
-				return $default;
-			}
-		);
-		// Return the passed default for any get_option() call. The resolver
+		Functions\when( 'get_theme_mod' )->alias( static fn( $key, $default = null ) => $default );
+		// Return the passed default for any other get_option() call. The resolver
 		// always passes a default (2 args), but the SSOT-reconciliation branch
 		// (active only when Lafka_Order_Hours is loaded by a sibling test) calls
 		// get_option('lafka_order_hours_options') with ONE argument — a strict
 		// returnArg(2) fatals there, so an alias that tolerates both arities is
 		// required for the test to behave the same in isolation and full-suite runs.
 		Functions\when( 'get_option' )->alias(
-			static function ( $option, $default_value = false ) {
+			static function ( $option, $default_value = false ) use ( $hours_by_day_key ) {
+				if ( str_starts_with( (string) $option, 'lafka_business_hours_' ) ) {
+					$day_key = substr( (string) $option, strlen( 'lafka_business_hours_' ) );
+					return $hours_by_day_key[ $day_key ] ?? '';
+				}
 				return $default_value;
 			}
 		);

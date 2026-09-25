@@ -77,11 +77,13 @@ namespace LafkaPlugin\Tests\Unit {
 		 * function_exists(): once any suite stubs it, the symbol exists for the
 		 * rest of the process.
 		 *
-		 * @param array<string, mixed> $theme_mods
+		 * GX3: business facts live in ONE store — the lafka_business_* options.
+		 *
+		 * @param array<string, mixed> $options
 		 */
-		private function stub_install( array $theme_mods ): void {
-			Functions\when( 'get_theme_mod' )->alias( static fn( $key, $default = null ) => $theme_mods[ $key ] ?? $default );
-			Functions\when( 'get_option' )->alias( static fn( $key, $default = false ) => $default );
+		private function stub_install( array $options ): void {
+			Functions\when( 'get_theme_mod' )->alias( static fn( $key, $default = null ) => $default );
+			Functions\when( 'get_option' )->alias( static fn( $key, $default = false ) => $options[ $key ] ?? $default );
 			Functions\when( 'get_bloginfo' )->justReturn( '' );
 			Functions\when( 'get_site_icon_url' )->justReturn( '' );
 			Functions\when( 'home_url' )->alias( static fn( $path = '' ) => 'https://example.test' . $path );

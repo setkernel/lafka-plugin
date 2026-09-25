@@ -68,6 +68,7 @@ if ( ! function_exists( 'lafka_schema_suppress_wc_native_product' ) ) {
 }
 
 require_once __DIR__ . '/lafka-schema-helpers.php';
+require_once __DIR__ . '/lafka-nap-migration.php';
 require_once __DIR__ . '/lafka-schema-website.php';
 require_once __DIR__ . '/lafka-schema-restaurant.php';
 require_once __DIR__ . '/lafka-schema-menu.php';
