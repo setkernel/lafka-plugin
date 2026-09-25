@@ -134,12 +134,19 @@ if ( ! class_exists( 'Lafka_Store_Api' ) ) {
 				return;
 			}
 
-			// order-hours: store closed → block checkout (always, like the classic gate).
-			if ( class_exists( 'Lafka_Order_Hours' ) ) {
-				$closed = self::evaluate_order_hours(
-					Lafka_Order_Hours::is_shop_open(),
-					Lafka_Order_Hours::get_closed_notice_message()
-				);
+			$datetime = self::get_datetime_session();
+
+			// order-hours: store closed → block checkout, like the classic gate —
+			// unless the store takes orders ahead and a slot is chosen (the
+			// timeslot gate below validates that slot).
+			if ( class_exists( 'Lafka_Order_Hours' ) && ! Lafka_Order_Hours::is_shop_open() ) {
+				$order_ahead = Lafka_Order_Hours::can_order_ahead();
+				$scheduled   = $order_ahead && ! empty( $datetime['date'] ) && ! empty( $datetime['timeslot'] );
+				$message     = Lafka_Order_Hours::get_closed_notice_with_next_open();
+				if ( $order_ahead ) {
+					$message .= ' ' . Lafka_Order_Hours::choose_time_hint();
+				}
+				$closed = self::evaluate_order_hours( $scheduled, $message );
 				if ( null !== $closed ) {
 					$errors->add( 'lafka_store_closed', $closed );
 				}
@@ -164,7 +171,7 @@ if ( ! class_exists( 'Lafka_Store_Api' ) ) {
 			}
 
 			// timeslot validity + capacity: route through the shared classic gate.
-			$timeslot_error = self::timeslot_error( self::get_datetime_session() );
+			$timeslot_error = self::timeslot_error( $datetime );
 			if ( null !== $timeslot_error ) {
 				$errors->add( 'lafka_invalid_timeslot', $timeslot_error );
 			}
