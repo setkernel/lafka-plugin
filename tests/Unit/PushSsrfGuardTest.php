@@ -48,6 +48,9 @@ final class PushSsrfGuardTest extends TestCase {
 	protected function setUp(): void {
 		parent::setUp();
 		Monkey\setUp();
+		// The endpoint host allowlist calls wp_parse_url() once any earlier test
+		// has defined it (Brain Monkey) — stub it so suite order can't matter.
+		Functions\when( 'wp_parse_url' )->alias( static fn( $url, $component = -1 ) => parse_url( (string) $url, $component ) );
 		Functions\when( '__' )->returnArg();
 		Functions\when( 'wp_json_encode' )->alias( 'json_encode' );
 		Functions\when( 'sanitize_text_field' )->returnArg();
