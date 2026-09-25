@@ -132,9 +132,6 @@ maps loader without a key. Closed in plugin v8.7.4 + theme v5.8.3.
 
 ## Known incompatibilities
 
-- **stylelint ^17** — incompatible with `@wordpress/stylelint-config@23.x`
-  (peer dep requires ^16.8.2). Pinned to ^16.26.1 in all 3 repos. Revisit
-  when @wordpress/stylelint-config@24+ ships.
 - **WP < 6.6** — uses `wp_body_open()` (since 5.2) but several other APIs
   the codebase depends on (CPT REST, modern HPOS hooks) are 6.6+.
 - **WC < 9.5** — addons rely on hook signatures changed in 9.5. Checkout
