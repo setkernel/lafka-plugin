@@ -91,14 +91,39 @@ if ( ! function_exists( 'lafka_cart_drawer_render_upsell' ) ) {
 			? lafka_cart_drawer_get_upsell_ids()
 			: array();
 		if ( ! empty( $ids ) ) {
-			echo '<p class="lafka-cart-drawer__upsell-heading">' . esc_html__( 'Complete your meal', 'lafka-plugin' ) . '</p>';
+			$default = __( 'Complete your meal', 'lafka-plugin' );
+			/**
+			 * Filter the drawer upsell heading (plain text; empty keeps the default).
+			 *
+			 * @since 10.2.0
+			 * @param string $heading Heading text.
+			 */
+			$heading = trim( (string) apply_filters( 'lafka_cart_drawer_upsell_heading', $default ) );
+			echo '<p class="lafka-cart-drawer__upsell-heading">' . esc_html( '' !== $heading ? $heading : $default ) . '</p>';
 			echo '<ul class="lafka-cart-drawer__upsell-list" role="list">';
 			foreach ( $ids as $id ) {
 				$p = wc_get_product( $id );
 				if ( ! $p ) {
 					continue;
 				}
-				$img = get_the_post_thumbnail(
+				/**
+				 * Filter a short plain-text note under an upsell row's name
+				 * (e.g. the product's short description). '' shows none.
+				 *
+				 * @since 10.2.0
+				 * @param string     $note    Note text.
+				 * @param WC_Product $product Suggested product.
+				 */
+				$note = trim( wp_strip_all_tags( (string) apply_filters( 'lafka_cart_drawer_upsell_row_note', '', $p ) ) );
+				/**
+				 * Filter the upsell add-button label (plain text).
+				 *
+				 * @since 10.2.0
+				 * @param string     $label   Button label.
+				 * @param WC_Product $product Suggested product.
+				 */
+				$add_label = trim( (string) apply_filters( 'lafka_cart_drawer_upsell_add_label', __( '+ Add', 'lafka-plugin' ), $p ) );
+				$img       = get_the_post_thumbnail(
                     $id,
                     'woocommerce_gallery_thumbnail',
                     array(
@@ -117,6 +142,9 @@ if ( ! function_exists( 'lafka_cart_drawer_render_upsell' ) ) {
 						}
 						?>
 						<span class="lafka-cart-drawer__upsell-name"><?php echo esc_html( $p->get_name() ); ?></span>
+						<?php if ( '' !== $note ) : ?>
+							<span class="lafka-cart-drawer__upsell-note"><?php echo esc_html( $note ); ?></span>
+						<?php endif; ?>
 						<span class="lafka-cart-drawer__upsell-price"><?php echo wp_kses_post( $p->get_price_html() ); ?></span>
 					</a>
 					<a href="<?php echo esc_url( $p->add_to_cart_url() ); ?>"
@@ -125,7 +153,7 @@ if ( ! function_exists( 'lafka_cart_drawer_render_upsell' ) ) {
 						class="lafka-cart-drawer__upsell-add add_to_cart_button ajax_add_to_cart"
 						rel="nofollow"
 						aria-label="<?php echo esc_attr( sprintf( /* translators: %s product */ __( 'Add %s to your order', 'lafka-plugin' ), wp_strip_all_tags( $p->get_name() ) ) ); ?>">
-						<?php esc_html_e( '+ Add', 'lafka-plugin' ); ?>
+						<?php echo esc_html( '' !== $add_label ? $add_label : __( '+ Add', 'lafka-plugin' ) ); ?>
 					</a>
 				</li>
 				<?php
