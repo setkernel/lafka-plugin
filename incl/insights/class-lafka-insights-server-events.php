@@ -303,10 +303,14 @@ if ( ! class_exists( 'Lafka_Insights_Server_Events' ) ) {
 		}
 
 		/**
-		 * Record against the visit that placed an order (parked at payment
-		 * attempt), falling back to the current request when it is the
-		 * visitor's own. Aggregate counters are written even without a visit
-		 * (they carry no identifier).
+		 * Record against the visit that placed an order — the visit id parked
+		 * at its payment attempt — and nothing otherwise.
+		 *
+		 * One population rule keeps every Insights number comparable: only
+		 * measured visits count. An order with no parked visit was placed before
+		 * Insights was collecting, by a visitor it does not measure (staff, a
+		 * bot, a GPC / Do-Not-Track browser, no consent), or outside checkout —
+		 * counting it would let "ordered" exceed "added" or "visits".
 		 *
 		 * @param int                             $order_id Order id.
 		 * @param int                             $stages   Stage bits.
@@ -324,11 +328,8 @@ if ( ! class_exists( 'Lafka_Insights_Server_Events' ) ) {
 				if ( $stages & Lafka_Insights_DB::STAGE_ORDER ) {
 					delete_transient( self::ORDER_SID_TRANSIENT . $order_id );
 				}
-			} elseif ( Lafka_Insights_Session::request_allowed() ) {
-				$sid = Lafka_Insights_Session::current_visitor_id();
 			}
 			if ( '' === $sid ) {
-				Lafka_Insights_DB::add_counters( Lafka_Insights_Session::today(), $counters );
 				return;
 			}
 			self::write( $day, $sid, $stages, $counters, $reason );
