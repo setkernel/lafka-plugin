@@ -7,6 +7,8 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
 
 ## [Unreleased]
 
+## [10.2.0] — 2026-09-25
+
 Phases GX0 ("stop losing orders"), GX1 (diagnostics) and GX2 (Insights).
 All new checkout behaviour works on the classic and the block (Store API)
 checkout; settings live in Customizer → **Lafka — Checkout** unless noted.
@@ -155,6 +157,14 @@ checkout; settings live in Customizer → **Lafka — Checkout** unless noted.
   listed as "never finished", indexed as incidents or emailed in the digest;
   incidents already recorded for them are resolved by the daily check. A
   "Show finished attempts" link reveals them; each row shows its outcome.
+
+### Platform (GX5)
+- Tested up to WordPress 7.1 / WooCommerce 11.1 (wp-env pins WP 7.1.2 + WC 11.1.2); `Requires Plugins: woocommerce` header.
+- Google Maps loader deferred via the script strategy API (no tag rewriting); add-ons depend on `wc-accounting`; checkout date/time uses `selectWoo`; the contact-form inline script attaches to `jquery-form`.
+- stylelint 17 + @wordpress/stylelint-config 26; non-blocking official Plugin Check workflow on the release tree.
+
+### Tests & CI
+- The PHPUnit suite is independent of test order and wall clock (300/300 random seeds): `LeftoverStubsExtension` pre-defines Brain-Monkey-stubbed functions, `StableClock` guards clock-tick races, static state resets between classes. CI also runs the suite in reverse and in seeded random order.
 
 ## [10.1.0] — 2026-09-24
 

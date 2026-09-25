@@ -196,6 +196,35 @@ complete, authoritative changelog and downloadable releases, see:
 
 https://github.com/setkernel/lafka-plugin/releases
 
+= 10.2.0 =
+* Stop losing orders:
+  * delivery prices are withheld until a street address is entered;
+  * pickup orders ask only for name, phone and email;
+  * "Pay at pickup" / "Pay on delivery";
+  * a closed store names its next opening and can take orders ahead;
+  * size options are listed in order;
+  * no more placeholder store location;
+  * the classic checkout refreshes delivery rates after autofill or paste.
+* Diagnostics: one logging layer on WooCommerce logs (personal data scrubbed), a reason
+  recorded every time checkout refuses an order, Lafka → Diagnostics and a daily error
+  digest.
+* Insights (optional module): first-party, cookieless funnel analytics with a weekly
+  plain-English owner email.
+* Local and AI search:
+  * a single business-profile source;
+  * a linked Restaurant/Menu schema graph;
+  * title and description templates;
+  * /llms.txt, /llms-full.txt, /menu.md and /menu.json;
+  * IndexNow;
+  * sitemap hygiene;
+  * category FAQs;
+  * Search & AI Site Health checks.
+* Design support for the theme's counter layout: "serves N", a required-add-ons probe, a
+  pickup/delivery preference, a drawer quantity stepper and category taglines.
+* Site Health flags menu items marked Virtual (they skip pickup and delivery), and adds
+  `wp lafka products unvirtual`.
+* Tested up to WordPress 7.1 / WooCommerce 11.1; `Requires Plugins: woocommerce`.
+
 = 10.1.0 =
 * Checkout/cart fixes (block + classic): date/time "mandatory" only when enabled,
   add-on "Include" honored, delivery geo-fence on block checkout, pickup never
@@ -205,6 +234,11 @@ https://github.com/setkernel/lafka-plugin/releases
 * See the GitHub releases page for the full history.
 
 == Upgrade Notice ==
+
+= 10.2.0 =
+Pairs with Lafka theme 7.2.0. Title templates are on by default when no SEO plugin is active,
+so page titles change. Review Site Health → Lafka after upgrading. Click-test pickup and
+delivery checkout.
 
 = 10.1.0 =
 Requires WordPress 6.6+, WooCommerce 9.5+ and PHP 8.1+. Review the GitHub
