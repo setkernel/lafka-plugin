@@ -17,6 +17,7 @@ use Lafka_Promotions;
 use PHPUnit\Framework\TestCase;
 
 require_once dirname( __DIR__, 2 ) . '/incl/promotions/class-lafka-promotions.php';
+require_once dirname( __DIR__, 2 ) . '/incl/schema/lafka-schema-helpers.php';
 
 final class PromotionsBannerPlacementTest extends TestCase {
 
@@ -28,6 +29,9 @@ final class PromotionsBannerPlacementTest extends TestCase {
 		Functions\when( 'esc_html' )->returnArg();
 		Functions\when( 'esc_attr' )->returnArg();
 		Functions\when( 'esc_attr_e' )->echoArg();
+		Functions\when( 'esc_url' )->returnArg();
+		Functions\when( 'home_url' )->alias( static fn( $path = '' ) => 'https://example.test' . $path );
+		Functions\when( 'trailingslashit' )->alias( static fn( $v ) => rtrim( (string) $v, '/' ) . '/' );
 		Lafka_Promotions::flush_knobs();
 	}
 
@@ -72,6 +76,65 @@ final class PromotionsBannerPlacementTest extends TestCase {
 		$this->assertStringContainsString( 'role="region"', $html );
 		$this->assertStringContainsString( 'aria-label="Promotion"', $html );
 		$this->assertStringNotContainsString( 'role="banner"', $html );
+	}
+
+	public function test_the_in_flow_banner_renders_visible_so_it_never_shifts_the_page(): void {
+		$inline = $this->capture( array( $this->promotions(), 'render_banner_inline' ) );
+		$fixed  = $this->capture( array( $this->promotions(), 'render_banner_fallback' ) );
+
+		$this->assertDoesNotMatchRegularExpression( '/<div id="lafka-bogo-banner"[^>]*\shidden/', $inline, 'H-05: no JS reveal after load.' );
+		$this->assertMatchesRegularExpression( '/<div id="lafka-bogo-banner"[^>]*\shidden/', $fixed, 'The overlay keeps its slide-in.' );
+	}
+
+	public function test_the_banner_speaks_plainly_links_to_the_menu_and_has_a_real_button(): void {
+		$html = $this->capture( array( $this->promotions(), 'render_banner_inline' ) );
+
+		$this->assertStringContainsString( '<a class="lafka-bogo-link" href="https://example.test/menu/">Buy 1, get 1 50% off</a>', $html );
+		$this->assertStringContainsString( '<button type="button" class="lafka-bogo-close"', $html );
+		$this->assertDoesNotMatchRegularExpression( '/[\x{1F300}-\x{1FAFF}]/u', $html, 'No emoji (served as s.w.org images).' );
+	}
+
+	public function test_the_prepaint_check_reads_the_same_key_the_script_writes(): void {
+		Functions\when( 'get_option' )->justReturn(
+			array(
+				'promo_key'    => 'spring_deal',
+				'dismiss_days' => 3,
+			)
+		);
+		Lafka_Promotions::flush_knobs();
+		Functions\when( 'plugins_url' )->alias( static fn( $path ) => 'https://example.test/' . $path );
+		Functions\when( 'wp_enqueue_style' )->justReturn( null );
+		Functions\when( 'wp_enqueue_script' )->justReturn( null );
+		$localized = array();
+		Functions\when( 'wp_localize_script' )->alias(
+			static function ( $handle, $name, $data ) use ( &$localized ) {
+				$localized = $data;
+			}
+		);
+
+		$this->promotions()->enqueue_banner_assets();
+		$script = Lafka_Promotions::prepaint_script();
+
+		$this->assertSame( 'lafka_bogo_dismissed_spring_deal', $localized['dismissKey'] );
+		$this->assertStringContainsString( 'localStorage.getItem("lafka_bogo_dismissed_spring_deal")', $script );
+		$this->assertStringContainsString( '<3*864e5', $script, 'Same dismissal window as the script.' );
+		$this->assertStringContainsString( 'lafka-bogo-dismissed', $script );
+
+		$js = (string) file_get_contents( dirname( __DIR__, 2 ) . '/incl/promotions/assets/js/lafka-promotions.js' );
+		$this->assertStringContainsString( 'window.LAFKA_PROMO.dismissKey', $js, 'The script uses the PHP-built key.' );
+	}
+
+	public function test_the_prepaint_check_is_printed_in_the_head_with_its_rule(): void {
+		Functions\when( 'wp_print_inline_script_tag' )->alias(
+			static function ( $data, $attrs ) {
+				echo '<script id="' . $attrs['id'] . '">' . $data . '</script>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			}
+		);
+
+		$html = $this->capture( array( $this->promotions(), 'print_prepaint_dismiss_check' ) );
+
+		$this->assertStringContainsString( '.lafka-bogo-dismissed #lafka-bogo-banner{display:none}', $html );
+		$this->assertStringContainsString( '<script id="lafka-bogo-prepaint-js">', $html );
 	}
 
 	public function test_only_the_fixed_variant_is_positioned_over_the_page(): void {

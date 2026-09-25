@@ -8,14 +8,21 @@
  * removed the hardcoded #c62828 / #e94560 / #4ecca3 brand literals.)
  */
 
-/* ─── Cart delivery-min notice ─────────────────────────────────────────── */
+/* ─── Cart delivery-min notice ───────────────────────────────────────────
+ * An information note, not an error (O-12): one paragraph, neutral colours. */
 .lafka-delivery-min-notice {
-	background-color: var(--lafka-color-accent-500, #dc2626);
-	color: var(--lafka-color-text-on-accent, #fff);
-	border-top-color: var(--lafka-color-accent-600, #b91c1c);
-	padding: 12px 20px;
+	display: block;
+	background-color: var(--lafka-color-surface-muted, #f4f4f5);
+	color: var(--lafka-color-text-primary, #18181b);
+	border-left: 4px solid var(--lafka-color-info-500, #2563eb);
+	padding: 12px 16px;
 	font-size: 15px;
-	font-weight: 600;
+	font-weight: 500;
+	line-height: 1.5;
+}
+
+.lafka-delivery-min-notice__text {
+	display: inline;
 }
 
 /* ─── BOGO savings line under cart subtotal ────────────────────────────── */
@@ -76,27 +83,44 @@
 	background: none;
 	border: none;
 	color: inherit;
-	padding: 8px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 44px; /* H-14: a 44px tap target */
+	min-height: 44px;
+	padding: 0;
+	border-radius: 4px;
 }
 
 .lafka-bogo-close:hover,
-.lafka-bogo-close:focus {
+.lafka-bogo-close:focus-visible {
 	opacity: 1;
-	outline: 2px solid rgba(255, 255, 255, 0.6);
-	outline-offset: 2px;
-	border-radius: 4px;
+	outline: 2px solid currentcolor;
+	outline-offset: -4px;
+}
+
+.lafka-bogo-link {
+	color: inherit;
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+
+.lafka-bogo-link:hover,
+.lafka-bogo-link:focus-visible {
+	color: inherit;
+	text-decoration-thickness: 2px;
 }
 
 @media (max-width: 768px) {
 
 	.lafka-bogo-inner {
-		padding: 12px 48px 12px 16px;
+		padding: 12px 56px 12px 16px;
 		font-size: 14px;
 		text-align: left;
 	}
 
 	.lafka-bogo-close {
-		right: 10px;
+		right: 6px;
 		font-size: 24px;
 	}
 }
