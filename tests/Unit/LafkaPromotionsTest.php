@@ -68,6 +68,20 @@ final class LafkaPromotionsTest extends TestCase {
 		self::assertSame( $offer, Lafka_Promotions::bogo_offer_label() );
 	}
 
+	public function test_the_delivery_minimum_is_exposed_only_while_promotions_is_on(): void {
+		Functions\when( 'get_option' )->justReturn( array( 'delivery_min' => '45' ) );
+		Lafka_Promotions::flush_knobs();
+		$on = true;
+		Functions\when( 'is_lafka_promotions' )->alias( static function () use ( &$on ) {
+			return $on;
+		} );
+
+		self::assertSame( 45.0, lafka_delivery_minimum() );
+
+		$on = false;
+		self::assertSame( 0.0, lafka_delivery_minimum(), 'Module off: no minimum is enforced, none is shown.' );
+	}
+
 	public function test_the_cart_line_says_how_much_the_deal_saved(): void {
 		Functions\when( '__' )->returnArg();
 		Functions\when( 'esc_html__' )->returnArg();
