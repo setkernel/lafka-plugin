@@ -119,9 +119,9 @@ namespace LafkaPlugin\Tests\Unit {
 			parent::tearDown();
 		}
 
-		private function product( string $name, string $price ): object {
-			return new class( $name, $price ) {
-				public function __construct( private string $n, private string $p ) {
+		private function product( string $name, string $price, string $short = '' ): object {
+			return new class( $name, $price, $short ) {
+				public function __construct( private string $n, private string $p, private string $s ) {
 				}
 				public function get_name() {
 					return $this->n;
@@ -133,7 +133,7 @@ namespace LafkaPlugin\Tests\Unit {
 					return $this->p;
 				}
 				public function get_short_description() {
-					return '';
+					return $this->s;
 				}
 			};
 		}
@@ -171,16 +171,20 @@ namespace LafkaPlugin\Tests\Unit {
 
 		public function test_home_title(): void {
 			$this->is['is_front_page'] = true;
-			self::assertSame( 'Acme Kitchen – Pizza &amp; Poutine in Springfield', lafka_seo_document_title( '' ) );
+			self::assertSame( 'Acme Kitchen – Pizza &amp; Poutine in Springfield – Order Online', lafka_seo_document_title( '' ) );
+
+			// No cuisines on file: still keyworded with the place and the action.
+			$this->info['cuisines'] = array();
+			self::assertSame( 'Acme Kitchen in Springfield – Order Online', lafka_seo_resolve_title() );
 		}
 
 		public function test_category_title_with_pagination(): void {
 			$this->is['is_product_category'] = true;
 			$this->queried                   = new \WP_Term( array( 'term_id' => 5, 'name' => 'Garlic Fingers', 'count' => 6 ) );
-			self::assertSame( 'Garlic Fingers in Springfield – Acme Kitchen', lafka_seo_resolve_title() );
+			self::assertSame( 'Garlic Fingers Menu in Springfield – Acme Kitchen', lafka_seo_resolve_title() );
 
 			$this->paged = 2;
-			self::assertSame( 'Garlic Fingers in Springfield – Acme Kitchen – Page 2', lafka_seo_resolve_title() );
+			self::assertSame( 'Garlic Fingers Menu in Springfield – Acme Kitchen – Page 2', lafka_seo_resolve_title() );
 		}
 
 		public function test_menu_product_and_page_titles(): void {
@@ -194,11 +198,38 @@ namespace LafkaPlugin\Tests\Unit {
 			);
 			$this->queried = (object) array( 'ID' => 9, 'post_title' => 'Donair' );
 			Functions\when( 'wc_get_product' )->justReturn( $this->product( 'Donair', '14' ) );
-			self::assertSame( 'Donair in Springfield – Acme Kitchen', lafka_seo_resolve_title() );
+			self::assertSame( 'Donair – Acme Kitchen', lafka_seo_resolve_title(), 'T-31: short product suffix, distinct from the category pattern.' );
 
 			$this->is      = array( 'is_singular' => true );
 			$this->queried = (object) array( 'ID' => 4, 'post_title' => 'Catering' );
 			self::assertSame( 'Catering – Acme Kitchen', lafka_seo_resolve_title() );
+		}
+
+		public function test_long_titles_drop_their_optional_segments_first(): void {
+			$this->is['is_product_category'] = true;
+			$this->queried                   = new \WP_Term( array( 'term_id' => 5, 'name' => 'Homemade Fish and Chips Platters', 'count' => 6 ) );
+			self::assertSame( 'Homemade Fish and Chips Platters Menu – Acme Kitchen', lafka_seo_resolve_title() );
+
+			$this->filters['lafka_seo_title_max_length'] = 0;
+			self::assertSame( 'Homemade Fish and Chips Platters Menu in Springfield – Acme Kitchen', lafka_seo_resolve_title() );
+		}
+
+		public function test_menu_and_page_description_fallbacks(): void {
+			$this->is['is_singular'] = true;
+			$this->queried           = new \WP_Post( (object) array( 'ID' => 3, 'post_name' => 'menu' ) );
+			self::assertSame(
+				'The full Acme Kitchen menu — Pizza & Poutine in Springfield, from $8.50. Order online or call (555) 123-4567.',
+				lafka_seo_page_description( (object) array( 'post_title' => 'Menu', 'post_content' => '[vc_row][/vc_row]' ) )
+			);
+
+			$this->queried = new \WP_Post( (object) array( 'ID' => 4, 'post_name' => 'catering' ) );
+			$long          = 'We cater office lunches, birthdays and team events with party trays of pizza, wings and salads.';
+			self::assertSame( $long, lafka_seo_page_description( (object) array( 'post_title' => 'Catering', 'post_content' => '[vc_row][vc_column]<p>' . $long . '</p>[/vc_column][/vc_row]' ) ) );
+
+			self::assertSame(
+				'Contact Us — Acme Kitchen in Springfield. Order online or call (555) 123-4567.',
+				lafka_seo_page_description( (object) array( 'post_title' => 'Contact Us', 'post_content' => '<p>Say hi.</p>' ) )
+			);
 		}
 
 		public function test_per_post_override_wins_and_takes_tokens(): void {
@@ -243,8 +274,12 @@ namespace LafkaPlugin\Tests\Unit {
 
 		public function test_product_fallback_description_is_fact_built(): void {
 			self::assertSame(
-				'Donair from $14.00 at Acme Kitchen in Springfield. Order online or call (555) 123-4567.',
+				'Donair, from $14.00 at Acme Kitchen in Springfield. Order online or call (555) 123-4567.',
 				lafka_seo_product_description( $this->product( 'Donair', '14' ) )
+			);
+			self::assertSame(
+				'Fries — Plain or Seasoned, from $4.99 at Acme Kitchen in Springfield. Order online or call (555) 123-4567.',
+				lafka_seo_product_description( $this->product( 'Fries', '4.99', '<p>Plain or Seasoned.</p>' ) )
 			);
 			$this->info['phone_display'] = '';
 			self::assertSame(

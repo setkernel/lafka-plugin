@@ -38,19 +38,23 @@ if ( ! function_exists( 'lafka_robots_disallow_paths' ) ) {
 	 */
 	function lafka_robots_disallow_paths(): array {
 		$paths = array(
-			// WC funnel pages.
+			// WC funnel pages. (The account area is NOT blocked: T-29 noindexes
+			// it instead, and a robots block would hide that noindex.)
 			'/cart/',
 			'/checkout/',
-			'/my-account/',
-			// Add-to-cart and WC AJAX query strings.
-			'/?add-to-cart=',
-			'/?wc-ajax=',
+			// Add-to-cart and WC AJAX query strings — on ANY path and in any
+			// position of the query (`/*?*` — Google/Bing wildcard syntax);
+			// the pre-GX `/?orderby=` form only matched the home page.
+			'/*?*add-to-cart=',
+			'/*?*wc-ajax=',
 			// Shop-archive filter + sort variants (huge crawl-budget drain on
-			// WC stores; canonical already strips these via lafka-shop-canonical.php
-			// but crawlers waste budget hitting them in the first place).
-			'/?orderby=',
-			'/?min_price=',
-			'/?max_price=',
+			// WC stores; the canonical already strips these via
+			// lafka-shop-canonical.php but crawlers waste budget hitting them).
+			'/*?*orderby=',
+			'/*?*min_price=',
+			'/*?*max_price=',
+			'/*?*filter_',
+			'/*?*rating_filter=',
 		);
 		/**
 		 * Filter the list of paths and query strings disallowed in robots.txt.
@@ -67,17 +71,23 @@ if ( ! function_exists( 'lafka_robots_disallow_paths' ) ) {
 
 if ( ! function_exists( 'lafka_robots_filter' ) ) {
 	/**
-	 * Append Lafka Disallow lines to the rendered robots.txt body.
+	 * Merge the Lafka Disallow lines into the rendered robots.txt body.
 	 *
 	 * Hook signature: ($output, $public). When $public is 0/false the site
-	 * is in "Discourage search engines" mode — WP-core emits `Disallow: /`
-	 * for the entire site, so we leave it alone (adding more lines would be
-	 * misleading and might confuse a future un-discourage operation).
+	 * is in "Discourage search engines" mode, so the body is left alone.
 	 *
-	 * Idempotency: every disallow line we'd emit is checked against the
-	 * incoming output via `false === strpos(...)`. This prevents duplicate
-	 * lines if another plugin or filter ran first and already added the same
-	 * directive.
+	 * T-29 (GX): WordPress core's sitemap module appends "\nSitemap: …" at
+	 * priority 0, BEFORE this filter — so appending rules at the end put them
+	 * after a blank line and the Sitemap line, i.e. outside any User-agent
+	 * group, where crawlers ignore them. The body is now rebuilt:
+	 *
+	 *   1. Sitemap lines are lifted out (with the blank lines around them);
+	 *   2. every Lafka rule is inserted at the end of the first
+	 *      `User-agent: *` group (one is created when the body has none);
+	 *   3. the Sitemap lines close the file after one blank line.
+	 *
+	 * Idempotent: a rule already present anywhere is not added again, so
+	 * running the filter twice (or after another plugin) changes nothing.
 	 *
 	 * @param string   $output The default robots.txt content.
 	 * @param int|bool $public Whether search engines are allowed (1) or not (0).
@@ -85,62 +95,94 @@ if ( ! function_exists( 'lafka_robots_filter' ) ) {
 	 */
 	function lafka_robots_filter( $output, $public = 1 ): string {
 		$output = (string) $output;
-		// Don't touch the body when the site is set to "Discourage search engines" —
-		// WP core's blanket `Disallow: /` already handles that case and stacking
-		// more rules underneath it is noisy + confuses operators reviewing the file.
 		if ( empty( $public ) ) {
 			return $output;
 		}
 
-		// Trim trailing whitespace once so we can append cleanly with a single newline.
-		$output = rtrim( $output ) . "\n";
+		$lines    = preg_split( '/\r\n|\r|\n/', rtrim( $output ) );
+		$sitemaps = array();
+		$body     = array();
+		foreach ( (array) $lines as $line ) {
+			if ( preg_match( '/^\s*sitemap\s*:/i', (string) $line ) ) {
+				$sitemaps[] = trim( (string) $line );
+				continue;
+			}
+			$body[] = rtrim( (string) $line );
+		}
 
-		$lines = array();
+		// New rules, de-duplicated against the body and among themselves.
+		$rules = array();
 		foreach ( lafka_robots_disallow_paths() as $path ) {
-			$line = 'Disallow: ' . $path;
-			// De-dupe against anything that may already be present (e.g. another
-			// plugin or a manually edited theme filter).
-			if ( false !== strpos( $output, $line ) ) {
+			$rule = 'Disallow: ' . $path;
+			if ( in_array( $rule, $body, true ) || in_array( $rule, $rules, true ) ) {
 				continue;
 			}
-			// De-dupe within our own list too, just in case the filter introduced
-			// a repeat.
-			if ( in_array( $line, $lines, true ) ) {
-				continue;
-			}
-			$lines[] = $line;
+			$rules[] = $rule;
 		}
 
-		if ( empty( $lines ) ) {
-			return $output;
-		}
-
-		// Insert INSIDE the `User-agent: *` group WP core emits — before the
-		// blank line / `Sitemap:` line that closes it (core's sitemap filter
-		// runs first, at priority 0). Appended after `Sitemap:` the rules sat
-		// outside any group (GX QA M-43). No group found: append.
-		$body   = explode( "\n", rtrim( $output, "\n" ) );
-		$in_ua  = false;
-		$insert = null;
-		foreach ( $body as $i => $row ) {
-			$row = trim( $row );
-			if ( 0 === stripos( $row, 'user-agent:' ) ) {
-				if ( $in_ua ) {
-					continue; // Consecutive User-agent lines share one group.
-				}
-				$in_ua = '*' === trim( substr( $row, strlen( 'user-agent:' ) ) );
-				continue;
-			}
-			if ( $in_ua && ( '' === $row || 0 === stripos( $row, 'sitemap:' ) ) ) {
-				$insert = $i;
+		// Locate the first `User-agent: *` group and its last line.
+		$start = null;
+		foreach ( $body as $i => $line ) {
+			if ( preg_match( '/^\s*user-agent\s*:\s*\*\s*$/i', $line ) ) {
+				$start = $i;
 				break;
 			}
 		}
-		if ( null === $insert ) {
-			return $output . implode( "\n", $lines ) . "\n";
+		if ( null === $start ) {
+			$body = array_merge( array( 'User-agent: *' ), $rules, array( '' ), $body );
+		} else {
+			$end   = $start;
+			$count = count( $body );
+			for ( $i = $start + 1; $i < $count; $i++ ) {
+				if ( '' === trim( $body[ $i ] ) ) {
+					break;
+				}
+				// A new User-agent line after rules starts the next group.
+				if ( preg_match( '/^\s*user-agent\s*:/i', $body[ $i ] ) && $i > $start + 1 && ! preg_match( '/^\s*user-agent\s*:/i', $body[ $i - 1 ] ) ) {
+					break;
+				}
+				$end = $i;
+			}
+			array_splice( $body, $end + 1, 0, $rules );
 		}
-		array_splice( $body, $insert, 0, $lines );
-		return implode( "\n", $body ) . "\n";
+
+		// Collapse blank-line runs and trim the edges.
+		$clean = array();
+		foreach ( $body as $line ) {
+			if ( '' === trim( $line ) && ( empty( $clean ) || '' === end( $clean ) ) ) {
+				continue;
+			}
+			$clean[] = '' === trim( $line ) ? '' : $line;
+		}
+		while ( ! empty( $clean ) && '' === end( $clean ) ) {
+			array_pop( $clean );
+		}
+
+		$out = implode( "\n", $clean ) . "\n";
+		if ( ! empty( $sitemaps ) ) {
+			$out .= "\n" . implode( "\n", array_values( array_unique( $sitemaps ) ) ) . "\n";
+		}
+		return $out;
+	}
+}
+
+if ( ! function_exists( 'lafka_seo_is_account_page' ) ) {
+	/**
+	 * T-29: whether the request is the customer-account area — WooCommerce's
+	 * "My account" page (and its endpoints), or a page carrying the
+	 * `[woocommerce_my_account]` shortcode while that setting is unset.
+	 *
+	 * @return bool
+	 */
+	function lafka_seo_is_account_page(): bool {
+		if ( function_exists( 'is_account_page' ) && is_account_page() ) {
+			return true;
+		}
+		if ( is_singular( 'page' ) ) {
+			$post = get_post( (int) get_queried_object_id() );
+			return is_object( $post ) && false !== strpos( (string) ( $post->post_content ?? '' ), '[woocommerce_my_account' );
+		}
+		return false;
 	}
 }
 
@@ -153,7 +195,8 @@ if ( ! function_exists( 'lafka_seo_should_noindex' ) ) {
 	 *   - attribute (`pa_*`) and legacy food-menu taxonomy archives;
 	 *   - legacy post types (the `lafka-foodmenu` demo CPT) — singles and archive;
 	 *   - author archives on a single-author site (filterable);
-	 *   - any post / page the operator marked "hide from search engines".
+	 *   - any post / page the operator marked "hide from search engines";
+	 *   - (T-29) the customer-account area (login / dashboard / endpoints).
 	 *
 	 * Predicates shared with the sitemap exclusions (lafka-sitemap.php).
 	 *
@@ -171,6 +214,8 @@ if ( ! function_exists( 'lafka_seo_should_noindex' ) ) {
 		} elseif ( is_author() && function_exists( 'lafka_seo_noindex_author_archives' ) && lafka_seo_noindex_author_archives() ) {
 			$noindex = true;
 		} elseif ( is_singular() && '1' === (string) get_post_meta( (int) get_queried_object_id(), '_lafka_seo_noindex', true ) ) {
+			$noindex = true;
+		} elseif ( lafka_seo_is_account_page() ) {
 			$noindex = true;
 		}
 

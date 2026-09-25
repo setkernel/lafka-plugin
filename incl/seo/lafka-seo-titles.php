@@ -47,8 +47,16 @@ if ( ! function_exists( 'lafka_seo_product_tokens' ) ) {
 	 * @return array<string,string>
 	 */
 	function lafka_seo_product_tokens( $product ): array {
+		$short = '';
+		if ( is_object( $product ) && method_exists( $product, 'get_short_description' ) ) {
+			// {short}: the plain short description, closing punctuation trimmed
+			// so the template controls the sentence ("Fries — Plain or Seasoned, from …").
+			$short = trim( (string) preg_replace( '/\s+/u', ' ', wp_strip_all_tags( (string) $product->get_short_description() ) ) );
+			$short = rtrim( $short, " \t.!;:,–—-" );
+		}
 		return array(
 			'product'    => is_object( $product ) && method_exists( $product, 'get_name' ) ? (string) $product->get_name() : '',
+			'short'      => $short,
 			'price_from' => lafka_seo_price_from_product( $product ),
 		);
 	}
@@ -109,6 +117,19 @@ if ( ! function_exists( 'lafka_seo_resolve_title' ) ) {
 
 		$title = lafka_seo_render_template( $tpl, $tokens );
 
+		// T-31: a title past the SERP width loses its optional segments
+		// ("[ in {city}]" …) before it is truncated by the search engine.
+		/**
+		 * Filter the length (characters) past which optional title segments are dropped.
+		 *
+		 * @since 10.3.0
+		 * @param int $max Default 65.
+		 */
+		$max = (int) apply_filters( 'lafka_seo_title_max_length', 65 );
+		if ( $max > 0 && mb_strlen( $title ) > $max && false !== strpos( $tpl, '[' ) ) {
+			$title = lafka_seo_render_template( (string) preg_replace( '/\[[^\[\]]*\]/', '', $tpl ), $tokens );
+		}
+
 		$paged = max( (int) get_query_var( 'paged' ), (int) get_query_var( 'page' ) );
 		if ( '' !== $title && $paged > 1 ) {
 			$base  = lafka_seo_base_tokens();
@@ -150,8 +171,9 @@ if ( ! function_exists( 'lafka_seo_document_title' ) ) {
 
 if ( ! function_exists( 'lafka_seo_product_description' ) ) {
 	/**
-	 * Fact-built fallback meta description for a product without a short
-	 * description (product template).
+	 * Fact-built meta description for a product without a (substantial)
+	 * short description (product template; the short description rides in
+	 * the {short} token).
 	 *
 	 * @param object $product WC_Product.
 	 * @return string
@@ -161,6 +183,94 @@ if ( ! function_exists( 'lafka_seo_product_description' ) ) {
 			return '';
 		}
 		return lafka_seo_excerpt( lafka_seo_render_template( lafka_seo_get( 'lafka_seo_desc_product' ), lafka_seo_product_tokens( $product ) ) );
+	}
+}
+
+if ( ! function_exists( 'lafka_seo_short_description_min' ) ) {
+	/**
+	 * T-15: a product short description shorter than this (plain characters)
+	 * is too thin to be the whole meta description ("Plain or Seasoned"), so
+	 * the product template wraps it with name, price and place.
+	 *
+	 * @return int
+	 */
+	function lafka_seo_short_description_min(): int {
+		/**
+		 * Filter the minimum short-description length used verbatim as a meta description.
+		 *
+		 * @since 10.3.0
+		 * @param int $min Default 70.
+		 */
+		return max( 0, (int) apply_filters( 'lafka_seo_short_description_min', 70 ) );
+	}
+}
+
+if ( ! function_exists( 'lafka_seo_menu_price_from' ) ) {
+	/**
+	 * Lowest price across the whole menu (plain text, '' when unpriced).
+	 *
+	 * @return string
+	 */
+	function lafka_seo_menu_price_from(): string {
+		if ( ! function_exists( 'lafka_schema_menu_data' ) ) {
+			return '';
+		}
+		$low  = null;
+		$data = lafka_schema_menu_data();
+		foreach ( (array) ( $data['sections'] ?? array() ) as $section ) {
+			$min = $section['price_min'] ?? '';
+			if ( is_numeric( $min ) && ( null === $low || (float) $min < $low ) ) {
+				$low = (float) $min;
+			}
+		}
+		return null === $low ? '' : lafka_seo_format_price( $low );
+	}
+}
+
+if ( ! function_exists( 'lafka_seo_content_description' ) ) {
+	/**
+	 * T-15: a page's own words as its description — the content with
+	 * shortcode / builder tags and HTML removed, SERP-capped; '' when fewer
+	 * than lafka_seo_short_description_min() characters remain.
+	 *
+	 * @param object $post WP_Post.
+	 * @return string
+	 */
+	function lafka_seo_content_description( $post ): string {
+		if ( ! is_object( $post ) ) {
+			return '';
+		}
+		$text = (string) ( $post->post_content ?? '' );
+		$text = (string) preg_replace( '/\[\/?[a-zA-Z0-9_\-]+[^\]]*\]/', ' ', $text );
+		$text = trim( (string) preg_replace( '/\s+/u', ' ', wp_strip_all_tags( $text ) ) );
+		if ( mb_strlen( $text ) < lafka_seo_short_description_min() ) {
+			return '';
+		}
+		return lafka_seo_excerpt( $text );
+	}
+}
+
+if ( ! function_exists( 'lafka_seo_page_description' ) ) {
+	/**
+	 * T-15: fallback meta description for a page without an override or
+	 * excerpt — the menu page gets the menu template; any other page its own
+	 * content, else the page template — so no two pages share the site pitch.
+	 *
+	 * @param object $post WP_Post.
+	 * @return string
+	 */
+	function lafka_seo_page_description( $post ): string {
+		if ( ! is_object( $post ) ) {
+			return '';
+		}
+		if ( function_exists( 'lafka_schema_is_menu_page' ) && lafka_schema_is_menu_page() ) {
+			return lafka_seo_excerpt( lafka_seo_render_template( lafka_seo_get( 'lafka_seo_desc_menu' ), array( 'price_from' => lafka_seo_menu_price_from() ) ) );
+		}
+		$own = lafka_seo_content_description( $post );
+		if ( '' !== $own ) {
+			return $own;
+		}
+		return lafka_seo_excerpt( lafka_seo_render_template( lafka_seo_get( 'lafka_seo_desc_page' ), array( 'title' => (string) ( $post->post_title ?? '' ) ) ) );
 	}
 }
 

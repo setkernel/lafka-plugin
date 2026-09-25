@@ -175,6 +175,14 @@ never rewrites your sales records.
 Yes. The WooCommerce integration is HPOS-compatible and does not rely on legacy
 post-based order storage.
 
+= How do I make menu photos smaller (WebP)? =
+
+New JPEG and PNG uploads are saved as WebP automatically when your server can write
+WebP (Lafka → Modules → "WebP images for new uploads" turns it off). For images you
+uploaded before, run `wp lafka images convert-webp` (writes a `.webp` next to each
+PNG/JPG; pages then serve the WebP copy) and/or `wp media regenerate --yes` to rebuild
+the thumbnail sizes. Details: docs/PERFORMANCE.md in the plugin.
+
 = Where is the full changelog? =
 
 Development happens in the open on GitHub. See the Changelog section below for

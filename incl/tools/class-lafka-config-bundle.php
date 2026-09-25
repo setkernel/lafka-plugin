@@ -326,6 +326,8 @@ if ( ! class_exists( 'Lafka_Config_Bundle' ) ) {
 				'lafka_seo_title_sep',
 				'lafka_seo_desc_category',
 				'lafka_seo_desc_product',
+				'lafka_seo_desc_menu',
+				'lafka_seo_desc_page',
 				'lafka_seo_menu_schema_on_home',
 				'lafka_seo_diet_map',
 				'lafka_seo_llms_enabled',

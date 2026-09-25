@@ -10,7 +10,7 @@
  *
  * Template syntax (titles and descriptions):
  *   - `{token}` is replaced by its value: {name} {city} {region} {cuisines}
- *     {term} {product} {title} {price_from} {count} {phone} {sep}.
+ *     {term} {product} {short} {title} {price_from} {count} {phone} {sep}.
  *   - `[ … ]` marks an optional segment, dropped entirely when any token
  *     inside it is empty — so "{term}[ in {city}]" never renders a dangling
  *     " in " on an install without a city.
@@ -48,19 +48,23 @@ if ( ! function_exists( 'lafka_seo_defaults' ) ) {
 	function lafka_seo_defaults(): array {
 		$defaults = lafka_seo_plain_defaults() + array(
 			/* translators: SEO title template for the home page. Keep the {tokens} and [optional] brackets. */
-			'lafka_seo_title_home'          => __( '{name}[{sep}{cuisines} in {city}]', 'lafka-plugin' ),
+			'lafka_seo_title_home'          => __( '{name}[{sep}{cuisines}][ in {city}]{sep}Order Online', 'lafka-plugin' ),
 			/* translators: SEO title template for the menu page. Keep the {tokens} and [optional] brackets. */
 			'lafka_seo_title_menu'          => __( 'Menu[{sep}{cuisines} in {city}]{sep}{name}', 'lafka-plugin' ),
 			/* translators: SEO title template for menu category pages. Keep the {tokens} and [optional] brackets. */
-			'lafka_seo_title_category'      => __( '{term}[ in {city}]{sep}{name}', 'lafka-plugin' ),
+			'lafka_seo_title_category'      => __( '{term} Menu[ in {city}]{sep}{name}', 'lafka-plugin' ),
 			/* translators: SEO title template for product pages. Keep the {tokens} and [optional] brackets. */
-			'lafka_seo_title_product'       => __( '{product}[ in {city}]{sep}{name}', 'lafka-plugin' ),
+			'lafka_seo_title_product'       => __( '{product}{sep}{name}', 'lafka-plugin' ),
 			/* translators: SEO title template for regular pages and posts. Keep the {tokens} and [optional] brackets. */
 			'lafka_seo_title_page'          => __( '{title}{sep}{name}', 'lafka-plugin' ),
 			/* translators: fallback meta description for menu category pages. Keep the {tokens} and [optional] brackets. */
 			'lafka_seo_desc_category'       => __( 'Order {term} online from {name}[ in {city}][ — {count} items from {price_from}].', 'lafka-plugin' ),
 			/* translators: fallback meta description for product pages. Keep the {tokens} and [optional] brackets. */
-			'lafka_seo_desc_product'        => __( '{product}[ from {price_from}] at {name}[ in {city}]. Order online[ or call {phone}].', 'lafka-plugin' ),
+			'lafka_seo_desc_product'        => __( '{product}[ — {short}][, from {price_from}] at {name}[ in {city}]. Order online[ or call {phone}].', 'lafka-plugin' ),
+			/* translators: fallback meta description for the menu page. Keep the {tokens} and [optional] brackets. */
+			'lafka_seo_desc_menu'           => __( 'The full {name} menu[ — {cuisines}][ in {city}][, from {price_from}]. Order online[ or call {phone}].', 'lafka-plugin' ),
+			/* translators: fallback meta description for pages without their own. Keep the {tokens} and [optional] brackets. */
+			'lafka_seo_desc_page'           => __( '{title} — {name}[ in {city}]. Order online[ or call {phone}].', 'lafka-plugin' ),
 		);
 
 		/**

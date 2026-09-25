@@ -319,7 +319,7 @@ if ( ! function_exists( 'lafka_define_wc_settings_restaurant_class' ) ) {
 			 */
 			private function get_search_settings() {
 				$d      = function_exists( 'lafka_seo_defaults' ) ? lafka_seo_defaults() : array();
-				$tokens = __( 'Tokens: {name} {city} {region} {cuisines} {term} {product} {title} {price_from} {count} {phone} {sep}. Wrap a part in [square brackets] to drop it when a token inside is empty. Leave a field empty to restore the default.', 'lafka-plugin' );
+				$tokens = __( 'Tokens: {name} {city} {region} {cuisines} {term} {product} {short} {title} {price_from} {count} {phone} {sep}. Wrap a part in [square brackets] to drop it when a token inside is empty. Leave a field empty to restore the default.', 'lafka-plugin' );
 				$text   = static function ( $id, $title, $tip, $type = 'text' ) use ( $d ) {
 					return array(
 						'title'       => $title,
@@ -359,7 +359,9 @@ if ( ! function_exists( 'lafka_define_wc_settings_restaurant_class' ) ) {
 						'desc_tip' => __( 'The character {sep} renders as (spaces are added around it).', 'lafka-plugin' ),
 					),
 					$text( 'lafka_seo_desc_category', __( 'Category description fallback', 'lafka-plugin' ), __( 'Used for menu categories without a description. A category description (Products → Categories) always wins.', 'lafka-plugin' ) . ' ' . $tokens, 'textarea' ),
-					$text( 'lafka_seo_desc_product', __( 'Product description fallback', 'lafka-plugin' ), __( 'Used for products without a short description. The short description always wins.', 'lafka-plugin' ) . ' ' . $tokens, 'textarea' ),
+					$text( 'lafka_seo_desc_product', __( 'Product description fallback', 'lafka-plugin' ), __( 'Used for products without a short description, or with one under 70 characters ({short} inserts it). A longer short description is used as is.', 'lafka-plugin' ) . ' ' . $tokens, 'textarea' ),
+					$text( 'lafka_seo_desc_menu', __( 'Menu page description', 'lafka-plugin' ), __( 'Used on the menu page unless it has its own description (SEO box on the page) or excerpt.', 'lafka-plugin' ) . ' ' . $tokens, 'textarea' ),
+					$text( 'lafka_seo_desc_page', __( 'Page description fallback', 'lafka-plugin' ), __( 'Used on pages with no description (SEO box), excerpt or enough text of their own, so no two pages share one description.', 'lafka-plugin' ) . ' ' . $tokens, 'textarea' ),
 					array(
 						'title'   => __( 'Full menu schema on the home page', 'lafka-plugin' ),
 						'desc'    => __( 'Also emit the complete Menu structured data on the home page (it is always emitted on the menu page; category pages carry only their own section).', 'lafka-plugin' ),

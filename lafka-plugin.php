@@ -228,6 +228,8 @@ function is_lafka_promotions( $lafka_options = null ) {
  * the module itself decides whether to attach hooks (see Lafka_Security_Headers::is_active()).
  */
 require_once plugin_dir_path( __FILE__ ) . 'incl/security/class-lafka-security-headers.php';
+// GX T-27: anonymous user enumeration (?author=N, /wp/v2/users) closed by default.
+require_once plugin_dir_path( __FILE__ ) . 'incl/security/lafka-user-enumeration.php';
 
 /**
  * Admin UI for the security-headers toggle (P2-05a). Self-gates to is_admin().
@@ -365,6 +367,8 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/seo/lafka-suppress-wc-breadcrum
  */
 require_once plugin_dir_path( __FILE__ ) . 'incl/seo/lafka-sitemap.php';
 require_once plugin_dir_path( __FILE__ ) . 'incl/seo/lafka-robots.php';
+// GX T-07 / T-36: legacy food-menu URLs 301 to the menu; no 404 permalink guessing.
+require_once plugin_dir_path( __FILE__ ) . 'incl/seo/lafka-url-hygiene.php';
 
 /**
  * v9.23.0 (Phase 1A — Analytics + SEO + Conversion plan):
@@ -753,6 +757,9 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/cli/class-lafka-cli-seed-demo.p
  * Self-gates via is_admin() inside the module; safe to load unconditionally.
  */
 require_once plugin_dir_path( __FILE__ ) . 'incl/perf/lafka-asset-pruning.php';
+// GX T-25: Contact Form 7 assets only where a form renders; payment-gateway
+// assets only on cart / checkout / account / order-pay (filterable).
+require_once plugin_dir_path( __FILE__ ) . 'incl/perf/lafka-conditional-assets.php';
 
 // Perf modules (CLS image-dim + LCP preload) — migrated from lafka-child
 // v5.10.6 in lafka-plugin v9.7.25.
@@ -761,6 +768,9 @@ require_once __DIR__ . '/incl/perf/lcp-preload.php';
 // WebP auto-swap (v9.10.0). No-op until .webp siblings exist on disk;
 // generates them via `wp lafka images convert-webp`.
 require_once __DIR__ . '/incl/perf/webp-swap.php';
+// GX T-04: new JPEG/PNG uploads saved as WebP when the server supports it
+// (Lafka → Modules toggle + `lafka_webp_uploads_enabled` filter).
+require_once __DIR__ . '/incl/perf/lafka-webp-uploads.php';
 
 add_action(
 	'before_woocommerce_init',

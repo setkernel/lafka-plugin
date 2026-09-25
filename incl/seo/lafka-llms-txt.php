@@ -510,6 +510,45 @@ if ( ! function_exists( 'lafka_llms_maybe_flush_on_option' ) ) {
 	}
 }
 
+if ( ! function_exists( 'lafka_llms_response_headers' ) ) {
+	/**
+	 * Response headers of a machine-readable document.
+	 *
+	 * T-30 (GX): the full-menu dumps (llms-full.txt, menu.md, menu.json)
+	 * duplicate the real menu pages, so they carry `X-Robots-Tag: noindex`
+	 * (AI assistants still read them; search engines keep ranking the menu
+	 * pages instead). /llms.txt, the short index, stays indexable.
+	 *
+	 * @param string $type Document type.
+	 * @return list<string> Header lines.
+	 */
+	function lafka_llms_response_headers( string $type ): array {
+		$types = array(
+			'llms'      => 'text/plain; charset=utf-8',
+			'llms-full' => 'text/plain; charset=utf-8',
+			'menu-md'   => 'text/markdown; charset=utf-8',
+			'menu-json' => 'application/json; charset=utf-8',
+		);
+		$headers = array(
+			'Content-Type: ' . ( $types[ $type ] ?? 'text/plain; charset=utf-8' ),
+			'Cache-Control: public, max-age=3600',
+			'X-Content-Type-Options: nosniff',
+		);
+
+		/**
+		 * Filter which machine-readable documents are served noindex.
+		 *
+		 * @since 10.3.0
+		 * @param list<string> $types Document types (llms | llms-full | menu-md | menu-json).
+		 */
+		$noindex = (array) apply_filters( 'lafka_llms_noindex_types', array( 'llms-full', 'menu-md', 'menu-json' ) );
+		if ( in_array( $type, $noindex, true ) ) {
+			$headers[] = 'X-Robots-Tag: noindex';
+		}
+		return $headers;
+	}
+}
+
 if ( ! function_exists( 'lafka_llms_serve' ) ) {
 	/**
 	 * `template_redirect`: serve a machine-readable document, or 404 when
@@ -531,18 +570,9 @@ if ( ! function_exists( 'lafka_llms_serve' ) ) {
 			return;
 		}
 
-		$types = array(
-			'llms'      => 'text/plain; charset=utf-8',
-			'llms-full' => 'text/plain; charset=utf-8',
-			'menu-md'   => 'text/markdown; charset=utf-8',
-			'menu-json' => 'application/json; charset=utf-8',
-		);
 		status_header( 200 );
-		header( 'Content-Type: ' . $types[ $type ] );
-		header( 'Cache-Control: public, max-age=3600' );
-		header( 'X-Content-Type-Options: nosniff' );
-		if ( 'menu-json' === $type ) {
-			header( 'X-Robots-Tag: noindex' );
+		foreach ( lafka_llms_response_headers( $type ) as $line ) {
+			header( $line );
 		}
 		echo lafka_llms_document( $type ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- plain-text / JSON document, served with a non-HTML Content-Type and nosniff.
 		exit;

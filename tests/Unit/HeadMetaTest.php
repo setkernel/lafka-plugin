@@ -67,7 +67,7 @@ final class HeadMetaTest extends TestCase {
 			'description' => '',
 		);
 
-		foreach ( array( 'is_admin', 'is_feed', 'is_404', 'is_front_page', 'is_home', 'is_singular', 'is_tax', 'is_category', 'is_tag', 'is_product' ) as $tag ) {
+		foreach ( array( 'is_admin', 'is_feed', 'is_404', 'is_front_page', 'is_home', 'is_singular', 'is_tax', 'is_category', 'is_tag', 'is_product', 'is_shop', 'is_post_type_archive', 'is_product_category' ) as $tag ) {
 			Functions\when( $tag )->alias( fn() => $this->is[ $tag ] ?? false );
 		}
 		Functions\when( 'lafka_seo_plugin_active' )->alias( fn() => $this->seo_plugin );
@@ -79,6 +79,7 @@ final class HeadMetaTest extends TestCase {
 				return array_key_exists( $hook, $this->filters ) ? $this->filters[ $hook ] : $value;
 			}
 		);
+		Functions\when( 'get_queried_object' )->alias( fn() => $GLOBALS['post'] ?? null );
 		Functions\when( 'get_bloginfo' )->alias( fn( $key = '' ) => $this->bloginfo[ $key ] ?? '' );
 		Functions\when( 'get_theme_mod' )->alias( fn( $key, $fallback = false ) => $this->theme_mods[ $key ] ?? $fallback );
 		Functions\when( 'get_option' )->alias( static fn( $key, $fallback = false ) => $fallback );
@@ -200,7 +201,8 @@ final class HeadMetaTest extends TestCase {
 		$this->singular_post();
 		$og = $this->og();
 		$this->assertSame( 'article', self::meta_content( $og, 'property', 'og:type' ) );
-		$this->assertSame( 'A Post', self::meta_content( $og, 'property', 'og:title' ) );
+		$this->assertSame( 'A Post – Test Kitchen', self::meta_content( $og, 'property', 'og:title' ), 'T-16: site suffix' );
+		$this->assertSame( 'A Post – Test Kitchen', self::meta_content( $og, 'name', 'twitter:title' ) );
 		$this->assertSame( 'https://example.test/?p=7', self::meta_content( $og, 'property', 'og:url' ) );
 
 		$this->is['is_product'] = true;
@@ -217,7 +219,10 @@ final class HeadMetaTest extends TestCase {
 		$this->assertSame( 'https://example.test/portrait.jpg', self::meta_content( $og, 'property', 'og:image' ) );
 		$this->assertSame( '800', self::meta_content( $og, 'property', 'og:image:width' ) );
 		$this->assertSame( '1200', self::meta_content( $og, 'property', 'og:image:height' ) );
-		$this->assertSame( 'summary_large_image', self::meta_content( $og, 'name', 'twitter:card' ) );
+		$this->assertSame( 'summary', self::meta_content( $og, 'name', 'twitter:card' ), 'T-16: a portrait image would be cropped by the large card.' );
+
+		$this->attachments[9] = array( 'https://example.test/wide.jpg', 1200, 630 );
+		$this->assertSame( 'summary_large_image', self::meta_content( $this->og(), 'name', 'twitter:card' ) );
 	}
 
 	public function test_an_image_url_override_wins_and_omits_unknown_dimensions(): void {
@@ -249,6 +254,78 @@ final class HeadMetaTest extends TestCase {
 		$og              = $this->og();
 		$this->assertNull( self::meta_content( $og, 'property', 'og:image' ) );
 		$this->assertSame( 'summary', self::meta_content( $og, 'name', 'twitter:card' ) );
+	}
+
+	/** T-16: pages are `website`; a title already naming the site gets no second suffix. */
+	public function test_pages_are_websites_and_titles_are_not_double_suffixed(): void {
+		$this->singular_post(
+			array(
+				'post_type'  => 'page',
+				'post_title' => 'Contact Test Kitchen',
+			)
+		);
+		$og = $this->og();
+		$this->assertSame( 'website', self::meta_content( $og, 'property', 'og:type' ) );
+		$this->assertSame( 'Contact Test Kitchen', self::meta_content( $og, 'property', 'og:title' ) );
+	}
+
+	/** T-16: a menu category shares its own thumbnail; the site icon never gets the large card. */
+	public function test_a_category_shares_its_thumbnail_and_the_icon_gets_the_small_card(): void {
+		$this->is['is_tax'] = true;
+		Functions\when( 'get_queried_object' )->justReturn(
+			(object) array(
+				'term_id'     => 5,
+				'name'        => 'Wings',
+				'taxonomy'    => 'product_cat',
+				'description' => 'Crispy.',
+			)
+		);
+		Functions\when( 'get_term_link' )->justReturn( 'https://example.test/menu/wings/' );
+		$thumb = 0;
+		Functions\when( 'get_term_meta' )->alias(
+			static function ( $id, $key ) use ( &$thumb ) {
+				return 5 === $id && 'thumbnail_id' === $key ? $thumb : '';
+			}
+		);
+		$this->site_icon = 'https://example.test/icon.png';
+
+		$og = $this->og();
+		$this->assertSame( 'https://example.test/icon.png', self::meta_content( $og, 'property', 'og:image' ) );
+		$this->assertSame( 'summary', self::meta_content( $og, 'name', 'twitter:card' ), 'square logo → small card' );
+
+		$thumb                 = 21;
+		$this->attachments[21] = array( 'https://example.test/wings.jpg', 1600, 900 );
+		$og                    = $this->og();
+		$this->assertSame( 'https://example.test/wings.jpg', self::meta_content( $og, 'property', 'og:image' ) );
+		$this->assertSame( 'summary_large_image', self::meta_content( $og, 'name', 'twitter:card' ) );
+	}
+
+	/** T-16: with no page image and no default share image, the homepage hero beats the logo. */
+	public function test_the_hero_photo_is_the_fallback_before_the_site_icon(): void {
+		Functions\when( 'wp_get_attachment_image_url' )->alias( fn( $id ) => $this->attachments[ $id ][0] ?? false );
+		require_once dirname( __DIR__, 2 ) . '/incl/perf/lcp-preload.php';
+		$this->theme_mods['lafka_home_hero_image_id'] = 11;
+		$this->attachments[11]                        = array( 'https://example.test/hero.jpg', 1600, 900 );
+		$this->site_icon                              = 'https://example.test/icon.png';
+
+		$og = $this->og();
+		$this->assertSame( 'https://example.test/hero.jpg', self::meta_content( $og, 'property', 'og:image' ) );
+		$this->assertSame( '900', self::meta_content( $og, 'property', 'og:image:height' ) );
+		$this->assertSame( 'summary_large_image', self::meta_content( $og, 'name', 'twitter:card' ) );
+	}
+
+	public function test_the_card_rule_and_its_filter(): void {
+		$this->assertSame( 'summary', lafka_og_twitter_card( '' ) );
+		$this->assertSame( 'summary', lafka_og_twitter_card( 'x.png', 1200, 1200 ) );
+		$this->assertSame( 'summary', lafka_og_twitter_card( 'x.png', 500, 250 ), 'too small for the large card' );
+		$this->assertSame( 'summary_large_image', lafka_og_twitter_card( 'x.png', 1200, 630 ) );
+		$this->assertSame( 'summary_large_image', lafka_og_twitter_card( 'x.png' ), 'operator URL, size unknown' );
+		$this->assertSame( 'summary', lafka_og_twitter_card( 'x.png', 1600, 900, true ) );
+
+		$this->filters['lafka_twitter_card'] = 'summary_large_image';
+		$this->assertSame( 'summary_large_image', lafka_og_twitter_card( 'x.png', 100, 100 ) );
+		$this->filters['lafka_twitter_card'] = 'player';
+		$this->assertSame( 'summary', lafka_og_twitter_card( 'x.png', 100, 100 ), 'unknown card types are refused' );
 	}
 
 	public function test_the_customizer_locale_drives_og_locale_and_html_lang(): void {
@@ -310,7 +387,7 @@ final class HeadMetaTest extends TestCase {
 		Functions\when( 'get_term_link' )->justReturn( 'https://example.test/menu/pizzas/' );
 
 		$og = $this->og();
-		$this->assertSame( 'Pizzas', self::meta_content( $og, 'property', 'og:title' ) );
+		$this->assertSame( 'Pizzas – Test Kitchen', self::meta_content( $og, 'property', 'og:title' ) );
 		$this->assertSame( 'Stone-baked', self::meta_content( $og, 'property', 'og:description' ) );
 		$this->assertSame( 'website', self::meta_content( $og, 'property', 'og:type' ) );
 		$this->assertSame( 'Stone-baked', lafka_resolve_meta_description( null ) );
@@ -390,6 +467,52 @@ final class HeadMetaTest extends TestCase {
 				}
 			}
 		);
-		$this->assertSame( 'Donair from $14.00 at Test Kitchen in Testville. Order online.', lafka_resolve_meta_description( $post ) );
+		$this->assertSame( 'Donair, from $14.00 at Test Kitchen in Testville. Order online.', lafka_resolve_meta_description( $post ) );
+	}
+
+	/** T-15: a thin short description is wrapped by the product template; a substantial one stands alone. */
+	public function test_a_thin_short_description_is_wrapped_by_the_product_template(): void {
+		$this->load_templates();
+		$post                   = $this->singular_post( array( 'post_title' => 'Fries' ) );
+		$this->is['is_product'] = true;
+		$short                  = 'Plain or Seasoned';
+		$product                = new class( $short ) {
+			public function __construct( public string $short ) {
+			}
+			public function get_short_description() {
+				return $this->short;
+			}
+			public function get_name() {
+				return 'Fries';
+			}
+			public function is_type( $t ) {
+				return false;
+			}
+			public function get_price() {
+				return '4.99';
+			}
+		};
+		Functions\when( 'wc_get_product' )->justReturn( $product );
+		$this->assertSame( 'Fries — Plain or Seasoned, from $4.99 at Test Kitchen in Testville. Order online.', lafka_resolve_meta_description( $post ) );
+
+		$product->short = 'Hand-cut Kennebec potatoes, fried twice in canola oil and tossed with sea salt or house seasoning.';
+		$this->assertSame( $product->short, lafka_resolve_meta_description( $post ) );
+	}
+
+	/** T-15: inner pages get their own description, the front page keeps the restaurant pitch. */
+	public function test_inner_pages_never_share_the_site_pitch(): void {
+		$this->load_templates();
+		$this->bloginfo['description'] = 'Pizza by the slice';
+		$about                         = $this->singular_post(
+			array(
+				'post_title'   => 'About Us',
+				'post_name'    => 'about-us',
+				'post_content' => '<p>Short.</p>',
+			)
+		);
+		$this->assertSame( 'About Us — Test Kitchen in Testville. Order online.', lafka_resolve_meta_description( $about ) );
+
+		$this->is['is_front_page'] = true;
+		$this->assertSame( 'Pizza by the slice', lafka_resolve_meta_description( $about ) );
 	}
 }

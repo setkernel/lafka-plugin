@@ -254,6 +254,25 @@ namespace LafkaPlugin\Tests\Unit {
 			self::assertSame( 404, $status );
 		}
 
+		/**
+		 * T-30: the menu dumps (menu.md, llms-full.txt, menu.json) duplicate
+		 * the real menu pages and must never rank; llms.txt stays indexable.
+		 */
+		public function test_menu_dumps_are_served_noindex(): void {
+			foreach ( array( 'llms-full', 'menu-md', 'menu-json' ) as $type ) {
+				self::assertContains( 'X-Robots-Tag: noindex', lafka_llms_response_headers( $type ), $type );
+			}
+			$llms = lafka_llms_response_headers( 'llms' );
+			self::assertNotContains( 'X-Robots-Tag: noindex', $llms );
+			self::assertContains( 'Content-Type: text/plain; charset=utf-8', $llms );
+			self::assertContains( 'Content-Type: text/markdown; charset=utf-8', lafka_llms_response_headers( 'menu-md' ) );
+			self::assertContains( 'X-Content-Type-Options: nosniff', $llms );
+
+			$this->filters['lafka_llms_noindex_types'] = array( 'llms' );
+			self::assertContains( 'X-Robots-Tag: noindex', lafka_llms_response_headers( 'llms' ) );
+			self::assertNotContains( 'X-Robots-Tag: noindex', lafka_llms_response_headers( 'menu-md' ) );
+		}
+
 		public function test_routes_and_diet_labels(): void {
 			Functions\when( 'add_rewrite_rule' )->alias(
 				static function ( $regex, $query ) use ( &$rules ) {

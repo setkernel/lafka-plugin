@@ -316,17 +316,21 @@ function lafka_schema_menu(): ?array {
 		return null;
 	}
 
-	$ids   = $data['order'];
-	$scope = 'full';
+	$ids      = $data['order'];
+	$scope    = 'full';
+	$node_url = '';
 	if ( function_exists( 'is_product_category' ) && is_product_category() ) {
 		$term = get_queried_object();
 		if ( $term instanceof WP_Term ) {
-			$ids   = lafka_schema_menu_subtree( $data, (int) $term->term_id );
-			$scope = 'category';
+			$ids      = lafka_schema_menu_subtree( $data, (int) $term->term_id );
+			$scope    = 'category';
+			// T-18: the category slice gets its own @id (term URL + #menu) —
+			// reusing /menu/#menu declared a second, partial "full menu".
+			$node_url = (string) ( $data['sections'][ (int) $term->term_id ]['url'] ?? '' );
 		}
 	}
 
-	return lafka_schema_menu_node( $data, $ids, $scope );
+	return lafka_schema_menu_node( $data, $ids, $scope, $node_url );
 }
 
 /**
@@ -335,9 +339,10 @@ function lafka_schema_menu(): ?array {
  * @param array{sections:array<int,array<string,mixed>>,order:list<int>} $data  Menu data.
  * @param list<int>                                                      $ids   Section term ids to include, in order.
  * @param string                                                         $scope 'full' | 'category' (passed to the filter).
+ * @param string                                                         $node_url URL the node is about ('' = the menu page); @id is this URL + '#menu'.
  * @return array<string,mixed>|null
  */
-function lafka_schema_menu_node( array $data, array $ids, string $scope = 'full' ): ?array {
+function lafka_schema_menu_node( array $data, array $ids, string $scope = 'full', string $node_url = '' ): ?array {
 	$sections = array();
 	foreach ( $ids as $id ) {
 		if ( ! isset( $data['sections'][ $id ] ) ) {
@@ -353,7 +358,7 @@ function lafka_schema_menu_node( array $data, array $ids, string $scope = 'full'
 	}
 
 	$nap      = lafka_schema_get_nap();
-	$menu_url = lafka_get_menu_url();
+	$menu_url = '' !== $node_url ? $node_url : lafka_get_menu_url();
 
 	$schema = array(
 		'@type'          => 'Menu',

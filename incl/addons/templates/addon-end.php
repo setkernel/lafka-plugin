@@ -4,4 +4,7 @@
 	<?php if ( ! empty( $addon['limit'] ) ) : ?>
 		<small class="lafka-addon-limit-message"><?php esc_html_e( 'Select up to', 'lafka-plugin' ); ?> <span><?php echo esc_html( $addon['limit'] ); ?></span> <?php esc_html_e( 'items', 'lafka-plugin' ); ?>.</small>
 	<?php endif; ?>
+	<?php if ( ! empty( $toggle ) ) : ?>
+		</div><!-- .lafka-addon-body -->
+	<?php endif; ?>
 </div>

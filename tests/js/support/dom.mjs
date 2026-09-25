@@ -35,6 +35,7 @@ export function loadScript( script, html, globals = {} ) {
 		URLSearchParams,
 		IntersectionObserver: window.IntersectionObserver,
 		MutationObserver: window.MutationObserver,
+		jQuery: window.jQuery,
 	} );
 
 	return {
