@@ -79,14 +79,19 @@
 		if ( ! label ) {
 			return;
 		}
-		var marks = label.querySelectorAll( 'abbr.required, span.optional' );
+		// Every marker WooCommerce may have printed or added (the server
+		// render, and address-i18n.js on country changes): <abbr class=
+		// "required"> (older), <span class="required" aria-hidden="true">
+		// (WC 9+), and <span class="optional">. Exactly one survives.
+		var marks = label.querySelectorAll( '.required, .optional' );
 		for ( var i = 0; i < marks.length; i++ ) {
 			marks[ i ].parentNode.removeChild( marks[ i ] );
 		}
-		var mark = doc.createElement( required ? 'abbr' : 'span' );
+		label.classList.toggle( 'required_field', required );
+		var mark = doc.createElement( 'span' );
 		if ( required ) {
 			mark.className = 'required';
-			mark.setAttribute( 'title', ( cfg.i18n && cfg.i18n.required ) || 'required' );
+			mark.setAttribute( 'aria-hidden', 'true' );
 			mark.textContent = '*';
 		} else {
 			mark.className = 'optional';
@@ -157,17 +162,84 @@
 		}
 	} );
 
+	// WooCommerce only refreshes the order review (and so the shipping rates)
+	// for address text typed key by key: its checkout.js marks a field dirty on
+	// keydown. Browser autofill, paste-and-tap and password managers fire
+	// change/input without keydown, so the street + postcode arrived but the
+	// delivery rate never appeared. Ask for a refresh on any address change.
+	var ADDRESS_FIELD = /^(billing|shipping)_(address_1|address_2|city|postcode|state|country)$/;
+	var refreshTimer = null;
+
+	function requestTotalsRefresh() {
+		if ( ! window.jQuery ) {
+			return;
+		}
+		window.clearTimeout( refreshTimer );
+		refreshTimer = window.setTimeout( function () {
+			window.jQuery( doc.body ).trigger( 'update_checkout' );
+		}, 300 );
+	}
+
+	function radioGroup( input ) {
+		return doc.querySelectorAll( 'input[type="radio"][name="' + input.getAttribute( 'name' ) + '"]' );
+	}
+
+	// "Want delivery?" means delivery: once a delivery rate shows up for the
+	// address the customer revealed, choose it for them (once — they can still
+	// switch back to pickup).
+	var autoChoseDelivery = false;
+	function chooseDeliveryIfAsked( cfg ) {
+		if ( ! wantsAddress || autoChoseDelivery || ! isPickup( cfg ) || 'pickup' === cfg.orderType ) {
+			return;
+		}
+		var radios = doc.querySelectorAll( 'input[type="radio"][name^="shipping_method["]' );
+		for ( var i = 0; i < radios.length; i++ ) {
+			if ( -1 !== ( cfg.pickupMethods || [] ).indexOf( methodId( radios[ i ].value ) ) ) {
+				continue;
+			}
+			var target = radios[ i ];
+			var group = radioGroup( target );
+			for ( var j = 0; j < group.length; j++ ) {
+				group[ j ].checked = group[ j ] === target;
+				if ( group[ j ] === target ) {
+					group[ j ].setAttribute( 'checked', 'checked' );
+				} else {
+					group[ j ].removeAttribute( 'checked' );
+				}
+			}
+			autoChoseDelivery = true;
+			// Bubbles to WooCommerce's shipping-method handler, which refreshes totals.
+			target.dispatchEvent( new window.Event( 'change', { bubbles: true } ) );
+			return;
+		}
+	}
+
 	doc.addEventListener( 'change', function ( event ) {
 		var name = ( event.target && event.target.name ) || '';
 		if ( 0 === name.indexOf( 'shipping_method[' ) || 'payment_method' === name ) {
 			update();
+		} else if ( ADDRESS_FIELD.test( name ) ) {
+			requestTotalsRefresh();
 		}
 	} );
 
+	function afterCheckoutRefresh() {
+		update();
+		var cfg = config();
+		if ( cfg && cfg.enabled ) {
+			chooseDeliveryIfAsked( cfg );
+		}
+	}
+
 	// WooCommerce re-renders the shipping + payment lists over AJAX and fires
-	// these on jQuery( document.body ).
+	// these on jQuery( document.body ). address-i18n.js re-marks fields
+	// required on country_to_state_changed; re-apply after it has run.
 	if ( window.jQuery ) {
-		window.jQuery( doc.body ).on( 'updated_checkout payment_method_selected', update );
+		window.jQuery( doc.body ).on( 'updated_checkout', afterCheckoutRefresh );
+		window.jQuery( doc.body ).on( 'payment_method_selected', update );
+		window.jQuery( doc.body ).on( 'country_to_state_changed', function () {
+			window.setTimeout( update, 0 );
+		} );
 	}
 
 	if ( 'loading' === doc.readyState ) {
