@@ -5,6 +5,62 @@ All notable changes to lafka-plugin are documented here. The format follows
 semver (`npm version` is the single source of truth — see the Releases section
 of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
 
+## [Unreleased]
+
+Phase GX0 ("stop losing orders"). All new behaviour works on the classic and
+the block (Store API) checkout; settings live in Customizer → **Lafka —
+Checkout** unless noted.
+
+### Added
+- **Checkout**: delivery prices are withheld until the destination has a
+  street address and a postcode (postcode skipped where the country has
+  none); pickup stays visible and the customer sees "Enter your street
+  address to see the delivery cost." (classic cart/checkout row, empty-rates
+  copy, block cart/checkout notice). Complements WooCommerce's
+  requires-address setting, which is bypassed whenever blocks Local Pickup is
+  enabled and never requires the street. Toggle + message in the Customizer;
+  filters `lafka_delivery_quote_guard_enabled`,
+  `lafka_delivery_rate_needs_address`, `lafka_delivery_quote_required_fields`,
+  `lafka_delivery_quote_guard_message`.
+- **Checkout**: pickup orders paid with an offline method (cash, cheque, bank
+  transfer) ask only for name, phone and email; card gateways keep the
+  billing address they verify (AVS). Empty billing country/state default to
+  the store base. Classic: fields hide/show live with the shipping/payment
+  choice, with "Want delivery? Add your address". Block: address fields are
+  shown as optional and the rule is enforced on place-order
+  (`lafka_pickup_checkout_relax_block_address` turns that off). Filters
+  `lafka_pickup_checkout_slim_enabled`, `lafka_pickup_checkout_hidden_fields`,
+  `lafka_pickup_address_optional_gateways`,
+  `lafka_pickup_gateway_needs_billing_address`.
+- **Checkout**: cash on delivery reads "Pay at pickup" / "Pay on delivery"
+  (title + description, Customizer overrides; filters `lafka_cod_title`,
+  `lafka_cod_description`, `lafka_contextual_payment_gateways`).
+- **Variations**: options without an explicit order (custom term order, or
+  a name/id sort) are listed cheapest first — WooCommerce dropdowns, Lafka
+  swatches, and the theme's PDP chips / menu rows (Customizer → Lafka — PDP
+  Redesign → "Order size options by price"; filter
+  `lafka_sort_variation_options_by_price`).
+- **NAP**: `lafka_format_phone_display()` — phone text in national format
+  ("(902) 555-0100"; grouped international elsewhere); `phone_display` uses
+  it when unset or stored as a bare E.164 number. tel: links keep E.164.
+- **Order hours**: `Lafka_Order_Hours::can_order_ahead()`,
+  `is_add_to_cart_blocked()`, `get_closed_notice_with_next_open()`; body
+  class `lafka-order-ahead`.
+
+### Fixed
+- **Order hours**: closed-store notices name the next opening ("STORE
+  CLOSED. Opens Saturday at 11:00 AM."); adding to a cart while closed says
+  so immediately; with date/time slots on, a closed store takes orders for a
+  later slot (a chosen slot is required at checkout) instead of blocking.
+- **Shipping areas**: the admin store-location map no longer falls back to
+  (and saves) a hard-coded Sydney, Australia location. A missing or
+  placeholder location is "not configured": delivery maths geocodes the
+  WooCommerce store address instead, and an admin notice + Site Health check
+  ask for the store location.
+- **Consent**: the banner publishes `--lafka-consent-banner-h` /
+  `html.lafka-consent-open` so fixed-bottom bars sit above it; 44px buttons
+  and a compact mobile layout.
+
 ## [10.1.0] — 2026-09-24
 
 ### Fixed
