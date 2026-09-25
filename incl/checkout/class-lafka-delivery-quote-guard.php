@@ -20,6 +20,15 @@
  * WC_Shipping::calculate_shipping_for_package(), which the classic cart, the
  * classic checkout and the Store API all share, so every path behaves the same.
  *
+ * Why not WooCommerce's own "Hide shipping costs until an address is entered"
+ * (woocommerce_shipping_cost_requires_address)? The live store had it ON and
+ * still showed the $52.20 quote: WC_Cart::show_shipping() skips the check
+ * whenever the blocks Local Pickup method is enabled (so pickup is visible
+ * before an address), and on the classic cart it is satisfied by country +
+ * state/postcode without a street. When it does apply it hides every rate,
+ * pickup included. This guard is the thin layer for exactly that gap: it
+ * leaves the core setting alone and removes only the address-dependent rates.
+ *
  * Operator surface:
  *   · Customizer → Lafka — Checkout → "Hide delivery prices until a street
  *     address is entered" (theme_mod `lafka_delivery_quote_guard`, default on)

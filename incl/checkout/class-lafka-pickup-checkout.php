@@ -547,7 +547,20 @@ if ( ! class_exists( 'Lafka_Pickup_Checkout' ) ) {
 		 * @return bool
 		 */
 		private static function relaxes_block_locale(): bool {
-			return self::is_enabled() && class_exists( 'Lafka_Checkout_Mode' ) && Lafka_Checkout_Mode::is_blocks();
+			if ( ! self::is_enabled() || ! class_exists( 'Lafka_Checkout_Mode' ) || ! Lafka_Checkout_Mode::is_blocks() ) {
+				return false;
+			}
+
+			/**
+			 * Filter whether the block checkout marks the address optional (and
+			 * enforces it on place-order instead). WooCommerce's native Local
+			 * Pickup already drops the shipping address; this covers the billing
+			 * address for gateways that do not need it. Return false to keep
+			 * WooCommerce's required address fields on the block checkout.
+			 *
+			 * @param bool $relax Default true.
+			 */
+			return (bool) apply_filters( 'lafka_pickup_checkout_relax_block_address', true );
 		}
 
 		/**

@@ -151,6 +151,26 @@ final class DeliveryQuoteGuardTest extends TestCase {
 		$this->assertSame( array( 'local_pickup:9', 'pickup_location:0' ), $kept );
 	}
 
+	/**
+	 * The gap WooCommerce's own "Hide shipping costs until an address is
+	 * entered" leaves: its classic check (WC_Cart::show_shipping) is satisfied
+	 * by country + state + postcode — no street — and it is skipped entirely
+	 * whenever the blocks Local Pickup method is enabled. The live store had
+	 * that option ON and still quoted delivery from the province.
+	 */
+	public function test_a_destination_core_accepts_without_a_street_is_still_withheld(): void {
+		$kept = $this->quote(
+			array(
+				'country'  => 'CA',
+				'state'    => 'NS',
+				'postcode' => 'A1A 1A1',
+				'city'     => 'Exampleville',
+			)
+		);
+
+		$this->assertSame( array( 'local_pickup:9', 'pickup_location:0' ), $kept );
+	}
+
 	public function test_a_full_address_quotes_every_rate_and_clears_the_notice(): void {
 		$this->quote( array( 'country' => 'CA' ) );
 
