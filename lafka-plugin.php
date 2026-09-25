@@ -1618,6 +1618,8 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/lafka-share-links.php';
 require_once plugin_dir_path( __FILE__ ) . 'incl/seo/lafka-head-meta.php';
 // GX3: <title> templates + per-post title override + templated fallback descriptions.
 require_once plugin_dir_path( __FILE__ ) . 'incl/seo/lafka-seo-titles.php';
+// GX3: optional per-category FAQ (term meta + admin rows; FAQPage via lafka_schema_faq()).
+require_once plugin_dir_path( __FILE__ ) . 'incl/seo/lafka-term-faq.php';
 
 add_action( 'woocommerce_single_product_summary', 'lafka_show_custom_product_popup_link', 12 );
 if ( ! function_exists( 'lafka_show_custom_product_popup_link' ) ) {
