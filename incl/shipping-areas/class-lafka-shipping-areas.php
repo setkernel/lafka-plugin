@@ -285,7 +285,7 @@ class Lafka_Shipping_Areas {
 			wp_enqueue_style( 'flatpickr' );
 			wp_enqueue_script( 'flatpickr-local' );
 			$datetime_js       = lafka_plugin_script_path( 'incl/shipping-areas/assets/js/frontend/lafka-shipping-datetime.min.js' );
-			wp_enqueue_script( 'lafka-shipping-datetime', plugins_url( $datetime_js, LAFKA_PLUGIN_FILE ), array( 'jquery', 'select2', 'flatpickr' ), lafka_plugin_asset_version( $datetime_js ), true );
+			wp_enqueue_script( 'lafka-shipping-datetime', plugins_url( $datetime_js, LAFKA_PLUGIN_FILE ), array( 'jquery', 'selectWoo', 'flatpickr' ), lafka_plugin_asset_version( $datetime_js ), true );
 			wp_localize_script(
 				'lafka-shipping-datetime',
 				'lafka_datetime_options',
