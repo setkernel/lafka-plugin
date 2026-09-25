@@ -1000,6 +1000,9 @@ function lafka_plugin_after_plugins_loaded() {
 	require_once plugin_dir_path( __FILE__ ) . 'incl/woocommerce/lafka-cart-drawer-upsell.php';
 	// Free delivery over $X — standalone (NOT behind the promotions/BOGO gate).
 	require_once plugin_dir_path( __FILE__ ) . 'incl/woocommerce/lafka-free-delivery.php';
+	// Variation options (sizes) in a sensible order: explicit order, else cheapest first.
+	require_once plugin_dir_path( __FILE__ ) . 'incl/woocommerce/lafka-variation-order.php';
+	lafka_variation_order_init();
 	// First-order discount — standalone (logged-in first-timers; abuse-resistant).
 	require_once plugin_dir_path( __FILE__ ) . 'incl/woocommerce/lafka-first-order.php';
 	// Slow-day discount — standalone (operator-chosen weekdays, site timezone).
