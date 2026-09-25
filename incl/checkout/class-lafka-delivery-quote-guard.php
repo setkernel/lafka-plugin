@@ -29,7 +29,20 @@
  * pickup included. This guard is the thin layer for exactly that gap: it
  * leaves the core setting alone and removes only the address-dependent rates.
  *
+ * "Delivery" stays a choice while its price is withheld (classic cart and
+ * checkout): a $0 placeholder rate `lafka_delivery_pending` labelled
+ * "Delivery" replaces the withheld rates, so the customer's Pickup/Delivery
+ * preference can select delivery before the address exists (the COD title,
+ * the address fields and the totals row all read "delivery"). It can never
+ * be ordered: the classic checkout validation and the Store API place-order
+ * refuse it, and the moment the address is complete the real delivery rates
+ * replace it (Lafka_Fulfilment re-defaults to the first of them). Not added
+ * on the block checkout, which explains the missing price through the Store
+ * API cart extension instead.
+ *
  * Operator surface:
+ *   · `lafka_delivery_placeholder_rate_enabled` (bool, default true) and
+ *     `lafka_delivery_placeholder_label` (string, default "Delivery").
  *   · Customizer → Lafka — Checkout → "Hide delivery prices until a street
  *     address is entered" (theme_mod `lafka_delivery_quote_guard`, default on)
  *     and the message text (`lafka_delivery_quote_guard_message`).
@@ -71,6 +84,11 @@ if ( ! class_exists( 'Lafka_Delivery_Quote_Guard' ) ) {
 		const SESSION_KEY = 'lafka_delivery_quote_withheld';
 
 		/**
+		 * Rate id (and method id) of the "Delivery" placeholder.
+		 */
+		const PLACEHOLDER = 'lafka_delivery_pending';
+
+		/**
 		 * Wire the rate filter and the classic cart/checkout messages.
 		 *
 		 * @return void
@@ -78,10 +96,183 @@ if ( ! class_exists( 'Lafka_Delivery_Quote_Guard' ) ) {
 		public static function init() {
 			// Late, so the rates any other plugin added or adjusted are all seen.
 			add_filter( 'woocommerce_package_rates', array( __CLASS__, 'filter_package_rates' ), 50, 2 );
+			add_filter( 'woocommerce_cart_shipping_packages', array( __CLASS__, 'tag_packages' ) );
 			add_action( 'woocommerce_cart_totals_after_shipping', array( __CLASS__, 'render_notice_row' ) );
 			add_action( 'woocommerce_review_order_after_shipping', array( __CLASS__, 'render_notice_row' ) );
 			add_filter( 'woocommerce_no_shipping_available_html', array( __CLASS__, 'filter_no_shipping_html' ) );
 			add_filter( 'woocommerce_cart_no_shipping_available_html', array( __CLASS__, 'filter_no_shipping_html' ) );
+			add_action( 'woocommerce_after_checkout_validation', array( __CLASS__, 'validate_classic_checkout' ), 20, 2 );
+			add_action( 'woocommerce_store_api_checkout_update_order_from_request', array( __CLASS__, 'validate_store_api_checkout' ), 5 );
+		}
+
+		/**
+		 * Whether a rate id is the "Delivery" placeholder.
+		 *
+		 * @param mixed $rate_id Rate id.
+		 * @return bool
+		 */
+		public static function is_placeholder( $rate_id ): bool {
+			return is_string( $rate_id ) && self::PLACEHOLDER === strtok( $rate_id, ':' );
+		}
+
+		/**
+		 * Whether this request may offer the placeholder: the operator filter,
+		 * then the classic checkout only (not a Store API request, not a site
+		 * whose Checkout page is the block checkout).
+		 *
+		 * @return bool
+		 */
+		public static function placeholder_enabled(): bool {
+			/**
+			 * Filter whether "Delivery" stays selectable (as a $0 placeholder
+			 * that cannot be ordered) while its price waits for the address.
+			 *
+			 * @since 10.3.0
+			 * @param bool $enabled Default true.
+			 */
+			if ( ! apply_filters( 'lafka_delivery_placeholder_rate_enabled', true ) ) {
+				return false;
+			}
+			if ( self::is_store_api_request() ) {
+				return false;
+			}
+
+			return ! ( class_exists( 'Lafka_Checkout_Mode' ) && Lafka_Checkout_Mode::is_blocks() );
+		}
+
+		/**
+		 * The placeholder rate.
+		 *
+		 * @return object|null WC_Shipping_Rate, or null without WooCommerce.
+		 */
+		private static function placeholder_rate() {
+			if ( ! class_exists( 'WC_Shipping_Rate' ) ) {
+				return null;
+			}
+
+			/**
+			 * Filter the label of the "Delivery" choice shown before the address.
+			 *
+			 * @since 10.3.0
+			 * @param string $label Default "Delivery".
+			 */
+			$label = (string) apply_filters( 'lafka_delivery_placeholder_label', __( 'Delivery', 'lafka-plugin' ) );
+
+			return new WC_Shipping_Rate( self::PLACEHOLDER, $label, 0, array(), self::PLACEHOLDER, 0 );
+		}
+
+		/**
+		 * woocommerce_cart_shipping_packages: keep the Store API's cached rates
+		 * apart from the classic ones (the placeholder is classic-only, and
+		 * WooCommerce caches package rates by the package contents).
+		 *
+		 * @param mixed $packages Shipping packages.
+		 * @return mixed
+		 */
+		public static function tag_packages( $packages ) {
+			if ( ! is_array( $packages ) ) {
+				return $packages;
+			}
+			$context = self::is_store_api_request() ? 'store_api' : 'classic';
+			foreach ( $packages as $i => $package ) {
+				if ( is_array( $package ) ) {
+					$packages[ $i ]['lafka_rate_context'] = $context;
+				}
+			}
+
+			return $packages;
+		}
+
+		/**
+		 * Whether this is a Store API request.
+		 *
+		 * @return bool
+		 */
+		private static function is_store_api_request(): bool {
+			$wc = function_exists( 'WC' ) ? WC() : null;
+			if ( is_object( $wc ) && method_exists( $wc, 'is_store_api_request' ) ) {
+				return (bool) $wc->is_store_api_request();
+			}
+
+			return isset( $_SERVER['REQUEST_URI'] ) && false !== strpos( rawurldecode( sanitize_text_field( wp_unslash( (string) $_SERVER['REQUEST_URI'] ) ) ), 'wc/store/' );
+		}
+
+		/**
+		 * The chosen rate ids in the session.
+		 *
+		 * @return string[]
+		 */
+		private static function chosen_rates(): array {
+			$session = self::session();
+
+			return null === $session ? array() : array_map( 'strval', (array) $session->get( 'chosen_shipping_methods' ) );
+		}
+
+		/**
+		 * Whether the placeholder is the chosen rate of any package.
+		 *
+		 * @return bool
+		 */
+		public static function placeholder_chosen(): bool {
+			foreach ( self::chosen_rates() as $rate_id ) {
+				if ( self::is_placeholder( $rate_id ) ) {
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		/**
+		 * The refusal shown when the placeholder is still chosen at place-order.
+		 *
+		 * @return string
+		 */
+		public static function placeholder_error(): string {
+			return __( 'Enter your delivery address to see the delivery cost, or choose pickup.', 'lafka-plugin' );
+		}
+
+		/**
+		 * woocommerce_after_checkout_validation: never place an order on the
+		 * placeholder (the address was still incomplete after the totals).
+		 *
+		 * @param mixed $data   Posted data.
+		 * @param mixed $errors WP_Error.
+		 * @return void
+		 */
+		public static function validate_classic_checkout( $data, $errors ) {
+			if ( ! is_object( $errors ) || ! method_exists( $errors, 'add' ) || ! self::placeholder_chosen() ) {
+				return;
+			}
+			// Reported as field_validation by the GX1 observer (codes only).
+			$errors->add( 'shipping', self::placeholder_error() );
+		}
+
+		/**
+		 * Store API place order: the same refusal (a cached placeholder).
+		 *
+		 * @param mixed $order WC_Order being placed.
+		 * @return void
+		 *
+		 * @throws \Automattic\WooCommerce\StoreApi\Exceptions\RouteException When the placeholder is chosen.
+		 * @throws \RuntimeException Fallback without the Store API.
+		 */
+		public static function validate_store_api_checkout( $order ) {
+			$chosen = self::placeholder_chosen();
+			if ( ! $chosen && is_object( $order ) && method_exists( $order, 'get_shipping_methods' ) ) {
+				foreach ( (array) $order->get_shipping_methods() as $item ) {
+					if ( is_object( $item ) && method_exists( $item, 'get_method_id' ) && self::is_placeholder( (string) $item->get_method_id() ) ) {
+						$chosen = true;
+					}
+				}
+			}
+			if ( ! $chosen ) {
+				return;
+			}
+			if ( class_exists( '\Automattic\WooCommerce\StoreApi\Exceptions\RouteException' ) ) {
+				throw new \Automattic\WooCommerce\StoreApi\Exceptions\RouteException( 'lafka_delivery_address_required', esc_html( self::placeholder_error() ), 400 );
+			}
+			throw new \RuntimeException( esc_html( self::placeholder_error() ) );
 		}
 
 		/**
@@ -243,7 +434,16 @@ if ( ! class_exists( 'Lafka_Delivery_Quote_Guard' ) ) {
 				}
 				$kept[ $rate_id ] = $rate;
 			}
-			self::remember( $withheld, count( $kept ) );
+
+			$placeholder = false;
+			if ( $withheld > 0 && self::placeholder_enabled() ) {
+				$rate = self::placeholder_rate();
+				if ( null !== $rate ) {
+					$kept[ self::PLACEHOLDER ] = $rate;
+					$placeholder               = true;
+				}
+			}
+			self::remember( $withheld, count( $kept ) - ( $placeholder ? 1 : 0 ), $placeholder );
 
 			return $kept;
 		}
@@ -270,7 +470,14 @@ if ( ! class_exists( 'Lafka_Delivery_Quote_Guard' ) ) {
 		 * @return void
 		 */
 		public static function render_notice_row() {
-			if ( ! self::is_withholding() || self::recalled()['kept'] < 1 ) {
+			$recalled = self::recalled();
+			if ( ! self::is_withholding() ) {
+				return;
+			}
+			// With the "Delivery" placeholder offered, explain only when it is
+			// the choice (no delivery hint under a chosen pickup). Without it,
+			// only when some other option is still listed.
+			if ( $recalled['placeholder'] ? ! self::placeholder_chosen() : $recalled['kept'] < 1 ) {
 				return;
 			}
 			printf(
@@ -293,11 +500,12 @@ if ( ! class_exists( 'Lafka_Delivery_Quote_Guard' ) ) {
 		/**
 		 * Record the last calculation in the WC session.
 		 *
-		 * @param int $withheld Rates withheld.
-		 * @param int $kept     Rates kept.
+		 * @param int  $withheld    Rates withheld.
+		 * @param int  $kept        Real rates kept (placeholder not counted).
+		 * @param bool $placeholder Whether the "Delivery" placeholder was added.
 		 * @return void
 		 */
-		private static function remember( int $withheld, int $kept ) {
+		private static function remember( int $withheld, int $kept, bool $placeholder = false ) {
 			$session = self::session();
 			if ( null === $session ) {
 				return;
@@ -305,8 +513,9 @@ if ( ! class_exists( 'Lafka_Delivery_Quote_Guard' ) ) {
 			$session->set(
 				self::SESSION_KEY,
 				array(
-					'withheld' => $withheld,
-					'kept'     => $kept,
+					'withheld'    => $withheld,
+					'kept'        => $kept,
+					'placeholder' => $placeholder,
 				)
 			);
 		}
@@ -314,15 +523,16 @@ if ( ! class_exists( 'Lafka_Delivery_Quote_Guard' ) ) {
 		/**
 		 * The last calculation recorded in the WC session.
 		 *
-		 * @return array{withheld:int,kept:int}
+		 * @return array{withheld:int,kept:int,placeholder:bool}
 		 */
 		private static function recalled(): array {
 			$session = self::session();
 			$stored  = null === $session ? null : $session->get( self::SESSION_KEY );
 
 			return array(
-				'withheld' => is_array( $stored ) ? (int) ( $stored['withheld'] ?? 0 ) : 0,
-				'kept'     => is_array( $stored ) ? (int) ( $stored['kept'] ?? 0 ) : 0,
+				'withheld'    => is_array( $stored ) ? (int) ( $stored['withheld'] ?? 0 ) : 0,
+				'kept'        => is_array( $stored ) ? (int) ( $stored['kept'] ?? 0 ) : 0,
+				'placeholder' => is_array( $stored ) && ! empty( $stored['placeholder'] ),
 			);
 		}
 

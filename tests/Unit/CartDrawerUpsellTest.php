@@ -17,9 +17,15 @@ use PHPUnit\Framework\TestCase;
 
 final class CartDrawerUpsellTest extends TestCase {
 
+	/** @var array<int, int[]> Product id => category ids. */
+	public static array $cats = array();
+
 	protected function setUp(): void {
 		parent::setUp();
 		Monkey\setUp();
+		self::$cats = array();
+		Functions\when( 'get_theme_mod' )->alias( static fn( $key, $fallback = false ) => $fallback );
+		Functions\when( 'get_term_by' )->justReturn( false );
 		require_once dirname( __DIR__, 2 ) . '/incl/woocommerce/lafka-bestseller.php';
 		require_once dirname( __DIR__, 2 ) . '/incl/woocommerce/lafka-upsell-row.php';
 		require_once dirname( __DIR__, 2 ) . '/incl/woocommerce/lafka-cart-drawer-upsell.php';
@@ -50,6 +56,9 @@ final class CartDrawerUpsellTest extends TestCase {
 				public function get_name() {
 					return 'Side ' . $this->id;
 				}
+				public function get_category_ids() {
+					return CartDrawerUpsellTest::$cats[ $this->id ] ?? array();
+				}
 				public function get_price_html() {
 					return '$3.00';
 				}
@@ -69,7 +78,13 @@ final class CartDrawerUpsellTest extends TestCase {
 		$cart = new class( $product_ids ) {
 			public function __construct( private array $ids ) {}
 			public function get_cart() {
-				return array_map( static fn( $id ) => array( 'product_id' => $id ), $this->ids );
+				return array_map(
+					static fn( $id ) => array(
+						'product_id' => $id,
+						'data'       => \wc_get_product( $id ),
+					),
+					$this->ids
+				);
 			}
 			public function is_empty() {
 				return empty( $this->ids );
@@ -81,7 +96,51 @@ final class CartDrawerUpsellTest extends TestCase {
 	public function test_suggests_three_one_tap_products_not_already_in_the_cart(): void {
 		$this->cart_with( array( 5 ) );
 
-		self::assertSame( array( 12, 41, 77 ), lafka_cart_drawer_get_upsell_ids() );
+		$ids = lafka_cart_drawer_get_upsell_ids();
+
+		self::assertCount( 3, $ids );
+		self::assertSame( array(), array_diff( $ids, array( 12, 41, 77, 78 ) ), 'Only addable simple products: not the cart item (5), the variable (9) or the out-of-stock one (40).' );
+		self::assertSame( $ids, lafka_cart_drawer_get_upsell_ids(), 'Stable for one cart: a refresh never reshuffles the row.' );
+	}
+
+	public function test_deals_and_combos_are_never_the_little_extra(): void {
+		Functions\when( 'get_theme_mod' )->alias( static fn( $key, $fallback = false ) => 'lafka_counter_deals_cat' === $key ? 300 : $fallback );
+		Functions\when( 'get_term_by' )->alias( static fn( $field, $slug ) => 'combos' === $slug ? (object) array( 'term_id' => 301 ) : false );
+		self::$cats = array(
+			12 => array( 300 ),
+			41 => array( 301 ),
+		);
+		$this->cart_with( array( 5 ) );
+
+		self::assertSame( array( 77, 78 ), array_values( array_intersect( array( 77, 78 ), lafka_cart_drawer_get_upsell_ids() ) ) );
+		self::assertSame( array(), array_intersect( array( 12, 41 ), lafka_cart_drawer_get_upsell_ids() ), 'Deals category (theme setting) and a category named combos.' );
+	}
+
+	public function test_something_new_to_the_order_comes_first(): void {
+		// The cart holds a pizza (category 7); 12 and 41 are pizzas too, 77 is a drink.
+		self::$cats = array(
+			5  => array( 7 ),
+			12 => array( 7 ),
+			41 => array( 7 ),
+			77 => array( 8 ),
+			78 => array( 7 ),
+		);
+		$this->cart_with( array( 5 ) );
+
+		self::assertSame( 77, lafka_cart_drawer_get_upsell_ids()[0] );
+	}
+
+	public function test_the_row_rotates_as_the_order_changes(): void {
+		Functions\when( 'wc_get_products' )->alias(
+			static fn( $args ) => 'simple' === ( $args['type'] ?? '' ) ? array( 12, 77, 78, 79, 80, 81 ) : array()
+		);
+		$seen = array();
+		foreach ( array( array( 5 ), array( 5, 6 ), array( 6 ), array( 7 ), array( 5, 7 ), array( 8 ) ) as $cart ) {
+			$this->cart_with( $cart );
+			$seen[ implode( ',', lafka_cart_drawer_get_upsell_ids() ) ] = true;
+		}
+
+		self::assertGreaterThan( 1, count( $seen ), 'Not always the same three.' );
 	}
 
 	public function test_fragment_renders_native_ajax_add_buttons_and_empties_with_the_cart(): void {
@@ -101,8 +160,9 @@ final class CartDrawerUpsellTest extends TestCase {
 
 		preg_match_all( '/class="lafka-cart-drawer__upsell-add add_to_cart_button ajax_add_to_cart"/', $html, $buttons );
 		self::assertCount( 3, $buttons[0], "WooCommerce's ajax add-to-cart handles the one-tap add." );
-		self::assertStringContainsString( 'data-product_id="12"', $html );
-		self::assertStringContainsString( 'href="?add-to-cart=41"', $html );
+		$ids = lafka_cart_drawer_get_upsell_ids();
+		self::assertStringContainsString( 'data-product_id="' . $ids[0] . '"', $html );
+		self::assertStringContainsString( 'href="?add-to-cart=' . $ids[1] . '"', $html );
 
 		$this->cart_with( array() );
 		self::assertSame(

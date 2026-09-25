@@ -550,6 +550,12 @@ if ( ! class_exists( 'Lafka_Pickup_Checkout' ) ) {
 			if ( ! self::is_enabled() || ! class_exists( 'Lafka_Checkout_Mode' ) || ! Lafka_Checkout_Mode::is_blocks() ) {
 				return false;
 			}
+			// The country locale is shared with the classic form, so relax it
+			// only where the block checkout reads it (its page render and the
+			// Store API) and never on a classic checkout request.
+			if ( self::is_classic_checkout_request() || ! self::is_block_checkout_context() ) {
+				return false;
+			}
 
 			/**
 			 * Filter whether the block checkout marks the address optional (and
@@ -561,6 +567,36 @@ if ( ! class_exists( 'Lafka_Pickup_Checkout' ) ) {
 			 * @param bool $relax Default true.
 			 */
 			return (bool) apply_filters( 'lafka_pickup_checkout_relax_block_address', true );
+		}
+
+		/**
+		 * A classic checkout request: a wc-ajax call (order-review refresh,
+		 * checkout submit) or a posted classic checkout form.
+		 *
+		 * @return bool
+		 */
+		private static function is_classic_checkout_request(): bool {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing -- read-only routing check; nothing is saved.
+			return isset( $_GET['wc-ajax'] ) || isset( $_POST['woocommerce-process-checkout-nonce'] );
+		}
+
+		/**
+		 * Where the block checkout reads the country locale: a Store API
+		 * request, or the checkout page render.
+		 *
+		 * @return bool
+		 */
+		private static function is_block_checkout_context(): bool {
+			$wc = function_exists( 'WC' ) ? WC() : null;
+			if ( is_object( $wc ) && method_exists( $wc, 'is_store_api_request' ) ) {
+				if ( $wc->is_store_api_request() ) {
+					return true;
+				}
+			} elseif ( isset( $_SERVER['REQUEST_URI'] ) && false !== strpos( rawurldecode( sanitize_text_field( wp_unslash( (string) $_SERVER['REQUEST_URI'] ) ) ), 'wc/store/' ) ) {
+				return true;
+			}
+
+			return function_exists( 'is_checkout' ) && is_checkout();
 		}
 
 		/**

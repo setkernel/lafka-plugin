@@ -173,4 +173,21 @@ final class CartDrawerFragmentsTest extends TestCase {
 		self::assertStringContainsString( 'lafka-cart-drawer__subtotal', $total );
 		self::assertStringNotContainsString( 'lafka-fdp', $total );
 	}
+
+	public function test_the_subtotal_uses_the_same_tax_basis_as_the_line_prices(): void {
+		$cart = new class() {
+			public function get_cart_contents_total() {
+				return 20.0;
+			}
+			public function get_cart_contents_tax() {
+				return 2.8;
+			}
+			public function display_prices_including_tax() {
+				return true;
+			}
+		};
+		Functions\when( 'WC' )->justReturn( (object) array( 'cart' => $cart ) );
+
+		self::assertStringContainsString( '$22.80', self::capture( 'lafka_cart_drawer_render_total' ) );
+	}
 }

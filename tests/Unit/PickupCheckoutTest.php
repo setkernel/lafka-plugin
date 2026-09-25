@@ -99,10 +99,14 @@ namespace LafkaPlugin\Tests\Unit {
 			require_once dirname( __DIR__, 2 ) . '/incl/checkout/class-lafka-checkout-mode.php';
 			require_once dirname( __DIR__, 2 ) . '/incl/checkout/class-lafka-pickup-checkout.php';
 			$_POST = array();
+			$_GET  = array();
+			unset( $_SERVER['REQUEST_URI'] );
 		}
 
 		protected function tearDown(): void {
 			$_POST = array();
+			$_GET  = array();
+			unset( $_SERVER['REQUEST_URI'] );
 			Monkey\tearDown();
 			parent::tearDown();
 		}
@@ -282,8 +286,51 @@ namespace LafkaPlugin\Tests\Unit {
 		 *  Block checkout (Store API)
 		 * ------------------------------------------------------------ */
 
+		/** Blocks mode, inside a Store API request (where the block checkout reads the locale). */
 		private function blocks_mode(): void {
 			$this->options['lafka_checkout_mode'] = 'blocks';
+			$_SERVER['REQUEST_URI']               = '/wp-json/wc/store/v1/checkout';
+		}
+
+		/** @return array<string, array<string, mixed>> A CA locale after the relaxation filter. */
+		private function relaxed_ca(): array {
+			return Lafka_Pickup_Checkout::relax_block_locale( array( 'CA' => array() ) )['CA'];
+		}
+
+		public function test_a_classic_checkout_request_never_relaxes_the_locale_even_in_blocks_mode(): void {
+			$this->blocks_mode();
+			unset( $_SERVER['REQUEST_URI'] );
+			$_GET['wc-ajax'] = 'checkout';
+
+			$this->assertSame( array(), $this->relaxed_ca(), 'Classic submit keeps street/city/postcode/province required.' );
+
+			$_GET  = array();
+			$_POST = array( 'woocommerce-process-checkout-nonce' => 'n' );
+			$this->assertSame( array(), $this->relaxed_ca(), 'Posted classic form (no-JS submit).' );
+		}
+
+		public function test_blocks_mode_relaxes_only_where_the_block_checkout_reads_the_locale(): void {
+			$this->blocks_mode();
+			unset( $_SERVER['REQUEST_URI'] );
+			$on_checkout = false;
+			Functions\when( 'is_checkout' )->alias( function () use ( &$on_checkout ) {
+				return $on_checkout;
+			} );
+
+			$this->assertSame( array(), $this->relaxed_ca(), 'Account address form / other pages keep the locale.' );
+
+			$on_checkout = true;
+			$this->assertFalse( $this->relaxed_ca()['address_1']['required'], 'The block checkout page render.' );
+		}
+
+		public function test_the_checkout_page_content_decides_over_the_stored_option(): void {
+			// Option says blocks, but the Checkout page renders the classic shortcode
+			// (an edited page the shim never swapped): the locale must stay strict.
+			$this->blocks_mode();
+			$this->options['woocommerce_checkout_page_id'] = 7;
+			Functions\when( 'get_post' )->justReturn( (object) array( 'post_content' => '<!-- wp:shortcode -->[woocommerce_checkout]<!-- /wp:shortcode -->' ) );
+
+			$this->assertSame( array(), $this->relaxed_ca() );
 		}
 
 		public function test_block_checkout_makes_the_address_optional_for_every_country(): void {

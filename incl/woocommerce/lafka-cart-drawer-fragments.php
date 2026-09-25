@@ -65,7 +65,7 @@ if ( ! function_exists( 'lafka_cart_drawer_render_item' ) ) {
 		}
 		$name  = apply_filters( 'woocommerce_cart_item_name', $product->get_name(), $cart_item, $cart_item_key );
 		$thumb = $product->get_image( 'woocommerce_gallery_thumbnail', array( 'loading' => 'lazy' ) );
-		$price = WC()->cart->get_product_subtotal( $product, $cart_item['quantity'] );
+		$price = lafka_cart_drawer_line_price_html( $cart_item );
 
 		// GX4: the theme opted in to the stepper row (theme support / filter).
 		if ( lafka_cart_drawer_stepper_enabled() ) {
@@ -86,6 +86,54 @@ if ( ! function_exists( 'lafka_cart_drawer_render_item' ) ) {
 			<a href="<?php echo esc_url( wc_get_cart_remove_url( $cart_item_key ) ); ?>" class="lafka-cart-drawer__remove remove_from_cart_button" role="button" data-product_id="<?php echo esc_attr( (string) ( $cart_item['product_id'] ?? '' ) ); ?>" data-cart_item_key="<?php echo esc_attr( $cart_item_key ); ?>" aria-label="<?php echo esc_attr( sprintf( /* translators: %s product name */ __( 'Remove %s from cart', 'lafka-plugin' ), wp_strip_all_tags( $name ) ) ); ?>">×</a>
 		</li>
 		<?php
+	}
+}
+
+if ( ! function_exists( 'lafka_cart_drawer_line_price_html' ) ) {
+	/**
+	 * A drawer line's price from the cart's calculated line totals, so the
+	 * lines always add up to the drawer subtotal: discounts (a BOGO deal, a
+	 * coupon) show as the original price struck through before the price
+	 * paid. WooCommerce's get_product_subtotal() is price × quantity from the
+	 * product, which on a page load still holds the pre-deal price (the deal
+	 * is applied inside calculate_totals), so the lines disagreed with the
+	 * subtotal. Falls back to it when the item carries no calculated totals.
+	 *
+	 * @param array<string,mixed> $cart_item WC cart-item array.
+	 * @return string Price HTML.
+	 */
+	function lafka_cart_drawer_line_price_html( array $cart_item ): string {
+		$cart = function_exists( 'WC' ) && WC() && isset( WC()->cart ) ? WC()->cart : null;
+		if ( ! isset( $cart_item['line_total'], $cart_item['line_subtotal'] ) || ! function_exists( 'wc_price' ) ) {
+			return is_object( $cart ) ? (string) $cart->get_product_subtotal( $cart_item['data'], $cart_item['quantity'] ) : '';
+		}
+
+		$incl     = is_object( $cart ) && method_exists( $cart, 'display_prices_including_tax' ) && $cart->display_prices_including_tax();
+		$subtotal = (float) $cart_item['line_subtotal'];
+		$paid     = (float) $cart_item['line_total'] + ( $incl ? (float) ( $cart_item['line_tax'] ?? 0 ) : 0.0 );
+
+		// A deal that lowers the product's own price (BOGO blends it) leaves no
+		// trace in line_subtotal; its original unit price is kept on the item.
+		$original = $subtotal;
+		if ( ! empty( $cart_item['_bogo_50'] ) && isset( $cart_item['_bogo_original_price'] ) ) {
+			$original = max( $original, (float) $cart_item['_bogo_original_price'] * (int) $cart_item['quantity'] );
+		}
+		if ( $incl && $subtotal > 0 ) {
+			$original *= 1 + ( (float) ( $cart_item['line_subtotal_tax'] ?? 0 ) / $subtotal );
+		}
+
+		$html = ( $original - $paid > 0.005 && function_exists( 'wc_format_sale_price' ) )
+			? wc_format_sale_price( $original, $paid )
+			: wc_price( $paid );
+
+		/**
+		 * Filter a cart-drawer line's price HTML.
+		 *
+		 * @since 10.3.0
+		 * @param string              $html      Price HTML.
+		 * @param array<string,mixed> $cart_item Cart item.
+		 */
+		return (string) apply_filters( 'lafka_cart_drawer_line_price_html', $html, $cart_item );
 	}
 }
 
@@ -169,14 +217,15 @@ if ( ! function_exists( 'lafka_cart_drawer_render_stepper_item' ) ) {
 				echo $thumb;
 				?>
 			</span>
-			<div class="lafka-cart-drawer__body">
+			<?php // __info, not __body: that is the drawer's scroll container class (O-01). ?>
+			<div class="lafka-cart-drawer__info">
 				<h3 class="lafka-cart-drawer__name"><?php echo wp_kses_post( $name ); ?></h3>
 				<?php if ( '' !== $details ) : ?>
 					<p class="lafka-cart-drawer__details"><?php echo esc_html( $details ); ?></p>
 				<?php endif; ?>
 				<span class="lafka-cart-drawer__price"><?php echo wp_kses_post( $price ); ?></span>
 			</div>
-			<div class="lafka-cart-drawer__stepper" role="group" aria-label="<?php echo esc_attr( sprintf( /* translators: %s: product name */ __( 'Quantity of %s', 'lafka-plugin' ), $plain_name ) ); ?>" data-lafka-qty data-cart-key="<?php echo esc_attr( $cart_item_key ); ?>" data-name="<?php echo esc_attr( $plain_name ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'lafka-cart-qty' ) ); ?>">
+			<div class="lafka-cart-drawer__stepper" role="group" aria-label="<?php echo esc_attr( sprintf( /* translators: %s: product name */ __( 'Quantity of %s', 'lafka-plugin' ), $plain_name ) ); ?>" data-lafka-qty data-cart-key="<?php echo esc_attr( $cart_item_key ); ?>" data-name="<?php echo esc_attr( $plain_name ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'lafka-cart-qty' ) ); ?>"<?php echo $max > 0 ? ' data-max="' . esc_attr( (string) $max ) . '"' : ''; ?>>
 				<button type="button" class="lafka-cart-drawer__step lafka-cart-drawer__step--less" data-lafka-qty-step="-1" aria-label="<?php echo esc_attr( sprintf( /* translators: %s: product name */ __( 'One less %s', 'lafka-plugin' ), $plain_name ) ); ?>"<?php echo $qty <= 1 ? ' disabled' : ''; ?>><span aria-hidden="true">−</span></button>
 				<output class="lafka-cart-drawer__qty" aria-live="polite"><?php echo esc_html( (string) $qty ); ?></output>
 				<button type="button" class="lafka-cart-drawer__step lafka-cart-drawer__step--more" data-lafka-qty-step="1" aria-label="<?php echo esc_attr( sprintf( /* translators: %s: product name */ __( 'One more %s', 'lafka-plugin' ), $plain_name ) ); ?>"<?php echo $at_max ? ' disabled' : ''; ?>><span aria-hidden="true">+</span></button>
@@ -208,10 +257,15 @@ if ( ! function_exists( 'lafka_cart_drawer_render_total' ) ) {
 		}
 
 		$total = (float) WC()->cart->get_cart_contents_total();
+		// Shown on the same tax basis as the line prices (lafka_cart_drawer_line_price_html).
+		$shown = $total;
+		if ( method_exists( WC()->cart, 'display_prices_including_tax' ) && WC()->cart->display_prices_including_tax() && method_exists( WC()->cart, 'get_cart_contents_tax' ) ) {
+			$shown += (float) WC()->cart->get_cart_contents_tax();
+		}
 		?>
 		<div class="lafka-cart-drawer__subtotal">
 			<span><?php esc_html_e( 'Subtotal', 'lafka-plugin' ); ?></span>
-			<strong><?php echo wp_kses_post( wc_price( $total ) ); ?></strong>
+			<strong><?php echo wp_kses_post( wc_price( $shown ) ); ?></strong>
 		</div>
 		<?php
 		// SSOT: resolve the free-delivery threshold through the canonical

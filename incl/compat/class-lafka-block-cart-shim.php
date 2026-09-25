@@ -45,6 +45,15 @@ class Lafka_Block_Cart_Shim {
 	}
 
 	/**
+	 * Whether the operator's configured checkout mode is classic.
+	 *
+	 * @return bool
+	 */
+	private static function configured_classic(): bool {
+		return ! class_exists( 'Lafka_Checkout_Mode' ) || Lafka_Checkout_Mode::MODE_CLASSIC === Lafka_Checkout_Mode::get_mode();
+	}
+
+	/**
 	 * The cart/checkout page pairs the shim manages.
 	 *
 	 * @return array<int,array<string,string>>
@@ -77,7 +86,9 @@ class Lafka_Block_Cart_Shim {
 			return;
 		}
 
-		$classic = ! class_exists( 'Lafka_Checkout_Mode' ) || Lafka_Checkout_Mode::is_classic();
+		// The shim APPLIES the configured intent to the pages, so it reads the
+		// option (get_mode), never the page-derived effective mode.
+		$classic = self::configured_classic();
 
 		$swapped = $classic ? self::apply_classic() : self::apply_blocks();
 
@@ -193,7 +204,7 @@ class Lafka_Block_Cart_Shim {
 			return;
 		}
 		$pages   = esc_html( implode( ' & ', $swapped ) );
-		$classic = ! class_exists( 'Lafka_Checkout_Mode' ) || Lafka_Checkout_Mode::is_classic();
+		$classic = self::configured_classic();
 
 		echo '<div class="notice notice-info is-dismissible">';
 		echo '<p><strong>Lafka:</strong> ';

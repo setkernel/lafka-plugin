@@ -38,14 +38,14 @@ final class LafkaPromotionsTest extends TestCase {
 	 */
 	public static function offers(): array {
 		return array(
-			'default half off' => array( '', '50% Off' ),
-			'quarter off'      => array( '0.25', '25% Off' ),
-			'free'             => array( '1', 'Free' ),
+			'default half off' => array( '', '50% Off', 'Buy 1, get 1 50% off' ),
+			'quarter off'      => array( '0.25', '25% Off', 'Buy 1, get 1 25% off' ),
+			'free'             => array( '1', 'Free', 'Buy 1, get 1 free' ),
 		);
 	}
 
 	#[\PHPUnit\Framework\Attributes\DataProvider( 'offers' )]
-	public function test_bogo_label_and_banner_state_the_configured_discount( $discount, string $offer ): void {
+	public function test_bogo_label_and_banner_state_the_configured_discount( $discount, string $offer, string $phrase ): void {
 		Functions\when( 'get_option' )->justReturn( array( 'bogo_discount' => $discount ) );
 		Functions\when( '__' )->returnArg();
 		Functions\when( 'esc_html__' )->returnArg();
@@ -61,8 +61,45 @@ final class LafkaPromotionsTest extends TestCase {
 			)
 		);
 
-		self::assertSame( "BOGO {$offer} applied to 2 unit(s)", $data[0]['value'] );
+		// Plain words, no emoji (O-20).
+		self::assertSame( 'Deal', $data[0]['name'] );
+		self::assertSame( $phrase, $data[0]['value'] );
+		self::assertSame( $phrase, Lafka_Promotions::bogo_offer_phrase() );
 		self::assertSame( $offer, Lafka_Promotions::bogo_offer_label() );
+	}
+
+	public function test_the_delivery_minimum_is_exposed_only_while_promotions_is_on(): void {
+		Functions\when( 'get_option' )->justReturn( array( 'delivery_min' => '45' ) );
+		Lafka_Promotions::flush_knobs();
+		$on = true;
+		Functions\when( 'is_lafka_promotions' )->alias( static function () use ( &$on ) {
+			return $on;
+		} );
+
+		self::assertSame( 45.0, lafka_delivery_minimum() );
+
+		$on = false;
+		self::assertSame( 0.0, lafka_delivery_minimum(), 'Module off: no minimum is enforced, none is shown.' );
+	}
+
+	public function test_the_cart_line_says_how_much_the_deal_saved(): void {
+		Functions\when( '__' )->returnArg();
+		Functions\when( 'esc_html__' )->returnArg();
+		Functions\when( 'esc_html' )->returnArg();
+		Functions\when( 'wp_strip_all_tags' )->alias( static fn( $v ) => strip_tags( (string) $v ) );
+		Functions\when( 'wc_price' )->alias( static fn( $v ) => '<span class="amount"><span>&#36;</span>' . number_format( (float) $v, 2 ) . '</span>' );
+		$promotions = ( new \ReflectionClass( Lafka_Promotions::class ) )->newInstanceWithoutConstructor();
+
+		$data = $promotions->render_bogo_label(
+			array(),
+			array(
+				'_bogo_50'      => true,
+				'_bogo_savings' => 2.0,
+			)
+		);
+
+		self::assertSame( 'Buy 1, get 1 50% off — saved $2.00', $data[0]['value'] );
+		self::assertDoesNotMatchRegularExpression( '/[\x{1F300}-\x{1FAFF}]/u', $data[0]['name'] . $data[0]['value'] );
 	}
 
 	// ─── distribute_discounts (audit case list) ─────────────────────────────

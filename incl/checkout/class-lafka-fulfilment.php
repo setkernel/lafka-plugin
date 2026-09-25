@@ -343,6 +343,13 @@ if ( ! class_exists( 'Lafka_Fulfilment' ) ) {
 
 			$pick       = $default;
 			$preference = self::preselect_enabled() ? self::preference() : '';
+			// The "Delivery" placeholder (price waiting for the address) was the
+			// choice and the real delivery rates just replaced it: the customer
+			// chose delivery, so the first real delivery rate takes over.
+			if ( class_exists( 'Lafka_Delivery_Quote_Guard' ) && Lafka_Delivery_Quote_Guard::is_placeholder( $chosen_method ) && ! array_key_exists( (string) $chosen_method, $rates ) ) {
+				$preference    = 'delivery';
+				$chosen_method = false;
+			}
 			if ( '' !== $preference && ! self::is_customer_choice( $chosen_method, $rates ) ) {
 				$match = self::first_rate_for( $preference, $rates );
 				if ( '' !== $match ) {

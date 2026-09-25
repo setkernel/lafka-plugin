@@ -633,7 +633,10 @@ if ( ! class_exists( 'Lafka_Diagnostics_Page' ) ) {
 				__( 'Child theme', 'lafka-plugin' )             => is_child_theme() ? $theme->get( 'Name' ) . ' ' . $theme->get( 'Version' ) : __( 'None', 'lafka-plugin' ),
 				__( 'WooCommerce', 'lafka-plugin' )             => $wc,
 				__( 'PHP', 'lafka-plugin' )                     => PHP_VERSION,
-				__( 'Checkout experience', 'lafka-plugin' )     => class_exists( 'Lafka_Checkout_Mode' ) ? Lafka_Checkout_Mode::get_mode() : '',
+				__( 'Checkout experience', 'lafka-plugin' )     => class_exists( 'Lafka_Checkout_Mode' )
+					/* translators: 1: configured checkout mode, 2: mode the Checkout page renders */
+					? sprintf( __( '%1$s (setting) · %2$s (checkout page)', 'lafka-plugin' ), Lafka_Checkout_Mode::get_mode(), Lafka_Checkout_Mode::get_effective_mode() )
+					: '',
 				__( 'Lafka minimum log level', 'lafka-plugin' ) => Lafka_Log::min_level(),
 				__( 'WooCommerce logging', 'lafka-plugin' )     => $logging && method_exists( '\Automattic\WooCommerce\Utilities\LoggingUtil', 'logging_is_enabled' ) && ! \Automattic\WooCommerce\Utilities\LoggingUtil::logging_is_enabled() ? __( 'Disabled — Lafka records will not be written', 'lafka-plugin' ) : __( 'Enabled', 'lafka-plugin' ),
 				__( 'WooCommerce log handler', 'lafka-plugin' ) => Lafka_Diagnostics::log_handler(),

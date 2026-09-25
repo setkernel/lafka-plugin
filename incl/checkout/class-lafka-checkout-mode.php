@@ -26,6 +26,16 @@
  * The single pure decision (decide_mode) drives both the activation hook and the
  * on-load migration and is exhaustively unit-tested (CheckoutModeDecisionTest).
  *
+ * CONFIGURED vs EFFECTIVE mode: the option is the operator's INTENT; the
+ * block-cart shim applies it only to unedited default pages, so an edited
+ * Checkout page can render the classic [woocommerce_checkout] shortcode while
+ * the option says 'blocks' (the live store did exactly that). Runtime consumers
+ * must follow what customers actually get, so is_blocks()/is_classic() read the
+ * EFFECTIVE mode: the Checkout page's content (checkout block ⇒ blocks, checkout
+ * shortcode ⇒ classic), falling back to the option only when the page says
+ * neither. get_mode() stays the configured intent (Modules screen, the shim).
+ * A Site Health test warns when the two disagree.
+ *
  * @package Lafka\Plugin\Checkout
  * @since   10.0.0
  */
@@ -63,6 +73,7 @@ if ( ! class_exists( 'Lafka_Checkout_Mode' ) ) {
 		 */
 		public static function init() {
 			add_action( 'admin_init', array( __CLASS__, 'maybe_migrate' ) );
+			add_filter( 'site_status_tests', array( __CLASS__, 'register_health_test' ) );
 		}
 
 		/**
@@ -125,21 +136,162 @@ if ( ! class_exists( 'Lafka_Checkout_Mode' ) ) {
 		}
 
 		/**
-		 * Whether the classic shortcode checkout is active.
+		 * The checkout experience a page's content renders: 'blocks' for the
+		 * WooCommerce Checkout block, 'classic' for the [woocommerce_checkout]
+		 * shortcode, '' when it holds neither. Pure (no WordPress calls).
+		 *
+		 * @param string $content Page content.
+		 * @return string
+		 */
+		public static function mode_for_content( string $content ): string {
+			if ( preg_match( '#<!--\s*wp:woocommerce/checkout(?:\s|/?-->)#', $content ) ) {
+				return self::MODE_BLOCKS;
+			}
+			if ( preg_match( '/\[woocommerce_checkout(?:\s[^\]]*)?\]/', $content ) ) {
+				return self::MODE_CLASSIC;
+			}
+
+			return '';
+		}
+
+		/**
+		 * The mode the WooCommerce Checkout page actually renders ('' when it
+		 * cannot be told from the page). Not cached: get_post() is served from
+		 * the object cache and the few callers run once per request each.
+		 *
+		 * @return string
+		 */
+		public static function page_mode(): string {
+			// What wc_get_page_id( 'checkout' ) reads (same WooCommerce filter).
+			$page_id = (int) apply_filters( 'woocommerce_get_checkout_page_id', get_option( 'woocommerce_checkout_page_id', 0 ) );
+			$mode    = '';
+			if ( $page_id > 0 && function_exists( 'get_post' ) ) {
+				$post = get_post( $page_id );
+				if ( is_object( $post ) && isset( $post->post_content ) ) {
+					$mode = self::mode_for_content( (string) $post->post_content );
+				}
+			}
+
+			/**
+			 * Filter the checkout experience read from the Checkout page.
+			 *
+			 * Return 'blocks' or 'classic' when the checkout is rendered some
+			 * other way (a block theme template, a page builder), or '' to fall
+			 * back to the configured `lafka_checkout_mode` option.
+			 *
+			 * @since 10.3.0
+			 *
+			 * @param string $mode    'blocks', 'classic' or ''.
+			 * @param int    $page_id Checkout page id (0 = none).
+			 */
+			$mode = (string) apply_filters( 'lafka_checkout_page_mode', $mode, $page_id );
+
+			return self::is_valid_mode( $mode ) ? $mode : '';
+		}
+
+		/**
+		 * The checkout experience customers actually get: the force-classic
+		 * filter, else the Checkout page's content, else the configured option.
+		 *
+		 * @return string self::MODE_BLOCKS or self::MODE_CLASSIC.
+		 */
+		public static function get_effective_mode(): string {
+			if ( apply_filters( 'lafka_force_classic_checkout', false ) ) {
+				return self::MODE_CLASSIC;
+			}
+			$page = self::page_mode();
+
+			return '' !== $page ? $page : self::get_mode();
+		}
+
+		/**
+		 * Whether the classic shortcode checkout is what customers get.
 		 *
 		 * @return bool
 		 */
 		public static function is_classic(): bool {
-			return self::MODE_CLASSIC === self::get_mode();
+			return self::MODE_CLASSIC === self::get_effective_mode();
 		}
 
 		/**
-		 * Whether the block Cart/Checkout is active.
+		 * Whether the block Checkout is what customers get.
 		 *
 		 * @return bool
 		 */
 		public static function is_blocks(): bool {
-			return self::MODE_BLOCKS === self::get_mode();
+			return self::MODE_BLOCKS === self::get_effective_mode();
+		}
+
+		/**
+		 * Whether the configured option and the Checkout page disagree.
+		 *
+		 * @return bool
+		 */
+		public static function has_mismatch(): bool {
+			$page = self::page_mode();
+
+			return '' !== $page && $page !== self::get_mode();
+		}
+
+		/**
+		 * site_status_tests: register the configured-vs-page check.
+		 *
+		 * @param mixed $tests Site Health tests.
+		 * @return mixed
+		 */
+		public static function register_health_test( $tests ) {
+			if ( ! is_array( $tests ) ) {
+				return $tests;
+			}
+			$tests['direct']['lafka_checkout_mode'] = array(
+				'label' => __( 'Lafka checkout experience', 'lafka-plugin' ),
+				'test'  => array( __CLASS__, 'health_test' ),
+			);
+
+			return $tests;
+		}
+
+		/**
+		 * Site Health: warn when the Checkout page renders a different checkout
+		 * than the one chosen under Lafka → Modules.
+		 *
+		 * @return array<string, mixed>
+		 */
+		public static function health_test(): array {
+			$labels = array(
+				self::MODE_BLOCKS  => __( 'block checkout', 'lafka-plugin' ),
+				self::MODE_CLASSIC => __( 'classic checkout', 'lafka-plugin' ),
+			);
+			$result = array(
+				'label'       => __( 'The checkout page matches the chosen checkout experience', 'lafka-plugin' ),
+				'status'      => 'good',
+				'badge'       => array(
+					'label' => __( 'Lafka', 'lafka-plugin' ),
+					'color' => 'blue',
+				),
+				'description' => '<p>' . esc_html__( 'Lafka reads the Checkout page to decide which checkout rules apply.', 'lafka-plugin' ) . '</p>',
+				'test'        => 'lafka_checkout_mode',
+			);
+			if ( ! self::has_mismatch() ) {
+				return $result;
+			}
+
+			$configured = self::get_mode();
+			$page       = self::page_mode();
+
+			$result['label']          = __( 'The checkout page does not match the chosen checkout experience', 'lafka-plugin' );
+			$result['status']         = 'recommended';
+			$result['badge']['color'] = 'orange';
+			$result['description']    = '<p>' . esc_html(
+				sprintf(
+					/* translators: 1: configured experience (e.g. "block checkout"), 2: what the page renders (e.g. "classic checkout") */
+					__( 'Lafka → Modules is set to the %1$s, but the Checkout page renders the %2$s (the page was edited, so it was not switched automatically). Lafka follows the page, so the right checkout rules apply; change the setting or the page so both say the same.', 'lafka-plugin' ),
+					$labels[ $configured ] ?? $configured,
+					$labels[ $page ] ?? $page
+				)
+			) . '</p>';
+
+			return $result;
 		}
 
 		/**

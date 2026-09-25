@@ -277,6 +277,27 @@ final class FulfilmentPreferenceTest extends TestCase {
 		self::assertSame( 'flat_rate:1', Lafka_Fulfilment::filter_chosen_method( 'local_pickup:3', self::rates( 'local_pickup:3', 'flat_rate:1' ), 'local_pickup:3' ) );
 	}
 
+	public function test_the_delivery_placeholder_carries_the_preference_until_the_real_rates_arrive(): void {
+		require_once dirname( __DIR__, 2 ) . '/incl/checkout/class-lafka-delivery-quote-guard.php';
+		$this->both_modes();
+		$_COOKIE['lafka_order_method'] = 'delivery';
+
+		// No address yet: pickup + the "Delivery" placeholder. The preference
+		// selects delivery on the cart and checkout (O-07).
+		self::assertSame( 'lafka_delivery_pending', Lafka_Fulfilment::filter_chosen_method( 'local_pickup:3', self::rates( 'local_pickup:3', 'lafka_delivery_pending' ), false ) );
+
+		// The address arrives and the real delivery rates replace the placeholder.
+		self::assertSame( 'distance_rate:8', Lafka_Fulfilment::filter_chosen_method( 'local_pickup:3', self::rates( 'local_pickup:3', 'distance_rate:8' ), 'lafka_delivery_pending' ) );
+	}
+
+	public function test_a_clicked_delivery_placeholder_hands_over_to_delivery_without_any_preference(): void {
+		require_once dirname( __DIR__, 2 ) . '/incl/checkout/class-lafka-delivery-quote-guard.php';
+		$this->both_modes();
+		// No cookie: the customer ticked "Delivery" themselves; WooCommerce's
+		// default would fall back to the first rate (pickup).
+		self::assertSame( 'distance_rate:8', Lafka_Fulfilment::filter_chosen_method( 'local_pickup:3', self::rates( 'local_pickup:3', 'distance_rate:8' ), 'lafka_delivery_pending' ) );
+	}
+
 	public function test_switching_back_to_an_earlier_automatic_rate_is_still_the_customers_choice(): void {
 		$this->both_modes();
 		$_COOKIE['lafka_order_method'] = 'delivery';

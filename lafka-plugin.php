@@ -1100,6 +1100,10 @@ function lafka_plugin_after_plugins_loaded() {
 	if ( LAFKA_PLUGIN_IS_WOOCOMMERCE ) {
 		require_once plugin_dir_path( __FILE__ ) . 'incl/checkout/class-lafka-fulfilment.php';
 		Lafka_Fulfilment::init();
+		// Order-path QA: shipping-choice heading, card CSC autocomplete, phone
+		// digits check, no speculative prefetch of cart/checkout/account.
+		require_once plugin_dir_path( __FILE__ ) . 'incl/checkout/class-lafka-order-path.php';
+		Lafka_Order_Path::init();
 		require_once plugin_dir_path( __FILE__ ) . 'incl/woocommerce/lafka-product-serves.php';
 		lafka_product_serves_init();
 		require_once plugin_dir_path( __FILE__ ) . 'incl/addons/lafka-required-addons.php';

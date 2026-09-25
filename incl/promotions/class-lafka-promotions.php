@@ -95,6 +95,31 @@ if ( ! class_exists( 'Lafka_Promotions' ) ) {
 			return sprintf( __( '%s%% Off', 'lafka-plugin' ), (string) round( $fraction * 100, 1 ) );
 		}
 
+		/**
+		 * The deal in plain words: "Buy 1, get 1 free" / "Buy 1, get 1 50% off"
+		 * (banner and cart line; no emoji, sentence case).
+		 *
+		 * @return string
+		 */
+		public static function bogo_offer_phrase(): string {
+			$fraction = min( 1.0, max( 0.0, (float) self::knob( 'bogo_discount' ) ) );
+			if ( $fraction >= 1.0 ) {
+				return __( 'Buy 1, get 1 free', 'lafka-plugin' );
+			}
+			/* translators: %s: discount percentage, e.g. 50 */
+			return sprintf( __( 'Buy 1, get 1 %s%% off', 'lafka-plugin' ), (string) round( $fraction * 100, 1 ) );
+		}
+
+		/**
+		 * localStorage key that remembers a dismissed banner. ONE source for the
+		 * pre-paint head check and lafka-promotions.js (a new promo key re-arms it).
+		 *
+		 * @return string
+		 */
+		public static function dismiss_key(): string {
+			return 'lafka_bogo_dismissed_' . (string) self::knob( 'promo_key' );
+		}
+
 		/** @var Lafka_Promotions|null */
 		private static $instance = null;
 
@@ -119,6 +144,9 @@ if ( ! class_exists( 'Lafka_Promotions' ) ) {
 
 			// Banner
 			add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_banner_assets' ) );
+			// Hide a dismissed banner before first paint (the banner is rendered
+			// visible, so showing it never shifts the layout — H-05).
+			add_action( 'wp_head', array( $this, 'print_prepaint_dismiss_check' ), 1 );
 			// In the page flow at the top of <body> (pushes the header down, never
 			// covers it or sticky bars). Themes without wp_body_open get the
 			// legacy fixed overlay from wp_footer instead.
@@ -298,8 +326,9 @@ if ( ! class_exists( 'Lafka_Promotions' ) ) {
 			}
 
 			$remaining = (float) self::knob( 'delivery_min' ) - $base;
+			// One text node (theme notice layouts flex their children — O-12).
 			printf(
-				'<div class="woocommerce-info lafka-delivery-min-notice">%s</div>',
+				'<div class="woocommerce-info lafka-delivery-min-notice" role="status"><span class="lafka-delivery-min-notice__text">%s</span></div>',
 				sprintf(
 					/* translators: 1: minimum in store currency, 2: remaining amount */
 					esc_html__( 'Delivery is available on orders over %1$s. Add %2$s more to your cart for delivery.', 'lafka-plugin' ),
@@ -371,15 +400,17 @@ if ( ! class_exists( 'Lafka_Promotions' ) ) {
 			if ( empty( $cart_item['_bogo_50'] ) ) {
 				return $item_data;
 			}
-			$disc_qty    = (int) $cart_item['_bogo_discounted_qty'];
+			$value   = self::bogo_offer_phrase();
+			$savings = isset( $cart_item['_bogo_savings'] ) ? (float) $cart_item['_bogo_savings'] : 0.0;
+			if ( $savings > 0 && function_exists( 'wc_price' ) ) {
+				$saved = html_entity_decode( wp_strip_all_tags( wc_price( $savings ) ), ENT_QUOTES, 'UTF-8' );
+				/* translators: 1: the deal, e.g. "Buy 1, get 1 50% off", 2: amount saved, e.g. "$2.00" */
+				$value = sprintf( __( '%1$s — saved %2$s', 'lafka-plugin' ), $value, $saved );
+			}
+			// Plain words, no emoji (O-20): "Deal: Buy 1, get 1 50% off — saved $2.00".
 			$item_data[] = array(
-				'name'  => esc_html__( '🎉 Promotion', 'lafka-plugin' ),
-				'value' => sprintf(
-					/* translators: 1: the BOGO offer (e.g. "50% Off" or "Free"), 2: number of units the discount applies to */
-					esc_html__( 'BOGO %1$s applied to %2$d unit(s)', 'lafka-plugin' ),
-					esc_html( self::bogo_offer_label() ),
-					$disc_qty
-				),
+				'name'  => esc_html__( 'Deal', 'lafka-plugin' ),
+				'value' => esc_html( $value ),
 			);
 			return $item_data;
 		}
@@ -434,27 +465,72 @@ if ( ! class_exists( 'Lafka_Promotions' ) ) {
 				'LAFKA_PROMO',
 				array(
 					'promoKey'    => self::knob( 'promo_key' ),
+					'dismissKey'  => self::dismiss_key(),
 					'dismissDays' => (int) self::knob( 'dismiss_days' ),
 				)
 			);
 		}
 
 		/**
+		 * The pre-paint check: a tiny inline head script that reads the SAME
+		 * localStorage key as lafka-promotions.js and, when the banner was
+		 * dismissed recently, marks <html> so the (visible-by-default) banner is
+		 * hidden before first paint. Its CSS rule is inline too, because theme
+		 * stylesheets may load asynchronously.
+		 *
+		 * @return string Script body.
+		 */
+		public static function prepaint_script(): string {
+			$days = max( 1, (int) self::knob( 'dismiss_days' ) );
+
+			return '(function(){try{var t=window.localStorage.getItem(' . wp_json_encode( self::dismiss_key() ) . ');'
+				. 'if(t&&Date.now()-parseInt(t,10)<' . $days . '*864e5){document.documentElement.classList.add("lafka-bogo-dismissed");}}catch(e){}})();';
+		}
+
+		/**
+		 * wp_head: print the pre-paint dismissal check (H-05).
+		 *
+		 * @return void
+		 */
+		public function print_prepaint_dismiss_check(): void {
+			echo '<style id="lafka-bogo-prepaint">.lafka-bogo-dismissed #lafka-bogo-banner{display:none}</style>' . "\n";
+			if ( function_exists( 'wp_print_inline_script_tag' ) ) {
+				wp_print_inline_script_tag( self::prepaint_script(), array( 'id' => 'lafka-bogo-prepaint-js' ) );
+				return;
+			}
+			echo '<script id="lafka-bogo-prepaint-js">' . self::prepaint_script() . "</script>\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static script; the only variable part is wp_json_encode()d.
+		}
+
+		/**
 		 * Print the dismissible BOGO banner.
+		 *
+		 * The in-flow variant renders VISIBLE (no `hidden`, no JS reveal), so it
+		 * never shifts the page after load; a recent dismissal hides it before
+		 * paint (print_prepaint_dismiss_check). The legacy fixed overlay covers
+		 * the page instead of pushing it, so it keeps its JS slide-in.
 		 *
 		 * @param string $placement `inline` (in the page flow) or `fixed` (legacy overlay).
 		 */
 		public function render_banner( string $placement = 'fixed' ) {
 			$placement = 'inline' === $placement ? 'inline' : 'fixed';
+
+			/**
+			 * Filter where the banner's offer text links to ('' = no link).
+			 *
+			 * @since 10.3.0
+			 * @param string $url Default: the menu page.
+			 */
+			$link = (string) apply_filters( 'lafka_bogo_banner_link', function_exists( 'lafka_get_menu_url' ) ? lafka_get_menu_url() : '' );
 			?>
-			<div id="lafka-bogo-banner" class="lafka-bogo-banner--<?php echo esc_attr( $placement ); ?>" role="region" aria-label="<?php esc_attr_e( 'Promotion', 'lafka-plugin' ); ?>" hidden>
+			<div id="lafka-bogo-banner" class="lafka-bogo-banner--<?php echo esc_attr( $placement ); ?>" role="region" aria-label="<?php esc_attr_e( 'Promotion', 'lafka-plugin' ); ?>"<?php echo 'fixed' === $placement ? ' hidden' : ''; ?>>
 				<div class="lafka-bogo-inner">
-					<?php
-					/* translators: %s: the BOGO offer (e.g. "50% Off" or "Free") */
-					echo '🔥 ' . esc_html( sprintf( __( 'Buy 1, Get 1 %s', 'lafka-plugin' ), self::bogo_offer_label() ) );
-					?>
+					<?php if ( '' !== $link ) : ?>
+						<a class="lafka-bogo-link" href="<?php echo esc_url( $link ); ?>"><?php echo esc_html( self::bogo_offer_phrase() ); ?></a>
+					<?php else : ?>
+						<?php echo esc_html( self::bogo_offer_phrase() ); ?>
+					<?php endif; ?>
 				</div>
-				<button class="lafka-bogo-close" aria-label="<?php esc_attr_e( 'Close banner', 'lafka-plugin' ); ?>">&times;</button>
+				<button type="button" class="lafka-bogo-close" aria-label="<?php esc_attr_e( 'Close banner', 'lafka-plugin' ); ?>"><span aria-hidden="true">&times;</span></button>
 			</div>
 			<?php
 		}
@@ -468,5 +544,25 @@ if ( ! class_exists( 'Lafka_Promotions' ) ) {
 	if ( function_exists( 'add_action' )
 		&& ( ! function_exists( 'is_lafka_promotions' ) || is_lafka_promotions() ) ) {
 		Lafka_Promotions::instance();
+	}
+}
+
+if ( ! function_exists( 'lafka_delivery_minimum' ) ) {
+	/**
+	 * The order subtotal below which delivery is not offered (0 = none), for
+	 * display (the drawer's Delivery note). 0 while the Promotions module is off.
+	 *
+	 * @return float
+	 */
+	function lafka_delivery_minimum(): float {
+		$minimum = ( ! function_exists( 'is_lafka_promotions' ) || is_lafka_promotions() ) ? max( 0.0, (float) Lafka_Promotions::knob( 'delivery_min' ) ) : 0.0;
+
+		/**
+		 * Filter the delivery minimum shown to customers.
+		 *
+		 * @since 10.3.0
+		 * @param float $minimum Order subtotal needed for delivery (0 = none).
+		 */
+		return (float) apply_filters( 'lafka_delivery_minimum', $minimum );
 	}
 }

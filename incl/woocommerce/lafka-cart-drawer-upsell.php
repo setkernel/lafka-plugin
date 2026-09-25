@@ -25,37 +25,55 @@ if ( ! function_exists( 'lafka_cart_drawer_get_upsell_ids' ) ) {
 	 * @return int[]
 	 */
 	function lafka_cart_drawer_get_upsell_ids(): array {
-		$in_cart = array();
+		$in_cart   = array();
+		$cart_cats = array();
 		if ( function_exists( 'WC' ) && WC()->cart ) {
 			foreach ( WC()->cart->get_cart() as $ci ) {
 				$in_cart[] = (int) ( $ci['product_id'] ?? 0 );
+				$product   = $ci['data'] ?? null;
+				if ( is_object( $product ) && method_exists( $product, 'get_category_ids' ) ) {
+					$cart_cats = array_merge( $cart_cats, array_map( 'intval', (array) $product->get_category_ids() ) );
+				}
 			}
 		}
-		$out      = array();
-		$is_addable = static function ( $id ) {
-			$p = wc_get_product( $id );
+		$deal_cats = lafka_cart_drawer_upsell_deal_category_ids();
+		$pool      = array(); // id => whether its category is new to the cart.
+		$is_addable = static function ( $p ) use ( $deal_cats ) {
 			// One-tap add needs a SIMPLE, purchasable, in-stock product (drinks /
-			// sides / garlic fingers) — variable products need the PDP.
-			return $p && $p->is_visible() && $p->is_purchasable() && $p->is_in_stock() && ! $p->is_type( 'variable' );
+			// sides / garlic fingers) — variable products need the PDP. Deals and
+			// combos are not "a little extra" (O-23).
+			if ( ! $p || ! $p->is_visible() || ! $p->is_purchasable() || ! $p->is_in_stock() || $p->is_type( 'variable' ) ) {
+				return false;
+			}
+			foreach ( array( 'bundle', 'grouped', 'composite', 'woosb' ) as $type ) {
+				if ( $p->is_type( $type ) ) {
+					return false;
+				}
+			}
+			$cats = method_exists( $p, 'get_category_ids' ) ? array_map( 'intval', (array) $p->get_category_ids() ) : array();
+
+			return array() === array_intersect( $cats, $deal_cats );
 		};
-		$consider = static function ( $id ) use ( &$out, $in_cart, $is_addable ) {
+		$consider = static function ( $id ) use ( &$pool, $in_cart, $cart_cats, $is_addable ) {
 			$id = (int) $id;
-			if ( $id && ! in_array( $id, $in_cart, true ) && ! in_array( $id, $out, true ) && $is_addable( $id ) ) {
-				$out[] = $id;
+			if ( ! $id || in_array( $id, $in_cart, true ) || isset( $pool[ $id ] ) || count( $pool ) >= 8 ) {
+				return;
+			}
+			$p = wc_get_product( $id );
+			if ( $is_addable( $p ) ) {
+				$cats        = method_exists( $p, 'get_category_ids' ) ? array_map( 'intval', (array) $p->get_category_ids() ) : array();
+				$pool[ $id ] = array() === array_intersect( $cats, $cart_cats );
 			}
 		};
 
 		// 1. Bestseller-driven fallbacks first (highest intent).
 		if ( function_exists( 'lafka_pdp_get_upsell_fallback_ids' ) ) {
 			foreach ( (array) lafka_pdp_get_upsell_fallback_ids() as $id ) {
-				if ( count( $out ) >= 3 ) {
-					break;
-				}
 				$consider( $id );
 			}
 		}
 		// 2. Fill from popular SIMPLE products (most top sellers are variable).
-		if ( count( $out ) < 3 ) {
+		if ( count( $pool ) < 8 ) {
 			$more = wc_get_products(
 				array(
 					'limit'        => 12,
@@ -63,18 +81,80 @@ if ( ! function_exists( 'lafka_cart_drawer_get_upsell_ids' ) ) {
 					'type'         => 'simple',
 					'stock_status' => 'instock',
 					'return'       => 'ids',
-					'exclude'      => array_merge( $in_cart, $out ),
+					'exclude'      => array_merge( $in_cart, array_keys( $pool ) ),
 					'orderby'      => 'popularity',
 				)
 			);
 			foreach ( (array) $more as $id ) {
-				if ( count( $out ) >= 3 ) {
-					break;
-				}
 				$consider( $id );
 			}
 		}
-		return array_slice( $out, 0, 3 );
+
+		// Rotation: the row changes as the order changes instead of always
+		// showing the same three (stable for one cart, so a refresh never
+		// reshuffles what the customer is looking at).
+		$sorted = $in_cart;
+		sort( $sorted );
+		$seed   = (int) crc32( implode( ',', $sorted ) );
+		$rotate = static function ( array $ids ) use ( $seed ): array {
+			$ids = array_slice( $ids, 0, 6 );
+			if ( count( $ids ) < 2 ) {
+				return $ids;
+			}
+			$offset = $seed % count( $ids );
+
+			return array_merge( array_slice( $ids, $offset ), array_slice( $ids, 0, $offset ) );
+		};
+
+		// Relevance: something from a category the order does not have yet
+		// (a drink or a dip next to a pizza) before more of the same.
+		$fresh  = $rotate( array_keys( array_filter( $pool ) ) );
+		$same   = $rotate( array_keys( array_diff_key( $pool, array_filter( $pool ) ) ) );
+		$window = array_merge( $fresh, $same );
+
+		/**
+		 * Filter the drawer upsell product ids (max 3 are shown).
+		 *
+		 * @since 10.3.0
+		 * @param int[] $ids     Suggested product ids.
+		 * @param int[] $in_cart Product ids in the cart.
+		 */
+		return array_slice( array_values( array_map( 'intval', (array) apply_filters( 'lafka_cart_drawer_upsell_ids', array_slice( $window, 0, 3 ), $in_cart ) ) ), 0, 3 );
+	}
+}
+
+if ( ! function_exists( 'lafka_cart_drawer_upsell_deal_category_ids' ) ) {
+	/**
+	 * Product categories that hold deals / combos, never suggested as "a
+	 * little extra": the counter theme's deals category (theme_mod
+	 * `lafka_counter_deals_cat`) and categories named deals, combos or
+	 * specials (the theme's own automatic rule). Filter
+	 * `lafka_cart_drawer_upsell_excluded_categories`.
+	 *
+	 * @return int[]
+	 */
+	function lafka_cart_drawer_upsell_deal_category_ids(): array {
+		$ids = array();
+		$mod = function_exists( 'get_theme_mod' ) ? (int) get_theme_mod( 'lafka_counter_deals_cat', 0 ) : 0;
+		if ( $mod > 0 ) {
+			$ids[] = $mod;
+		}
+		if ( function_exists( 'get_term_by' ) ) {
+			foreach ( array( 'deals', 'combos', 'combo', 'specials' ) as $slug ) {
+				$term = get_term_by( 'slug', $slug, 'product_cat' );
+				if ( is_object( $term ) && ! empty( $term->term_id ) ) {
+					$ids[] = (int) $term->term_id;
+				}
+			}
+		}
+
+		/**
+		 * Filter the categories the drawer upsell never suggests from.
+		 *
+		 * @since 10.3.0
+		 * @param int[] $ids product_cat term ids.
+		 */
+		return array_values( array_unique( array_map( 'intval', (array) apply_filters( 'lafka_cart_drawer_upsell_excluded_categories', $ids ) ) ) );
 	}
 }
 
