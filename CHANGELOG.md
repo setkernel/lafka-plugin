@@ -12,6 +12,36 @@ All new checkout behaviour works on the classic and the block (Store API)
 checkout; settings live in Customizer → **Lafka — Checkout** unless noted.
 
 ### Added
+- **The counter (GX4, plugin part)** — behaviour the theme's counter layouts
+  read; inert until a theme calls it or opts in:
+  - **Serves N**: Product data → General → "Serves (people)" (`_lafka_serves`,
+    0–50, 0 = not set). `lafka_get_product_serves()` + filter
+    `lafka_product_serves` (a variation reads its parent); REST field
+    `lafka_serves`; Store API `extensions.lafka.serves` on products. Never
+    inferred.
+  - `lafka_product_has_required_addons( $product_id )` (filter of the same
+    name; Store API `extensions.lafka.has_required_addons`): a product with a
+    required add-on group goes to its page instead of a listing quick add.
+  - **Pickup or delivery, once**: `lafka_fulfilment_modes()`,
+    `lafka_fulfilment_preference()` (branch-session order type, else cookie
+    `lafka_order_method`). WooCommerce's default shipping rate follows the
+    preference on the classic and block checkout; a rate the customer picked
+    is never overridden, and with delivery preferred pickup is only the
+    stop-gap until delivery rates exist. Filters `lafka_fulfilment_modes`,
+    `lafka_fulfilment_preference`, `lafka_fulfilment_preselect_enabled`.
+  - **Drawer quantity stepper** for themes that declare
+    `add_theme_support( 'lafka-drawer-stepper' )` (or filter
+    `lafka_cart_drawer_stepper_enabled`): options line, labelled − / + and a
+    worded Remove per row; `wc-ajax=lafka_cart_set_qty` (nonce
+    `lafka-cart-qty`, WooCommerce quantity rules) answers with refreshed
+    fragments; page-cache safe. Filter `lafka_cart_drawer_item_details`.
+  - **Category tagline**: Products → Categories → "Tagline (optional)" (term
+    meta `lafka_tagline`, ≤ 140 chars, REST); `lafka_get_category_tagline()`,
+    filter `lafka_category_tagline_meta`.
+  - Drawer extras wording: `lafka_cart_drawer_upsell_heading`,
+    `lafka_cart_drawer_upsell_row_note`, `lafka_cart_drawer_upsell_add_label`.
+  - `wp lafka seed-demo`: a Deals category first in category order (three
+    combos: one serves 2, one featured).
 - **Diagnostics (GX1)**: `Lafka_Log` / `lafka_log()` logging facade on
   WooCommerce's logger — one WC log source per channel (`lafka-{channel}`),
   personal data scrubbed, a request id on Lafka REST / Store API / checkout

@@ -34,4 +34,29 @@ final class Hooks {
 		}
 		return $out;
 	}
+
+	/**
+	 * Run a filter through the callbacks recorded for it, in priority order
+	 * (registration order within a priority) — what apply_filters() would do
+	 * with only those registrations. Alias apply_filters to this to exercise a
+	 * module's real wiring.
+	 *
+	 * @param string $tag   Hook name.
+	 * @param mixed  $value Value to filter.
+	 * @param mixed  ...$args Extra arguments.
+	 * @return mixed
+	 */
+	public static function apply( string $tag, $value, ...$args ) {
+		$matching = array();
+		foreach ( $GLOBALS['lafka_test_hooks'] ?? array() as $index => $registration ) {
+			if ( $registration[0] === $tag ) {
+				$matching[] = array( (int) $registration[2], $index, $registration[1], (int) $registration[3] );
+			}
+		}
+		usort( $matching, static fn( $a, $b ) => array( $a[0], $a[1] ) <=> array( $b[0], $b[1] ) );
+		foreach ( $matching as $entry ) {
+			$value = call_user_func_array( $entry[2], array_slice( array_merge( array( $value ), $args ), 0, max( 1, $entry[3] ) ) );
+		}
+		return $value;
+	}
 }

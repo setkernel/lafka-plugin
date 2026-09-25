@@ -12,7 +12,9 @@
  * store. It is the kernel the NX3 demo packs grow from.
  *
  * The seeded store:
- *   - 12 WC simple/variable products across 4 neutral categories,
+ *   - 15 WC simple/variable products across 5 neutral categories in a set
+ *     WooCommerce category order (Deals first: three simple combos, one
+ *     "serves 2", one featured — data for the counter layout's deals section),
  *   - tiny placeholder images generated at seed time via GD (no bundled binaries,
  *     no remote fetches),
  *   - 2 addon groups exercising the flat-per-option + flat-group pricing
@@ -170,6 +172,34 @@ if ( ! class_exists( 'Lafka_CLI_Seed_Demo' ) ) {
 		 */
 		public static function save_manifest( array $manifest ): void {
 			update_option( self::MANIFEST_OPTION, $manifest );
+		}
+
+		/**
+		 * Category slugs in their WooCommerce category order (fixture `order`,
+		 * then fixture position).
+		 *
+		 * @param array<int,array<string,mixed>> $categories Fixture categories.
+		 * @return array<int,string>
+		 */
+		public static function categories_in_menu_order( array $categories ): array {
+			$rows = array();
+			foreach ( array_values( $categories ) as $index => $cat ) {
+				$rows[] = array( (int) ( $cat['order'] ?? $index ), $index, (string) $cat['slug'] );
+			}
+			sort( $rows );
+			return array_column( $rows, 2 );
+		}
+
+		/**
+		 * Lafka product meta a fixture product carries: key => value to write,
+		 * or null to delete (so a re-seed clears a value the fixture dropped).
+		 *
+		 * @param array<string,mixed> $product_data Fixture product.
+		 * @return array<string,int|null>
+		 */
+		public static function product_meta( array $product_data ): array {
+			$serves = (int) ( $product_data['serves'] ?? 0 );
+			return array( '_lafka_serves' => $serves > 0 ? $serves : null );
 		}
 
 		/**
@@ -348,6 +378,10 @@ if ( ! class_exists( 'Lafka_CLI_Seed_Demo' ) ) {
 					}
 					$term_id = (int) $res['term_id'];
 				}
+				if ( isset( $cat['order'] ) ) {
+					// WooCommerce's category order (Products → Categories drag-sort).
+					update_term_meta( $term_id, 'order', (int) $cat['order'] );
+				}
 				$manifest = self::record( $manifest, 'categories', $cat['slug'], $term_id );
 			}
 			WP_CLI::log( sprintf( 'Seeded %d product categories.', count( $fixtures['categories'] ) ) );
@@ -381,6 +415,14 @@ if ( ! class_exists( 'Lafka_CLI_Seed_Demo' ) ) {
 				$product->set_catalog_visibility( 'visible' );
 				$product->set_description( $product_data['description'] );
 				$product->set_short_description( $product_data['short_description'] );
+				$product->set_featured( ! empty( $product_data['featured'] ) );
+				foreach ( self::product_meta( $product_data ) as $meta_key => $meta_value ) {
+					if ( null === $meta_value ) {
+						$product->delete_meta_data( $meta_key );
+					} else {
+						$product->update_meta_data( $meta_key, $meta_value );
+					}
+				}
 
 				$cat_id = self::recorded_id( $manifest, 'categories', $product_data['category'] );
 				if ( $cat_id > 0 ) {

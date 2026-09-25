@@ -1077,6 +1077,33 @@ function lafka_plugin_after_plugins_loaded() {
 	 * images missing alt on /menu/.
 	 */
 	require_once plugin_dir_path( __FILE__ ) . 'incl/woocommerce/lafka-product-image-alt.php';
+
+	/*
+	 * GX4 "The counter": behaviour the counter layouts (theme) read. Theme-
+	 * agnostic; every piece is inert until a theme calls it or opts in.
+	 *   · "Serves N" product field + `lafka_product_serves` + REST field.
+	 *   · lafka_product_has_required_addons() — listing quick-add probe.
+	 *   · Store API `extensions.lafka` on products (serves, required add-ons).
+	 *   · Lafka_Fulfilment — one pickup/delivery preference (cookie
+	 *     lafka_order_method) preselects the matching shipping rate on the
+	 *     classic and block checkout; never over the customer's own choice.
+	 */
+	if ( LAFKA_PLUGIN_IS_WOOCOMMERCE ) {
+		require_once plugin_dir_path( __FILE__ ) . 'incl/checkout/class-lafka-fulfilment.php';
+		Lafka_Fulfilment::init();
+		require_once plugin_dir_path( __FILE__ ) . 'incl/woocommerce/lafka-product-serves.php';
+		lafka_product_serves_init();
+		require_once plugin_dir_path( __FILE__ ) . 'incl/addons/lafka-required-addons.php';
+		require_once plugin_dir_path( __FILE__ ) . 'incl/store-api/lafka-store-api-product.php';
+		add_action( 'woocommerce_init', 'lafka_store_api_product_register' );
+		// Drawer quantity stepper: wc-ajax=lafka_cart_set_qty + client, live only
+		// for a theme that declares add_theme_support( 'lafka-drawer-stepper' ).
+		require_once plugin_dir_path( __FILE__ ) . 'incl/woocommerce/lafka-cart-drawer-qty.php';
+		lafka_cart_drawer_qty_init();
+		// Category tagline: term meta lafka_tagline + Products → Categories field.
+		require_once plugin_dir_path( __FILE__ ) . 'incl/woocommerce/lafka-category-tagline.php';
+		lafka_category_tagline_init();
+	}
 }
 
 // C-10: hook on `plugins_loaded` (priority 10) so the text domain is available

@@ -250,6 +250,7 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 				'_lafka_meta_description',
 				'_lafka_seo_title',
 				'_lafka_seo_noindex',
+				'_lafka_serves', // GX4 "serves N" product field.
 			);
 		}
 
