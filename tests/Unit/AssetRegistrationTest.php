@@ -156,6 +156,26 @@ final class AssetRegistrationTest extends TestCase {
 		$this->assertStringContainsString( 'key=key%20with%26chars&', $this->scripts['lafka-google-maps']['src'] );
 	}
 
+	/**
+	 * The Maps loader is deferred through the WP strategy API (no script-tag
+	 * string rewriting), in the footer, front end and admin alike.
+	 */
+	public function test_google_maps_loader_uses_the_defer_strategy(): void {
+		$this->maps_key = 'abc';
+		Functions\when( 'get_current_screen' )->justReturn( null );
+		$expected = array(
+			'in_footer' => true,
+			'strategy'  => 'defer',
+		);
+
+		lafka_register_plugin_scripts();
+		$this->assertSame( $expected, $this->scripts['lafka-google-maps']['args'] );
+
+		$this->scripts = array();
+		lafka_register_admin_plugin_scripts();
+		$this->assertSame( $expected, $this->scripts['lafka-google-maps']['args'] );
+	}
+
 	public function test_admin_google_maps_is_registered_only_with_a_key(): void {
 		Functions\when( 'get_current_screen' )->justReturn( null );
 

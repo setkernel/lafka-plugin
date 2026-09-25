@@ -7,7 +7,7 @@
 }
 
 .lafka-geocode-debug-info {
-    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 button.button.lafka-disabled {

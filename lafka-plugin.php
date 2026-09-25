@@ -9,7 +9,8 @@
 	Requires at least: 6.6
 	Requires PHP: 8.1
 	WC requires at least: 9.5
-	WC tested up to: 10.9
+	WC tested up to: 11.1
+	Requires Plugins: woocommerce
 	License: GPL v2 or later
 	License URI: https://www.gnu.org/licenses/gpl-2.0.html
  */
@@ -1763,26 +1764,6 @@ if ( ! function_exists( 'lafka_after_setup_theme' ) ) {
 			remove_action( 'woocommerce_archive_description', 'woocommerce_taxonomy_archive_description', 10 );
 			add_action( 'woocommerce_after_main_content', 'woocommerce_taxonomy_archive_description', 1 );
 		}
-	}
-}
-
-add_filter( 'script_loader_tag', 'lafka_defer_script_loader_tags', 10, 3 );
-if ( ! function_exists( 'lafka_defer_script_loader_tags' ) ) {
-	/**
-	 * Add async to script tags with defined handles.
-	 *
-	 * @param string $tag HTML for the script tag.
-	 * @param string $handle Handle of script.
-	 * @param string $src Src of script.
-	 *
-	 * @return string
-	 */
-	function lafka_defer_script_loader_tags( $tag, $handle, $src ) {
-		if ( ! in_array( $handle, array( 'lafka-google-maps' ), true ) ) {
-			return $tag;
-		}
-
-		return str_replace( ' src', ' defer src', $tag );
 	}
 }
 

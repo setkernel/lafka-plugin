@@ -1447,7 +1447,8 @@ if ( ! function_exists( 'lafka_contact_form_shortcode' ) ) {
                 });
             });';
 
-			wp_add_inline_script( 'flexslider', $inline_js );
+			// Rides jquery-form (enqueued above), the library it calls.
+			wp_add_inline_script( 'jquery-form', $inline_js );
 			?>
 			<?php require plugin_dir_path( __FILE__ ) . 'partials/contact-form.php'; ?>
 		</div>

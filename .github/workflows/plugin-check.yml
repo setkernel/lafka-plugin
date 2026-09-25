@@ -1,0 +1,121 @@
+name: Plugin Check
+
+# The official WordPress.org Plugin Check (https://wordpress.org/plugins/plugin-check/)
+# run against exactly what release.yml would zip, on the pinned WordPress +
+# WooCommerce stack. wp.org's automated release review recommends it.
+#
+# POLICY: first-party GitHub actions ONLY (actions/checkout, actions/setup-node,
+# actions/upload-artifact) — the same rule as ci.yml. The community
+# WordPress/plugin-check-action is therefore NOT used; Plugin Check itself is
+# installed from downloads.wordpress.org into a wp-env stack started with
+# `npx @wordpress/env` (npm), and run through its WP-CLI command.
+#
+# NON-BLOCKING for now: `continue-on-error`, and not part of ci.yml's
+# `ci-passed` gate, until the existing findings are triaged. Promote by dropping
+# `continue-on-error` and adding the job to the required checks.
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main, master]
+    paths-ignore:
+      - 'languages/**'
+      - 'tests/**'
+      - '**.md'
+  push:
+    branches: [main, master]
+    paths-ignore:
+      - 'languages/**'
+      - 'tests/**'
+      - '**.md'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: plugin-check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  plugin-check:
+    name: Plugin Check (wp.org)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          path: src
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: src/package-lock.json
+
+      # Same build release.yml runs before zipping (fresh .min.js files).
+      - name: Build assets
+        working-directory: src
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+
+      # Stage the distributable with release.yml's OWN rsync --exclude list
+      # (parsed at run time, as ReleasePackagingTest does), so Plugin Check
+      # sees exactly the shipped files and the two lists can never drift.
+      - name: Stage the release tree
+        run: |
+          mapfile -t EXCLUDES < <(grep -oE -- "--exclude='[^']*'" src/.github/workflows/release.yml | sed -E "s/^--exclude='(.*)'$/--exclude=\1/")
+          if [ "${#EXCLUDES[@]}" -eq 0 ]; then echo "::error::No --exclude entries found in release.yml"; exit 1; fi
+          mkdir lafka-plugin
+          rsync -a "${EXCLUDES[@]}" src/ lafka-plugin/
+
+      # CI-only wp-env config, generated so nothing CI-only is committed.
+      # WooCommerce is required (the plugin declares `Requires Plugins: woocommerce`).
+      - name: Write wp-env config
+        run: |
+          cat > .wp-env.json <<'JSON'
+          {
+            "core": "WordPress/WordPress#7.1.2",
+            "phpVersion": "8.3",
+            "plugins": [
+              "https://downloads.wordpress.org/plugin/woocommerce.11.1.2.zip",
+              "https://downloads.wordpress.org/plugin/plugin-check.latest-stable.zip",
+              "./lafka-plugin"
+            ],
+            "config": {
+              "WP_DEBUG": true,
+              "WP_ENVIRONMENT_TYPE": "development"
+            }
+          }
+          JSON
+
+      - name: Start wp-env
+        run: npx -y @wordpress/env start
+
+      # --require loads Plugin Check early so its runtime checks run too.
+      # Errors fail this (non-blocking) job; warnings are reported only.
+      - name: Run Plugin Check
+        run: |
+          npx -y @wordpress/env run cli wp plugin activate woocommerce plugin-check lafka-plugin
+          npx -y @wordpress/env run cli wp plugin check lafka-plugin \
+            --require=./wp-content/plugins/plugin-check/cli.php \
+            --format=csv | tee plugin-check.csv
+          if grep -q ',ERROR,' plugin-check.csv; then
+            echo "::error::Plugin Check reported errors (see plugin-check.csv)."
+            exit 1
+          fi
+
+      - name: Upload report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: plugin-check-report
+          path: plugin-check.csv
+          retention-days: 14
+          if-no-files-found: ignore
+
+      - name: Stop wp-env
+        if: ${{ always() }}
+        run: npx -y @wordpress/env stop || true

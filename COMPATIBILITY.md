@@ -11,12 +11,12 @@ Supported versions of the Lafka plugin's dependencies, and how each is checked.
 | Component   | Minimum | Recommended | Latest tested |
 |-------------|---------|-------------|---------------|
 | **PHP**     | 8.1     | 8.4         | 8.4           |
-| **WordPress** | 6.6   | 7.0         | 7.0           |
-| **WooCommerce** | 9.5 | 10.9        | 10.9.1        |
+| **WordPress** | 6.6   | 7.1         | 7.1.2         |
+| **WooCommerce** | 9.5 | 11.1        | 11.1.2        |
 | **Node.js** (build only) | 20 | 24 | 24         |
 | **Apache** (recommended for security headers) | 2.4 | 2.4.66+ | 2.4.66 |
 
-`.wp-env.json` pins the local integration stack at WP 7.0 / WC 10.9.1 /
+`.wp-env.json` pins the local integration stack at WP 7.1.2 / WC 11.1.2 /
 PHP 8.4; CI's PHP job runs PHPUnit + PHPCS on the runner's single
 pre-installed PHP (currently 8.3, matching prod), not on wp-env. End-to-end
 coverage is the theme repo's Playwright smoke suite (`e2e.yml` in
@@ -65,6 +65,11 @@ PHP, plus `npm run check-version`. JS is linted (ESLint), CSS linted
 (Stylelint), front-end JS behaviour-tested (`npm test`, node:test) and the
 committed `.min.js` builds are checked against their sources (`npm run build`)
 on Node 24.
+
+The official WordPress.org **Plugin Check** runs in `.github/workflows/plugin-check.yml`
+(non-blocking for now, outside `ci-passed`) against exactly the tree release.yml
+zips, on a wp-env stack (WP 7.1.2 + WC 11.1.2) started from npm — no community
+actions; errors fail that job, the CSV report is uploaded as an artifact.
 
 The security sniff families — `WordPress.Security.EscapeOutput.*`,
 `WordPress.Security.NonceVerification.*`, `WordPress.DB.PreparedSQL.*` —
@@ -127,9 +132,6 @@ maps loader without a key. Closed in plugin v8.7.4 + theme v5.8.3.
 
 ## Known incompatibilities
 
-- **stylelint ^17** — incompatible with `@wordpress/stylelint-config@23.x`
-  (peer dep requires ^16.8.2). Pinned to ^16.26.1 in all 3 repos. Revisit
-  when @wordpress/stylelint-config@24+ ships.
 - **WP < 6.6** — uses `wp_body_open()` (since 5.2) but several other APIs
   the codebase depends on (CPT REST, modern HPOS hooks) are 6.6+.
 - **WC < 9.5** — addons rely on hook signatures changed in 9.5. Checkout
