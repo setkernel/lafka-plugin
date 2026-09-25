@@ -753,6 +753,9 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/cli/class-lafka-cli-seed-demo.p
  * Self-gates via is_admin() inside the module; safe to load unconditionally.
  */
 require_once plugin_dir_path( __FILE__ ) . 'incl/perf/lafka-asset-pruning.php';
+// GX T-25: Contact Form 7 assets only where a form renders; payment-gateway
+// assets only on cart / checkout / account / order-pay (filterable).
+require_once plugin_dir_path( __FILE__ ) . 'incl/perf/lafka-conditional-assets.php';
 
 // Perf modules (CLS image-dim + LCP preload) — migrated from lafka-child
 // v5.10.6 in lafka-plugin v9.7.25.
