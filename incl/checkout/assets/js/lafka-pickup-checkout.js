@@ -113,7 +113,9 @@
 
 	function syncToggle( show, list, cfg ) {
 		var existing = doc.querySelector( '.' + TOGGLE_CLASS );
-		if ( ! show ) {
+		// No "Want delivery?" when this order cannot be delivered (e.g. under the
+		// delivery minimum): the address would never bring a delivery rate.
+		if ( ! show || false === cfg.addressToggle ) {
 			if ( existing ) {
 				existing.parentNode.removeChild( existing );
 			}
