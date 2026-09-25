@@ -54,6 +54,7 @@ if ( ! class_exists( 'Lafka_Customizer_Analytics' ) ) {
 			self::register_tag_manager_section( $wp_customize );
 			self::register_direct_ids_section( $wp_customize );
 			self::register_consent_section( $wp_customize );
+			self::register_insights_section( $wp_customize );
 		}
 
 		// ====================================================================
@@ -200,6 +201,17 @@ if ( ! class_exists( 'Lafka_Customizer_Analytics' ) ) {
 		public static function sanitize_consent_state( $value ): string {
 			$value = is_scalar( $value ) ? strtolower( trim( (string) $value ) ) : '';
 			return 'granted' === $value ? 'granted' : 'denied';
+		}
+
+		/**
+		 * Sanitize the Lafka Insights consent mode.
+		 *
+		 * @param mixed $value
+		 * @return string 'aggregate' | 'consent_required' | 'off' (unknown → 'aggregate').
+		 */
+		public static function sanitize_insights_consent_mode( $value ): string {
+			$value = is_scalar( $value ) ? strtolower( trim( (string) $value ) ) : '';
+			return in_array( $value, array( 'aggregate', 'consent_required', 'off' ), true ) ? $value : 'aggregate';
 		}
 
 		/**
@@ -494,6 +506,63 @@ if ( ! class_exists( 'Lafka_Customizer_Analytics' ) ) {
 					)
 				);
 			}
+		}
+
+		// ====================================================================
+		// Section: Lafka Insights (first-party funnel analytics)
+		// ====================================================================
+
+		private static function register_insights_section( $wp_customize ): void {
+			$wp_customize->add_section(
+				'lafka_analytics_insights',
+				array(
+					'title'       => esc_html__( 'Insights (first-party)', 'lafka-plugin' ),
+					'description' => esc_html__( 'Lafka Insights measures your ordering funnel on your own site — no Google account, no third party. Turn the module on under Lafka → Modules; read the results under Lafka → Insights. These settings only apply while the module is on.', 'lafka-plugin' ),
+					'panel'       => 'lafka_analytics',
+					'priority'    => 40,
+				)
+			);
+
+			$wp_customize->add_setting(
+				'lafka_insights_consent_mode',
+				array(
+					'default'           => 'aggregate',
+					'transport'         => 'refresh',
+					'sanitize_callback' => array( __CLASS__, 'sanitize_insights_consent_mode' ),
+				)
+			);
+			$wp_customize->add_control(
+				'lafka_insights_consent_mode',
+				array(
+					'label'       => esc_html__( 'Consent mode', 'lafka-plugin' ),
+					'description' => esc_html__( 'Aggregate (default): cookieless and anonymous — visits are told apart with a daily-rotating, never-stored hash; browsers sending Global Privacy Control or Do Not Track are skipped; no cookie banner is needed for it. Consent required: nothing is measured until the visitor allows analytics in the consent banner (keep the banner on), and WooCommerce order attribution waits for consent too. Off: nothing is collected; existing reports stay readable.', 'lafka-plugin' ),
+					'section'     => 'lafka_analytics_insights',
+					'type'        => 'select',
+					'choices'     => array(
+						'aggregate'        => esc_html__( 'Aggregate — cookieless, no consent needed', 'lafka-plugin' ),
+						'consent_required' => esc_html__( 'Consent required — wait for the banner', 'lafka-plugin' ),
+						'off'              => esc_html__( 'Off — collect nothing', 'lafka-plugin' ),
+					),
+				)
+			);
+
+			$wp_customize->add_setting(
+				'lafka_insights_behind_cloudflare',
+				array(
+					'default'           => '0',
+					'transport'         => 'refresh',
+					'sanitize_callback' => array( __CLASS__, 'sanitize_checkbox' ),
+				)
+			);
+			$wp_customize->add_control(
+				'lafka_insights_behind_cloudflare',
+				array(
+					'label'       => esc_html__( 'This site is behind Cloudflare', 'lafka-plugin' ),
+					'description' => esc_html__( 'Tick only when all traffic reaches the site through the Cloudflare proxy (orange cloud). Insights then reads the real visitor IP from the CF-Connecting-IP header to tell visits apart; the IP is never stored. Leave unticked otherwise — the header could be forged.', 'lafka-plugin' ),
+					'section'     => 'lafka_analytics_insights',
+					'type'        => 'checkbox',
+				)
+			);
 		}
 	}
 

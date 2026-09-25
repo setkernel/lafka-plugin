@@ -32,6 +32,7 @@ export function loadScript( script, html, globals = {} ) {
 		window,
 		document,
 		URL,
+		URLSearchParams,
 		IntersectionObserver: window.IntersectionObserver,
 		MutationObserver: window.MutationObserver,
 	} );
@@ -49,8 +50,8 @@ export function loadScript( script, html, globals = {} ) {
 		change( selector ) {
 			document.querySelector( selector ).dispatchEvent( new window.Event( 'change', { bubbles: true } ) );
 		},
-		fireWindow( type ) {
-			( listeners[ type ] || [] ).forEach( ( fn ) => fn() );
+		fireWindow( type, event ) {
+			( listeners[ type ] || [] ).forEach( ( fn ) => fn( event ) );
 		},
 	};
 }

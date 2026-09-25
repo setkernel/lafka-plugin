@@ -7,7 +7,7 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
 
 ## [Unreleased]
 
-Phases GX0 ("stop losing orders") and GX1 (diagnostics).
+Phases GX0 ("stop losing orders"), GX1 (diagnostics) and GX2 (Insights).
 All new checkout behaviour works on the classic and the block (Store API)
 checkout; settings live in Customizer → **Lafka — Checkout** unless noted.
 
@@ -63,6 +63,26 @@ checkout; settings live in Customizer → **Lafka — Checkout** unless noted.
 - **Order hours**: `Lafka_Order_Hours::can_order_ahead()`,
   `is_add_to_cart_blocked()`, `get_closed_notice_with_next_open()`; body
   class `lafka-order-ahead`.
+- **Insights (GX2)**: first-party, cookieless funnel analytics — module
+  `insights`, off by default (Lafka → Modules). One `sendBeacon` per page to
+  `POST /wp-json/lafka/v1/i` (page type, referrer host, UTM, device class)
+  plus server-side money events for classic and block checkout (add/remove
+  cart, cart/checkout views, payment attempt, order placed once, payment
+  failures, every `lafka_checkout_blocked` refusal). Visits are told apart by
+  a daily-rotating hash; no IP, cookie or identifier is stored. Tables
+  `wp_lafka_insights_sessions` (35 days) and `wp_lafka_insights_daily`, a
+  nightly Action Scheduler rollup, **Lafka → Insights** (funnel + biggest
+  leak, why no order, visits while closed, items viewed but not bought,
+  search incl. zero results, device, visits vs orders by source, hour ×
+  weekday, payment health) and a Monday-morning plain-English email
+  (WooCommerce → Settings → Emails → Weekly Insights). Consent modes in
+  Customizer → Lafka — Analytics → Insights: aggregate (default, no banner
+  needed, honours GPC/DNT), consent required, off. See `docs/TRACKING.md`.
+- **Analytics**: Insights counts as a dataLayer destination, so the event
+  layer runs without GA4/GTM.
+- **Diagnostics**: a ≤ 700-byte inline handler reports same-origin JavaScript
+  errors to `POST /wp-json/lafka/v1/diag`, logged on the `js` channel (with
+  the diagnostics or insights module).
 
 ### Changed
 - `lafka_write_log()` is deprecated and now writes through `Lafka_Log`; the

@@ -52,6 +52,9 @@ if ( ! function_exists( 'lafka_analytics_has_datalayer_destination' ) ) {
 		if ( function_exists( 'lafka_analytics_meta_pixel_id' ) && '' !== lafka_analytics_meta_pixel_id() ) {
 			return true;
 		}
+		if ( function_exists( 'lafka_insights_is_collecting' ) && lafka_insights_is_collecting() ) {
+			return true;
+		}
 		return false;
 	}
 }

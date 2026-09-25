@@ -107,6 +107,8 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 				'lafka_abandoned_carts',
 				'lafka_push_subscriptions',
 				'lafka_incidents', // GX1 diagnostics incident index.
+				'lafka_insights_sessions', // GX2 Insights: per-visit rows (pseudonymous, 35 days)
+				'lafka_insights_daily',    // GX2 Insights: aggregate counters
 			);
 		}
 
@@ -152,6 +154,7 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 				'lafka_block_cart_shim_done',     // block-cart page shim marker
 				'lafka_seed_demo_manifest',       // `wp lafka seed-demo` bookkeeping
 				'woocommerce_lafka_error_digest_settings', // GX1 digest WC_Email settings
+				'woocommerce_lafka_weekly_insights_settings', // GX2 weekly Insights WC_Email settings
 				self::DATA_TOGGLE_OPTION,         // the uninstall toggle itself
 			);
 		}
@@ -188,6 +191,7 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 				'lafka_log_',            // diagnostics settings, checkout counters, daily-job bookkeeping
 				'lafka_incidents_',      // incident table schema version
 				'lafka_seo_',            // Search & AI settings, IndexNow key/queue (GX3)
+				'lafka_insights_',       // Insights db version, daily secret, rollup cursor
 			);
 		}
 
@@ -351,11 +355,16 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 			// The incident table is dropped on every uninstall, so its schema
 			// marker must go too (else a re-install would skip creating it).
 			delete_option( 'lafka_incidents_db_version' );
+			// Insights: its tables are dropped above, so their markers and the
+			// daily visit-id secret go too (the secret must never outlive the data).
+			delete_option( 'lafka_insights_db_version' );
+			delete_option( 'lafka_insights_secret' );
+			delete_option( 'lafka_insights_rolled_through' );
 		}
 
 		/**
-		 * Remove Lafka's Action Scheduler jobs (the daily Diagnostics job and a
-		 * pending IndexNow flush).
+		 * Remove Lafka's Action Scheduler jobs (the daily Diagnostics job, a
+		 * pending IndexNow flush, and the Insights nightly + weekly jobs).
 		 *
 		 * @return void
 		 */
@@ -363,6 +372,7 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 			if ( function_exists( 'as_unschedule_all_actions' ) ) {
 				as_unschedule_all_actions( 'lafka_diagnostics_daily', array(), 'lafka' );
 				as_unschedule_all_actions( 'lafka_indexnow_flush', array(), 'lafka' );
+				as_unschedule_all_actions( '', array(), 'lafka-insights' );
 			}
 		}
 

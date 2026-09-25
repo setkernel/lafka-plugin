@@ -57,6 +57,7 @@ final class ModuleRegistryTest extends TestCase {
 		'push',
 		'review_prompt',
 		'diagnostics',
+		'insights',
 		'analytics',
 	);
 
@@ -122,6 +123,7 @@ final class ModuleRegistryTest extends TestCase {
 			'push'            => false,  // lafka_push_enabled default '0'
 			'review_prompt'   => false,  // lafka_review_email_enabled default '0'
 			'diagnostics'     => true,   // GX1: logging core always on; screens + digest default ON
+			'insights'        => false,  // GX2 gated module, default OFF
 			'analytics'       => false,  // derived — no destination by default
 		);
 
@@ -360,9 +362,10 @@ final class ModuleRegistryTest extends TestCase {
 		$flags = array_keys( Lafka_Module_Registry::modules_by_storage( 'lafka_option' ) );
 		sort( $flags );
 
-		// The five 'enabled'/'disabled' sentinel flags plus the '1'/'0'
-		// order-notifications checkbox — all persisted in the 'lafka' option array.
-		$expected = array( 'kitchen_display', 'order_hours', 'order_notifications', 'product_addons', 'promotions', 'shipping_areas' );
+		// The 'enabled'/'disabled' sentinel flags (the five legacy flags plus the
+		// GX2 insights module) and the '1'/'0' order-notifications checkbox — all
+		// persisted in the 'lafka' option array.
+		$expected = array( 'insights', 'kitchen_display', 'order_hours', 'order_notifications', 'product_addons', 'promotions', 'shipping_areas' );
 
 		self::assertSame( $expected, $flags );
 	}

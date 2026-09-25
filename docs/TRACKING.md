@@ -26,7 +26,80 @@ first-party beacon emitted directly.
 | `lafka_gsc_*` / `lafka_consent_*` | Search Console verification + Consent Mode v2 defaults (default: denied). |
 
 Nothing emits until at least one destination is configured
-(`lafka_analytics_is_active()`).
+(`lafka_analytics_is_active()`). **Lafka Insights counts as a destination**
+while it collects, so the event layer runs on a site with no GA4/GTM at all.
+
+## Lafka Insights — first-party funnel analytics (module `insights`)
+
+Off by default; turn it on under **Lafka → Modules**, read it under
+**Lafka → Insights**. No third party, no Google account.
+
+**Collection.** `assets/js/lafka-insights.js` (≈2 KB, deferred, never on admin,
+the kitchen display or for shop staff) reads the dataLayer events below —
+`page_context`, `view_item_list`, `view_item`, `select_item`, `search`,
+`store_closed_view`, `select_fulfilment`, `order_channel_click`,
+`add_shipping_info` — and sends **one** `navigator.sendBeacon` per page on
+`pagehide` to `POST /wp-json/lafka/v1/i` with the page type, the referrer
+*host*, `utm_source/medium/campaign` and a viewport device class. The money
+path is recorded **server-side** from WooCommerce hooks (so ad-blockers and page
+caches can't hide it), for classic and block checkout alike: add/remove cart,
+cart and checkout views, payment attempt, order placed (once per order),
+payment failed (classified avs / cvv / declined / gateway_error / other from the
+gateway note), plus every `do_action( 'lafka_checkout_blocked', $reason, $context )`.
+
+**Visits without cookies.** `sid = sha256( daily secret | IP | browser family | site )`.
+The secret (option `lafka_insights_secret`) is replaced every local day and the
+old one deleted, so yesterday's visits can't be re-identified; the IP is never
+stored. Behind Cloudflare, tick *This site is behind Cloudflare* so the real
+visitor IP (`CF-Connecting-IP`) is used; other proxies: filter
+`lafka_insights_client_ip`.
+
+**Storage.** `{prefix}lafka_insights_sessions` (one row per visit per day:
+furthest funnel stage, refusal reasons, device, source, landing page type,
+hour/weekday — kept 35 days) and `{prefix}lafka_insights_daily` (aggregate
+counters, 25 months). A nightly Action Scheduler job (03:10 site time) rolls up,
+prunes and rotates the secret. Orders by source come straight from
+WooCommerce Order Attribution.
+
+**Consent** (Customizer → Lafka — Analytics → *Insights (first-party)*,
+theme_mod `lafka_insights_consent_mode`):
+
+| Mode | Behaviour |
+|---|---|
+| `aggregate` (default) | Cookieless; skips browsers sending Global Privacy Control / Do Not Track; needs no cookie banner. |
+| `consent_required` | Nothing is measured until the visitor allows analytics in the consent banner, which then mirrors the choice into the first-party `lafka_consent` cookie (read by the server-side events; `assets/js/lafka-consent-mirror.js`, inlined first in `<head>`) and switches WooCommerce Order Attribution on. |
+| `off` | Collects nothing; reports stay readable. |
+
+A privacy-policy paragraph is added to *Settings → Privacy → Policy guide*.
+
+**Weekly email.** WooCommerce → Settings → Emails → *Weekly Insights* (on by
+default once the module is on; recipient defaults to the admin email):
+Monday 08:00 site time, last week in plain English. Zero visits → it says
+tracking may be broken.
+
+**Guards on `/lafka/v1/i`** (anonymous beacons carry no nonce because pages are
+full-page cached): same-origin `Origin`/`Referer`, ≤ 2 KB strict schema, bot
+filter, staff excluded, per-visit daily cap (`lafka_insights_visit_cap`, 300)
+and site-wide hourly cap (`lafka_insights_global_cap`, 5000). One read + at most
+two writes per beacon.
+
+**Filters:** `lafka_insights_consent_mode`, `lafka_insights_behind_cloudflare`,
+`lafka_insights_client_ip`, `lafka_insights_exclude_user`,
+`lafka_insights_store_is_open`, `lafka_insights_search_engine_pattern`,
+`lafka_insights_block_reason_bits`, `lafka_payment_failure_keywords` (the GX1
+classifier Insights shares; `lafka_insights_payment_failure_keywords` only
+without it),
+`lafka_insights_placed_statuses`, `lafka_checkout_block_reasons` (labels),
+`lafka_beacon_bot_pattern`.
+
+## JavaScript error beacon (with the `diagnostics` module — on by default — or `insights`)
+
+A ≤ 700-byte inline `<head>` handler reports uncaught errors and unhandled
+promise rejections from **same-origin** scripts (≤ 3 per page, ≤ 10 per tab
+session) to `POST /wp-json/lafka/v1/diag`, which logs them via `lafka_log()`
+(channel `js`) or, without the logging facade, WooCommerce → Status → Logs
+(source `lafka-js`). Sample rate: `lafka_log_settings[js_sample]` (default 1).
+Filter `lafka_diag_js_beacon_enabled` to force it on/off.
 
 ## Event dictionary
 

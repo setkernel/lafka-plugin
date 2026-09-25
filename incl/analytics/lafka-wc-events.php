@@ -61,6 +61,10 @@ if ( ! function_exists( 'lafka_analytics_has_datalayer_destination' ) ) {
 	 * lafka_analytics_cf_beacon_token(). The union of the two lives in
 	 * lafka_analytics_is_active() for the cheap server-rendered pushes.
 	 *
+	 * Lafka Insights (GX2) is a first-party destination: when it is collecting,
+	 * the dataLayer events feed its page beacon, so they must run even on a
+	 * site with no GA4 / GTM configured.
+	 *
 	 * @return bool
 	 */
 	function lafka_analytics_has_datalayer_destination(): bool {
@@ -74,6 +78,9 @@ if ( ! function_exists( 'lafka_analytics_has_datalayer_destination' ) ) {
 			return true;
 		}
 		if ( function_exists( 'lafka_analytics_meta_pixel_id' ) && '' !== lafka_analytics_meta_pixel_id() ) {
+			return true;
+		}
+		if ( function_exists( 'lafka_insights_is_collecting' ) && lafka_insights_is_collecting() ) {
 			return true;
 		}
 		return false;
