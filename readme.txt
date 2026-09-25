@@ -196,6 +196,9 @@ complete, authoritative changelog and downloadable releases, see:
 
 https://github.com/setkernel/lafka-plugin/releases
 
+= 10.2.1 =
+* Promotions: the BOGO banner sits at the top of the page instead of covering the header.
+
 = 10.2.0 =
 * Stop losing orders:
   * delivery prices are withheld until a street address is entered;

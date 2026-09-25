@@ -7,6 +7,11 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
 
 ## [Unreleased]
 
+## [10.2.1] — 2026-09-25
+
+### Fixed
+- Promotions: the BOGO banner renders in the page flow at the top of `<body>` (`wp_body_open`) instead of a fixed overlay, so it no longer covers the theme header or sticky bars; the fixed overlay remains only as the fallback for themes without `wp_body_open`. The banner is a labelled `region` (not a second `banner` landmark).
+
 ## [10.2.0] — 2026-09-25
 
 Phases GX0 ("stop losing orders"), GX1 (diagnostics) and GX2 (Insights).

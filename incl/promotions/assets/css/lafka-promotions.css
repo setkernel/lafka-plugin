@@ -26,12 +26,21 @@
 
 /* ─── Promotional banner ───────────────────────────────────────────────── */
 #lafka-bogo-banner {
-	position: fixed;
-	top: 0;
-	left: 0;
+	position: relative;
 	width: 100%;
 	background: var(--lafka-color-accent-600, #b91c1c);
 	color: var(--lafka-color-text-on-accent, #fff);
+}
+
+#lafka-bogo-banner[hidden] {
+	display: none;
+}
+
+/* Legacy overlay — only for themes that never fire wp_body_open. */
+#lafka-bogo-banner.lafka-bogo-banner--fixed {
+	position: fixed;
+	top: 0;
+	left: 0;
 	z-index: 10000;
 	transform: translateY(-100%);
 	opacity: 0;
@@ -40,7 +49,7 @@
 	box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
 }
 
-#lafka-bogo-banner.is-visible {
+#lafka-bogo-banner.lafka-bogo-banner--fixed.is-visible {
 	transform: translateY(0);
 	opacity: 1;
 }

@@ -119,7 +119,29 @@ if ( ! class_exists( 'Lafka_Promotions' ) ) {
 
 			// Banner
 			add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_banner_assets' ) );
-			add_action( 'wp_footer', array( $this, 'render_banner' ) );
+			// In the page flow at the top of <body> (pushes the header down, never
+			// covers it or sticky bars). Themes without wp_body_open get the
+			// legacy fixed overlay from wp_footer instead.
+			add_action( 'wp_body_open', array( $this, 'render_banner_inline' ), 5 );
+			add_action( 'wp_footer', array( $this, 'render_banner_fallback' ) );
+		}
+
+		/** @var bool Whether the banner was already printed this request. */
+		private $banner_rendered = false;
+
+		/** wp_body_open: the banner as an in-flow strip at the top of the page. */
+		public function render_banner_inline(): void {
+			$this->banner_rendered = true;
+			$this->render_banner( 'inline' );
+		}
+
+		/** wp_footer: fixed overlay, only when the theme never fired wp_body_open. */
+		public function render_banner_fallback(): void {
+			if ( $this->banner_rendered ) {
+				return;
+			}
+			$this->banner_rendered = true;
+			$this->render_banner( 'fixed' );
 		}
 
 		// ─── Pure math helpers (also used by tests) ──────────────────────────
@@ -417,9 +439,15 @@ if ( ! class_exists( 'Lafka_Promotions' ) ) {
 			);
 		}
 
-		public function render_banner() {
+		/**
+		 * Print the dismissible BOGO banner.
+		 *
+		 * @param string $placement `inline` (in the page flow) or `fixed` (legacy overlay).
+		 */
+		public function render_banner( string $placement = 'fixed' ) {
+			$placement = 'inline' === $placement ? 'inline' : 'fixed';
 			?>
-			<div id="lafka-bogo-banner" role="banner" hidden>
+			<div id="lafka-bogo-banner" class="lafka-bogo-banner--<?php echo esc_attr( $placement ); ?>" role="region" aria-label="<?php esc_attr_e( 'Promotion', 'lafka-plugin' ); ?>" hidden>
 				<div class="lafka-bogo-inner">
 					<?php
 					/* translators: %s: the BOGO offer (e.g. "50% Off" or "Free") */
