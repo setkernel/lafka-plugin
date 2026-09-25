@@ -29,9 +29,15 @@ if ( ! function_exists( 'lafka_seo_shop_canonical_url' ) ) {
 	/**
 	 * Compute the canonical URL for the current shop/product-taxonomy archive.
 	 *
-	 * Returns the base archive URL with sort/filter query params stripped.
-	 * For paginated archives the /page/N/ path component is preserved so each
-	 * paginated page self-canonicals correctly.
+	 * T-09 (GX): the CLEAN archive URL — the queried term's own
+	 * get_term_link() on a product-taxonomy archive, the shop page permalink
+	 * on the shop — and `/page/N/` on paginated archives (each paginated page
+	 * self-canonicalises, per Google's guidance). Every request query arg is
+	 * dropped: sort / filter params AND tracking params (utm_*, fbclid, gclid …),
+	 * which previously leaked into the canonical and split the signal across
+	 * shared links.
+	 *
+	 * Filter: `lafka_seo_shop_canonical_url` (string $url, int $paged).
 	 *
 	 * @return string|false Canonical URL string, or false when not on a shop/taxonomy archive.
 	 */
@@ -44,68 +50,49 @@ if ( ! function_exists( 'lafka_seo_shop_canonical_url' ) ) {
 			return false;
 		}
 
-		// get_pagenum_link() returns HTML-entity-encoded ampersands (&#038;) which
-		// break remove_query_arg() — decode first so wp_parse_url() sees real '&'.
-		$paged = get_query_var( 'paged', 0 );
+		$paged = (int) get_query_var( 'paged', 0 );
+		$base  = '';
 
-		if ( $paged >= 2 ) {
-			// Paginated page: self-canonical (preserve /page/N/ path, drop filter params).
-			$raw_base = html_entity_decode( get_pagenum_link( $paged ), ENT_QUOTES, 'UTF-8' );
-		} else {
-			// Page 1 / unfiltered: canonical = clean base archive URL.
-			$raw_base = html_entity_decode( get_pagenum_link( 1 ), ENT_QUOTES, 'UTF-8' );
-		}
-
-		// Build the canonical from the raw path only (scheme + host + port + path),
-		// then re-add any query args that are NOT sort/filter params.
-		// Independent audit 2026-04-29 caught the missing port: when site_url
-		// includes a non-default port (e.g. http://localhost:8891 in dev,
-		// https://example.com:8443 in some prod), the rebuild dropped it,
-		// emitting a canonical that didn't match the host the page was served
-		// from — Google treats that as a deduplication signal and depowers.
-		$parsed = wp_parse_url( $raw_base );
-		$path   = ( isset( $parsed['scheme'] ) ? $parsed['scheme'] . '://' : '' )
-			. ( isset( $parsed['host'] ) ? $parsed['host'] : '' )
-			. ( isset( $parsed['port'] ) ? ':' . $parsed['port'] : '' )
-			. ( isset( $parsed['path'] ) ? $parsed['path'] : '' );
-
-		// Collect any surviving (non-filter) query args from the raw URL.
-		$surviving_args = array();
-		if ( ! empty( $parsed['query'] ) ) {
-			parse_str( $parsed['query'], $args );
-
-			// Params to strip entirely.
-			$deny_exact = array(
-				'orderby',
-				'min_price',
-				'max_price',
-				'rating_filter',
-				'product_cat',
-				'product_tag',
-				'filter_attr',
-				'paged',
-			);
-			foreach ( $args as $k => $v ) {
-				if ( in_array( $k, $deny_exact, true ) ) {
-					continue;
+		if ( is_product_taxonomy() ) {
+			$term = get_queried_object();
+			if ( is_object( $term ) && isset( $term->term_id ) ) {
+				$link = get_term_link( $term );
+				if ( is_string( $link ) && ! is_wp_error( $link ) ) {
+					$base = $link;
 				}
-				// Strip WC attribute-filter and price-range wildcard keys.
-				if ( 0 === strpos( $k, 'filter_' )
-					|| 0 === strpos( $k, 'min_price' )
-					|| 0 === strpos( $k, 'max_price' )
-				) {
-					continue;
-				}
-				$surviving_args[ $k ] = $v;
 			}
+		} elseif ( function_exists( 'wc_get_page_permalink' ) ) {
+			$base = (string) wc_get_page_permalink( 'shop' );
 		}
 
-		$url = $path;
-		if ( ! empty( $surviving_args ) ) {
-			$url .= '?' . http_build_query( $surviving_args );
+		if ( '' === $base ) {
+			// Fallback: the requested archive URL, query string removed.
+			// get_pagenum_link() returns HTML-entity-encoded ampersands.
+			$raw    = html_entity_decode( (string) get_pagenum_link( 1 ), ENT_QUOTES, 'UTF-8' );
+			$parsed = wp_parse_url( $raw );
+			// Keep the port (a dev/staging host on :8443 must not canonicalise elsewhere).
+			$base = ( isset( $parsed['scheme'] ) ? $parsed['scheme'] . '://' : '' )
+				. ( $parsed['host'] ?? '' )
+				. ( isset( $parsed['port'] ) ? ':' . $parsed['port'] : '' )
+				. ( $parsed['path'] ?? '' );
 		}
 
-		return $url;
+		$url = $base;
+		if ( $paged >= 2 ) {
+			$pretty = '' !== (string) get_option( 'permalink_structure', '' ) && false === strpos( $base, '?' );
+			$url    = $pretty
+				? trailingslashit( $base ) . 'page/' . $paged . '/'
+				: add_query_arg( 'paged', $paged, $base );
+		}
+
+		/**
+		 * Filter the canonical URL of a shop / product-taxonomy archive.
+		 *
+		 * @since 10.3.0
+		 * @param string $url   Clean canonical URL.
+		 * @param int    $paged Current page number (0 or 1 = first page).
+		 */
+		return (string) apply_filters( 'lafka_seo_shop_canonical_url', $url, $paged );
 	}
 }
 
