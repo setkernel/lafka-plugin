@@ -87,32 +87,79 @@ return array(
 		'shipping_areas' => 'enabled',
 	),
 
-	// ── Product categories (neutral names) ──
+	// ── Product categories (neutral names). `order` is WooCommerce's category
+	// order (term meta `order`): Deals first, then the counter layout's
+	// automatic co-stars (Pizzas, Sides). ──
 	'categories'   => array(
+		array(
+			'slug'        => 'deals',
+			'name'        => 'Deals',
+			'description' => 'Combos and meal deals.',
+			'order'       => 0,
+		),
 		array(
 			'slug'        => 'pizzas',
 			'name'        => 'Pizzas',
 			'description' => 'Hand-stretched pizzas baked to order.',
+			'order'       => 1,
 		),
 		array(
 			'slug'        => 'sides',
 			'name'        => 'Sides',
 			'description' => 'Shareable starters and sides.',
+			'order'       => 2,
 		),
 		array(
 			'slug'        => 'salads',
 			'name'        => 'Salads',
 			'description' => 'Fresh, crisp salads.',
+			'order'       => 3,
 		),
 		array(
 			'slug'        => 'drinks',
 			'name'        => 'Drinks',
 			'description' => 'Cold drinks to go with your meal.',
+			'order'       => 4,
 		),
 	),
 
-	// ── 12 products across the 4 categories ──
+	// ── 15 products across the 5 categories ──
 	'products'     => array(
+
+		// Deals — simple combos. One feeds two (`serves`, the per-person line),
+		// one is WooCommerce-featured (the counter layout's big deal card).
+		array(
+			'slug'              => 'pizza-night-for-two',
+			'name'              => 'Pizza Night for Two',
+			'sku'               => 'demo-pizza-night-for-two',
+			'category'          => 'deals',
+			'type'              => 'simple',
+			'price'             => '24.99',
+			'serves'            => 2,
+			'short_description' => 'Two medium pizzas and garlic bread.',
+			'description'       => 'Two medium pizzas of your choice with a side of garlic bread.',
+		),
+		array(
+			'slug'              => 'family-feast',
+			'name'              => 'Family Feast',
+			'sku'               => 'demo-family-feast',
+			'category'          => 'deals',
+			'type'              => 'simple',
+			'price'             => '39.99',
+			'featured'          => true,
+			'short_description' => 'Two large pizzas, two sides and four drinks.',
+			'description'       => 'Two large pizzas, two sides and four cold drinks for the table.',
+		),
+		array(
+			'slug'              => 'lunch-combo',
+			'name'              => 'Lunch Combo',
+			'sku'               => 'demo-lunch-combo',
+			'category'          => 'deals',
+			'type'              => 'simple',
+			'price'             => '11.99',
+			'short_description' => 'A small pizza, fries and a drink.',
+			'description'       => 'A small pizza with a portion of fries and a cold drink.',
+		),
 
 		// Pizzas — variable (Small / Medium / Large).
 		array(
