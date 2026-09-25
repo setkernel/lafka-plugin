@@ -10,9 +10,12 @@ use DateTimeZone;
 use Lafka_Order_Hours;
 use Lafka_Shipping_Areas_Admin;
 use Lafka_Timeslots;
+use LafkaPlugin\Tests\Unit\Support\StableClock;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
+
+require_once __DIR__ . '/Support/StableClock.php';
 
 /**
  * Regression lock for the timeslot-duration floor (audit f048).
@@ -86,12 +89,17 @@ final class TimeslotDurationFloorTest extends TestCase {
 		);
 
 		try {
-			$dates = Lafka_Timeslots::get_enabled_dates_for_days_ahead( 1, '' );
+			// The store clock is the real one: pin "tomorrow" to the day the
+			// call saw, so a run straddling midnight cannot disagree with it.
+			list( $dates, $tomorrow ) = StableClock::run(
+				static fn(): string => ( new DateTime( 'tomorrow', new DateTimeZone( 'UTC' ) ) )->format( 'Y-m-d' ),
+				static fn(): array => Lafka_Timeslots::get_enabled_dates_for_days_ahead( 1, '' )
+			);
 		} finally {
 			Lafka_Order_Hours::$lafka_order_hours_schedule = null;
 		}
 
-		$this->assertSame( array( ( new DateTime( 'tomorrow', new DateTimeZone( 'UTC' ) ) )->format( 'Y-m-d' ) ), $dates );
+		$this->assertSame( array( $tomorrow ), $dates );
 	}
 
 	/**

@@ -15,7 +15,10 @@ use Brain\Monkey;
 use Brain\Monkey\Functions;
 use Lafka_Incidents;
 use Lafka_Log;
+use LafkaPlugin\Tests\Unit\Support\StableClock;
 use PHPUnit\Framework\TestCase;
+
+require_once __DIR__ . '/Support/StableClock.php';
 
 require_once dirname( __DIR__, 2 ) . '/incl/observability/class-lafka-log-scrubber.php';
 require_once dirname( __DIR__, 2 ) . '/incl/observability/class-lafka-log.php';
@@ -185,11 +188,18 @@ final class IncidentIndexTest extends TestCase {
 	}
 
 	public function test_prune_deletes_rows_older_than_the_retention_window(): void {
-		Lafka_Incidents::prune( 90 );
+		// prune() reads the real clock; pin the expected cutoff day to the
+		// instant it ran so a run straddling midnight UTC cannot disagree.
+		list( , $cutoff ) = StableClock::run(
+			static fn(): string => gmdate( 'Y-m-d', time() - 90 * 86400 ),
+			function (): void {
+				$this->wpdb->queries = array();
+				Lafka_Incidents::prune( 90 );
+			}
+		);
 
 		self::assertCount( 1, $this->wpdb->queries );
 		self::assertStringStartsWith( 'DELETE FROM wp_lafka_incidents WHERE last_seen < ', $this->wpdb->queries[0] );
-		$cutoff = gmdate( 'Y-m-d', time() - 90 * 86400 );
 		self::assertStringContainsString( $cutoff, $this->wpdb->queries[0] );
 	}
 
