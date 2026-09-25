@@ -318,6 +318,18 @@ function lafka_schema_menu(): ?array {
 		}
 	}
 
+	return lafka_schema_menu_node( $data, $ids, $scope );
+}
+
+/**
+ * Assemble a Menu node from cached menu data.
+ *
+ * @param array{sections:array<int,array<string,mixed>>,order:list<int>} $data  Menu data.
+ * @param list<int>                                                      $ids   Section term ids to include, in order.
+ * @param string                                                         $scope 'full' | 'category' (passed to the filter).
+ * @return array<string,mixed>|null
+ */
+function lafka_schema_menu_node( array $data, array $ids, string $scope = 'full' ): ?array {
 	$sections = array();
 	foreach ( $ids as $id ) {
 		if ( ! isset( $data['sections'][ $id ] ) ) {

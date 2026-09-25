@@ -1620,6 +1620,8 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/seo/lafka-head-meta.php';
 require_once plugin_dir_path( __FILE__ ) . 'incl/seo/lafka-seo-titles.php';
 // GX3: optional per-category FAQ (term meta + admin rows; FAQPage via lafka_schema_faq()).
 require_once plugin_dir_path( __FILE__ ) . 'incl/seo/lafka-term-faq.php';
+// GX3: /llms.txt, /llms-full.txt, /menu.md, /menu.json from the JSON-LD data sources.
+require_once plugin_dir_path( __FILE__ ) . 'incl/seo/lafka-llms-txt.php';
 
 add_action( 'woocommerce_single_product_summary', 'lafka_show_custom_product_popup_link', 12 );
 if ( ! function_exists( 'lafka_show_custom_product_popup_link' ) ) {
