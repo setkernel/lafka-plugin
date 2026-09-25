@@ -38,11 +38,11 @@
 	],
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
-		"@wordpress/stylelint-config": "^23.41.0",
+		"@wordpress/stylelint-config": "^26.0.0",
 		"esbuild": "^0.27.7",
 		"eslint": "^10.6.0",
 		"globals": "^17.7.0",
 		"linkedom": "^0.18.13",
-		"stylelint": "^16.26.1"
+		"stylelint": "^17.15.0"
 	}
 }

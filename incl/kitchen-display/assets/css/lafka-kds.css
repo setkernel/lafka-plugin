@@ -709,7 +709,6 @@ html, body {
 	}
 
 	.kds-column {
-		page-break-inside: avoid;
 		break-inside: avoid;
 		max-height: none;
 		overflow: visible;
@@ -732,7 +731,6 @@ html, body {
 	.kds-card {
 		background: white;
 		border: 1px solid #333;
-		page-break-inside: avoid;
 		break-inside: avoid;
 		margin-bottom: 10px;
 	}
