@@ -351,7 +351,7 @@ if ( ! class_exists( 'Lafka_Checkout_Failures' ) ) {
 				$codes[] = $code;
 			}
 
-			$fields = array_merge( $errors['fields'], array() );
+			$fields = $errors['fields'];
 			$known  = array();
 			$other  = array();
 			foreach ( $codes as $code ) {
