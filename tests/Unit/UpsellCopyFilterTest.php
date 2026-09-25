@@ -24,6 +24,9 @@ final class UpsellCopyFilterTest extends TestCase {
 		parent::setUp();
 		Monkey\setUp();
 		$this->filters = array();
+		// No deals category configured (O-23 exclusion reads these).
+		Functions\when( 'get_theme_mod' )->alias( static fn( $key, $fallback = false ) => $fallback );
+		Functions\when( 'get_term_by' )->justReturn( false );
 		require_once dirname( __DIR__, 2 ) . '/incl/woocommerce/lafka-bestseller.php';
 		require_once dirname( __DIR__, 2 ) . '/incl/woocommerce/lafka-upsell-row.php';
 		require_once dirname( __DIR__, 2 ) . '/incl/woocommerce/lafka-cart-drawer-upsell.php';
