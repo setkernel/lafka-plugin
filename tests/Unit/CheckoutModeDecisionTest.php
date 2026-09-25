@@ -210,4 +210,103 @@ final class CheckoutModeDecisionTest extends TestCase {
 		Lafka_Checkout_Mode::maybe_migrate();
 		$this->assertSame( 0, $write_count );
 	}
+
+	/* ----------------------------------------------------------------- *
+	 *  Effective mode: the Checkout page decides (O-03 / O-04)
+	 * ----------------------------------------------------------------- */
+
+	/** @return array<string, array{0: string, 1: string}> */
+	public static function page_contents(): array {
+		return array(
+			'checkout block'               => array( "<!-- wp:woocommerce/checkout {\"align\":\"wide\"} -->\n<div></div>\n<!-- /wp:woocommerce/checkout -->", 'blocks' ),
+			'self-closing checkout block'  => array( '<!-- wp:woocommerce/checkout /-->', 'blocks' ),
+			'bare shortcode'               => array( '[woocommerce_checkout]', 'classic' ),
+			'shortcode in a shortcode block' => array( "<!-- wp:shortcode -->\n[woocommerce_checkout]\n<!-- /wp:shortcode -->", 'classic' ),
+			'shortcode with attributes'    => array( 'Intro [woocommerce_checkout foo="1"]', 'classic' ),
+			'an inner checkout sub-block only' => array( '<!-- wp:woocommerce/checkout-fields-block /-->', '' ),
+			'neither'                      => array( '<p>Hello</p>', '' ),
+		);
+	}
+
+	#[DataProvider( 'page_contents' )]
+	public function test_mode_for_content( string $content, string $expected ): void {
+		$this->assertSame( $expected, Lafka_Checkout_Mode::mode_for_content( $content ) );
+	}
+
+	/**
+	 * Store with the given option and Checkout page content.
+	 *
+	 * @param string      $option  Stored lafka_checkout_mode.
+	 * @param string|null $content Checkout page content (null = no page).
+	 */
+	private function store( string $option, ?string $content ): void {
+		Functions\when( 'get_option' )->alias(
+			static function ( $key, $default = false ) use ( $option, $content ) {
+				if ( Lafka_Checkout_Mode::OPTION === $key ) {
+					return $option;
+				}
+				if ( 'woocommerce_checkout_page_id' === $key ) {
+					return null === $content ? 0 : 42;
+				}
+				return $default;
+			}
+		);
+		Functions\when( 'get_post' )->alias(
+			static function ( $id ) use ( $content ) {
+				return 42 === (int) $id ? (object) array( 'post_content' => (string) $content ) : null;
+			}
+		);
+	}
+
+	public function test_a_classic_page_wins_over_a_blocks_option(): void {
+		$this->store( 'blocks', '[woocommerce_checkout]' );
+
+		$this->assertSame( 'blocks', Lafka_Checkout_Mode::get_mode(), 'The configured intent is unchanged.' );
+		$this->assertTrue( Lafka_Checkout_Mode::is_classic() );
+		$this->assertFalse( Lafka_Checkout_Mode::is_blocks() );
+		$this->assertTrue( Lafka_Checkout_Mode::has_mismatch() );
+	}
+
+	public function test_a_block_page_wins_over_a_classic_option(): void {
+		$this->store( 'classic', '<!-- wp:woocommerce/checkout /-->' );
+
+		$this->assertTrue( Lafka_Checkout_Mode::is_blocks() );
+		$this->assertTrue( Lafka_Checkout_Mode::has_mismatch() );
+	}
+
+	public function test_the_option_decides_when_the_page_says_neither(): void {
+		$this->store( 'blocks', null );
+		$this->assertTrue( Lafka_Checkout_Mode::is_blocks() );
+		$this->assertFalse( Lafka_Checkout_Mode::has_mismatch() );
+
+		$this->store( 'blocks', '<p>custom page builder checkout</p>' );
+		$this->assertTrue( Lafka_Checkout_Mode::is_blocks() );
+	}
+
+	public function test_page_mode_is_filterable_and_force_classic_still_wins(): void {
+		$this->store( 'classic', null );
+		Filters\expectApplied( 'lafka_checkout_page_mode' )->andReturn( 'blocks' );
+		$this->assertTrue( Lafka_Checkout_Mode::is_blocks() );
+
+		$this->store( 'blocks', '<!-- wp:woocommerce/checkout /-->' );
+		Filters\expectApplied( 'lafka_force_classic_checkout' )->andReturn( true );
+		$this->assertTrue( Lafka_Checkout_Mode::is_classic() );
+	}
+
+	public function test_site_health_warns_only_on_a_mismatch(): void {
+		Functions\when( '__' )->returnArg();
+		Functions\when( 'esc_html__' )->returnArg();
+		Functions\when( 'esc_html' )->returnArg();
+
+		$this->store( 'classic', '[woocommerce_checkout]' );
+		$this->assertSame( 'good', Lafka_Checkout_Mode::health_test()['status'] );
+
+		$this->store( 'blocks', '[woocommerce_checkout]' );
+		$result = Lafka_Checkout_Mode::health_test();
+		$this->assertSame( 'recommended', $result['status'] );
+		$this->assertStringContainsString( 'set to the block checkout, but the Checkout page renders the classic checkout', $result['description'] );
+
+		$tests = Lafka_Checkout_Mode::register_health_test( array( 'direct' => array() ) );
+		$this->assertSame( array( Lafka_Checkout_Mode::class, 'health_test' ), $tests['direct']['lafka_checkout_mode']['test'] );
+	}
 }
