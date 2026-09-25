@@ -88,7 +88,33 @@ final class RestaurantInfoResolverTest extends TestCase {
 		$this->stub_wc_options( array( 'woocommerce_store_phone' => '+15551234567' ) );
 		$info = \lafka_get_restaurant_info();
 		$this->assertSame( '+15551234567', $info['phone_e164'] );
-		$this->assertSame( '+15551234567', $info['phone_display'], 'phone_display falls back to phone_e164 when no separate display set' );
+		$this->assertSame( '(555) 123-4567', $info['phone_display'], 'phone_display falls back to the national format of phone_e164' );
+	}
+
+	public function test_a_display_phone_stored_as_bare_e164_is_shown_in_national_format(): void {
+		$this->stub_wc_options(
+			array(
+				'lafka_business_phone_e164'    => '+15551234567',
+				'lafka_business_phone_display' => '+15551234567',
+				'woocommerce_default_country'  => 'CA:NS',
+			)
+		);
+
+		$info = \lafka_get_restaurant_info();
+
+		$this->assertSame( '(555) 123-4567', $info['phone_display'] );
+		$this->assertSame( '+15551234567', $info['phone_e164'], 'tel: links keep E.164.' );
+	}
+
+	public function test_an_operator_formatted_display_phone_is_kept_verbatim(): void {
+		$this->stub_wc_options(
+			array(
+				'lafka_business_phone_e164'    => '+15551234567',
+				'lafka_business_phone_display' => '555-123-4567 ext. 2',
+			)
+		);
+
+		$this->assertSame( '555-123-4567 ext. 2', \lafka_get_restaurant_info()['phone_display'] );
 	}
 
 	public function test_customizer_value_overrides_wc_store_value(): void {
