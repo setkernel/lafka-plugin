@@ -11,12 +11,12 @@ Supported versions of the Lafka plugin's dependencies, and how each is checked.
 | Component   | Minimum | Recommended | Latest tested |
 |-------------|---------|-------------|---------------|
 | **PHP**     | 8.1     | 8.4         | 8.4           |
-| **WordPress** | 6.6   | 7.0         | 7.0           |
-| **WooCommerce** | 9.5 | 10.9        | 10.9.1        |
+| **WordPress** | 6.6   | 7.1         | 7.1.2         |
+| **WooCommerce** | 9.5 | 11.1        | 11.1.2        |
 | **Node.js** (build only) | 20 | 24 | 24         |
 | **Apache** (recommended for security headers) | 2.4 | 2.4.66+ | 2.4.66 |
 
-`.wp-env.json` pins the local integration stack at WP 7.0 / WC 10.9.1 /
+`.wp-env.json` pins the local integration stack at WP 7.1.2 / WC 11.1.2 /
 PHP 8.4; CI's PHP job runs PHPUnit + PHPCS on the runner's single
 pre-installed PHP (currently 8.3, matching prod), not on wp-env. End-to-end
 coverage is the theme repo's Playwright smoke suite (`e2e.yml` in

@@ -11,7 +11,7 @@ Originally developed by [theAlThemist](https://www.althemist.com). Continued as 
 - PHP 8.1+
 - Recommended (not required): the [Lafka Theme](https://github.com/setkernel/lafka-theme), which ships the matching styling
 
-These match the floor declared in `lafka-plugin.php` (`Requires at least:` / `Requires PHP:` / `WC requires at least:`). The plugin will fatal-error or behave unexpectedly on older versions. WC tested up to: 10.9.
+These match the floor declared in `lafka-plugin.php` (`Requires at least:` / `Requires PHP:` / `WC requires at least:`). The plugin will fatal-error or behave unexpectedly on older versions. WC tested up to: 11.1.
 
 ## Installation
 
