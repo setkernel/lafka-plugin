@@ -327,6 +327,25 @@ namespace LafkaPlugin\Tests\Unit {
 			self::assertTrue( lafka_schema_is_menu_context() );
 		}
 
+		/**
+		 * WC 11.0: on the Shop archive get_queried_object() is the Shop PAGE.
+		 * With that page slugged `menu`/`order` the archive must not count as
+		 * "the menu page" (the shop is its own menu context).
+		 */
+		public function test_a_product_archive_is_never_the_menu_page(): void {
+			Functions\when( 'is_post_type_archive' )->alias( fn( $type = '' ) => $this->is['is_post_type_archive'] ?? false );
+			$this->queried = new \WP_Post( (object) array( 'ID' => 5, 'post_name' => 'menu' ) );
+
+			self::assertTrue( lafka_schema_is_menu_page(), 'the real /menu/ page' );
+
+			$this->is['is_shop'] = true;
+			self::assertFalse( lafka_schema_is_menu_page(), 'shop archive whose queried object is the Shop page' );
+			self::assertTrue( lafka_schema_is_menu_context(), 'the shop is still a menu context in its own right' );
+
+			$this->is = array( 'is_post_type_archive' => true );
+			self::assertFalse( lafka_schema_is_menu_page(), 'product post-type archive' );
+		}
+
 		// ── Product ───────────────────────────────────────────────────────
 
 		public function test_product_offer_names_the_restaurant_as_seller(): void {

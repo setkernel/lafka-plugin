@@ -56,6 +56,14 @@ function lafka_schema_is_menu_page(): bool {
 	if ( is_front_page() ) {
 		return false;
 	}
+	// WooCommerce 11.0 made the Shop archive's queried object the Shop *page*
+	// (a WP_Post). When that page's slug is `menu` / `order` the slug check
+	// below would claim the product archive is "the menu page". The shop is
+	// its own, separately handled context (lafka_schema_is_menu_context()),
+	// so a product archive is never the menu page.
+	if ( ( function_exists( 'is_shop' ) && is_shop() ) || ( function_exists( 'is_post_type_archive' ) && is_post_type_archive( 'product' ) ) ) {
+		return false;
+	}
 	$obj = get_queried_object();
 	if ( $obj instanceof WP_Post && in_array( $obj->post_name, array( 'menu', 'order' ), true ) ) {
 		return true;
