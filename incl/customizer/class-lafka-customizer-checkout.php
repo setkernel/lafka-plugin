@@ -71,6 +71,12 @@ if ( ! class_exists( 'Lafka_Customizer_Checkout' ) ) {
 				esc_html__( 'Message while delivery prices are hidden', 'lafka-plugin' ),
 				esc_html__( 'Leave empty for the default: "Enter your street address to see the delivery cost."', 'lafka-plugin' )
 			);
+			self::checkbox(
+				$wp_customize,
+				'lafka_pickup_checkout_slim',
+				esc_html__( 'Short checkout for pickup orders', 'lafka-plugin' ),
+				esc_html__( 'Pickup orders paid in cash (or another offline method) ask only for name, phone and email. Card payments keep the billing address, which card processors verify. On the block checkout the address fields are shown as optional and checked when the order is placed.', 'lafka-plugin' )
+			);
 		}
 
 		/**

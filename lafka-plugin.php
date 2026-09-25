@@ -745,10 +745,13 @@ if ( LAFKA_PLUGIN_IS_WOOCOMMERCE ) {
 	 * the modules it configures. Each works on the classic and the block
 	 * (Store API) checkout alike.
 	 *   · Lafka_Delivery_Quote_Guard — no delivery price from a partial address.
+	 *   · Lafka_Pickup_Checkout — pickup orders ask for name/phone/email only.
 	 */
 	require_once plugin_dir_path( __FILE__ ) . 'incl/customizer/class-lafka-customizer-checkout.php';
 	require_once plugin_dir_path( __FILE__ ) . 'incl/checkout/class-lafka-delivery-quote-guard.php';
 	Lafka_Delivery_Quote_Guard::init();
+	require_once plugin_dir_path( __FILE__ ) . 'incl/checkout/class-lafka-pickup-checkout.php';
+	Lafka_Pickup_Checkout::init();
 
 	/*
 	 * Block Cart/Checkout UI (NX1-04b). Builds on the NX1-04a Store API contract:
