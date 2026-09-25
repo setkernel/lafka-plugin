@@ -545,25 +545,61 @@ if ( ! class_exists( 'Lafka_Diagnostics_Page' ) ) {
 		 * @return void
 		 */
 		private function render_traces() {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only view toggle.
+			$show_finished = isset( $_GET['show_finished'] ) && '1' === sanitize_key( wp_unslash( $_GET['show_finished'] ) );
+
 			echo '<h2>' . esc_html__( 'Checkout attempts that never finished', 'lafka-plugin' ) . '</h2>';
-			echo '<p class="description">' . esc_html__( 'WooCommerce (9.9+) records every place-order attempt step by step and deletes the record when the attempt completes. A record left behind is an attempt that stopped part-way — the last step shows where. WooCommerce clears them after a few days; the daily check keeps a copy as an incident.', 'lafka-plugin' ) . '</p>';
-			$traces = Lafka_Diagnostics::place_order_traces( 20 );
-			if ( empty( $traces ) ) {
+			echo '<p class="description">' . esc_html__( 'WooCommerce (9.9+) records every place-order attempt step by step. An attempt that stopped part-way (for example inside the payment gateway, or at form validation) is listed here with the last step it reached. Completed checkouts whose record WooCommerce has not cleared yet are hidden. The daily check keeps a copy of each unfinished attempt as an incident.', 'lafka-plugin' ) . '</p>';
+
+			$all      = Lafka_Diagnostics::place_order_traces( 100 );
+			$visible  = Lafka_Diagnostics::filter_traces( $all, $show_finished );
+			$hidden   = count( $all ) - count( Lafka_Diagnostics::filter_traces( $all, false ) );
+			$base_url = add_query_arg(
+				array(
+					'page' => self::MENU_SLUG,
+					'tab'  => 'checkout',
+				),
+				admin_url( 'admin.php' )
+			);
+			if ( $show_finished ) {
+				printf( '<p><a href="%1$s">%2$s</a></p>', esc_url( $base_url ), esc_html__( 'Hide finished attempts', 'lafka-plugin' ) );
+			} elseif ( $hidden > 0 ) {
+				printf(
+					'<p><a href="%1$s">%2$s</a></p>',
+					esc_url( add_query_arg( 'show_finished', '1', $base_url ) ),
+					esc_html(
+						sprintf(
+							/* translators: %d: number of completed checkout attempts hidden from the list */
+							_n( 'Show finished attempts (%d hidden)', 'Show finished attempts (%d hidden)', $hidden, 'lafka-plugin' ),
+							$hidden
+						)
+					)
+				);
+			}
+
+			if ( empty( $visible ) ) {
 				echo '<p>' . esc_html__( 'None found (or this WooCommerce version / log handler does not record place-order steps).', 'lafka-plugin' ) . '</p>';
 				return;
 			}
+			$outcomes = array(
+				'unfinished' => __( 'Stopped part-way', 'lafka-plugin' ),
+				'failed'     => __( 'Failed with an error', 'lafka-plugin' ),
+				'finished'   => __( 'Finished', 'lafka-plugin' ),
+			);
 			echo '<table class="widefat striped"><thead><tr>';
-			foreach ( array( __( 'Started', 'lafka-plugin' ), __( 'Steps', 'lafka-plugin' ), __( 'Last step reached', 'lafka-plugin' ), __( 'Order', 'lafka-plugin' ), __( 'Trace', 'lafka-plugin' ) ) as $heading ) {
+			foreach ( array( __( 'Started', 'lafka-plugin' ), __( 'Steps', 'lafka-plugin' ), __( 'Last step reached', 'lafka-plugin' ), __( 'Outcome', 'lafka-plugin' ), __( 'Order', 'lafka-plugin' ), __( 'Trace', 'lafka-plugin' ) ) as $heading ) {
 				echo '<th scope="col">' . esc_html( $heading ) . '</th>';
 			}
 			echo '</tr></thead><tbody>';
-			foreach ( $traces as $trace ) {
+			foreach ( array_slice( $visible, 0, 20 ) as $trace ) {
 				$order_id = (int) $trace['order_id'];
 				$started  = '' !== $trace['started'] ? strtotime( (string) $trace['started'] ) : false;
+				$outcome  = (string) ( $trace['outcome'] ?? 'unfinished' );
 				echo '<tr>';
 				echo '<td>' . esc_html( $started ? wp_date( 'Y-m-d H:i:s', $started ) : '' ) . '</td>';
 				echo '<td>' . esc_html( (string) (int) $trace['steps'] ) . '</td>';
 				echo '<td>' . esc_html( (string) $trace['last_step'] ) . '</td>';
+				echo '<td>' . esc_html( $outcomes[ $outcome ] ?? $outcome ) . '</td>';
 				if ( $order_id > 0 && function_exists( 'wc_get_order' ) && ( $order = wc_get_order( $order_id ) ) ) {
 					printf( '<td><a href="%1$s">#%2$s</a> (%3$s)</td>', esc_url( $order->get_edit_order_url() ), esc_html( (string) $order->get_order_number() ), esc_html( wc_get_order_status_name( $order->get_status() ) ) );
 				} else {

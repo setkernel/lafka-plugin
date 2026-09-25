@@ -47,6 +47,29 @@ if ( ! class_exists( 'Lafka_Diagnostics' ) ) {
 		const MAX_SEEN_TRACES = 300;
 
 		/**
+		 * WooCommerce place-order step markers that END an attempt successfully:
+		 * `[Shortcode #6A] Order payment processed successfully`,
+		 * `[Shortcode #6B] Order processed without payment`,
+		 * `[Store API #9] Order processed`. WC logs them as the final step but
+		 * does not always delete the log (deletion is deferred to a background
+		 * batch, and skipped when a step repeats), so a leftover log is NOT
+		 * proof of an unfinished attempt.
+		 */
+		const TRACE_SUCCESS_MARKER = '/^\[(?:Shortcode #6[A-Z]?|Store API #9)(?:::[^\]]*)?\]/';
+
+		/** Final steps that end an attempt with an exception (`#EXPECTEDFAIL`, `#FAIL`). */
+		const TRACE_FAILURE_MARKER = '/^\[(?:Shortcode|Store API) #(?:EXPECTED)?FAIL\]/';
+
+		/** Step number at/after which the payment has been processed, per flow. */
+		const TRACE_PAYMENT_RANK = array(
+			'shortcode' => 6,
+			'store_api' => 9,
+		);
+
+		/** Order statuses that mean the attempt went through. */
+		const TRACE_PAID_STATUSES = array( 'processing', 'completed', 'on-hold' );
+
+		/**
 		 * Wire the daily job, scheduling, the digest email and Site Health.
 		 *
 		 * @return void
@@ -170,6 +193,9 @@ if ( ! class_exists( 'Lafka_Diagnostics' ) ) {
 				'traces'  => self::index_place_order_traces(),
 				'digest'  => 0,
 			);
+			if ( class_exists( 'Lafka_Incidents' ) ) {
+				Lafka_Incidents::resolve_finished_trace_incidents();
+			}
 			if ( class_exists( 'Lafka_Checkout_Failures' ) ) {
 				Lafka_Checkout_Failures::prune_stats();
 			}
@@ -309,9 +335,21 @@ if ( ! class_exists( 'Lafka_Diagnostics' ) ) {
 				$parsed['source']   = preg_match( '/^(place-order-debug-[a-f0-9]{8})/', $basename, $m ) ? $m[1] : '';
 				$parsed['file_id']  = (string) preg_replace( '/-[a-f0-9]{32}\.log$/', '', $basename );
 				$parsed['modified'] = (int) filemtime( $file );
-				$traces[]           = $parsed;
+				$traces[]           = self::with_outcome( $parsed );
 			}
 			return $traces;
+		}
+
+		/**
+		 * Attach the linked order's status and the attempt outcome.
+		 *
+		 * @param array<string,mixed> $trace Parsed trace.
+		 * @return array<string,mixed>
+		 */
+		private static function with_outcome( array $trace ): array {
+			$trace['order_status'] = self::order_status( (int) ( $trace['order_id'] ?? 0 ) );
+			$trace['outcome']      = self::trace_outcome( $trace, $trace['order_status'] );
+			return $trace;
 		}
 
 		/**
@@ -319,8 +357,12 @@ if ( ! class_exists( 'Lafka_Diagnostics' ) ) {
 		 *
 		 * Line shape: `2026-05-29T20:22:14+00:00 DEBUG [Shortcode #5] message CONTEXT: {json}`.
 		 *
+		 * `terminal` is 'success' / 'failure' when any step is a WC terminal
+		 * marker; `path` + `rank` describe the last numbered step reached
+		 * ('shortcode' | 'store_api', step number).
+		 *
 		 * @param string $contents File contents.
-		 * @return array{steps:int,last_step:string,first_step:string,order_id:int,started:string,ended:string}
+		 * @return array{steps:int,last_step:string,first_step:string,order_id:int,started:string,ended:string,terminal:string,path:string,rank:int}
 		 */
 		public static function parse_trace( string $contents ): array {
 			$out = array(
@@ -330,6 +372,9 @@ if ( ! class_exists( 'Lafka_Diagnostics' ) ) {
 				'order_id'   => 0,
 				'started'    => '',
 				'ended'      => '',
+				'terminal'   => '',
+				'path'       => '',
+				'rank'       => 0,
 			);
 			foreach ( preg_split( '/\r\n|\n|\r/', $contents ) as $line ) {
 				if ( ! preg_match( '/^(\S+)\s+[A-Z]+\s+(.*?)(?:\s+CONTEXT:\s+(\{.*\}))?\s*$/', (string) $line, $m ) ) {
@@ -343,6 +388,15 @@ if ( ! class_exists( 'Lafka_Diagnostics' ) ) {
 				}
 				$out['last_step'] = $message;
 				$out['ended']     = $m[1];
+				if ( preg_match( self::TRACE_SUCCESS_MARKER, $message ) ) {
+					$out['terminal'] = 'success';
+				} elseif ( '' === $out['terminal'] && preg_match( self::TRACE_FAILURE_MARKER, $message ) ) {
+					$out['terminal'] = 'failure';
+				}
+				if ( preg_match( '/^\[(Shortcode|Store API) #(\d+)/', $message, $step ) ) {
+					$out['path'] = 'Shortcode' === $step[1] ? 'shortcode' : 'store_api';
+					$out['rank'] = (int) $step[2];
+				}
 				if ( ! empty( $m[3] ) ) {
 					$context = json_decode( $m[3], true );
 					if ( is_array( $context ) && ! empty( $context['order_id'] ) ) {
@@ -355,6 +409,90 @@ if ( ! class_exists( 'Lafka_Diagnostics' ) ) {
 				$out['first_step'] = Lafka_Log_Scrubber::scrub_string( $out['first_step'] );
 			}
 			return $out;
+		}
+
+		/**
+		 * Outcome of one place-order attempt:
+		 *   'finished'   — a WC success step was reached, or the attempt got past
+		 *                  the payment step and its order is paid / on hold;
+		 *   'failed'     — WC logged a failure step (#EXPECTEDFAIL / #FAIL);
+		 *   'unfinished' — it stopped part-way (e.g. inside the gateway, or at
+		 *                  validation) — the ones worth an owner's attention.
+		 * Filter: `lafka_place_order_trace_outcome`.
+		 *
+		 * @param array<string,mixed> $trace        parse_trace() result.
+		 * @param string              $order_status Linked order's status ('' = none/unknown).
+		 * @return string
+		 */
+		public static function trace_outcome( array $trace, string $order_status = '' ): string {
+			$outcome = 'unfinished';
+			$path    = (string) ( $trace['path'] ?? '' );
+			$rank    = (int) ( $trace['rank'] ?? 0 );
+			if ( 'success' === ( $trace['terminal'] ?? '' ) ) {
+				$outcome = 'finished';
+			} elseif ( in_array( $order_status, self::TRACE_PAID_STATUSES, true )
+				&& isset( self::TRACE_PAYMENT_RANK[ $path ] )
+				&& $rank >= self::TRACE_PAYMENT_RANK[ $path ] ) {
+				$outcome = 'finished';
+			} elseif ( 'failure' === ( $trace['terminal'] ?? '' ) ) {
+				$outcome = 'failed';
+			}
+			if ( function_exists( 'apply_filters' ) ) {
+				$filtered = apply_filters( 'lafka_place_order_trace_outcome', $outcome, $trace, $order_status );
+				if ( in_array( $filtered, array( 'finished', 'failed', 'unfinished' ), true ) ) {
+					$outcome = $filtered;
+				}
+			}
+			return $outcome;
+		}
+
+		/**
+		 * Drop finished attempts unless asked for them (the Diagnostics
+		 * "Show finished attempts" toggle).
+		 *
+		 * @param array<int,array<string,mixed>> $traces           Traces.
+		 * @param bool                           $include_finished Keep finished ones.
+		 * @return array<int,array<string,mixed>>
+		 */
+		public static function filter_traces( array $traces, bool $include_finished ): array {
+			$out = array();
+			foreach ( $traces as $trace ) {
+				if ( $include_finished || 'finished' !== self::outcome_of( $trace ) ) {
+					$out[] = $trace;
+				}
+			}
+			return $out;
+		}
+
+		/**
+		 * A trace's outcome, using its precomputed `outcome` / `order_status`
+		 * when present (place_order_traces() sets both).
+		 *
+		 * @param array<string,mixed> $trace Trace.
+		 * @return string
+		 */
+		private static function outcome_of( array $trace ): string {
+			if ( isset( $trace['outcome'] ) && is_string( $trace['outcome'] ) ) {
+				return $trace['outcome'];
+			}
+			$status = isset( $trace['order_status'] )
+				? (string) $trace['order_status']
+				: self::order_status( (int) ( $trace['order_id'] ?? 0 ) );
+			return self::trace_outcome( $trace, $status );
+		}
+
+		/**
+		 * Current status of an order ('' when unknown).
+		 *
+		 * @param int $order_id Order id.
+		 * @return string
+		 */
+		private static function order_status( int $order_id ): string {
+			if ( $order_id <= 0 || ! function_exists( 'wc_get_order' ) ) {
+				return '';
+			}
+			$order = wc_get_order( $order_id );
+			return is_object( $order ) && method_exists( $order, 'get_status' ) ? (string) $order->get_status() : '';
 		}
 
 		/**
@@ -380,6 +518,9 @@ if ( ! class_exists( 'Lafka_Diagnostics' ) ) {
 				$source = (string) ( $trace['source'] ?? '' );
 				if ( '' === $source || in_array( $source, $seen, true ) || (int) ( $trace['modified'] ?? 0 ) > $cutoff ) {
 					continue;
+				}
+				if ( 'finished' === self::outcome_of( $trace ) ) {
+					continue; // A completed checkout whose log WC has not deleted (yet).
 				}
 				Lafka_Log::warning(
 					'checkout',
@@ -432,7 +573,7 @@ if ( ! class_exists( 'Lafka_Diagnostics' ) ) {
 				$parsed['source']   = $source;
 				$parsed['file_id']  = '';
 				$parsed['modified'] = (int) strtotime( (string) $parsed['ended'] );
-				$traces[]           = $parsed;
+				$traces[]           = self::with_outcome( $parsed );
 			}
 			usort(
 				$traces,

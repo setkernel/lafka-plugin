@@ -12,8 +12,13 @@ could not add to cart, check out or pay. Code: `incl/observability/`.
     happens again), or open its lines in the WooCommerce log viewer.
   - *Checkout failures*: refusals by reason for the last 30 days, recent failed
     payments (declined / address check (AVS) / security code (CVV) / gateway
-    error), and checkout attempts that stopped part-way (WooCommerce 9.9+
-    place-order traces).
+    error), and checkout attempts that stopped part-way or failed (WooCommerce
+    9.9+ place-order traces). WooCommerce does not always delete the trace of
+    a completed checkout, so traces whose final step is a success step
+    (`[Shortcode #6A/#6B]`, `[Store API #9]`), or that got past the payment
+    step on an order now processing / completed / on hold, count as finished:
+    hidden (a "Show finished attempts" link reveals them), never indexed as
+    incidents and never in the digest. Filter: `lafka_place_order_trace_outcome`.
   - *Health*: versions, checkout mode, modules, WooCommerce logging settings,
     daily job status.
   - *Settings*: minimum log level, how long incidents are kept (default 90
@@ -109,4 +114,5 @@ of per-day counters in `lafka_log_checkout_stats`.
   `lafka_log_checkout_stats`, `lafka_log_last_daily_run`, `lafka_log_seen_traces`.
 - Action Scheduler recurring action `lafka_diagnostics_daily` (group `lafka`,
   07:00 site time; `lafka_diagnostics_daily_hour` filter): prune incidents,
-  index stale place-order traces, prune counters, send the digest.
+  index stale unfinished place-order traces (and resolve incidents that were
+  recorded for finished ones), prune counters, send the digest.

@@ -101,6 +101,12 @@ checkout; settings live in Customizer → **Lafka — Checkout** unless noted.
 - **Consent**: the banner publishes `--lafka-consent-banner-h` /
   `html.lafka-consent-open` so fixed-bottom bars sit above it; 44px buttons
   and a compact mobile layout.
+- **Diagnostics**: completed checkouts whose WooCommerce place-order trace was
+  left behind (final step `[Shortcode #6A/#6B]` / `[Store API #9]`, or past
+  the payment step on a processing / completed / on-hold order) are no longer
+  listed as "never finished", indexed as incidents or emailed in the digest;
+  incidents already recorded for them are resolved by the daily check. A
+  "Show finished attempts" link reveals them; each row shows its outcome.
 
 ## [10.1.0] — 2026-09-24
 
