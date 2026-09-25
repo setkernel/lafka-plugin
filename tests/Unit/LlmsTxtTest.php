@@ -285,5 +285,28 @@ namespace LafkaPlugin\Tests\Unit {
 			lafka_seo_maybe_flush_rewrites();
 			self::assertSame( 1, $flushes );
 		}
+
+		public function test_listed_on_the_modules_page_default_on(): void {
+			require_once dirname( __DIR__, 2 ) . '/incl/class-lafka-options.php';
+			require_once dirname( __DIR__, 2 ) . '/incl/class-lafka-module-registry.php';
+			Functions\when( 'esc_html__' )->returnArg();
+			Functions\when( 'do_action' )->justReturn( null );
+			Functions\when( 'update_option' )->alias(
+				function ( $k, $v ) {
+					$this->options[ $k ] = $v;
+					return true;
+				}
+			);
+			\Lafka_Module_Registry::reset();
+
+			lafka_llms_register_module();
+			$module = \Lafka_Module_Registry::get( 'machine_readable_menu' );
+
+			self::assertTrue( $module->default_enabled() );
+			self::assertTrue( $module->is_enabled() );
+			$module->set_enabled( false );
+			self::assertFalse( lafka_llms_enabled() );
+			\Lafka_Module_Registry::reset();
+		}
 	}
 }

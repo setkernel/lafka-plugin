@@ -212,6 +212,25 @@ final class IndexNowTest extends TestCase {
 		lafka_indexnow_serve_key();
 		self::assertSame( 404, $status, 'no key file while IndexNow is off' );
 	}
+
+	public function test_listed_on_the_modules_page_with_the_same_option(): void {
+		require_once dirname( __DIR__, 2 ) . '/incl/class-lafka-options.php';
+		require_once dirname( __DIR__, 2 ) . '/incl/class-lafka-module-registry.php';
+		Functions\when( 'esc_html__' )->returnArg();
+		Functions\when( 'do_action' )->justReturn( null );
+		\Lafka_Module_Registry::reset();
+
+		lafka_indexnow_register_module();
+		$module = \Lafka_Module_Registry::get( 'indexnow' );
+
+		self::assertNotNull( $module );
+		self::assertSame( 'seo', $module->get_category() );
+		self::assertFalse( $module->default_enabled() );
+		self::assertTrue( $module->is_enabled() );
+		$module->set_enabled( false );
+		self::assertSame( 'no', $this->options['lafka_seo_indexnow_enabled'] );
+		\Lafka_Module_Registry::reset();
+	}
 }
 
 // phpcs:ignore Generic.Files.OneObjectStructurePerFile

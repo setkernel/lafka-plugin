@@ -266,6 +266,7 @@ if ( ! class_exists( 'Lafka_Module_Registry' ) ) {
 				'operations' => esc_html__( 'Operations', 'lafka-plugin' ),
 				'conversion' => esc_html__( 'Conversion', 'lafka-plugin' ),
 				'analytics'  => esc_html__( 'Analytics', 'lafka-plugin' ),
+				'seo'        => esc_html__( 'Search & AI visibility', 'lafka-plugin' ),
 			);
 			return $labels[ $slug ] ?? ucfirst( $slug );
 		}

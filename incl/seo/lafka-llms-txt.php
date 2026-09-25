@@ -549,6 +549,41 @@ if ( ! function_exists( 'lafka_llms_serve' ) ) {
 	}
 }
 
+if ( ! function_exists( 'lafka_llms_register_module' ) ) {
+	/**
+	 * List the machine-readable menu on Lafka → Modules (same option as the
+	 * settings toggle).
+	 *
+	 * @return void
+	 */
+	function lafka_llms_register_module() {
+		if ( ! class_exists( 'Lafka_Module' ) || ! class_exists( 'Lafka_Module_Registry' ) ) {
+			return;
+		}
+		Lafka_Module_Registry::register(
+			new Lafka_Module(
+				array(
+					'id'              => 'machine_readable_menu',
+					'label'           => esc_html__( 'AI-readable menu (llms.txt)', 'lafka-plugin' ),
+					'description'     => esc_html__( 'Publish /llms.txt, /llms-full.txt, /menu.md and /menu.json: your hours, address and full menu with prices, in plain text for AI assistants.', 'lafka-plugin' ),
+					'category'        => 'seo',
+					'storage'         => 'option',
+					'default_enabled' => true,
+					'get_enabled'     => static function () {
+						return lafka_seo_is_on( 'lafka_seo_llms_enabled' );
+					},
+					'set_enabled'     => static function ( bool $enabled ) {
+						update_option( 'lafka_seo_llms_enabled', $enabled ? 'yes' : 'no' );
+					},
+					'settings_path'   => 'admin.php?page=wc-settings&tab=lafka_restaurant&section=search',
+					'docs_slug'       => 'llms-txt',
+				)
+			)
+		);
+	}
+}
+
+add_action( 'lafka_register_modules', 'lafka_llms_register_module' );
 add_action( 'init', 'lafka_llms_register_rewrites' );
 add_action( 'init', 'lafka_seo_maybe_flush_rewrites', 99 );
 add_filter( 'query_vars', 'lafka_llms_query_vars' );
