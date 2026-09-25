@@ -115,6 +115,27 @@ namespace LafkaPlugin\Tests\Unit {
 			self::assertSame( 'https://example.test/#website', $node['@id'] );
 		}
 
+		public function test_website_name_and_description_are_entity_decoded(): void {
+			// get_bloginfo() is display-filtered: "Pizza &amp; Poutine". The
+			// JSON-LD must carry the literal "&" (H-19).
+			$this->stub_populated_install();
+			Functions\when( 'get_bloginfo' )->alias(
+				static fn( $k = '' ) => array(
+					'name'        => 'Pizza &amp; Poutine',
+					'description' => 'Fresh &#8211; &quot;fast&quot;',
+				)[ $k ] ?? ''
+			);
+			$node = lafka_schema_website();
+			self::assertSame( 'Pizza & Poutine', $node['name'] );
+			self::assertSame( 'Fresh – "fast"', $node['description'] );
+		}
+
+		public function test_restaurant_name_fallback_is_entity_decoded(): void {
+			$this->stub_unconfigured_install();
+			Functions\when( 'get_bloginfo' )->alias( static fn( $k = '' ) => 'name' === $k ? 'Pizza &amp; Poutine' : '' );
+			self::assertSame( 'Pizza & Poutine', lafka_get_restaurant_info()['name'] );
+		}
+
 		public function test_website_links_restaurant_as_publisher_when_configured(): void {
 			$this->stub_populated_install();
 			self::assertSame( array( '@id' => 'https://example.test/#restaurant' ), lafka_schema_website()['publisher'] );
