@@ -33,6 +33,12 @@ final class StoreApiProductDataTest extends TestCase {
 				$this->registered[] = $args;
 			}
 		);
+		// Load the real definitions before stubbing them. Stubbing first let
+		// Brain Monkey define them, so the files' function_exists() guards
+		// skipped the real code and ProductServesTest / RequiredAddonsTest
+		// called a dead stub whenever they ran after this file.
+		require_once dirname( __DIR__, 2 ) . '/incl/woocommerce/lafka-product-serves.php';
+		require_once dirname( __DIR__, 2 ) . '/incl/addons/lafka-required-addons.php';
 		Functions\when( 'lafka_get_product_serves' )->alias( static fn( $product ) => 12 === $product->get_id() ? 2 : 0 );
 		Functions\when( 'lafka_product_has_required_addons' )->alias( static fn( $id ) => 12 === $id );
 
