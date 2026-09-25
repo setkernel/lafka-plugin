@@ -67,7 +67,7 @@ final class HeadMetaTest extends TestCase {
 			'description' => '',
 		);
 
-		foreach ( array( 'is_admin', 'is_feed', 'is_404', 'is_front_page', 'is_home', 'is_singular', 'is_tax', 'is_category', 'is_tag', 'is_product' ) as $tag ) {
+		foreach ( array( 'is_admin', 'is_feed', 'is_404', 'is_front_page', 'is_home', 'is_singular', 'is_tax', 'is_category', 'is_tag', 'is_product', 'is_shop', 'is_post_type_archive', 'is_product_category' ) as $tag ) {
 			Functions\when( $tag )->alias( fn() => $this->is[ $tag ] ?? false );
 		}
 		Functions\when( 'lafka_seo_plugin_active' )->alias( fn() => $this->seo_plugin );
@@ -79,6 +79,7 @@ final class HeadMetaTest extends TestCase {
 				return array_key_exists( $hook, $this->filters ) ? $this->filters[ $hook ] : $value;
 			}
 		);
+		Functions\when( 'get_queried_object' )->alias( fn() => $GLOBALS['post'] ?? null );
 		Functions\when( 'get_bloginfo' )->alias( fn( $key = '' ) => $this->bloginfo[ $key ] ?? '' );
 		Functions\when( 'get_theme_mod' )->alias( fn( $key, $fallback = false ) => $this->theme_mods[ $key ] ?? $fallback );
 		Functions\when( 'get_option' )->alias( static fn( $key, $fallback = false ) => $fallback );
@@ -390,6 +391,52 @@ final class HeadMetaTest extends TestCase {
 				}
 			}
 		);
-		$this->assertSame( 'Donair from $14.00 at Test Kitchen in Testville. Order online.', lafka_resolve_meta_description( $post ) );
+		$this->assertSame( 'Donair, from $14.00 at Test Kitchen in Testville. Order online.', lafka_resolve_meta_description( $post ) );
+	}
+
+	/** T-15: a thin short description is wrapped by the product template; a substantial one stands alone. */
+	public function test_a_thin_short_description_is_wrapped_by_the_product_template(): void {
+		$this->load_templates();
+		$post                   = $this->singular_post( array( 'post_title' => 'Fries' ) );
+		$this->is['is_product'] = true;
+		$short                  = 'Plain or Seasoned';
+		$product                = new class( $short ) {
+			public function __construct( public string $short ) {
+			}
+			public function get_short_description() {
+				return $this->short;
+			}
+			public function get_name() {
+				return 'Fries';
+			}
+			public function is_type( $t ) {
+				return false;
+			}
+			public function get_price() {
+				return '4.99';
+			}
+		};
+		Functions\when( 'wc_get_product' )->justReturn( $product );
+		$this->assertSame( 'Fries — Plain or Seasoned, from $4.99 at Test Kitchen in Testville. Order online.', lafka_resolve_meta_description( $post ) );
+
+		$product->short = 'Hand-cut Kennebec potatoes, fried twice in canola oil and tossed with sea salt or house seasoning.';
+		$this->assertSame( $product->short, lafka_resolve_meta_description( $post ) );
+	}
+
+	/** T-15: inner pages get their own description, the front page keeps the restaurant pitch. */
+	public function test_inner_pages_never_share_the_site_pitch(): void {
+		$this->load_templates();
+		$this->bloginfo['description'] = 'Pizza by the slice';
+		$about                         = $this->singular_post(
+			array(
+				'post_title'   => 'About Us',
+				'post_name'    => 'about-us',
+				'post_content' => '<p>Short.</p>',
+			)
+		);
+		$this->assertSame( 'About Us — Test Kitchen in Testville. Order online.', lafka_resolve_meta_description( $about ) );
+
+		$this->is['is_front_page'] = true;
+		$this->assertSame( 'Pizza by the slice', lafka_resolve_meta_description( $about ) );
 	}
 }

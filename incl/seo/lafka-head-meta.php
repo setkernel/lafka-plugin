@@ -306,7 +306,11 @@ if ( ! function_exists( 'lafka_resolve_meta_description' ) ) {
 	 *   1. Per-post `_lafka_meta_description` post meta (manual override).
 	 *   2. WC product short description (single product), else (GX3) the
 	 *      fact-built product template — never the site-wide pitch.
-	 *   3. Post excerpt (any singular).
+	 *   3. Post excerpt (any singular); else (T-15) the menu template on the
+	 *      menu page, the page's own content, or the page template — never the
+	 *      site-wide pitch on an inner page. A short description under
+	 *      lafka_seo_short_description_min() (70) characters is wrapped by the
+	 *      product template instead of standing alone.
 	 *   4. Term description (taxonomy archive), else (GX3) the fact-built
 	 *      category template on product category / tag archives.
 	 *   Auto-derived values are capped at ~160 characters on a word boundary.
@@ -325,7 +329,12 @@ if ( ! function_exists( 'lafka_resolve_meta_description' ) ) {
 			}
 			if ( function_exists( 'is_product' ) && is_product() ) {
 				$product = wc_get_product( $post_or_null->ID );
-				if ( $product && $product->get_short_description() ) {
+				$short   = $product ? trim( wp_strip_all_tags( (string) $product->get_short_description() ) ) : '';
+				// T-15: a substantial short description is the description; a
+				// thin one ("Plain or Seasoned") is wrapped by the product
+				// template with name, price and place.
+				$min = function_exists( 'lafka_seo_short_description_min' ) ? lafka_seo_short_description_min() : 0;
+				if ( '' !== $short && mb_strlen( $short ) >= $min ) {
 					return lafka_resolve_meta_excerpt( $product->get_short_description() );
 				}
 				if ( $product && function_exists( 'lafka_seo_product_description' ) ) {
@@ -334,9 +343,22 @@ if ( ! function_exists( 'lafka_resolve_meta_description' ) ) {
 						return $templated;
 					}
 				}
+				if ( '' !== $short ) {
+					return lafka_resolve_meta_excerpt( $short );
+				}
 			}
 			if ( ! empty( $post_or_null->post_excerpt ) ) {
 				return lafka_resolve_meta_excerpt( $post_or_null->post_excerpt );
+			}
+			// T-15: every other page gets its own description (menu template /
+			// its content / page template) instead of the shared site pitch.
+			// The static front page keeps the restaurant pitch below.
+			$is_product = function_exists( 'is_product' ) && is_product();
+			if ( ! $is_product && ! is_front_page() && function_exists( 'lafka_seo_page_description' ) ) {
+				$page_desc = lafka_seo_page_description( $post_or_null );
+				if ( '' !== $page_desc ) {
+					return $page_desc;
+				}
 			}
 		}
 		if ( is_tax() || is_category() || is_tag() ) {
