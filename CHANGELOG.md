@@ -7,6 +7,63 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
 
 ## [Unreleased]
 
+### Added
+- **WebP for new uploads**: new JPEG/PNG uploads are saved as WebP (every
+  generated size) when the server's image editor can write WebP. Toggle on
+  Lafka → Modules → "WebP images for new uploads" (option `lafka_webp_uploads`)
+  or the `lafka_webp_uploads_enabled` filter. Existing images:
+  `wp lafka images convert-webp` / `wp media regenerate` (docs/PERFORMANCE.md).
+- **Add-on group disclosure**: a theme that declares
+  `add_theme_support( 'lafka-addon-group-toggle' )` gets add-on group headings
+  as `<h3><button aria-expanded aria-controls>` around a `.lafka-addon-body`
+  region; addons.js keeps `aria-expanded` and the group's `data-collapsed` in
+  sync. Other themes keep the plain heading. Filter `lafka_addon_group_toggle`.
+- Search & AI: "Menu page description" and "Page description fallback"
+  templates (`lafka_seo_desc_menu`, `lafka_seo_desc_page`) and the `{short}`
+  token (product short description).
+
+### Changed
+- **Contact Form 7** CSS/JS load only on content that embeds a form (a form
+  rendered from a widget or template still loads them late). Filter
+  `lafka_cf7_assets_needed`.
+- **Payment-gateway assets** (SkyVerge framework, Authorize.Net CIM) load only on
+  cart, checkout, account, order-pay and add-payment-method; express-pay handles
+  are never touched. Filters `lafka_gateway_asset_patterns`,
+  `lafka_gateway_assets_needed`.
+- **Descriptions**: a product short description under 70 characters is wrapped
+  by the product template (name — short description, from $X, place); inner
+  pages get the menu template, their own text or the page template instead of
+  the shared site pitch (the front page keeps it).
+- **Titles**: home adds the place and "Order Online" even without cuisines;
+  categories read "{term} Menu[ in {city}] – {name}", products
+  "{product} – {name}"; a title over 65 characters drops its optional parts
+  (`lafka_seo_title_max_length`). Saved operator templates still win.
+- **Social previews**: og:image falls back to the menu-category thumbnail, the
+  default share image, then the homepage hero before the site icon;
+  `twitter:card` is `summary_large_image` only for a landscape image (never the
+  square logo); pages are `og:type` website (article only for posts);
+  og:title/twitter:title carry the site name. Filter `lafka_twitter_card`.
+- **robots.txt**: Lafka's rules join the `User-agent: *` group (they used to land
+  after the Sitemap line, outside any group) as `/*?*orderby=`,
+  `/*?*add-to-cart=`, `/*?*filter_` …; the Sitemap line closes the file.
+  `/my-account/` is noindexed instead of blocked.
+- Legacy `lafka-foodmenu` singles, archive and categories 301 to the menu page
+  when WooCommerce is the menu (`lafka_legacy_foodmenu_redirect`,
+  `lafka_legacy_foodmenu_redirect_target`).
+- WordPress' 404 "guess the permalink" redirect is off
+  (`lafka_disable_404_guess_redirect`).
+- Anonymous `?author=N` probes answer 404 and anonymous `/wp/v2/users` requests
+  401; logged-in users (block editor) are unaffected
+  (`lafka_restrict_user_enumeration`, `lafka_author_enumeration_response`).
+
+### Fixed
+- Menu-category canonicals are the clean term link (+ `/page/N/`) with every
+  query arg dropped (utm_*, fbclid, sort/filter).
+- `menu.md` and `llms-full.txt` are served `X-Robots-Tag: noindex` like
+  `menu.json` (`lafka_llms_noindex_types`).
+- A category page's Menu JSON-LD has its own `@id` (term URL + `#menu`) instead
+  of re-declaring `/menu/#menu`.
+
 ## [10.2.1] — 2026-09-25
 
 ### Fixed
