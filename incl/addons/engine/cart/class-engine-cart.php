@@ -106,7 +106,8 @@ class Lafka_Engine_Cart {
 			return $other_data;
 		}
 
-		$last_used_name = '';
+		$last_used_name = null;
+		$last_index     = null;
 		foreach ( $cart_item['addons'] as $addon ) {
 			$value       = $addon['value'];
 			$addon_price = $this->coerce_price_to_scalar( $addon['price'] );
@@ -115,14 +116,26 @@ class Lafka_Engine_Cart {
 				$value .= ' ' . wc_price( Lafka_Engine_Helper::get_product_addon_price_for_display( $addon_price, $cart_item['data'] ) );
 			}
 
-			$name = $addon['name'] !== $last_used_name ? $addon['name'] : '';
+			// Several choices from one group ("Toppings: Bacon, Olives") join
+			// the group's line. A nameless follow-up line rendered as an orphan
+			// ":" label in the cart, drawer and checkout (O-22).
+			if ( null !== $last_index && $addon['name'] === $last_used_name ) {
+				$prev_display = (string) ( $other_data[ $last_index ]['display'] ?? '' );
+				$this_display = (string) ( $addon['display'] ?? '' );
+				if ( '' !== $prev_display || '' !== $this_display ) {
+					$other_data[ $last_index ]['display'] = ( '' !== $prev_display ? $prev_display : $other_data[ $last_index ]['value'] ) . ', ' . ( '' !== $this_display ? $this_display : $value );
+				}
+				$other_data[ $last_index ]['value'] .= ', ' . $value;
+				continue;
+			}
 			$last_used_name = $addon['name'];
 
 			$other_data[] = array(
-				'name'    => $name,
+				'name'    => $addon['name'],
 				'value'   => $value,
 				'display' => $addon['display'] ?? '',
 			);
+			$last_index   = array_key_last( $other_data );
 		}
 
 		return $other_data;
