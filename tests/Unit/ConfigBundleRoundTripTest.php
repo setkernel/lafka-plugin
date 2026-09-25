@@ -25,10 +25,12 @@ use Brain\Monkey;
 use Brain\Monkey\Functions;
 use Lafka_Config_Bundle;
 use Lafka_Options;
+use LafkaPlugin\Tests\Unit\Support\StableClock;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use stdClass;
 
+require_once __DIR__ . '/Support/StableClock.php';
 require_once dirname( __DIR__, 2 ) . '/incl/class-lafka-options.php';
 require_once dirname( __DIR__, 2 ) . '/incl/tools/class-lafka-config-bundle.php';
 
@@ -73,11 +75,16 @@ final class ConfigBundleRoundTripTest extends TestCase {
 		$this->stores = $this->build_full_state();
 		$this->wire_wp();
 
-		$json    = Lafka_Config_Bundle::export_json();
+		// Both exports stamp generated_at from the clock: take them within one
+		// second so a tick between the two calls cannot fail a faithful JSON.
+		list( list( $json, $bundle ) ) = StableClock::run(
+			static fn(): string => gmdate( 'c' ),
+			static fn(): array => array( Lafka_Config_Bundle::export_json(), Lafka_Config_Bundle::export() )
+		);
 		$decoded = json_decode( $json, true );
 
 		self::assertIsArray( $decoded );
-		self::assertSame( Lafka_Config_Bundle::export(), $decoded );
+		self::assertSame( $bundle, $decoded );
 	}
 
 	// ─── Secrets exclusion ──────────────────────────────────────────────────

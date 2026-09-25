@@ -37,6 +37,18 @@ implementation strings, comments or "function exists"; a source scan is only
 for a genuine repo-wide invariant (text domain, operator literals, versioned
 asset paths, uninstall inventory, release packaging).
 
+Tests must pass in any order and at any wall-clock time; CI also runs the
+suite with `--order-by=reverse` and `--order-by=random` (the seed is printed —
+reproduce with `vendor/bin/phpunit --order-by=random --random-order-seed=<seed>`).
+Every function a test stubs is defined before the first test
+(`tests/Unit/Support/LeftoverStubsExtension.php`), so code behind
+`function_exists()` needs that function stubbed in the test itself. To stub a
+plugin function, `require_once` its file first, or its `function_exists()`
+guard skips the real code for every later test. Reset any
+static or global a test changes in both `setUp()` and `tearDown()`, and pin
+clock-derived expectations with `Support\StableClock::run()` (or pass an
+explicit time) instead of reading the clock twice.
+
 ## Architecture (short version)
 
 - `lafka-plugin.php` — bootstrap, CPT/taxonomy registration, AJAX endpoints, asset enqueues, HPOS + Cart-Checkout-Blocks compat declaration.

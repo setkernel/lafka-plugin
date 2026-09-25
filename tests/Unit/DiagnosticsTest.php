@@ -17,7 +17,10 @@ use Lafka_Diagnostics;
 use Lafka_Email_Error_Digest;
 use Lafka_Incidents;
 use Lafka_Log;
+use LafkaPlugin\Tests\Unit\Support\StableClock;
 use PHPUnit\Framework\TestCase;
+
+require_once __DIR__ . '/Support/StableClock.php';
 
 require_once dirname( __DIR__, 2 ) . '/incl/observability/class-lafka-checkout-block-reasons.php';
 require_once dirname( __DIR__, 2 ) . '/incl/observability/class-lafka-log-scrubber.php';
@@ -277,10 +280,18 @@ LOG;
 	public function test_daily_job_prunes_with_the_retention_window_and_skips_an_empty_digest(): void {
 		$this->options['lafka_log_settings'] = array( 'retention_days' => 3 ); // clamped to 7.
 
-		$summary = Lafka_Diagnostics::run_daily();
+		// The prune cutoff comes from the real clock; pin the expected day to
+		// the instant the job ran so a run straddling midnight UTC agrees.
+		list( $summary, $cutoff ) = StableClock::run(
+			static fn(): string => gmdate( 'Y-m-d', time() - 7 * 86400 ),
+			function (): array {
+				$this->wpdb->queries = array();
+				return Lafka_Diagnostics::run_daily();
+			}
+		);
 
 		self::assertSame( 0, $summary['digest'] );
-		self::assertStringContainsString( gmdate( 'Y-m-d', time() - 7 * 86400 ), $this->wpdb->queries[0] );
+		self::assertStringContainsString( $cutoff, $this->wpdb->queries[0] );
 		self::assertIsInt( $this->options[ Lafka_Diagnostics::LAST_RUN_OPTION ] );
 	}
 
@@ -328,10 +339,16 @@ LOG;
 	}
 
 	public function test_next_run_is_the_next_seven_am_in_the_future(): void {
-		$next = Lafka_Diagnostics::next_run_timestamp();
+		// Compare against the second the scheduler saw: at 06:59:59 → 07:00:00
+		// a later time() would equal "today 07:00" and fail a correct answer.
+		list( $next, $now ) = StableClock::run(
+			static fn(): string => (string) time(),
+			static fn(): int => Lafka_Diagnostics::next_run_timestamp()
+		);
+		$now = (int) $now;
 
-		self::assertGreaterThan( time(), $next );
-		self::assertLessThanOrEqual( time() + 86400, $next );
+		self::assertGreaterThan( $now, $next );
+		self::assertLessThanOrEqual( $now + 86400, $next );
 		self::assertSame( '07:00', gmdate( 'H:i', $next ) );
 	}
 

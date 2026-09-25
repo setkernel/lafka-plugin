@@ -26,6 +26,9 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use RuntimeException;
+use LafkaPlugin\Tests\Unit\Support\StableClock;
+
+require_once __DIR__ . '/Support/StableClock.php';
 
 final class TimeslotsBehaviorTest extends TestCase {
 
@@ -217,11 +220,11 @@ final class TimeslotsBehaviorTest extends TestCase {
 			$tz = new \DateTimeZone( $zone );
 			Functions\when( 'wp_timezone' )->justReturn( $tz );
 
-			$this->assertSame(
-				array( ( new \DateTime( 'now', $tz ) )->format( 'Y-m-d' ) ),
-				Lafka_Timeslots::get_all_days_ahead_public( 0 ),
-				"Today must be today in $zone."
+			list( $days, $today ) = StableClock::run(
+				static fn(): string => ( new \DateTime( 'now', $tz ) )->format( 'Y-m-d' ),
+				static fn(): array => Lafka_Timeslots::get_all_days_ahead_public( 0 )
 			);
+			$this->assertSame( array( $today ), $days, "Today must be today in $zone." );
 		}
 	}
 

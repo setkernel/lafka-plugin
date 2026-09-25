@@ -29,6 +29,11 @@ final class OrderDiscountCoordinatorTest extends TestCase {
 		Monkey\setUp();
 		Functions\when( 'apply_filters' )->returnArg( 2 );
 		Functions\when( '__' )->returnArg( 1 );
+		// lafka_order_discount_apply() reads wc_tax_enabled() behind a
+		// function_exists() guard. Once any test has stubbed it, Brain Monkey
+		// leaves the function defined-but-unmocked for the rest of the process,
+		// so pin the store's tax setting here instead of relying on its absence.
+		Functions\when( 'wc_tax_enabled' )->justReturn( true );
 	}
 
 	protected function tearDown(): void {

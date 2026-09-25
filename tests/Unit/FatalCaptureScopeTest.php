@@ -31,6 +31,11 @@ final class FatalCaptureScopeTest extends TestCase {
 		Lafka_Log::reset();
 		$this->logged = array();
 		Functions\when( 'get_option' )->justReturn( array() );
+		// roots() reads the active theme behind function_exists() guards; the
+		// scope test below stubs get_template(), and Brain Monkey leaves it
+		// defined-but-unmocked afterwards. Pin "no Lafka theme active" (plugin
+		// root only) so every test sees the same roots in any order.
+		Functions\when( 'get_template' )->justReturn( '' );
 		$test = $this;
 		Lafka_Log::set_logger(
 			new class( $test ) {

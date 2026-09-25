@@ -11,6 +11,10 @@
 	failOnRisky="true"
 	beStrictAboutOutputDuringTests="true"
 >
+	<extensions>
+		<!-- Every function a test stubs is defined up front, so function_exists() answers the same in any test order. -->
+		<bootstrap class="LafkaPlugin\Tests\Unit\Support\LeftoverStubsExtension"/>
+	</extensions>
 	<testsuites>
 		<testsuite name="unit">
 			<directory>tests/Unit</directory>

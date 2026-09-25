@@ -73,6 +73,10 @@ final class CheckoutFailuresTest extends TestCase {
 	}
 
 	protected function tearDown(): void {
+		// on_rest_before() marks the request as a Store API checkout in a
+		// static; leaving it set turned later tests' 'cart' stage into 'checkout'.
+		Lafka_Checkout_Failures::reset();
+		Lafka_Checkout_Block_Reasons::reset();
 		Lafka_Log::reset();
 		Monkey\tearDown();
 		parent::tearDown();

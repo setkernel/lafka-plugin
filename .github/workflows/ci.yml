@@ -126,6 +126,22 @@ jobs:
       - name: PHPUnit
         run: composer test
 
+      # Order independence. Reverse order runs every test class after the ones
+      # it normally precedes, so a test that only passes because another ran
+      # first fails deterministically on the PR that adds it.
+      - name: PHPUnit (reverse order)
+        run: vendor/bin/phpunit --do-not-cache-result --order-by=reverse
+
+      # Random order shuffles the rest. The seed is the run number (a re-run of
+      # the same run reuses it) and is printed, so a failure reproduces locally
+      # with the exact command from the log.
+      - name: PHPUnit (random order)
+        env:
+          SEED: ${{ github.run_number }}
+        run: |
+          echo "Random-order seed: $SEED (reproduce: vendor/bin/phpunit --order-by=random --random-order-seed=$SEED)"
+          vendor/bin/phpunit --do-not-cache-result --order-by=random --random-order-seed="$SEED"
+
   # Flags any PR that introduces a new vulnerable composer or npm
   # dependency at moderate severity or above. PR-only — push events
   # have nothing to compare against.

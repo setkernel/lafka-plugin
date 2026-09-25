@@ -58,6 +58,11 @@ namespace LafkaPlugin\Tests\Unit {
 			parent::setUp();
 			Monkey\setUp();
 			Lafka_Checkout_Block_Reasons::reset();
+			// The Store API stage ('cart' vs 'checkout') reads a per-request
+			// static another test file may have left set: start from a clean request.
+			if ( class_exists( 'Lafka_Checkout_Failures', false ) ) {
+				Lafka_Checkout_Failures::reset();
+			}
 			$this->blocked = array();
 			$this->options = array();
 			$this->session = array();

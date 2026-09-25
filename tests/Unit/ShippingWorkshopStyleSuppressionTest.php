@@ -25,7 +25,9 @@ final class ShippingWorkshopStyleSuppressionTest extends TestCase {
 		parent::setUp();
 		Monkey\setUp();
 		if ( ! defined( 'WP_PLUGIN_DIR' ) ) {
-			define( 'WP_PLUGIN_DIR', sys_get_temp_dir() . '/lafka-plugin-tests-wp-plugins' );
+			// Per process: a shared path let one run's "file shipped" fixture
+			// break a concurrent run's "file missing" precondition.
+			define( 'WP_PLUGIN_DIR', sys_get_temp_dir() . '/lafka-plugin-tests-wp-plugins-' . getmypid() );
 		}
 		$this->css = WP_PLUGIN_DIR . '/address-field-autocomplete-for-woocommerce/build/style-index.css';
 		Functions\when( 'wp_dequeue_style' )->alias( fn( $handle ) => $this->dropped[] = 'dequeue:' . $handle );
@@ -36,6 +38,10 @@ final class ShippingWorkshopStyleSuppressionTest extends TestCase {
 	protected function tearDown(): void {
 		if ( is_file( $this->css ) ) {
 			unlink( $this->css );
+		}
+		// Remove the fixture directories this test created, deepest first.
+		for ( $dir = dirname( $this->css ); str_starts_with( $dir, WP_PLUGIN_DIR ) && is_dir( $dir ); $dir = dirname( $dir ) ) {
+			@rmdir( $dir ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- best-effort; non-empty dirs stay.
 		}
 		Monkey\tearDown();
 		parent::tearDown();
