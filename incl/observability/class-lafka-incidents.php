@@ -311,6 +311,30 @@ if ( ! class_exists( 'Lafka_Incidents' ) ) {
 		}
 
 		/**
+		 * Resolve `place_order_incomplete` incidents that were recorded for
+		 * attempts that actually finished (a WC success step as the last step)
+		 * — indexed before finished traces were told apart (GX1 fix).
+		 *
+		 * @return int Rows updated.
+		 */
+		public static function resolve_finished_trace_incidents(): int {
+			global $wpdb;
+			if ( ! self::db_ready() ) {
+				return 0;
+			}
+			$table   = self::table_name();
+			$updated = $wpdb->query(
+				$wpdb->prepare(
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is a code-controlled prefix concatenation.
+					"UPDATE {$table} SET status = 'resolved' WHERE code = 'place_order_incomplete' AND status <> 'resolved' AND ( message LIKE %s OR message LIKE %s )",
+					'%' . $wpdb->esc_like( '[Shortcode #6' ) . '%',
+					'%' . $wpdb->esc_like( '[Store API #9' ) . '%'
+				)
+			);
+			return is_numeric( $updated ) ? (int) $updated : 0;
+		}
+
+		/**
 		 * Number of non-muted incidents on $channel seen in the last $hours.
 		 *
 		 * @param string $channel Channel.

@@ -61,6 +61,10 @@ final class FakeDiagnosticsWpdb {
 	public function suppress_errors( $s = true ) {
 		return false;
 	}
+
+	public function esc_like( $text ) {
+		return addcslashes( (string) $text, '_%\\' );
+	}
 }
 
 final class DiagnosticsTest extends TestCase {
@@ -166,6 +170,103 @@ LOG;
 
 		// Seen traces are never indexed twice.
 		self::assertSame( 0, Lafka_Diagnostics::index_place_order_traces( array( $stale ) ) );
+	}
+
+	/**
+	 * One WC place-order log line.
+	 */
+	private static function line( string $step, string $context = '{}' ): string {
+		return '2026-09-25T05:57:18+00:00 DEBUG ' . $step . ' CONTEXT: ' . $context;
+	}
+
+	/**
+	 * A trace whose steps are $steps, optionally linked to an order in $status.
+	 *
+	 * @param array<int,string> $steps  Step messages.
+	 * @param string            $status Order status ('' = no order).
+	 * @return array<string,mixed>
+	 */
+	private static function trace( array $steps, string $status = '', string $source = 'place-order-debug-cccccccc' ): array {
+		$lines = array();
+		foreach ( $steps as $step ) {
+			$lines[] = self::line( $step, '' !== $status ? '{"order_id":9750}' : '{}' );
+		}
+		return array_merge(
+			Lafka_Diagnostics::parse_trace( implode( "\n", $lines ) ),
+			array(
+				'source'       => $source,
+				'modified'     => time() - 3600,
+				'order_status' => $status,
+			)
+		);
+	}
+
+	/**
+	 * @return array<string,array{0:array<int,string>,1:string,2:string}>
+	 */
+	public static function trace_outcomes(): array {
+		$shortcode = array(
+			'[Shortcode #1] Place Order flow initiated',
+			'[Shortcode #2] Session updated with checkout data and totals calculated',
+			'[Shortcode #3] Checkout posted data validated',
+			'[Shortcode #4] Validated/Created customer and created order object',
+			'[Shortcode #5] woocommerce_checkout_order_processed hook ran successfully',
+		);
+		$store_api = array(
+			'[Store API #1] Place Order flow initiated',
+			'[Store API #2] Cart validated',
+			'[Store API #4::create_or_update_draft_order] Updated order from cart',
+			'[Store API #7] Validated order data',
+			'[Store API #8] Reserved stock for order',
+		);
+		return array(
+			// Success terminal steps: WC keeps (or defers deleting) these logs.
+			'shortcode paid (#6A)'              => array( array_merge( $shortcode, array( '[Shortcode #6A] Order payment processed successfully' ) ), 'processing', 'finished' ),
+			'shortcode no payment (#6B)'        => array( array_merge( $shortcode, array( '[Shortcode #6B] Order processed without payment' ) ), 'processing', 'finished' ),
+			'store api processed (#9)'          => array( array_merge( $store_api, array( '[Store API #9] Order processed' ) ), 'processing', 'finished' ),
+			'success marker, order not looked up' => array( array_merge( $shortcode, array( '[Shortcode #6A] Order payment processed successfully' ) ), '', 'finished' ),
+			// A later step than payment on a paid order also counts as finished.
+			'past payment step, paid order'     => array( array_merge( $shortcode, array( '[Shortcode #7] Some later step' ) ), 'on-hold', 'finished' ),
+			// Genuinely stuck: stopped in the gateway, even though a LATER retry completed the order.
+			'stopped at #5, order completed later' => array( $shortcode, 'completed', 'unfinished' ),
+			'store api stopped before payment'  => array( $store_api, 'processing', 'unfinished' ),
+			'validation stop at #2'             => array( array_slice( $shortcode, 0, 2 ), '', 'unfinished' ),
+			// Explicit failure terminal steps.
+			'shortcode expected failure'        => array( array_merge( array_slice( $shortcode, 0, 3 ), array( '[Shortcode #EXPECTEDFAIL] Invalid payment method.' ) ), '', 'failed' ),
+			'store api failure'                 => array( array_merge( array_slice( $store_api, 0, 2 ), array( '[Store API #FAIL] Placing Order failed' ) ), '', 'failed' ),
+		);
+	}
+
+	#[\PHPUnit\Framework\Attributes\DataProvider( 'trace_outcomes' )]
+	public function test_trace_outcome_separates_finished_from_stuck_attempts( array $steps, string $status, string $expected ): void {
+		$trace = self::trace( $steps, $status );
+
+		self::assertSame( $expected, Lafka_Diagnostics::trace_outcome( $trace, $status ) );
+	}
+
+	public function test_finished_traces_are_never_indexed_and_are_hidden_unless_asked_for(): void {
+		$done  = self::trace( array( '[Shortcode #5] woocommerce_checkout_order_processed hook ran successfully', '[Shortcode #6A] Order payment processed successfully' ), 'processing', 'place-order-debug-dddddddd' );
+		$stuck = self::trace( array( '[Shortcode #1] Place Order flow initiated', '[Shortcode #2] Session updated with checkout data and totals calculated' ), '', 'place-order-debug-eeeeeeee' );
+
+		self::assertSame( 1, Lafka_Diagnostics::index_place_order_traces( array( $done, $stuck ) ) );
+		self::assertCount( 1, $this->logged );
+		self::assertStringContainsString( '[Shortcode #2]', $this->logged[0]['message'] );
+		self::assertNotContains( 'place-order-debug-dddddddd', (array) $this->options[ Lafka_Diagnostics::SEEN_TRACES_OPTION ] );
+
+		$visible = Lafka_Diagnostics::filter_traces( array( $done, $stuck ), false );
+		self::assertSame( array( 'place-order-debug-eeeeeeee' ), array_column( $visible, 'source' ) );
+		self::assertCount( 2, Lafka_Diagnostics::filter_traces( array( $done, $stuck ), true ) );
+	}
+
+	public function test_daily_job_resolves_incidents_recorded_for_finished_attempts(): void {
+		Lafka_Diagnostics::run_daily();
+
+		$resolve = array_values( array_filter( $this->wpdb->queries, static fn( $q ) => str_starts_with( $q, 'UPDATE' ) ) );
+		self::assertCount( 1, $resolve );
+		self::assertStringContainsString( "SET status = 'resolved'", $resolve[0] );
+		self::assertStringContainsString( "code = 'place_order_incomplete'", $resolve[0] );
+		self::assertStringContainsString( '[Shortcode #6', $resolve[0] );
+		self::assertStringContainsString( '[Store API #9', $resolve[0] );
 	}
 
 	// ─── Daily job ──────────────────────────────────────────────────────────
