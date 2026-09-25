@@ -86,7 +86,7 @@
 					window.sessionStorage.setItem( params.cart_hash_key, data.cart_hash );
 				}
 			}
-		} catch ( e ) {
+		} catch {
 			// Storage unavailable (private mode): WooCommerce re-fetches on the next page.
 		}
 		if ( typeof window.jQuery === 'function' ) {
