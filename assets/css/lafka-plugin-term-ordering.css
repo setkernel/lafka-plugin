@@ -7,7 +7,7 @@ table.wp-list-table tbody td.column-handle {
 
 table.wp-list-table tbody td.column-handle::before {
     content: '\f333';
-    font-family: Dashicons;
+    font-family: Dashicons, sans-serif;
     text-align: center;
     line-height: 1;
     color: #999;

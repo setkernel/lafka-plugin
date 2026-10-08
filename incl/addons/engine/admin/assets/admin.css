@@ -1,6 +1,8 @@
 /**
  * Lafka Addons Engine — admin editor styles.
  */
+.lafka-engine-options-table th { background: #f6f7f7; }
+
 .lafka-engine-admin .wp-list-table th { font-weight: 600; }
 
 .lafka-engine-edit .lafka-engine-form { max-width: 1100px; }
@@ -94,8 +96,6 @@
 .lafka-engine-options-table {
 	margin-top: 8px;
 }
-
-.lafka-engine-options-table th { background: #f6f7f7; }
 
 .lafka-engine-option-label-readonly {
 	display: inline-block;

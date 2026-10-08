@@ -698,8 +698,8 @@ html, body {
 
 	/* Reset colors for print */
 	body {
-		background: white;
-		color: black;
+		background: #fff;
+		color: #000;
 	}
 
 	.kds-board {
@@ -718,7 +718,7 @@ html, body {
 
 	.kds-column-header {
 		background: #333 !important;
-		color: white !important;
+		color: #fff !important;
 		-webkit-print-color-adjust: exact;
 		print-color-adjust: exact;
 	}
@@ -729,7 +729,7 @@ html, body {
 	}
 
 	.kds-card {
-		background: white;
+		background: #fff;
 		border: 1px solid #333;
 		break-inside: avoid;
 		margin-bottom: 10px;
@@ -743,7 +743,7 @@ html, body {
 	.kds-allergen,
 	.kds-special-instructions,
 	.kds-total {
-		color: black;
+		color: #000;
 	}
 
 	.kds-badge {

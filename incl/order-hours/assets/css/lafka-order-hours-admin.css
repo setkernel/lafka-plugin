@@ -8,11 +8,11 @@
 }
 
 .lafka-order-hours-current-time.open {
-    background-color: green;
+    background-color: #008000;
 }
 
 .lafka-order-hours-current-time.closed {
-    background-color: red;
+    background-color: #f00;
 }
 
 .lafka-order-hours-admin-wrap select {
@@ -24,10 +24,7 @@
     -moz-appearance: none;
     appearance: none;
     outline: none;
-    outline-color: currentcolor;
-    outline-style: none;
     outline-color: transparent;
-    outline-style: none;
     position: relative;
     z-index: 1;
     border-radius: 3px;

@@ -69,17 +69,6 @@ a.lafka-branch-delivery, a.lafka-branch-pickup, .lafka-branch-user-address, .laf
     text-transform: uppercase;
 }
 
-.lafka-branch-order-type a:hover {
-    color: #333;
-    background-color: #e1e1e1;
-}
-
-.lafka-branch-order-type a.lafka-selected {
-    background-color: #fff;
-    position: relative;
-    bottom: -2px;
-}
-
 .lafka-branch-user-address input#lafka_branch_select_user_address {
     width: 100%;
     margin: 8px 0 12px 0;
@@ -128,6 +117,17 @@ span.lafka-branch-select-image a {
     display: block;
 }
 
+.lafka-branch-order-type a:hover {
+    color: #333;
+    background-color: #e1e1e1;
+}
+
+.lafka-branch-order-type a.lafka-selected {
+    background-color: #fff;
+    position: relative;
+    bottom: -2px;
+}
+
 span.lafka-branch-select-image a img {
     margin-bottom: 8px;
     width: 100%;
@@ -146,7 +146,7 @@ a.lafka-branch-delivery, a.lafka-branch-pickup {
 
 a.lafka-branch-delivery::before, a.lafka-branch-pickup::before {
     display: inline-block;
-    font-family: Flaticon;
+    font-family: Flaticon, sans-serif;
     content: "\f11e";
     margin-right: 8px;
     font-size: 21px;
@@ -168,6 +168,10 @@ a.lafka-branch-pickup::before {
 
 h3.lafka-address-not-found, h3.lafka-address-marked {
     display: none;
+}
+
+form.checkout h3.lafka-address-not-found, form.checkout h3.lafka-address-marked {
+    opacity: 0;
 }
 
 .woocommerce form.checkout h3.lafka-address-not-found, .woocommerce form.checkout h3.lafka-address-marked {
@@ -211,6 +215,14 @@ h3.lafka-address-not-found, h3.lafka-address-marked {
     position: relative;
 }
 
+.cart-collaterals .lafka-change-branch {
+    margin-bottom: 25px;
+}
+
+body > div.widget.woocommerce.widget_shopping_cart .widget_shopping_cart_content .lafka-change-branch {
+    margin-top: 5px;
+}
+
 #products-wrapper .lafka-change-branch {
     width: 100%;
     max-width: 400px;
@@ -219,11 +231,7 @@ h3.lafka-address-not-found, h3.lafka-address-marked {
     margin-bottom: 20px;
 }
 
-body > div.widget.woocommerce.widget_shopping_cart .widget_shopping_cart_content .lafka-change-branch {
-    margin-top: 5px;
-}
-
-.cart-collaterals .lafka-change-branch, #order_review .lafka-change-branch {
+#order_review .lafka-change-branch {
     margin-bottom: 25px;
 }
 
@@ -272,7 +280,7 @@ a.lafka-change-branch-button {
 
 a.lafka-change-branch-button::before, .lafka-change-branch-button-select::before {
     display: block;
-    font-family: 'Font Awesome 6 Free';
+    font-family: 'Font Awesome 6 Free', sans-serif;
     font-weight: 900;
     content: "\f303";
     font-size: 10px;
@@ -322,7 +330,7 @@ a.lafka-change-branch-button:hover::before, .lafka-change-branch-button-select:h
 }
 
 .lafka-delivery-time-toggle::before {
-    font-family: 'Font Awesome 6 Free';
+    font-family: 'Font Awesome 6 Free', sans-serif;
     font-weight: 400;
     content: "\f017";
     display: inline-block;
@@ -363,7 +371,7 @@ a.lafka-change-branch-button:hover::before, .lafka-change-branch-button-select:h
 }
 
 .lafka-checkout-datetime-fields .lafka-datetime-clear::before {
-    font-family: 'Font Awesome 6 Free';
+    font-family: 'Font Awesome 6 Free', sans-serif;
     font-weight: 400;
     content: "\f057";
     display: block;
@@ -383,7 +391,7 @@ a.lafka-change-branch-button:hover::before, .lafka-change-branch-button-select:h
     color: #333;
 }
 
-form.checkout tr.woocommerce-shipping-totals, form.checkout tr.order-total, form.checkout h3.lafka-address-not-found, form.checkout h3.lafka-address-marked {
+form.checkout tr.woocommerce-shipping-totals, form.checkout tr.order-total {
     opacity: 0;
 }
 
@@ -402,7 +410,7 @@ form.checkout tr.woocommerce-shipping-totals, form.checkout tr.order-total, form
 }
 
 .lafka-estimated-time::before {
-    font-family: 'Font Awesome 6 Free';
+    font-family: 'Font Awesome 6 Free', sans-serif;
     font-weight: 400;
     content: "\f017";
     display: block;

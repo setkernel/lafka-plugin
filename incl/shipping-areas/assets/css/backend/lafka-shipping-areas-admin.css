@@ -21,10 +21,7 @@
     -moz-appearance: none;
     appearance: none;
     outline: none;
-    outline-color: currentcolor;
-    outline-style: none;
     outline-color: transparent;
-    outline-style: none;
     position: relative;
     z-index: 1;
     border-radius: 3px;
@@ -92,7 +89,7 @@ input.lafka-geocode-branch-button:hover {
 
 input.lafka-geocode-branch-button.lafka-geocode-branch-address-submit {
     background-color: #1a73e8;
-    color: white;
+    color: #fff;
 }
 
 input.lafka-geocode-branch-button.lafka-geocode-branch-address-submit:hover {
@@ -100,7 +97,7 @@ input.lafka-geocode-branch-button.lafka-geocode-branch-address-submit:hover {
 }
 
 input.lafka-geocode-branch-button.lafka-geocode-branch-address-clear {
-    background-color: white;
+    background-color: #fff;
     color: #1a73e8;
 }
 
@@ -114,7 +111,6 @@ input.lafka-geocode-branch-button.lafka-geocode-branch-address-clear:hover {
     border-radius: 2px;
     box-shadow: 0 1px 4px -1px rgba(0, 0, 0, 0.3);
     margin: 10px;
-    padding: 0 0.5em;
     overflow: hidden;
     padding: 1rem;
     font-size: medium;
@@ -140,7 +136,7 @@ td.column-lafka_order_type span {
 }
 
 td.column-lafka_order_type span::before {
-    font-family: 'Font Awesome 6 Free';
+    font-family: 'Font Awesome 6 Free', sans-serif;
     font-weight: 900;
     content: "\f48b";
     display: inline-block;
@@ -163,7 +159,7 @@ span.lafka-delivery-date, span.lafka-delivery-timeslot {
 }
 
 span.lafka-delivery-date::before, span.lafka-delivery-timeslot::before {
-    font-family: 'Font Awesome 6 Free';
+    font-family: 'Font Awesome 6 Free', sans-serif;
     font-weight: 900;
     content: "\f783";
     display: inline-block;
@@ -199,11 +195,11 @@ body.taxonomy-lafka_branch_location .term-description-wrap {
 }
 
 .lafka-order-hours-current-time.open {
-    background-color: green;
+    background-color: #008000;
 }
 
 .lafka-order-hours-current-time.closed {
-    background-color: red;
+    background-color: #f00;
 }
 
 .taxonomy-lafka_branch_location #col-left {
