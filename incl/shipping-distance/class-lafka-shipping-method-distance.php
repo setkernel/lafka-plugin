@@ -62,7 +62,14 @@ if ( ! class_exists( 'Lafka_Shipping_Method_Distance' ) && class_exists( 'WC_Shi
 		 * @return void
 		 */
 		public function init_form_fields() {
-			$threshold = function_exists( 'lafka_get_free_delivery_threshold' ) ? lafka_get_free_delivery_threshold() : 0.0;
+			// The threshold looks up the zone's methods, which builds this method again: stop that loop.
+			static $reading = false;
+			$threshold      = 0.0;
+			if ( ! $reading && function_exists( 'lafka_get_free_delivery_threshold' ) ) {
+				$reading   = true;
+				$threshold = lafka_get_free_delivery_threshold();
+				$reading   = false;
+			}
 			if ( $threshold > 0 ) {
 				/* translators: %s: formatted free-delivery threshold. */
 				$free_note = sprintf( __( 'The store\'s free-delivery threshold is currently %s (WooCommerce > Settings > Restaurant > Promotions).', 'lafka-plugin' ), wp_strip_all_tags( wc_price( $threshold ) ) );
