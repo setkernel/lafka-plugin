@@ -114,6 +114,9 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
   `docs/OPERATOR_GUIDE.md`.
 
 ### Removed
+- The Magnific Popup dependency (loaded from the theme's directory, so the location
+  popup failed under any other theme): the popup is a native `<dialog>`. Also the
+  unused jQuery UI dialog stylesheet it enqueued.
 - **All automated tests and test tooling**: `tests/` (PHPUnit + node:test suites),
   `phpunit.xml.dist`, `composer test` / `npm test`, the `phpunit/phpunit`,
   `brain/monkey` and `linkedom` dev dependencies, and the test-only seams
@@ -197,6 +200,20 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
   applies (`woocommerce_product_add_to_cart_text` / `_url` stay).
 
 ### Fixed
+- **A delivery order no longer silently becomes a pickup.** On the classic
+  checkout, a customer who chose Delivery and typed an address that brought no
+  delivery rate (out of range, or the distance lookup failed) got the only rate
+  left, Pickup, and the order went through as a pickup. The checkout now refuses
+  it and says to check the address or choose Pickup ("Collect it myself instead"
+  on the form). Choosing Delivery on the checkout itself opens the address.
+- Address lookups (`lafka/v1/geocode`) were rate-limited by values the visitor
+  controls (session cookie, browser string, forwarded-for IP), so the per-visitor
+  limit could be bypassed and the site-wide cap used up; they are now limited per
+  account, else per connection IP.
+- The cart drawer could suggest a Deal as a one-tap extra (then refuse the add).
+- The location popup's Start Order read accent-on-accent; it is now a button.
+- The order-hours schedule editor used jQuery APIs removed in jQuery 4
+  (`$.isArray`, `$.isFunction`); patched in the vendored jquery.schedule.
 - A branch whose map location was cleared kept its old location.
 - "Pick the delivery map only when the address cannot be found" with "Mandatory"
   refused every order whose address was found.
