@@ -261,6 +261,28 @@ if ( ! class_exists( 'Lafka_Module_Registry' ) ) {
 				)
 			);
 
+			// ---- Tips (a WooCommerce yes/no option; the settings live with it) ----
+			self::register(
+				new Lafka_Module(
+					array(
+						'id'              => 'tips',
+						'label'           => esc_html__( 'Tips', 'lafka-plugin' ),
+						'description'     => esc_html__( 'Suggested tips and a custom amount at checkout, added as a separate non-taxable line.', 'lafka-plugin' ),
+						'category'        => 'ordering',
+						'storage'         => 'option',
+						'default_enabled' => false,
+						'get_enabled'     => static function () {
+							return 'yes' === get_option( 'lafka_tips_enabled', 'no' );
+						},
+						'set_enabled'     => static function ( bool $enabled ) {
+							update_option( 'lafka_tips_enabled', $enabled ? 'yes' : 'no' );
+						},
+						'settings_path'   => 'admin.php?page=wc-settings&tab=lafka_restaurant&section=tips',
+						'docs_slug'       => 'tips',
+					)
+				)
+			);
+
 			// ---- New-order alerts (a checkbox flag in the 'lafka' option array) ----
 			// Stored as a '1'/'0' checkbox (NOT the 'enabled'/'disabled' sentinel the
 			// five flags above use), so it gets bespoke truthy getter/setter rather

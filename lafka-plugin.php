@@ -766,6 +766,9 @@ if ( LAFKA_PLUGIN_IS_WOOCOMMERCE ) {
 	Lafka_Pickup_Checkout::init();
 	require_once plugin_dir_path( __FILE__ ) . 'incl/checkout/class-lafka-payment-labels.php';
 	Lafka_Payment_Labels::init();
+	// Tips at checkout (WooCommerce → Settings → Restaurant → Tips; off by default).
+	require_once plugin_dir_path( __FILE__ ) . 'incl/checkout/class-lafka-tips.php';
+	Lafka_Tips::init();
 
 	/*
 	 * Block Cart/Checkout UI (NX1-04b). Builds on the NX1-04a Store API contract:

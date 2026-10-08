@@ -95,6 +95,7 @@ if ( ! function_exists( 'lafka_define_wc_settings_restaurant_class' ) ) {
 					'social'     => __( 'Social Profiles', 'lafka-plugin' ),
 					'search'     => __( 'Search & AI', 'lafka-plugin' ),
 					'promotions' => __( 'Promotions', 'lafka-plugin' ),
+					'tips'       => __( 'Tips', 'lafka-plugin' ),
 				);
 			}
 
@@ -110,6 +111,8 @@ if ( ! function_exists( 'lafka_define_wc_settings_restaurant_class' ) ) {
 						return $this->get_search_settings();
 					case 'promotions':
 						return $this->get_promotions_settings();
+					case 'tips':
+						return $this->get_tips_settings();
 					default:
 						return $this->get_hours_settings();
 				}
@@ -445,6 +448,63 @@ if ( ! function_exists( 'lafka_define_wc_settings_restaurant_class' ) ) {
 			 *
 			 * @return array
 			 */
+			/**
+			 * Tips at checkout (Lafka_Tips).
+			 *
+			 * @return array
+			 */
+			private function get_tips_settings() {
+				return array(
+					array(
+						'title' => __( 'Tips', 'lafka-plugin' ),
+						'type'  => 'title',
+						'desc'  => esc_html__( 'Let customers add a tip at checkout, on the classic and the block checkout. The tip is a separate, non-taxable line on the order.', 'lafka-plugin' ),
+						'id'    => 'lafka_tips_title',
+					),
+					array(
+						'title'   => __( 'Offer tips', 'lafka-plugin' ),
+						'id'      => 'lafka_tips_enabled',
+						'type'    => 'checkbox',
+						'default' => 'no',
+					),
+					array(
+						'title'    => __( 'Suggested tips (%)', 'lafka-plugin' ),
+						'desc_tip' => __( 'Comma-separated percentages of the order\'s items, e.g. 10,15,20.', 'lafka-plugin' ),
+						'id'       => 'lafka_tips_presets',
+						'type'     => 'text',
+						'default'  => '10,15,20',
+					),
+					array(
+						'title'   => __( 'Custom amount', 'lafka-plugin' ),
+						'desc'    => __( 'Customers can enter their own amount.', 'lafka-plugin' ),
+						'id'      => 'lafka_tips_custom',
+						'type'    => 'checkbox',
+						'default' => 'yes',
+					),
+					array(
+						'title'   => __( 'Offer on', 'lafka-plugin' ),
+						'id'      => 'lafka_tips_scope',
+						'type'    => 'select',
+						'default' => 'all',
+						'options' => array(
+							'all'      => __( 'Every order', 'lafka-plugin' ),
+							'delivery' => __( 'Delivery orders only', 'lafka-plugin' ),
+						),
+					),
+					array(
+						'title'       => __( 'Label', 'lafka-plugin' ),
+						'id'          => 'lafka_tips_label',
+						'type'        => 'text',
+						'default'     => '',
+						'placeholder' => __( 'Tip', 'lafka-plugin' ),
+					),
+					array(
+						'type' => 'sectionend',
+						'id'   => 'lafka_tips_end',
+					),
+				);
+			}
+
 			private function get_promotions_settings() {
 				return array(
 					array(
