@@ -283,7 +283,7 @@ class Lafka_Branch_Locations {
 					<input type="hidden" name="lafka_user_postcode" id="lafka_user_postcode"/>
 					<input type="hidden" name="lafka_user_geocoded_location" id="lafka_user_geocoded_location"/>
 					<?php wp_nonce_field( 'lafka_select_branch' ); ?>
-					<a class="lafka-branch-select-submit button" href="javascript:"><?php esc_html_e( 'Start Order', 'lafka-plugin' ); ?></a>
+					<button type="button" class="lafka-branch-select-submit button"><?php esc_html_e( 'Start Order', 'lafka-plugin' ); ?></button>
 				</form>
 			<?php endif; ?>
 		</div>

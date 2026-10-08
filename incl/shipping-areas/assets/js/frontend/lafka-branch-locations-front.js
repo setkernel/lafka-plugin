@@ -374,7 +374,7 @@
 			openPopup();
 		}
 
-		body().on( 'click', 'a.lafka-branch-select-submit', function () {
+		body().on( 'click', '.lafka-branch-select-submit', function () {
 			window.sessionStorage.removeItem( 'lafka_branch_selection_closed' );
 			const modal = body().find( '#lafka_select_branch_modal' );
 			const $form = $( this ).closest( 'form' );
