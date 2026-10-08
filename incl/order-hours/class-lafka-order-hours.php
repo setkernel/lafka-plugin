@@ -570,6 +570,11 @@ class Lafka_Order_Hours {
 				// non-purchasable product cannot be added by ANY path and WC stops
 				// rendering its add-to-cart form. Backs the add_to_cart_validation gate.
 				add_filter( 'woocommerce_is_purchasable', '__return_false' );
+				// ...but a cart built while open survives closing time: when
+				// WooCommerce restores it from the session, each item is judged
+				// on its own purchasability, not the closed-store block (the
+				// checkout gate still stops the order until we open).
+				add_filter( 'woocommerce_cart_item_is_purchasable', array( __CLASS__, 'keep_cart_item_when_closed' ), 10, 4 );
 
 				// (B) Card swap on WC's single-product hook (classic / quick-view).
 				// The redesigned PDP never fires woocommerce_single_product_summary;
@@ -580,6 +585,28 @@ class Lafka_Order_Hours {
 				add_action( 'woocommerce_single_product_summary', array( $this, 'echo_closed_store_message' ), 30 );
 			}
 		}
+	}
+
+	/**
+	 * woocommerce_cart_item_is_purchasable while closed: the item's real
+	 * purchasability, ignoring the closed-store block, so restoring a cart
+	 * from the session does not empty it at closing time.
+	 *
+	 * @param bool       $purchasable Purchasable as WooCommerce sees it now.
+	 * @param string     $key         Cart item key.
+	 * @param array      $values      Cart item data.
+	 * @param WC_Product $product     The item's product.
+	 * @return bool
+	 */
+	public static function keep_cart_item_when_closed( $purchasable, $key, $values, $product ) {
+		if ( $purchasable || ! $product instanceof WC_Product ) {
+			return $purchasable;
+		}
+		remove_filter( 'woocommerce_is_purchasable', '__return_false' );
+		$real = $product->is_purchasable();
+		add_filter( 'woocommerce_is_purchasable', '__return_false' );
+
+		return $real;
 	}
 
 	/**
