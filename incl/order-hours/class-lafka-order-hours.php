@@ -519,12 +519,11 @@ class Lafka_Order_Hours {
 
 	public function handle_shop_status() {
 		// Canonical server-side ordering gate. The UI hooks inside the
-		// is_shop_open() branch below are cosmetic ONLY: they swap the proceed/
-		// place-order button HTML and print a "closed" card. A replayed or stale
-		// classic place-order POST (the form is still rendered, only the button
-		// markup is swapped) and the entire Cart/Checkout Blocks + Store API path
-		// (which ignores woocommerce_order_button_html) bypass that UI, so the
-		// server must enforce closure itself. These validation hooks are the real
+		// is_shop_open() branch below are cosmetic ONLY: they print a "closed" card
+		// next to WooCommerce's own buttons, which stay in place. A replayed or
+		// stale classic place-order POST and the entire Cart/Checkout Blocks +
+		// Store API path bypass that UI, so the server must enforce closure
+		// itself. These validation hooks are the real
 		// gate; each re-checks is_shop_open() (per active branch/session) at fire
 		// time, so a closed store can never accept an order — and, when the
 		// operator opts into lafka_order_hours_disable_add_to_cart, can never
@@ -553,60 +552,17 @@ class Lafka_Order_Hours {
 				return;
 			}
 
-			remove_action( 'woocommerce_proceed_to_checkout', 'woocommerce_button_proceed_to_checkout', 20 );
-			add_action( 'woocommerce_proceed_to_checkout', array( $this, 'echo_closed_store_message' ), 20 );
-
-			remove_action( 'woocommerce_widget_shopping_cart_buttons', 'woocommerce_widget_shopping_cart_proceed_to_checkout', 20 );
-			add_action( 'woocommerce_widget_shopping_cart_buttons', array( $this, 'echo_closed_store_message' ), 20 );
-
+			// Closed and not taking orders ahead: say so where the customer is about
+			// to commit, and leave WooCommerce's own buttons in place (express-pay
+			// and other extensions hang on them). The theme dims them from the
+			// lafka-store-closed body class; the gates above refuse the order and
+			// any add-to-cart (when the operator opted in), through the cart's
+			// own validation, the classic checkout and the Store API.
+			add_action( 'woocommerce_proceed_to_checkout', array( $this, 'echo_closed_store_message' ), 10 );
+			add_action( 'woocommerce_widget_shopping_cart_before_buttons', array( $this, 'echo_closed_store_message' ), 10 );
+			add_action( 'woocommerce_before_checkout_form', array( $this, 'echo_closed_store_message' ), 5 );
 			add_action( 'woocommerce_after_add_to_cart_button', array( $this, 'echo_closed_store_message' ), 99 );
-			add_filter( 'woocommerce_order_button_html', array( $this, 'get_closed_store_message' ) );
-
-			// v9.7.26: when the operator opts into disable_add_to_cart, hard-block
-			// the add-to-cart and surface the closed-store card. Without this the
-			// option was a no-op (only added a body class). See the (A)/(B) notes.
-			if ( ! empty( self::$lafka_order_hours_options['lafka_order_hours_disable_add_to_cart'] ) ) {
-				// (A) Authoritative, template-agnostic server-side block: a
-				// non-purchasable product cannot be added by ANY path and WC stops
-				// rendering its add-to-cart form. Backs the add_to_cart_validation gate.
-				add_filter( 'woocommerce_is_purchasable', '__return_false' );
-				// ...but a cart built while open survives closing time: when
-				// WooCommerce restores it from the session, each item is judged
-				// on its own purchasability, not the closed-store block (the
-				// checkout gate still stops the order until we open).
-				add_filter( 'woocommerce_cart_item_is_purchasable', array( __CLASS__, 'keep_cart_item_when_closed' ), 10, 4 );
-
-				// (B) Card swap on WC's single-product hook (classic / quick-view).
-				// The redesigned PDP never fires woocommerce_single_product_summary;
-				// it gates its own form on is_shop_open() and renders the card inline
-				// via the now-static echo_closed_store_message(), so this is a no-op there.
-				remove_action( 'woocommerce_after_add_to_cart_button', array( $this, 'echo_closed_store_message' ), 99 );
-				remove_action( 'woocommerce_single_product_summary', 'woocommerce_template_single_add_to_cart', 30 );
-				add_action( 'woocommerce_single_product_summary', array( $this, 'echo_closed_store_message' ), 30 );
-			}
 		}
-	}
-
-	/**
-	 * woocommerce_cart_item_is_purchasable while closed: the item's real
-	 * purchasability, ignoring the closed-store block, so restoring a cart
-	 * from the session does not empty it at closing time.
-	 *
-	 * @param bool       $purchasable Purchasable as WooCommerce sees it now.
-	 * @param string     $key         Cart item key.
-	 * @param array      $values      Cart item data.
-	 * @param WC_Product $product     The item's product.
-	 * @return bool
-	 */
-	public static function keep_cart_item_when_closed( $purchasable, $key, $values, $product ) {
-		if ( $purchasable || ! $product instanceof WC_Product ) {
-			return $purchasable;
-		}
-		remove_filter( 'woocommerce_is_purchasable', '__return_false' );
-		$real = $product->is_purchasable();
-		add_filter( 'woocommerce_is_purchasable', '__return_false' );
-
-		return $real;
 	}
 
 	/**
@@ -882,10 +838,8 @@ class Lafka_Order_Hours {
 	 * Render the customer-facing "store closed" card.
 	 *
 	 * Static so theme templates can render it directly — the redesigned PDP
-	 * (lafka-theme/partials/pdp-summary.php) gates its own add-to-cart form on
-	 * is_shop_open() and calls Lafka_Order_Hours::echo_closed_store_message()
-	 * inline, because it never fires the WC single-product hooks the plugin
-	 * attaches this card to. Also used as an instance-array action callback
+	 * (lafka-theme/partials/pdp-buybox.php) swaps its add-to-cart form for the
+	 * card when is_add_to_cart_blocked() says so. Also used as an instance-array action callback
 	 * ( array( $this, 'echo_closed_store_message' ) ), which PHP resolves to the
 	 * same static method. Uses only self:: references — no $this.
 	 *
@@ -929,13 +883,6 @@ class Lafka_Order_Hours {
 			?>
 		</div>
 		<?php
-	}
-
-	public function get_closed_store_message() {
-		ob_start();
-		self::echo_closed_store_message();
-
-		return ob_get_clean();
 	}
 }
 
