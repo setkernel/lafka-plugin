@@ -302,7 +302,9 @@
 	} );
 
 	$( function () {
-		$( 'form.checkout' ).on( 'keydown', '.address-field input', forgetPin );
+		// Only a real edit of the address forgets the pin (typing, paste,
+		// autofill); Tab, arrows and other navigation keys leave it alone.
+		$( 'form.checkout' ).on( 'input', '.address-field input', forgetPin );
 		$( 'form.checkout' ).on( 'change', '.address-field select', forgetPin );
 	} );
 } )( window.jQuery, window, document );
