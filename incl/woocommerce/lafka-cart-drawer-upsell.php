@@ -36,14 +36,17 @@ if ( ! function_exists( 'lafka_cart_drawer_get_upsell_ids' ) ) {
 				}
 			}
 		}
-		$deal_cats  = lafka_cart_drawer_upsell_deal_category_ids();
-		$pool       = array(); // id => whether its category is new to the cart.
-		$is_addable = static function ( $p ) use ( $deal_cats ) {
+		$deal_cats = lafka_cart_drawer_upsell_deal_category_ids();
+		$pool      = array(); // id => whether its category is new to the cart.
+		// Closed and not taking add-to-cart: nothing to suggest (the products stay
+		// purchasable in WooCommerce; the order-hours gate refuses the add).
+		$cart_blocked = class_exists( 'Lafka_Order_Hours' ) && Lafka_Order_Hours::is_add_to_cart_blocked();
+		$is_addable   = static function ( $p ) use ( $deal_cats, $cart_blocked ) {
 			// One-tap add needs a purchasable, in-stock product WooCommerce can
 			// add from a list (drinks / sides / garlic fingers): variable products
 			// and Deals need their page. Deals and combos are not "a little
 			// extra" (O-23).
-			if ( ! $p || ! $p->is_visible() || ! $p->is_purchasable() || ! $p->is_in_stock() || ! $p->supports( 'ajax_add_to_cart' ) ) {
+			if ( ! $p || ! $p->is_visible() || ! $p->is_purchasable() || ! $p->is_in_stock() || ! $p->supports( 'ajax_add_to_cart' ) || $cart_blocked ) {
 				return false;
 			}
 			foreach ( array( 'bundle', 'grouped', 'composite', 'woosb' ) as $type ) {
@@ -55,7 +58,7 @@ if ( ! function_exists( 'lafka_cart_drawer_get_upsell_ids' ) ) {
 
 			return array() === array_intersect( $cats, $deal_cats );
 		};
-		$consider   = static function ( $id ) use ( &$pool, $in_cart, $cart_cats, $is_addable ) {
+		$consider     = static function ( $id ) use ( &$pool, $in_cart, $cart_cats, $is_addable ) {
 			$id = (int) $id;
 			if ( ! $id || in_array( $id, $in_cart, true ) || isset( $pool[ $id ] ) || count( $pool ) >= 8 ) {
 				return;
@@ -135,7 +138,7 @@ if ( ! function_exists( 'lafka_cart_drawer_upsell_deal_category_ids' ) ) {
 	 */
 	function lafka_cart_drawer_upsell_deal_category_ids(): array {
 		$ids  = array();
-		$deal = function_exists( 'lafka_counter_deals_term_id' ) ? (int) lafka_counter_deals_term_id() : 0;
+		$deal = function_exists( 'lafka_get_deals_category_id' ) ? (int) lafka_get_deals_category_id() : 0;
 		if ( $deal > 0 ) {
 			$ids[] = $deal;
 		}

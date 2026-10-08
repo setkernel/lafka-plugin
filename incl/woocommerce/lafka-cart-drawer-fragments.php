@@ -26,6 +26,15 @@
  *
  * Drawer markup partial lives in lafka-theme/partials/cart-drawer.php (W4-T14).
  *
+ * The drawer fires WooCommerce's mini-cart actions where core's mini-cart does
+ * (woocommerce_before_mini_cart_contents / woocommerce_mini_cart_contents around
+ * the rows here; the widget_shopping_cart button actions and
+ * woocommerce_before_mini_cart / woocommerce_after_mini_cart in the drawer
+ * partials), and its row details go through the cart-item filters core's
+ * mini-cart uses (woocommerce_widget_cart_item_visible, _cart_item_name,
+ * _cart_item_thumbnail, _cart_item_subtotal), so extensions that hook the
+ * mini-cart work here.
+ *
  * @package Lafka\Plugin\WooCommerce
  * @since   8.12.0
  */
@@ -60,12 +69,17 @@ if ( ! function_exists( 'lafka_cart_drawer_render_item' ) ) {
 		}
 
 		$product = $cart_item['data'] ?? null;
-		if ( ! $product ) {
+		if ( ! $product || ! $product->exists() || $cart_item['quantity'] <= 0 ) {
+			return;
+		}
+		// Bundles, composites and the like hide their child lines here exactly as
+		// they do in core's mini-cart.
+		if ( ! apply_filters( 'woocommerce_widget_cart_item_visible', true, $cart_item, $cart_item_key ) ) {
 			return;
 		}
 		$name  = apply_filters( 'woocommerce_cart_item_name', $product->get_name(), $cart_item, $cart_item_key );
-		$thumb = $product->get_image( 'woocommerce_gallery_thumbnail', array( 'loading' => 'lazy' ) );
-		$price = lafka_cart_drawer_line_price_html( $cart_item );
+		$thumb = apply_filters( 'woocommerce_cart_item_thumbnail', $product->get_image( 'woocommerce_gallery_thumbnail', array( 'loading' => 'lazy' ) ), $cart_item, $cart_item_key );
+		$price = lafka_cart_drawer_line_price_html( $cart_item, $cart_item_key );
 
 		// GX4: the theme opted in to the stepper row (theme support / filter).
 		if ( lafka_cart_drawer_stepper_enabled() ) {
@@ -90,22 +104,60 @@ if ( ! function_exists( 'lafka_cart_drawer_render_item' ) ) {
 
 if ( ! function_exists( 'lafka_cart_drawer_line_price_html' ) ) {
 	/**
-	 * A drawer line's price from the cart's calculated line totals, so the
-	 * lines always add up to the drawer subtotal: discounts (a BOGO deal, a
-	 * coupon) show as the original price struck through before the price
-	 * paid. WooCommerce's get_product_subtotal() is price × quantity from the
-	 * product, which on a page load still holds the pre-deal price (the deal
-	 * is applied inside calculate_totals), so the lines disagreed with the
-	 * subtotal. Falls back to it when the item carries no calculated totals.
+	 * A drawer line's price, through WooCommerce's own cart-item pipeline:
+	 * WC_Cart::get_product_subtotal() run through woocommerce_cart_item_subtotal,
+	 * the filter every cart template and extension uses. While a row is being
+	 * drawn, lafka_cart_drawer_paid_price_html() (priority 5 on that filter)
+	 * swaps the base value for the line's calculated totals, so the lines always
+	 * add up to the drawer subtotal and a discount (a BOGO deal, a coupon) shows
+	 * as the original price struck through before the price paid; filters at
+	 * priority 10 and later (subscriptions, bookings, "from" prices) still apply.
 	 *
-	 * @param array<string,mixed> $cart_item WC cart-item array.
+	 * @param array<string,mixed> $cart_item     WC cart-item array.
+	 * @param string              $cart_item_key Cart-item key.
 	 * @return string Price HTML.
 	 */
-	function lafka_cart_drawer_line_price_html( array $cart_item ): string {
+	function lafka_cart_drawer_line_price_html( array $cart_item, string $cart_item_key = '' ): string {
 		$cart = function_exists( 'WC' ) && WC() && isset( WC()->cart ) ? WC()->cart : null;
-		if ( ! isset( $cart_item['line_total'], $cart_item['line_subtotal'] ) || ! function_exists( 'wc_price' ) ) {
-			return is_object( $cart ) ? (string) $cart->get_product_subtotal( $cart_item['data'], $cart_item['quantity'] ) : '';
+		if ( ! is_object( $cart ) ) {
+			return '';
 		}
+
+		$GLOBALS['lafka_cart_drawer_row'] = true;
+		$html                             = (string) apply_filters(
+			'woocommerce_cart_item_subtotal',
+			$cart->get_product_subtotal( $cart_item['data'], $cart_item['quantity'] ),
+			$cart_item,
+			$cart_item_key
+		);
+		unset( $GLOBALS['lafka_cart_drawer_row'] );
+
+		return $html;
+	}
+}
+
+if ( ! function_exists( 'lafka_cart_drawer_paid_price_html' ) ) {
+	add_filter( 'woocommerce_cart_item_subtotal', 'lafka_cart_drawer_paid_price_html', 5, 2 );
+	/**
+	 * woocommerce_cart_item_subtotal, drawer rows only: the price paid for the
+	 * line from the cart's calculated totals, with the original struck through
+	 * when a deal lowered it. WooCommerce's get_product_subtotal() is price x
+	 * quantity from the product, which on a page load still holds the pre-deal
+	 * price (the deal is applied inside calculate_totals). Falls back to
+	 * WooCommerce's value when the item carries no calculated totals.
+	 *
+	 * @param string              $html      WooCommerce's subtotal HTML.
+	 * @param array<string,mixed> $cart_item WC cart-item array.
+	 * @return string
+	 */
+	function lafka_cart_drawer_paid_price_html( $html, $cart_item ) {
+		if ( empty( $GLOBALS['lafka_cart_drawer_row'] ) || ! is_array( $cart_item ) ) {
+			return $html;
+		}
+		if ( ! isset( $cart_item['line_total'], $cart_item['line_subtotal'] ) || ! function_exists( 'wc_price' ) ) {
+			return $html;
+		}
+		$cart = function_exists( 'WC' ) && WC() && isset( WC()->cart ) ? WC()->cart : null;
 
 		$incl     = is_object( $cart ) && method_exists( $cart, 'display_prices_including_tax' ) && $cart->display_prices_including_tax();
 		$subtotal = (float) $cart_item['line_subtotal'];
@@ -121,7 +173,7 @@ if ( ! function_exists( 'lafka_cart_drawer_line_price_html' ) ) {
 			$original *= 1 + ( (float) ( $cart_item['line_subtotal_tax'] ?? 0 ) / $subtotal );
 		}
 
-		$html = ( $original - $paid > 0.005 && function_exists( 'wc_format_sale_price' ) )
+		$paid_html = ( $original - $paid > 0.005 && function_exists( 'wc_format_sale_price' ) )
 			? wc_format_sale_price( $original, $paid )
 			: wc_price( $paid );
 
@@ -132,7 +184,33 @@ if ( ! function_exists( 'lafka_cart_drawer_line_price_html' ) ) {
 		 * @param string              $html      Price HTML.
 		 * @param array<string,mixed> $cart_item Cart item.
 		 */
-		return (string) apply_filters( 'lafka_cart_drawer_line_price_html', $html, $cart_item );
+		return (string) apply_filters( 'lafka_cart_drawer_line_price_html', $paid_html, $cart_item );
+	}
+}
+
+if ( ! function_exists( 'lafka_cart_drawer_render_items' ) ) {
+	/**
+	 * The drawer's items list, ul.lafka-cart-drawer__items (the WC fragment
+	 * target): the rows, or the empty state, inside core's mini-cart item
+	 * actions. One renderer for the drawer partials and the AJAX fragment.
+	 *
+	 * @since 10.4.0
+	 * @return void
+	 */
+	function lafka_cart_drawer_render_items(): void {
+		echo '<ul class="lafka-cart-drawer__items">';
+		/** This action is documented in WooCommerce's cart/mini-cart.php. */
+		do_action( 'woocommerce_before_mini_cart_contents' );
+		if ( ! function_exists( 'WC' ) || ! WC()->cart || WC()->cart->is_empty() ) {
+			lafka_cart_drawer_render_item();
+		} else {
+			foreach ( WC()->cart->get_cart() as $cart_item_key => $cart_item ) {
+				lafka_cart_drawer_render_item( (string) $cart_item_key, $cart_item );
+			}
+		}
+		/** This action is documented in WooCommerce's cart/mini-cart.php. */
+		do_action( 'woocommerce_mini_cart_contents' );
+		echo '</ul>';
 	}
 }
 
@@ -266,21 +344,13 @@ if ( ! function_exists( 'lafka_cart_drawer_render_total' ) ) {
 			<strong><?php echo wp_kses_post( wc_price( $shown ) ); ?></strong>
 		</div>
 		<?php
-		// SSOT: resolve the free-delivery threshold through the canonical
-		// resolver so the drawer hint can never disagree with the amount the
-		// shipping rule (lafka_free_delivery_apply_rates) actually enforces. The
-		// resolver walks the operator option -> promotions knob -> Customizer
-		// theme_mods and applies the canonical 'lafka_free_delivery_threshold'
-		// filter. Fall back to the shared theme_mod (0 = disabled, no progress
-		// rendered) only when the plugin isn't loaded.
-		$threshold = function_exists( 'lafka_get_free_delivery_threshold' )
-			? lafka_get_free_delivery_threshold()
-			: (float) get_theme_mod( 'lafka_pdp_free_delivery_threshold', 0 );
-		// Back-compat (deprecated): re-apply the legacy
-		// 'lafka_pdp_free_delivery_threshold' filter on top of the resolved value
-		// so existing child overrides keyed to that name keep working until they
-		// migrate to the canonical 'lafka_free_delivery_threshold' filter.
-		$threshold = (float) apply_filters( 'lafka_pdp_free_delivery_threshold', (float) $threshold );
+		// SSOT: the one free-delivery threshold accessor (the zone's Free Shipping
+		// amount, else the operator option), so the drawer hint can never disagree
+		// with the rule the shipping methods enforce. 0 = disabled, no progress.
+		$threshold = lafka_get_free_delivery_threshold();
+		// Deprecated: child overrides keyed to the legacy filter keep working
+		// until they move to 'lafka_free_delivery_threshold'.
+		$threshold = (float) apply_filters_deprecated( 'lafka_pdp_free_delivery_threshold', array( (float) $threshold ), '10.4.0', 'lafka_free_delivery_threshold' );
 
 		// Threshold disabled — render no progress component (matches the
 		// free-delivery-progress.php gate). The .lafka-cart-drawer__total
@@ -345,15 +415,7 @@ if ( ! function_exists( 'lafka_pdp_cart_drawer_fragments' ) ) {
 		// Items list — render through the same callable the theme partial uses
 		// on initial load (SSOT), so the AJAX swap is byte-identical.
 		ob_start();
-		echo '<ul class="lafka-cart-drawer__items">';
-		if ( WC()->cart->is_empty() ) {
-			lafka_cart_drawer_render_item();
-		} else {
-			foreach ( WC()->cart->get_cart() as $cart_item_key => $cart_item ) {
-				lafka_cart_drawer_render_item( (string) $cart_item_key, $cart_item );
-			}
-		}
-		echo '</ul>';
+		lafka_cart_drawer_render_items();
 		$fragments['ul.lafka-cart-drawer__items'] = (string) ob_get_clean();
 
 		// Subtotal + free-delivery total — same callable as initial render.
