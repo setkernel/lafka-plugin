@@ -1049,12 +1049,10 @@ function lafka_plugin_after_plugins_loaded() {
 	}
 }
 
-// C-10: hook on `plugins_loaded` (priority 10) so the text domain is available
-// before `init` fires. CPT/taxonomy labels are registered at `init` priority 5
-// in this plugin, so loading the text domain at `init` priority 10 was too late
-// — non-default-locale labels rendered untranslated. `plugins_loaded` runs
-// strictly before `init`, fixing the ordering.
-add_action( 'plugins_loaded', 'lafka_load_plugin_text_domain' );
+// Load the text domain at `init` priority 0: WordPress 6.7+ flags any
+// translation loaded before `init`, and CPT/taxonomy labels register at
+// `init` priority 5, so priority 0 keeps them translated.
+add_action( 'init', 'lafka_load_plugin_text_domain', 0 );
 if ( ! function_exists( 'lafka_load_plugin_text_domain' ) ) {
 	function lafka_load_plugin_text_domain() {
 		load_plugin_textdomain( 'lafka-plugin', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );

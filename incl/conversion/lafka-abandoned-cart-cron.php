@@ -297,6 +297,8 @@ if ( function_exists( 'add_action' ) ) {
 	// exception is logged to the `cron` channel instead of killing the cron run.
 	add_action( 'lafka_check_abandoned_carts', function_exists( 'lafka_guarded' ) ? lafka_guarded( 'lafka_ac_run_check' ) : 'lafka_ac_run_check' );
 	add_action( 'lafka_cleanup_abandoned_carts', function_exists( 'lafka_guarded' ) ? lafka_guarded( 'lafka_ac_run_cleanup' ) : 'lafka_ac_run_cleanup' );
-	// Self-heal — if either event got de-scheduled, re-register on plugins_loaded.
-	add_action( 'plugins_loaded', 'lafka_ac_schedule_events', 30 );
+	// Self-heal — if either event got de-scheduled, re-register. On init, not
+	// plugins_loaded: scheduling reads wp_get_schedules(), whose labels are
+	// translated, and translating before init triggers a core notice.
+	add_action( 'init', 'lafka_ac_schedule_events', 30 );
 }
