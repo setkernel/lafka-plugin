@@ -317,6 +317,7 @@ if ( ! class_exists( 'Lafka_CLI_Seed_Demo' ) ) {
 			$this->make_store_live();
 			$this->seed_categories( $fixtures, $manifest );
 			$this->seed_products( $fixtures, $manifest );
+			$this->seed_deals( $fixtures, $manifest );
 			$this->seed_addon_groups( $fixtures, $manifest );
 			$this->write_business_info( $fixtures );
 			$this->write_order_hours( $fixtures );
@@ -537,6 +538,60 @@ if ( ! class_exists( 'Lafka_CLI_Seed_Demo' ) ) {
 				$manifest = self::record( $manifest, 'products', $product_data['slug'], $product_id );
 			}
 			WP_CLI::log( sprintf( 'Seeded %d products.', count( $fixtures['products'] ) ) );
+		}
+
+		/**
+		 * Seed the pick-your-items deals (when the Deals module is on). Slot
+		 * categories are fixture slugs, resolved to the seeded category ids.
+		 *
+		 * @param array<string,mixed> $fixtures Fixture data.
+		 * @param array<string,mixed> $manifest Manifest (by reference).
+		 * @return void
+		 */
+		private function seed_deals( array $fixtures, array &$manifest ): void {
+			if ( ! class_exists( 'WC_Product_Lafka_Deal' ) || empty( $fixtures['deals'] ) ) {
+				return;
+			}
+			foreach ( $fixtures['deals'] as $data ) {
+				$existing = (int) wc_get_product_id_by_sku( $data['sku'] );
+				if ( $existing > 0 ) {
+					wp_delete_post( $existing, true );
+				}
+				$slots = array();
+				foreach ( $data['slots'] as $slot ) {
+					$slot['categories'] = array_values(
+						array_filter(
+							array_map(
+								static function ( $slug ) use ( $manifest ) {
+									return self::recorded_id( $manifest, 'categories', (string) $slug );
+								},
+								$slot['categories']
+							)
+						)
+					);
+					$slots[]            = $slot;
+				}
+				$deal = new WC_Product_Lafka_Deal();
+				$deal->set_name( $data['name'] );
+				$deal->set_slug( $data['slug'] );
+				$deal->set_sku( $data['sku'] );
+				$deal->set_status( 'publish' );
+				$deal->set_regular_price( $data['price'] );
+				$deal->set_short_description( $data['short_description'] );
+				$cat_id = self::recorded_id( $manifest, 'categories', $data['category'] );
+				if ( $cat_id > 0 ) {
+					$deal->set_category_ids( array( $cat_id ) );
+				}
+				$deal->update_meta_data( Lafka_Deals::SLOTS_META, Lafka_Deals::normalize_slots( $slots ) );
+				$deal_id = (int) $deal->save();
+				$image   = $this->ensure_image( $data['slug'], $data['name'], $manifest );
+				if ( $image > 0 ) {
+					$deal->set_image_id( $image );
+					$deal->save();
+				}
+				$manifest = self::record( $manifest, 'products', $data['slug'], $deal_id );
+			}
+			WP_CLI::log( sprintf( 'Seeded %d deal(s).', count( $fixtures['deals'] ) ) );
 		}
 
 		/**

@@ -468,6 +468,41 @@ return array(
 		),
 	),
 
+	// ── A pick-your-items Deal (the plugin's lafka_deal type): two medium
+	//    pizzas of the customer's choice, premiums pay the difference, and an
+	//    optional side at its own price. Slots name category slugs. ──
+	'deals'        => array(
+		array(
+			'name'              => 'Any 2 Medium Pizzas',
+			'slug'              => 'any-2-medium-pizzas',
+			'sku'               => 'demo-any-2-medium-pizzas',
+			'price'             => '22.00',
+			'category'          => 'deals',
+			'short_description' => 'Pick any two medium pizzas and make each your own.',
+			'slots'             => array(
+				array(
+					'label'      => 'Pizza 1',
+					'categories' => array( 'pizzas' ),
+					'attributes' => array( 'size' => 'medium' ),
+					'required'   => true,
+					'upcharge'   => true,
+				),
+				array(
+					'label'      => 'Pizza 2',
+					'categories' => array( 'pizzas' ),
+					'attributes' => array( 'size' => 'medium' ),
+					'required'   => true,
+					'upcharge'   => true,
+				),
+				array(
+					'label'      => 'Add a side',
+					'categories' => array( 'sides' ),
+					'required'   => false,
+				),
+			),
+		),
+	),
+
 	// ── WooCommerce shipping: Delivery (flat rate) in the demo region, and
 	//    block-checkout Pickup at the restaurant, so checkout offers both. ──
 	'shipping'     => array(
