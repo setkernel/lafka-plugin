@@ -1064,10 +1064,6 @@ if ( is_admin() && ! function_exists( 'get_plugin_data' ) ) {
 	include_once ABSPATH . 'wp-admin/includes/plugin.php';
 }
 
-if ( ! defined( 'LAFKA_PLUGIN_IMAGES_PATH' ) ) {
-	define( 'LAFKA_PLUGIN_IMAGES_PATH', plugins_url( '/assets/image/', plugin_basename( __FILE__ ) ) );
-}
-
 if ( ! function_exists( 'lafka_get_excerpt_by_id' ) ) {
 
 	/**
@@ -1130,75 +1126,6 @@ if ( ! function_exists( 'lafka_optionsframework_adminbar' ) ) {
 
 // Script/style handle registration (front end + admin).
 require_once plugin_dir_path( __FILE__ ) . 'incl/lafka-asset-registration.php';
-
-// Contact form ajax actions
-if ( ! function_exists( 'lafka_submit_contact' ) ) {
-
-	function lafka_submit_contact() {
-
-		check_ajax_referer( 'lafka_contactform', false, true );
-
-		$unique_id = array_key_exists( 'unique_id', $_POST ) ? sanitize_text_field( wp_unslash( $_POST['unique_id'] ) ) : '';
-		$nonce     = array_key_exists( '_ajax_nonce', $_POST ) ? sanitize_text_field( wp_unslash( $_POST['_ajax_nonce'] ) ) : '';
-
-		?>
-		<script>
-			//<![CDATA[
-			"use strict";
-			jQuery(document).ready(function () {
-				var submitButton = jQuery('#holder_<?php echo esc_js( $unique_id ); ?> input:submit');
-				var loader = jQuery('<img id="<?php echo esc_js( $unique_id ); ?>_loading_gif" class="lafka-contacts-loading" src="<?php echo esc_url( plugin_dir_url( __FILE__ ) ); ?>assets/image/contacts_ajax_loading.png" />').prependTo('#holder_<?php echo esc_attr( $unique_id ); ?> div.buttons div.left').hide();
-
-				jQuery('#holder_<?php echo esc_js( $unique_id ); ?> form').ajaxForm({
-					target: '#holder_<?php echo esc_js( $unique_id ); ?>',
-					data: {
-						// additional data to be included along with the form fields
-						unique_id: '<?php echo esc_js( $unique_id ); ?>',
-						action: 'lafka_submit_contact',
-						_ajax_nonce: '<?php echo esc_js( $nonce ); ?>'
-					},
-					beforeSubmit: function (formData, jqForm, options) {
-						// optionally process data before submitting the form via AJAX
-						submitButton.hide();
-						loader.show();
-					},
-					success: function (responseText, statusText, xhr, $form) {
-						// code that's executed when the request is processed successfully
-						loader.remove();
-						submitButton.show();
-					}
-				});
-			});
-			//]]>
-		</script>
-		<?php
-		require plugin_dir_path( __FILE__ ) . 'shortcodes/partials/contact-form.php';
-
-		wp_die();
-	}
-
-}
-
-add_action( 'wp_ajax_lafka_submit_contact', 'lafka_submit_contact' );
-add_action( 'wp_ajax_nopriv_lafka_submit_contact', 'lafka_submit_contact' );
-
-//function to generate response
-if ( ! function_exists( 'lafka_contact_form_generate_response' ) ) {
-
-	function lafka_contact_form_generate_response( $type, $message ) {
-
-		$lafka_contactform_response = '';
-
-		if ( 'success' === (string) $type ) {
-			$lafka_contactform_response = "<div class='success-message'>" . esc_html( $message ) . '</div>';
-		} else {
-			$lafka_contactform_response .= "<div class='error-message'>" . esc_html( $message ) . '</div>';
-		}
-
-		return $lafka_contactform_response;
-	}
-
-}
 
 /**
  * Social share links (lafka_share_links(), lafka_has_to_show_share()) and

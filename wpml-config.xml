@@ -43,66 +43,6 @@
     <taxonomies>
         <taxonomy translate="1">product_cat</taxonomy>
     </taxonomies>
-    <shortcodes>
-        <shortcode>
-            <tag>lafka_counter</tag>
-            <attributes>
-                <attribute>txt_before_counter</attribute>
-                <attribute>txt_after_counter</attribute>
-            </attributes>
-        </shortcode>
-        <shortcode>
-            <tag>lafka_typed</tag>
-            <attributes>
-                <attribute>txt_before_typed</attribute>
-                <attribute>txt_after_typed</attribute>
-            </attributes>
-        </shortcode>
-        <shortcode>
-            <tag>lafka_banner</tag>
-            <attributes>
-                <attribute>title</attribute>
-                <attribute>subtitle</attribute>
-                <attribute type="link">link</attribute>
-                <attribute>button_text</attribute>
-            </attributes>
-        </shortcode>
-        <shortcode>
-            <tag>lafka_icon_teaser</tag>
-            <attributes>
-                <attribute>title</attribute>
-                <attribute>subtitle</attribute>
-            </attributes>
-        </shortcode>
-        <shortcode>
-            <tag>lafka_icon_box</tag>
-            <attributes>
-                <attribute>title</attribute>
-                <attribute>subtitle</attribute>
-            </attributes>
-        </shortcode>
-        <shortcode>
-            <tag>lafka_map</tag>
-            <attributes>
-                <attribute>location_title</attribute>
-            </attributes>
-        </shortcode>
-        <shortcode>
-            <tag>lafka_pricing_table</tag>
-            <attributes>
-                <attribute>title</attribute>
-                <attribute>subtitle</attribute>
-                <attribute>button_text</attribute>
-                <attribute type="link">link</attribute>
-            </attributes>
-        </shortcode>
-        <shortcode>
-            <tag>lafka_contact_form</tag>
-            <attributes>
-                <attribute>title</attribute>
-            </attributes>
-        </shortcode>
-    </shortcodes>
     <admin-texts>
         <!-- Plugin-rendered copy stored in the shared `lafka` option. -->
         <key name="lafka">

@@ -99,34 +99,27 @@ The plugin ships with **zero hardcoded restaurant data** — every public NAP / 
 ## Features
 
 ### Custom Post Types
-- **Restaurant Menu** (`lafka-foodmenu`) — Menu items with categories, prices, images
 - **Shipping Areas** (`lafka_shipping_areas`) — Delivery zone management
 - **Product Addons** (`lafka_glb_addon`) — Global addon groups
 
 For bundled / composite products, install the official **[WooCommerce Product Bundles](https://woocommerce.com/products/product-bundles/)** plugin. Lafka's addons engine bridges into it via `incl/addons/engine/compat/class-lafka-bundles-addons-compatibility.php`.
 
-### Shortcodes (24)
-Old pages built with WPBakery or Slider Revolution still render cleanly: `incl/compat/lafka-wpbakery-fallback.php` strips their orphaned `[vc_*]` / `[rev_slider]` tags from stored content. Neither plugin is supported or required.
-
+### Shortcodes
 | Shortcode | Description |
 |---|---|
-| `[lafka_foodmenu]` | Restaurant menu display with filtering |
-| `[lafka_banner]` | Banner with image, text, button |
-| `[lafka_counter]` | Animated number counter |
-| `[lafka_typed]` | Typed.js text animation |
-| `[lafka_icon_box]` / `[lafka_icon_teaser]` | Icon blocks |
-| `[lafka_pricing_table]` | Pricing tables |
-| `[lafka_countdown]` | Countdown timer |
-| `[lafka_map]` | Google Maps with directions |
-| `[lafka_contact_form]` | Ajax contact form |
-| `[lafka_latest_posts]` / `[lafkablogposts]` | Blog grids/carousels |
-| `[lafka_woo_*]` | 9 WooCommerce product carousels / sliders (top-rated, recent, featured, sale, best-selling, category, categories, recently viewed, products slider) |
-| `[lafka_cloudzoom_gallery]` | Product image gallery |
 | `[lafka_nap]` | Canonical name / address / phone block with Restaurant schema |
 | `[lafka_shipping_areas]` | Delivery-area map (Delivery areas module) |
 
+The page-builder-era shortcodes (`[lafka_banner]`, `[lafka_counter]`, `[lafka_map]`,
+`[lafka_contact_form]`, `[lafka_woo_*]` carousels and the rest) are retired.
+`shortcodes/shortcodes.php` keeps their tags registered so old pages never print them as
+raw text: each renders only the content it encloses. Old pages built with WPBakery or
+Slider Revolution still render cleanly: `incl/compat/lafka-wpbakery-fallback.php` strips
+their orphaned `[vc_*]` / `[rev_slider]` tags from stored content. Neither plugin is
+supported or required.
+
 ### Widgets
-- About, Contacts, Latest Menu Entries, Payment Options, Popular Posts, Product Filter
+- About, Contacts, Payment Options, Popular Posts, Product Filter
 
 ### Modules (toggled at Lafka → Modules)
 Gated features are declared in `Lafka_Module_Registry` (`incl/class-lafka-module-registry.php`) and switched on or off from the **Lafka → Modules** admin page. Everything is off by default except Product add-ons.

@@ -5,8 +5,8 @@
  * Lets the operator DEACTIVATE the heavy WPBakery plugin without breaking pages
  * whose stored content was built with it. WPBakery's `[vc_row]/[vc_column]/...`
  * are layout WRAPPERS; the real content inside them is plain HTML plus first-
- * party shortcodes (lafka_map, lafka_contact_form, lafka_foodmenu) and
- * WooCommerce shortcodes — all of which keep working on their own.
+ * party shortcodes (retired ones render only their enclosed content, see
+ * shortcodes/shortcodes.php) and WooCommerce shortcodes.
  *
  * When js_composer is NOT loaded, this strips orphaned `[vc_*]` wrapper tags
  * (and the retired `[lafka_content_slider]` wrapper, which only WPBakery could

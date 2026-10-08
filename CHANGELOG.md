@@ -100,6 +100,19 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
   defaults to an empty list. `LAFKA_SEO_REWRITE_VERSION` is 2, so the old rewrite rules are
   flushed once after the update. Uninstall still deletes any leftover entries and terms.
 
+- **The page-builder-era shortcode library** (`shortcodes/shortcodes.php`, ~2,000 lines, and
+  `shortcodes/partials/contact-form.php`): `[lafka_counter]`, `[lafka_typed]`,
+  `[lafkablogposts]`, `[lafka_foodmenu]`, `[lafka_latest_posts]`, `[lafka_banner]`,
+  `[lafka_cloudzoom_gallery]`, `[lafka_icon_teaser]`, `[lafka_icon_box]`,
+  `[lafka_countdown]`, `[lafka_map]`, `[lafka_pricing_table]`, `[lafka_contact_form]` and the
+  nine `[lafka_woo_*]` carousels, with the Ajax contact-form handler
+  (`lafka_submit_contact`, `lafka_contact_form_generate_response()`), the map script
+  (`assets/js/lafka-plugin-map-config.js`), their images, `LAFKA_PLUGIN_IMAGES_PATH` and the
+  WPML shortcode keys. The file is now a stub that keeps every retired tag registered and
+  renders only the content it encloses, so old pages never print a raw tag (on Peppery the
+  tags sat only on pages whose content is not rendered, plus one `[lafka_icon_box]` on My
+  account). `[lafka_nap]` and `[lafka_shipping_areas]` are unchanged.
+
 ### Fixed
 - Promo tooltips never matched their default zone: the theme default
   `promo_tooltip_N_position` was `above_price` while the plugin compared against
