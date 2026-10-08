@@ -8,6 +8,17 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
 ## [Unreleased]
 
 ### Changed
+- **No lint rule is switched off any more.** ESLint now enforces `no-var`, `prefer-const`,
+  `no-prototype-builtins`, `no-redeclare`, `no-unused-vars`, `no-empty`, `no-useless-escape`,
+  `no-useless-assignment` and `no-shadow-restricted-names` everywhere, including the
+  shipping-areas and branch scripts that used to be exempt; the only ignored files are
+  the vendored flatpickr and jquery.schedule libraries and minified output. Stylelint
+  has no `null` overrides left: named colours became hex, icon-font declarations gained a
+  generic fallback family, duplicate declarations were removed, and the few
+  `no-descending-specificity` hits were resolved by moving rules only where the cascade
+  result is identical. `selector-class-pattern` / `selector-id-pattern` are configured to
+  the real naming convention (lowercase kebab/snake, BEM, third-party prefixes) instead of
+  being disabled; see CONTRIBUTING.md. Rebuilt the `.min.js` files from the updated sources.
 - **Strict lint, no suppressions.** PHPCS now runs plain `WordPress-Extra` with no
   excluded sniffs and warnings fail the run. Every inline lint-suppression comment is gone;
   ESLint is at zero warnings. Class files are `class-lafka-*.php`, the widgets are

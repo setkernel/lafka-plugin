@@ -68,6 +68,32 @@ The plugin currently ships no automated test suite.
 - All `$wpdb` queries MUST use `prepare()` or be string-literal.
 - All `_FILES` uploads MUST validate MIME server-side and check `is_uploaded_file()`.
 
+### CSS class and id naming (Stylelint `selector-class-pattern` / `selector-id-pattern`)
+
+Class names and ids are contracts with templates, JS, the theme and
+WooCommerce/WordPress, so the lint pattern describes the names that exist
+instead of forcing renames. One regex serves both rules, and it is identical in
+lafka-plugin, lafka-child and lafka-theme:
+
+- Our own names are lowercase words joined by `-` or `_`: `lafka-branch-order-type`,
+  `lafka_select_branch_modal` (ids that mirror PHP field names keep their `_`).
+- BEM is allowed: `lafka-engine-group__header`, `lafka-bogo-banner--fixed`.
+- Mixed case is accepted only for names owned by someone else, recognised by
+  prefix: `woocommerce-` (for example `woocommerce-Price-amount`), `wc-`, `wp-`,
+  jQuery UI `ui-`, `select2-`, `flatpickr-`, `dashicons-` and `fa-`.
+- camelCase or a capital in a `lafka-` / `lafka_` name is rejected.
+
+The regex lives in `.stylelintrc.json`. Do not rename an existing class or id
+to satisfy it, and do not widen it for new code: new names follow the rules above.
+
+### JavaScript conventions (ESLint)
+
+`no-var`, `prefer-const`, `no-prototype-builtins` and the recommended set
+(including `no-redeclare`, `no-unused-vars`, `no-empty`, `no-useless-escape`,
+`no-useless-assignment` and `no-shadow-restricted-names`) are all on. A script
+that other scripts read through `window` assigns it explicitly (`window.x = ...`);
+never rely on a top-level `var`.
+
 ## HPOS / Blocks
 
 The plugin declares both HPOS and `cart_checkout_blocks` compatibility in `lafka-plugin.php`. Block Cart/Checkout shipped in 10.0.0: Store API parity lives in `incl/store-api/`, checkout-mode migration + additional checkout fields + blocks integration in `incl/checkout/`. New order/cart code must work on BOTH the classic (shortcode) and block paths — parity is asserted, not assumed.
