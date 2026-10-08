@@ -140,6 +140,10 @@ customer chooses, one slot per item:
   own price on top.
 - **Premium items pay the difference**: a dearer choice adds the difference over the
   slot's cheapest choice (shown as "+$1.00").
+- **Runs on** / **First day** / **Last day** (top of the tab): "Two for Tuesday" runs
+  only on the ticked weekdays (site timezone) and between the dates. On other days
+  the deal page says when it runs, and a deal still in a cart is removed with a
+  notice. Leave all of it empty to run the deal every day.
 
 On the deal's page the customer picks each item and sets its own options (crust,
 toppings, half and half); a sticky bar shows the total and what is still missing.
@@ -217,7 +221,9 @@ reviews. It is never put on the `Restaurant` node (Google's structured-data
 policy) and never comes from a decorative setting.
 
 For AI and search crawlers the plugin also serves `/llms.txt`, `/llms-full.txt`,
-`/menu.md` and `/menu.json`, and can ping IndexNow.
+`/menu.md` and `/menu.json` (the home page links to `/llms.txt`), and can ping
+IndexNow. None of them is served while Settings → Reading → "Discourage search
+engines" is ticked, so a staging copy publishes nothing.
 
 ### 3. Name, address, phone
 
@@ -336,7 +342,9 @@ reach your tools depends on the setup.
 - **Consent plugins.** With a plugin that speaks the WP Consent API (Complianz,
   CookieYes, Cookiebot and others) active, Lafka's own banner stands down and every
   Lafka tag, and the server-side conversions, follow that plugin: *statistics* for
-  analytics, *marketing* for ads.
+  analytics, *marketing* for ads. The WP Consent API plugin on its own (no consent
+  manager registering a consent type) changes nothing: it would report every
+  category as granted, so Lafka keeps its banner and defaults.
 
 ### Configuration
 

@@ -29,6 +29,8 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
   decisions; Lafka declares compatibility.
 - **Search**: `OrderAction` on the restaurant schema; ready-to-paste order links for
   Google Business Profile, Apple Business Connect and Bing Places under Search & AI.
+- Deals can run on chosen weekdays and between dates ("Two for Tuesday"); outside
+  them the deal page says when it runs and a deal left in a cart is removed.
 - Demo seed: a delivery zone and block-checkout pickup, a Deal, half-and-half
   toppings and tips.
 
@@ -170,6 +172,17 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
   applies (`woocommerce_product_add_to_cart_text` / `_url` stay).
 
 ### Fixed
+- Abandoned carts were never captured on the block checkout; they are now captured
+  as the email is typed and marked recovered when the order is placed.
+- The WP Consent API alone (no consent manager) failed open: every tag and
+  server-side send ran as consented. It is trusted only once a consent type is
+  registered.
+- `/llms.txt` and the menu documents were served on sites that discourage search
+  engines; the home page now links to `/llms.txt`.
+- `lafka_get_option()` read keys that moved to the Customizer from the stale
+  `lafka` option whenever the plugin was active (`lafka_pre_get_option` filter).
+- The branch info box kept the branch picker's address after the customer changed
+  it on the block checkout.
 - Default-on modules (Product add-ons, Deals) now load on a fresh install; before,
   add-ons never loaded until the Modules page was saved.
 - A mandatory delivery pin refused every block-checkout delivery order (and every
