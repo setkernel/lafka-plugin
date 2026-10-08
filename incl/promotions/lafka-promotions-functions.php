@@ -11,8 +11,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 if ( ! function_exists( 'lafka_delivery_minimum' ) ) {
 	/**
-	 * The order subtotal below which delivery is not offered (0 = none), for
-	 * display (the drawer's Delivery note). 0 while the Promotions module is off.
+	 * The order subtotal below which delivery is not offered (0 = none): the one
+	 * reader of the Promotions delivery-minimum setting. The rate-hiding rule,
+	 * the cart notice, the drawer's Delivery note, the Store API and the checkout
+	 * all ask here. 0 while the Promotions module is off.
 	 *
 	 * @return float
 	 */
@@ -20,7 +22,7 @@ if ( ! function_exists( 'lafka_delivery_minimum' ) ) {
 		$minimum = ( ! function_exists( 'is_lafka_promotions' ) || is_lafka_promotions() ) ? max( 0.0, (float) Lafka_Promotions::knob( 'delivery_min' ) ) : 0.0;
 
 		/**
-		 * Filter the delivery minimum shown to customers.
+		 * Filter the delivery minimum (shown to customers and enforced).
 		 *
 		 * @since 10.3.0
 		 * @param float $minimum Order subtotal needed for delivery (0 = none).

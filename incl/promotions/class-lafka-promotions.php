@@ -269,7 +269,7 @@ if ( ! class_exists( 'Lafka_Promotions' ) ) {
 		 * Boundary semantics: `<` not `<=` — exactly at the threshold ALLOWS delivery.
 		 */
 		public static function should_block_delivery( $contents_cost ) {
-			return (float) $contents_cost < (float) (float) self::knob( 'delivery_min' );
+			return (float) $contents_cost < lafka_delivery_minimum();
 		}
 
 		// ─── Delivery-minimum hooks ──────────────────────────────────────────
@@ -355,14 +355,14 @@ if ( ! class_exists( 'Lafka_Promotions' ) ) {
 				return;
 			}
 
-			$remaining = (float) self::knob( 'delivery_min' ) - $base;
+			$remaining = lafka_delivery_minimum() - $base;
 			// One text node (theme notice layouts flex their children — O-12).
 			printf(
 				'<div class="woocommerce-info lafka-delivery-min-notice" role="status"><span class="lafka-delivery-min-notice__text">%s</span></div>',
 				sprintf(
 					/* translators: 1: minimum in store currency, 2: remaining amount */
 					esc_html__( 'Delivery is available on orders over %1$s. Add %2$s more to your cart for delivery.', 'lafka-plugin' ),
-					wp_kses_post( wc_price( (float) self::knob( 'delivery_min' ) ) ),
+					wp_kses_post( wc_price( lafka_delivery_minimum() ) ),
 					wp_kses_post( wc_price( $remaining ) )
 				)
 			);
