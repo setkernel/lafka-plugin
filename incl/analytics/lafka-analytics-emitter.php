@@ -198,7 +198,14 @@ if ( ! function_exists( 'lafka_consent_api_active' ) ) {
 	 * @return bool
 	 */
 	function lafka_consent_api_active(): bool {
-		return (bool) apply_filters( 'lafka_consent_api_active', function_exists( 'wp_has_consent' ) );
+		// Only when a consent plugin has registered a consent type (false or ''
+		// otherwise): the API on its own reports every category as consented
+		// (fail open), so without a consent manager Lafka's banner and defaults
+		// stay in charge.
+		$active = function_exists( 'wp_has_consent' )
+			&& function_exists( 'wp_get_consent_type' )
+			&& '' !== (string) wp_get_consent_type();
+		return (bool) apply_filters( 'lafka_consent_api_active', $active );
 	}
 }
 
