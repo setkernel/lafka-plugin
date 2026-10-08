@@ -345,9 +345,10 @@ if ( ! class_exists( 'Lafka_Pickup_Checkout' ) ) {
 				'prefersDelivery' => class_exists( 'Lafka_Fulfilment' ) && 'delivery' === Lafka_Fulfilment::preference(),
 				'fields'          => $fields,
 				'i18n'            => array(
-					'required'   => __( 'required', 'lafka-plugin' ),
-					'optional'   => __( '(optional)', 'lafka-plugin' ),
-					'addAddress' => __( 'Want delivery? Add your address', 'lafka-plugin' ),
+					'required'      => __( 'required', 'lafka-plugin' ),
+					'optional'      => __( '(optional)', 'lafka-plugin' ),
+					'addAddress'    => __( 'Want delivery? Add your address', 'lafka-plugin' ),
+					'pickupInstead' => __( 'Collect it myself instead', 'lafka-plugin' ),
 				),
 			);
 		}

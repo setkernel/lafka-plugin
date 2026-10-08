@@ -100,6 +100,7 @@ if ( ! class_exists( 'Lafka_Fulfilment' ) ) {
 		public static function init() {
 			add_filter( 'woocommerce_shipping_chosen_method', array( __CLASS__, 'filter_chosen_method' ), 20, 3 );
 			add_action( 'woocommerce_cart_loaded_from_session', array( __CLASS__, 'maybe_release_automatic_choice' ), 20 );
+			add_action( 'woocommerce_after_checkout_validation', array( __CLASS__, 'validate_classic_checkout' ), 25, 2 );
 
 			foreach ( array(
 				'woocommerce_shipping_zone_method_added',
@@ -473,6 +474,43 @@ if ( ! class_exists( 'Lafka_Fulfilment' ) ) {
 				}
 			}
 			$session->set( 'chosen_shipping_methods', array() );
+		}
+
+		/**
+		 * Classic checkout: a customer who chose Delivery must not get a pickup
+		 * order just because no delivery rate came back for their address (out
+		 * of range, or the distance lookup failed). WooCommerce would fall back
+		 * to the only rate left, Pickup, without a word, and the kitchen would
+		 * hold the food while the customer waits at home. A customer who picked
+		 * Pickup over an offered delivery rate is not stopped.
+		 *
+		 * @param array    $data   Posted checkout data.
+		 * @param WP_Error $errors Validation errors.
+		 * @return void
+		 */
+		public static function validate_classic_checkout( $data, $errors ) {
+			if ( ! is_object( $errors ) || ! method_exists( $errors, 'add' ) || 'delivery' !== self::preference() ) {
+				return;
+			}
+			$chosen = is_array( $data ) && isset( $data['shipping_method'] ) ? (array) $data['shipping_method'] : array();
+			if ( array() === $chosen ) {
+				return;
+			}
+			foreach ( $chosen as $rate_id ) {
+				if ( ! lafka_is_pickup_shipping_method( (string) $rate_id ) ) {
+					return;
+				}
+			}
+			$packages = function_exists( 'WC' ) && WC()->shipping() ? WC()->shipping()->get_packages() : array();
+			foreach ( (array) $packages as $package ) {
+				foreach ( (array) ( $package['rates'] ?? array() ) as $rate_id => $rate ) {
+					$method_id = is_object( $rate ) && method_exists( $rate, 'get_method_id' ) ? (string) $rate->get_method_id() : (string) $rate_id;
+					if ( ! lafka_is_pickup_shipping_method( $method_id ) ) {
+						return;
+					}
+				}
+			}
+			$errors->add( 'shipping', __( 'We can\'t deliver to this address. Check the street and postcode, or choose Pickup to collect your order.', 'lafka-plugin' ) );
 		}
 
 		/**

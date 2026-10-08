@@ -111,27 +111,42 @@
 		return out;
 	}
 
-	function syncToggle( show, list, cfg ) {
+	function syncToggle( hidden, list, cfg ) {
 		const existing = doc.querySelector( '.' + TOGGLE_CLASS );
-		// No "Want delivery?" when this order cannot be delivered (e.g. under the
-		// delivery minimum): the address would never bring a delivery rate.
-		if ( ! show || false === cfg.addressToggle ) {
-			if ( existing ) {
-				existing.parentNode.removeChild( existing );
-			}
+		// "Want delivery?" while the address is folded away (never when this
+		// order cannot be delivered, e.g. under the delivery minimum); "Collect
+		// it myself instead" while the customer opened the address but the order
+		// is still a pickup (no delivery rate for the address yet).
+		let mode = '';
+		if ( hidden && false !== cfg.addressToggle ) {
+			mode = 'delivery';
+		} else if ( ! hidden && wantsAddress && isPickup( cfg ) ) {
+			mode = 'pickup';
+		}
+		if ( existing && existing.getAttribute( 'data-mode' ) !== mode ) {
+			existing.parentNode.removeChild( existing );
+		} else if ( existing ) {
 			return;
 		}
-		if ( existing || ! list.length ) {
+		if ( ! mode || ! list.length ) {
 			return;
 		}
+		const i18n = cfg.i18n || {};
 		const wrap = doc.createElement( 'p' );
 		wrap.className = 'form-row form-row-wide ' + TOGGLE_CLASS;
+		wrap.setAttribute( 'data-mode', mode );
 		const button = doc.createElement( 'button' );
 		button.type = 'button';
 		button.className = TOGGLE_CLASS + '__button';
-		button.textContent = ( cfg.i18n && cfg.i18n.addAddress ) || 'Want delivery? Add your address';
+		button.textContent = 'delivery' === mode ? i18n.addAddress || 'Want delivery? Add your address' : i18n.pickupInstead || 'Collect it myself instead';
 		wrap.appendChild( button );
 		list[ 0 ].row.parentNode.insertBefore( wrap, list[ 0 ].row );
+	}
+
+	// Tell the page (the header / drawer Pickup-Delivery toggle, which records
+	// the preference the checkout validates against) what the customer chose.
+	function announce( mode ) {
+		doc.dispatchEvent( new window.CustomEvent( 'lafka:fulfilment-change', { detail: { mode: mode, source: 'lafka-pickup-checkout' }, bubbles: true } ) );
 	}
 
 	let preferenceApplied = false;
@@ -167,11 +182,16 @@
 			return;
 		}
 		event.preventDefault();
-		wantsAddress = true;
+		const wrap = target.closest( '.' + TOGGLE_CLASS );
+		const mode = wrap ? wrap.getAttribute( 'data-mode' ) : 'delivery';
+		wantsAddress = 'delivery' === mode;
+		announce( mode );
 		update();
-		const street = doc.getElementById( 'billing_address_1' );
-		if ( street && street.focus ) {
-			street.focus();
+		if ( wantsAddress ) {
+			const street = doc.getElementById( 'billing_address_1' );
+			if ( street && street.focus ) {
+				street.focus();
+			}
 		}
 	} );
 
@@ -234,6 +254,19 @@
 		} else if ( ADDRESS_FIELD.test( name ) ) {
 			requestTotalsRefresh();
 		}
+	} );
+
+	// Delivery / Pickup chosen on this page (the header or drawer toggle):
+	// Delivery opens the address at once, as if "Want delivery?" was tapped;
+	// Pickup folds it away again.
+	doc.addEventListener( 'lafka:fulfilment-change', function ( event ) {
+		const mode = event.detail && event.detail.mode;
+		if ( 'delivery' !== mode && 'pickup' !== mode ) {
+			return;
+		}
+		const cfg = config();
+		wantsAddress = 'delivery' === mode && !! cfg && false !== cfg.addressToggle;
+		update();
 	} );
 
 	function afterCheckoutRefresh() {
