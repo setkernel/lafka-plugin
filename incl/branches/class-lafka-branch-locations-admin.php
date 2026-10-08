@@ -205,7 +205,7 @@ class Lafka_Branch_Locations_Admin {
 				<p><?php esc_html_e( 'Enter the number of orders which can be made in one time slot. If the number is reached for particular time slot, the users will still be able to see it, but it will be disabled.', 'lafka-plugin' ); ?></p>
 			</div>
 		<?php endif; ?>
-		<?php if ( is_lafka_order_hours( get_option( 'lafka' ) ) ) : ?>
+		<?php if ( Lafka_Order_Hours::module_enabled() ) : ?>
 			<h3><?php esc_html_e( 'Branch Specific Order Hours Settings', 'lafka-plugin' ); ?></h3>
 			<div>
 				<label for="lafka_branch_override_order_hours_global">
@@ -470,7 +470,7 @@ class Lafka_Branch_Locations_Admin {
 				</td>
 			</tr>
 		<?php endif; ?>
-		<?php if ( is_lafka_order_hours( get_option( 'lafka' ) ) ) : ?>
+		<?php if ( Lafka_Order_Hours::module_enabled() ) : ?>
 			<tr class="form-field">
 				<td colspan="2">
 					<h3><?php esc_html_e( 'Branch Specific Order Hours Settings', 'lafka-plugin' ); ?></h3>
@@ -686,7 +686,7 @@ class Lafka_Branch_Locations_Admin {
 			unset( $columns['name'] );
 		}
 		$new_columns['lafka_branch_order_type'] = esc_html__( 'Order Type', 'lafka-plugin' );
-		if ( is_lafka_order_hours( get_option( 'lafka' ) ) ) {
+		if ( Lafka_Order_Hours::module_enabled() ) {
 			$new_columns['lafka_branch_status'] = esc_html__( 'Status', 'lafka-plugin' );
 		}
 		$new_columns['lafka_branch_user']    = esc_html__( 'Manager', 'lafka-plugin' );
@@ -717,7 +717,7 @@ class Lafka_Branch_Locations_Admin {
 
 			echo esc_html( $values[ $branch_order_type ] );
 		} elseif ( 'lafka_branch_status' === $column ) {
-			if ( is_lafka_order_hours( get_option( 'lafka' ) ) && class_exists( 'Lafka_Order_Hours' ) ) {
+			if ( Lafka_Order_Hours::module_enabled() ) {
 				$branch_status = Lafka_Order_Hours::get_branch_working_status( $id );
 				?>
 				<span class="lafka-order-hours-current-time <?php echo esc_attr( $branch_status->code ); ?>">

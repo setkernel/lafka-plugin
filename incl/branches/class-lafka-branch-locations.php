@@ -142,7 +142,7 @@ class Lafka_Branch_Locations {
 			<?php
 			$show_all_closed_message    = false;
 			$all_legit_branch_locations = array();
-			if ( is_lafka_order_hours( get_option( 'lafka' ) ) && class_exists( 'Lafka_Order_Hours' ) ) {
+			if ( Lafka_Order_Hours::module_enabled() ) {
 				$lafka_order_hours_options = get_option( 'lafka_order_hours_options' );
 				if ( $lafka_order_hours_options['lafka_order_hours_closed_stores_message_enabled'] ?? false ) {
 					$main_store_timezone              = null;

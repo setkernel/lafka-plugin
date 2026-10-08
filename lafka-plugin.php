@@ -194,10 +194,6 @@ function is_lafka_shipping_areas() {
 	return Lafka_Options::is_enabled( 'shipping_areas' );
 }
 
-function is_lafka_order_hours() {
-	return Lafka_Options::is_enabled( 'order_hours' );
-}
-
 function is_lafka_kitchen_display() {
 	return Lafka_Options::is_enabled( 'kitchen_display' );
 }
@@ -728,6 +724,15 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/cli/class-lafka-products-cli-co
 require_once plugin_dir_path( __FILE__ ) . 'incl/cli/class-lafka-shipping-cli-command.php';
 
 /**
+ * WP-CLI: the store's opening hours — open now, the per-day fields vs the order
+ * schedule, and a one-way sync. Self-gates on WP_CLI.
+ *
+ *   wp lafka hours status
+ *   wp lafka hours check
+ */
+require_once plugin_dir_path( __FILE__ ) . 'incl/cli/class-lafka-hours-cli-command.php';
+
+/**
  * WP-CLI: provision a deterministic demo restaurant for e2e/CI + preset QA (NX1-09a).
  * The class is always defined; only the command registration self-gates on
  * WP_CLI.
@@ -736,15 +741,6 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/cli/class-lafka-shipping-cli-co
  *   wp lafka seed-demo --reset
  */
 require_once plugin_dir_path( __FILE__ ) . 'incl/cli/class-lafka-cli-seed-demo.php';
-
-/**
- * WP-CLI: the store's opening hours — open now, the per-day fields vs the order
- * schedule, and a one-way sync. Self-gates on WP_CLI.
- *
- *   wp lafka hours status
- *   wp lafka hours check
- */
-require_once plugin_dir_path( __FILE__ ) . 'incl/cli/class-lafka-hours-cli-command.php';
 
 /**
  * P6-PERF-4 (W3-T2, 2026-04-28): Asset pruning — dequeue heavy third-party assets
@@ -862,7 +858,7 @@ if ( LAFKA_PLUGIN_IS_WOOCOMMERCE ) {
 		require_once plugin_dir_path( __FILE__ ) . '/incl/shipping-areas/class-lafka-shipping-areas.php';
 	}
 
-	if ( is_lafka_order_hours( get_option( 'lafka' ) ) ) {
+	if ( Lafka_Order_Hours::module_enabled() ) {
 		new Lafka_Order_Hours();
 	}
 
