@@ -330,7 +330,7 @@ if ( ! class_exists( 'Lafka_Log_Scrubber' ) ) {
 		 * @return array<string|int,mixed>
 		 */
 		public static function bound( array $data, int $max_bytes = self::MAX_CONTEXT_BYTES ): array {
-			$json = json_encode( $data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PARTIAL_OUTPUT_ON_ERROR );
+			$json = wp_json_encode( $data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PARTIAL_OUTPUT_ON_ERROR );
 			if ( is_string( $json ) && strlen( $json ) <= $max_bytes ) {
 				return $data;
 			}
@@ -339,7 +339,7 @@ if ( ! class_exists( 'Lafka_Log_Scrubber' ) ) {
 			foreach ( $data as $key => $value ) {
 				$candidate         = $out;
 				$candidate[ $key ] = $value;
-				$size              = strlen( (string) json_encode( $candidate, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PARTIAL_OUTPUT_ON_ERROR ) );
+				$size              = strlen( (string) wp_json_encode( $candidate, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PARTIAL_OUTPUT_ON_ERROR ) );
 				if ( $size > $budget ) {
 					break;
 				}

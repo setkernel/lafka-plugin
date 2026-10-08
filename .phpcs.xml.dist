@@ -28,6 +28,20 @@
 			<property name="prefixes" type="array">
 				<element value="lafka"/>
 				<element value="Lafka"/>
+				<!-- Public gate functions the theme calls by name
+				     (is_lafka_product_addons(), is_lafka_order_hours()). -->
+				<element value="is_lafka"/>
+			</property>
+		</properties>
+	</rule>
+
+	<!-- WooCommerce capabilities the plugin checks (not WordPress core caps). -->
+	<rule ref="WordPress.WP.Capabilities">
+		<properties>
+			<property name="custom_capabilities" type="array">
+				<element value="manage_woocommerce"/>
+				<element value="edit_shop_orders"/>
+				<element value="manage_product_terms"/>
 			</property>
 		</properties>
 	</rule>

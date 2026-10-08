@@ -543,7 +543,7 @@ class Lafka_Shipping_Areas {
 
 		wp_add_inline_script(
 			'lafka-shipping-areas-handle-shipping',
-			'lafka_checkout_map_properties = ' . json_encode(
+			'lafka_checkout_map_properties = ' . wp_json_encode(
 				array(
 					'pick_delivery_address_option' => $options['pick_delivery_address'],
 				)

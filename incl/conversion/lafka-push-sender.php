@@ -143,8 +143,8 @@ if ( ! function_exists( 'lafka_push_build_vapid_jwt' ) ) {
 			'exp' => time() + ( 12 * HOUR_IN_SECONDS ),
 			'sub' => $subject,
 		);
-		$h_enc   = lafka_push_b64url_encode( function_exists( 'wp_json_encode' ) ? (string) wp_json_encode( $header ) : (string) json_encode( $header ) );
-		$p_enc   = lafka_push_b64url_encode( function_exists( 'wp_json_encode' ) ? (string) wp_json_encode( $payload ) : (string) json_encode( $payload ) );
+		$h_enc   = lafka_push_b64url_encode( (string) wp_json_encode( $header ) );
+		$p_enc   = lafka_push_b64url_encode( (string) wp_json_encode( $payload ) );
 		$body    = $h_enc . '.' . $p_enc;
 
 		$pem = lafka_push_p256_pem_from_raw_private( $private_raw );
@@ -370,7 +370,7 @@ if ( ! function_exists( 'lafka_push_send' ) ) {
 			return $result;
 		}
 
-		$parsed = parse_url( (string) $row->endpoint );
+		$parsed = wp_parse_url( (string) $row->endpoint );
 		if ( ! is_array( $parsed ) || empty( $parsed['scheme'] ) || empty( $parsed['host'] ) ) {
 			$result['response'] = 'invalid_endpoint';
 			return $result;
@@ -393,7 +393,7 @@ if ( ! function_exists( 'lafka_push_send' ) ) {
 			return $result;
 		}
 
-		$payload_json = function_exists( 'wp_json_encode' ) ? (string) wp_json_encode( $payload ) : (string) json_encode( $payload );
+		$payload_json = (string) wp_json_encode( $payload );
 		if ( '' === $payload_json ) {
 			$result['response'] = 'empty_payload';
 			return $result;
@@ -571,7 +571,7 @@ if ( ! function_exists( 'lafka_push_http_post' ) ) {
 			}
 		}
 		// SSRF guard: only ever speak HTTPS to a publicly-routable provider host.
-		$parsed = parse_url( $url );
+		$parsed = wp_parse_url( $url );
 		if ( ! is_array( $parsed ) || empty( $parsed['scheme'] ) || 'https' !== strtolower( (string) $parsed['scheme'] ) || empty( $parsed['host'] ) ) {
 			return array(
 				'http_code' => 0,

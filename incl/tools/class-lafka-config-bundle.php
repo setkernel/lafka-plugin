@@ -130,10 +130,7 @@ if ( ! class_exists( 'Lafka_Config_Bundle' ) ) {
 		public static function export_json(): string {
 			$flags = JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE;
 			$data  = self::export();
-			if ( function_exists( 'wp_json_encode' ) ) {
-				return (string) wp_json_encode( $data, $flags );
-			}
-			return (string) json_encode( $data, $flags );
+			return (string) wp_json_encode( $data, $flags );
 		}
 
 		/**
@@ -1063,10 +1060,7 @@ if ( ! class_exists( 'Lafka_Config_Bundle' ) ) {
 			if ( is_array( $value ) ) {
 				$value = self::ksort_recursive( $value );
 			}
-			if ( function_exists( 'wp_json_encode' ) ) {
-				return (string) wp_json_encode( $value );
-			}
-			return (string) json_encode( $value );
+			return (string) wp_json_encode( $value );
 		}
 
 		/**

@@ -426,7 +426,7 @@ if ( ! class_exists( 'Lafka_Insights_Collector' ) ) {
 			if ( '' === $url || Lafka_Beacon_Guard::site_host() !== $host ) {
 				return '';
 			}
-			$path = (string) parse_url( $url, PHP_URL_PATH );
+			$path = (string) wp_parse_url( $url, PHP_URL_PATH );
 			return self::slash( '' === $path ? '/' : $path );
 		}
 

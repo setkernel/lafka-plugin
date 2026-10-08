@@ -173,7 +173,7 @@ if ( ! class_exists( 'Lafka_Diag_Beacon' ) ) {
 			if ( '' === $message || preg_match( '/^Script error\.?$/', $message ) ) {
 				return null;
 			}
-			$host = strtolower( (string) parse_url( $file, PHP_URL_HOST ) );
+			$host = strtolower( (string) wp_parse_url( $file, PHP_URL_HOST ) );
 			if ( '' === $host || $host !== $site_host ) {
 				return null;
 			}
@@ -181,7 +181,7 @@ if ( ! class_exists( 'Lafka_Diag_Beacon' ) ) {
 				'message' => self::scrub( function_exists( 'mb_substr' ) ? mb_substr( $message, 0, 200 ) : substr( $message, 0, 200 ) ),
 				'context' => array(
 					'code'      => 'js_error',
-					'file'      => substr( (string) parse_url( $file, PHP_URL_PATH ), 0, 200 ),
+					'file'      => substr( (string) wp_parse_url( $file, PHP_URL_PATH ), 0, 200 ),
 					'line'      => max( 0, (int) $data['l'] ),
 					'column'    => max( 0, (int) ( $data['c'] ?? 0 ) ),
 					'page_type' => substr( (string) preg_replace( '/[^a-z_]/', '', $type ), 0, 16 ),

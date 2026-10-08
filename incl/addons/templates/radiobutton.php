@@ -44,8 +44,8 @@ foreach ( $addon['options'] as $i => $option ) :
 
 	<p class="form-row form-row-wide addon-wrap-<?php echo esc_attr( sanitize_title( $addon['field-name'] ) . '-' . $i ); ?>">
 		<label><input type="radio" class="addon addon-radio" name="addon-<?php echo esc_attr( sanitize_title( $addon['field-name'] ) ); ?>[]"
-					data-attribute-raw-prices="<?php echo esc_attr( json_encode( $attribute_raw_prices ) ); ?>"
-					data-attribute-prices="<?php echo esc_attr( json_encode( $attribute_prices ) ); ?>"
+					data-attribute-raw-prices="<?php echo esc_attr( wp_json_encode( $attribute_raw_prices ) ); ?>"
+					data-attribute-prices="<?php echo esc_attr( wp_json_encode( $attribute_prices ) ); ?>"
 					<?php $addon_attribute = isset( $addon['attribute'] ) ? wc_get_attribute( $addon['attribute'] ) : null; ?>
 					<?php if ( ! is_null( $addon_attribute ) && isset( $attribute_prices[ $addon_attribute->slug ] ) && is_array( $attribute_prices[ $addon_attribute->slug ] ) ) : ?>
 						<?php foreach ( $attribute_prices[ $addon_attribute->slug ] as $attribute => $attr_price ) : ?>

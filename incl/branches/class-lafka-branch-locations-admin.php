@@ -623,7 +623,7 @@ class Lafka_Branch_Locations_Admin {
 			}
 		}
 		if ( isset( $_POST['lafka_branch_shipping_areas'] ) ) {
-			update_term_meta( $term_id, 'lafka_branch_shipping_areas', sanitize_text_field( json_encode( $_POST['lafka_branch_shipping_areas'] ) ) );
+			update_term_meta( $term_id, 'lafka_branch_shipping_areas', sanitize_text_field( wp_json_encode( $_POST['lafka_branch_shipping_areas'] ) ) );
 		} else {
 			update_term_meta( $term_id, 'lafka_branch_shipping_areas', '' );
 		}

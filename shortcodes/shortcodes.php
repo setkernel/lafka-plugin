@@ -1382,7 +1382,7 @@ if ( ! function_exists( 'lafka_contact_form_shortcode' ) ) {
 		$unique_id = uniqid( 'lafka_contactform' );
 		$nonce     = wp_create_nonce( 'lafka_contactform' );
 
-		$lafka_shortcode_params_for_tpl = json_encode( $combined_atts );
+		$lafka_shortcode_params_for_tpl = wp_json_encode( $combined_atts );
 
 		ob_start();
 		?>

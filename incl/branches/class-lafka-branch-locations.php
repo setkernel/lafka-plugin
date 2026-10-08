@@ -752,7 +752,7 @@ class Lafka_Branch_Locations {
 		$branch_locations = Lafka_Shipping_Areas::get_all_legit_branch_locations();
 
 		if ( empty( $branch_locations ) ) {
-			return json_encode( $locations_rich_data );
+			return wp_json_encode( $locations_rich_data );
 		}
 
 		// PERF-H26: Prime term meta cache for ALL branches in a single query
@@ -806,7 +806,7 @@ class Lafka_Branch_Locations {
 			}
 		}
 
-		return json_encode( $locations_rich_data );
+		return wp_json_encode( $locations_rich_data );
 	}
 
 	private static function get_processed_state_code_from_google_state( $state, $country ) {

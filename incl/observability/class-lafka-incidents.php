@@ -182,7 +182,7 @@ if ( ! class_exists( 'Lafka_Incidents' ) ) {
 			self::$written[ $print ] = true;
 
 			$context = is_array( $record['context'] ?? null ) ? Lafka_Log_Scrubber::bound( $record['context'], 2048 ) : array();
-			$json    = function_exists( 'wp_json_encode' ) ? wp_json_encode( $context ) : json_encode( $context );
+			$json    = wp_json_encode( $context );
 			$now     = gmdate( 'Y-m-d H:i:s' );
 			$table   = self::table_name();
 

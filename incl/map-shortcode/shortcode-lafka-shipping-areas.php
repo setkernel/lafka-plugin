@@ -67,7 +67,7 @@ function lafka_shipping_areas_shortcode( $atts = array(), $content = null, $tag 
 		'lafka_shipping_areas_shortcode_php_variables',
 		array(
 			'shortcode_id'       => $shortcode_id,
-			'areas'              => json_encode( $areas_array ),
+			'areas'              => wp_json_encode( $areas_array ),
 			'circle_area'        => $shortcode_atts['circle_area'],
 			'circle_radius'      => $shortcode_atts['circle_radius'],
 			'circle_radius_unit' => $shortcode_atts['circle_radius_unit'],

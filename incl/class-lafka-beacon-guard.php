@@ -43,7 +43,7 @@ if ( ! class_exists( 'Lafka_Beacon_Guard' ) ) {
 		 */
 		public static function site_host(): string {
 			$home = function_exists( 'home_url' ) ? (string) home_url( '/' ) : '';
-			$host = (string) parse_url( $home, PHP_URL_HOST );
+			$host = (string) wp_parse_url( $home, PHP_URL_HOST );
 			return strtolower( $host );
 		}
 
@@ -58,7 +58,7 @@ if ( ! class_exists( 'Lafka_Beacon_Guard' ) ) {
 			if ( '' === $value || 'null' === strtolower( $value ) ) {
 				return '';
 			}
-			$host = parse_url( $value, PHP_URL_HOST );
+			$host = wp_parse_url( $value, PHP_URL_HOST );
 			return is_string( $host ) ? strtolower( $host ) : '';
 		}
 

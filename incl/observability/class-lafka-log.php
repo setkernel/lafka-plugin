@@ -255,7 +255,7 @@ if ( ! class_exists( 'Lafka_Log' ) ) {
 				return;
 			}
 			if ( defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
-				$json = function_exists( 'wp_json_encode' ) ? wp_json_encode( $record['context'] ) : json_encode( $record['context'] );
+				$json = wp_json_encode( $record['context'] );
 				error_log( sprintf( '[%s] %s: %s %s', $record['source'], strtoupper( $record['level'] ), $record['message'], (string) $json ) );
 			}
 		}

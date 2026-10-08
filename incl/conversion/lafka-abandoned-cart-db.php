@@ -207,7 +207,7 @@ if ( ! function_exists( 'lafka_ac_save_cart' ) ) {
 			);
 		}
 
-		$encoded = function_exists( 'wp_json_encode' ) ? wp_json_encode( $cart ) : json_encode( $cart );
+		$encoded = wp_json_encode( $cart );
 		if ( ! is_string( $encoded ) ) {
 			$encoded = '';
 		}
