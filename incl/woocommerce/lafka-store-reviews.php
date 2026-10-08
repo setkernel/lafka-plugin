@@ -11,6 +11,29 @@
 
 defined( 'ABSPATH' ) || exit;
 
+if ( ! function_exists( 'lafka_store_reviews_short_name' ) ) {
+	/**
+	 * Public display name of a reviewer: first name and last initial
+	 * ("Sam K."); "Verified customer" when empty or when the name is an email.
+	 *
+	 * @since 10.4.0
+	 * @param string $name Name the reviewer typed.
+	 * @return string
+	 */
+	function lafka_store_reviews_short_name( string $name ): string {
+		$name = trim( wp_strip_all_tags( $name ) );
+		if ( '' === $name || false !== strpos( $name, '@' ) ) {
+			return __( 'Verified customer', 'lafka-plugin' );
+		}
+		$parts = preg_split( '/\s+/', $name );
+		$first = (string) $parts[0];
+		if ( count( $parts ) < 2 ) {
+			return $first;
+		}
+		return $first . ' ' . mb_strtoupper( mb_substr( (string) end( $parts ), 0, 1 ) ) . '.';
+	}
+}
+
 if ( ! function_exists( 'lafka_store_reviews_collect' ) ) {
 	/**
 	 * Every approved product review that carries a star rating, newest first,
@@ -28,26 +51,41 @@ if ( ! function_exists( 'lafka_store_reviews_collect' ) ) {
 		if ( function_exists( 'wc_review_ratings_enabled' ) && wc_review_ratings_enabled() ) {
 			$ids = get_comments(
 				array(
-					'type'     => 'review',
-					'status'   => 'approve',
-					'number'   => 500,
-					'orderby'  => 'comment_date_gmt',
-					'order'    => 'DESC',
-					'fields'   => 'ids',
-					'meta_key' => 'rating',
+					'type'        => 'review',
+					'post_type'   => 'product',
+					'post_status' => 'publish',
+					'status'      => 'approve',
+					'number'      => 500,
+					'orderby'     => 'comment_date_gmt',
+					'order'       => 'DESC',
+					'fields'      => 'ids',
+					'meta_key'    => 'rating',
 				)
 			);
 			update_meta_cache( 'comment', $ids );
+			$public = array();
 			foreach ( $ids as $id ) {
 				$comment = get_comment( (int) $id );
 				$stars   = (int) get_comment_meta( (int) $id, 'rating', true );
 				if ( ! $comment || $stars < 1 || $stars > 5 ) {
 					continue;
 				}
+				// Only products a visitor can see: published, not password
+				// protected, not hidden from the catalogue.
+				$pid = (int) $comment->comment_post_ID;
+				if ( ! isset( $public[ $pid ] ) ) {
+					$post           = get_post( $pid );
+					$product        = function_exists( 'wc_get_product' ) ? wc_get_product( $pid ) : null;
+					$public[ $pid ] = $post && 'publish' === $post->post_status && '' === (string) $post->post_password
+						&& $product && 'hidden' !== $product->get_catalog_visibility();
+				}
+				if ( ! $public[ $pid ] ) {
+					continue;
+				}
 				$rows[] = array(
 					'id'         => (int) $id,
 					'product_id' => (int) $comment->comment_post_ID,
-					'author'     => (string) $comment->comment_author,
+					'author'     => lafka_store_reviews_short_name( (string) $comment->comment_author ),
 					'text'       => trim( wp_strip_all_tags( (string) $comment->comment_content ) ),
 					'stars'      => $stars,
 					'time'       => (int) strtotime( (string) $comment->comment_date_gmt . ' UTC' ),
