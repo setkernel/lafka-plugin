@@ -51,10 +51,10 @@ if ( ! function_exists( 'lafka_review_banner_is_enabled' ) ) {
 	 * @return bool
 	 */
 	function lafka_review_banner_is_enabled(): bool {
-		if ( ! function_exists( 'get_theme_mod' ) ) {
+		if ( ! function_exists( 'lafka_setting' ) ) {
 			return false;
 		}
-		return '1' === (string) get_theme_mod( 'lafka_review_banner_enabled', '0' );
+		return '1' === (string) lafka_setting( 'lafka_review_banner_enabled', '0' );
 	}
 }
 
@@ -67,8 +67,8 @@ if ( ! function_exists( 'lafka_review_banner_window_days' ) ) {
 	 */
 	function lafka_review_banner_window_days(): int {
 		$raw = 7;
-		if ( function_exists( 'get_theme_mod' ) ) {
-			$raw = (int) get_theme_mod( 'lafka_review_banner_window_days', 7 );
+		if ( function_exists( 'lafka_setting' ) ) {
+			$raw = (int) lafka_setting( 'lafka_review_banner_window_days', 7 );
 		}
 		return max( 1, min( 30, $raw ) );
 	}
@@ -76,8 +76,8 @@ if ( ! function_exists( 'lafka_review_banner_window_days' ) ) {
 
 if ( ! function_exists( 'lafka_review_banner_copy' ) ) {
 	function lafka_review_banner_copy(): string {
-		$value = function_exists( 'get_theme_mod' )
-			? (string) get_theme_mod( 'lafka_review_banner_copy', '' )
+		$value = function_exists( 'lafka_setting' )
+			? (string) lafka_setting( 'lafka_review_banner_copy', '' )
 			: '';
 		return '' === trim( $value ) ? 'Loved your order? Tap to rate us' : $value;
 	}
@@ -85,8 +85,8 @@ if ( ! function_exists( 'lafka_review_banner_copy' ) ) {
 
 if ( ! function_exists( 'lafka_review_banner_cta_label' ) ) {
 	function lafka_review_banner_cta_label(): string {
-		$value = function_exists( 'get_theme_mod' )
-			? (string) get_theme_mod( 'lafka_review_banner_cta_label', '' )
+		$value = function_exists( 'lafka_setting' )
+			? (string) lafka_setting( 'lafka_review_banner_cta_label', '' )
 			: '';
 		return '' === trim( $value ) ? 'Leave a review →' : $value;
 	}

@@ -102,6 +102,7 @@ if ( ! class_exists( 'Lafka_Customizer_Checkout' ) ) {
 			$wp_customize->add_setting(
 				$id,
 				array(
+					'type'              => 'option',
 					'default'           => '1',
 					'transport'         => 'refresh',
 					'sanitize_callback' => array( __CLASS__, 'sanitize_checkbox' ),
@@ -131,6 +132,7 @@ if ( ! class_exists( 'Lafka_Customizer_Checkout' ) ) {
 			$wp_customize->add_setting(
 				$id,
 				array(
+					'type'              => 'option',
 					'default'           => '',
 					'transport'         => 'refresh',
 					'sanitize_callback' => 'sanitize_text_field',

@@ -227,7 +227,7 @@ if ( ! class_exists( 'Lafka_Site_Health_Seo' ) ) {
 			if ( empty( $info['same_as'] ) ) {
 				$issues[] = __( 'No social / listing profiles (sameAs). Add your Google Business Profile, Facebook, Instagram, Yelp … under WooCommerce → Settings → Restaurant → Social Profiles.', 'lafka-plugin' );
 			}
-			if ( '' === trim( (string) get_theme_mod( 'lafka_review_target_url', '' ) ) ) {
+			if ( '' === trim( (string) lafka_setting( 'lafka_review_target_url', '' ) ) ) {
 				$issues[] = __( 'No review link. Set your Google "write a review" URL in Customizer → Reviews so post-order emails can ask for reviews.', 'lafka-plugin' );
 			}
 			$tagline = trim( (string) get_bloginfo( 'description' ) );
@@ -243,7 +243,7 @@ if ( ! class_exists( 'Lafka_Site_Health_Seo' ) ) {
 
 			$locale  = (string) get_locale();
 			$country = strtoupper( (string) strtok( (string) get_option( 'woocommerce_default_country', '' ), ':' ) );
-			$pinned  = (string) get_theme_mod( 'lafka_default_locale', '' );
+			$pinned  = (string) lafka_setting( 'lafka_default_locale', '' );
 			if ( '' === $pinned && '' !== $country && preg_match( '/^([a-z]{2,3})_([A-Z]{2})$/', $locale, $m ) && $m[2] !== $country ) {
 				$issues[] = sprintf(
 					/* translators: 1: site locale, 2: store country, 3: suggested locale. */

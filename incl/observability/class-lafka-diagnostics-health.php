@@ -175,7 +175,7 @@ if ( ! class_exists( 'Lafka_Diagnostics_Health' ) ) {
 					),
 					'incidents_db' => array(
 						'label' => __( 'Incident table', 'lafka-plugin' ),
-						'value' => Lafka_Incidents::is_installed() ? Lafka_Incidents::DB_VERSION : __( 'Not installed', 'lafka-plugin' ),
+						'value' => Lafka_Incidents::is_installed() ? Lafka_Schema::definitions()['incidents']['version'] : __( 'Not installed', 'lafka-plugin' ),
 					),
 				),
 			);

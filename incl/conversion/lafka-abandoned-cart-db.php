@@ -2,8 +2,7 @@
 /**
  * Phase 3B (v9.27.0): Abandoned-cart recovery — DB layer.
  *
- * Owns the `wp_lafka_abandoned_carts` table:
- *   - Schema definition + dbDelta() idempotent migration
+ * Owns the `wp_lafka_abandoned_carts` table (its schema lives in Lafka_Schema):
  *   - Helper functions to insert/upsert a row when a checkout email is captured
  *   - Helper to mark a row as recovered (an order was placed)
  *   - Helper to mark a row as "recovery email sent"
@@ -14,9 +13,8 @@
  * so a customer who edits the cart and re-enters their email on /checkout/ keeps
  * a single row that updates `cart_contents` and `last_seen_at` in place.
  *
- * Schema is versioned via `lafka_abandoned_cart_db_version` option; the migration
- * runs through dbDelta() on plugin activation AND on any version mismatch (so
- * the table self-heals if it's missing after a stale clone).
+ * The schema and its version are declared once in Lafka_Schema
+ * (incl/tools/class-lafka-schema.php), which creates and upgrades the table.
  *
  * Privacy: each row carries the customer's email until either (a) the cron job
  * runs the 30-day cleanup, (b) the customer completes an order (then the row is
@@ -30,10 +28,6 @@
 
 defined( 'ABSPATH' ) || exit;
 
-if ( ! defined( 'LAFKA_ABANDONED_CART_DB_VERSION' ) ) {
-	define( 'LAFKA_ABANDONED_CART_DB_VERSION', '1.0.0' );
-}
-
 if ( ! function_exists( 'lafka_ac_table_name' ) ) {
 	/**
 	 * Return the fully-qualified table name (respects $wpdb->prefix).
@@ -41,114 +35,7 @@ if ( ! function_exists( 'lafka_ac_table_name' ) ) {
 	 * @return string
 	 */
 	function lafka_ac_table_name(): string {
-		global $wpdb;
-		$prefix = isset( $wpdb ) && is_object( $wpdb ) && isset( $wpdb->prefix ) ? (string) $wpdb->prefix : 'wp_';
-		return $prefix . 'lafka_abandoned_carts';
-	}
-}
-
-if ( ! function_exists( 'lafka_ac_schema_sql' ) ) {
-	/**
-	 * CREATE TABLE statement for the abandoned-cart table.
-	 *
-	 * Charset/collate comes from $wpdb when available
-	 * so the table matches site conventions; falls back to utf8mb4 otherwise.
-	 *
-	 * Columns:
-	 *   id                  PK, auto-incrementing
-	 *   customer_email      indexed — used for upsert + opt-out filter
-	 *   session_id          indexed — WC session token; pairs with email for dedupe
-	 *   resume_token        unique random string — appears in the recovery URL
-	 *   cart_contents       JSON-encoded WC cart payload (line items + qty + meta)
-	 *   cart_total          numeric cart subtotal at time of save (for email)
-	 *   currency            ISO currency code at time of save
-	 *   order_id            non-null when an order was placed from this row
-	 *   recovery_sent_at    timestamp the email left the queue (NULL if pending)
-	 *   created_at          row insertion time
-	 *   last_seen_at        last time the customer touched the cart (heartbeat)
-	 *
-	 * @return string
-	 */
-	function lafka_ac_schema_sql(): string {
-		global $wpdb;
-		$table   = lafka_ac_table_name();
-		$charset = isset( $wpdb ) && is_object( $wpdb ) && method_exists( $wpdb, 'get_charset_collate' )
-			? $wpdb->get_charset_collate()
-			: 'DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci';
-
-		// dbDelta is whitespace-sensitive — keep one column per line, 2-space
-		// indent, no trailing spaces. The PRIMARY KEY clause goes last.
-		$sql = "CREATE TABLE {$table} (
-  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-  customer_email VARCHAR(190) NOT NULL DEFAULT '',
-  session_id VARCHAR(190) NOT NULL DEFAULT '',
-  resume_token VARCHAR(64) NOT NULL DEFAULT '',
-  cart_contents LONGTEXT NOT NULL,
-  cart_total DECIMAL(18,4) NOT NULL DEFAULT 0,
-  currency VARCHAR(8) NOT NULL DEFAULT '',
-  order_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
-  recovery_sent_at DATETIME NULL DEFAULT NULL,
-  created_at DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
-  last_seen_at DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
-  PRIMARY KEY  (id),
-  KEY customer_email (customer_email),
-  KEY session_id (session_id),
-  KEY resume_token (resume_token),
-  KEY recovery_sent_at (recovery_sent_at),
-  KEY last_seen_at (last_seen_at)
-) {$charset};";
-
-		return $sql;
-	}
-}
-
-if ( ! function_exists( 'lafka_ac_install_table' ) ) {
-	/**
-	 * Run dbDelta() to create or migrate the abandoned-cart table.
-	 *
-	 * Idempotent: dbDelta diffs current schema against the desired one and only
-	 * emits ALTER statements when columns drift. Safe to call on every plugin
-	 * activation; safe to call from a self-heal check on `plugins_loaded`.
-	 *
-	 * @return void
-	 */
-	function lafka_ac_install_table(): void {
-		if ( ! function_exists( 'dbDelta' ) ) {
-			require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-		}
-
-		$sql = lafka_ac_schema_sql();
-		if ( function_exists( 'dbDelta' ) ) {
-			dbDelta( $sql );
-		}
-
-		if ( function_exists( 'update_option' ) ) {
-			update_option( 'lafka_abandoned_cart_db_version', LAFKA_ABANDONED_CART_DB_VERSION );
-		}
-	}
-}
-
-if ( ! function_exists( 'lafka_ac_maybe_install_table' ) ) {
-	/**
-	 * Self-heal: if the stored DB version is missing or older than this file's
-	 * constant, re-run the install. Hooked on `plugins_loaded` so a stale clone
-	 * that's missing the activation hook (e.g. WP CLI deploy with no activate
-	 * call) still gets the table.
-	 *
-	 * @return void
-	 */
-	function lafka_ac_maybe_install_table(): void {
-		if ( ! function_exists( 'get_option' ) ) {
-			return;
-		}
-		if ( function_exists( 'lafka_ac_capture_is_enabled' ) && ! lafka_ac_capture_is_enabled() ) {
-			return; // Default-OFF module: don't create the table until the operator opts in.
-		}
-		$installed = (string) get_option( 'lafka_abandoned_cart_db_version', '' );
-		if ( LAFKA_ABANDONED_CART_DB_VERSION === $installed ) {
-			return;
-		}
-		lafka_ac_install_table();
+		return Lafka_Schema::table_name( 'abandoned_carts' );
 	}
 }
 
@@ -415,9 +302,4 @@ if ( ! function_exists( 'lafka_ac_delete_by_email' ) ) {
 		);
 		return is_numeric( $deleted ) ? (int) $deleted : 0;
 	}
-}
-
-// Self-heal: if the table is missing on a stale deploy, install on plugins_loaded.
-if ( function_exists( 'add_action' ) ) {
-	add_action( 'plugins_loaded', 'lafka_ac_maybe_install_table', 20 );
 }

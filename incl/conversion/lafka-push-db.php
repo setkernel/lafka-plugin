@@ -2,8 +2,7 @@
 /**
  * Phase 3E (v9.29.0): Web Push notifications — DB layer.
  *
- * Owns the `wp_lafka_push_subscriptions` table:
- *   - Schema definition + dbDelta() idempotent migration
+ * Owns the `wp_lafka_push_subscriptions` table (its schema lives in Lafka_Schema):
  *   - Helpers to save / delete / mark-unsubscribed / fetch active subscriptions
  *   - Helper to delete stale rows (60-day inactive cleanup)
  *
@@ -13,9 +12,8 @@
  * new row; an already-subscribed customer re-running the subscribe flow on the
  * same browser hits the same endpoint and updates the row in place.
  *
- * Schema is versioned via the `lafka_push_db_version` option; the migration
- * runs through dbDelta() on plugin activation AND on any version mismatch (so
- * the table self-heals if it's missing on a stale clone or WP-CLI deploy).
+ * The schema and its version are declared once in Lafka_Schema
+ * (incl/tools/class-lafka-schema.php), which creates and upgrades the table.
  *
  * Privacy: each row carries the customer's push endpoint + public keys (~1 KB
  * each). When a customer unsubscribes (browser settings, site profile, or the
@@ -32,10 +30,6 @@
 
 defined( 'ABSPATH' ) || exit;
 
-if ( ! defined( 'LAFKA_PUSH_DB_VERSION' ) ) {
-	define( 'LAFKA_PUSH_DB_VERSION', '1.0.0' );
-}
-
 if ( ! function_exists( 'lafka_push_table_name' ) ) {
 	/**
 	 * Return the fully-qualified table name (respects $wpdb->prefix).
@@ -43,116 +37,7 @@ if ( ! function_exists( 'lafka_push_table_name' ) ) {
 	 * @return string
 	 */
 	function lafka_push_table_name(): string {
-		global $wpdb;
-		$prefix = isset( $wpdb ) && is_object( $wpdb ) && isset( $wpdb->prefix ) ? (string) $wpdb->prefix : 'wp_';
-		return $prefix . 'lafka_push_subscriptions';
-	}
-}
-
-if ( ! function_exists( 'lafka_push_schema_sql' ) ) {
-	/**
-	 * CREATE TABLE statement for the push-subscriptions table.
-	 *
-	 * Charset/collate comes from $wpdb when available
-	 * so the table matches site conventions; falls back to utf8mb4 otherwise.
-	 *
-	 * Columns:
-	 *   id                  PK, auto-incrementing
-	 *   user_id             nullable — guests can subscribe without an account
-	 *   endpoint            UNIQUE — the push service URL the row sends to
-	 *   p256dh              base64url public key used by the Web Push protocol
-	 *   auth                base64url 16-byte auth secret for AES-GCM encryption
-	 *   user_agent          UA string at subscribe time (for analytics + debug)
-	 *   locale              site locale at subscribe time (multilingual sends)
-	 *   created_at          row insertion time
-	 *   last_seen_at        last activity heartbeat (subscribe re-up or send)
-	 *   unsubscribed_at     NULL = active; timestamp = soft-deleted
-	 *
-	 * Note on endpoint length: Apple Web Push endpoints can run >2 KB; Mozilla
-	 * autopush is short. TEXT covers all known producers. The UNIQUE key uses
-	 * a 191-char prefix (utf8mb4 InnoDB limit) which is more than enough for
-	 * the random-suffix portion of any push service URL to be unique.
-	 *
-	 * @return string
-	 */
-	function lafka_push_schema_sql(): string {
-		global $wpdb;
-		$table   = lafka_push_table_name();
-		$charset = isset( $wpdb ) && is_object( $wpdb ) && method_exists( $wpdb, 'get_charset_collate' )
-			? $wpdb->get_charset_collate()
-			: 'DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci';
-
-		// dbDelta is whitespace-sensitive — keep one column per line, 2-space
-		// indent, no trailing spaces. The PRIMARY KEY clause goes last.
-		$sql = "CREATE TABLE {$table} (
-  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-  user_id BIGINT UNSIGNED NULL DEFAULT NULL,
-  endpoint TEXT NOT NULL,
-  p256dh VARCHAR(190) NOT NULL DEFAULT '',
-  auth VARCHAR(64) NOT NULL DEFAULT '',
-  user_agent VARCHAR(255) NOT NULL DEFAULT '',
-  locale VARCHAR(16) NOT NULL DEFAULT '',
-  created_at DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
-  last_seen_at DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
-  unsubscribed_at DATETIME NULL DEFAULT NULL,
-  PRIMARY KEY  (id),
-  UNIQUE KEY endpoint (endpoint(191)),
-  KEY user_id (user_id),
-  KEY last_seen_at (last_seen_at),
-  KEY unsubscribed_at (unsubscribed_at)
-) {$charset};";
-
-		return $sql;
-	}
-}
-
-if ( ! function_exists( 'lafka_push_install_table' ) ) {
-	/**
-	 * Run dbDelta() to create or migrate the push-subscriptions table.
-	 *
-	 * Idempotent: dbDelta diffs current schema against the desired one and only
-	 * emits ALTER statements when columns drift. Safe to call on every plugin
-	 * activation; safe to call from a self-heal check on `plugins_loaded`.
-	 *
-	 * @return void
-	 */
-	function lafka_push_install_table(): void {
-		if ( ! function_exists( 'dbDelta' ) ) {
-			require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-		}
-
-		$sql = lafka_push_schema_sql();
-		if ( function_exists( 'dbDelta' ) ) {
-			dbDelta( $sql );
-		}
-
-		if ( function_exists( 'update_option' ) ) {
-			update_option( 'lafka_push_db_version', LAFKA_PUSH_DB_VERSION );
-		}
-	}
-}
-
-if ( ! function_exists( 'lafka_push_maybe_install_table' ) ) {
-	/**
-	 * Self-heal: if the stored DB version is missing or older than this file's
-	 * constant, re-run the install. Hooked on `plugins_loaded` so a stale clone
-	 * that's missing the activation hook (e.g. WP-CLI deploy with no activate
-	 * call) still gets the table.
-	 *
-	 * @return void
-	 */
-	function lafka_push_maybe_install_table(): void {
-		if ( ! function_exists( 'get_option' ) ) {
-			return;
-		}
-		if ( function_exists( 'lafka_push_rest_is_enabled' ) && ! lafka_push_rest_is_enabled() ) {
-			return; // Default-OFF module: don't create the table until the operator opts in.
-		}
-		$installed = (string) get_option( 'lafka_push_db_version', '' );
-		if ( LAFKA_PUSH_DB_VERSION === $installed ) {
-			return;
-		}
-		lafka_push_install_table();
+		return Lafka_Schema::table_name( 'push' );
 	}
 }
 
@@ -307,6 +192,101 @@ if ( ! function_exists( 'lafka_push_mark_unsubscribed' ) ) {
 	}
 }
 
+if ( ! function_exists( 'lafka_push_user_id_chunks' ) ) {
+	/**
+	 * Split a user-id list into the fixed-size groups the user_id IN (…)
+	 * queries take (10 ids each, short groups padded with 0, which matches no
+	 * user), so the user_id index serves them. Positive, unique ids only.
+	 *
+	 * @since 10.4.0
+	 * @param array<int,mixed> $user_ids User ids.
+	 * @return array<int,array<int,int>> Groups of exactly 10 ids.
+	 */
+	function lafka_push_user_id_chunks( array $user_ids ): array {
+		$ids = array_values(
+			array_unique(
+				array_filter(
+					array_map( 'intval', $user_ids ),
+					static function ( $id ) {
+						return $id > 0;
+					}
+				)
+			)
+		);
+		$out = array();
+		foreach ( array_chunk( $ids, 10 ) as $chunk ) {
+			$out[] = array_pad( $chunk, 10, 0 );
+		}
+		return $out;
+	}
+}
+
+if ( ! function_exists( 'lafka_push_get_active_subscriptions_for_users' ) ) {
+	/**
+	 * Active subscriptions of the given users with id greater than a cursor,
+	 * ordered by id, at most $limit rows.
+	 *
+	 * @since 10.4.0
+	 * @param array<int,mixed> $user_ids Non-empty user ids.
+	 * @param int              $after_id Return rows with id greater than this.
+	 * @param int              $limit    Max rows.
+	 * @return array<int,object>
+	 */
+	function lafka_push_get_active_subscriptions_for_users( array $user_ids, int $after_id, int $limit ): array {
+		global $wpdb;
+		if ( ! isset( $wpdb ) || ! is_object( $wpdb ) || ! method_exists( $wpdb, 'get_results' ) ) {
+			return array();
+		}
+		$table = lafka_push_table_name();
+		$rows  = array();
+		foreach ( lafka_push_user_id_chunks( $user_ids ) as $chunk ) {
+			$found = $wpdb->get_results(
+				$wpdb->prepare(
+					'SELECT * FROM %i WHERE unsubscribed_at IS NULL AND user_id IN ( %d,%d,%d,%d,%d,%d,%d,%d,%d,%d ) AND id > %d ORDER BY id ASC LIMIT %d',
+					array( $table, $chunk[0], $chunk[1], $chunk[2], $chunk[3], $chunk[4], $chunk[5], $chunk[6], $chunk[7], $chunk[8], $chunk[9], max( 0, $after_id ), $limit )
+				)
+			);
+			if ( is_array( $found ) ) {
+				$rows = array_merge( $rows, $found );
+			}
+		}
+		usort(
+			$rows,
+			static function ( $a, $b ) {
+				return (int) $a->id <=> (int) $b->id;
+			}
+		);
+		return array_slice( $rows, 0, $limit );
+	}
+}
+
+if ( ! function_exists( 'lafka_push_count_active_subscriptions_for_users' ) ) {
+	/**
+	 * Number of active subscriptions belonging to the given users.
+	 *
+	 * @since 10.4.0
+	 * @param array<int,mixed> $user_ids User ids.
+	 * @return int
+	 */
+	function lafka_push_count_active_subscriptions_for_users( array $user_ids ): int {
+		global $wpdb;
+		if ( ! isset( $wpdb ) || ! is_object( $wpdb ) || ! method_exists( $wpdb, 'get_var' ) ) {
+			return 0;
+		}
+		$table = lafka_push_table_name();
+		$count = 0;
+		foreach ( lafka_push_user_id_chunks( $user_ids ) as $chunk ) {
+			$count += (int) $wpdb->get_var(
+				$wpdb->prepare(
+					'SELECT COUNT(*) FROM %i WHERE unsubscribed_at IS NULL AND user_id IN ( %d,%d,%d,%d,%d,%d,%d,%d,%d,%d )',
+					array( $table, $chunk[0], $chunk[1], $chunk[2], $chunk[3], $chunk[4], $chunk[5], $chunk[6], $chunk[7], $chunk[8], $chunk[9] )
+				)
+			);
+		}
+		return $count;
+	}
+}
+
 if ( ! function_exists( 'lafka_push_get_active_subscriptions' ) ) {
 	/**
 	 * Fetch every active (not unsubscribed) subscription row.
@@ -327,25 +307,7 @@ if ( ! function_exists( 'lafka_push_get_active_subscriptions' ) ) {
 		$table = lafka_push_table_name();
 
 		if ( is_array( $user_ids ) && ! empty( $user_ids ) ) {
-			$ids = array_values( array_unique( array_map( 'intval', $user_ids ) ) );
-			$ids = array_filter(
-				$ids,
-				static function ( $id ) {
-					return $id > 0;
-				}
-			);
-			if ( empty( $ids ) ) {
-				return array();
-			}
-			$rows = $wpdb->get_results(
-				$wpdb->prepare(
-					'SELECT * FROM %i WHERE unsubscribed_at IS NULL AND FIND_IN_SET( user_id, %s ) ORDER BY id ASC LIMIT %d',
-					$table,
-					implode( ',', $ids ),
-					$limit
-				)
-			);
-			return is_array( $rows ) ? $rows : array();
+			return lafka_push_get_active_subscriptions_for_users( $user_ids, 0, $limit );
 		}
 
 		$rows = $wpdb->get_results(
@@ -424,9 +386,4 @@ if ( ! function_exists( 'lafka_push_cleanup' ) ) {
 		);
 		return is_numeric( $result ) ? (int) $result : 0;
 	}
-}
-
-// Self-heal: if the table is missing on a stale deploy, install on plugins_loaded.
-if ( function_exists( 'add_action' ) ) {
-	add_action( 'plugins_loaded', 'lafka_push_maybe_install_table', 20 );
 }

@@ -136,6 +136,7 @@ if ( ! class_exists( 'Lafka_Customizer_Abandoned_Cart' ) ) {
 			$wp_customize->add_setting(
 				'lafka_ac_enabled',
 				array(
+					'type'              => 'option',
 					'default'           => '0',
 					'transport'         => 'refresh',
 					'sanitize_callback' => array( __CLASS__, 'sanitize_checkbox' ),
@@ -156,6 +157,7 @@ if ( ! class_exists( 'Lafka_Customizer_Abandoned_Cart' ) ) {
 			$wp_customize->add_setting(
 				'lafka_ac_delay_minutes',
 				array(
+					'type'              => 'option',
 					'default'           => 75,
 					'transport'         => 'refresh',
 					'sanitize_callback' => array( __CLASS__, 'sanitize_delay_minutes' ),
@@ -181,6 +183,7 @@ if ( ! class_exists( 'Lafka_Customizer_Abandoned_Cart' ) ) {
 			$wp_customize->add_setting(
 				'lafka_ac_subject',
 				array(
+					'type'              => 'option',
 					'default'           => 'Did you forget something? Your cart is waiting at {site}',
 					'transport'         => 'refresh',
 					'sanitize_callback' => 'sanitize_text_field',
@@ -201,6 +204,7 @@ if ( ! class_exists( 'Lafka_Customizer_Abandoned_Cart' ) ) {
 			$wp_customize->add_setting(
 				'lafka_ac_intro_heading',
 				array(
+					'type'              => 'option',
 					'default'           => 'Your cart is still here',
 					'transport'         => 'refresh',
 					'sanitize_callback' => 'sanitize_text_field',
@@ -221,6 +225,7 @@ if ( ! class_exists( 'Lafka_Customizer_Abandoned_Cart' ) ) {
 			$wp_customize->add_setting(
 				'lafka_ac_intro_body',
 				array(
+					'type'              => 'option',
 					'default'           => 'We saved your selection. Tap below to pick up where you left off.',
 					'transport'         => 'refresh',
 					'sanitize_callback' => 'sanitize_textarea_field',
@@ -241,6 +246,7 @@ if ( ! class_exists( 'Lafka_Customizer_Abandoned_Cart' ) ) {
 			$wp_customize->add_setting(
 				'lafka_ac_cta_label',
 				array(
+					'type'              => 'option',
 					'default'           => 'Resume my order',
 					'transport'         => 'refresh',
 					'sanitize_callback' => 'sanitize_text_field',
@@ -261,6 +267,7 @@ if ( ! class_exists( 'Lafka_Customizer_Abandoned_Cart' ) ) {
 			$wp_customize->add_setting(
 				'lafka_ac_global_opt_out',
 				array(
+					'type'              => 'option',
 					'default'           => '',
 					'transport'         => 'refresh',
 					'sanitize_callback' => array( __CLASS__, 'sanitize_opt_out_list' ),

@@ -34,7 +34,7 @@ if ( ! class_exists( 'Lafka_Module' ) ) {
 		/** @var string Grouping slug (ordering / fulfilment / operations / conversion / analytics). */
 		private $category;
 
-		/** @var string Where the enable flag lives — 'lafka_option' | 'theme_mod' | 'derived'. */
+		/** @var string Where the enable flag lives — 'lafka_option' | 'option' | 'derived'. */
 		private $storage;
 
 		/** @var bool Product default state (documentation / wizard seed). */

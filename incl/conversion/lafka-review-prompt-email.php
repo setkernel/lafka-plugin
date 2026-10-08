@@ -47,10 +47,10 @@ if ( ! function_exists( 'lafka_review_email_is_enabled' ) ) {
 	 * @return bool
 	 */
 	function lafka_review_email_is_enabled(): bool {
-		if ( ! function_exists( 'get_theme_mod' ) ) {
+		if ( ! function_exists( 'lafka_setting' ) ) {
 			return false;
 		}
-		return '1' === (string) get_theme_mod( 'lafka_review_email_enabled', '0' );
+		return '1' === (string) lafka_setting( 'lafka_review_email_enabled', '0' );
 	}
 }
 
@@ -62,8 +62,8 @@ if ( ! function_exists( 'lafka_review_email_delay_hours' ) ) {
 	 */
 	function lafka_review_email_delay_hours(): int {
 		$raw = 24;
-		if ( function_exists( 'get_theme_mod' ) ) {
-			$raw = (int) get_theme_mod( 'lafka_review_email_delay_hours', 24 );
+		if ( function_exists( 'lafka_setting' ) ) {
+			$raw = (int) lafka_setting( 'lafka_review_email_delay_hours', 24 );
 		}
 		return max( 1, min( 336, $raw ) );
 	}
@@ -78,8 +78,8 @@ if ( ! function_exists( 'lafka_review_email_subject_default' ) ) {
 	 * @return string
 	 */
 	function lafka_review_email_subject_default(): string {
-		$tmpl = function_exists( 'get_theme_mod' )
-			? (string) get_theme_mod( 'lafka_review_email_subject', '' )
+		$tmpl = function_exists( 'lafka_setting' )
+			? (string) lafka_setting( 'lafka_review_email_subject', '' )
 			: '';
 		if ( '' === trim( $tmpl ) ) {
 			$tmpl = 'How was your order, {firstname}?';
@@ -90,8 +90,8 @@ if ( ! function_exists( 'lafka_review_email_subject_default' ) ) {
 
 if ( ! function_exists( 'lafka_review_email_intro' ) ) {
 	function lafka_review_email_intro(): string {
-		$value = function_exists( 'get_theme_mod' )
-			? (string) get_theme_mod( 'lafka_review_email_intro', '' )
+		$value = function_exists( 'lafka_setting' )
+			? (string) lafka_setting( 'lafka_review_email_intro', '' )
 			: '';
 		return '' === trim( $value )
 			? 'We hope you enjoyed every bite. A quick rating goes a long way for a small spot like ours.'
@@ -108,8 +108,8 @@ if ( ! function_exists( 'lafka_review_target_url' ) ) {
 	 * @return string
 	 */
 	function lafka_review_target_url(): string {
-		$raw = function_exists( 'get_theme_mod' )
-			? (string) get_theme_mod( 'lafka_review_target_url', '' )
+		$raw = function_exists( 'lafka_setting' )
+			? (string) lafka_setting( 'lafka_review_target_url', '' )
 			: '';
 		return trim( $raw );
 	}
@@ -117,8 +117,8 @@ if ( ! function_exists( 'lafka_review_target_url' ) ) {
 
 if ( ! function_exists( 'lafka_review_target_label' ) ) {
 	function lafka_review_target_label(): string {
-		$value = function_exists( 'get_theme_mod' )
-			? (string) get_theme_mod( 'lafka_review_target_label', '' )
+		$value = function_exists( 'lafka_setting' )
+			? (string) lafka_setting( 'lafka_review_target_label', '' )
 			: '';
 		return '' === trim( $value ) ? 'Leave a Google review' : $value;
 	}

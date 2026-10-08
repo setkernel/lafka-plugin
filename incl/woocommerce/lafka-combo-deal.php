@@ -46,10 +46,7 @@ if ( ! function_exists( 'lafka_combo_deal_config' ) ) {
 	function lafka_combo_deal_config(): array {
 		$get    = static function ( $key, $default_value = '' ) {
 			$v = get_option( $key, '' );
-			if ( '' === $v || false === $v ) {
-				$v = get_theme_mod( $key, $default_value );
-			}
-			return $v;
+			return ( '' === $v || false === $v ) ? $default_value : $v;
 		};
 		$cat_a  = lafka_combo_deal_term_id( $get( 'lafka_combo_deal_cat_a' ) );
 		$cat_b  = lafka_combo_deal_term_id( $get( 'lafka_combo_deal_cat_b' ) );

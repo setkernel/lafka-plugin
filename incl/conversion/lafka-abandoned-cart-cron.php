@@ -107,8 +107,8 @@ if ( ! function_exists( 'lafka_ac_get_delay_minutes' ) ) {
 	 */
 	function lafka_ac_get_delay_minutes(): int {
 		$raw = 75;
-		if ( function_exists( 'get_theme_mod' ) ) {
-			$raw = (int) get_theme_mod( 'lafka_ac_delay_minutes', 75 );
+		if ( function_exists( 'lafka_setting' ) ) {
+			$raw = (int) lafka_setting( 'lafka_ac_delay_minutes', 75 );
 		}
 		return max( 5, min( 1440, $raw ) );
 	}
@@ -121,10 +121,10 @@ if ( ! function_exists( 'lafka_ac_get_opt_out_list' ) ) {
 	 * @return array<int, string>
 	 */
 	function lafka_ac_get_opt_out_list(): array {
-		if ( ! function_exists( 'get_theme_mod' ) ) {
+		if ( ! function_exists( 'lafka_setting' ) ) {
 			return array();
 		}
-		$raw = (string) get_theme_mod( 'lafka_ac_global_opt_out', '' );
+		$raw = (string) lafka_setting( 'lafka_ac_global_opt_out', '' );
 		if ( '' === trim( $raw ) ) {
 			return array();
 		}

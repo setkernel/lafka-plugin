@@ -169,7 +169,7 @@ if ( ! function_exists( 'lafka_insert_og_tags' ) ) {
 		// that fell through tiers 1+2 (archives, /menu/, /contact-us/,
 		// homepage without featured image, etc).
 		if ( '' === $image ) {
-			$og_default = get_theme_mod( 'lafka_og_image_default', '' );
+			$og_default = lafka_setting( 'lafka_og_image_default', '' );
 			if ( '' !== $og_default && null !== $og_default ) {
 				if ( is_numeric( $og_default ) ) {
 					$src = wp_get_attachment_image_src( (int) $og_default, 'large' );
@@ -217,7 +217,7 @@ if ( ! function_exists( 'lafka_insert_og_tags' ) ) {
 		// WP Settings → General → Site Language. Output normalized to "xx_YY"
 		// (underscore, not hyphen). The `lafka_og_locale` filter lets a
 		// theme/plugin override per-request without touching settings.
-		$customizer_locale = (string) get_theme_mod( 'lafka_default_locale', '' );
+		$customizer_locale = (string) lafka_setting( 'lafka_default_locale', '' );
 		$locale            = '' !== $customizer_locale
 			? str_replace( '-', '_', $customizer_locale )
 			: str_replace( '-', '_', get_locale() );
@@ -329,10 +329,10 @@ if ( ! function_exists( 'lafka_filter_language_attributes' ) ) {
 		if ( is_admin() ) {
 			return $output;
 		}
-		if ( ! function_exists( 'get_theme_mod' ) ) {
+		if ( ! function_exists( 'lafka_setting' ) ) {
 			return $output;
 		}
-		$override = (string) get_theme_mod( 'lafka_default_locale', '' );
+		$override = (string) lafka_setting( 'lafka_default_locale', '' );
 		if ( '' === $override ) {
 			return $output;
 		}

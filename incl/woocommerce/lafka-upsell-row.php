@@ -53,7 +53,7 @@ if ( ! function_exists( 'lafka_pdp_get_upsell_ids' ) ) {
 		if ( $root && isset( $root->slug ) ) {
 			for ( $i = 1; $i <= 4; $i++ ) {
 				$key = 'lafka_upsell_' . sanitize_key( (string) $root->slug ) . '_' . $i;
-				$val = (int) get_theme_mod( $key, 0 );
+				$val = (int) lafka_setting( $key, 0 );
 				if ( $val > 0 ) {
 					$ids[] = $val;
 				}

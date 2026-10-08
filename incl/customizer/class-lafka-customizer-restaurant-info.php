@@ -59,7 +59,6 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 			self::register_hours_section( $wp_customize );
 			self::register_cuisine_payment_section( $wp_customize );
 			self::register_same_as_section( $wp_customize );
-			self::register_homepage_hero_section( $wp_customize );
 			self::register_social_sharing_section( $wp_customize );
 		}
 
@@ -527,42 +526,6 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 		}
 
 		// ====================================================================
-		// Section: Homepage Hero (LCP image)
-		// ====================================================================
-
-		private static function register_homepage_hero_section( $wp_customize ): void {
-			$wp_customize->add_section(
-				'lafka_homepage_hero',
-				array(
-					'title'       => esc_html__( 'Homepage Hero (LCP)', 'lafka-plugin' ),
-					'description' => esc_html__( 'Image preloaded on the homepage for fastest Largest Contentful Paint. Used by the lafka_lcp_image_url filter in lafka-plugin (incl/perf/lcp-preload.php). Image emitted as a `<link rel="preload">` from the theme\'s header.php.', 'lafka-plugin' ),
-					'panel'       => 'lafka_restaurant_info',
-					'priority'    => 70,
-				)
-			);
-
-			$wp_customize->add_setting(
-				'lafka_homepage_hero_image',
-				array(
-					'default'           => '',
-					'transport'         => 'refresh',
-					'sanitize_callback' => 'esc_url_raw',
-				)
-			);
-			$wp_customize->add_control(
-				new WP_Customize_Image_Control(
-					$wp_customize,
-					'lafka_homepage_hero_image',
-					array(
-						'label'       => esc_html__( 'Homepage hero image', 'lafka-plugin' ),
-						'description' => esc_html__( 'Leave empty to disable LCP preloading.', 'lafka-plugin' ),
-						'section'     => 'lafka_homepage_hero',
-					)
-				)
-			);
-		}
-
-		// ====================================================================
 		// Section: Social Sharing (OG image + locale)
 		// ====================================================================
 
@@ -600,6 +563,7 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 			$wp_customize->add_setting(
 				'lafka_og_image_default',
 				array(
+					'type'              => 'option',
 					'default'           => '',
 					'transport'         => 'refresh',
 					'sanitize_callback' => 'esc_url_raw',
@@ -620,6 +584,7 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 			$wp_customize->add_setting(
 				'lafka_default_locale',
 				array(
+					'type'              => 'option',
 					'default'           => '',
 					'transport'         => 'refresh',
 					'sanitize_callback' => array( __CLASS__, 'sanitize_locale' ),

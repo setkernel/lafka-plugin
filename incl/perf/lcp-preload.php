@@ -7,10 +7,10 @@
  * The hero is resolved once, by lafka_lcp_hero(), for BOTH hints so they can
  * never disagree (v9.30.x shipped them reading different keys):
  *
- *   1. the theme Customizer setting `lafka_home_hero_image_id` (attachment ID —
- *      the canonical key used by partials/home-hero.php and the Home panel);
- *   2. legacy keys: the `lafka_homepage_hero_image` theme_mod (attachment ID or
- *      URL) and the `lafka_homepage_hero_attachment_id` option.
+ *   1. the `lafka_home_hero_image_id` filter (attachment ID). The hero is an
+ *      appearance setting, so the active theme owns it and answers the filter
+ *      (lafka-theme does, from its Home Customizer panel);
+ *   2. the legacy `lafka_homepage_hero_attachment_id` option.
  *
  * With no configured hero the preload falls back to the first <img> in the
  * front page's content (cached); fetchpriority needs an attachment, so it only
@@ -31,9 +31,16 @@ if ( ! function_exists( 'lafka_lcp_hero' ) ) {
 	 *                                   URL) and URL ('' when none is set).
 	 */
 	function lafka_lcp_hero(): array {
+		/**
+		 * Filter the homepage hero attachment id (0 = none). The theme that
+		 * renders the hero answers it.
+		 *
+		 * @since 10.4.0
+		 *
+		 * @param int $attachment_id Attachment id.
+		 */
 		$candidates = array(
-			get_theme_mod( 'lafka_home_hero_image_id', 0 ),
-			get_theme_mod( 'lafka_homepage_hero_image', '' ),
+			(int) apply_filters( 'lafka_home_hero_image_id', 0 ),
 			get_option( 'lafka_homepage_hero_attachment_id', 0 ),
 		);
 		foreach ( $candidates as $value ) {

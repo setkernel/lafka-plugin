@@ -102,7 +102,7 @@ if ( ! function_exists( 'lafka_pdp_get_bestseller_ids' ) ) {
 
 if ( ! function_exists( 'lafka_pdp_render_bestseller_eyebrow' ) ) {
 	function lafka_pdp_render_bestseller_eyebrow( int $product_id ): void {
-		if ( 'no' === get_theme_mod( 'lafka_pdp_show_bestseller_eyebrow', 'yes' ) ) {
+		if ( 'no' === lafka_setting( 'lafka_pdp_show_bestseller_eyebrow', 'yes' ) ) {
 			return;
 		}
 		// Eyebrow only renders for top-3 (the wider list serves the upsell fallback).

@@ -77,7 +77,6 @@ if ( ! class_exists( 'Lafka_Diagnostics' ) ) {
 		public static function register(): void {
 			add_action( self::DAILY_HOOK, array( __CLASS__, 'run_daily_guarded' ) );
 			add_action( 'admin_init', array( __CLASS__, 'ensure_scheduled' ) );
-			add_action( 'init', array( 'Lafka_Incidents', 'maybe_install' ) );
 			if ( self::is_enabled() ) {
 				add_filter( 'woocommerce_email_classes', array( __CLASS__, 'register_email' ) );
 			}

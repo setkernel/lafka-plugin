@@ -56,6 +56,14 @@ if ( ! function_exists( 'lafka_plugin_asset_version' ) ) {
 // Load shared options helper — available to both plugin and theme.
 require_once plugin_dir_path( __FILE__ ) . 'incl/class-lafka-options.php';
 
+// Plugin behaviour settings (options, not theme_mods): the one getter and the one-time migration.
+require_once plugin_dir_path( __FILE__ ) . 'incl/settings/lafka-settings.php';
+
+// The one registry of the custom tables and the one upgrader (activation, self-heal, uninstall).
+require_once plugin_dir_path( __FILE__ ) . 'incl/tools/class-lafka-schema.php';
+add_action( 'plugins_loaded', array( 'Lafka_Schema', 'maybe_install' ), 20 );
+register_activation_hook( __FILE__, array( 'Lafka_Schema', 'install_all' ) );
+
 // Pickup-vs-delivery shipping-method recognition shared across modules.
 require_once plugin_dir_path( __FILE__ ) . 'incl/lafka-shipping-method-helpers.php';
 
@@ -104,7 +112,6 @@ register_activation_hook( __FILE__, array( 'Lafka_Checkout_Mode', 'on_activation
  * module (default ON). Required early so every module below can log.
  */
 require_once plugin_dir_path( __FILE__ ) . 'incl/observability/lafka-observability.php';
-register_activation_hook( __FILE__, array( 'Lafka_Incidents', 'install' ) );
 register_deactivation_hook( __FILE__, array( 'Lafka_Diagnostics', 'unschedule' ) );
 
 /**
@@ -505,9 +512,6 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/customizer/class-lafka-customiz
 register_activation_hook(
 	__FILE__,
 	static function () {
-		if ( function_exists( 'lafka_ac_install_table' ) ) {
-			lafka_ac_install_table();
-		}
 		if ( function_exists( 'lafka_ac_schedule_events' ) ) {
 			lafka_ac_schedule_events();
 		}
@@ -613,9 +617,6 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/conversion/class-lafka-conversi
 register_activation_hook(
 	__FILE__,
 	static function () {
-		if ( function_exists( 'lafka_push_install_table' ) ) {
-			lafka_push_install_table();
-		}
 		if ( function_exists( 'lafka_push_reorder_schedule_event' ) ) {
 			lafka_push_reorder_schedule_event();
 		}

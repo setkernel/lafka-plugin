@@ -28,13 +28,13 @@ if ( ! function_exists( 'lafka_push_reorder_is_enabled' ) ) {
 	 * Both the master toggle and the channel toggle must be ON.
 	 */
 	function lafka_push_reorder_is_enabled(): bool {
-		if ( ! function_exists( 'get_theme_mod' ) ) {
+		if ( ! function_exists( 'lafka_setting' ) ) {
 			return false;
 		}
-		if ( '1' !== (string) get_theme_mod( 'lafka_push_enabled', '0' ) ) {
+		if ( '1' !== (string) lafka_setting( 'lafka_push_enabled', '0' ) ) {
 			return false;
 		}
-		if ( '1' !== (string) get_theme_mod( 'lafka_push_reorder_reminder_enabled', '0' ) ) {
+		if ( '1' !== (string) lafka_setting( 'lafka_push_reorder_reminder_enabled', '0' ) ) {
 			return false;
 		}
 		return true;
@@ -48,8 +48,8 @@ if ( ! function_exists( 'lafka_push_reorder_get_days' ) ) {
 	 */
 	function lafka_push_reorder_get_days(): int {
 		$raw = 14;
-		if ( function_exists( 'get_theme_mod' ) ) {
-			$raw = (int) get_theme_mod( 'lafka_push_reorder_reminder_days', 14 );
+		if ( function_exists( 'lafka_setting' ) ) {
+			$raw = (int) lafka_setting( 'lafka_push_reorder_reminder_days', 14 );
 		}
 		return max( 3, min( 90, $raw ) );
 	}

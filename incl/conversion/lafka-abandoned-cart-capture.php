@@ -32,10 +32,10 @@ if ( ! function_exists( 'lafka_ac_capture_is_enabled' ) ) {
 	 * @return bool
 	 */
 	function lafka_ac_capture_is_enabled(): bool {
-		if ( ! function_exists( 'get_theme_mod' ) ) {
+		if ( ! function_exists( 'lafka_setting' ) ) {
 			return false;
 		}
-		$value = get_theme_mod( 'lafka_ac_enabled', '0' );
+		$value = lafka_setting( 'lafka_ac_enabled', '0' );
 		return '1' === (string) $value;
 	}
 }

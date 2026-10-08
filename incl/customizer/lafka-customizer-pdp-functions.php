@@ -11,9 +11,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 if ( ! function_exists( 'lafka_pdp_redesign_enabled' ) ) {
 	function lafka_pdp_redesign_enabled(): bool {
-		if ( ! function_exists( 'get_theme_mod' ) ) {
+		if ( ! function_exists( 'lafka_setting' ) ) {
 			return true;
 		}
-		return 'no' !== get_theme_mod( 'lafka_pdp_redesign_enabled', 'yes' );
+		return 'no' !== lafka_setting( 'lafka_pdp_redesign_enabled', 'yes' );
 	}
 }

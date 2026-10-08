@@ -1,7 +1,7 @@
 <?php
 /**
- * Lafka_Insights_DB — the two Insights tables (dbDelta install / self-heal,
- * upserts, reads).
+ * Lafka_Insights_DB — the two Insights tables (upserts, reads; the schema and
+ * its upgrade live in Lafka_Schema).
  *
  *   {prefix}lafka_insights_sessions — one row per visit per local day (35-day
  *     retention): furthest funnel stages (bitmask), checkout-refusal reasons
@@ -14,9 +14,6 @@
  *     upserted with INSERT … ON DUPLICATE KEY UPDATE, one prepared statement
  *     per (metric, dim) counter.
  *
- * Schema version: option `lafka_insights_db_version`; maybe_install() re-runs
- * dbDelta when it drifts (same self-heal as the abandoned-cart table).
- *
  * @package Lafka\Plugin\Insights
  * @since   10.2.0
  */
@@ -26,9 +23,6 @@ defined( 'ABSPATH' ) || exit;
 if ( ! class_exists( 'Lafka_Insights_DB' ) ) {
 
 	final class Lafka_Insights_DB {
-
-		const VERSION        = '1.0.0';
-		const VERSION_OPTION = 'lafka_insights_db_version';
 
 		/** Funnel stage bits (sessions.stages). */
 		const STAGE_VISIT       = 1;
@@ -79,7 +73,7 @@ if ( ! class_exists( 'Lafka_Insights_DB' ) ) {
 		 * @return string
 		 */
 		public static function sessions_table_name(): string {
-			return self::prefix() . 'lafka_insights_sessions';
+			return Lafka_Schema::table_name( 'insights' );
 		}
 
 		/**
@@ -88,88 +82,16 @@ if ( ! class_exists( 'Lafka_Insights_DB' ) ) {
 		 * @return string
 		 */
 		public static function daily_table_name(): string {
-			return self::prefix() . 'lafka_insights_daily';
+			return Lafka_Schema::table_name( 'insights', 'lafka_insights_daily' );
 		}
 
 		/**
-		 * The $wpdb prefix.
-		 *
-		 * @return string
-		 */
-		private static function prefix(): string {
-			global $wpdb;
-			return ( isset( $wpdb ) && is_object( $wpdb ) && isset( $wpdb->prefix ) ) ? (string) $wpdb->prefix : 'wp_';
-		}
-
-		/**
-		 * dbDelta schema for both tables (one column per line, two spaces
-		 * before PRIMARY KEY's column list — dbDelta is whitespace-sensitive).
-		 *
-		 * @return array<int,string>
-		 */
-		public static function schema_sql(): array {
-			global $wpdb;
-			$charset  = ( isset( $wpdb ) && is_object( $wpdb ) && method_exists( $wpdb, 'get_charset_collate' ) )
-				? $wpdb->get_charset_collate()
-				: 'DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci';
-			$sessions = self::sessions_table_name();
-			$daily    = self::daily_table_name();
-
-			return array(
-				"CREATE TABLE {$sessions} (
-  day DATE NOT NULL,
-  sid BINARY(16) NOT NULL,
-  stages SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-  block_mask INT UNSIGNED NOT NULL DEFAULT 0,
-  last_block VARCHAR(32) NOT NULL DEFAULT '',
-  device TINYINT UNSIGNED NOT NULL DEFAULT 0,
-  source_type VARCHAR(16) NOT NULL DEFAULT '',
-  source VARCHAR(64) NOT NULL DEFAULT '',
-  medium VARCHAR(32) NOT NULL DEFAULT '',
-  campaign VARCHAR(64) NOT NULL DEFAULT '',
-  landing VARCHAR(16) NOT NULL DEFAULT '',
-  hour TINYINT UNSIGNED NOT NULL DEFAULT 0,
-  dow TINYINT UNSIGNED NOT NULL DEFAULT 0,
-  pageviews SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-  PRIMARY KEY  (day,sid),
-  KEY day_stages (day,stages)
-) {$charset};",
-				"CREATE TABLE {$daily} (
-  day DATE NOT NULL,
-  metric VARCHAR(24) NOT NULL,
-  dim VARCHAR(100) NOT NULL DEFAULT '',
-  value INT UNSIGNED NOT NULL DEFAULT 0,
-  PRIMARY KEY  (day,metric,dim),
-  KEY metric_day (metric,day)
-) {$charset};",
-			);
-		}
-
-		/**
-		 * Create / migrate both tables and record the schema version.
+		 * Create / migrate both tables (see Lafka_Schema).
 		 *
 		 * @return void
 		 */
 		public static function install(): void {
-			if ( ! function_exists( 'dbDelta' ) && defined( 'ABSPATH' ) && file_exists( ABSPATH . 'wp-admin/includes/upgrade.php' ) ) {
-				require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-			}
-			if ( function_exists( 'dbDelta' ) ) {
-				dbDelta( self::schema_sql() );
-			}
-			update_option( self::VERSION_OPTION, self::VERSION );
-		}
-
-		/**
-		 * Self-heal on plugins_loaded: (re)install when the stored version drifts.
-		 *
-		 * @return void
-		 */
-		public static function maybe_install(): void {
-			if ( self::VERSION === (string) get_option( self::VERSION_OPTION, '' ) ) {
-				return;
-			}
-			self::install();
+			Lafka_Schema::install( 'insights' );
 		}
 
 		/**

@@ -11,17 +11,17 @@
  *
  *   - Toggle OFF (default) — the historical "minimal cleanup": revert custom
  *     product-attribute types back to 'select', drop the custom tables
- *     (abandoned carts, push subscriptions, diagnostics incidents), unschedule
- *     the daily diagnostics job, and delete the tables' version/marker
- *     options. Everything else the plugin ever wrote is left in place, so a
+ *     (the ones declared in Lafka_Schema), unschedule every Lafka job (wp-cron
+ *     events and Action Scheduler actions), and delete the tables'
+ *     version/marker options. Everything else the plugin ever wrote is left in place, so a
  *     re-install picks up exactly where the operator left off.
  *
  *   - Toggle ON — full inventory-driven cleanup layered on top of the minimal
  *     pass: every `lafka*` option (enumerated by prefix, deleted with prepared
- *     LIKE statements), the three Lafka CPTs' posts (force-deleted so their meta
- *     cascades), the `lafka_branch_location` + `lafka_foodmenu_category` terms
- *     (term meta cascades with the term), lafka-prefixed transients, and the
- *     plugin-owned product + user meta keys.
+ *     LIKE statements, plus the exact names of the plugin settings), the two
+ *     Lafka CPTs' posts (force-deleted so their meta cascades), the
+ *     `lafka_branch_location` terms (term meta cascades with the term),
+ *     lafka-prefixed transients, and the plugin-owned product + user meta keys.
  *
  * Intentionally RETAINED even under the toggle: WooCommerce orders and their
  * order-item meta (`_lafka_kds_*`, `_lafka_addon_keys`, `_lafka_dl_*`, …). Orders
@@ -102,13 +102,7 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 		 * @return array<int,string>
 		 */
 		public static function tables(): array {
-			return array(
-				'lafka_abandoned_carts',
-				'lafka_push_subscriptions',
-				'lafka_incidents', // GX1 diagnostics incident index.
-				'lafka_insights_sessions', // GX2 Insights: per-visit rows (pseudonymous, 35 days)
-				'lafka_insights_daily',    // GX2 Insights: aggregate counters
-			);
+			return Lafka_Schema::all_suffixes();
 		}
 
 		/**
@@ -119,7 +113,6 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 		 */
 		public static function post_types(): array {
 			return array(
-				'lafka-foodmenu',       // menu presentation CPT
 				'lafka_shipping_areas', // delivery-zone polygons CPT
 				'lafka_glb_addon',      // global add-on groups CPT
 			);
@@ -133,8 +126,7 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 		 */
 		public static function taxonomies(): array {
 			return array(
-				'lafka_branch_location',  // branches + ~19 per-branch term-meta keys
-				'lafka_foodmenu_category', // menu categories
+				'lafka_branch_location', // branches + ~19 per-branch term-meta keys
 			);
 		}
 
@@ -144,18 +136,21 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 		 * @return array<int,string>
 		 */
 		public static function exact_options(): array {
-			return array(
-				'lafka',                          // the master flag/settings array
-				'lafka_last_processed_order_ids', // KDS poller cursor
-				'lafka_checkout_mode',            // classic vs block checkout choice
-				'lafka_email_unsub_list',         // marketing-email unsubscribe list
-				'lafka_security_options',         // security-header toggles
-				'lafka_block_cart_shim_done',     // block-cart page shim marker
-				'lafka_seed_demo_manifest',       // `wp lafka seed-demo` bookkeeping
-				'lafka_webp_uploads',             // WebP-for-new-uploads toggle
-				'woocommerce_lafka_error_digest_settings', // GX1 digest WC_Email settings
-				'woocommerce_lafka_weekly_insights_settings', // GX2 weekly Insights WC_Email settings
-				self::DATA_TOGGLE_OPTION,         // the uninstall toggle itself
+			return array_merge(
+				lafka_settings_keys(), // plugin settings (Customizer, stored as options).
+				array(
+					'lafka',                          // the master flag/settings array
+					'lafka_last_processed_order_ids', // KDS poller cursor
+					'lafka_checkout_mode',            // classic vs block checkout choice
+					'lafka_email_unsub_list',         // marketing-email unsubscribe list
+					'lafka_security_options',         // security-header toggles
+					'lafka_block_cart_shim_done',     // block-cart page shim marker
+					'lafka_seed_demo_manifest',       // `wp lafka seed-demo` bookkeeping
+					'lafka_webp_uploads',             // WebP-for-new-uploads toggle
+					'woocommerce_lafka_error_digest_settings', // GX1 digest WC_Email settings
+					'woocommerce_lafka_weekly_insights_settings', // GX2 weekly Insights WC_Email settings
+					self::DATA_TOGGLE_OPTION,         // the uninstall toggle itself
+				)
 			);
 		}
 
@@ -168,29 +163,37 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 		 * @return array<int,string>
 		 */
 		public static function option_prefixes(): array {
-			return array(
-				'lafka_business_',       // NAP / geo / hours / identity SSOT
-				'lafka_restaurant',      // legacy restaurant-info + schema toggles
-				'lafka_shipping_areas_', // delivery-area option groups
-				'lafka_order_hours_',    // order-hours schedule
-				'lafka_kds_',            // kitchen-display options + token activity
-				'lafka_push_',           // web-push db version + activity log
-				'lafka_abandoned_cart',  // abandoned-cart db version
-				'lafka_dietary_tags_',   // dietary-tag seeding marker
-				'lafka_first_order_',    // first-order promo
-				'lafka_free_delivery_',  // free-delivery threshold
-				'lafka_slow_day_',       // slow-day promo
-				'lafka_share_on_',       // social-share toggles
-				'lafka_homepage_hero_',  // hero attachment id
-				'lafka_github_updates_', // self-updater bookkeeping (defensive)
-				'lafka_contact_',        // contact-block options
-				'lafka_promotions_',     // promo knobs + migration-notice dismissal
-				'lafka_combo_deal_',     // combo-deal categories / amount / type
-				'lafka_log_',            // diagnostics settings, checkout counters, daily-job bookkeeping
-				'lafka_incidents_',      // incident table schema version
-				'lafka_seo_',            // Search & AI settings, IndexNow key/queue (GX3)
-				'lafka_insights_',       // Insights db version, daily secret, rollup cursor
-				'lafka_tracking',        // tracking IDs and consent settings (Customizer → Analytics)
+			return array_merge(
+				lafka_settings_key_prefixes(), // upsell picks, prep-time overrides, contact FAQ.
+				array(
+					'lafka_business_',       // NAP / geo / hours / identity SSOT
+					'lafka_restaurant',      // legacy restaurant-info + schema toggles
+					'lafka_shipping_areas_', // delivery-area option groups
+					'lafka_order_hours_',    // order-hours schedule
+					'lafka_kds_',            // kitchen-display options + token activity
+					'lafka_push_',           // web-push db version + activity log
+					'lafka_abandoned_cart',  // abandoned-cart db version
+					'lafka_dietary_tags_',   // dietary-tag seeding marker
+					'lafka_first_order_',    // first-order promo
+					'lafka_free_delivery_',  // free-delivery threshold
+					'lafka_slow_day_',       // slow-day promo
+					'lafka_share_on_',       // social-share toggles
+					'lafka_homepage_hero_',  // hero attachment id
+					'lafka_github_updates_', // self-updater bookkeeping (defensive)
+					'lafka_contact_',        // contact-block options
+					'lafka_promotions_',     // promo knobs + migration-notice dismissal
+					'lafka_combo_deal_',     // combo-deal categories / amount / type
+					'lafka_deals_',          // deals category pick
+					'lafka_log_',            // diagnostics settings, checkout counters, daily-job bookkeeping
+					'lafka_incidents_',      // incident table schema version
+					'lafka_seo_',            // Search & AI settings, IndexNow key/queue (GX3)
+					'lafka_insights_',       // Insights db version, daily secret, rollup cursor
+					'lafka_tracking',        // tracking IDs and consent settings (Customizer → Analytics)
+					'lafka_settings_',       // settings migration marker
+					'lafka_tips_',           // tip presets and labels (WooCommerce → Restaurant → Tips)
+					'widget_lafka_',         // widget instances (about, contacts, payment options)
+					'widget_lafka-',         // widget instances (popular posts)
+				)
 			);
 		}
 
@@ -249,6 +252,7 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 				'_lafka_meta_description',
 				'_lafka_seo_title',
 				'_lafka_seo_noindex',
+				'_lafka_og_image', // per-post share image.
 				'_lafka_serves', // GX4 "serves N" product field.
 				'_lafka_virtual_ok', // "meant to be virtual" mark (virtual menu-items check).
 			);
@@ -284,7 +288,7 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 				'_lafka_special_instructions', // per-order kitchen note
 				'_lafka_review_email_sent', // order-level send guard
 				'_lafka_push_reorder_sent_', // order-level send guard
-				'_lafka_winback_email',     // win-back address captured at checkout
+				'_lafka_winback_email',     // win-back address captured at checkout by an earlier version
 				'_lafka_request_id',        // request id of the checkout that created the order (diagnostics correlation)
 			);
 		}
@@ -349,15 +353,13 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 			if ( ! function_exists( 'delete_option' ) ) {
 				return;
 			}
-			delete_option( 'lafka_abandoned_cart_db_version' );
-			delete_option( 'lafka_push_db_version' );
+			// The tables are dropped on every uninstall, so their schema markers
+			// must go too (else a re-install would skip creating them).
+			foreach ( Lafka_Schema::version_options() as $marker ) {
+				delete_option( $marker );
+			}
 			delete_option( 'lafka_push_activity_log' );
-			// The incident table is dropped on every uninstall, so its schema
-			// marker must go too (else a re-install would skip creating it).
-			delete_option( 'lafka_incidents_db_version' );
-			// Insights: its tables are dropped above, so their markers and the
-			// daily visit-id secret go too (the secret must never outlive the data).
-			delete_option( 'lafka_insights_db_version' );
+			// Insights: the daily visit-id secret must never outlive its data.
 			delete_option( 'lafka_insights_secret' );
 			delete_option( 'lafka_insights_rolled_through' );
 			delete_option( 'lafka_insights_rollup_version' );
@@ -365,15 +367,41 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 		}
 
 		/**
-		 * Remove Lafka's Action Scheduler jobs (the daily Diagnostics job, a
-		 * pending IndexNow flush, and the Insights nightly + weekly jobs).
+		 * wp-cron hooks the plugin schedules (recurring jobs and one-off events
+		 * such as a delayed review email or a push broadcast batch).
+		 *
+		 * @return array<int,string>
+		 */
+		public static function cron_hooks(): array {
+			return array(
+				'lafka_check_abandoned_carts',
+				'lafka_cleanup_abandoned_carts',
+				'lafka_push_reorder_reminder',
+				'lafka_push_cleanup_subscriptions',
+				'lafka_push_broadcast_batch',
+				'lafka_send_review_email',
+				'lafka_indexnow_flush',
+				'lafka_insights_nightly',
+				'lafka_insights_weekly_email',
+			);
+		}
+
+		/**
+		 * Remove every Lafka job: the wp-cron events (including the single-event
+		 * fallbacks used when Action Scheduler is absent) and the Action
+		 * Scheduler actions of the `lafka` and `lafka-insights` groups (daily
+		 * Diagnostics, IndexNow flush, server-side conversions, Insights).
 		 *
 		 * @return void
 		 */
 		public static function unschedule_actions(): void {
+			if ( function_exists( 'wp_unschedule_hook' ) ) {
+				foreach ( self::cron_hooks() as $hook ) {
+					wp_unschedule_hook( $hook );
+				}
+			}
 			if ( function_exists( 'as_unschedule_all_actions' ) ) {
-				as_unschedule_all_actions( 'lafka_diagnostics_daily', array(), 'lafka' );
-				as_unschedule_all_actions( 'lafka_indexnow_flush', array(), 'lafka' );
+				as_unschedule_all_actions( '', array(), 'lafka' );
 				as_unschedule_all_actions( '', array(), 'lafka-insights' );
 			}
 		}

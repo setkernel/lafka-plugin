@@ -24,7 +24,11 @@
  *   numeric_knobs  — promotions levers (free-delivery, first-order, slow-day, combo).
  *   order_hours    — the lafka_order_hours_options array.
  *   shipping_areas — the four lafka_shipping_areas_* option groups (secrets stripped).
- *   theme_mods     — ONLY lafka_-prefixed, non-secret theme mods (feature flags).
+ *   settings       — the plugin behaviour settings stored as options (abandoned cart,
+ *                    push, review requests, checkout, SEO, contact FAQ), non-secret.
+ *   theme_mods     — ONLY lafka_-prefixed, non-secret theme mods (appearance). Bundles
+ *                    made before the settings section carried the behaviour settings
+ *                    here; import routes those to their options.
  *   branches       — lafka_branch_location terms + all per-branch term meta.
  *   areas          — lafka_shipping_areas CPT posts incl. polygon meta.
  *   addon_groups   — lafka_glb_addon CPT posts + their addon meta (raw post+meta).
@@ -92,6 +96,7 @@ if ( ! class_exists( 'Lafka_Config_Bundle' ) ) {
 				'numeric_knobs',
 				'order_hours',
 				'shipping_areas',
+				'settings',
 				'theme_mods',
 				'branches',
 				'areas',
@@ -371,6 +376,7 @@ if ( ! class_exists( 'Lafka_Config_Bundle' ) ) {
 				'lafka_first_order_discount_percent',
 				'lafka_slow_day_discount_percent',
 				'lafka_slow_day_days',
+				'lafka_deals_category',
 				'lafka_combo_deal_cat_a',
 				'lafka_combo_deal_cat_b',
 				'lafka_combo_deal_amount',
@@ -507,6 +513,77 @@ if ( ! class_exists( 'Lafka_Config_Bundle' ) ) {
 			return $counts;
 		}
 
+		// ─── Section: settings (plugin behaviour options, non-secret) ─────────
+
+		/**
+		 * @return array<string,mixed>
+		 */
+		public static function export_settings(): array {
+			$out = array();
+			foreach ( wp_load_alloptions() as $name => $unused ) {
+				$name = (string) $name;
+				if ( lafka_settings_is_key( $name ) && ! self::is_secret_key( $name ) ) {
+					$out[ $name ] = get_option( $name );
+				}
+			}
+			foreach ( lafka_settings_keys() as $name ) {
+				if ( ! isset( $out[ $name ] ) && ! self::is_secret_key( $name ) ) {
+					$value = get_option( $name, self::sentinel() );
+					if ( self::sentinel() !== $value ) {
+						$out[ $name ] = $value;
+					}
+				}
+			}
+			ksort( $out );
+			return $out;
+		}
+
+		/**
+		 * @param mixed $data Section payload.
+		 * @return true|string
+		 */
+		public static function validate_settings( $data ) {
+			if ( ! is_array( $data ) ) {
+				return __( 'settings must be an object', 'lafka-plugin' );
+			}
+			foreach ( array_keys( $data ) as $key ) {
+				if ( ! lafka_settings_is_key( (string) $key ) ) {
+					return sprintf(
+						/* translators: %s: setting key. */
+						__( 'setting "%s" is not a known Lafka setting and was rejected', 'lafka-plugin' ),
+						is_scalar( $key ) ? (string) $key : gettype( $key )
+					);
+				}
+			}
+			return true;
+		}
+
+		/**
+		 * @param array<string,mixed> $data    Incoming settings.
+		 * @param bool                $dry_run Preview only.
+		 * @return array{created:int,updated:int,skipped:int}
+		 */
+		public static function import_settings( array $data, bool $dry_run ): array {
+			$counts = self::zero_counts();
+			foreach ( $data as $key => $value ) {
+				$key = (string) $key;
+				if ( ! lafka_settings_is_key( $key ) || self::is_secret_key( $key ) ) {
+					continue;
+				}
+				$current = get_option( $key, self::sentinel() );
+				if ( self::values_equal( $current, $value ) ) {
+					++$counts['skipped'];
+					continue;
+				}
+				$created = ( self::sentinel() === $current );
+				if ( ! $dry_run ) {
+					update_option( $key, $value );
+				}
+				++$counts[ $created ? 'created' : 'updated' ];
+			}
+			return $counts;
+		}
+
 		// ─── Section: theme_mods (lafka_-prefixed, non-secret only) ──────────
 
 		/**
@@ -560,6 +637,12 @@ if ( ! class_exists( 'Lafka_Config_Bundle' ) ) {
 			foreach ( $data as $key => $value ) {
 				$key = (string) $key;
 				if ( 0 !== strpos( $key, 'lafka_' ) || self::is_secret_theme_mod( $key ) ) {
+					continue;
+				}
+				if ( lafka_settings_is_key( $key ) ) {
+					// A bundle made before the settings section: this is an option now.
+					$legacy = self::import_settings( array( $key => $value ), $dry_run );
+					$counts = self::add_counts( $counts, $legacy );
 					continue;
 				}
 				$current = get_theme_mod( $key, self::sentinel() );

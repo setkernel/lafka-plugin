@@ -6,7 +6,7 @@
  * Lafka_Options flags inside the opaque 'lafka' option array
  * (product_addons / shipping_areas / order_hours / kitchen_display /
  * promotions), the conversion modules self-gating on scattered Customizer
- * theme_mods (abandoned cart / web push / review prompts), and analytics
+ * settings (abandoned cart / web push / review prompts), and analytics
  * deriving its own "is a destination configured?" answer. A buyer could not
  * see or flip what they owned from one place.
  *
@@ -15,7 +15,7 @@
  * callbacks that read/write the module's REAL existing storage. It invents no
  * new storage: the five flags still read/write the same 'lafka' array the
  * is_lafka_*() gates read (via Lafka_Options), and the conversion modules
- * still read/write the same theme_mods their Customizer panels persist. So
+ * still read/write the same plugin options their Customizer panels persist. So
  * toggling a module here changes exactly the option the current code already
  * reads — zero behaviour change when untouched.
  *
@@ -75,7 +75,7 @@ if ( ! class_exists( 'Lafka_Module_Registry' ) ) {
 		 * Used by Site Health to enumerate exactly the five 'lafka'-option
 		 * flags without re-hardcoding them.
 		 *
-		 * @param string $storage 'lafka_option' | 'theme_mod' | 'derived'.
+		 * @param string $storage 'lafka_option' | 'option' | 'derived'.
 		 * @return array<string,Lafka_Module>
 		 */
 		public static function modules_by_storage( string $storage ): array {
@@ -333,7 +333,7 @@ if ( ! class_exists( 'Lafka_Module_Registry' ) ) {
 				)
 			);
 
-			// ---- Conversion modules (Customizer theme_mods) ----
+			// ---- Conversion modules (plugin options, set in the Customizer) ----
 			self::register(
 				new Lafka_Module(
 					array(
@@ -341,10 +341,10 @@ if ( ! class_exists( 'Lafka_Module_Registry' ) ) {
 						'label'           => esc_html__( 'Abandoned cart recovery', 'lafka-plugin' ),
 						'description'     => esc_html__( 'Email a one-click resume link when a customer enters their email at checkout but does not finish.', 'lafka-plugin' ),
 						'category'        => 'conversion',
-						'storage'         => 'theme_mod',
+						'storage'         => 'option',
 						'default_enabled' => false,
-						'get_enabled'     => self::theme_mod_getter( 'lafka_ac_enabled' ),
-						'set_enabled'     => self::theme_mod_setter( 'lafka_ac_enabled' ),
+						'get_enabled'     => self::setting_getter( 'lafka_ac_enabled' ),
+						'set_enabled'     => self::setting_setter( 'lafka_ac_enabled' ),
 						'settings_path'   => 'customize.php?autofocus[panel]=lafka_abandoned_cart',
 						'docs_slug'       => 'abandoned-cart',
 					)
@@ -357,18 +357,16 @@ if ( ! class_exists( 'Lafka_Module_Registry' ) ) {
 						'label'           => esc_html__( 'Web push notifications', 'lafka-plugin' ),
 						'description'     => esc_html__( 'Browser-native alerts for order updates and reorder reminders, sent even when the site is closed.', 'lafka-plugin' ),
 						'category'        => 'conversion',
-						'storage'         => 'theme_mod',
+						'storage'         => 'option',
 						'default_enabled' => false,
-						'get_enabled'     => self::theme_mod_getter( 'lafka_push_enabled' ),
-						'set_enabled'     => self::theme_mod_setter( 'lafka_push_enabled' ),
+						'get_enabled'     => self::setting_getter( 'lafka_push_enabled' ),
+						'set_enabled'     => self::setting_setter( 'lafka_push_enabled' ),
 						'is_configured'   => static function () {
-							$public  = ( defined( 'LAFKA_PUSH_VAPID_PUBLIC_KEY' ) && LAFKA_PUSH_VAPID_PUBLIC_KEY )
-								? LAFKA_PUSH_VAPID_PUBLIC_KEY
-								: get_theme_mod( 'lafka_push_vapid_public_key', '' );
-							$private = ( defined( 'LAFKA_PUSH_VAPID_PRIVATE_KEY' ) && LAFKA_PUSH_VAPID_PRIVATE_KEY )
-								? LAFKA_PUSH_VAPID_PRIVATE_KEY
-								: get_theme_mod( 'lafka_push_vapid_private_key', '' );
-							return '' !== (string) $public && '' !== (string) $private;
+							if ( ! function_exists( 'lafka_push_get_vapid_config' ) ) {
+								return false;
+							}
+							$vapid = lafka_push_get_vapid_config();
+							return '' !== $vapid['public'] && '' !== $vapid['private'];
 						},
 						'settings_path'   => 'customize.php?autofocus[panel]=lafka_push',
 						'docs_slug'       => 'web-push',
@@ -382,12 +380,12 @@ if ( ! class_exists( 'Lafka_Module_Registry' ) ) {
 						'label'           => esc_html__( 'Review requests', 'lafka-plugin' ),
 						'description'     => esc_html__( 'Ask happy customers for a review after a completed order via a scheduled email.', 'lafka-plugin' ),
 						'category'        => 'conversion',
-						'storage'         => 'theme_mod',
+						'storage'         => 'option',
 						'default_enabled' => false,
-						'get_enabled'     => self::theme_mod_getter( 'lafka_review_email_enabled' ),
-						'set_enabled'     => self::theme_mod_setter( 'lafka_review_email_enabled' ),
+						'get_enabled'     => self::setting_getter( 'lafka_review_email_enabled' ),
+						'set_enabled'     => self::setting_setter( 'lafka_review_email_enabled' ),
 						'is_configured'   => static function () {
-							return '' !== (string) get_theme_mod( 'lafka_review_target_url', '' );
+							return '' !== (string) lafka_setting( 'lafka_review_target_url', '' );
 						},
 						'settings_path'   => 'customize.php?autofocus[panel]=lafka_reviews',
 						'docs_slug'       => 'review-requests',
@@ -506,26 +504,26 @@ if ( ! class_exists( 'Lafka_Module_Registry' ) ) {
 		}
 
 		/**
-		 * Reader for a boolean theme_mod stored as the '1'/'0' string the Lafka
-		 * Customizer panels persist.
+		 * Reader for a boolean plugin option stored as the '1'/'0' string the
+		 * Lafka Customizer panels persist.
 		 *
 		 * @return callable():bool
 		 */
-		private static function theme_mod_getter( string $key ): callable {
+		private static function setting_getter( string $key ): callable {
 			return static function () use ( $key ) {
-				return '1' === (string) get_theme_mod( $key, '0' );
+				return '1' === (string) lafka_setting( $key, '0' );
 			};
 		}
 
 		/**
-		 * Writer for a boolean theme_mod, matching the Customizer sanitiser's
-		 * '1'/'0' contract.
+		 * Writer for a boolean plugin option, matching the Customizer
+		 * sanitiser's '1'/'0' contract.
 		 *
 		 * @return callable(bool):void
 		 */
-		private static function theme_mod_setter( string $key ): callable {
+		private static function setting_setter( string $key ): callable {
 			return static function ( bool $enabled ) use ( $key ) {
-				set_theme_mod( $key, $enabled ? '1' : '0' );
+				update_option( $key, $enabled ? '1' : '0' );
 			};
 		}
 	}

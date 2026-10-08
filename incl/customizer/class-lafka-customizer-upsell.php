@@ -53,6 +53,7 @@ if ( ! class_exists( 'Lafka_Customizer_Upsell' ) ) {
 					$wp_customize->add_setting(
 						$setting_id,
 						array(
+							'type'              => 'option',
 							'default'           => 0,
 							'sanitize_callback' => 'absint',
 							'transport'         => 'refresh',

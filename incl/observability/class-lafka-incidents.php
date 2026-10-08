@@ -16,8 +16,8 @@
  * `lafka_log_settings[retention_days]`, filter `lafka_incidents_retention_days`)
  * by the daily Action Scheduler job (Lafka_Diagnostics::run_daily()).
  *
- * Schema is versioned by `lafka_incidents_db_version` and self-heals through
- * dbDelta on version drift; uninstall drops the table (Lafka_Uninstall).
+ * The schema is declared in Lafka_Schema, which creates and upgrades the table
+ * and records its version; uninstall drops it (Lafka_Uninstall).
  *
  * @package Lafka\Plugin\Observability
  * @since   10.2.0
@@ -32,9 +32,7 @@ if ( ! class_exists( 'Lafka_Incidents' ) ) {
 	 */
 	final class Lafka_Incidents {
 
-		const DB_VERSION     = '1.0.0';
-		const VERSION_OPTION = 'lafka_incidents_db_version';
-		const STATUSES       = array( 'open', 'muted', 'resolved' );
+		const STATUSES = array( 'open', 'muted', 'resolved' );
 
 		/** Hard cap on incident upserts in one request. */
 		const MAX_WRITES_PER_REQUEST = 20;
@@ -58,76 +56,23 @@ if ( ! class_exists( 'Lafka_Incidents' ) ) {
 		 * @return string
 		 */
 		public static function table_name(): string {
-			global $wpdb;
-			$prefix = isset( $wpdb ) && is_object( $wpdb ) && isset( $wpdb->prefix ) ? (string) $wpdb->prefix : 'wp_';
-			return $prefix . 'lafka_incidents';
+			return Lafka_Schema::table_name( 'incidents' );
 		}
 
 		/**
-		 * CREATE TABLE for dbDelta (one column per line, two spaces before the PK).
-		 *
-		 * @return string
-		 */
-		public static function schema_sql(): string {
-			global $wpdb;
-			$table   = self::table_name();
-			$charset = isset( $wpdb ) && is_object( $wpdb ) && method_exists( $wpdb, 'get_charset_collate' )
-				? $wpdb->get_charset_collate()
-				: 'DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci';
-
-			return "CREATE TABLE {$table} (
-  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-  fingerprint CHAR(40) NOT NULL DEFAULT '',
-  channel VARCHAR(32) NOT NULL DEFAULT '',
-  level VARCHAR(16) NOT NULL DEFAULT '',
-  code VARCHAR(64) NOT NULL DEFAULT '',
-  message VARCHAR(255) NOT NULL DEFAULT '',
-  sample_context TEXT NULL,
-  first_seen DATETIME NOT NULL,
-  last_seen DATETIME NOT NULL,
-  hit_count BIGINT UNSIGNED NOT NULL DEFAULT 0,
-  last_request_id VARCHAR(32) NOT NULL DEFAULT '',
-  status VARCHAR(10) NOT NULL DEFAULT 'open',
-  notified_at DATETIME NULL DEFAULT NULL,
-  PRIMARY KEY  (id),
-  UNIQUE KEY fingerprint (fingerprint),
-  KEY status_last_seen (status,last_seen),
-  KEY channel (channel)
-) {$charset};";
-		}
-
-		/**
-		 * Create / migrate the table and record the schema version.
+		 * Create / migrate the table (see Lafka_Schema). Activation hook.
 		 *
 		 * @return void
 		 */
 		public static function install(): void {
-			if ( ! function_exists( 'dbDelta' ) && defined( 'ABSPATH' ) && file_exists( ABSPATH . 'wp-admin/includes/upgrade.php' ) ) {
-				require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-			}
-			if ( function_exists( 'dbDelta' ) ) {
-				dbDelta( self::schema_sql() );
-				update_option( self::VERSION_OPTION, self::DB_VERSION );
-			}
-		}
-
-		/**
-		 * Self-heal: install when the stored schema version drifted. The version
-		 * option is autoloaded, so the steady-state cost is one array lookup.
-		 *
-		 * @return void
-		 */
-		public static function maybe_install(): void {
-			if ( ! self::is_installed() ) {
-				self::install();
-			}
+			Lafka_Schema::install( 'incidents' );
 		}
 
 		/**
 		 * @return bool
 		 */
 		public static function is_installed(): bool {
-			return function_exists( 'get_option' ) && self::DB_VERSION === get_option( self::VERSION_OPTION );
+			return Lafka_Schema::is_installed( 'incidents' );
 		}
 
 		// ─── Write path ─────────────────────────────────────────────────────

@@ -20,9 +20,6 @@ if ( ! function_exists( 'lafka_slow_day_percent' ) ) {
 	/** @return float 0–100 (0 = off). */
 	function lafka_slow_day_percent(): float {
 		$percent = (float) get_option( 'lafka_slow_day_discount_percent', 0 );
-		if ( $percent <= 0 ) {
-			$percent = (float) get_theme_mod( 'lafka_slow_day_discount_percent', 0 );
-		}
 		$percent = (float) apply_filters( 'lafka_slow_day_discount_percent', $percent );
 		return min( 100.0, max( 0.0, $percent ) );
 	}
@@ -58,9 +55,6 @@ if ( ! function_exists( 'lafka_slow_day_days' ) ) {
 	/** @return int[] Configured slow weekdays (0=Sun..6=Sat). */
 	function lafka_slow_day_days(): array {
 		$raw = get_option( 'lafka_slow_day_days', '' );
-		if ( '' === $raw || array() === $raw ) {
-			$raw = get_theme_mod( 'lafka_slow_day_days', '' );
-		}
 		$raw = apply_filters( 'lafka_slow_day_days', $raw );
 		return lafka_slow_day_normalize_days( $raw );
 	}

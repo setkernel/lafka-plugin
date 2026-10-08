@@ -38,7 +38,7 @@ if ( ! class_exists( 'Lafka_Payment_Labels' ) ) {
 	final class Lafka_Payment_Labels {
 
 		/**
-		 * Theme mod: contextual labels on/off (default on).
+		 * Setting: contextual labels on/off (default on).
 		 */
 		const MOD_ENABLED = 'lafka_cod_contextual_title';
 
@@ -122,7 +122,7 @@ if ( ! class_exists( 'Lafka_Payment_Labels' ) ) {
 			if ( ! in_array( $gateway_id, $gateways, true ) ) {
 				return '';
 			}
-			if ( ! get_theme_mod( self::MOD_ENABLED, true ) ) {
+			if ( ! lafka_setting( self::MOD_ENABLED, true ) ) {
 				return '';
 			}
 			// Admin screens (gateway settings, order edit) show the configured title.
@@ -139,12 +139,12 @@ if ( ! class_exists( 'Lafka_Payment_Labels' ) ) {
 		/**
 		 * A Customizer string, or the translatable default when empty.
 		 *
-		 * @param string $mod      Theme mod id.
+		 * @param string $mod      Setting name.
 		 * @param string $fallback Default text.
 		 * @return string
 		 */
 		private static function string( string $mod, string $fallback ): string {
-			$custom = trim( (string) get_theme_mod( $mod, '' ) );
+			$custom = trim( (string) lafka_setting( $mod, '' ) );
 
 			return '' !== $custom ? $custom : $fallback;
 		}

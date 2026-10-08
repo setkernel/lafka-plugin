@@ -15,7 +15,7 @@ defined( 'ABSPATH' ) || exit;
 
 if ( ! function_exists( 'lafka_pdp_get_prep_time' ) ) {
 	function lafka_pdp_get_prep_time( int $product_id ): int {
-		$default = (int) get_theme_mod( 'lafka_pdp_prep_time_default', 25 );
+		$default = (int) lafka_setting( 'lafka_pdp_prep_time_default', 25 );
 
 		$terms = wp_get_post_terms( $product_id, 'product_cat', array( 'fields' => 'slugs' ) );
 		if ( is_wp_error( $terms ) || empty( $terms ) ) {
@@ -23,7 +23,7 @@ if ( ! function_exists( 'lafka_pdp_get_prep_time' ) ) {
 		}
 		foreach ( $terms as $slug ) {
 			$key = 'lafka_pdp_prep_time_' . sanitize_key( $slug );
-			$val = get_theme_mod( $key, null );
+			$val = lafka_setting( $key, null );
 			if ( null !== $val && '' !== $val ) {
 				return (int) $val;
 			}

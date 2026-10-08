@@ -65,8 +65,8 @@ if ( ! function_exists( 'lafka_ac_email_subject_default' ) ) {
 	 * @return string
 	 */
 	function lafka_ac_email_subject_default(): string {
-		$tmpl = function_exists( 'get_theme_mod' )
-			? (string) get_theme_mod( 'lafka_ac_subject', '' )
+		$tmpl = function_exists( 'lafka_setting' )
+			? (string) lafka_setting( 'lafka_ac_subject', '' )
 			: '';
 		if ( '' === trim( $tmpl ) ) {
 			$tmpl = 'Did you forget something? Your cart is waiting at {site}';
@@ -78,8 +78,8 @@ if ( ! function_exists( 'lafka_ac_email_subject_default' ) ) {
 
 if ( ! function_exists( 'lafka_ac_email_intro_heading' ) ) {
 	function lafka_ac_email_intro_heading(): string {
-		$value = function_exists( 'get_theme_mod' )
-			? (string) get_theme_mod( 'lafka_ac_intro_heading', '' )
+		$value = function_exists( 'lafka_setting' )
+			? (string) lafka_setting( 'lafka_ac_intro_heading', '' )
 			: '';
 		return '' === trim( $value ) ? 'Your cart is still here' : $value;
 	}
@@ -87,8 +87,8 @@ if ( ! function_exists( 'lafka_ac_email_intro_heading' ) ) {
 
 if ( ! function_exists( 'lafka_ac_email_intro_body' ) ) {
 	function lafka_ac_email_intro_body(): string {
-		$value = function_exists( 'get_theme_mod' )
-			? (string) get_theme_mod( 'lafka_ac_intro_body', '' )
+		$value = function_exists( 'lafka_setting' )
+			? (string) lafka_setting( 'lafka_ac_intro_body', '' )
 			: '';
 		return '' === trim( $value )
 			? 'We saved your selection. Tap below to pick up where you left off.'
@@ -98,8 +98,8 @@ if ( ! function_exists( 'lafka_ac_email_intro_body' ) ) {
 
 if ( ! function_exists( 'lafka_ac_email_cta_label' ) ) {
 	function lafka_ac_email_cta_label(): string {
-		$value = function_exists( 'get_theme_mod' )
-			? (string) get_theme_mod( 'lafka_ac_cta_label', '' )
+		$value = function_exists( 'lafka_setting' )
+			? (string) lafka_setting( 'lafka_ac_cta_label', '' )
 			: '';
 		return '' === trim( $value ) ? 'Resume my order' : $value;
 	}

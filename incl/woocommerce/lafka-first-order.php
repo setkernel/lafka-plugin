@@ -22,15 +22,12 @@ defined( 'ABSPATH' ) || exit;
 if ( ! function_exists( 'lafka_first_order_discount_percent' ) ) {
 	/**
 	 * SSOT first-order discount percent (0 = off). Source order:
-	 * filter → option → Customizer theme_mod → 0.
+	 * filter → option → 0.
 	 *
 	 * @return float 0–100.
 	 */
 	function lafka_first_order_discount_percent(): float {
 		$percent = (float) get_option( 'lafka_first_order_discount_percent', 0 );
-		if ( $percent <= 0 ) {
-			$percent = (float) get_theme_mod( 'lafka_first_order_discount_percent', 0 );
-		}
 		$percent = (float) apply_filters( 'lafka_first_order_discount_percent', $percent );
 		return min( 100.0, max( 0.0, $percent ) );
 	}

@@ -33,6 +33,7 @@ if ( ! class_exists( 'Lafka_Customizer_PDP' ) ) {
 			$wp_customize->add_setting(
 				'lafka_pdp_redesign_enabled',
 				array(
+					'type'              => 'option',
 					'default'           => 'yes',
 					'sanitize_callback' => array( __CLASS__, 'sanitize_yes_no' ),
 					'transport'         => 'refresh',
@@ -55,6 +56,7 @@ if ( ! class_exists( 'Lafka_Customizer_PDP' ) ) {
 			$wp_customize->add_setting(
 				'lafka_pdp_show_bestseller_eyebrow',
 				array(
+					'type'              => 'option',
 					'default'           => 'yes',
 					'sanitize_callback' => array( __CLASS__, 'sanitize_yes_no' ),
 					'transport'         => 'refresh',
@@ -76,6 +78,7 @@ if ( ! class_exists( 'Lafka_Customizer_PDP' ) ) {
 			$wp_customize->add_setting(
 				'lafka_pdp_prep_time_default',
 				array(
+					'type'              => 'option',
 					'default'           => 25,
 					'sanitize_callback' => 'absint',
 					'transport'         => 'refresh',
@@ -96,57 +99,12 @@ if ( ! class_exists( 'Lafka_Customizer_PDP' ) ) {
 				)
 			);
 
-			// Free-delivery threshold for the cart-drawer "Add $X more for free delivery"
-			// hint. Default 0 = disabled (no hint rendered). Stored as a raw monetary
-			// amount in the WC store currency (no symbol — wc_price() formats at render).
-			$wp_customize->add_setting(
-				'lafka_pdp_free_delivery_threshold',
-				array(
-					'default'           => 0,
-					'sanitize_callback' => array( __CLASS__, 'sanitize_decimal' ),
-					'transport'         => 'refresh',
-				)
-			);
-			$wp_customize->add_control(
-				'lafka_pdp_free_delivery_threshold',
-				array(
-					'label'       => esc_html__( 'Free-delivery threshold', 'lafka-plugin' ),
-					'description' => esc_html__( 'Cart-drawer shows "Add X more for free delivery" until this amount is reached. 0 = disabled. Currency comes from WooCommerce → Settings → General.', 'lafka-plugin' ),
-					'section'     => 'lafka_pdp',
-					'type'        => 'number',
-					'input_attrs' => array(
-						'min'  => 0,
-						'step' => '0.01',
-					),
-				)
-			);
-
-			// Win-back email-capture copy for the checkout opt-in field. Default
-			// empty = the field is not rendered at all. Operator must opt in by
-			// entering a customer-facing offer like "Save 10% on your next order".
-			$wp_customize->add_setting(
-				'lafka_pdp_winback_offer_text',
-				array(
-					'default'           => '',
-					'sanitize_callback' => 'sanitize_text_field',
-					'transport'         => 'refresh',
-				)
-			);
-			$wp_customize->add_control(
-				'lafka_pdp_winback_offer_text',
-				array(
-					'label'       => esc_html__( 'Win-back offer text (checkout)', 'lafka-plugin' ),
-					'description' => esc_html__( 'Headline shown above the optional email-capture field at checkout. Leave blank to hide the field entirely. Example: "Save 10% on your next order".', 'lafka-plugin' ),
-					'section'     => 'lafka_pdp',
-					'type'        => 'text',
-				)
-			);
-
 			// Variation options (sizes) without an explicit order are listed
 			// cheapest first — see incl/woocommerce/lafka-variation-order.php.
 			$wp_customize->add_setting(
 				'lafka_sort_variation_options',
 				array(
+					'type'              => 'option',
 					'default'           => 'yes',
 					'sanitize_callback' => array( __CLASS__, 'sanitize_yes_no' ),
 					'transport'         => 'refresh',
@@ -165,21 +123,6 @@ if ( ! class_exists( 'Lafka_Customizer_PDP' ) ) {
 					),
 				)
 			);
-		}
-
-		public static function sanitize_decimal( $value ): string {
-			if ( ! is_scalar( $value ) ) {
-				return '0';
-			}
-			$value = trim( (string) $value );
-			if ( '' === $value || ! is_numeric( $value ) ) {
-				return '0';
-			}
-			$f = (float) $value;
-			if ( $f < 0 ) {
-				return '0';
-			}
-			return (string) $f;
 		}
 
 		public static function sanitize_yes_no( $value ): string {

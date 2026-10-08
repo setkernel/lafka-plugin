@@ -181,6 +181,7 @@ if ( ! class_exists( 'Lafka_Customizer_Reviews' ) ) {
 			$wp_customize->add_setting(
 				'lafka_review_email_enabled',
 				array(
+					'type'              => 'option',
 					'default'           => '0',
 					'transport'         => 'refresh',
 					'sanitize_callback' => array( __CLASS__, 'sanitize_checkbox' ),
@@ -201,6 +202,7 @@ if ( ! class_exists( 'Lafka_Customizer_Reviews' ) ) {
 			$wp_customize->add_setting(
 				'lafka_review_email_delay_hours',
 				array(
+					'type'              => 'option',
 					'default'           => 24,
 					'transport'         => 'refresh',
 					'sanitize_callback' => array( __CLASS__, 'sanitize_delay_hours' ),
@@ -226,6 +228,7 @@ if ( ! class_exists( 'Lafka_Customizer_Reviews' ) ) {
 			$wp_customize->add_setting(
 				'lafka_review_email_subject',
 				array(
+					'type'              => 'option',
 					'default'           => 'How was your order, {firstname}?',
 					'transport'         => 'refresh',
 					'sanitize_callback' => 'sanitize_text_field',
@@ -246,6 +249,7 @@ if ( ! class_exists( 'Lafka_Customizer_Reviews' ) ) {
 			$wp_customize->add_setting(
 				'lafka_review_email_intro',
 				array(
+					'type'              => 'option',
 					'default'           => 'We hope you enjoyed every bite. A quick rating goes a long way for a small spot like ours.',
 					'transport'         => 'refresh',
 					'sanitize_callback' => 'sanitize_textarea_field',
@@ -270,6 +274,7 @@ if ( ! class_exists( 'Lafka_Customizer_Reviews' ) ) {
 			$wp_customize->add_setting(
 				'lafka_review_target_url',
 				array(
+					'type'              => 'option',
 					'default'           => '',
 					'transport'         => 'refresh',
 					'sanitize_callback' => array( __CLASS__, 'sanitize_review_url' ),
@@ -290,6 +295,7 @@ if ( ! class_exists( 'Lafka_Customizer_Reviews' ) ) {
 			$wp_customize->add_setting(
 				'lafka_review_target_label',
 				array(
+					'type'              => 'option',
 					'default'           => 'Leave a Google review',
 					'transport'         => 'refresh',
 					'sanitize_callback' => 'sanitize_text_field',
@@ -314,6 +320,7 @@ if ( ! class_exists( 'Lafka_Customizer_Reviews' ) ) {
 			$wp_customize->add_setting(
 				'lafka_review_banner_enabled',
 				array(
+					'type'              => 'option',
 					'default'           => '0',
 					'transport'         => 'refresh',
 					'sanitize_callback' => array( __CLASS__, 'sanitize_checkbox' ),
@@ -334,6 +341,7 @@ if ( ! class_exists( 'Lafka_Customizer_Reviews' ) ) {
 			$wp_customize->add_setting(
 				'lafka_review_banner_window_days',
 				array(
+					'type'              => 'option',
 					'default'           => 7,
 					'transport'         => 'refresh',
 					'sanitize_callback' => array( __CLASS__, 'sanitize_window_days' ),
@@ -359,6 +367,7 @@ if ( ! class_exists( 'Lafka_Customizer_Reviews' ) ) {
 			$wp_customize->add_setting(
 				'lafka_review_banner_copy',
 				array(
+					'type'              => 'option',
 					'default'           => 'Loved your order? Tap to rate us',
 					'transport'         => 'refresh',
 					'sanitize_callback' => 'sanitize_text_field',
@@ -379,6 +388,7 @@ if ( ! class_exists( 'Lafka_Customizer_Reviews' ) ) {
 			$wp_customize->add_setting(
 				'lafka_review_banner_cta_label',
 				array(
+					'type'              => 'option',
 					'default'           => 'Leave a review →',
 					'transport'         => 'refresh',
 					'sanitize_callback' => 'sanitize_text_field',
