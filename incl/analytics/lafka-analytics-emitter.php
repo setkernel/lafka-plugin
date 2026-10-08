@@ -44,6 +44,8 @@ if ( ! function_exists( 'lafka_tracking_keys' ) ) {
 			'lafka_clarity_project_id',
 			'lafka_cf_beacon_token',
 			'lafka_meta_pixel_id',
+			'lafka_google_ads_id',
+			'lafka_google_ads_purchase_label',
 			'lafka_gsc_verification',
 			'lafka_consent_banner_enabled',
 			'lafka_consent_banner_text',
@@ -131,6 +133,20 @@ if ( ! function_exists( 'lafka_analytics_meta_pixel_id' ) ) {
 	}
 }
 
+if ( ! function_exists( 'lafka_analytics_google_ads_id' ) ) {
+	function lafka_analytics_google_ads_id(): string {
+		$id = lafka_analytics_get_setting( 'lafka_google_ads_id', '' );
+		return preg_match( '/^AW-\d{6,12}$/', $id ) ? $id : '';
+	}
+}
+
+if ( ! function_exists( 'lafka_analytics_google_ads_label' ) ) {
+	function lafka_analytics_google_ads_label(): string {
+		$label = lafka_analytics_get_setting( 'lafka_google_ads_purchase_label', '' );
+		return preg_match( '/^[A-Za-z0-9_-]{6,40}$/', $label ) ? $label : '';
+	}
+}
+
 if ( ! function_exists( 'lafka_analytics_gsc_token' ) ) {
 	function lafka_analytics_gsc_token(): string {
 		return lafka_analytics_get_setting( 'lafka_gsc_verification', '' );
@@ -175,7 +191,7 @@ if ( ! function_exists( 'lafka_analytics_needs_consent_banner' ) ) {
 	 * @return bool
 	 */
 	function lafka_analytics_needs_consent_banner(): bool {
-		foreach ( array( 'lafka_analytics_gtm_id', 'lafka_analytics_ga4_id', 'lafka_analytics_clarity_id', 'lafka_analytics_meta_pixel_id', 'lafka_analytics_cf_beacon_token' ) as $accessor ) {
+		foreach ( array( 'lafka_analytics_gtm_id', 'lafka_analytics_ga4_id', 'lafka_analytics_google_ads_id', 'lafka_analytics_clarity_id', 'lafka_analytics_meta_pixel_id', 'lafka_analytics_cf_beacon_token' ) as $accessor ) {
 			if ( function_exists( $accessor ) && '' !== (string) call_user_func( $accessor ) ) {
 				return true;
 			}
@@ -443,14 +459,16 @@ if ( ! function_exists( 'lafka_emit_direct_ga4' ) ) {
 			return; // GTM owns this path.
 		}
 		$ga4_id = lafka_analytics_ga4_id();
-		if ( '' === $ga4_id ) {
+		$ads_id = lafka_analytics_google_ads_id();
+		if ( '' === $ga4_id && '' === $ads_id ) {
 			return;
 		}
-		echo "<!-- Lafka — direct GA4 -->\n";
+		// One gtag.js serves both Google destinations.
+		echo "<!-- Lafka — direct Google tag (GA4 / Google Ads) -->\n";
 		wp_print_script_tag(
 			array(
 				'async' => true,
-				'src'   => 'https://www.googletagmanager.com/gtag/js?id=' . rawurlencode( $ga4_id ),
+				'src'   => 'https://www.googletagmanager.com/gtag/js?id=' . rawurlencode( '' !== $ga4_id ? $ga4_id : $ads_id ),
 			)
 		);
 		echo "\n";
@@ -458,6 +476,22 @@ if ( ! function_exists( 'lafka_emit_direct_ga4' ) ) {
 		echo "window.dataLayer = window.dataLayer || [];\n";
 		echo "function gtag(){dataLayer.push(arguments);}\n";
 		echo "gtag('js', new Date());\n";
+		if ( '' !== $ads_id ) {
+			echo "gtag('config','" . esc_js( $ads_id ) . "');\n";
+			$label = lafka_analytics_google_ads_label();
+			if ( '' !== $label ) {
+				// One conversion per order, deduped by Google on transaction_id.
+				echo "window.lafkaDL.on(function(o){\n";
+				echo "\tif (o.event !== 'purchase' || !o.ecommerce) { return; }\n";
+				echo "\tif (window.lafkaUserData && window.lafkaConsentGranted('ad_user_data')) { gtag('set', 'user_data', window.lafkaUserData); }\n";
+				echo "\tgtag('event', 'conversion', { send_to: '" . esc_js( $ads_id . '/' . $label ) . "', value: o.ecommerce.value, currency: o.ecommerce.currency, transaction_id: o.ecommerce.transaction_id });\n";
+				echo "});\n";
+			}
+		}
+		if ( '' === $ga4_id ) {
+			echo "</script>\n";
+			return;
+		}
 		echo "gtag('config','" . esc_js( $ga4_id ) . "');\n";
 		// GTM-format pushes ({event: …}) reach GA4 only through a container, so
 		// in direct mode forward every event, ecommerce or not, with its

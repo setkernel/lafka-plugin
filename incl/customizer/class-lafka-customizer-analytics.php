@@ -170,6 +170,28 @@ if ( ! class_exists( 'Lafka_Customizer_Analytics' ) ) {
 		 * @param mixed $value
 		 * @return string
 		 */
+		/**
+		 * Google Ads conversion ID: AW- followed by digits, else empty.
+		 *
+		 * @param mixed $value Raw value.
+		 * @return string
+		 */
+		public static function sanitize_google_ads_id( $value ): string {
+			$value = is_scalar( $value ) ? strtoupper( trim( (string) $value ) ) : '';
+			return preg_match( '/^AW-\d{6,12}$/', $value ) ? $value : '';
+		}
+
+		/**
+		 * Google Ads conversion label: letters, digits, '-' and '_' only.
+		 *
+		 * @param mixed $value Raw value.
+		 * @return string
+		 */
+		public static function sanitize_google_ads_label( $value ): string {
+			$value = is_scalar( $value ) ? trim( (string) $value ) : '';
+			return preg_match( '/^[A-Za-z0-9_-]{6,40}$/', $value ) ? $value : '';
+		}
+
 		public static function sanitize_meta_pixel_id( $value ): string {
 			if ( ! is_scalar( $value ) ) {
 				return '';
@@ -370,6 +392,47 @@ if ( ! class_exists( 'Lafka_Customizer_Analytics' ) ) {
 				array(
 					'label'       => esc_html__( 'Meta Pixel ID', 'lafka-plugin' ),
 					'description' => esc_html__( '15-16 digit numeric ID from business.facebook.com → Events Manager → Data Sources. Only needed when running paid Facebook / Instagram ads. Only used when GTM is empty.', 'lafka-plugin' ),
+					'section'     => 'lafka_analytics_direct',
+					'type'        => 'text',
+				)
+			);
+
+			$wp_customize->add_setting(
+				self::setting_id( 'lafka_google_ads_id' ),
+				array(
+					'type'              => 'option',
+					'default'           => '',
+					'transport'         => 'refresh',
+					'sanitize_callback' => array( __CLASS__, 'sanitize_google_ads_id' ),
+				)
+			);
+			$wp_customize->add_control(
+				self::setting_id( 'lafka_google_ads_id' ),
+				array(
+					'label'       => esc_html__( 'Google Ads conversion ID', 'lafka-plugin' ),
+					'description' => esc_html__( 'Format: AW-123456789. Google Ads → Goals → Conversions → your purchase action → Tag setup. Only used when GTM is empty.', 'lafka-plugin' ),
+					'section'     => 'lafka_analytics_direct',
+					'type'        => 'text',
+					'input_attrs' => array(
+						'placeholder' => 'AW-123456789',
+					),
+				)
+			);
+
+			$wp_customize->add_setting(
+				self::setting_id( 'lafka_google_ads_purchase_label' ),
+				array(
+					'type'              => 'option',
+					'default'           => '',
+					'transport'         => 'refresh',
+					'sanitize_callback' => array( __CLASS__, 'sanitize_google_ads_label' ),
+				)
+			);
+			$wp_customize->add_control(
+				self::setting_id( 'lafka_google_ads_purchase_label' ),
+				array(
+					'label'       => esc_html__( 'Google Ads purchase conversion label', 'lafka-plugin' ),
+					'description' => esc_html__( 'The label after the slash in send_to (AW-123456789/AbC-dEfGhIj). Each order sends one conversion with its value and order number; with ad_user_data consent the order email and phone go along as enhanced conversion data (hashed by Google\'s tag before sending).', 'lafka-plugin' ),
 					'section'     => 'lafka_analytics_direct',
 					'type'        => 'text',
 				)

@@ -458,6 +458,43 @@ if ( ! function_exists( 'lafka_dl_emit_begin_checkout' ) ) {
 	}
 }
 
+if ( ! function_exists( 'lafka_dl_emit_user_data' ) ) {
+	/**
+	 * Expose the buyer's email and phone (E.164) as `window.lafkaUserData` on
+	 * the order-received page, for Google Ads enhanced conversions: the direct
+	 * Google tag sends it only with ad_user_data consent, and GTM users can
+	 * read it as a JavaScript variable. Emitted only when Google Ads or GTM is
+	 * configured; never stored or sent by the plugin itself.
+	 *
+	 * @param WC_Order $order The order just placed.
+	 * @return void
+	 */
+	function lafka_dl_emit_user_data( $order ): void {
+		$wanted = ( function_exists( 'lafka_analytics_google_ads_id' ) && '' !== lafka_analytics_google_ads_id() )
+			|| ( function_exists( 'lafka_analytics_gtm_id' ) && '' !== lafka_analytics_gtm_id() );
+		if ( ! $wanted || ! is_object( $order ) || ! method_exists( $order, 'get_billing_email' ) ) {
+			return;
+		}
+		$data  = array();
+		$email = strtolower( trim( (string) $order->get_billing_email() ) );
+		if ( '' !== $email ) {
+			$data['email'] = $email;
+		}
+		$phone = preg_replace( '/[^\d+]/', '', (string) $order->get_billing_phone() );
+		if ( '' !== $phone && '+' !== $phone[0] && function_exists( 'WC' ) && WC()->countries ) {
+			$code  = (string) WC()->countries->get_country_calling_code( (string) $order->get_billing_country() );
+			$phone = '' !== $code ? $code . ltrim( $phone, '0' ) : '';
+		}
+		if ( '' !== $phone && preg_match( '/^\+\d{8,15}$/', $phone ) ) {
+			$data['phone_number'] = $phone;
+		}
+		if ( array() === $data ) {
+			return;
+		}
+		echo '<script>window.lafkaUserData = ' . wp_json_encode( $data ) . ";</script>\n";
+	}
+}
+
 if ( ! function_exists( 'lafka_dl_emit_purchase' ) ) {
 	/**
 	 * `purchase` — emit on woocommerce_thankyou, once per order.
@@ -531,6 +568,7 @@ if ( ! function_exists( 'lafka_dl_emit_purchase' ) ) {
 			$payload['coupon'] = implode( ',', $coupons );
 		}
 
+		lafka_dl_emit_user_data( $order );
 		lafka_dl_emit_push( 'purchase', $payload );
 
 		// Lock so this order can't double-fire across page refreshes (order CRUD,
