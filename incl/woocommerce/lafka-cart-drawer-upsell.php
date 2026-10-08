@@ -207,7 +207,7 @@ if ( ! function_exists( 'lafka_cart_drawer_render_upsell' ) ) {
 					)
 				);
 				?>
-				<li class="lafka-cart-drawer__upsell-item">
+				<li class="lafka-cart-drawer__upsell-item lafka-card lafka-card--sm lafka-card--flat">
 					<a class="lafka-cart-drawer__upsell-link" href="<?php echo esc_url( get_permalink( $id ) ); ?>">
 						<?php
 						if ( '' !== $img ) {
@@ -225,7 +225,7 @@ if ( ! function_exists( 'lafka_cart_drawer_render_upsell' ) ) {
 					<a href="<?php echo esc_url( $p->add_to_cart_url() ); ?>"
 						data-quantity="1"
 						data-product_id="<?php echo esc_attr( (string) $id ); ?>"
-						class="lafka-cart-drawer__upsell-add add_to_cart_button ajax_add_to_cart"
+						class="lafka-cart-drawer__upsell-add lafka-btn lafka-btn--primary lafka-btn--sm add_to_cart_button ajax_add_to_cart"
 						rel="nofollow"
 						aria-label="<?php echo esc_attr( sprintf( /* translators: %s product */ __( 'Add %s to your order', 'lafka-plugin' ), wp_strip_all_tags( $p->get_name() ) ) ); ?>">
 						<?php echo esc_html( '' !== $add_label ? $add_label : __( '+ Add', 'lafka-plugin' ) ); ?>

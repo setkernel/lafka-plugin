@@ -142,7 +142,7 @@ if ( ! function_exists( 'lafka_pdp_render_upsell_row' ) ) {
 					$price = $product->get_price_html();
 					$type  = $product->get_type();
 					?>
-					<article class="lafka-pdp-upsell__card">
+					<article class="lafka-pdp-upsell__card lafka-card lafka-card--sm lafka-card--sunken">
 						<a class="lafka-pdp-upsell__link" href="<?php echo esc_url( $url ); ?>">
 							<?php
 							// v9.21.0: get_the_post_thumbnail() returns empty string when a product
@@ -161,7 +161,7 @@ if ( ! function_exists( 'lafka_pdp_render_upsell_row' ) ) {
 						</a>
 						<?php if ( ! $cart_blocked ) : ?>
 							<button type="button"
-								class="lafka-pdp-upsell__add"
+								class="lafka-pdp-upsell__add lafka-btn lafka-btn--ghost lafka-btn--sm"
 								data-product-id="<?php echo esc_attr( (string) $id ); ?>"
 								data-product-type="<?php echo esc_attr( $type ); ?>"
 								data-permalink="<?php echo esc_url( $url ); ?>">

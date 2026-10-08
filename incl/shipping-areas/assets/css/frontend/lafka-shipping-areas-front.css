@@ -3,11 +3,11 @@
 }
 
 .pac-container {
-    z-index: 200102;
+    z-index: var(--lafka-z-maps-suggest, 200100);
 }
 
 /* The branch popup: a native <dialog> opened in place over its own backdrop
-   (z-index under Google's .pac-container suggestions). */
+   (under Google's .pac-container suggestions: --lafka-z-maps-suggest sits above --lafka-z-popup). */
 #lafka_select_branch_modal {
     display: none;
 }
@@ -16,7 +16,7 @@
     display: block;
     position: fixed;
     inset: 0;
-    z-index: 200001;
+    z-index: calc(var(--lafka-z-popup, 200000) + 1);
     box-sizing: border-box;
     width: min(600px, calc(100vw - 32px));
     height: fit-content;
@@ -26,14 +26,14 @@
     overflow: auto;
     border: 0;
     border-radius: 6px;
-    background: #fff;
+    background: var(--lafka-color-surface-raised, #fff);
     color: inherit;
 }
 
 .lafka-branch-dialog-backdrop {
     position: fixed;
     inset: 0;
-    z-index: 200000;
+    z-index: var(--lafka-z-popup, 200000);
     background: rgb(11 11 11 / 80%);
 }
 
@@ -51,7 +51,7 @@ html.lafka-branch-dialog-open {
     border: 0;
     background: none;
     color: inherit;
-    font-size: 28px;
+    font-size: 1.75rem;
     line-height: 1;
     cursor: pointer;
 }
@@ -62,13 +62,13 @@ html.lafka-branch-dialog-open {
 
 .lafka-all-stores-closed-countdown {
     text-align: center;
-    font-size: 18px;
+    font-size: var(--lafka-font-size-h4, 18px);
     font-weight: 700;
     margin-bottom: 15px;
 }
 
 .lafka-all-stores-closed-countdown .count_holder_small {
-    font-size: 24px;
+    font-size: 1.5rem;
 }
 
 a.lafka-branch-delivery, a.lafka-branch-pickup, .lafka-branch-user-address, .lafka-branch-selection {
@@ -80,18 +80,20 @@ a.lafka-branch-delivery, a.lafka-branch-pickup, .lafka-branch-user-address, .laf
 }
 
 .lafka-branch-order-type {
-    background-color: #f8f8f8;
+    background-color: var(--lafka-color-surface-sunken, #f8f8f8);
     padding: 2px 2px 0 8px;
-    border-bottom: 1px solid #e1e1e1;
+    border-bottom: 1px solid var(--lafka-color-border-subtle, #e1e1e1);
 }
 
 .lafka-branch-order-type a {
     display: inline-block;
-    padding: 10px 20px;
+    box-sizing: border-box;
+    min-height: var(--lafka-tap-target, 44px);
+    padding: 12px 20px;
     border-radius: 6px 6px 0 0;
-    background-color: #f8f8f8;
+    background-color: var(--lafka-color-surface-sunken, #f8f8f8);
     text-decoration: none;
-    color: #333;
+    color: var(--lafka-color-text-primary, #333);
     text-transform: uppercase;
 }
 
@@ -101,8 +103,11 @@ a.lafka-branch-delivery, a.lafka-branch-pickup, .lafka-branch-user-address, .laf
 }
 
 a.lafka-branch-auto-locate {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--lafka-tap-target, 44px);
     text-decoration: none !important;
-    color: #333;
+    color: var(--lafka-color-text-primary, #333);
 }
 
 div.lafka-branch-select-images {
@@ -118,8 +123,8 @@ span.lafka-branch-select-image {
     display: inline-block;
     width: 31%;
     text-align: center;
-    color: #333;
-    border: 2px solid #e1e1e1;
+    color: var(--lafka-color-text-primary, #333);
+    border: 2px solid var(--lafka-color-border-subtle, #e1e1e1);
     border-radius: 6px;
     margin-right: 3px;
     vertical-align: top;
@@ -129,7 +134,7 @@ span.lafka-branch-select-image {
 }
 
 span.lafka-branch-select-image a, span.lafka-branch-select-image a .lafka-branch-select-name {
-    color: #333;
+    color: var(--lafka-color-text-primary, #333);
     text-decoration: none;
     display: block;
 }
@@ -144,12 +149,12 @@ span.lafka-branch-select-image a {
 }
 
 .lafka-branch-order-type a:hover {
-    color: #333;
-    background-color: #e1e1e1;
+    color: var(--lafka-color-text-primary, #333);
+    background-color: var(--lafka-color-surface-active, #e1e1e1);
 }
 
 .lafka-branch-order-type a.lafka-selected {
-    background-color: #fff;
+    background-color: var(--lafka-color-surface-raised, #fff);
     position: relative;
     bottom: -2px;
 }
@@ -166,7 +171,7 @@ span.lafka-branch-select-image a img {
 
 a.lafka-branch-delivery, a.lafka-branch-pickup {
     text-decoration: none !important;
-    font-size: 14px;
+    font-size: var(--lafka-font-size-caption, 14px);
     font-weight: 700;
 }
 
@@ -196,8 +201,8 @@ a.lafka-branch-pickup::before {
 .lafka-branch-select-tip {
     display: block;
     width: 100%;
-    font-size: 14px;
-    color: #333;
+    font-size: var(--lafka-font-size-caption, 14px);
+    color: var(--lafka-color-text-primary, #333);
     margin-bottom: 8px;
 }
 
@@ -206,12 +211,12 @@ h3.lafka-address-not-found, h3.lafka-address-marked {
 }
 
 .woocommerce form.checkout h3.lafka-address-not-found, .woocommerce form.checkout h3.lafka-address-marked {
-    font-size: 16px;
+    font-size: var(--lafka-font-size-body, 16px);
     font-weight: 400;
     padding: 10px;
     border-radius: 6px;
-    color: #fff;
-    background-color: #333;
+    color: var(--lafka-color-text-inverse, #fff);
+    background-color: var(--lafka-color-text-primary, #333);
     position: relative;
     margin-bottom: 25px;
 }
@@ -226,12 +231,12 @@ h3.lafka-address-not-found, h3.lafka-address-marked {
     position: absolute;
     bottom: -4px;
     left: 20px;
-    background-color: #333;
+    background-color: var(--lafka-color-text-primary, #333);
 }
 
 .woocommerce form.checkout h3.lafka-address-marked, .woocommerce form.checkout h3.lafka-address-marked::after {
-    color: #333;
-    background-color: #f1f1f1;
+    color: var(--lafka-color-text-primary, #333);
+    background-color: var(--lafka-color-surface-muted, #f1f1f1);
 }
 
 .lafka-change-branch {
@@ -239,8 +244,8 @@ h3.lafka-address-not-found, h3.lafka-address-marked {
     padding: 8px;
     border-radius: 6px;
     background: rgba(0, 0, 0, 0.04);
-    color: #666;
-    font-size: 14px;
+    color: var(--lafka-color-text-secondary, #666);
+    font-size: var(--lafka-font-size-caption, 14px);
     text-align: left;
     margin: 2px 0;
     position: relative;
@@ -268,7 +273,7 @@ body > div.widget.woocommerce.widget_shopping_cart .widget_shopping_cart_content
 
 .lafka-change-branch span strong {
     font-weight: 400;
-    color: #333;
+    color: var(--lafka-color-text-primary, #333);
 }
 
 .lafka-change-branch span {
@@ -316,10 +321,10 @@ a.lafka-change-branch-button::before, .lafka-change-branch-button-select::before
     background-repeat: no-repeat;
     background-position: center;
     background-size: 12px 12px;
-    font-size: 10px;
+    font-size: 0.625rem;
     border-radius: 50px;
-    color: #fff;
-    background-color: #333;
+    color: var(--lafka-color-text-inverse, #fff);
+    background-color: var(--lafka-color-text-primary, #333);
     width: 20px;
     height: 20px;
     line-height: 20px;
@@ -331,21 +336,21 @@ a.lafka-change-branch-button::before, .lafka-change-branch-button-select::before
     margin: 0 4px 0 0;
     vertical-align: middle;
     content: "";
-    font-size: 14px;
+    font-size: 0.875rem;
 }
 
 a.lafka-change-branch-button:hover::before, .lafka-change-branch-button-select:hover::before {
-    background-color: #333;
+    background-color: var(--lafka-color-text-primary, #333);
 }
 
 .lafka-change-branch-button-select {
-    color: #333;
+    color: var(--lafka-color-text-primary, #333);
     text-decoration: none !important;
 }
 
 .lafka-checkout-datetime-container {
     border-radius: 8px;
-    border: 1px solid #f1f1f1;
+    border: 1px solid var(--lafka-color-border-subtle, #f1f1f1);
     padding: 15px;
     margin-bottom: 30px;
 }
@@ -353,13 +358,13 @@ a.lafka-change-branch-button:hover::before, .lafka-change-branch-button-select:h
 .lafka-delivery-time-toggle {
     display: block;
     padding: 15px;
-    background-color: #f8f8f8;
+    background-color: var(--lafka-color-surface-sunken, #f8f8f8);
     border-radius: 8px;
     text-decoration: none !important;
-    color: #333;
+    color: var(--lafka-color-text-primary, #333);
     text-transform: uppercase;
     font-weight: 500;
-    font-size: 13px;
+    font-size: var(--lafka-font-size-caption, 13px);
 }
 
 .lafka-delivery-time-toggle::before {
@@ -372,7 +377,7 @@ a.lafka-change-branch-button:hover::before, .lafka-change-branch-button-select:h
     display: inline-block;
     margin-right: 4px;
     vertical-align: middle;
-    font-size: 24px;
+    font-size: 1.5rem;
 }
 
 .lafka-checkout-datetime-fields {
@@ -399,7 +404,7 @@ a.lafka-change-branch-button:hover::before, .lafka-change-branch-button-select:h
     width: 45px;
     height: 45px;
     line-height: 45px;
-    border: 1px solid #e1e1e1;
+    border: 1px solid var(--lafka-color-border-subtle, #e1e1e1);
     border-radius: 6px;
     font-size: 0;
     text-align: center;
@@ -414,18 +419,18 @@ a.lafka-change-branch-button:hover::before, .lafka-change-branch-button-select:h
     display: block;
     margin-right: 4px;
     vertical-align: middle;
-    font-size: 24px;
+    font-size: 1.5rem;
     width: 45px;
     height: 45px;
     line-height: 45px;
 }
 
 .lafka-checkout-datetime-fields .lafka-datetime-clear:hover {
-    background-color: #f1f1f1;
+    background-color: var(--lafka-color-surface-muted, #f1f1f1);
 }
 
 .lafka-checkout-datetime-fields .lafka-datetime-clear:hover::before {
-    color: #333;
+    color: var(--lafka-color-text-primary, #333);
 }
 
 form.checkout tr.woocommerce-shipping-totals, form.checkout tr.order-total {
@@ -437,13 +442,13 @@ form.checkout tr.woocommerce-shipping-totals, form.checkout tr.order-total {
     float: left;
     width: 45px !important;
     height: 45px;
-    border: 1px solid #e1e1e1;
+    border: 1px solid var(--lafka-color-border-subtle, #e1e1e1);
     border-radius: 3px;
     margin-right: 8px;
-    font-size: 9px;
+    font-size: 0.75rem;
     text-align: center;
     padding-top: 3px !important;
-    background-color: #fff;
+    background-color: var(--lafka-color-surface-raised, #fff);
 }
 
 .lafka-estimated-time::before {
@@ -453,9 +458,9 @@ form.checkout tr.woocommerce-shipping-totals, form.checkout tr.order-total {
     -webkit-mask: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%229%22%2F%3E%3Cpath%20d%3D%22M12%207v5l3%202%22%2F%3E%3C%2Fsvg%3E) center / 1em 1em no-repeat;
     mask: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%229%22%2F%3E%3Cpath%20d%3D%22M12%207v5l3%202%22%2F%3E%3C%2Fsvg%3E) center / 1em 1em no-repeat;
     display: block;
-    font-size: 16px;
+    font-size: var(--lafka-font-size-body, 16px);
     width: 100%;
-    color: #9db55d;
+    color: var(--lafka-color-success-500, #9db55d);
 }
 
 .lafka-branch-select-dropdown label, .lafka-branch-select-dropdown select {
@@ -470,7 +475,7 @@ form.checkout tr.woocommerce-shipping-totals, form.checkout tr.order-total {
 .lafka-branch-select-dropdown select {
     padding: 15px;
     border-radius: 6px;
-    background-color: #f6f6f6;
+    background-color: var(--lafka-color-surface-sunken, #f6f6f6);
 }
 
 .woocommerce-message[data-lafka-notice="minimum-amount"] {

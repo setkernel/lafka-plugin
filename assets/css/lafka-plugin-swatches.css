@@ -30,7 +30,7 @@
     -webkit-box-shadow: 0 0 7px;
     -moz-box-shadow: 0 0 7px;
     box-shadow: 0 0 7px;
-    border-color: #999;
+    border-color: var(--lafka-color-border-strong, #999);
     opacity: 1;
 }
 
@@ -54,7 +54,7 @@
     width: 6px;
     height: 10px;
     display: block;
-    border: solid #fff;
+    border: solid var(--lafka-color-text-on-dark, #fff);
     border-width: 0 2px 2px 0;
     position: absolute;
     top: 8px;
@@ -62,7 +62,7 @@
 }
 
 .lafka-wcs-swatches .swatch-label {
-    background-color: #f1f1f1;
+    background-color: var(--lafka-color-surface-muted, #f1f1f1);
 }
 
 .lafka-wcs-swatches .swatch-image {

@@ -16,7 +16,7 @@
 	color: var(--lafka-color-text-primary, #18181b);
 	border-left: 4px solid var(--lafka-color-info-500, #2563eb);
 	padding: 12px 16px;
-	font-size: 15px;
+	font-size: var(--lafka-font-size-body-sm, 15px);
 	font-weight: 500;
 	line-height: 1.5;
 }
@@ -48,7 +48,7 @@
 	position: fixed;
 	top: 0;
 	left: 0;
-	z-index: 10000;
+	z-index: var(--lafka-z-drawer, 10000);
 	transform: translateY(-100%);
 	opacity: 0;
 	transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
@@ -66,7 +66,7 @@
 	margin: 0 auto;
 	padding: 14px 48px;
 	text-align: center;
-	font-size: 15px;
+	font-size: var(--lafka-font-size-body-sm, 15px);
 	font-weight: 600;
 	letter-spacing: 0.3px;
 }
@@ -77,7 +77,7 @@
 	top: 50%;
 	transform: translateY(-50%);
 	cursor: pointer;
-	font-size: 20px;
+	font-size: 1.25rem;
 	line-height: 1;
 	opacity: 0.9;
 	background: none;
@@ -100,6 +100,7 @@
 }
 
 .lafka-bogo-link {
+	position: relative;
 	color: inherit;
 	text-decoration: underline;
 	text-underline-offset: 3px;
@@ -111,16 +112,23 @@
 	text-decoration-thickness: 2px;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
 
 	.lafka-bogo-inner {
 		padding: 12px 56px 12px 16px;
-		font-size: 14px;
+		font-size: var(--lafka-font-size-caption, 14px);
 		text-align: left;
 	}
 
 	.lafka-bogo-close {
 		right: 6px;
-		font-size: 24px;
+		font-size: 1.5rem;
 	}
+}
+
+/* The banner stays a slim strip; a transparent ::after gives the link a 44px hit area. */
+.lafka-bogo-link::after {
+	content: "";
+	position: absolute;
+	inset: -13px 0;
 }

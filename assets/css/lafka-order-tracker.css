@@ -10,7 +10,7 @@
 	padding: 1.25em;
 	border: 1px solid var(--lafka-color-border-subtle, #d9d9d9);
 	border-radius: var(--lafka-radius-lg, 8px);
-	background: var(--lafka-color-surface, #fff);
+	background: var(--lafka-color-surface-raised, #fff);
 }
 
 .lafka-tracker__title {
@@ -70,7 +70,7 @@
 	height: var(--lafka-tracker-dot);
 	border: 3px solid var(--lafka-color-border-strong, #bdbdbd);
 	border-radius: 50%;
-	background: var(--lafka-color-surface, #fff);
+	background: var(--lafka-color-surface-raised, #fff);
 }
 
 .lafka-tracker__step.is-done .lafka-tracker__dot {
@@ -83,7 +83,7 @@
 }
 
 /* Wider screens: the steps sit in a row, the line runs between the dots. */
-@media (min-width: 640px) {
+@media (min-width: 600px) {
 
 	.lafka-tracker__steps {
 		display: flex;

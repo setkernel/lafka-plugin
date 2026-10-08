@@ -839,23 +839,23 @@ if ( ! function_exists( 'lafka_emit_consent_banner' ) ) {
 		// the theme CSS fails to load — which is exactly when consent matters
 		// most (slow / bot / privacy-tool requests).
 		$styles = <<<'CSS'
-.lafka-consent-banner{position:fixed;left:0;right:0;bottom:0;z-index:99998;background:var(--lafka-consent-bg,#1f2937);color:var(--lafka-consent-fg,#fff);font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding:16px 20px;box-shadow:0 -4px 16px rgba(0,0,0,.2);display:none}
+.lafka-consent-banner{position:fixed;left:0;right:0;bottom:0;z-index:var(--lafka-z-consent,99998);background:var(--lafka-consent-bg,#1f2937);color:var(--lafka-consent-fg,#fff);font-family:var(--lafka-font-family-body,system-ui,-apple-system,Segoe UI,Roboto,sans-serif);font-size:var(--lafka-font-size-body-sm,14px);line-height:1.5;padding:16px 20px;box-shadow:0 -4px 16px rgba(0,0,0,.2);display:none}
 .lafka-consent-banner.is-visible{display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between}
 .lafka-consent-banner__text{flex:1 1 320px;margin:0}
 .lafka-consent-banner__actions{display:flex;flex-wrap:wrap;gap:8px}
 .lafka-consent-banner__btn{appearance:none;border:0;border-radius:6px;padding:10px 18px;min-height:44px;font:inherit;font-weight:600;cursor:pointer;line-height:1}
-@media (max-width:600px){.lafka-consent-banner{padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));gap:10px;font-size:13px}.lafka-consent-banner__text{flex-basis:100%}.lafka-consent-banner__actions{width:100%}.lafka-consent-banner__btn{flex:1 1 auto}}
+@media (max-width:599px){.lafka-consent-banner{padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));gap:10px;font-size:var(--lafka-font-size-caption,13px)}.lafka-consent-banner__text{flex-basis:100%}.lafka-consent-banner__actions{width:100%}.lafka-consent-banner__btn{flex:1 1 auto}}
 .lafka-consent-banner__btn--accept{background:var(--lafka-consent-accept,#10b981);color:var(--lafka-consent-accept-fg,#fff)}
 .lafka-consent-banner__btn--reject{background:var(--lafka-consent-reject,#374151);color:var(--lafka-consent-reject-fg,#fff)}
 .lafka-consent-banner__btn--settings{background:transparent;color:var(--lafka-consent-fg,#fff);text-decoration:underline}
-.lafka-consent-modal{position:fixed;inset:0;z-index:99999;background:var(--lafka-consent-overlay,rgba(0,0,0,.55));display:none;align-items:center;justify-content:center;padding:20px}
+.lafka-consent-modal{position:fixed;inset:0;z-index:calc(var(--lafka-z-consent,99998) + 1);background:var(--lafka-consent-overlay,rgba(0,0,0,.55));display:none;align-items:center;justify-content:center;padding:20px}
 .lafka-consent-modal.is-visible{display:flex}
 .lafka-consent-modal__panel{background:var(--lafka-consent-panel-bg,#fff);color:var(--lafka-consent-panel-fg,#1f2937);border-radius:10px;max-width:520px;width:100%;padding:24px;box-shadow:0 20px 50px rgba(0,0,0,.35)}
-.lafka-consent-modal__title{margin:0 0 12px;font-size:18px}
-.lafka-consent-modal__row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid var(--lafka-consent-border,#e5e7eb);font-size:14px}
+.lafka-consent-modal__title{margin:0 0 12px;font-size:var(--lafka-font-size-h4,18px)}
+.lafka-consent-modal__row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;min-height:44px;border-top:1px solid var(--lafka-consent-border,#e5e7eb);font-size:var(--lafka-font-size-body-sm,14px)}
 .lafka-consent-modal__row:first-of-type{border-top:0}
 .lafka-consent-modal__actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
-.lafka-consent-modal__btn{appearance:none;border:0;border-radius:6px;padding:10px 18px;font:inherit;font-weight:600;cursor:pointer}
+.lafka-consent-modal__btn{appearance:none;border:0;border-radius:6px;padding:10px 18px;min-height:44px;font:inherit;font-weight:600;cursor:pointer}
 .lafka-consent-modal__btn--save{background:var(--lafka-consent-accept,#10b981);color:var(--lafka-consent-accept-fg,#fff)}
 .lafka-consent-modal__btn--close{background:var(--lafka-consent-close-bg,#e5e7eb);color:var(--lafka-consent-close-fg,#1f2937)}
 @media (prefers-reduced-motion:no-preference){.lafka-consent-banner.is-visible{animation:lafka-slide-up .25s ease-out}}

@@ -7,6 +7,16 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
 
 ## [Unreleased]
 
+### Design system
+- Front-end CSS reads the theme's tokens with a neutral fallback: the branch popup and its Google
+  suggestion list use `--lafka-z-popup` / `--lafka-z-maps-suggest` (the list stays above the popup), colours
+  and sizes use `--lafka-color-*` and `--lafka-font-size-*`, the promotions banner uses `--lafka-z-drawer`, the
+  maps define `--lafka-map-pin` / `--lafka-map-editor`, the order tracker uses `--lafka-color-surface-raised`.
+- The consent banner's z-index, font and 44 px controls read the same tokens.
+- The cart-drawer and PDP upsell buttons and tiles carry the theme's `lafka-btn` / `lafka-card` classes; the
+  deal builder's focus ring uses `--lafka-shadow-focus`; the Peppery-neutral aliases (`--lafka-disabled-*`,
+  `--lafka-font-size-sm`, ...) moved to the canonical token names.
+
 ### One source of truth: hours, money, fulfilment, the shared script
 - **Opening hours have one home.** `Lafka_Order_Hours::status( $now )` returns `is_open`, `closes_at`,
   `next_open`, `source` (schedule, display, forced, holiday) and `gated`, from one engine
