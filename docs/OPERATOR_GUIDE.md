@@ -239,6 +239,17 @@ Delivery by distance**, and open it:
 - **Free over the store's free-delivery threshold**: on by default. The threshold itself
   is set in one place (WooCommerce → Settings → Restaurant → Promotions); this method only
   reads it. A delivery minimum is the Promotions **delivery minimum**, also set once.
+  If the customer's shipping zone also has WooCommerce's own **Free Shipping** method with
+  "A minimum order amount", that amount is the threshold everywhere (progress bar, copy and
+  this method), so the promise always matches the zone's real rule.
+
+**Free delivery for other methods.** Free delivery over the threshold never changes the
+rates of a method Lafka does not own. For any other delivery method use WooCommerce's
+**Free Shipping** method in the zone with a minimum order amount (and the theme's "only
+show free delivery when it is available" switch to hide the paid rate). A shop still on a
+third-party delivery method can opt it in with
+`add_filter( 'lafka_free_delivery_method_ids', fn() => array( 'distance_rate' ) )`;
+moving to Delivery by distance (below) removes the need.
 
 With branch selection on, the distance is measured from the chosen branch; otherwise from
 the store location.
@@ -278,6 +289,33 @@ costs, percentage fees, "avoid tolls", walking mode). Then
 the fees for a few real addresses, then disable the old method and enable the new one in
 the zone (and deactivate the old plugin when you are happy). Check the DRS origin address
 is the same place as your store location.
+
+### Cart and Checkout pages: blocks or classic
+
+**Lafka → Modules → Checkout experience** chooses the checkout customers use; Lafka works
+fully on both. Saving the choice never edits your pages. The **Switch the pages now**
+button below it rewrites the Cart and Checkout pages once, only when they still hold the
+unedited WooCommerce default (block markup to the classic shortcodes, or Lafka's saved
+copy back to blocks), and **Undo the last switch** puts back exactly what was there.
+Pages you edited are never touched.
+
+### Closed store
+
+While the store is closed (and not taking orders for later), the cart, mini cart and
+checkout keep WooCommerce's own buttons, so payment extensions' express buttons stay
+available; a "Closed" card sits above them, the buttons look unavailable, and the order is
+refused by the server on the classic and the block checkout. With "disable add to cart"
+on, adding to the cart is refused with the closed message, while the products themselves
+stay purchasable in the admin, the REST API and other channels.
+
+### Delivery chosen, no delivery rate
+
+A customer who chose Delivery is never turned into a pickup order without a word. When no
+delivery rate is on offer (beyond the maximum distance, the address not found), the classic
+and the block checkout show the same sentence under the shipping options ("We can't deliver
+that far (we deliver up to 10 km). Choose Pickup instead."), and placing the order is
+refused until they pick Pickup or a reachable address. The sentence is filterable
+(`lafka_distance_unavailable_message`).
 
 ## Where settings live
 

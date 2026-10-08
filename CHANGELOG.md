@@ -65,6 +65,42 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
 - The appearance meta boxes (page layout, header style, page subtitle, top menu, sidebars, product
   video, gallery type) moved to the theme; the meta keys are unchanged.
 
+### Changed
+- **Built on WooCommerce, not beside it** (extensions work out of the box):
+  - The cart drawer fires WooCommerce's mini-cart actions
+    (`woocommerce_before_mini_cart`, `woocommerce_before_mini_cart_contents`,
+    `woocommerce_mini_cart_contents`, the three `woocommerce_widget_shopping_cart_*_buttons`
+    actions, `woocommerce_after_mini_cart`); its rows use the cart-item filters core's
+    mini-cart uses (`woocommerce_widget_cart_item_visible`, `_cart_item_thumbnail`,
+    `_cart_item_subtotal`; the struck-through deal price is a priority-5 callback on the
+    subtotal filter); one `lafka_cart_drawer_render_items()` renders the list for the page
+    and the AJAX fragment.
+  - Free delivery over the threshold no longer zeroes other plugins' delivery rates. The
+    threshold follows the zone's WooCommerce Free Shipping minimum amount when the zone has
+    one; `lafka_free_delivery_method_ids` opts methods in (none by default). Sites still on
+    Distance Rate Shipping: opt `distance_rate` in, or move to Delivery by distance.
+  - The Cart and Checkout pages are never edited automatically: switching between blocks and
+    the classic shortcodes is a button on Lafka → Modules, once, with undo (the old
+    `admin_init` rewrite and its done-flag are gone).
+  - A closed store no longer makes every product non-purchasable (`woocommerce_is_purchasable`)
+    or removes WooCommerce's checkout buttons: a closed card is added next to them and the
+    existing gates (add-to-cart validation, classic checkout, Store API) refuse. Lists and
+    the drawer upsell read `lafka_add_to_cart_blocked()`/`Lafka_Order_Hours::is_add_to_cart_blocked()`.
+  - The shop-archive subcategory filter removal moved to the theme (archive only); the cart
+    page no longer removes `woocommerce_output_all_notices` from the login form.
+  - Declares `product_block_editor` compatibility as false (Deals and the add-on tabs are
+    classic-editor only).
+
+### Added
+- Block checkout: when delivery was chosen and no delivery rate is on offer, the `lafka` cart
+  extension carries `delivery_unavailable_message` (the distance method's reason, else the
+  plain "we can't deliver") that the block cart/checkout shows under the shipping options,
+  and placing the order is refused through the Store API
+  (`Lafka_Fulfilment::validate_store_api_checkout`), like the classic checkout. One shared
+  `lafka_shipping_has_delivery_rate()`.
+- Hooks: `lafka_free_delivery_method_ids`. Cart/Checkout page switch handlers
+  `lafka_checkout_pages_apply` / `lafka_checkout_pages_undo`.
+
 ### Removed
 - The kitchen display's customer progress bar and its `lafka_kds_customer_status` AJAX
   action: Order tracking replaces them (the Customer Poll Interval setting still sets the poll).
