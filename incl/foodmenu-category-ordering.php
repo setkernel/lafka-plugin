@@ -266,7 +266,9 @@ if ( ! function_exists( 'lafka_order_foodmenu_by_tax' ) ) {
 	function lafka_order_foodmenu_by_tax( $clauses, $wp_query ) {
 		global $wpdb;
 
-		if ( isset( $wp_query->query['post_type'] ) && 'lafka-foodmenu' === (string) $wp_query->query['post_type'] && ! isset( $wp_query->query['orderby'] ) ) {
+		// post_type may be an array (searches, admin lists); a strict compare
+		// against the string matches only a single-type foodmenu query.
+		if ( 'lafka-foodmenu' === ( $wp_query->query['post_type'] ?? null ) && ! isset( $wp_query->query['orderby'] ) ) {
 			$clauses['join']   .= " LEFT JOIN (
 			SELECT object_id, GROUP_CONCAT(meta_value ORDER BY meta_value ASC) AS lafka_foodmenu_category
 			FROM $wpdb->term_relationships
