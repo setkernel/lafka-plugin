@@ -388,7 +388,7 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 				array(
 					'title'       => esc_html__( 'Hours', 'lafka-plugin' ),
 					'panel'       => 'lafka_restaurant_info',
-					'description' => esc_html__( 'Per-day opening hours in 24h format "HH:MM-HH:MM" (e.g. 11:00-23:00). Use "closed" for closed days. Empty values are simply skipped.', 'lafka-plugin' ),
+					'description' => esc_html__( 'Per-day opening hours in 24h format "HH:MM-HH:MM" (e.g. 11:00-23:00). Use "closed" for closed days. Empty values are simply skipped.', 'lafka-plugin' ) . ( class_exists( 'Lafka_Order_Hours' ) && '' !== Lafka_Order_Hours::display_hours_note() ? ' ' . esc_html( Lafka_Order_Hours::display_hours_note() ) : '' ),
 					'priority'    => 40,
 				)
 			);

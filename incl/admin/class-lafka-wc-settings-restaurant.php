@@ -142,6 +142,7 @@ if ( ! function_exists( 'lafka_define_wc_settings_restaurant_class' ) ) {
 						'type'  => 'title',
 						'desc'  => $this->intro_html(
 							__( 'Per-day hours in 24h format "HH:MM-HH:MM" (e.g. 11:00-23:00). Use "closed" for closed days. Empty values are skipped from JSON-LD openingHoursSpecification.', 'lafka-plugin' )
+							. ( class_exists( 'Lafka_Order_Hours' ) && '' !== Lafka_Order_Hours::display_hours_note() ? ' ' . Lafka_Order_Hours::display_hours_note() : '' )
 						),
 						'id'    => 'lafka_restaurant_hours_title',
 					),

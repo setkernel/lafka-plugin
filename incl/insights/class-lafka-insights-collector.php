@@ -431,15 +431,15 @@ if ( ! class_exists( 'Lafka_Insights_Collector' ) ) {
 		}
 
 		/**
-		 * Whether the store accepts orders right now (order-hours module), for
+		 * Whether the store is open right now (Lafka_Order_Hours::status()), for
 		 * the "visited while closed" flag. Filter `lafka_insights_store_is_open`.
 		 *
 		 * @return bool
 		 */
 		public static function store_is_open(): bool {
 			$open = true;
-			if ( Lafka_Options::is_enabled( 'order_hours' ) && class_exists( 'Lafka_Order_Hours' ) && method_exists( 'Lafka_Order_Hours', 'is_shop_open' ) ) {
-				$open = (bool) Lafka_Order_Hours::is_shop_open();
+			if ( class_exists( 'Lafka_Order_Hours' ) ) {
+				$open = Lafka_Order_Hours::status()['is_open'];
 			}
 			if ( function_exists( 'apply_filters' ) ) {
 				$open = (bool) apply_filters( 'lafka_insights_store_is_open', $open );

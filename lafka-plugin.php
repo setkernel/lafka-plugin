@@ -76,6 +76,11 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/lafka-kses-helpers.php';
 // Readers for public read-only query-string parameters.
 require_once plugin_dir_path( __FILE__ ) . 'incl/lafka-input-helpers.php';
 
+// Opening hours: Lafka_Order_Hours::status() is the one "open now" every reader
+// (storefront badges, schema, Insights, llms.txt) asks. It is always loaded; only
+// the ordering gate and its settings page belong to the order_hours module.
+require_once plugin_dir_path( __FILE__ ) . 'incl/order-hours/class-lafka-order-hours.php';
+
 // Geo: the store point, the default map view, the map provider (keyless
 // OpenStreetMap, or Google with a key), the one Maps key and the geocoder.
 require_once plugin_dir_path( __FILE__ ) . 'incl/geo/lafka-geo.php';
@@ -730,6 +735,15 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/cli/class-lafka-shipping-cli-co
 require_once plugin_dir_path( __FILE__ ) . 'incl/cli/class-lafka-cli-seed-demo.php';
 
 /**
+ * WP-CLI: the store's opening hours — open now, the per-day fields vs the order
+ * schedule, and a one-way sync. Self-gates on WP_CLI.
+ *
+ *   wp lafka hours status
+ *   wp lafka hours check
+ */
+require_once plugin_dir_path( __FILE__ ) . 'incl/cli/class-lafka-hours-cli-command.php';
+
+/**
  * P6-PERF-4 (W3-T2, 2026-04-28): Asset pruning — dequeue heavy third-party assets
  * on pages that don't use them (block-library CSS, jQuery Migrate).
  * Self-gates via is_admin() inside the module; safe to load unconditionally.
@@ -846,8 +860,7 @@ if ( LAFKA_PLUGIN_IS_WOOCOMMERCE ) {
 	}
 
 	if ( is_lafka_order_hours( get_option( 'lafka' ) ) ) {
-		/* Load order_hours */
-		require_once plugin_dir_path( __FILE__ ) . '/incl/order-hours/class-lafka-order-hours.php';
+		new Lafka_Order_Hours();
 	}
 
 	if ( is_lafka_kitchen_display( get_option( 'lafka' ) ) ) {

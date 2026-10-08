@@ -285,76 +285,14 @@ if ( ! function_exists( 'lafka_get_restaurant_info' ) ) {
 		$short_parts             = array_filter( array( $info['street'], $info['city'] ) );
 		$info['address_short']   = implode( ', ', $short_parts );
 
-		// Hours: structured per-day. Read from theme_mod 'lafka_business_hours_<key>'
-		// in "HH:MM-HH:MM" 24h format (or "closed"). Produces TWO shapes:
+		// Hours: one source. Lafka_Order_Hours publishes the order-hours schedule
+		// when it is in use (so the badge, schema and the order gate cannot
+		// disagree), else the per-day display hours set in Customizer →
+		// Restaurant Information. Two shapes:
 		//   - $info['hours']         display map ['Monday' => '11:00-23:00', ...]
 		//   - $info['opening_hours'] OpeningHoursSpecification array for JSON-LD
-		$info['hours']         = array();
-		$info['opening_hours'] = array();
-		$days                  = array(
-			'mon' => 'Monday',
-			'tue' => 'Tuesday',
-			'wed' => 'Wednesday',
-			'thu' => 'Thursday',
-			'fri' => 'Friday',
-			'sat' => 'Saturday',
-			'sun' => 'Sunday',
-		);
-		foreach ( $days as $key => $day_name ) {
-			$val = trim( (string) $get( 'hours_' . $key ) );
-			if ( '' === $val ) {
-				continue;
-			}
-			if ( 'closed' === strtolower( $val ) ) {
-				$info['hours'][ $day_name ] = 'Closed';
-				continue;
-			}
-			if ( preg_match( '/^(\d{2}:\d{2})\s*-\s*(\d{2}:\d{2})$/', $val, $m ) ) {
-				$info['hours'][ $day_name ] = $m[1] . '-' . $m[2];
-				$info['opening_hours'][]    = array(
-					'@type'     => 'OpeningHoursSpecification',
-					'dayOfWeek' => 'https://schema.org/' . $day_name,
-					'opens'     => $m[1],
-					'closes'    => $m[2],
-				);
-			}
-		}
-
-		// SSOT reconciliation: restaurant hours are otherwise captured twice —
-		// the dedicated display store above (lafka_business_hours_*) drives this
-		// badge + JSON-LD, while Lafka_Order_Hours' own JSON schedule gates
-		// whether an order is actually accepted. Nothing keeps the two in sync,
-		// so an operator who fills in only the order-hours schedule gets a
-		// storefront that emits NO hours (badge hidden / schema omitted) while
-		// ordering is gated, and one who edits only one of two populated stores
-		// can show "Open now" (telling Google the store is open) while ordering
-		// is blocked, or the reverse.
-		//
-		// When the display store is unset we therefore derive hours from the
-		// SAME schedule the order gate reads, so badge + schema + gate all read
-		// one store. An explicitly populated display store still wins (the
-		// emptiness check below), preserving any deliberate operator override.
-		// Scoped to the main-store schedule; per-branch order-gate overrides
-		// remain authoritative for the gate only (the display store is
-		// single-location). See Lafka_Order_Hours::get_schedule_display_hours_map().
-		if ( empty( $info['hours'] ) && class_exists( 'Lafka_Order_Hours' ) ) {
-			$schedule_map = Lafka_Order_Hours::get_schedule_display_hours_map();
-			foreach ( $schedule_map as $day_name => $range ) {
-				if ( 'Closed' === $range ) {
-					$info['hours'][ $day_name ] = 'Closed';
-					continue;
-				}
-				if ( preg_match( '/^(\d{2}:\d{2})-(\d{2}:\d{2})$/', $range, $m ) ) {
-					$info['hours'][ $day_name ] = $m[1] . '-' . $m[2];
-					$info['opening_hours'][]    = array(
-						'@type'     => 'OpeningHoursSpecification',
-						'dayOfWeek' => 'https://schema.org/' . $day_name,
-						'opens'     => $m[1],
-						'closes'    => $m[2],
-					);
-				}
-			}
-		}
+		$info['hours']         = class_exists( 'Lafka_Order_Hours' ) ? Lafka_Order_Hours::hours_map() : array();
+		$info['opening_hours'] = class_exists( 'Lafka_Order_Hours' ) ? Lafka_Order_Hours::schema_specification() : array();
 
 		// Directions URL — Google Maps query when address is configured.
 		$info['directions_url'] = '';
