@@ -104,7 +104,7 @@ if ( ! class_exists( 'Lafka_Email_Weekly_Insights' ) ) {
 		 */
 		public function get_content_html(): string {
 			ob_start();
-			do_action( 'woocommerce_email_header', $this->get_heading(), $this );
+			WC()->mailer()->email_header( $this->get_heading() );
 			echo '<ul style="margin:0 0 16px 0;padding-left:18px;">';
 			foreach ( $this->sentences() as $sentence ) {
 				echo '<li style="margin:0 0 8px 0;font-size:15px;line-height:1.5;">' . esc_html( $sentence ) . '</li>';
@@ -114,7 +114,7 @@ if ( ! class_exists( 'Lafka_Email_Weekly_Insights' ) ) {
 			if ( '' !== $url ) {
 				echo '<p><a href="' . esc_url( $url ) . '">' . esc_html__( 'Open Lafka Insights', 'lafka-plugin' ) . '</a></p>';
 			}
-			do_action( 'woocommerce_email_footer', $this );
+			WC()->mailer()->email_footer();
 			return (string) ob_get_clean();
 		}
 

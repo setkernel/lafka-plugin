@@ -190,7 +190,7 @@ class Lafka_Engine_Resolver {
 			return self::$category_addons_cache[ $cache_key ];
 		}
 		$args                                      = (array) apply_filters(
-			'get_product_addons_global_query_args',
+			'lafka_get_product_addons_global_query_args',
 			array(
 				'posts_per_page' => -1,
 				'orderby'        => 'meta_value',
@@ -209,6 +209,7 @@ class Lafka_Engine_Resolver {
 			),
 			$term_ids
 		);
+		$args                                      = (array) apply_filters_deprecated( 'get_product_addons_global_query_args', array( $args, $term_ids ), '10.4.0', 'lafka_get_product_addons_global_query_args' );
 		self::$category_addons_cache[ $cache_key ] = (array) get_posts( $args );
 		return self::$category_addons_cache[ $cache_key ];
 	}
@@ -221,10 +222,11 @@ class Lafka_Engine_Resolver {
 			return array();
 		}
 		$terms = (array) apply_filters(
-			'get_product_addons_product_terms',
+			'lafka_get_product_addons_product_terms',
 			wc_get_object_terms( $product_id, 'product_cat', 'term_id' ),
 			$product_id
 		);
+		$terms = (array) apply_filters_deprecated( 'get_product_addons_product_terms', array( $terms, $product_id ), '10.4.0', 'lafka_get_product_addons_product_terms' );
 		return array_map( 'intval', $terms );
 	}
 

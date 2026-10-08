@@ -237,7 +237,8 @@ class Lafka_Engine_Cart {
 				return false;
 			}
 
-			do_action( 'woocommerce_validate_posted_addon_data', $addon );
+			do_action( 'lafka_validate_posted_addon_data', $addon );
+			do_action_deprecated( 'woocommerce_validate_posted_addon_data', array( $addon ), '10.4.0', 'lafka_validate_posted_addon_data' );
 		}
 
 		return $passed;

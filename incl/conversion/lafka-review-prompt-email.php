@@ -529,7 +529,7 @@ if ( ! function_exists( 'lafka_review_email_render_body' ) ) {
 
 		// Inherit WC email styling — header + footer wrap the body.
 		if ( function_exists( 'do_action' ) ) {
-			do_action( 'woocommerce_email_header', $heading, $email_instance );
+			WC()->mailer()->email_header( $heading );
 		}
 
 		?>
@@ -606,7 +606,7 @@ if ( ! function_exists( 'lafka_review_email_render_body' ) ) {
 		<?php
 
 		if ( function_exists( 'do_action' ) ) {
-			do_action( 'woocommerce_email_footer', $email_instance );
+			WC()->mailer()->email_footer();
 		}
 
 		return (string) ob_get_clean();

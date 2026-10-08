@@ -34,7 +34,10 @@ if ( $has_options_with_images ) {
 		echo 'data-addon-group-limit="' . esc_attr( $addon['limit'] ) . '"';}
 	?>
 	>
-	<?php do_action( 'wc_product_addon_start', $addon ); ?>
+	<?php
+	do_action( 'lafka_product_addon_start', $addon );
+	do_action_deprecated( 'wc_product_addon_start', array( $addon ), '10.4.0', 'lafka_product_addon_start' );
+	?>
 
 	<?php if ( $lafka_toggle ) : ?>
 		<h3 class="addon-name"><button type="button" class="lafka-addon-toggle" aria-expanded="true" aria-controls="<?php echo esc_attr( $lafka_body_id ); ?>"><?php echo esc_html( wptexturize( $name ) ); ?>
@@ -61,4 +64,7 @@ if ( $has_options_with_images ) {
 		?>
 	<?php endif; ?>
 
-	<?php do_action( 'wc_product_addon_options', $addon ); ?>
+	<?php
+	do_action( 'lafka_product_addon_options', $addon );
+	do_action_deprecated( 'wc_product_addon_options', array( $addon ), '10.4.0', 'lafka_product_addon_options' );
+	?>

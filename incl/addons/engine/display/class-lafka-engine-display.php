@@ -303,7 +303,8 @@ class Lafka_Engine_Display {
 		}
 
 		if ( ! is_single( $product->get_id() ) && $this->check_required_addons( $product->get_id() ) ) {
-			$text = (string) apply_filters( 'addons_add_to_cart_text', esc_html__( 'Select options', 'lafka-plugin' ) );
+			$text = (string) apply_filters( 'lafka_addons_add_to_cart_text', esc_html__( 'Select options', 'lafka-plugin' ) );
+			$text = (string) apply_filters_deprecated( 'addons_add_to_cart_text', array( $text ), '10.4.0', 'lafka_addons_add_to_cart_text' );
 		}
 		return $text;
 	}
@@ -333,7 +334,8 @@ class Lafka_Engine_Display {
 			&& ! $is_quick_view;
 
 		if ( $applicable && $this->check_required_addons( $product->get_id() ) ) {
-			$url = (string) apply_filters( 'addons_add_to_cart_url', get_permalink( $product->get_id() ) );
+			$url = (string) apply_filters( 'lafka_addons_add_to_cart_url', get_permalink( $product->get_id() ) );
+			$url = (string) apply_filters_deprecated( 'addons_add_to_cart_url', array( $url ), '10.4.0', 'lafka_addons_add_to_cart_url' );
 		}
 		return $url;
 	}

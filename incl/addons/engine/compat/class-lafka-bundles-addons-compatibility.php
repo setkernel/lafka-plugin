@@ -54,7 +54,7 @@ class Lafka_Bundles_Addons_Compatibility {
 		add_action( 'woocommerce_bundled_single_variation', array( __CLASS__, 'render_addons' ), 15, 2 );
 
 		// Scope addon field names per bundled item via the engine's existing prefix filter.
-		add_filter( 'product_addons_field_prefix', array( __CLASS__, 'field_prefix' ), 10, 2 );
+		add_filter( 'lafka_product_addons_field_prefix', array( __CLASS__, 'field_prefix' ), 10, 2 );
 
 		// Per-request cache key disambiguation: different bundled items must not
 		// share a cached addon list keyed only by post_id.

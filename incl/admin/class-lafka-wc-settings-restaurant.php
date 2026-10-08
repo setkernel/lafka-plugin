@@ -81,17 +81,20 @@ if ( ! function_exists( 'lafka_define_wc_settings_restaurant_class' ) ) {
 				parent::__construct();
 			}
 
-			public function get_sections() {
-				return apply_filters(
-					'woocommerce_get_sections_' . $this->id,
-					array(
-						''           => __( 'Hours', 'lafka-plugin' ),
-						'cuisine'    => __( 'Cuisine & Payment', 'lafka-plugin' ),
-						'schema'     => __( 'Schema & Geo', 'lafka-plugin' ),
-						'social'     => __( 'Social Profiles', 'lafka-plugin' ),
-						'search'     => __( 'Search & AI', 'lafka-plugin' ),
-						'promotions' => __( 'Promotions', 'lafka-plugin' ),
-					)
+			/**
+			 * Sections of this tab. WC_Settings_Page::get_sections() merges any
+			 * registered sections and applies WooCommerce's per-tab sections filter.
+			 *
+			 * @return array<string,string>
+			 */
+			protected function get_own_sections() {
+				return array(
+					''           => __( 'Hours', 'lafka-plugin' ),
+					'cuisine'    => __( 'Cuisine & Payment', 'lafka-plugin' ),
+					'schema'     => __( 'Schema & Geo', 'lafka-plugin' ),
+					'social'     => __( 'Social Profiles', 'lafka-plugin' ),
+					'search'     => __( 'Search & AI', 'lafka-plugin' ),
+					'promotions' => __( 'Promotions', 'lafka-plugin' ),
 				);
 			}
 

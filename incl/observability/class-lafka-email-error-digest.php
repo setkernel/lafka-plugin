@@ -151,9 +151,9 @@ if ( class_exists( 'WC_Email' ) && ! class_exists( 'Lafka_Email_Error_Digest' ) 
 		 */
 		public function get_content_html() {
 			ob_start();
-			do_action( 'woocommerce_email_header', $this->get_heading(), $this );
+			WC()->mailer()->email_header( $this->get_heading() );
 			echo self::render_rows_html( $this->rows );
-			do_action( 'woocommerce_email_footer', $this );
+			WC()->mailer()->email_footer();
 			return (string) ob_get_clean();
 		}
 

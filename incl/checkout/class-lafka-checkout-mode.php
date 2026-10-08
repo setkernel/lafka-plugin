@@ -162,8 +162,9 @@ if ( ! class_exists( 'Lafka_Checkout_Mode' ) ) {
 		 * @return string
 		 */
 		public static function page_mode(): string {
-			// What wc_get_page_id( 'checkout' ) reads (same WooCommerce filter).
-			$page_id = (int) apply_filters( 'woocommerce_get_checkout_page_id', get_option( 'woocommerce_checkout_page_id', 0 ) );
+			$page_id = function_exists( 'wc_get_page_id' )
+				? (int) wc_get_page_id( 'checkout' )
+				: (int) get_option( 'woocommerce_checkout_page_id', 0 );
 			$mode    = '';
 			if ( $page_id > 0 && function_exists( 'get_post' ) ) {
 				$post = get_post( $page_id );

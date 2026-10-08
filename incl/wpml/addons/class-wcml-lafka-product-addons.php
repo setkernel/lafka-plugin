@@ -42,7 +42,7 @@ class WCML_Lafka_Product_Addons {
 	public function add_hooks() {
 
 		add_action( 'init', array( $this, 'load_assets' ) );
-		add_filter( 'get_product_addons_product_terms', array( $this, 'addons_product_terms' ) );
+		add_filter( 'lafka_get_product_addons_product_terms', array( $this, 'addons_product_terms' ) );
 
 		add_action( 'updated_post_meta', array( $this, 'register_addons_strings' ), 10, 4 );
 		add_action( 'added_post_meta', array( $this, 'register_addons_strings' ), 10, 4 );
@@ -73,7 +73,7 @@ class WCML_Lafka_Product_Addons {
 		);
 
 		add_filter(
-			'get_product_addons_global_query_args',
+			'lafka_get_product_addons_global_query_args',
 			array(
 				$this,
 				'set_global_ids_in_query_args',

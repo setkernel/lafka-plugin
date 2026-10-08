@@ -256,7 +256,7 @@ if ( ! class_exists( 'Lafka_Checkout_Block_Reasons' ) ) {
 			self::$emitted[ $key ] = true;
 
 			if ( function_exists( 'do_action' ) ) {
-				do_action( self::ACTION, $reason, $context );
+				do_action( 'lafka_checkout_blocked', $reason, $context );
 			}
 			return true;
 		}

@@ -67,7 +67,8 @@ class Lafka_Engine_Helper {
 
 		$addons = self::assign_field_names( $addons, (int) $post_id, $prefix );
 
-		$result = (array) apply_filters( 'get_product_addons', $addons );
+		$result = (array) apply_filters( 'lafka_get_product_addons', $addons );
+		$result = (array) apply_filters_deprecated( 'get_product_addons', array( $result ), '10.4.0', 'lafka_get_product_addons' );
 
 		self::$product_addons_cache[ $cache_key ] = $result;
 		return $result;
@@ -128,7 +129,8 @@ class Lafka_Engine_Helper {
 	 */
 	private static function assign_field_names( array $addons, int $post_id, $prefix ): array {
 		if ( ! $prefix ) {
-			$prefix = (string) apply_filters( 'product_addons_field_prefix', "{$post_id}-", $post_id );
+			$prefix = (string) apply_filters( 'lafka_product_addons_field_prefix', "{$post_id}-", $post_id );
+			$prefix = (string) apply_filters_deprecated( 'product_addons_field_prefix', array( $prefix, $post_id ), '10.4.0', 'lafka_product_addons_field_prefix' );
 		}
 
 		$max_addon_name_length = 45 - strlen( $prefix );
