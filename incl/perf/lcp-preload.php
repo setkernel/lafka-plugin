@@ -105,8 +105,11 @@ if ( ! function_exists( 'lafka_lcp_flush_auto_hero_cache' ) ) {
 	add_action( 'save_post', 'lafka_lcp_flush_auto_hero_cache' );
 	add_action( 'customize_save_after', 'lafka_lcp_flush_auto_hero_cache' );
 	function lafka_lcp_flush_auto_hero_cache( $post_id = 0 ) {
+		// save_post passes a post id; customize_save_after passes the
+		// WP_Customize_Manager, which always flushes.
+		$post_id  = is_numeric( $post_id ) ? (int) $post_id : 0;
 		$front_id = (int) get_option( 'page_on_front' );
-		if ( ! $post_id || (int) $post_id === $front_id ) {
+		if ( 0 === $post_id || $post_id === $front_id ) {
 			delete_transient( 'lafka_lcp_auto_hero' );
 		}
 	}
