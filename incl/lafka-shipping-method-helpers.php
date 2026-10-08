@@ -179,3 +179,31 @@ if ( ! function_exists( 'lafka_shipping_has_delivery_rate' ) ) {
 		return false;
 	}
 }
+
+if ( ! function_exists( 'lafka_order_pickup_address' ) ) {
+	/**
+	 * Where a pickup order is collected: the chosen branch's address, else
+	 * the WooCommerce pickup location on the order, else the restaurant's
+	 * address (lafka_get_restaurant_info()). '' when none is known.
+	 *
+	 * @param WC_Order $order Order.
+	 * @return string
+	 */
+	function lafka_order_pickup_address( $order ): string {
+		$branch_id = (int) $order->get_meta( 'lafka_selected_branch_id' );
+		if ( $branch_id > 0 ) {
+			$branch = (string) get_term_meta( $branch_id, 'lafka_branch_address', true );
+			if ( '' !== $branch ) {
+				return $branch;
+			}
+		}
+		foreach ( $order->get_shipping_methods() as $method ) {
+			$address = (string) $method->get_meta( 'pickup_address' );
+			if ( '' !== $address ) {
+				return $address;
+			}
+		}
+		$info = function_exists( 'lafka_get_restaurant_info' ) ? lafka_get_restaurant_info() : array();
+		return implode( ', ', array_filter( array( (string) ( $info['street'] ?? '' ), (string) ( $info['city'] ?? '' ), trim( ( $info['region'] ?? '' ) . ' ' . ( $info['postal'] ?? '' ) ) ) ) );
+	}
+}

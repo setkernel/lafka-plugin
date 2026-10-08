@@ -300,21 +300,7 @@ if ( ! class_exists( 'Lafka_Order_Tracking' ) ) {
 				return implode( ', ', array_filter( array_map( 'trim', $parts ) ) );
 			}
 
-			$branch_id = (int) $order->get_meta( 'lafka_selected_branch_id' );
-			if ( $branch_id > 0 ) {
-				$branch = (string) get_term_meta( $branch_id, 'lafka_branch_address', true );
-				if ( '' !== $branch ) {
-					return $branch;
-				}
-			}
-			foreach ( $order->get_shipping_methods() as $method ) {
-				$address = (string) $method->get_meta( 'pickup_address' );
-				if ( '' !== $address ) {
-					return $address;
-				}
-			}
-			$info = function_exists( 'lafka_get_restaurant_info' ) ? lafka_get_restaurant_info() : array();
-			return implode( ', ', array_filter( array( (string) ( $info['street'] ?? '' ), (string) ( $info['city'] ?? '' ), trim( ( $info['region'] ?? '' ) . ' ' . ( $info['postal'] ?? '' ) ) ) ) );
+			return lafka_order_pickup_address( $order );
 		}
 
 		/**

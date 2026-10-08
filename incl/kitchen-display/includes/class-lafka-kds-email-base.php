@@ -95,9 +95,10 @@ abstract class Lafka_KDS_Email_Base extends WC_Email {
 			'email_heading'      => $this->get_heading(),
 			'additional_content' => $this->get_additional_content(),
 			'order_type'         => Lafka_Kitchen_Display::get_order_type( $this->object ),
-			'order_url'          => $this->object->get_checkout_order_received_url(),
+			'order_url'          => class_exists( 'Lafka_Order_Tracking' ) ? Lafka_Order_Tracking::track_url( $this->object ) : $this->object->get_checkout_order_received_url(),
 			'store_address'      => $this->get_store_address(),
 			'store_phone'        => $this->get_store_phone(),
+			'accent_color'       => (string) get_option( 'woocommerce_email_base_color', '#7f54b3' ),
 			'sent_to_admin'      => false,
 			'plain_text'         => $plain_text,
 			'email'              => $this,
@@ -107,29 +108,18 @@ abstract class Lafka_KDS_Email_Base extends WC_Email {
 	/**
 	 * WooCommerce store address as a single comma-separated string. Empty
 	 * components are filtered out so an unset address-line-2 doesn't yield
-	 * `Foo, , Bar`.
+	 * `Foo, , Bar`: where this order is collected (the chosen branch, the
+	 * WooCommerce pickup location, else the restaurant's address).
 	 */
 	protected function get_store_address(): string {
-		$parts = array_filter(
-			array(
-				get_option( 'woocommerce_store_address' ),
-				get_option( 'woocommerce_store_address_2' ),
-				get_option( 'woocommerce_store_city' ),
-				get_option( 'woocommerce_store_postcode' ),
-			)
-		);
-		return implode( ', ', $parts );
+		return lafka_order_pickup_address( $this->object );
 	}
 
 	/**
-	 * Store phone — prefers the WC core option, falls back to the customizer
-	 * key the Lafka theme writes for header/footer NAP rendering.
+	 * The restaurant's phone, from the one business-info source.
 	 */
 	protected function get_store_phone(): string {
-		$phone = get_option( 'woocommerce_store_phone', '' );
-		if ( ! $phone ) {
-			$phone = get_option( 'lafka_contact_phone', '' );
-		}
-		return (string) $phone;
+		$info = function_exists( 'lafka_get_restaurant_info' ) ? lafka_get_restaurant_info() : array();
+		return (string) ( $info['phone_display'] ?? '' );
 	}
 }

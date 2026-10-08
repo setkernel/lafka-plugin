@@ -9,6 +9,7 @@
  * @var string   $order_url
  * @var string   $store_address
  * @var string   $store_phone
+ * @var string   $accent_color WooCommerce email base colour.
  * @var bool     $sent_to_admin
  * @var bool     $plain_text
  * @var WC_Email $email
@@ -96,7 +97,7 @@ else :
 	<?php endif; ?>
 
 	<p style="text-align:center;margin:20px 0;">
-		<a href="<?php echo esc_url( $order_url ); ?>" style="display:inline-block;padding:12px 28px;background:#e94560;color:#fff;text-decoration:none;border-radius:6px;font-weight:bold;font-size:15px;">
+		<a href="<?php echo esc_url( $order_url ); ?>" style="display:inline-block;padding:12px 28px;background:<?php echo esc_attr( $accent_color ); ?>;color:#fff;text-decoration:none;border-radius:6px;font-weight:bold;font-size:15px;">
 			<?php esc_html_e( 'Track Your Order', 'lafka-plugin' ); ?>
 		</a>
 	</p>
