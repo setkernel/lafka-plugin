@@ -26,19 +26,19 @@ $lafka_summary_text = implode( ', ', $lafka_items_summary );
 
 if ( $plain_text ) :
 	echo '= ' . esc_html( wp_strip_all_tags( $email_heading ) ) . " =\n\n";
-	/* translators: %s: Customer first name */
+	/* translators: %s: customer first name. */
 	printf( esc_html__( 'Hi %s,', 'lafka-plugin' ), esc_html( $order->get_billing_first_name() ) );
 	echo "\n\n";
 
 	if ( $lafka_is_pickup ) {
-		/* translators: %s: Order number */
+		/* translators: %s: order number. */
 		printf( esc_html__( 'Your order #%s is ready for pickup!', 'lafka-plugin' ), esc_html( $order->get_order_number() ) );
 		echo "\n\n";
 		if ( $store_address ) {
 			echo esc_html__( 'Pickup location:', 'lafka-plugin' ) . ' ' . esc_html( $store_address ) . "\n\n";
 		}
 	} else {
-		/* translators: %s: Order number */
+		/* translators: %s: order number. */
 		printf( esc_html__( 'Your order #%s is ready and will be delivered shortly!', 'lafka-plugin' ), esc_html( $order->get_order_number() ) );
 		echo "\n\n";
 	}

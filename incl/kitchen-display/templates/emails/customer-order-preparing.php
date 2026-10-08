@@ -33,15 +33,15 @@ if ( $lafka_eta_timestamp ) {
 
 if ( $plain_text ) :
 	echo '= ' . esc_html( wp_strip_all_tags( $email_heading ) ) . " =\n\n";
-	/* translators: %s: Customer first name */
+	/* translators: %s: customer first name. */
 	printf( esc_html__( 'Hi %s,', 'lafka-plugin' ), esc_html( $order->get_billing_first_name() ) );
 	echo "\n\n";
 
 	if ( $lafka_is_pickup ) {
-		/* translators: %s: Order number */
+		/* translators: %s: order number. */
 		printf( esc_html__( 'Your order #%s is now being prepared by our kitchen. We\'ll let you know when it\'s ready for pickup!', 'lafka-plugin' ), esc_html( $order->get_order_number() ) );
 	} else {
-		/* translators: %s: Order number */
+		/* translators: %s: order number. */
 		printf( esc_html__( 'Your order #%s is now being prepared by our kitchen. We\'ll let you know when it\'s ready for delivery!', 'lafka-plugin' ), esc_html( $order->get_order_number() ) );
 	}
 	echo "\n\n";

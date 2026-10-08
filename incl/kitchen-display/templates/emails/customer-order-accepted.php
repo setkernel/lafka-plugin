@@ -26,15 +26,15 @@ $lafka_summary_text = implode( ', ', $lafka_items_summary );
 
 if ( $plain_text ) :
 	echo '= ' . esc_html( wp_strip_all_tags( $email_heading ) ) . " =\n\n";
-	/* translators: %s: Customer first name */
+	/* translators: %s: customer first name. */
 	printf( esc_html__( 'Hi %s,', 'lafka-plugin' ), esc_html( $order->get_billing_first_name() ) );
 	echo "\n\n";
 
 	if ( $lafka_is_pickup ) {
-		/* translators: %s: Order number */
+		/* translators: %s: order number. */
 		printf( esc_html__( 'Great news! Your order #%s has been accepted. We\'ll have it ready for you to pick up shortly.', 'lafka-plugin' ), esc_html( $order->get_order_number() ) );
 	} else {
-		/* translators: %s: Order number */
+		/* translators: %s: order number. */
 		printf( esc_html__( 'Great news! Your order #%s has been accepted and will be delivered to you soon.', 'lafka-plugin' ), esc_html( $order->get_order_number() ) );
 	}
 	echo "\n\n";
