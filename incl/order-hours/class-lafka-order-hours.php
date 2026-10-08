@@ -350,12 +350,13 @@ class Lafka_Order_Hours {
 		$display_map  = Lafka_Order_Hours_Engine::display_map( $display );
 		$differences  = array();
 		foreach ( Lafka_Order_Hours_Engine::DAYS as $day ) {
-			// 00:00 and 24:00 both name the end of the day.
-			$shown = str_replace( '-24:00', '-00:00', $display_map[ $day ] ?? 'Closed' );
-			$gated = str_replace( '-24:00', '-00:00', $schedule_map[ $day ] ?? 'Closed' );
+			$display_raw = str_replace( '-24:00', '-00:00', $display_map[ $day ] ?? 'Closed' );
+			// 00:00, 24:00 and 23:59 all name the end of the day.
+			$shown = str_replace( array( '-24:00', '-23:59' ), '-00:00', $display_map[ $day ] ?? 'Closed' );
+			$gated = str_replace( array( '-24:00', '-23:59' ), '-00:00', $schedule_map[ $day ] ?? 'Closed' );
 			if ( $shown !== $gated ) {
 				$differences[ $day ] = array(
-					'display'  => str_replace( '-24:00', '-00:00', $display_map[ $day ] ?? 'Closed' ),
+					'display'  => $display_raw,
 					'schedule' => str_replace( '-24:00', '-00:00', $schedule_map[ $day ] ?? 'Closed' ),
 				);
 			}
