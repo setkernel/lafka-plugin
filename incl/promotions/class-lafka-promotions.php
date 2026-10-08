@@ -439,8 +439,8 @@ if ( ! class_exists( 'Lafka_Promotions' ) ) {
 			}
 			$value   = self::bogo_offer_phrase();
 			$savings = isset( $cart_item['_bogo_savings'] ) ? (float) $cart_item['_bogo_savings'] : 0.0;
-			if ( $savings > 0 && function_exists( 'wc_price' ) ) {
-				$saved = html_entity_decode( wp_strip_all_tags( wc_price( $savings ) ), ENT_QUOTES, 'UTF-8' );
+			if ( $savings > 0 ) {
+				$saved = lafka_price_plain( $savings );
 				/* translators: 1: the deal, e.g. "Buy 1, get 1 50% off", 2: amount saved, e.g. "$2.00" */
 				$value = sprintf( __( '%1$s — saved %2$s', 'lafka-plugin' ), $value, $saved );
 			}

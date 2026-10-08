@@ -73,6 +73,9 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/lafka-asset-helpers.php';
 // The shared storefront script (window.lafka: track, cookie, money, debounce, api).
 require_once plugin_dir_path( __FILE__ ) . 'incl/lafka-core-assets.php';
 
+// Money as plain text in the WooCommerce currency settings (lafka_price_plain).
+require_once plugin_dir_path( __FILE__ ) . 'incl/lafka-money-helpers.php';
+
 // wp_kses() allowlists shared across the plugin.
 require_once plugin_dir_path( __FILE__ ) . 'incl/lafka-kses-helpers.php';
 

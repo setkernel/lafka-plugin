@@ -468,17 +468,6 @@ if ( ! class_exists( 'Lafka_Deals_Builder' ) ) {
 		}
 
 		/**
-		 * A price as plain text ("$24.50") for the builder's live total, which
-		 * the script writes with textContent.
-		 *
-		 * @param float $amount Amount.
-		 * @return string
-		 */
-		private static function plain_price( float $amount ): string {
-			return html_entity_decode( wp_strip_all_tags( wc_price( $amount ) ), ENT_QUOTES, 'UTF-8' );
-		}
-
-		/**
 		 * Totals for resolved lines.
 		 *
 		 * @param WC_Product                      $deal  Deal.
@@ -512,15 +501,15 @@ if ( ! class_exists( 'Lafka_Deals_Builder' ) ) {
 			$note                 = array();
 			if ( $totals['extras'] > 0 || $totals['upcharges'] > 0 ) {
 				/* translators: %s: amount of extras. */
-				$note[] = sprintf( __( 'incl. %s extras', 'lafka-plugin' ), self::plain_price( $totals['extras'] + $totals['upcharges'] ) );
+				$note[] = sprintf( __( 'incl. %s extras', 'lafka-plugin' ), lafka_price_plain( $totals['extras'] + $totals['upcharges'] ) );
 			}
 			if ( $totals['saving'] > 0 && array() === $resolved['missing'] ) {
 				/* translators: %s: amount saved. */
-				$note[] = sprintf( __( 'you save %s', 'lafka-plugin' ), self::plain_price( $totals['saving'] ) );
+				$note[] = sprintf( __( 'you save %s', 'lafka-plugin' ), lafka_price_plain( $totals['saving'] ) );
 			}
 			wp_send_json_success(
 				array(
-					'total'     => self::plain_price( $totals['total'] ),
+					'total'     => lafka_price_plain( $totals['total'] ),
 					'note'      => implode( ' · ', $note ),
 					'missing'   => $resolved['missing'],
 					'errors'    => $resolved['errors'],
