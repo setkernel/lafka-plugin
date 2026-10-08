@@ -36,6 +36,24 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
   through `filter_input()`; SQL identifiers use `%i`; pre-built HTML is escaped or
   passed through `wp_kses()` allowlists; the web-push sender uses the WordPress
   HTTP API and sodium base64.
+- New floors: WordPress 7.0, PHP 8.3, WooCommerce 11.0 (tested up to WordPress 7.1
+  / WooCommerce 11.2), declared in the plugin header, `readme.txt`, `composer.json`
+  and `.phpcs.xml.dist` (`testVersion 8.3-`, `minimum_wp_version 7.0`).
+  The plugin header is the single source for the floors; the README has a
+  "Requirements & compatibility" section.
+- Compat code for older WordPress / WooCommerce removed: `function_exists()` /
+  `method_exists()` guards and fallbacks for `wp_date()`, `wp_timezone()`,
+  `wp_timezone_string()`, `wp_parse_url()`, `wp_print_inline_script_tag()`,
+  `wp_get_environment_type()`, `wp_doing_ajax()`, `wp_generate_uuid4()`,
+  `wp_using_ext_object_cache()`, `get_site_icon_url()`, `get_term_meta()`,
+  `wp_get_attachment_image_url()`, `register_rest_route()`, `wp_strip_all_tags()`,
+  `WP_Sitemaps_Renderer`, and the WooCommerce `LoggingUtil` / `WC_AJAX` /
+  `WC_Install` methods. HPOS and legacy order storage are both still supported.
+- **Documentation consolidated**: `COMPATIBILITY.md` moved into the README
+  ("Requirements & compatibility"), `CREDITS.md` into `readme.txt` ("Third-party
+  libraries"), the flatpickr locale notes into CONTRIBUTING.md, and
+  `docs/DIAGNOSTICS.md`, `LOCAL_SEO.md`, `PERFORMANCE.md` and `TRACKING.md` into one
+  `docs/OPERATOR_GUIDE.md`.
 
 ### Removed
 - **All automated tests and test tooling**: `tests/` (PHPUnit + node:test suites),
@@ -68,21 +86,6 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
   - The WordPress Importer ↔ WC attributes bridge (demo content is `wp lafka seed-demo`).
   - `incl/compat/lafka-wpbakery-fallback.php` stays: it is content safety (orphaned
     `[vc_*]` / `[rev_slider]` tags in old pages), not an integration.
-
-### Changed
-- New floors: WordPress 7.0, PHP 8.3, WooCommerce 11.0 (tested up to WordPress 7.1
-  / WooCommerce 11.2), declared in the plugin header, `readme.txt`, `composer.json`
-  and `.phpcs.xml.dist` (`testVersion 8.3-`, `minimum_wp_version 7.0`).
-  `COMPATIBILITY.md` is now the single source for the floors; README and
-  CONTRIBUTING link to it.
-- Compat code for older WordPress / WooCommerce removed: `function_exists()` /
-  `method_exists()` guards and fallbacks for `wp_date()`, `wp_timezone()`,
-  `wp_timezone_string()`, `wp_parse_url()`, `wp_print_inline_script_tag()`,
-  `wp_get_environment_type()`, `wp_doing_ajax()`, `wp_generate_uuid4()`,
-  `wp_using_ext_object_cache()`, `get_site_icon_url()`, `get_term_meta()`,
-  `wp_get_attachment_image_url()`, `register_rest_route()`, `wp_strip_all_tags()`,
-  `WP_Sitemaps_Renderer`, and the WooCommerce `LoggingUtil` / `WC_AJAX` /
-  `WC_Install` methods. HPOS and legacy order storage are both still supported.
 
 ### Fixed
 - Promo tooltips never matched their default zone: the theme default

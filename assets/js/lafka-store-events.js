@@ -6,7 +6,7 @@
  * destination is configured. All bindings are delegated + null-safe, so they
  * no-op cleanly on pages where the markup isn't present.
  *
- * Data-attribute contracts (kept in sync with docs/TRACKING.md):
+ * Data-attribute contracts (kept in sync with docs/OPERATOR_GUIDE.md):
  *   [data-lafka-order-channel="direct|ubereats|skipthedishes|doordash|phone"]
  *       [data-lafka-order-source]   → order_channel_click   (the "order direct,
  *       skip the 30% app fees" CTAs vs aggregator buttons — core growth signal)

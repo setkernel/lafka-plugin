@@ -16,7 +16,7 @@
  *  - Only NEW uploads are affected. Existing images: run
  *    `wp lafka images convert-webp` (WebP siblings, picked up by
  *    incl/perf/webp-swap.php) and/or `wp media regenerate` — see
- *    docs/PERFORMANCE.md.
+ *    docs/OPERATOR_GUIDE.md.
  *  - A mapping another plugin or the operator already set for a MIME type
  *    is kept.
  *

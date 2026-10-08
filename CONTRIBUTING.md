@@ -62,7 +62,7 @@ The plugin currently ships no automated test suite.
 ## Coding standards
 
 - WordPress-Extra (PHPCS) with short arrays.
-- Version floors (PHP / WordPress / WooCommerce): see [COMPATIBILITY.md](COMPATIBILITY.md), the single source. Write against the floors — no `version_compare()` branches or polyfills for older versions.
+- Version floors (PHP / WordPress / WooCommerce): the plugin header in `lafka-plugin.php` is the source; see [Requirements & compatibility](README.md#requirements--compatibility). Write against the floors — no `version_compare()` branches or polyfills for older versions.
 - Text domain: `lafka-plugin`.
 - All public-by-default AJAX (`_nopriv_`) handlers MUST: verify nonce, sanitize input, escape output, gate by capability where appropriate.
 - All `$wpdb` queries MUST use `prepare()` or be string-literal.
@@ -93,6 +93,21 @@ to satisfy it, and do not widen it for new code: new names follow the rules abov
 `no-useless-assignment` and `no-shadow-restricted-names`) are all on. A script
 that other scripts read through `window` assigns it explicitly (`window.x = ...`);
 never rely on a top-level `var`.
+
+## Flatpickr locales
+
+Only the most-used locale files ship in `assets/js/flatpickr/l10n/`: `ar`, `de`, `es`,
+`fr`, `he`, `it`, `ja`, `ko`, `nl`, `pl`, `pt`, `ru`, `sv`, `tr`, `zh`. Each is a standalone
+UMD bundle (no `index.js` or `default.js` needed); English is flatpickr's built-in default.
+`incl/lafka-asset-registration.php` resolves the file from `get_locale()`, trying `<ll-cc>.js`,
+then `<ll_cc>.js`, then `<ll>.js`, with a `file_exists()` check. If the locale has no file, no
+localized JS loads and the date picker falls back to English.
+
+To add a locale, either drop `<locale>.js` into the active child theme at
+`lafka_plugin_templates/flatpickr_l10n/<locale>.js` (the enqueue logic falls back to
+child-theme overrides when the plugin's own copy is missing), or fetch it from upstream
+(`https://raw.githubusercontent.com/flatpickr/flatpickr/master/dist/l10n/<locale>.js`) and
+commit it to that directory. The set is kept small because only one locale loads per request.
 
 ## HPOS / Blocks
 

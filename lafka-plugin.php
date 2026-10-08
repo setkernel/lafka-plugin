@@ -394,7 +394,7 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/analytics/lafka-custom-events.p
  *     Web Analytics beacon when a token is configured (independent of GTM/consent).
  *
  *   All gated on an analytics destination being configured (lafka_analytics_is_active()).
- *   Event dictionary + data-attr contracts: incl/../docs/TRACKING.md.
+ *   Event dictionary + data-attr contracts: docs/OPERATOR_GUIDE.md (Tracking).
  */
 require_once plugin_dir_path( __FILE__ ) . 'incl/analytics/lafka-page-context.php';
 require_once plugin_dir_path( __FILE__ ) . 'incl/analytics/lafka-store-events.php';

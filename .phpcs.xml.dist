@@ -55,7 +55,7 @@
 		</properties>
 	</rule>
 
-	<!-- Cross-version PHP compatibility against the PHP floor (COMPATIBILITY.md
+	<!-- Cross-version PHP compatibility against the PHP floor (the plugin header
 	     is the single source for the floors). PHPCompatibility 10 (alpha) is
 	     required: 9.3.5 has no PHP 8.x sniffs. -->
 	<config name="testVersion" value="8.3-"/>
@@ -65,7 +65,7 @@
 	     WordPress.WP.I18n.TextDomainMismatch sniff is enforced. -->
 	<config name="text_domain" value="lafka-plugin"/>
 
-	<!-- Minimum supported WordPress version (the WP floor in COMPATIBILITY.md) -->
+	<!-- Minimum supported WordPress version (the WP floor in the plugin header) -->
 	<config name="minimum_wp_version" value="7.0"/>
 
 	<!-- Exclude third-party / vendor directories -->

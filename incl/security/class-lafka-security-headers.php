@@ -109,7 +109,7 @@ if ( ! class_exists( 'Lafka_Security_Headers' ) ) {
 			// or `expose_php = On` adds. Apache's `ServerTokens Prod` setting is
 			// the right place to suppress the `Server:` header — we can't reach
 			// that from PHP — so this is a partial fix; document the Apache side
-			// in COMPATIBILITY.md.
+			// in the README (Requirements & compatibility).
 			header_remove( 'X-Powered-By' );
 
 			foreach ( self::build_headers() as $line ) {
