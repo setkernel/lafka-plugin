@@ -45,7 +45,15 @@ class Lafka_Engine_Editor {
 		}
 
 		// Resolve render context.
-		$context = $this->build_render_context( $edit_id );
+		$context            = $this->build_render_context( $edit_id );
+		$edit_id            = $context['edit_id'];
+		$reference          = $context['reference'];
+		$priority           = $context['priority'];
+		$applies_to_all     = $context['applies_to_all'];
+		$category_ids       = $context['category_ids'];
+		$groups             = $context['groups'];
+		$product_attributes = $context['product_attributes'];
+		$product_categories = $context['product_categories'];
 		require __DIR__ . '/views/global-edit.php';
 	}
 

@@ -4,7 +4,7 @@
 // during validation failures. WC verifies the add-to-cart nonce upstream
 // before this template is included in the variations form output.
 /** @var array $addon */
-foreach ( $addon['options'] as $i => $option ) :
+foreach ( $addon['options'] as $lafka_i => $lafka_option ) :
 	/**
 	 * @var WC_Product $product
 	 * @var Lafka_Engine_Display $Lafka_Engine_Display
@@ -13,64 +13,64 @@ foreach ( $addon['options'] as $i => $option ) :
 	global $product;
 	global $Lafka_Engine_Display;
 
-	$option_price             = lafka_get_option_price_on_default_attribute( $product, $option['price'] );
-	$option_price_for_display = '';
-	if ( is_numeric( $option_price ) ) {
+	$lafka_option_price             = lafka_get_option_price_on_default_attribute( $product, $lafka_option['price'] );
+	$lafka_option_price_for_display = '';
+	if ( is_numeric( $lafka_option_price ) ) {
 		// Wrap the whole "($price)" block in a <span class="lafka-addon-price">
 		// so themes can position it as one inline element. Without the wrapper,
 		// the bare "(" and ")" parens are text nodes that don't move with the
 		// .woocommerce-Price-amount span when a theme uses flex/grid alignment
 		// — splitting "(" left and ")$3.50" right. The span is structural, not
 		// stylistic: themes that don't target it still see "(<wc_price>)".
-		$option_price_for_display = '<span class="lafka-addon-price">(' . wc_price( Lafka_Engine_Helper::get_product_addon_price_for_display( $option_price ) ) . ')</span>';
+		$lafka_option_price_for_display = '<span class="lafka-addon-price">(' . wc_price( Lafka_Engine_Helper::get_product_addon_price_for_display( $lafka_option_price ) ) . ')</span>';
 	}
 
-	$price = apply_filters( 'lafka_product_addons_option_price', $option_price_for_display, $option, $i, 'checkbox' );
+	$lafka_price = apply_filters( 'lafka_product_addons_option_price', $lafka_option_price_for_display, $lafka_option, $lafka_i, 'checkbox' );
 
-	$option_id = ! empty( $option['id'] ) ? $option['id'] : sanitize_title( $option['label'] );
+	$lafka_option_id = ! empty( $lafka_option['id'] ) ? $lafka_option['id'] : sanitize_title( $lafka_option['label'] );
 
-	$selected = array();
+	$lafka_selected = array();
 	if ( isset( $_POST[ 'addon-' . sanitize_title( $addon['field-name'] ) ] ) ) {
-		$selected = $_POST[ 'addon-' . sanitize_title( $addon['field-name'] ) ];
-	} elseif ( ! empty( $option['default'] ) ) {
-		$selected = array( $option_id );
+		$lafka_selected = $_POST[ 'addon-' . sanitize_title( $addon['field-name'] ) ];
+	} elseif ( ! empty( $lafka_option['default'] ) ) {
+		$lafka_selected = array( $lafka_option_id );
 	}
 
-	if ( ! is_array( $selected ) ) {
-		$selected = array( $selected );
+	if ( ! is_array( $lafka_selected ) ) {
+		$lafka_selected = array( $lafka_selected );
 	}
 
-	$current_value = ( in_array( (string) $option_id, array_map( 'strval', (array) $selected ), true ) ) ? 1 : 0;
+	$lafka_current_value = ( in_array( (string) $lafka_option_id, array_map( 'strval', (array) $lafka_selected ), true ) ) ? 1 : 0;
 
-	$attribute_raw_prices = $option['price'];
-	$attribute_prices     = lafka_convert_attribute_raw_prices_to_prices( $attribute_raw_prices );
+	$lafka_attribute_raw_prices = $lafka_option['price'];
+	$lafka_attribute_prices     = lafka_convert_attribute_raw_prices_to_prices( $lafka_attribute_raw_prices );
 
-	$custom_image_id      = $Lafka_Engine_Display->get_addon_option_custom_image_id( $option );
-	$custom_image_classes = $Lafka_Engine_Display->get_addon_option_image_classes( $custom_image_id );
+	$lafka_custom_image_id      = $Lafka_Engine_Display->get_addon_option_custom_image_id( $lafka_option );
+	$lafka_custom_image_classes = $Lafka_Engine_Display->get_addon_option_image_classes( $lafka_custom_image_id );
 	?>
 
-	<p class="form-row form-row-wide addon-wrap-<?php echo esc_attr( sanitize_title( $addon['field-name'] ) . '-' . $i ); ?>">
+	<p class="form-row form-row-wide addon-wrap-<?php echo esc_attr( sanitize_title( $addon['field-name'] ) . '-' . $lafka_i ); ?>">
 		<label><input type="checkbox" class="addon addon-checkbox" name="addon-<?php echo esc_attr( sanitize_title( $addon['field-name'] ) ); ?>[]"
-						data-attribute-raw-prices="<?php echo esc_attr( wp_json_encode( $attribute_raw_prices ) ); ?>"
-						data-attribute-prices="<?php echo esc_attr( wp_json_encode( $attribute_prices ) ); ?>"
-						<?php $addon_attribute = isset( $addon['attribute'] ) ? wc_get_attribute( $addon['attribute'] ) : null; ?>
-						<?php if ( ! is_null( $addon_attribute ) && isset( $attribute_prices[ $addon_attribute->slug ] ) && is_array( $attribute_prices[ $addon_attribute->slug ] ) ) : ?>
-							<?php foreach ( $attribute_prices[ $addon_attribute->slug ] as $attribute => $attr_price ) : ?>
-								data-<?php echo esc_html( $attribute ); ?>-formatted-price="<?php echo esc_html( wc_price( $attr_price ) ); ?>"
+						data-attribute-raw-prices="<?php echo esc_attr( wp_json_encode( $lafka_attribute_raw_prices ) ); ?>"
+						data-attribute-prices="<?php echo esc_attr( wp_json_encode( $lafka_attribute_prices ) ); ?>"
+						<?php $lafka_addon_attribute = isset( $addon['attribute'] ) ? wc_get_attribute( $addon['attribute'] ) : null; ?>
+						<?php if ( ! is_null( $lafka_addon_attribute ) && isset( $lafka_attribute_prices[ $lafka_addon_attribute->slug ] ) && is_array( $lafka_attribute_prices[ $lafka_addon_attribute->slug ] ) ) : ?>
+							<?php foreach ( $lafka_attribute_prices[ $lafka_addon_attribute->slug ] as $lafka_attribute => $lafka_attr_price ) : ?>
+								data-<?php echo esc_html( $lafka_attribute ); ?>-formatted-price="<?php echo esc_html( wc_price( $lafka_attr_price ) ); ?>"
 							<?php endforeach; ?>
 						<?php endif; ?>
-						data-raw-price="<?php echo esc_attr( $option_price ); ?>"
-						data-price="<?php echo esc_attr( Lafka_Engine_Helper::get_product_addon_price_for_display( $option_price ) ); ?>"
-						value="<?php echo esc_attr( $option_id ); ?>" <?php checked( $current_value, 1 ); ?> /><?php echo ' '; ?>
-			<?php if ( $custom_image_id ) : ?>
-				<?php echo wp_get_attachment_image( $custom_image_id, 'lafka-widgets-thumb', false, array( 'class' => implode( ' ', $custom_image_classes ) ) ); ?>
+						data-raw-price="<?php echo esc_attr( $lafka_option_price ); ?>"
+						data-price="<?php echo esc_attr( Lafka_Engine_Helper::get_product_addon_price_for_display( $lafka_option_price ) ); ?>"
+						value="<?php echo esc_attr( $lafka_option_id ); ?>" <?php checked( $lafka_current_value, 1 ); ?> /><?php echo ' '; ?>
+			<?php if ( $lafka_custom_image_id ) : ?>
+				<?php echo wp_get_attachment_image( $lafka_custom_image_id, 'lafka-widgets-thumb', false, array( 'class' => implode( ' ', $lafka_custom_image_classes ) ) ); ?>
 			<?php endif; ?>
 			<?php
 			// $price is HTML built by wc_price() (e.g., "(<span class="amount">$3.50</span>)").
 			// esc_html() would escape the spans to entities and render them as visible text.
 			// wp_kses_post() preserves trusted markup (spans/bdi/sup) while stripping anything
 			// dangerous a hostile filter on lafka_product_addons_option_price might inject.
-			echo esc_html( wptexturize( $option['label'] ) ) . ' ' . wp_kses_post( $price );
+			echo esc_html( wptexturize( $lafka_option['label'] ) ) . ' ' . wp_kses_post( $lafka_price );
 			?>
 			</label>
 	</p>

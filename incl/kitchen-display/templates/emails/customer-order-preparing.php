@@ -15,20 +15,20 @@
  */
 defined( 'ABSPATH' ) || exit;
 
-$is_pickup = ( 'pickup' === $order_type );
+$lafka_is_pickup = ( 'pickup' === $order_type );
 
 // Build inline order summary
-$items_summary = array();
-foreach ( $order->get_items() as $item ) {
-	$items_summary[] = $item->get_quantity() . 'x ' . $item->get_name();
+$lafka_items_summary = array();
+foreach ( $order->get_items() as $lafka_item ) {
+	$lafka_items_summary[] = $lafka_item->get_quantity() . 'x ' . $lafka_item->get_name();
 }
-$summary_text = implode( ', ', $items_summary );
+$lafka_summary_text = implode( ', ', $lafka_items_summary );
 
 // Contextualized ETA — compute remaining minutes from now
-$eta_timestamp = $order->get_meta( '_lafka_kds_eta' );
-$eta_remaining = 0;
-if ( $eta_timestamp ) {
-	$eta_remaining = max( 0, (int) round( ( (int) $eta_timestamp - time() ) / 60 ) );
+$lafka_eta_timestamp = $order->get_meta( '_lafka_kds_eta' );
+$lafka_eta_remaining = 0;
+if ( $lafka_eta_timestamp ) {
+	$lafka_eta_remaining = max( 0, (int) round( ( (int) $lafka_eta_timestamp - time() ) / 60 ) );
 }
 
 if ( $plain_text ) :
@@ -37,7 +37,7 @@ if ( $plain_text ) :
 	printf( esc_html__( 'Hi %s,', 'lafka-plugin' ), esc_html( $order->get_billing_first_name() ) );
 	echo "\n\n";
 
-	if ( $is_pickup ) {
+	if ( $lafka_is_pickup ) {
 		/* translators: %s: Order number */
 		printf( esc_html__( 'Your order #%s is now being prepared by our kitchen. We\'ll let you know when it\'s ready for pickup!', 'lafka-plugin' ), esc_html( $order->get_order_number() ) );
 	} else {
@@ -46,11 +46,11 @@ if ( $plain_text ) :
 	}
 	echo "\n\n";
 
-	echo esc_html__( 'Your order:', 'lafka-plugin' ) . ' ' . esc_html( $summary_text ) . "\n\n";
+	echo esc_html__( 'Your order:', 'lafka-plugin' ) . ' ' . esc_html( $lafka_summary_text ) . "\n\n";
 
-	if ( $eta_remaining > 0 ) {
+	if ( $lafka_eta_remaining > 0 ) {
 		/* translators: %d: minutes */
-		printf( esc_html__( 'Estimated ready in about %d minutes.', 'lafka-plugin' ), (int) $eta_remaining );
+		printf( esc_html__( 'Estimated ready in about %d minutes.', 'lafka-plugin' ), (int) $lafka_eta_remaining );
 		echo "\n\n";
 	}
 
@@ -76,7 +76,7 @@ else :
 	<p><?php printf( esc_html__( 'Hi %s,', 'lafka-plugin' ), esc_html( $order->get_billing_first_name() ) ); ?></p>
 	<p>
 		<?php
-		if ( $is_pickup ) {
+		if ( $lafka_is_pickup ) {
 			printf( esc_html__( 'Your order #%s is now being prepared by our kitchen. We\'ll let you know when it\'s ready for pickup!', 'lafka-plugin' ), esc_html( $order->get_order_number() ) );
 		} else {
 			printf( esc_html__( 'Your order #%s is now being prepared by our kitchen. We\'ll let you know when it\'s ready for delivery!', 'lafka-plugin' ), esc_html( $order->get_order_number() ) );
@@ -86,12 +86,12 @@ else :
 
 	<p style="background:#f8f8f8;padding:12px 16px;border-radius:6px;font-size:14px;color:#555;">
 		<strong><?php esc_html_e( 'Your order:', 'lafka-plugin' ); ?></strong><br>
-		<?php echo esc_html( $summary_text ); ?>
+		<?php echo esc_html( $lafka_summary_text ); ?>
 	</p>
 
-	<?php if ( $eta_remaining > 0 ) : ?>
+	<?php if ( $lafka_eta_remaining > 0 ) : ?>
 		<p style="font-size:18px;font-weight:bold;">
-			<?php printf( esc_html__( 'Estimated ready in about %d minutes', 'lafka-plugin' ), (int) $eta_remaining ); ?>
+			<?php printf( esc_html__( 'Estimated ready in about %d minutes', 'lafka-plugin' ), (int) $lafka_eta_remaining ); ?>
 		</p>
 	<?php endif; ?>
 

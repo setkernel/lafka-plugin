@@ -30,13 +30,11 @@ if ( ! function_exists( 'lafka_hide_single_product_price_when_eligible' ) ) {
 
 		global $product;
 
-		if ( ! is_object( $product ) ) {
-			$product = wc_get_product( get_the_ID() );
-		}
+		$current_product = is_object( $product ) ? $product : wc_get_product( get_the_ID() );
 
-		if ( $product && function_exists( 'lafka_is_product_eligible_for_variation_in_listings' ) && lafka_is_product_eligible_for_variation_in_listings( $product ) ) {
+		if ( $current_product && function_exists( 'lafka_is_product_eligible_for_variation_in_listings' ) && lafka_is_product_eligible_for_variation_in_listings( $current_product ) ) {
 			/** @var WC_Product_Variable $variable_product */
-			$variable_product = wc_get_product( $product );
+			$variable_product = wc_get_product( $current_product );
 			// Only if it has default variation
 			if ( $variable_product->get_default_attributes() ) {
 				remove_action( 'woocommerce_single_product_summary', 'woocommerce_template_single_price', 10 );

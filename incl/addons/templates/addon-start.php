@@ -11,24 +11,24 @@
  * @var string $body_id (T-19) Id of the collapsible body the button controls.
  */
 
-$toggle  = ! empty( $toggle ) && $name && ! empty( $body_id );
-$body_id = $toggle ? (string) $body_id : '';
+$lafka_toggle  = ! empty( $lafka_toggle ) && $name && ! empty( $lafka_body_id );
+$lafka_body_id = $lafka_toggle ? (string) $lafka_body_id : '';
 
-$classes = array( 'product-addon', sanitize_html_class( 'product-addon-' . $name ) );
+$lafka_classes = array( 'product-addon', sanitize_html_class( 'product-addon-' . $name ) );
 if ( 1 === (int) $required ) {
-	$classes[] = 'required-product-addon';
+	$lafka_classes[] = 'required-product-addon';
 }
 if ( isset( $addon['type'] ) ) {
-	$classes[] = sanitize_html_class( $addon['type'] );
+	$lafka_classes[] = sanitize_html_class( $addon['type'] );
 }
 if ( ! empty( $addon['limit'] ) ) {
-	$classes[] = 'lafka-limit';
+	$lafka_classes[] = 'lafka-limit';
 }
 if ( $has_options_with_images ) {
-	$classes[] = 'lafka-addon-with-images';
+	$lafka_classes[] = 'lafka-addon-with-images';
 }
 ?>
-<div class="<?php echo esc_attr( implode( ' ', $classes ) ); ?>"
+<div class="<?php echo esc_attr( implode( ' ', $lafka_classes ) ); ?>"
 	<?php
 	if ( ! empty( $addon['limit'] ) ) {
 		echo 'data-addon-group-limit="' . esc_attr( $addon['limit'] ) . '"';}
@@ -36,14 +36,14 @@ if ( $has_options_with_images ) {
 	>
 	<?php do_action( 'wc_product_addon_start', $addon ); ?>
 
-	<?php if ( $toggle ) : ?>
-		<h3 class="addon-name"><button type="button" class="lafka-addon-toggle" aria-expanded="true" aria-controls="<?php echo esc_attr( $body_id ); ?>"><?php echo esc_html( wptexturize( $name ) ); ?>
+	<?php if ( $lafka_toggle ) : ?>
+		<h3 class="addon-name"><button type="button" class="lafka-addon-toggle" aria-expanded="true" aria-controls="<?php echo esc_attr( $lafka_body_id ); ?>"><?php echo esc_html( wptexturize( $name ) ); ?>
 		<?php
 		if ( 1 === (int) $required ) {
 			echo '<abbr class="required" title="' . esc_html__( 'Required field', 'lafka-plugin' ) . '">*</abbr>';}
 		?>
 		</button></h3>
-		<div class="lafka-addon-body" id="<?php echo esc_attr( $body_id ); ?>">
+		<div class="lafka-addon-body" id="<?php echo esc_attr( $lafka_body_id ); ?>">
 	<?php elseif ( $name ) : ?>
 		<h3 class="addon-name"><?php echo esc_html( wptexturize( $name ) ); ?>
 		<?php

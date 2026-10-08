@@ -7,16 +7,16 @@ if ( ! defined( 'ABSPATH' ) ) {
 	<div class="lafka-nutrition-summary">
 		<?php if ( count( $lafka_nutrition_list ) ) : ?>
 			<ul class="lafka-nutrition-list">
-				<?php foreach ( $lafka_nutrition_list as $nutrition_name => $nutrition_value ) : ?>
+				<?php foreach ( $lafka_nutrition_list as $lafka_nutrition_name => $lafka_nutrition_value ) : ?>
 					<li 
 					<?php
-					if ( 'lafka_nutrition_energy' === $nutrition_name ) :
+					if ( 'lafka_nutrition_energy' === $lafka_nutrition_name ) :
 						?>
 						class="lafka-nutrition-energy" <?php endif; ?> >
-						<span class="lafka-nutrition-list-label"><?php echo esc_html( Lafka_Nutrition_Config::$nutrition_meta_fields[ $nutrition_name ]['frontend_label'] ); ?></span>
-						<?php echo esc_html( $nutrition_value ); ?> <?php echo esc_html( Lafka_Nutrition_Config::$nutrition_meta_fields[ $nutrition_name ]['frontend_label_weight'] ); ?>
+						<span class="lafka-nutrition-list-label"><?php echo esc_html( Lafka_Nutrition_Config::$nutrition_meta_fields[ $lafka_nutrition_name ]['frontend_label'] ); ?></span>
+						<?php echo esc_html( $lafka_nutrition_value ); ?> <?php echo esc_html( Lafka_Nutrition_Config::$nutrition_meta_fields[ $lafka_nutrition_name ]['frontend_label_weight'] ); ?>
 						<span class="lafka-nutrition-list-label"><?php esc_html_e( 'DI', 'lafka-plugin' ); ?>*</span>
-						<?php echo esc_html( round( $nutrition_value / Lafka_Nutrition_Config::$nutrition_meta_fields[ $nutrition_name ]['DI'] * 100 ) ); ?>%
+						<?php echo esc_html( round( $lafka_nutrition_value / Lafka_Nutrition_Config::$nutrition_meta_fields[ $lafka_nutrition_name ]['DI'] * 100 ) ); ?>%
 					</li>
 				<?php endforeach; ?>
 			</ul>

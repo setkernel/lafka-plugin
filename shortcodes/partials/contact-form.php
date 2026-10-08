@@ -131,10 +131,39 @@ if ( isset( $_POST['lafka_contact_submitted'] ) ) {
 	}
 
 	/* Check if all fields are filled */
+	$lafka_field_values = array(
+		'name'    => $lafka_name,
+		'email'   => $lafka_email,
+		'phone'   => $lafka_phone,
+		'address' => $lafka_address,
+		'subject' => $lafka_subject,
+		'message' => $lafka_message,
+	);
 	foreach ( $lafka_contacts_fields as $lafka_fieldname => $lafka_is_enabled ) {
-		if ( $lafka_is_enabled && ! ${'lafka_' . $lafka_fieldname} ) {
-			$lafka_has_error                          = true;
-			${'lafka_' . $lafka_fieldname . '_error'} = lafka_contact_form_generate_response( 'error', sprintf( $lafka_missing_content, $lafka_fields_strings[ $lafka_fieldname ] ) );
+		if ( ! $lafka_is_enabled || ! array_key_exists( $lafka_fieldname, $lafka_field_values ) || $lafka_field_values[ $lafka_fieldname ] ) {
+			continue;
+		}
+		$lafka_has_error      = true;
+		$lafka_missing_notice = lafka_contact_form_generate_response( 'error', sprintf( $lafka_missing_content, isset( $lafka_fields_strings[ $lafka_fieldname ] ) ? $lafka_fields_strings[ $lafka_fieldname ] : $lafka_fieldname ) );
+		switch ( $lafka_fieldname ) {
+			case 'name':
+				$lafka_name_error = $lafka_missing_notice;
+				break;
+			case 'email':
+				$lafka_email_error = $lafka_missing_notice;
+				break;
+			case 'phone':
+				$lafka_phone_error = $lafka_missing_notice;
+				break;
+			case 'address':
+				$lafka_address_error = $lafka_missing_notice;
+				break;
+			case 'subject':
+				$lafka_subject_error = $lafka_missing_notice;
+				break;
+			case 'message':
+				$lafka_message_error = $lafka_missing_notice;
+				break;
 		}
 	}
 

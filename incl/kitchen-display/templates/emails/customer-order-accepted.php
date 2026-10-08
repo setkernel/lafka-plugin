@@ -15,14 +15,14 @@
  */
 defined( 'ABSPATH' ) || exit;
 
-$is_pickup = ( 'pickup' === $order_type );
+$lafka_is_pickup = ( 'pickup' === $order_type );
 
 // Build inline order summary
-$items_summary = array();
-foreach ( $order->get_items() as $item ) {
-	$items_summary[] = $item->get_quantity() . 'x ' . $item->get_name();
+$lafka_items_summary = array();
+foreach ( $order->get_items() as $lafka_item ) {
+	$lafka_items_summary[] = $lafka_item->get_quantity() . 'x ' . $lafka_item->get_name();
 }
-$summary_text = implode( ', ', $items_summary );
+$lafka_summary_text = implode( ', ', $lafka_items_summary );
 
 if ( $plain_text ) :
 	echo '= ' . esc_html( wp_strip_all_tags( $email_heading ) ) . " =\n\n";
@@ -30,7 +30,7 @@ if ( $plain_text ) :
 	printf( esc_html__( 'Hi %s,', 'lafka-plugin' ), esc_html( $order->get_billing_first_name() ) );
 	echo "\n\n";
 
-	if ( $is_pickup ) {
+	if ( $lafka_is_pickup ) {
 		/* translators: %s: Order number */
 		printf( esc_html__( 'Great news! Your order #%s has been accepted. We\'ll have it ready for you to pick up shortly.', 'lafka-plugin' ), esc_html( $order->get_order_number() ) );
 	} else {
@@ -39,12 +39,12 @@ if ( $plain_text ) :
 	}
 	echo "\n\n";
 
-	echo esc_html__( 'Your order:', 'lafka-plugin' ) . ' ' . esc_html( $summary_text ) . "\n\n";
+	echo esc_html__( 'Your order:', 'lafka-plugin' ) . ' ' . esc_html( $lafka_summary_text ) . "\n\n";
 
-	$eta_minutes = $order->get_meta( '_lafka_kds_eta_minutes' );
-	if ( $eta_minutes ) {
+	$lafka_eta_minutes = $order->get_meta( '_lafka_kds_eta_minutes' );
+	if ( $lafka_eta_minutes ) {
 		/* translators: %d: minutes */
-		printf( esc_html__( 'Estimated time: approximately %d minutes from now.', 'lafka-plugin' ), (int) $eta_minutes );
+		printf( esc_html__( 'Estimated time: approximately %d minutes from now.', 'lafka-plugin' ), (int) $lafka_eta_minutes );
 		echo "\n\n";
 	}
 
@@ -58,7 +58,7 @@ if ( $plain_text ) :
 	if ( $store_phone ) {
 		echo esc_html__( 'Questions? Call us:', 'lafka-plugin' ) . ' ' . esc_html( $store_phone ) . "\n";
 	}
-	if ( $is_pickup && $store_address ) {
+	if ( $lafka_is_pickup && $store_address ) {
 		echo esc_html__( 'Pickup location:', 'lafka-plugin' ) . ' ' . esc_html( $store_address ) . "\n";
 	}
 	echo "\n---\n\n";
@@ -73,7 +73,7 @@ else :
 	<p><?php printf( esc_html__( 'Hi %s,', 'lafka-plugin' ), esc_html( $order->get_billing_first_name() ) ); ?></p>
 	<p>
 		<?php
-		if ( $is_pickup ) {
+		if ( $lafka_is_pickup ) {
 			printf( esc_html__( 'Great news! Your order #%s has been accepted. We\'ll have it ready for you to pick up shortly.', 'lafka-plugin' ), esc_html( $order->get_order_number() ) );
 		} else {
 			printf( esc_html__( 'Great news! Your order #%s has been accepted and will be delivered to you soon.', 'lafka-plugin' ), esc_html( $order->get_order_number() ) );
@@ -83,15 +83,15 @@ else :
 
 	<p style="background:#f8f8f8;padding:12px 16px;border-radius:6px;font-size:14px;color:#555;">
 		<strong><?php esc_html_e( 'Your order:', 'lafka-plugin' ); ?></strong><br>
-		<?php echo esc_html( $summary_text ); ?>
+		<?php echo esc_html( $lafka_summary_text ); ?>
 	</p>
 
 	<?php
-	$eta_minutes = $order->get_meta( '_lafka_kds_eta_minutes' );
-	if ( $eta_minutes ) :
+	$lafka_eta_minutes = $order->get_meta( '_lafka_kds_eta_minutes' );
+	if ( $lafka_eta_minutes ) :
 		?>
 		<p style="font-size:18px;font-weight:bold;">
-			<?php printf( esc_html__( 'Estimated time: approximately %d minutes from now', 'lafka-plugin' ), (int) $eta_minutes ); ?>
+			<?php printf( esc_html__( 'Estimated time: approximately %d minutes from now', 'lafka-plugin' ), (int) $lafka_eta_minutes ); ?>
 		</p>
 	<?php endif; ?>
 
@@ -114,7 +114,7 @@ else :
 			</td>
 		</tr>
 		<?php endif; ?>
-		<?php if ( $is_pickup && $store_address ) : ?>
+		<?php if ( $lafka_is_pickup && $store_address ) : ?>
 		<tr>
 			<td style="padding:4px 0;font-size:13px;color:#888;">
 				<?php esc_html_e( 'Pickup location:', 'lafka-plugin' ); ?>

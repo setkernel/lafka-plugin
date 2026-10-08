@@ -13,7 +13,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$add_url = add_query_arg(
+$lafka_add_url = add_query_arg(
 	array(
 		'post_type' => 'product',
 		'page'      => Lafka_Engine_Admin::PAGE_SLUG,
@@ -24,7 +24,7 @@ $add_url = add_query_arg(
 ?>
 <div class="wrap lafka-engine-admin">
 	<h1 class="wp-heading-inline"><?php esc_html_e( 'Lafka Add-ons', 'lafka-plugin' ); ?></h1>
-	<a href="<?php echo esc_url( $add_url ); ?>" class="page-title-action"><?php esc_html_e( 'Add new', 'lafka-plugin' ); ?></a>
+	<a href="<?php echo esc_url( $lafka_add_url ); ?>" class="page-title-action"><?php esc_html_e( 'Add new', 'lafka-plugin' ); ?></a>
 	<hr class="wp-header-end">
 
 	<form method="get">

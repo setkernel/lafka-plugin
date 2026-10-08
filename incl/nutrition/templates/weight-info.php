@@ -12,8 +12,8 @@ if ( count( $lafka_product_weights ) ) : ?>
 				<span class="lafka-item-weight-values">
 					<?php
 					$lafka_serving_size_text_array = array();
-					foreach ( $lafka_product_weights as $weight ) {
-						$lafka_serving_size_text_array[] = ( $weight['title'] ? ' ' . $weight['title'] . ' - ' : '' ) . $weight['weight'] . ' ' . get_option( 'woocommerce_weight_unit' );
+					foreach ( $lafka_product_weights as $lafka_weight ) {
+						$lafka_serving_size_text_array[] = ( $lafka_weight['title'] ? ' ' . $lafka_weight['title'] . ' - ' : '' ) . $lafka_weight['weight'] . ' ' . get_option( 'woocommerce_weight_unit' );
 					}
 					?>
 					<?php echo esc_html( implode( ' /', $lafka_serving_size_text_array ) ); ?>

@@ -44,8 +44,9 @@ class Lafka_Nutrition_Admin {
 		global $post;
 		$product = wc_get_product( $post );
 
-		foreach ( Lafka_Nutrition_Config::$nutrition_meta_fields as $field_name => $data ) {
-			${$field_name} = $product->get_meta( '_' . $field_name );
+		$lafka_nutrition_values = array();
+		foreach ( array_keys( Lafka_Nutrition_Config::$nutrition_meta_fields ) as $field_name ) {
+			$lafka_nutrition_values[ $field_name ] = $product->get_meta( '_' . $field_name );
 		}
 		$lafka_product_allergens = $product->get_meta( '_lafka_product_allergens' );
 

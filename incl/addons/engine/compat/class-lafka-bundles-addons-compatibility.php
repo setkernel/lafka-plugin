@@ -107,17 +107,20 @@ class Lafka_Bundles_Addons_Compatibility {
 			return;
 		}
 
-		// Swap $product global so the engine's templates see the bundled product.
+		// Point WooCommerce's current product at the bundled product so the
+		// engine's templates see it, then restore the previous one.
 		global $product;
-		$product_bak = $product ?? null;
-		$product     = $bundled_product;
+		$product_bak_id = is_object( $product ) && method_exists( $product, 'get_id' ) ? (int) $product->get_id() : 0;
+		wc_setup_product_data( $bundled_product->get_id() );
 
 		self::$addons_prefix = (string) $bundled_item->get_id();
 
 		$Lafka_Engine_Display->display( $product_id );
 
 		self::$addons_prefix = '';
-		$product             = $product_bak;
+		if ( $product_bak_id ) {
+			wc_setup_product_data( $product_bak_id );
+		}
 	}
 
 	/**

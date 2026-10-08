@@ -33,7 +33,7 @@ defined( 'ABSPATH' ) || exit;
 
 		<div class="lafka-engine-groups">
 			<?php
-			foreach ( $groups as $group_index => $group ) {
+			foreach ( $groups as $lafka_group_index => $lafka_group ) {
 				require __DIR__ . '/editor.php';
 			}
 			?>
@@ -46,18 +46,18 @@ defined( 'ABSPATH' ) || exit;
 
 	<template id="lafka-engine-group-template" data-loop-placeholder="__GROUP_INDEX__">
 		<?php
-		$group       = Lafka_Addon_Group::from_array( array() );
-		$group_index = '__GROUP_INDEX__';
+		$lafka_group       = Lafka_Addon_Group::from_array( array() );
+		$lafka_group_index = '__GROUP_INDEX__';
 		require __DIR__ . '/editor.php';
 		?>
 	</template>
 
 	<template id="lafka-engine-option-row-template" data-loop-placeholder="__OPTION_INDEX__">
 		<?php
-		$option       = Lafka_Addon_Option::from_array( array() );
-		$option_index = '__OPTION_INDEX__';
-		$group_index  = '__GROUP_INDEX__';
-		$group        = Lafka_Addon_Group::from_array( array() );
+		$lafka_option       = Lafka_Addon_Option::from_array( array() );
+		$lafka_option_index = '__OPTION_INDEX__';
+		$lafka_group_index  = '__GROUP_INDEX__';
+		$lafka_group        = Lafka_Addon_Group::from_array( array() );
 		require __DIR__ . '/parts/option-row.php';
 		?>
 	</template>

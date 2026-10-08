@@ -265,10 +265,8 @@ if ( ! function_exists( 'lafka_blogposts_shortcode' ) ) {
 			$query_args['offset'] = $lafka_blogposts_param_offset;
 		}
 
-		// The query - use WP_Query and temporarily replace global for pagination support
-		global $wp_query;
-		$original_query = $wp_query;
-		$wp_query       = new WP_Query( $query_args );
+		// The query: a dedicated WP_Query, iterated directly and handed to the pagination helper.
+		$lafka_blog_query = new WP_Query( $query_args );
 
 		switch ( $lafka_blogposts_param_blog_style ) {
 			case 'lafka_blog_masonry':
@@ -296,9 +294,9 @@ if ( ! function_exists( 'lafka_blogposts_shortcode' ) ) {
 
 		$output = '<div class="lafka_shortcode_blog ' . esc_attr( $lafka_blogposts_param_blog_style ) . '">';
 
-		if ( have_posts() ) {
-			while ( have_posts() ) {
-				the_post();
+		if ( $lafka_blog_query->have_posts() ) {
+			while ( $lafka_blog_query->have_posts() ) {
+				$lafka_blog_query->the_post();
 				// Capture each post
 				ob_start();
 
@@ -321,7 +319,7 @@ if ( ! function_exists( 'lafka_blogposts_shortcode' ) ) {
 		<div class="box box-common">
 			<?php
 			if ( function_exists( 'lafka_pagination' ) ) :
-				lafka_pagination();
+				lafka_pagination( '', $lafka_blog_query );
 			else :
 				?>
 				<div class="navigation group">
@@ -336,7 +334,6 @@ if ( ! function_exists( 'lafka_blogposts_shortcode' ) ) {
 		<?php
 		$output .= ob_get_clean();
 
-		$wp_query = $original_query;
 		wp_reset_postdata();
 
 		return $output;
@@ -1651,8 +1648,6 @@ if ( ! function_exists( 'lafka_woo_product_category_carousel_shortcode' ) ) {
 if ( ! function_exists( 'lafka_woo_recent_viewed_products_shortcode' ) ) {
 
 	function lafka_woo_recent_viewed_products_shortcode( $atts ) {
-		global $woocommerce_loop;
-
 		$atts = shortcode_atts(
 			array(
 				'title'           => esc_html__( 'Recently viewed products', 'lafka-plugin' ),
@@ -1737,8 +1732,8 @@ if ( ! function_exists( 'lafka_woo_recent_viewed_products_shortcode' ) ) {
 
 		ob_start();
 
-		$products                    = new WP_Query( $query_args );
-		$woocommerce_loop['columns'] = $atts['columns'];
+		$products = new WP_Query( $query_args );
+		wc_set_loop_prop( 'columns', $atts['columns'] );
 
 		?>
 			<div id="<?php echo esc_attr( $unique_id ); ?>" class="lafka_woo_recent_viewed">
@@ -1777,8 +1772,6 @@ if ( ! function_exists( 'lafka_woo_recent_viewed_products_shortcode' ) ) {
 if ( ! function_exists( 'lafka_woo_product_categories_carousel_shortcode' ) ) {
 
 	function lafka_woo_product_categories_carousel_shortcode( $atts ) {
-		global $woocommerce_loop;
-
 		$atts = shortcode_atts(
 			array(
 				'number'     => null,
@@ -1830,8 +1823,8 @@ if ( ! function_exists( 'lafka_woo_product_categories_carousel_shortcode' ) ) {
 			$product_categories = array_slice( $product_categories, 0, $atts['number'] );
 		}
 
-		$woocommerce_loop['columns'] = $atts['columns'];
-		$unique_id                   = uniqid( 'woo_product_categories' );
+		wc_set_loop_prop( 'columns', $atts['columns'] );
+		$unique_id = uniqid( 'woo_product_categories' );
 
 		ob_start();
 		?>
@@ -1873,8 +1866,8 @@ if ( ! function_exists( 'lafka_woo_product_categories_carousel_shortcode' ) ) {
 		ob_start();
 
 		// Reset loop/columns globals when starting a new loop
-		$woocommerce_loop['loop']   = '';
-		$woocommerce_loop['column'] = '';
+		wc_set_loop_prop( 'loop', '' );
+		wc_set_loop_prop( 'column', '' );
 
 		if ( $product_categories ) {
 

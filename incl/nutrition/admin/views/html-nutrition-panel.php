@@ -15,14 +15,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 	?>
 	<input type="hidden" name="_lafka_nutrition_panel_present" value="1">
 	<div class="options_group lafka-nutrition-info-group">
-		<?php foreach ( Lafka_Nutrition_Config::$nutrition_meta_fields as $nutrition_meta_field => $data ) : ?>
+		<?php foreach ( Lafka_Nutrition_Config::$nutrition_meta_fields as $lafka_nutrition_meta_field => $lafka_data ) : ?>
 			<p class="form-field">
-				<label for="_<?php echo esc_attr( $nutrition_meta_field ); ?>"><?php echo esc_html( $data['label'] ); ?></label>
+				<label for="_<?php echo esc_attr( $lafka_nutrition_meta_field ); ?>"><?php echo esc_html( $lafka_data['label'] ); ?></label>
 				<input type="number" min="0" step="0.01" inputmode="decimal"
-						name="_<?php echo esc_attr( $nutrition_meta_field ); ?>"
-						placeholder="<?php echo esc_attr( $data['placeholder'] ); ?>"
-						id="_<?php echo esc_attr( $nutrition_meta_field ); ?>"
-						value="<?php echo esc_attr( ${$nutrition_meta_field} ); ?>">
+						name="_<?php echo esc_attr( $lafka_nutrition_meta_field ); ?>"
+						placeholder="<?php echo esc_attr( $lafka_data['placeholder'] ); ?>"
+						id="_<?php echo esc_attr( $lafka_nutrition_meta_field ); ?>"
+						value="<?php echo esc_attr( $lafka_nutrition_values[ $lafka_nutrition_meta_field ] ); ?>">
 			</p>
 		<?php endforeach; ?>
 	</div>

@@ -14,11 +14,11 @@
 defined( 'ABSPATH' ) || exit;
 
 // Build inline order summary
-$items_summary = array();
-foreach ( $order->get_items() as $item ) {
-	$items_summary[] = $item->get_quantity() . 'x ' . $item->get_name();
+$lafka_items_summary = array();
+foreach ( $order->get_items() as $lafka_item ) {
+	$lafka_items_summary[] = $lafka_item->get_quantity() . 'x ' . $lafka_item->get_name();
 }
-$summary_text = implode( ', ', $items_summary );
+$lafka_summary_text = implode( ', ', $lafka_items_summary );
 
 if ( $plain_text ) :
 	echo '= ' . esc_html( wp_strip_all_tags( $email_heading ) ) . " =\n\n";
@@ -29,7 +29,7 @@ if ( $plain_text ) :
 	printf( esc_html__( 'Unfortunately, we are unable to fulfill your order #%s at this time.', 'lafka-plugin' ), esc_html( $order->get_order_number() ) );
 	echo "\n\n";
 
-	echo esc_html__( 'Your order was:', 'lafka-plugin' ) . ' ' . esc_html( $summary_text ) . "\n\n";
+	echo esc_html__( 'Your order was:', 'lafka-plugin' ) . ' ' . esc_html( $lafka_summary_text ) . "\n\n";
 
 	if ( $additional_content ) {
 		echo esc_html( wp_strip_all_tags( wptexturize( $additional_content ) ) );
@@ -55,7 +55,7 @@ else :
 
 	<p style="background:#f8f8f8;padding:12px 16px;border-radius:6px;font-size:14px;color:#555;">
 		<strong><?php esc_html_e( 'Your order was:', 'lafka-plugin' ); ?></strong><br>
-		<?php echo esc_html( $summary_text ); ?>
+		<?php echo esc_html( $lafka_summary_text ); ?>
 	</p>
 
 	<?php if ( $additional_content ) : ?>

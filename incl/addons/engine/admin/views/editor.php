@@ -18,16 +18,16 @@
 
 defined( 'ABSPATH' ) || exit;
 
-if ( ! isset( $group, $group_index ) ) {
+if ( ! isset( $lafka_group, $lafka_group_index ) ) {
 	return;
 }
-$prefix = 'lafka_addon_groups[' . $group_index . ']';
+$lafka_prefix = 'lafka_addon_groups[' . $lafka_group_index . ']';
 ?>
-<div class="lafka-engine-group" data-lafka-group data-group-index="<?php echo esc_attr( (string) $group_index ); ?>">
+<div class="lafka-engine-group" data-lafka-group data-group-index="<?php echo esc_attr( (string) $lafka_group_index ); ?>">
 	<div class="lafka-engine-group__header">
 		<h3>
 			<?php esc_html_e( 'Group', 'lafka-plugin' ); ?>:
-			<span class="lafka-engine-group__title-display"><?php echo esc_html( $group->name ? $group->name : __( 'Untitled', 'lafka-plugin' ) ); ?></span>
+			<span class="lafka-engine-group__title-display"><?php echo esc_html( $lafka_group->name ? $lafka_group->name : __( 'Untitled', 'lafka-plugin' ) ); ?></span>
 		</h3>
 		<button type="button" class="button-link-delete" data-lafka-remove-group><?php esc_html_e( 'Remove group', 'lafka-plugin' ); ?></button>
 	</div>
@@ -36,31 +36,31 @@ $prefix = 'lafka_addon_groups[' . $group_index . ']';
 		<tr>
 			<th scope="row"><label><?php esc_html_e( 'Name', 'lafka-plugin' ); ?></label></th>
 			<td>
-				<input type="text" name="<?php echo esc_attr( $prefix . '[name]' ); ?>" value="<?php echo esc_attr( $group->name ); ?>" class="regular-text" data-lafka-group-name />
+				<input type="text" name="<?php echo esc_attr( $lafka_prefix . '[name]' ); ?>" value="<?php echo esc_attr( $lafka_group->name ); ?>" class="regular-text" data-lafka-group-name />
 				<p class="description"><?php esc_html_e( 'Customer-facing label for this group on the product page.', 'lafka-plugin' ); ?></p>
 			</td>
 		</tr>
 		<tr>
 			<th scope="row"><label><?php esc_html_e( 'Field type', 'lafka-plugin' ); ?></label></th>
 			<td>
-				<select name="<?php echo esc_attr( $prefix . '[type]' ); ?>">
-					<option value="checkbox" <?php selected( $group->type, 'checkbox' ); ?>><?php esc_html_e( 'Checkboxes (multi-select)', 'lafka-plugin' ); ?></option>
-					<option value="radiobutton" <?php selected( $group->type, 'radiobutton' ); ?>><?php esc_html_e( 'Radio buttons (single-select)', 'lafka-plugin' ); ?></option>
-					<option value="textarea" <?php selected( $group->type, 'textarea' ); ?>><?php esc_html_e( 'Free text', 'lafka-plugin' ); ?></option>
+				<select name="<?php echo esc_attr( $lafka_prefix . '[type]' ); ?>">
+					<option value="checkbox" <?php selected( $lafka_group->type, 'checkbox' ); ?>><?php esc_html_e( 'Checkboxes (multi-select)', 'lafka-plugin' ); ?></option>
+					<option value="radiobutton" <?php selected( $lafka_group->type, 'radiobutton' ); ?>><?php esc_html_e( 'Radio buttons (single-select)', 'lafka-plugin' ); ?></option>
+					<option value="textarea" <?php selected( $lafka_group->type, 'textarea' ); ?>><?php esc_html_e( 'Free text', 'lafka-plugin' ); ?></option>
 				</select>
 			</td>
 		</tr>
 		<tr>
 			<th scope="row"><label><?php esc_html_e( 'Description', 'lafka-plugin' ); ?></label></th>
 			<td>
-				<textarea name="<?php echo esc_attr( $prefix . '[description]' ); ?>" rows="2" class="large-text"><?php echo esc_textarea( $group->description ); ?></textarea>
+				<textarea name="<?php echo esc_attr( $lafka_prefix . '[description]' ); ?>" rows="2" class="large-text"><?php echo esc_textarea( $lafka_group->description ); ?></textarea>
 			</td>
 		</tr>
 		<tr>
 			<th scope="row"><?php esc_html_e( 'Required', 'lafka-plugin' ); ?></th>
 			<td>
 				<label>
-					<input type="checkbox" name="<?php echo esc_attr( $prefix . '[required]' ); ?>" value="1" <?php checked( 1, $group->required ); ?> />
+					<input type="checkbox" name="<?php echo esc_attr( $lafka_prefix . '[required]' ); ?>" value="1" <?php checked( 1, $lafka_group->required ); ?> />
 					<?php esc_html_e( 'Customer must make a selection.', 'lafka-plugin' ); ?>
 				</label>
 			</td>
@@ -68,7 +68,7 @@ $prefix = 'lafka_addon_groups[' . $group_index . ']';
 		<tr>
 			<th scope="row"><label><?php esc_html_e( 'Max selections', 'lafka-plugin' ); ?></label></th>
 			<td>
-				<input type="number" name="<?php echo esc_attr( $prefix . '[limit]' ); ?>" value="<?php echo esc_attr( (string) $group->limit ); ?>" min="0" class="small-text" />
+				<input type="number" name="<?php echo esc_attr( $lafka_prefix . '[limit]' ); ?>" value="<?php echo esc_attr( (string) $lafka_group->limit ); ?>" min="0" class="small-text" />
 				<p class="description"><?php esc_html_e( '0 = unlimited. Only relevant for checkboxes.', 'lafka-plugin' ); ?></p>
 			</td>
 		</tr>

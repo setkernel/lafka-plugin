@@ -24,9 +24,7 @@ defined( 'ABSPATH' ) || exit;
 if ( ! isset( $context ) || ! is_array( $context ) ) {
 	return;
 }
-extract( $context, EXTR_SKIP );
-
-$list_url = add_query_arg(
+$lafka_list_url = add_query_arg(
 	array(
 		'post_type' => 'product',
 		'page'      => Lafka_Engine_Admin::PAGE_SLUG,
@@ -44,7 +42,7 @@ $list_url = add_query_arg(
 		);
 		?>
 	</h1>
-	<a href="<?php echo esc_url( $list_url ); ?>" class="page-title-action"><?php esc_html_e( 'Back to list', 'lafka-plugin' ); ?></a>
+	<a href="<?php echo esc_url( $lafka_list_url ); ?>" class="page-title-action"><?php esc_html_e( 'Back to list', 'lafka-plugin' ); ?></a>
 	<hr class="wp-header-end">
 
 	<form method="post" class="lafka-engine-form">
@@ -84,11 +82,11 @@ $list_url = add_query_arg(
 								<p><em><?php esc_html_e( 'No product categories defined yet. Add categories under Products → Categories first.', 'lafka-plugin' ); ?></em></p>
 							<?php else : ?>
 								<ul class="lafka-engine-category-list">
-									<?php foreach ( $product_categories as $term ) : ?>
+									<?php foreach ( $product_categories as $lafka_term ) : ?>
 										<li>
 											<label>
-												<input type="checkbox" name="lafka_addon_categories[]" value="<?php echo esc_attr( (int) $term->term_id ); ?>" <?php checked( in_array( (int) $term->term_id, $category_ids, true ), true ); ?> />
-												<?php echo esc_html( $term->name ); ?>
+												<input type="checkbox" name="lafka_addon_categories[]" value="<?php echo esc_attr( (int) $lafka_term->term_id ); ?>" <?php checked( in_array( (int) $lafka_term->term_id, $category_ids, true ), true ); ?> />
+												<?php echo esc_html( $lafka_term->name ); ?>
 											</label>
 										</li>
 									<?php endforeach; ?>
@@ -103,7 +101,7 @@ $list_url = add_query_arg(
 		<h2><?php esc_html_e( 'Add-on Groups', 'lafka-plugin' ); ?></h2>
 		<div class="lafka-engine-groups">
 			<?php
-			foreach ( $groups as $group_index => $group ) {
+			foreach ( $groups as $lafka_group_index => $lafka_group ) {
 				require __DIR__ . '/editor.php';
 			}
 			?>
@@ -115,24 +113,24 @@ $list_url = add_query_arg(
 
 		<p class="submit">
 			<button type="submit" class="button button-primary"><?php esc_html_e( 'Save', 'lafka-plugin' ); ?></button>
-			<a href="<?php echo esc_url( $list_url ); ?>" class="button"><?php esc_html_e( 'Cancel', 'lafka-plugin' ); ?></a>
+			<a href="<?php echo esc_url( $lafka_list_url ); ?>" class="button"><?php esc_html_e( 'Cancel', 'lafka-plugin' ); ?></a>
 		</p>
 	</form>
 
 	<template id="lafka-engine-group-template" data-loop-placeholder="__GROUP_INDEX__">
 		<?php
-		$group       = Lafka_Addon_Group::from_array( array() );
-		$group_index = '__GROUP_INDEX__';
+		$lafka_group       = Lafka_Addon_Group::from_array( array() );
+		$lafka_group_index = '__GROUP_INDEX__';
 		require __DIR__ . '/editor.php';
 		?>
 	</template>
 
 	<template id="lafka-engine-option-row-template" data-loop-placeholder="__OPTION_INDEX__">
 		<?php
-		$option       = Lafka_Addon_Option::from_array( array() );
-		$option_index = '__OPTION_INDEX__';
-		$group_index  = '__GROUP_INDEX__';
-		$group        = Lafka_Addon_Group::from_array( array() );
+		$lafka_option       = Lafka_Addon_Option::from_array( array() );
+		$lafka_option_index = '__OPTION_INDEX__';
+		$lafka_group_index  = '__GROUP_INDEX__';
+		$lafka_group        = Lafka_Addon_Group::from_array( array() );
 		require __DIR__ . '/parts/option-row.php';
 		?>
 	</template>
