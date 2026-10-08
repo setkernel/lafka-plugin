@@ -244,7 +244,7 @@ if ( ! function_exists( 'lafka_unsub_email_headers' ) ) {
 	 * @param mixed  $email
 	 * @return string
 	 */
-	function lafka_unsub_email_headers( $headers, $email_id = '', $object = null, $email = null ): string {
+	function lafka_unsub_email_headers( $headers, $email_id = '', $email_object = null, $email = null ): string {
 		$headers = (string) $headers;
 		$ids     = array( 'lafka_abandoned_cart', 'lafka_review_prompt' );
 		if ( ! in_array( (string) $email_id, $ids, true ) ) {
@@ -257,8 +257,8 @@ if ( ! function_exists( 'lafka_unsub_email_headers' ) ) {
 			$recipient = (string) $email->recipient;
 		}
 		// Fallback to the order object (review email; older 3-arg WC signature).
-		if ( '' === $recipient && is_object( $object ) && method_exists( $object, 'get_billing_email' ) ) {
-			$recipient = (string) $object->get_billing_email();
+		if ( '' === $recipient && is_object( $email_object ) && method_exists( $email_object, 'get_billing_email' ) ) {
+			$recipient = (string) $email_object->get_billing_email();
 		}
 		// Defend against a comma-joined recipient list — token the first address.
 		if ( false !== strpos( $recipient, ',' ) ) {

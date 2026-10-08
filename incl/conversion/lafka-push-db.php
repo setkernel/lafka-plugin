@@ -379,7 +379,7 @@ if ( ! function_exists( 'lafka_push_get_subscription_by_endpoint' ) ) {
 				$endpoint
 			)
 		);
-		return $row ?: null;
+		return $row ? $row : null;
 	}
 }
 

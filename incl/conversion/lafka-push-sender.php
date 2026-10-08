@@ -241,19 +241,7 @@ if ( ! function_exists( 'lafka_push_hkdf' ) ) {
 	 * HKDF (RFC 5869).
 	 */
 	function lafka_push_hkdf( string $ikm, string $salt, string $info, int $length ): string {
-		if ( function_exists( 'hash_hkdf' ) ) {
-			return (string) hash_hkdf( 'sha256', $ikm, $length, $info, $salt );
-		}
-		$prk = hash_hmac( 'sha256', $ikm, $salt, true );
-		$t   = '';
-		$out = '';
-		$i   = 1;
-		while ( strlen( $out ) < $length ) {
-			$t    = hash_hmac( 'sha256', $t . $info . chr( $i ), $prk, true );
-			$out .= $t;
-			++$i;
-		}
-		return substr( $out, 0, $length );
+		return (string) hash_hkdf( 'sha256', $ikm, $length, $info, $salt );
 	}
 }
 

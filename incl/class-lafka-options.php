@@ -43,7 +43,7 @@ class Lafka_Options {
 	 *
 	 * @return mixed
 	 */
-	public static function get( $name, $default = null ) {
+	public static function get( $name, $default_value = null ) {
 		if ( null === self::$options ) {
 			self::$options = get_option( 'lafka', array() );
 			if ( ! is_array( self::$options ) ) {
@@ -57,8 +57,8 @@ class Lafka_Options {
 		}
 
 		// 2. Caller-supplied default.
-		if ( null !== $default ) {
-			return $default;
+		if ( null !== $default_value ) {
+			return $default_value;
 		}
 
 		// 3. Registered defaults from the theme's options framework.

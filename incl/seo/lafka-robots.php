@@ -93,9 +93,9 @@ if ( ! function_exists( 'lafka_robots_filter' ) ) {
 	 * @param int|bool $public Whether search engines are allowed (1) or not (0).
 	 * @return string
 	 */
-	function lafka_robots_filter( $output, $public = 1 ): string {
+	function lafka_robots_filter( $output, $is_public = 1 ): string {
 		$output = (string) $output;
-		if ( empty( $public ) ) {
+		if ( empty( $is_public ) ) {
 			return $output;
 		}
 

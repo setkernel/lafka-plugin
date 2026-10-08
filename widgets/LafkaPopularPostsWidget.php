@@ -7,7 +7,7 @@ defined( 'ABSPATH' ) || exit;
  */
 class LafkaPopularPostsWidget extends WP_Widget {
 
-	function __construct() {
+	public function __construct() {
 		$widget_ops = array(
 			'classname'   => 'widget_recent_entries lafka-popular-posts',
 			'description' => esc_html__( 'The most popular posts on your site', 'lafka-plugin' ),
@@ -16,7 +16,7 @@ class LafkaPopularPostsWidget extends WP_Widget {
 		$this->alt_option_name = 'widget_popular_entries';
 	}
 
-	function widget( $args, $instance ) {
+	public function widget( $args, $instance ) {
 		if ( ! isset( $args['widget_id'] ) ) {
 			$args['widget_id'] = $this->id;
 		}
@@ -102,7 +102,7 @@ class LafkaPopularPostsWidget extends WP_Widget {
 		<?php
 	}
 
-	function update( $new_instance, $old_instance ) {
+	public function update( $new_instance, $old_instance ) {
 		$instance           = $old_instance;
 		$instance['title']  = isset( $new_instance['title'] ) ? sanitize_text_field( wp_unslash( $new_instance['title'] ) ) : '';
 		$instance['number'] = isset( $new_instance['number'] ) ? max( 1, (int) $new_instance['number'] ) : 5;
@@ -110,7 +110,7 @@ class LafkaPopularPostsWidget extends WP_Widget {
 		return $instance;
 	}
 
-	function form( $instance ) {
+	public function form( $instance ) {
 		$title  = isset( $instance['title'] ) ? esc_attr( $instance['title'] ) : '';
 		$number = isset( $instance['number'] ) ? absint( $instance['number'] ) : 5;
 		?>

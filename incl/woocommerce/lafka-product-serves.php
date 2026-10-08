@@ -201,13 +201,13 @@ if ( ! function_exists( 'lafka_product_serves_rest_update' ) ) {
 	 * @param mixed $object WC_Product or WP_Post.
 	 * @return true|WP_Error
 	 */
-	function lafka_product_serves_rest_update( $value, $object ) {
-		$is_wc_object = is_object( $object ) && method_exists( $object, 'update_meta_data' );
-		$id           = $is_wc_object && method_exists( $object, 'get_id' ) ? (int) $object->get_id() : (int) ( is_object( $object ) && isset( $object->ID ) ? $object->ID : 0 );
+	function lafka_product_serves_rest_update( $value, $rest_object ) {
+		$is_wc_object = is_object( $rest_object ) && method_exists( $rest_object, 'update_meta_data' );
+		$id           = $is_wc_object && method_exists( $rest_object, 'get_id' ) ? (int) $rest_object->get_id() : (int) ( is_object( $rest_object ) && isset( $rest_object->ID ) ? $rest_object->ID : 0 );
 		if ( $id <= 0 || ! current_user_can( 'edit_post', $id ) ) {
 			return new WP_Error( 'lafka_serves_forbidden', __( 'Sorry, you are not allowed to edit this product.', 'lafka-plugin' ), array( 'status' => 403 ) );
 		}
-		$product = $is_wc_object ? $object : ( function_exists( 'wc_get_product' ) ? wc_get_product( $id ) : null );
+		$product = $is_wc_object ? $rest_object : ( function_exists( 'wc_get_product' ) ? wc_get_product( $id ) : null );
 		if ( ! is_object( $product ) ) {
 			return new WP_Error( 'lafka_serves_invalid_product', __( 'Invalid product.', 'lafka-plugin' ), array( 'status' => 404 ) );
 		}

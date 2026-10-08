@@ -130,13 +130,13 @@ if ( ! function_exists( 'lafka_schema_faq_items_from_content' ) ) {
 		$html_chunks = array();
 		if ( $has_blocks && function_exists( 'parse_blocks' ) ) {
 			$blocks    = parse_blocks( $content );
-			$collector = static function ( array $block, callable $self ) use ( &$html_chunks ): void {
+			$collector = static function ( array $block, callable $walker ) use ( &$html_chunks ): void {
 				if ( ! empty( $block['innerHTML'] ) && false !== strpos( (string) $block['innerHTML'], 'lafka-contact__faq-item' ) ) {
 					$html_chunks[] = (string) $block['innerHTML'];
 				}
 				if ( ! empty( $block['innerBlocks'] ) && is_array( $block['innerBlocks'] ) ) {
 					foreach ( $block['innerBlocks'] as $inner ) {
-						$self( $inner, $self );
+						$walker( $inner, $walker );
 					}
 				}
 			};

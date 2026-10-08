@@ -361,7 +361,7 @@ if ( ! function_exists( 'lafka_ac_get_row_by_token' ) ) {
 				$token
 			)
 		);
-		return $row ?: null;
+		return $row ? $row : null;
 	}
 }
 

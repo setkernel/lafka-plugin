@@ -263,18 +263,18 @@ if ( ! class_exists( 'Lafka_Insights_Server_Events' ) ) {
 		 * @param string $class    declined | avs | cvv | gateway_error | other.
 		 * @return void
 		 */
-		private static function record_payment_failure( int $order_id, string $class ): void {
+		private static function record_payment_failure( int $order_id, string $gateway_class ): void {
 			if ( isset( self::$failed_orders[ $order_id ] ) ) {
 				return;
 			}
 			self::$failed_orders[ $order_id ] = true;
-			$class                            = in_array( $class, array( 'declined', 'avs', 'cvv', 'gateway_error' ), true ) ? $class : 'other';
-			$reason                           = 'payment_' . $class;
+			$gateway_class                            = in_array( $gateway_class, array( 'declined', 'avs', 'cvv', 'gateway_error' ), true ) ? $gateway_class : 'other';
+			$reason                           = 'payment_' . $gateway_class;
 			self::record_for_order(
 				$order_id,
 				Lafka_Insights_DB::STAGE_PAY_FAILED,
 				array(
-					'pay_fail' => array( $class => 1 ),
+					'pay_fail' => array( $gateway_class => 1 ),
 					'block'    => array( $reason => 1 ),
 				),
 				$reason

@@ -54,8 +54,8 @@ class Lafka_WC_Variation_Swatches_Frontend {
 	 * @return string
 	 */
 	public function get_swatch_html( $html, $args ) {
-		$swatch_types = Lafka_WCVS()->types;
-		$attr         = Lafka_WCVS()->get_tax_attribute( $args['attribute'] );
+		$swatch_types = lafka_wcvs()->types;
+		$attr         = lafka_wcvs()->get_tax_attribute( $args['attribute'] );
 
 		// Return if this is normal attribute
 		if ( empty( $attr ) ) {

@@ -106,7 +106,13 @@ if ( isset( $lafka_contact_form_fields ) ) {
 }
 
 $lafka_has_error  = false;
-$lafka_name_error = $lafka_email_error = $lafka_phone_error = $lafka_address_error = $lafka_subject_error = $lafka_message_error = $lafka_captcha_error = false;
+$lafka_name_error    = false;
+$lafka_email_error   = false;
+$lafka_phone_error   = false;
+$lafka_address_error = false;
+$lafka_subject_error = false;
+$lafka_message_error = false;
+$lafka_captcha_error = false;
 
 if ( isset( $_POST['lafka_contact_submitted'] ) ) {
 
@@ -171,7 +177,12 @@ if ( isset( $_POST['lafka_contact_submitted'] ) ) {
 			// Bump the per-IP rate counter only on successful sends so attackers spamming garbage don't lock out legit users.
 			set_transient( $lafka_rate_key, $lafka_rate_count + 1, HOUR_IN_SECONDS );
 			//clear values
-			$lafka_subject = $lafka_email = $lafka_name = $lafka_phone = $lafka_address = $lafka_message = '';
+			$lafka_subject = '';
+			$lafka_email   = '';
+			$lafka_name    = '';
+			$lafka_phone   = '';
+			$lafka_address = '';
+			$lafka_message = '';
 		} else {
 			$lafka_contactform_response = lafka_contact_form_generate_response( 'error', $lafka_message_unsent ); //message wasn't sent
 		}

@@ -109,7 +109,7 @@ if ( ! function_exists( 'lafka_disable_404_guess_redirect' ) ) {
 	 * @param bool $do Whether core should guess.
 	 * @return bool
 	 */
-	function lafka_disable_404_guess_redirect( $do ) {
+	function lafka_disable_404_guess_redirect( $do_guess ) {
 		/**
 		 * Filter whether Lafka disables WordPress' 404 permalink guessing.
 		 *
@@ -119,7 +119,7 @@ if ( ! function_exists( 'lafka_disable_404_guess_redirect' ) ) {
 		if ( (bool) apply_filters( 'lafka_disable_404_guess_redirect', true ) ) {
 			return false;
 		}
-		return (bool) $do;
+		return (bool) $do_guess;
 	}
 }
 

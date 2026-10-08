@@ -88,7 +88,7 @@ class Lafka_Engine_Field_Textarea extends Lafka_Engine_Field {
 			);
 		}
 
-		return $cart_item_data ?: false;
+		return $cart_item_data ? $cart_item_data : false;
 	}
 
 	/**

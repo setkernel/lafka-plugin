@@ -147,7 +147,7 @@ class LafkaProductFilterWidget extends WC_Widget {
 			return;
 		}
 
-		$attribute_object = Lafka_WCVS()->get_tax_attribute( $taxonomy );
+		$attribute_object = lafka_wcvs()->get_tax_attribute( $taxonomy );
 		$display_type     = $attribute_object->attribute_type;
 
 		$terms = get_terms( $taxonomy, array( 'hide_empty' => '1' ) );
@@ -568,7 +568,7 @@ class LafkaProductFilterWidget extends WC_Widget {
 					$term_html = '';
 			}
 
-			if ( $term_html && $count > 0 || $option_is_set ) {
+			if ( ( $term_html && $count > 0 ) || $option_is_set ) {
 				$link           = esc_url( apply_filters( 'woocommerce_layered_nav_link', $link, $term, $taxonomy ) );
 				$term_html_link = '<a href="' . $link . '">' . $term_html . '</a>';
 			} else {

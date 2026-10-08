@@ -6,7 +6,7 @@ defined( 'ABSPATH' ) || exit;
  */
 class LafkaLatestMenuEntriesWidget extends WP_Widget {
 
-	function __construct() {
+	public function __construct() {
 		$widget_ops = array(
 			'classname'   => 'lafka_latest_projects_widget',
 			'description' => esc_html__( 'List Restaurant Menu Entries with configurable options.', 'lafka-plugin' ),
@@ -19,7 +19,7 @@ class LafkaLatestMenuEntriesWidget extends WP_Widget {
 		add_action( 'switch_theme', array( $this, 'flush_widget_cache' ) );
 	}
 
-	function widget( $args, $instance ) {
+	public function widget( $args, $instance ) {
 		$cache = wp_cache_get( 'lafka_widget_latest_projects', 'widget' );
 
 		if ( ! is_array( $cache ) ) {
@@ -38,7 +38,8 @@ class LafkaLatestMenuEntriesWidget extends WP_Widget {
 		ob_start();
 
 		$title = apply_filters( 'widget_title', empty( $instance['title'] ) ? esc_html__( 'Latest Menu Entries', 'lafka-plugin' ) : $instance['title'], $instance, $this->id_base );
-		if ( empty( $instance['number'] ) || ! $number = absint( $instance['number'] ) ) {
+		$number = empty( $instance['number'] ) ? 0 : absint( $instance['number'] );
+		if ( ! $number ) {
 			$number = 10;
 		}
 
@@ -88,7 +89,7 @@ class LafkaLatestMenuEntriesWidget extends WP_Widget {
 		wp_cache_set( 'lafka_widget_latest_projects', $cache, 'widget' );
 	}
 
-	function update( $new_instance, $old_instance ) {
+	public function update( $new_instance, $old_instance ) {
 		$instance = $old_instance;
 		// sanitize_text_field over strip_tags: also decodes entities + normalises whitespace.
 		$instance['title']  = isset( $new_instance['title'] ) ? sanitize_text_field( wp_unslash( $new_instance['title'] ) ) : '';
@@ -103,11 +104,11 @@ class LafkaLatestMenuEntriesWidget extends WP_Widget {
 		return $instance;
 	}
 
-	function flush_widget_cache() {
+	public function flush_widget_cache() {
 		wp_cache_delete( 'lafka_widget_latest_projects', 'widget' );
 	}
 
-	function form( $instance ) {
+	public function form( $instance ) {
 		$title  = isset( $instance['title'] ) ? esc_attr( $instance['title'] ) : '';
 		$number = isset( $instance['number'] ) ? absint( $instance['number'] ) : 5;
 		?>

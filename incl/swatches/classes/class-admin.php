@@ -103,7 +103,7 @@ class Lafka_WC_Variation_Swatches_Admin {
 	 * @param string $taxonomy
 	 */
 	public function add_attribute_fields( $taxonomy ) {
-		$attr = Lafka_WCVS()->get_tax_attribute( $taxonomy );
+		$attr = lafka_wcvs()->get_tax_attribute( $taxonomy );
 
 		do_action( 'lafka-wcs_product_attribute_field', $attr->attribute_type, '', 'add' );
 	}
@@ -115,7 +115,7 @@ class Lafka_WC_Variation_Swatches_Admin {
 	 * @param string $taxonomy
 	 */
 	public function edit_attribute_fields( $term, $taxonomy ) {
-		$attr  = Lafka_WCVS()->get_tax_attribute( $taxonomy );
+		$attr  = lafka_wcvs()->get_tax_attribute( $taxonomy );
 		$value = get_term_meta( $term->term_id, $attr->attribute_type, true );
 
 		do_action( 'lafka-wcs_product_attribute_field', $attr->attribute_type, $value, 'edit' );
@@ -135,14 +135,14 @@ class Lafka_WC_Variation_Swatches_Admin {
 		}
 
 		// Print the open tag of field container. Translated label flows from
-		// Lafka_WCVS()->types[ $type ]; escape it before printf since a
+		// lafka_wcvs()->types[ $type ]; escape it before printf since a
 		// malicious or buggy translation could otherwise inject HTML.
 		printf(
 			'<%s class="form-field">%s<label for="term-%s">%s</label>%s',
 			'edit' === $form ? 'tr' : 'div',
 			'edit' === $form ? '<th>' : '',
 			esc_attr( $type ),
-			esc_html( (string) ( Lafka_WCVS()->types[ $type ] ?? $type ) ),
+			esc_html( (string) ( lafka_wcvs()->types[ $type ] ?? $type ) ),
 			'edit' === $form ? '</th><td>' : ''
 		);
 
@@ -216,7 +216,7 @@ class Lafka_WC_Variation_Swatches_Admin {
 		// Note: WP's term-edit form supplies its own nonce (verified by
 		// edit_terms / wp-admin/edit-tags.php) before hitting this hook,
 		// so an explicit per-field nonce here would be redundant.
-		foreach ( Lafka_WCVS()->types as $type => $label ) {
+		foreach ( lafka_wcvs()->types as $type => $label ) {
 			if ( isset( $_POST[ $type ] ) ) {
 				update_term_meta( $term_id, $type, sanitize_text_field( wp_unslash( $_POST[ $type ] ) ) );
 			}
@@ -230,7 +230,7 @@ class Lafka_WC_Variation_Swatches_Admin {
 	 * @param $index
 	 */
 	public function product_option_terms( $taxonomy, $index ) {
-		if ( ! array_key_exists( $taxonomy->attribute_type, Lafka_WCVS()->types ) ) {
+		if ( ! array_key_exists( $taxonomy->attribute_type, lafka_wcvs()->types ) ) {
 			return;
 		}
 
@@ -295,7 +295,7 @@ class Lafka_WC_Variation_Swatches_Admin {
 	 * @param $term_id
 	 */
 	public function add_attribute_column_content( $columns, $column, $term_id ) {
-		$attr  = Lafka_WCVS()->get_tax_attribute( sanitize_text_field( wp_unslash( $_REQUEST['taxonomy'] ) ) );
+		$attr  = lafka_wcvs()->get_tax_attribute( sanitize_text_field( wp_unslash( $_REQUEST['taxonomy'] ) ) );
 		$value = get_term_meta( $term_id, $attr->attribute_type, true );
 
 		switch ( $attr->attribute_type ) {

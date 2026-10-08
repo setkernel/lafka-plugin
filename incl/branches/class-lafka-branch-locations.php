@@ -668,7 +668,8 @@ class Lafka_Branch_Locations {
 	 * @return bool
 	 */
 	public static function is_order_type_allowed_for_branch( string $order_type, int $branch_id ): bool {
-		$branch_cap = get_term_meta( $branch_id, 'lafka_branch_order_type', true ) ?: 'delivery_pickup';
+		$branch_cap = get_term_meta( $branch_id, 'lafka_branch_order_type', true );
+		$branch_cap = $branch_cap ? $branch_cap : 'delivery_pickup';
 
 		return self::is_order_type_permitted_by_caps( $order_type, (string) $branch_cap, self::get_order_type() );
 	}

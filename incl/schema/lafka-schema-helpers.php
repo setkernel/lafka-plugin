@@ -161,7 +161,7 @@ if ( ! function_exists( 'lafka_get_restaurant_info' ) ) {
 		// for list fields — are treated as "not set" so the next resolver
 		// step takes over. WC store options (woocommerce_store_address etc.)
 		// remain the fallback for shared NAP fields.
-		$get = function ( $key, $default = '' ) use ( $wc_fallbacks ) {
+		$get = function ( $key, $default_value = '' ) use ( $wc_fallbacks ) {
 			if ( function_exists( 'get_option' ) ) {
 				$option = get_option( 'lafka_business_' . $key, null );
 				if ( lafka_schema_is_set_value( $option ) ) {
@@ -171,7 +171,7 @@ if ( ! function_exists( 'lafka_get_restaurant_info' ) ) {
 			if ( isset( $wc_fallbacks[ $key ] ) && '' !== $wc_fallbacks[ $key ] ) {
 				return $wc_fallbacks[ $key ];
 			}
-			return $default;
+			return $default_value;
 		};
 
 		// Decoded: get_bloginfo() is display-filtered ("&amp;"), and this name
@@ -188,6 +188,8 @@ if ( ! function_exists( 'lafka_get_restaurant_info' ) ) {
 		if ( '' !== $map_url && false === filter_var( $map_url, FILTER_VALIDATE_URL ) ) {
 			$map_url = '';
 		}
+
+		$business_types = lafka_schema_normalize_csv_list( $get( 'business_type' ) );
 
 		$info = array(
 			'name'            => $get( 'name', $name_default ),
@@ -216,7 +218,7 @@ if ( ! function_exists( 'lafka_get_restaurant_info' ) ) {
 			// JSON-LD @type. Resolve the stored value via the shared CSV parser;
 			// fall back to the Restaurant default only when nothing is stored
 			// (normalize returns an empty — falsy — array for unset/empty input).
-			'business_type'   => lafka_schema_normalize_csv_list( $get( 'business_type' ) ) ?: array( 'Restaurant', 'LocalBusiness', 'FoodEstablishment' ),
+			'business_type'   => $business_types ? $business_types : array( 'Restaurant', 'LocalBusiness', 'FoodEstablishment' ),
 			'same_as'         => array_values(
 				array_filter(
 					lafka_schema_normalize_line_list( $get( 'same_as' ) ),

@@ -136,7 +136,7 @@ class Lafka_Engine_Editor {
 			$reference = sprintf(
 				/* translators: %d: post id placeholder */
 				__( 'Lafka Addon Group #%d', 'lafka-plugin' ),
-				$edit_id ?: ( wp_count_posts( 'lafka_glb_addon' )->publish + 1 )
+				$edit_id ? $edit_id : ( wp_count_posts( 'lafka_glb_addon' )->publish + 1 )
 			);
 		}
 

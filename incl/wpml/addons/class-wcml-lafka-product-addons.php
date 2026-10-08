@@ -33,7 +33,7 @@ class WCML_Lafka_Product_Addons {
 	 * @param SitePress $sitepress
 	 * @param woocommerce_wpml $woocommerce_wpml
 	 */
-	function __construct( SitePress $sitepress, woocommerce_wpml $woocommerce_wpml ) {
+	public function __construct( SitePress $sitepress, woocommerce_wpml $woocommerce_wpml ) {
 		$this->sitepress           = $sitepress;
 		$this->woocommerce_wpml    = $woocommerce_wpml;
 		$this->multi_currency_mode = $woocommerce_wpml->settings['enable_multi_currency'];
@@ -98,7 +98,7 @@ class WCML_Lafka_Product_Addons {
 	 * @param $meta_key
 	 * @param $addons
 	 */
-	function register_addons_strings( $meta_id, $id, $meta_key, $addons ) {
+	public function register_addons_strings( $meta_id, $id, $meta_key, $addons ) {
 		if ( '_product_addons' === $meta_key && 'lafka_glb_addon' === get_post_type( $id ) ) {
 			$this->update_custom_prices_values( $id );
 			foreach ( $addons as $addon ) {
@@ -122,7 +122,7 @@ class WCML_Lafka_Product_Addons {
 	 *
 	 * @return array
 	 */
-	function translate_addons_strings( $null, $object_id, $meta_key, $single ) {
+	public function translate_addons_strings( $check, $object_id, $meta_key, $single ) {
 
 		if ( '_product_addons' === $meta_key && 'lafka_glb_addon' === get_post_type( $object_id ) ) {
 
@@ -146,7 +146,7 @@ class WCML_Lafka_Product_Addons {
 			return array( 0 => $addons );
 		}
 
-		return $null;
+		return $check;
 	}
 
 
@@ -155,7 +155,7 @@ class WCML_Lafka_Product_Addons {
 	 *
 	 * @return array
 	 */
-	function addons_product_terms( $product_terms ) {
+	public function addons_product_terms( $product_terms ) {
 		foreach ( $product_terms as $key => $product_term ) {
 			$product_terms[ $key ] = apply_filters( 'translate_object_id', $product_term, 'product_cat', true, $this->sitepress->get_default_language() );
 		}
@@ -169,7 +169,7 @@ class WCML_Lafka_Product_Addons {
 	 * @param $product_id
 	 * @param $data
 	 */
-	function custom_box_html( $obj, $product_id, $data ) {
+	public function custom_box_html( $obj, $product_id, $data ) {
 
 		$product_addons = $this->get_product_addons( $product_id );
 
@@ -208,7 +208,7 @@ class WCML_Lafka_Product_Addons {
 	 *
 	 * @return mixed
 	 */
-	function custom_box_html_data( $data, $product_id, $translation ) {
+	public function custom_box_html_data( $data, $product_id, $translation ) {
 
 		$product_addons = $this->get_product_addons( $product_id );
 
@@ -247,7 +247,7 @@ class WCML_Lafka_Product_Addons {
 	 * @param $product_id
 	 * @param $data
 	 */
-	function addons_update( $original_product_id, $product_id, $data ) {
+	public function addons_update( $original_product_id, $product_id, $data ) {
 
 		$product_addons = $this->get_product_addons( $original_product_id );
 
@@ -281,7 +281,7 @@ class WCML_Lafka_Product_Addons {
 		$pointer_ui->show();
 	}
 
-	function replace_tm_editor_custom_fields_with_own_sections( $fields ) {
+	public function replace_tm_editor_custom_fields_with_own_sections( $fields ) {
 		$fields[] = '_product_addons';
 
 		return $fields;

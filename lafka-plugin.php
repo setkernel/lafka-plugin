@@ -109,7 +109,7 @@ if ( function_exists( 'register_deactivation_hook' ) ) {
  *      Plugin's class-lafka-options.php definition supersedes this when both load.
  */
 if ( ! function_exists( 'lafka_get_option' ) ) {
-	function lafka_get_option( $name, $default = false ) {
+	function lafka_get_option( $name, $default_value = false ) {
 		// Defensive guard: if this shim fires before Lafka_Options loaded, surface
 		// a clear error rather than a silent fatal on the next line.
 		if ( ! class_exists( 'Lafka_Options' ) ) {
@@ -118,12 +118,12 @@ if ( ! function_exists( 'lafka_get_option' ) ) {
 				'lafka_get_option() called before Lafka_Options class loaded. Ensure class-lafka-options.php is required before this shim.',
 				'8.8.1'
 			);
-			return $default;
+			return $default_value;
 		}
 		// Match the theme's helper: any falsy "no default given" sentinel falls
 		// through to registered defaults. Only an explicit truthy default short-
 		// circuits the framework defaults lookup.
-		return Lafka_Options::get( $name, $default ?: null );
+		return Lafka_Options::get( $name, $default_value ? $default_value : null );
 	}
 }
 
@@ -1445,7 +1445,7 @@ add_action(
 if ( ! function_exists( 'lafka_output_info_tooltips' ) ) {
 	function lafka_output_info_tooltips( $position, $show_in_listing = false ) {
 		for ( $i = 1; $i <= 3; $i++ ) {
-			if ( function_exists( 'lafka_get_option' ) && lafka_get_option( 'promo_tooltip_' . $i . '_trigger_text' ) && ( lafka_promo_tooltip_position( $i ) === $position || $show_in_listing && lafka_get_option( 'promo_tooltip_' . $i . '_show_in_listing' ) ) ) {
+			if ( function_exists( 'lafka_get_option' ) && lafka_get_option( 'promo_tooltip_' . $i . '_trigger_text' ) && ( lafka_promo_tooltip_position( $i ) === $position || ( $show_in_listing && lafka_get_option( 'promo_tooltip_' . $i . '_show_in_listing' ) ) ) ) {
 				?>
 				<div class="lafka-promo-wrapper
 				<?php

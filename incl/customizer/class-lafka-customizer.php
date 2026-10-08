@@ -9,7 +9,7 @@ defined( 'ABSPATH' ) || exit;
 require_once __DIR__ . '/class-lafka-customizer-restaurant-info.php';
 
 class Lafka_Customizer {
-	function __construct() {
+	public function __construct() {
 		add_action( 'customize_register', array( $this, 'add_sections' ) );
 	}
 
@@ -93,15 +93,15 @@ class Lafka_Customizer {
 		}
 	}
 
-	public function lafka_bool_to_string( $bool ) {
-		if ( ! is_bool( $bool ) ) {
-			$bool = $this->lafka_string_to_bool( $bool );
+	public function lafka_bool_to_string( $value ) {
+		if ( ! is_bool( $value ) ) {
+			$value = $this->lafka_string_to_bool( $value );
 		}
-		return true === $bool ? 'yes' : 'no';
+		return true === $value ? 'yes' : 'no';
 	}
 
-	public function lafka_string_to_bool( $string ) {
-		return is_bool( $string ) ? $string : ( 'yes' === $string || 1 === $string || 'true' === $string || '1' === $string );
+	public function lafka_string_to_bool( $value ) {
+		return is_bool( $value ) ? $value : ( 'yes' === $value || 1 === $value || 'true' === $value || '1' === $value );
 	}
 }
 

@@ -138,7 +138,7 @@ final class Lafka_WC_Variation_Swatches {
  *
  * @return Lafka_WC_Variation_Swatches
  */
-function Lafka_WCVS() {
+function lafka_wcvs() {
 	return Lafka_WC_Variation_Swatches::instance();
 }
 
@@ -149,7 +149,7 @@ function Lafka_WCVS() {
  */
 function lafka_wc_variation_swatches_constructor() {
 	if ( function_exists( 'WC' ) ) {
-		Lafka_WCVS();
+		lafka_wcvs();
 	}
 }
 

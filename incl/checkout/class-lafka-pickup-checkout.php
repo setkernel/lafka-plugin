@@ -530,7 +530,9 @@ if ( ! class_exists( 'Lafka_Pickup_Checkout' ) ) {
 			}
 			$available = self::available_gateway_ids();
 
-			return (string) ( reset( $available ) ?: '' );
+			$first = reset( $available );
+
+			return $first ? (string) $first : '';
 		}
 
 		/**

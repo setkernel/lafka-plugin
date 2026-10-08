@@ -99,7 +99,7 @@ class Lafka_Addons_CLI_Commands {
 		\WP_CLI::log( sprintf( '  groups: %d', count( $groups ) ) );
 
 		foreach ( $groups as $idx => $group ) {
-			\WP_CLI::log( sprintf( "\n  [%d] %s", $idx, $group->name ?: '(unnamed)' ) );
+			\WP_CLI::log( sprintf( "\n  [%d] %s", $idx, $group->name ? $group->name : '(unnamed)' ) );
 			\WP_CLI::log( sprintf( '      mode:    %s', $group->pricing_mode ) );
 			\WP_CLI::log( sprintf( '      source:  %s', $group->options_source ) );
 			if ( $group->options_source_attribute ) {
@@ -165,7 +165,7 @@ class Lafka_Addons_CLI_Commands {
 				$updated[] = sprintf(
 					'  [%d] %s — %d → %d options',
 					$idx,
-					$group->name ?: '(unnamed)',
+					$group->name ? $group->name : '(unnamed)',
 					$before,
 					$after
 				);
@@ -310,7 +310,7 @@ class Lafka_Addons_CLI_Commands {
 				sprintf(
 					'  [%d] %s (mode=%s, options=%d)',
 					$idx,
-					$g->name ?: '(unnamed)',
+					$g->name ? $g->name : '(unnamed)',
 					$g->pricing_mode,
 					count( $g->options )
 				)

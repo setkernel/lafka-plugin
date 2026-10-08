@@ -67,9 +67,15 @@ if ( ! function_exists( 'lafka_foodmenu_cat_ordering' ) ) {
 
 		lafka_reorder_terms( $term, $next_id, $taxonomy );
 
-		$children = get_terms( $taxonomy, "child_of=$id&menu_order=ASC&hide_empty=0" );
+		$children = get_terms(
+			array(
+				'taxonomy'   => $taxonomy,
+				'child_of'   => $id,
+				'hide_empty' => false,
+			)
+		);
 
-		if ( $term && sizeof( $children ) ) {
+		if ( $term && ! is_wp_error( $children ) && count( $children ) ) {
 			echo 'children';
 			wp_die();
 		}

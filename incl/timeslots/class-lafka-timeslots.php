@@ -47,7 +47,7 @@ class Lafka_Timeslots {
 	/**
 	 * @var Lafka_Timeslots|null
 	 */
-	protected static $_instance = null;
+	protected static $instance = null;
 
 	/**
 	 * Whether the customer must pick a date+time before checkout submits.
@@ -73,10 +73,10 @@ class Lafka_Timeslots {
 	private $order_date_time_timeslot_duration;
 
 	public static function instance(): ?Lafka_Timeslots {
-		if ( null === self::$_instance ) {
-			self::$_instance = new self();
+		if ( null === self::$instance ) {
+			self::$instance = new self();
 		}
-		return self::$_instance;
+		return self::$instance;
 	}
 
 	protected function __construct() {
@@ -700,7 +700,7 @@ class Lafka_Timeslots {
 				$end = '24:00';
 			}
 			$is_today = $curr_time->format( 'Y-m-d' ) === $date->format( 'Y-m-d' );
-			if ( $is_today && $curr_time <= ( clone $time )->sub( $interval ) || ! $is_today ) {
+			if ( ( $is_today && $curr_time <= ( clone $time )->sub( $interval ) ) || ! $is_today ) {
 				$timeslots[] = array(
 					'start' => $start,
 					'end'   => $end,

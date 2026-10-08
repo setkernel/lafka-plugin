@@ -27,7 +27,7 @@ $prefix = 'lafka_addon_groups[' . $group_index . ']';
 	<div class="lafka-engine-group__header">
 		<h3>
 			<?php esc_html_e( 'Group', 'lafka-plugin' ); ?>:
-			<span class="lafka-engine-group__title-display"><?php echo esc_html( $group->name ?: __( 'Untitled', 'lafka-plugin' ) ); ?></span>
+			<span class="lafka-engine-group__title-display"><?php echo esc_html( $group->name ? $group->name : __( 'Untitled', 'lafka-plugin' ) ); ?></span>
 		</h3>
 		<button type="button" class="button-link-delete" data-lafka-remove-group><?php esc_html_e( 'Remove group', 'lafka-plugin' ); ?></button>
 	</div>

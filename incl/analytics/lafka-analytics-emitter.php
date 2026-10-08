@@ -40,9 +40,9 @@ if ( ! function_exists( 'lafka_analytics_get_setting' ) ) {
 	 * @param string $default
 	 * @return string
 	 */
-	function lafka_analytics_get_setting( string $key, string $default = '' ): string {
-		$value = function_exists( 'get_theme_mod' ) ? get_theme_mod( $key, $default ) : $default;
-		return is_scalar( $value ) ? (string) $value : $default;
+	function lafka_analytics_get_setting( string $key, string $default_value = '' ): string {
+		$value = function_exists( 'get_theme_mod' ) ? get_theme_mod( $key, $default_value ) : $default_value;
+		return is_scalar( $value ) ? (string) $value : $default_value;
 	}
 }
 

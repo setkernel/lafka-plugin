@@ -594,7 +594,8 @@ if ( ! class_exists( 'Lafka_Diagnostics_Page' ) ) {
 				echo '<td>' . esc_html( (string) (int) $trace['steps'] ) . '</td>';
 				echo '<td>' . esc_html( (string) $trace['last_step'] ) . '</td>';
 				echo '<td>' . esc_html( $outcomes[ $outcome ] ?? $outcome ) . '</td>';
-				if ( $order_id > 0 && function_exists( 'wc_get_order' ) && ( $order = wc_get_order( $order_id ) ) ) {
+				$order = ( $order_id > 0 && function_exists( 'wc_get_order' ) ) ? wc_get_order( $order_id ) : false;
+				if ( $order ) {
 					printf( '<td><a href="%1$s">#%2$s</a> (%3$s)</td>', esc_url( $order->get_edit_order_url() ), esc_html( (string) $order->get_order_number() ), esc_html( wc_get_order_status_name( $order->get_status() ) ) );
 				} else {
 					echo '<td>—</td>';

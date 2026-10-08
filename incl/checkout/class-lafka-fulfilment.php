@@ -336,12 +336,12 @@ if ( ! class_exists( 'Lafka_Fulfilment' ) ) {
 		 * @param mixed $chosen_method Previously chosen rate id (or false).
 		 * @return mixed
 		 */
-		public static function filter_chosen_method( $default, $rates, $chosen_method = false ) {
+		public static function filter_chosen_method( $default_method, $rates, $chosen_method = false ) {
 			if ( ! is_array( $rates ) || empty( $rates ) ) {
-				return $default;
+				return $default_method;
 			}
 
-			$pick       = $default;
+			$pick       = $default_method;
 			$preference = self::preselect_enabled() ? self::preference() : '';
 			// The "Delivery" placeholder (price waiting for the address) was the
 			// choice and the real delivery rates just replaced it: the customer

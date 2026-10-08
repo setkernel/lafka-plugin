@@ -45,7 +45,7 @@ class Lafka_Engine_Helper {
 		}
 
 		$extra_key = (string) apply_filters( 'lafka_product_addons_cache_key_extra', '', $post_id, $prefix );
-		$cache_key = $post_id . '|' . ( $prefix ?: 'default' ) . '|' . (int) $inc_parent . '|' . (int) $inc_global . '|' . $extra_key;
+		$cache_key = $post_id . '|' . ( $prefix ? $prefix : 'default' ) . '|' . (int) $inc_parent . '|' . (int) $inc_global . '|' . $extra_key;
 		if ( isset( self::$product_addons_cache[ $cache_key ] ) ) {
 			return self::$product_addons_cache[ $cache_key ];
 		}

@@ -75,7 +75,7 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 		 * @param string               $type     'text' | 'textarea' | 'email'
 		 * @param callable|string|null $sanitize Custom sanitizer or null for default.
 		 */
-		private static function add_text( $wp_customize, $id, $section, $label, $default = '', $description = '', $type = 'text', $sanitize = null ): void {
+		private static function add_text( $wp_customize, $id, $section, $label, $default_value = '', $description = '', $type = 'text', $sanitize = null ): void {
 			if ( null === $sanitize ) {
 				$sanitize = ( 'textarea' === $type )
 					? 'sanitize_textarea_field'
@@ -88,7 +88,7 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 					// `lafka_business_*`, the same option the WooCommerce →
 					// Settings → Restaurant tab writes (see lafka-nap-migration.php).
 					'type'              => 0 === strpos( (string) $id, 'lafka_business_' ) ? 'option' : 'theme_mod',
-					'default'           => $default,
+					'default'           => $default_value,
 					'transport'         => 'refresh',
 					'sanitize_callback' => $sanitize,
 				)

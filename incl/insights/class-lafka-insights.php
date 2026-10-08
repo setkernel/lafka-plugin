@@ -186,9 +186,9 @@ if ( ! class_exists( 'Lafka_Insights' ) ) {
 		 * @param mixed $new New 'lafka' array.
 		 * @return void
 		 */
-		public static function on_flags_changed( $old, $new ): void {
-			$was = is_array( $old ) && 'enabled' === ( $old[ self::MODULE ] ?? '' );
-			$now = is_array( $new ) && 'enabled' === ( $new[ self::MODULE ] ?? '' );
+		public static function on_flags_changed( $old_flags, $new_flags ): void {
+			$was = is_array( $old_flags ) && 'enabled' === ( $old_flags[ self::MODULE ] ?? '' );
+			$now = is_array( $new_flags ) && 'enabled' === ( $new_flags[ self::MODULE ] ?? '' );
 			if ( $was === $now ) {
 				return;
 			}

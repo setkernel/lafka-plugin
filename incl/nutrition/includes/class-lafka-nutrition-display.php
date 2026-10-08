@@ -26,7 +26,9 @@ class Lafka_Nutrition_Display {
 	 * Get the plugin path.
 	 */
 	public function plugin_path() {
-		return $this->plugin_path = untrailingslashit( plugin_dir_path( __DIR__ ) );
+		$this->plugin_path = untrailingslashit( plugin_dir_path( __DIR__ ) );
+
+		return $this->plugin_path;
 	}
 
 	/**
