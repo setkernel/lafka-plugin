@@ -2,6 +2,9 @@
  * jQuery Schedule v2.1.0
  * https://github.com/Yehzuna/jquery-schedule
  * Thomas BORUSZEWSKI <yehzuna@outlook.com>
+ *
+ * Lafka patch: Array.isArray and typeof in place of $.isArray / $.isFunction
+ * (deprecated, removed in jQuery 4); the same three call sites in the .min.js.
  */
 ;(function ($, window, document, undefined) {
   'use strict';
@@ -260,7 +263,7 @@
             var parent = $('.jqs-day', $this.element).eq(data.day);
             var options = {};
             var height, position;
-            if ($.isArray(period)) {
+            if (Array.isArray(period)) {
               position = $this.positionFormat(period[0]);
               height = $this.positionFormat(period[1]);
             } else {
@@ -814,7 +817,7 @@
           var parent = $('.jqs-day', $this.element).eq(data.day);
           var options = {};
           var height, position;
-          if ($.isArray(period)) {
+          if (Array.isArray(period)) {
             position = $this.positionFormat(period[0]);
             height = $this.positionFormat(period[1]);
           } else {
@@ -860,7 +863,7 @@
     var loop = this.each(function () {
       if (!$.data(this, 'plugin_' + pluginName)) {
         $.data(this, 'plugin_' + pluginName, new Plugin(this, options));
-      } else if ($.isFunction(Plugin.prototype[options])) {
+      } else if ('function' === typeof Plugin.prototype[options]) {
         ret = $.data(this, 'plugin_' + pluginName)[options](args);
       }
     });
