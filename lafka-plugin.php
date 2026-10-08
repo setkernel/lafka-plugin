@@ -125,6 +125,19 @@ if ( ! function_exists( 'lafka_get_option' ) ) {
 			);
 			return $default_value;
 		}
+		/**
+		 * Short-circuit the lookup: return non-null to answer for a key. The
+		 * theme answers here for appearance keys that moved to theme_mods.
+		 *
+		 * @since 10.4.0
+		 * @param mixed  $value         Null to continue with the `lafka` option.
+		 * @param string $name          Option key.
+		 * @param mixed  $default_value Caller's default.
+		 */
+		$pre = apply_filters( 'lafka_pre_get_option', null, $name, $default_value );
+		if ( null !== $pre ) {
+			return $pre;
+		}
 		// Match the theme's helper: any falsy "no default given" sentinel falls
 		// through to registered defaults. Only an explicit truthy default short-
 		// circuits the framework defaults lookup.
