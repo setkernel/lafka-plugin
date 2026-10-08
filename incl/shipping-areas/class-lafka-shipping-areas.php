@@ -506,7 +506,7 @@ class Lafka_Shipping_Areas {
 		}
 
 		$options = get_option( 'lafka_shipping_areas_general' );
-		if ( empty( $options['pick_delivery_address'] ) ) {
+		if ( empty( $options['pick_delivery_address'] ) || ! self::delivery_pinpoint_ui_available() ) {
 			return;
 		}
 
@@ -585,6 +585,27 @@ class Lafka_Shipping_Areas {
 	}
 
 	/**
+	 * Whether this checkout can show the delivery pin map: the classic
+	 * checkout (the block checkout has no pin UI yet) with a map provider
+	 * loaded. Without it a mandatory pin would refuse every delivery order.
+	 *
+	 * @return bool
+	 */
+	public static function delivery_pinpoint_ui_available(): bool {
+		$classic   = ! class_exists( 'Lafka_Checkout_Mode' ) || Lafka_Checkout_Mode::is_classic();
+		$has_map   = function_exists( 'lafka_google_maps_script_url' ) && '' !== lafka_google_maps_script_url( 'places' );
+		$available = $classic && $has_map;
+
+		/**
+		 * Filter whether the checkout can collect a delivery pin.
+		 *
+		 * @since 10.4.0
+		 * @param bool $available Classic checkout with a map provider loaded.
+		 */
+		return (bool) apply_filters( 'lafka_delivery_pinpoint_ui_available', $available );
+	}
+
+	/**
 	 * delivery_pinpoint_required() for the current request: options, the WC
 	 * session's order type + chosen shipping methods, and the cart.
 	 *
@@ -593,6 +614,11 @@ class Lafka_Shipping_Areas {
 	 * @return bool
 	 */
 	public static function checkout_requires_delivery_pinpoint( ?array $chosen_methods = null ): bool {
+		// A pin can only be demanded where the customer can place one.
+		if ( ! self::delivery_pinpoint_ui_available() ) {
+			return false;
+		}
+
 		$order_type     = '';
 		$needs_shipping = true;
 		$wc             = function_exists( 'WC' ) ? WC() : null;
