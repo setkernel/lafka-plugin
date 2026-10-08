@@ -195,7 +195,7 @@ if ( ! function_exists( 'lafka_pdp_get_last_order' ) ) {
 			$orders = wc_get_orders(
 				array(
 					'customer_id' => get_current_user_id(),
-					'status'      => array( 'completed', 'processing' ),
+					'status'      => lafka_pdp_reorderable_statuses(),
 					'orderby'     => 'date',
 					'order'       => 'DESC',
 					'limit'       => 1,
@@ -231,6 +231,25 @@ if ( ! function_exists( 'lafka_pdp_get_last_order' ) ) {
 	}
 }
 
+if ( ! function_exists( 'lafka_pdp_reorderable_statuses' ) ) {
+	/**
+	 * Order statuses a customer can reorder from: done, paid, or in the
+	 * kitchen. The one list for the "Your usual?" card and WooCommerce's
+	 * order-again check.
+	 *
+	 * @return string[]
+	 */
+	function lafka_pdp_reorderable_statuses(): array {
+		return (array) apply_filters( 'lafka_pdp_reorderable_statuses', array( 'completed', 'processing', 'accepted', 'preparing', 'ready' ) );
+	}
+	add_filter(
+		'woocommerce_valid_order_statuses_for_order_again',
+		static function ( $statuses ) {
+			return array_values( array_unique( array_merge( (array) $statuses, lafka_pdp_reorderable_statuses() ) ) );
+		}
+	);
+}
+
 if ( ! function_exists( 'lafka_pdp_render_last_order_card' ) ) {
 	function lafka_pdp_render_last_order_card(): void {
 		$last = lafka_pdp_get_last_order();
@@ -249,13 +268,37 @@ if ( ! function_exists( 'lafka_pdp_render_last_order_card' ) ) {
 					<li><?php echo esc_html( $i['name'] ); ?></li>
 				<?php endforeach; ?>
 			</ul>
-			<button
-				type="button"
-				class="lafka-pdp-last-order__reorder"
-				data-lafka-reorder="<?php echo esc_attr( (string) $last['order_id'] ); ?>"
-				data-nonce="<?php echo esc_attr( wp_create_nonce( 'lafka_pdp_reorder' ) ); ?>">
-				<?php esc_html_e( 'Reorder', 'lafka-plugin' ); ?>
-			</button>
+			<?php if ( is_user_logged_in() ) : ?>
+				<?php
+				// WooCommerce's own order-again: checks ownership, empties the cart
+				// and re-adds every line with its add-ons, then opens the cart.
+				$lafka_reorder_url = wp_nonce_url( add_query_arg( 'order_again', (int) $last['order_id'], wc_get_cart_url() ), 'woocommerce-order_again' );
+				?>
+				<a class="lafka-pdp-last-order__reorder" href="<?php echo esc_url( $lafka_reorder_url ); ?>"><?php esc_html_e( 'Reorder', 'lafka-plugin' ); ?></a>
+			<?php else : ?>
+				<?php
+				wp_enqueue_script(
+					'lafka-last-order',
+					plugins_url( lafka_plugin_script_path( 'assets/js/lafka-last-order.min.js' ), LAFKA_PLUGIN_FILE ),
+					array(),
+					lafka_plugin_asset_version( 'assets/js/lafka-last-order.min.js' ),
+					array(
+						'in_footer' => true,
+						'strategy'  => 'defer',
+					)
+				);
+				?>
+				<button
+					type="button"
+					class="lafka-pdp-last-order__reorder"
+					data-lafka-reorder="<?php echo esc_attr( (string) $last['order_id'] ); ?>"
+					data-nonce="<?php echo esc_attr( wp_create_nonce( 'lafka_pdp_reorder' ) ); ?>"
+					data-ajax-url="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>"
+					data-cart-url="<?php echo esc_url( wc_get_cart_url() ); ?>"
+					data-fail-text="<?php esc_attr_e( 'Could not reorder — add items from the menu', 'lafka-plugin' ); ?>">
+					<?php esc_html_e( 'Reorder', 'lafka-plugin' ); ?>
+				</button>
+			<?php endif; ?>
 		</div>
 		<?php
 	}
