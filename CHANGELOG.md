@@ -113,6 +113,10 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
   tags sat only on pages whose content is not rendered, plus one `[lafka_icon_box]` on My
   account). `[lafka_nap]` and `[lafka_shipping_areas]` are unchanged.
 
+- The `typed`, `nice-select` and `isotope` fallback script handles that pointed into the
+  theme folder (`lafka_register_theme_script_fallbacks()`); the theme no longer ships those
+  libraries.
+
 ### Fixed
 - Promo tooltips never matched their default zone: the theme default
   `promo_tooltip_N_position` was `above_price` while the plugin compared against

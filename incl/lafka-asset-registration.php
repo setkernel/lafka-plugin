@@ -183,10 +183,6 @@ if ( ! function_exists( 'lafka_register_theme_script_fallbacks' ) ) {
 		// $.magnificPopup.open) depends on it.
 		$register_script( 'magnific', $theme_uri . '/js/magnific/jquery.magnific-popup.min.js', array( 'jquery' ), $theme_ver( '/js/magnific/jquery.magnific-popup.min.js' ) );
 		$register_style( 'magnific', $theme_uri . '/styles/magnific/magnific-popup.css', array(), $theme_ver( '/styles/magnific/magnific-popup.css' ) );
-
-		$register_script( 'typed', $theme_uri . '/js/typed.min.js', array(), $theme_ver( '/js/typed.min.js' ) );
-		$register_script( 'nice-select', $theme_uri . '/js/jquery.nice-select.min.js', array( 'jquery' ), $theme_ver( '/js/jquery.nice-select.min.js' ) );
-		$register_script( 'isotope', $theme_uri . '/js/isotope/dist/isotope.pkgd.min.js', array( 'jquery', 'imagesloaded' ), $theme_ver( '/js/isotope/dist/isotope.pkgd.min.js' ) );
 	}
 }
 
