@@ -389,34 +389,35 @@ if ( ! class_exists( 'Lafka_Store_Api' ) ) {
 			};
 
 			return array(
-				'order_type'                 => $string_prop( __( 'Selected order type (delivery or pickup).', 'lafka-plugin' ) ),
-				'branch_id'                  => array(
+				'order_type'                   => $string_prop( __( 'Selected order type (delivery or pickup).', 'lafka-plugin' ) ),
+				'branch_id'                    => array(
 					'description' => __( 'Selected branch term id (0 when none).', 'lafka-plugin' ),
 					'type'        => 'integer',
 					'context'     => array( 'view', 'edit' ),
 					'readonly'    => true,
 				),
-				'branch_name'                => $string_prop( __( 'Selected branch name.', 'lafka-plugin' ) ),
-				'checkout_date'              => $string_prop( __( 'Selected delivery/pickup date (Y-m-d).', 'lafka-plugin' ) ),
-				'checkout_timeslot'          => $string_prop( __( 'Selected delivery/pickup timeslot id.', 'lafka-plugin' ) ),
-				'store_open_now'             => array(
+				'branch_name'                  => $string_prop( __( 'Selected branch name.', 'lafka-plugin' ) ),
+				'checkout_date'                => $string_prop( __( 'Selected delivery/pickup date (Y-m-d).', 'lafka-plugin' ) ),
+				'checkout_timeslot'            => $string_prop( __( 'Selected delivery/pickup timeslot id.', 'lafka-plugin' ) ),
+				'store_open_now'               => array(
 					'description' => __( 'Whether the store is currently accepting orders.', 'lafka-plugin' ),
 					'type'        => 'boolean',
 					'context'     => array( 'view', 'edit' ),
 					'readonly'    => true,
 				),
-				'next_open'                  => $string_prop( __( 'Human-readable next opening time when closed (null when open).', 'lafka-plugin' ) ),
-				'free_delivery_threshold'    => $number_prop( __( 'Cart total at which delivery becomes free (0 = off).', 'lafka-plugin' ) ),
-				'free_delivery_remaining'    => $number_prop( __( 'Amount remaining to reach the free-delivery threshold.', 'lafka-plugin' ) ),
-				'delivery_minimum'           => $number_prop( __( 'Minimum cart total required for delivery (0 = off).', 'lafka-plugin' ) ),
-				'delivery_minimum_remaining' => $number_prop( __( 'Amount remaining to reach the delivery minimum.', 'lafka-plugin' ) ),
-				'delivery_address_required'  => array(
+				'next_open'                    => $string_prop( __( 'Human-readable next opening time when closed (null when open).', 'lafka-plugin' ) ),
+				'free_delivery_threshold'      => $number_prop( __( 'Cart total at which delivery becomes free (0 = off).', 'lafka-plugin' ) ),
+				'free_delivery_remaining'      => $number_prop( __( 'Amount remaining to reach the free-delivery threshold.', 'lafka-plugin' ) ),
+				'delivery_minimum'             => $number_prop( __( 'Minimum cart total required for delivery (0 = off).', 'lafka-plugin' ) ),
+				'delivery_minimum_remaining'   => $number_prop( __( 'Amount remaining to reach the delivery minimum.', 'lafka-plugin' ) ),
+				'delivery_address_required'    => array(
 					'description' => __( 'Whether delivery prices are withheld until a street address and postcode are entered.', 'lafka-plugin' ),
 					'type'        => 'boolean',
 					'context'     => array( 'view', 'edit' ),
 					'readonly'    => true,
 				),
-				'delivery_address_message'   => $string_prop( __( 'Customer-facing explanation shown while delivery prices are withheld.', 'lafka-plugin' ) ),
+				'delivery_address_message'     => $string_prop( __( 'Customer-facing explanation shown while delivery prices are withheld.', 'lafka-plugin' ) ),
+				'delivery_unavailable_message' => $string_prop( __( 'Customer-facing reason no delivery rate is on offer (we cannot find the address, it is beyond our delivery range); empty while delivery is available.', 'lafka-plugin' ) ),
 			);
 		}
 
@@ -459,19 +460,23 @@ if ( ! class_exists( 'Lafka_Store_Api' ) ) {
 			$address_required = class_exists( 'Lafka_Delivery_Quote_Guard' ) && Lafka_Delivery_Quote_Guard::is_withholding();
 
 			return array(
-				'order_type'                 => isset( $branch['order_type'] ) ? (string) $branch['order_type'] : '',
-				'branch_id'                  => $branch_id,
-				'branch_name'                => $branch_name,
-				'checkout_date'              => isset( $datetime['date'] ) ? (string) $datetime['date'] : '',
-				'checkout_timeslot'          => isset( $datetime['timeslot'] ) ? (string) $datetime['timeslot'] : '',
-				'store_open_now'             => $open,
-				'next_open'                  => $next_open,
-				'free_delivery_threshold'    => $free_threshold,
-				'free_delivery_remaining'    => $free_remaining,
-				'delivery_minimum'           => $delivery_minimum,
-				'delivery_minimum_remaining' => $delivery_remaining,
-				'delivery_address_required'  => $address_required,
-				'delivery_address_message'   => $address_required ? Lafka_Delivery_Quote_Guard::message() : '',
+				'order_type'                   => isset( $branch['order_type'] ) ? (string) $branch['order_type'] : '',
+				'branch_id'                    => $branch_id,
+				'branch_name'                  => $branch_name,
+				'checkout_date'                => isset( $datetime['date'] ) ? (string) $datetime['date'] : '',
+				'checkout_timeslot'            => isset( $datetime['timeslot'] ) ? (string) $datetime['timeslot'] : '',
+				'store_open_now'               => $open,
+				'next_open'                    => $next_open,
+				'free_delivery_threshold'      => $free_threshold,
+				'free_delivery_remaining'      => $free_remaining,
+				'delivery_minimum'             => $delivery_minimum,
+				'delivery_minimum_remaining'   => $delivery_remaining,
+				'delivery_address_required'    => $address_required,
+				'delivery_address_message'     => $address_required ? Lafka_Delivery_Quote_Guard::message() : '',
+				// Why no delivery rate exists, in the words the classic cart and checkout
+				// use (the distance method's reasons, else a plain "we can't deliver").
+				// Not while the quote guard is still waiting for an address.
+				'delivery_unavailable_message' => ( ! $address_required && class_exists( 'Lafka_Fulfilment' ) ) ? Lafka_Fulfilment::delivery_unavailable_message() : '',
 			);
 		}
 

@@ -101,6 +101,9 @@ if ( ! class_exists( 'Lafka_Fulfilment' ) ) {
 			add_filter( 'woocommerce_shipping_chosen_method', array( __CLASS__, 'filter_chosen_method' ), 20, 3 );
 			add_action( 'woocommerce_cart_loaded_from_session', array( __CLASS__, 'maybe_release_automatic_choice' ), 20 );
 			add_action( 'woocommerce_after_checkout_validation', array( __CLASS__, 'validate_classic_checkout' ), 25, 2 );
+			// Block checkout: the same refusal, through the Store API place-order action
+			// (after the quote guard at 5, before Lafka_Store_Api's own work at 10).
+			add_action( 'woocommerce_store_api_checkout_update_order_from_request', array( __CLASS__, 'validate_store_api_checkout' ), 6 );
 
 			foreach ( array(
 				'woocommerce_shipping_zone_method_added',
@@ -477,40 +480,104 @@ if ( ! class_exists( 'Lafka_Fulfilment' ) ) {
 		}
 
 		/**
-		 * Classic checkout: a customer who chose Delivery must not get a pickup
-		 * order just because no delivery rate came back for their address (out
-		 * of range, or the distance lookup failed). WooCommerce would fall back
-		 * to the only rate left, Pickup, without a word, and the kitchen would
-		 * hold the food while the customer waits at home. A customer who picked
-		 * Pickup over an offered delivery rate is not stopped.
+		 * Whether a customer who chose Delivery would silently get a pickup order:
+		 * their preference is delivery, every rate they chose is a pickup rate, and
+		 * no package offers a delivery rate at all (out of range, or the distance
+		 * lookup failed). WooCommerce falls back to the only rate left, Pickup,
+		 * without a word, and the kitchen would hold the food while the customer
+		 * waits at home. A customer who picked Pickup over an offered delivery rate
+		 * is not stopped. One decision for the classic and the block checkout.
+		 *
+		 * @since 10.4.0
+		 *
+		 * @param string[] $chosen_rate_ids Rate ids chosen for the order's packages.
+		 * @return bool
+		 */
+		public static function delivery_would_become_pickup( array $chosen_rate_ids ): bool {
+			if ( 'delivery' !== self::preference() || array() === $chosen_rate_ids ) {
+				return false;
+			}
+			foreach ( $chosen_rate_ids as $rate_id ) {
+				if ( ! lafka_is_pickup_shipping_method( (string) $rate_id ) ) {
+					return false;
+				}
+			}
+
+			return ! lafka_shipping_has_delivery_rate();
+		}
+
+		/**
+		 * Why delivery is not on offer, for the customer: the distance method's own
+		 * reason (we cannot find that address / we do not deliver that far) when it
+		 * left one, else the plain "we can't deliver to this address". '' while a
+		 * delivery rate exists, or when the customer has not asked for delivery and
+		 * no method left a reason. The classic checkout's error, the block
+		 * checkout's notice (Lafka's `lafka` cart extension) and the block
+		 * checkout's place-order refusal all read this.
+		 *
+		 * @since 10.4.0
+		 *
+		 * @return string Plain text.
+		 */
+		public static function delivery_unavailable_message(): string {
+			$reason = class_exists( 'Lafka_Distance_Shipping' ) ? Lafka_Distance_Shipping::reason_message() : '';
+			if ( '' !== $reason ) {
+				return $reason;
+			}
+			if ( 'delivery' !== self::preference() || lafka_shipping_has_delivery_rate() ) {
+				return '';
+			}
+
+			return __( 'We can\'t deliver to this address. Check the street and postcode, or choose Pickup to collect your order.', 'lafka-plugin' );
+		}
+
+		/**
+		 * Classic checkout: refuse a Delivery choice that would become a pickup order.
 		 *
 		 * @param array    $data   Posted checkout data.
 		 * @param WP_Error $errors Validation errors.
 		 * @return void
 		 */
 		public static function validate_classic_checkout( $data, $errors ) {
-			if ( ! is_object( $errors ) || ! method_exists( $errors, 'add' ) || 'delivery' !== self::preference() ) {
+			if ( ! is_object( $errors ) || ! method_exists( $errors, 'add' ) ) {
 				return;
 			}
-			$chosen = is_array( $data ) && isset( $data['shipping_method'] ) ? (array) $data['shipping_method'] : array();
-			if ( array() === $chosen ) {
+			$chosen = is_array( $data ) && isset( $data['shipping_method'] ) ? array_map( 'strval', (array) $data['shipping_method'] ) : array();
+			if ( self::delivery_would_become_pickup( $chosen ) ) {
+				$errors->add( 'shipping', self::delivery_unavailable_message() );
+			}
+		}
+
+		/**
+		 * Block (Store API) checkout: the same refusal at place-order, so a Delivery
+		 * choice never silently becomes a pickup order there either.
+		 *
+		 * @since 10.4.0
+		 *
+		 * @param mixed $order WC_Order being placed.
+		 * @return void
+		 *
+		 * @throws \Automattic\WooCommerce\StoreApi\Exceptions\RouteException When delivery was chosen but only pickup is on offer.
+		 * @throws \RuntimeException Fallback without the Store API.
+		 */
+		public static function validate_store_api_checkout( $order ) {
+			if ( ! is_object( $order ) || ! method_exists( $order, 'get_shipping_methods' ) ) {
 				return;
 			}
-			foreach ( $chosen as $rate_id ) {
-				if ( ! lafka_is_pickup_shipping_method( (string) $rate_id ) ) {
-					return;
+			$chosen = array();
+			foreach ( (array) $order->get_shipping_methods() as $item ) {
+				if ( is_object( $item ) && method_exists( $item, 'get_method_id' ) ) {
+					$chosen[] = (string) $item->get_method_id();
 				}
 			}
-			$packages = function_exists( 'WC' ) && WC()->shipping() ? WC()->shipping()->get_packages() : array();
-			foreach ( (array) $packages as $package ) {
-				foreach ( (array) ( $package['rates'] ?? array() ) as $rate_id => $rate ) {
-					$method_id = is_object( $rate ) && method_exists( $rate, 'get_method_id' ) ? (string) $rate->get_method_id() : (string) $rate_id;
-					if ( ! lafka_is_pickup_shipping_method( $method_id ) ) {
-						return;
-					}
-				}
+			if ( ! self::delivery_would_become_pickup( $chosen ) ) {
+				return;
 			}
-			$errors->add( 'shipping', __( 'We can\'t deliver to this address. Check the street and postcode, or choose Pickup to collect your order.', 'lafka-plugin' ) );
+			$message = self::delivery_unavailable_message();
+			if ( class_exists( '\Automattic\WooCommerce\StoreApi\Exceptions\RouteException' ) ) {
+				throw new \Automattic\WooCommerce\StoreApi\Exceptions\RouteException( 'lafka_delivery_unavailable', esc_html( $message ), 400 );
+			}
+			throw new \RuntimeException( esc_html( $message ) );
 		}
 
 		/**

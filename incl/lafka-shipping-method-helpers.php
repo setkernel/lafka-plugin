@@ -149,3 +149,31 @@ if ( ! function_exists( 'lafka_order_fulfilment_type' ) ) {
 		return 'delivery';
 	}
 }
+
+if ( ! function_exists( 'lafka_shipping_has_delivery_rate' ) ) {
+	/**
+	 * Whether any shipping package currently offers a delivery rate: a rate that
+	 * is not a pickup method and not the "Delivery" placeholder the quote guard
+	 * shows before an address exists (it cannot be ordered).
+	 *
+	 * @since 10.4.0
+	 *
+	 * @return bool
+	 */
+	function lafka_shipping_has_delivery_rate(): bool {
+		$wc = function_exists( 'WC' ) ? WC() : null;
+		if ( ! is_object( $wc ) || ! method_exists( $wc, 'shipping' ) || ! is_object( $wc->shipping() ) ) {
+			return false;
+		}
+		foreach ( (array) $wc->shipping()->get_packages() as $package ) {
+			foreach ( (array) ( $package['rates'] ?? array() ) as $rate_id => $rate ) {
+				$method_id = is_object( $rate ) && method_exists( $rate, 'get_method_id' ) ? (string) $rate->get_method_id() : (string) strtok( (string) $rate_id, ':' );
+				if ( ! lafka_is_pickup_shipping_method( $method_id ) && 'lafka_delivery_pending' !== $method_id ) {
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+}

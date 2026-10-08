@@ -16,6 +16,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
+require_once __DIR__ . '/../lafka-shipping-method-helpers.php';
 require_once __DIR__ . '/class-lafka-distance-resolver.php';
 
 if ( ! class_exists( 'Lafka_Distance_Shipping' ) ) {
@@ -208,7 +209,7 @@ if ( ! class_exists( 'Lafka_Distance_Shipping' ) ) {
 		public static function reason_message(): string {
 			$wc     = function_exists( 'WC' ) ? WC() : null;
 			$reason = ( is_object( $wc ) && isset( $wc->session ) && is_object( $wc->session ) ) ? $wc->session->get( self::SESSION_REASON ) : null;
-			if ( ! is_array( $reason ) || self::has_delivery_rate() ) {
+			if ( ! is_array( $reason ) || lafka_shipping_has_delivery_rate() ) {
 				return '';
 			}
 			switch ( $reason['kind'] ?? '' ) {
@@ -234,27 +235,6 @@ if ( ! class_exists( 'Lafka_Distance_Shipping' ) ) {
 			 * @param array  $reason  kind (address, beyond, unavailable), max, unit.
 			 */
 			return (string) apply_filters( 'lafka_distance_unavailable_message', $message, $reason );
-		}
-
-		/**
-		 * Whether any shipping package currently offers a delivery (non-pickup) rate.
-		 *
-		 * @return bool
-		 */
-		private static function has_delivery_rate(): bool {
-			$wc = function_exists( 'WC' ) ? WC() : null;
-			if ( ! is_object( $wc ) || ! method_exists( $wc, 'shipping' ) || ! is_object( $wc->shipping() ) ) {
-				return false;
-			}
-			foreach ( (array) $wc->shipping()->get_packages() as $package ) {
-				foreach ( (array) ( $package['rates'] ?? array() ) as $rate ) {
-					if ( is_object( $rate ) && ! lafka_is_pickup_shipping_method( (string) $rate->get_method_id() ) && Lafka_Delivery_Quote_Guard::PLACEHOLDER !== $rate->get_method_id() ) {
-						return true;
-					}
-				}
-			}
-
-			return false;
 		}
 
 		/**

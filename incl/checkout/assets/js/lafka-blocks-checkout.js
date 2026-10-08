@@ -8,6 +8,8 @@
  *
  *   · Free-delivery progress — SlotFill on the block CART, reading the `lafka`
  *     cart-extension exposed by NX1-04a (threshold / remaining).
+ *   · Delivery notices — SlotFill under the shipping options on both blocks: the
+ *     quote guard's "enter your address" and the "no delivery rate" reason.
  *   · Timeslot picker — SlotFill on the block CHECKOUT, driven by the existing
  *     `time_slots_for_date` AJAX endpoint, pushing the selection through the
  *     `lafka` cart/extensions update callback.
@@ -108,6 +110,20 @@
 	// `lafka` cart extension; this tells the customer why delivery is missing.
 	function DeliveryAddressNotice( props ) {
 		const lafka = ( props && props.extensions && props.extensions.lafka ) || {};
+		// No delivery rate on offer (out of range, address not found): the same
+		// specific sentence the classic cart and checkout show, in place of
+		// WooCommerce's generic "no shipping options" text.
+		if ( lafka.delivery_unavailable_message ) {
+			return el(
+				'p',
+				{
+					className:
+						'lafka-block-delivery-quote-notice lafka-block-delivery-unavailable',
+					role: 'alert',
+				},
+				String( lafka.delivery_unavailable_message )
+			);
+		}
 		if ( ! lafka.delivery_address_required || ! lafka.delivery_address_message ) {
 			return null;
 		}
