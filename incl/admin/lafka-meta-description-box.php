@@ -9,7 +9,9 @@
  *   - `_lafka_seo_title`   — per-post <title> override (tokens allowed, e.g.
  *     "{title} in {city}{sep}{name}"), read by lafka_seo_resolve_title();
  *   - `_lafka_seo_noindex` — "hide from search engines": noindex via
- *     wp_robots and dropped from the XML sitemap (incl/seo/lafka-sitemap.php).
+ *     wp_robots and dropped from the XML sitemap (incl/seo/lafka-sitemap.php);
+ *   - `_lafka_og_image`    — per-post share image (attachment ID or URL), read
+ *     by lafka_insert_og_tags() before the featured image.
  */
 defined( 'ABSPATH' ) || exit;
 
@@ -58,6 +60,7 @@ if ( ! function_exists( 'lafka_meta_description_render_box' ) ) {
 
 		$seo_title   = (string) get_post_meta( $post->ID, '_lafka_seo_title', true );
 		$seo_noindex = '1' === (string) get_post_meta( $post->ID, '_lafka_seo_noindex', true );
+		$og_image    = (string) get_post_meta( $post->ID, '_lafka_og_image', true );
 		?>
 		<input type="hidden" name="lafka_seo_fields" value="1">
 		<p>
@@ -72,6 +75,18 @@ if ( ! function_exists( 'lafka_meta_description_render_box' ) ) {
 				placeholder="<?php esc_attr_e( 'Leave empty to use the site-wide title template', 'lafka-plugin' ); ?>"
 			>
 			<span class="description"><?php esc_html_e( 'Tokens: {title} {name} {city} {region} {cuisines} {sep} — [optional segments] are dropped when a token is empty. Aim for 50–60 characters.', 'lafka-plugin' ); ?></span>
+		</p>
+		<p>
+			<label for="lafka_og_image_input"><strong><?php esc_html_e( 'Share image', 'lafka-plugin' ); ?></strong></label>
+			<input
+				type="text"
+				id="lafka_og_image_input"
+				name="lafka_og_image"
+				value="<?php echo esc_attr( $og_image ); ?>"
+				style="width:100%;"
+				placeholder="<?php esc_attr_e( 'Leave empty to use the featured image', 'lafka-plugin' ); ?>"
+			>
+			<span class="description"><?php esc_html_e( 'Image shown when this page is shared (Facebook, WhatsApp, search): a media-library attachment ID or an image URL. 1200×630 works best.', 'lafka-plugin' ); ?></span>
 		</p>
 		<p><strong><?php esc_html_e( 'Meta description', 'lafka-plugin' ); ?></strong></p>
 		<p class="description">
@@ -150,6 +165,13 @@ if ( ! function_exists( 'lafka_meta_description_save' ) ) {
 			delete_post_meta( $post_id, '_lafka_seo_title' );
 		} else {
 			update_post_meta( $post_id, '_lafka_seo_title', $title );
+		}
+		$og_raw = isset( $_POST['lafka_og_image'] ) ? trim( sanitize_text_field( wp_unslash( $_POST['lafka_og_image'] ) ) ) : '';
+		$og_val = ctype_digit( $og_raw ) ? $og_raw : esc_url_raw( $og_raw );
+		if ( '' === $og_val ) {
+			delete_post_meta( $post_id, '_lafka_og_image' );
+		} else {
+			update_post_meta( $post_id, '_lafka_og_image', $og_val );
 		}
 		if ( ! empty( $_POST['lafka_seo_noindex'] ) ) {
 			update_post_meta( $post_id, '_lafka_seo_noindex', '1' );

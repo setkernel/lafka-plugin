@@ -1038,6 +1038,12 @@ function lafka_plugin_after_plugins_loaded() {
 	require_once plugin_dir_path( __FILE__ ) . 'incl/woocommerce/lafka-combo-deal.php';
 
 	/**
+	 * Real customer reviews (WooCommerce product reviews) for the storefront:
+	 * the quotes and the average rating the theme shows; nothing hand-typed.
+	 */
+	require_once plugin_dir_path( __FILE__ ) . 'incl/woocommerce/lafka-store-reviews.php';
+
+	/**
 	 * P6-PDP (W4-T8, 2026-04-29): Checkout email-capture field.
 	 */
 	require_once plugin_dir_path( __FILE__ ) . 'incl/woocommerce/lafka-checkout-email-capture.php';

@@ -10,6 +10,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
+require_once __DIR__ . '/lafka-deals-category.php';
 require_once __DIR__ . '/class-lafka-deals.php';
 
 if ( ! function_exists( 'lafka_deals_boot' ) ) {

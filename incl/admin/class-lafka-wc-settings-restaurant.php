@@ -15,8 +15,8 @@
  *   - Phone display format (the human-readable phone shown in the UI)
  *   - sameAs URLs (Facebook, Instagram, Yelp, etc. — for schema sameAs)
  *
- * (The homepage hero / LCP image is set in the Customizer — Lafka
- * Restaurant Info → Homepage Hero — which is what lcp-preload.php reads.)
+ * (The homepage hero / LCP image is an appearance setting of the theme —
+ * Customizer → Home Page — which lcp-preload.php reads through a filter.)
  *
  * **What this tab does NOT duplicate** (sourced from WP/WC core instead):
  *   - Restaurant name → `get_bloginfo('name')` (WP Settings → General → Site Title)
@@ -93,6 +93,7 @@ if ( ! function_exists( 'lafka_define_wc_settings_restaurant_class' ) ) {
 					'cuisine'    => __( 'Cuisine & Payment', 'lafka-plugin' ),
 					'schema'     => __( 'Schema & Geo', 'lafka-plugin' ),
 					'social'     => __( 'Social Profiles', 'lafka-plugin' ),
+					'faq'        => __( 'Contact FAQ', 'lafka-plugin' ),
 					'search'     => __( 'Search & AI', 'lafka-plugin' ),
 					'promotions' => __( 'Promotions', 'lafka-plugin' ),
 					'tips'       => __( 'Tips', 'lafka-plugin' ),
@@ -107,6 +108,8 @@ if ( ! function_exists( 'lafka_define_wc_settings_restaurant_class' ) ) {
 						return $this->get_schema_settings();
 					case 'social':
 						return $this->get_social_settings();
+					case 'faq':
+						return $this->get_faq_settings();
 					case 'search':
 						return $this->get_search_settings();
 					case 'promotions':
@@ -317,6 +320,51 @@ if ( ! function_exists( 'lafka_define_wc_settings_restaurant_class' ) ) {
 			}
 
 			/**
+			 * Contact-page FAQ: five question/answer pairs. They are business
+			 * facts (delivery area, allergens, payment), shown on the contact
+			 * page and published as FAQPage structured data from this one place.
+			 *
+			 * @since 10.4.0
+			 *
+			 * @return array
+			 */
+			private function get_faq_settings() {
+				$fields = array(
+					array(
+						'title' => __( 'Contact page FAQ', 'lafka-plugin' ),
+						'type'  => 'title',
+						'desc'  => $this->intro_html(
+							__( 'Up to five questions customers ask most. The contact page shows them and search engines read them as structured data (FAQPage). Leave a row empty to skip it. With no questions filled in the contact page shows the standard questions of the theme, which are not published as structured data.', 'lafka-plugin' )
+						),
+						'id'    => 'lafka_restaurant_faq_title',
+					),
+				);
+				for ( $i = 1; $i <= 5; $i++ ) {
+					$fields[] = array(
+						/* translators: %d: question number. */
+						'title'   => sprintf( __( 'Question %d', 'lafka-plugin' ), $i ),
+						'id'      => 'lafka_contact_faq_' . $i . '_q',
+						'type'    => 'text',
+						'default' => '',
+						'css'     => 'min-width: 420px;',
+					);
+					$fields[] = array(
+						/* translators: %d: question number. */
+						'title'   => sprintf( __( 'Answer %d', 'lafka-plugin' ), $i ),
+						'id'      => 'lafka_contact_faq_' . $i . '_a',
+						'type'    => 'textarea',
+						'default' => '',
+						'css'     => 'min-width: 420px; min-height: 60px;',
+					);
+				}
+				$fields[] = array(
+					'type' => 'sectionend',
+					'id'   => 'lafka_restaurant_faq_end',
+				);
+				return $fields;
+			}
+
+			/**
 			 * Search & AI (GX3): title / description templates, where the full
 			 * menu schema is emitted, the diet map, /llms.txt and IndexNow.
 			 * Defaults live in lafka_seo_defaults() (incl/seo/lafka-seo-settings.php).
@@ -408,6 +456,23 @@ if ( ! function_exists( 'lafka_define_wc_settings_restaurant_class' ) ) {
 						'id'      => 'lafka_seo_indexnow_enabled',
 						'type'    => 'checkbox',
 						'default' => 'no',
+					),
+					array(
+						'title'       => __( 'Default locale', 'lafka-plugin' ),
+						'desc_tip'    => __( 'Locale code for <html lang> and og:locale, e.g. en_CA, en_US, fr_CA. Leave empty to follow Settings → General → Site Language.', 'lafka-plugin' ),
+						'id'          => 'lafka_default_locale',
+						'type'        => 'text',
+						'default'     => '',
+						'placeholder' => 'en_CA',
+						'css'         => 'width: 120px;',
+					),
+					array(
+						'title'    => __( 'Default share image', 'lafka-plugin' ),
+						'desc_tip' => __( 'Media-library attachment ID or image URL used for social-share previews when a page has no image of its own (1200×630 food photo recommended). Empty falls back to the site icon.', 'lafka-plugin' ),
+						'id'       => 'lafka_og_image_default',
+						'type'     => 'text',
+						'default'  => '',
+						'css'      => 'min-width: 420px;',
 					),
 					array(
 						'type' => 'sectionend',
@@ -554,6 +619,14 @@ if ( ! function_exists( 'lafka_define_wc_settings_restaurant_class' ) ) {
 							'6' => __( 'Saturday', 'lafka-plugin' ),
 							'0' => __( 'Sunday', 'lafka-plugin' ),
 						),
+					),
+					array(
+						'title'    => __( 'Deals category', 'lafka-plugin' ),
+						'desc_tip' => __( 'The category that holds your deals and combos. It gets its own section on the menu page and is never suggested as an extra in the cart. Empty = a category named deals, combos or specials.', 'lafka-plugin' ),
+						'id'       => 'lafka_deals_category',
+						'type'     => 'select',
+						'class'    => 'wc-enhanced-select',
+						'options'  => $this->product_cat_options(),
 					),
 					array(
 						'title'    => __( 'Combo: category A', 'lafka-plugin' ),

@@ -65,25 +65,26 @@ if ( ! function_exists( 'lafka_schema_is_contact_page' ) ) {
 	}
 }
 
-if ( ! function_exists( 'lafka_schema_faq_items_from_theme_mods' ) ) {
+if ( ! function_exists( 'lafka_contact_faq_items' ) ) {
 	/**
-	 * Pull FAQ items from theme_mods set by the Lafka theme contact page.
+	 * The operator's contact-page FAQ (WooCommerce → Settings → Restaurant →
+	 * Contact FAQ). The single home of this business data: the theme shows it
+	 * on the contact page, this file publishes it as FAQPage structured data and
+	 * /llms.txt lists it.
 	 *
-	 * Mirrors the array shape consumed by template-contact.php. We do NOT pass
-	 * defaults — empty Q or A is dropped so unconfigured installs don't emit
-	 * placeholder copy as schema. The theme uses `__()` defaults for visual
-	 * rendering, but schema is operator-owned content and must be explicit.
+	 * We do NOT pass defaults — an empty Q or A is dropped so unconfigured
+	 * installs don't emit placeholder copy as schema. The theme falls back to
+	 * translatable standard questions for display, but schema is operator-owned
+	 * content and must be explicit.
 	 *
+	 * @since 10.4.0
 	 * @return array<int, array{q: string, a: string}>
 	 */
-	function lafka_schema_faq_items_from_theme_mods(): array {
-		if ( ! function_exists( 'get_theme_mod' ) ) {
-			return array();
-		}
+	function lafka_contact_faq_items(): array {
 		$items = array();
 		for ( $i = 1; $i <= 5; $i++ ) {
-			$q = trim( (string) get_theme_mod( 'lafka_contact_faq_' . $i . '_q', '' ) );
-			$a = trim( (string) get_theme_mod( 'lafka_contact_faq_' . $i . '_a', '' ) );
+			$q = trim( (string) get_option( 'lafka_contact_faq_' . $i . '_q', '' ) );
+			$a = trim( (string) get_option( 'lafka_contact_faq_' . $i . '_a', '' ) );
 			if ( '' === $q || '' === $a ) {
 				continue;
 			}
@@ -242,16 +243,16 @@ if ( ! function_exists( 'lafka_schema_faq_resolve_items' ) ) {
 	 * Order:
 	 *   1. `lafka_contact_faqs` filter — same hook the theme uses; if a child
 	 *      theme has populated it, we use that verbatim.
-	 *   2. theme_mods `lafka_contact_faq_<n>_q` + `_a` — the operator-facing
-	 *      Customizer panel slots.
+	 *   2. the `lafka_contact_faq_<n>_q` + `_a` options — the operator-facing
+	 *      WooCommerce → Settings → Restaurant → Contact FAQ fields.
 	 *   3. Parse the page's post_content (Block Editor blocks or Classic HTML).
 	 *
 	 * @return array<int, array{q: string, a: string}>
 	 */
 	function lafka_schema_faq_resolve_items(): array {
-		// Seed with theme_mods so the filter receives the same shape the theme
-		// passes to it — keeps the contract identical for child-theme overrides.
-		$seed = lafka_schema_faq_items_from_theme_mods();
+		// Seed with the configured items so the filter receives the same shape
+		// the theme passes to it — keeps the contract identical for child-theme overrides.
+		$seed = lafka_contact_faq_items();
 
 		if ( function_exists( 'apply_filters' ) ) {
 			$filtered = apply_filters( 'lafka_contact_faqs', $seed );
@@ -283,7 +284,7 @@ if ( ! function_exists( 'lafka_schema_faq_resolve_items' ) ) {
 
 		// Last resort: parse the page body. This handles operators who hand-wrote
 		// FAQ markup into the page editor (Block or Classic) instead of using
-		// the Customizer panel.
+		// the settings fields.
 		if ( function_exists( 'get_queried_object' ) ) {
 			$post = get_queried_object();
 			if ( $post instanceof \WP_Post && '' !== $post->post_content ) {

@@ -347,10 +347,10 @@ if ( ! function_exists( 'lafka_llms_contact_faqs' ) ) {
 	 * @return list<array{q:string,a:string}>
 	 */
 	function lafka_llms_contact_faqs(): array {
-		if ( ! function_exists( 'lafka_schema_faq_items_from_theme_mods' ) ) {
+		if ( ! function_exists( 'lafka_contact_faq_items' ) ) {
 			return array();
 		}
-		$items = apply_filters( 'lafka_contact_faqs', lafka_schema_faq_items_from_theme_mods() );
+		$items = apply_filters( 'lafka_contact_faqs', lafka_contact_faq_items() );
 		return function_exists( 'lafka_seo_normalize_faqs' ) ? lafka_seo_normalize_faqs( $items ) : array();
 	}
 }

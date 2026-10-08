@@ -84,6 +84,7 @@ if ( ! function_exists( 'lafka_get_restaurant_info' ) ) {
 	 *   - address_short   (string, single-line "street, city")
 	 *   - phone_e164 (string, e.g. "+15551234567")
 	 *   - phone_display (string, e.g. "+1 555-123-4567")
+	 *   - phone_tel (string, e.g. "+15551234567" — digits and "+" only, for tel: links)
 	 *   - email (string)
 	 *   - geo_lat, geo_lng (string|null — null when unset; schema skips geo)
 	 *   - hours (array<string, string>) — display map keyed by full day name
@@ -267,6 +268,10 @@ if ( ! function_exists( 'lafka_get_restaurant_info' ) ) {
 				$info['phone_e164'] = '+' . $digits;
 			}
 		}
+
+		// The value for a tel: link: digits and a leading "+" only. One place
+		// derives it, so templates never rebuild it from the display text.
+		$info['phone_tel'] = (string) preg_replace( '/[^0-9+]/', '', '' !== $info['phone_e164'] ? (string) $info['phone_e164'] : (string) $info['phone_display'] );
 
 		// Normalize cuisines/payment_methods: cast to string array regardless
 		// of input shape. See `lafka_schema_normalize_csv_list()` below.
@@ -565,7 +570,7 @@ if ( ! function_exists( 'lafka_schema_get_restaurant_images' ) ) {
 	function lafka_schema_get_restaurant_images(): array {
 		$images = array();
 
-		$og_default = function_exists( 'get_theme_mod' ) ? get_theme_mod( 'lafka_og_image_default', '' ) : '';
+		$og_default = lafka_setting( 'lafka_og_image_default', '' );
 		if ( is_numeric( $og_default ) && (int) $og_default > 0 ) {
 			$images[] = (string) wp_get_attachment_image_url( (int) $og_default, 'large' );
 		} elseif ( is_string( $og_default ) && false !== filter_var( $og_default, FILTER_VALIDATE_URL ) ) {
