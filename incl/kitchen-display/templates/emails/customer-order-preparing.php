@@ -66,12 +66,11 @@ if ( $plain_text ) :
 	}
 	echo "\n---\n\n";
 
-	WC()->mailer()->order_downloads( $order, $sent_to_admin, $plain_text, $email );
-	WC()->mailer()->order_details( $order, $sent_to_admin, $plain_text, $email );
+	do_action( 'woocommerce_email_order_details', $order, $sent_to_admin, $plain_text, $email );
 
 else :
 
-	WC()->mailer()->email_header( $email_heading );
+	do_action( 'woocommerce_email_header', $email_heading, $email );
 	?>
 
 	<p><?php printf( /* translators: %s: customer first name. */ esc_html__( 'Hi %s,', 'lafka-plugin' ), esc_html( $order->get_billing_first_name() ) ); ?></p>
@@ -118,9 +117,8 @@ else :
 	</table>
 
 	<?php
-	WC()->mailer()->order_downloads( $order, $sent_to_admin, $plain_text, $email );
-	WC()->mailer()->order_details( $order, $sent_to_admin, $plain_text, $email );
-	WC()->mailer()->email_footer();
+	do_action( 'woocommerce_email_order_details', $order, $sent_to_admin, $plain_text, $email );
+	do_action( 'woocommerce_email_footer', $email );
 
 endif;
 

@@ -176,9 +176,9 @@ if ( class_exists( 'WC_Email' ) && ! class_exists( 'Lafka_Email_Error_Digest' ) 
 		 */
 		public function get_content_html() {
 			ob_start();
-			WC()->mailer()->email_header( $this->get_heading() );
+			do_action( 'woocommerce_email_header', $this->get_heading(), $this );
 			echo wp_kses( self::render_rows_html( $this->rows ), self::ROWS_KSES );
-			WC()->mailer()->email_footer();
+			do_action( 'woocommerce_email_footer', $this );
 			return (string) ob_get_clean();
 		}
 
