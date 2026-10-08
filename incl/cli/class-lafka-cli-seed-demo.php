@@ -314,6 +314,7 @@ if ( ! class_exists( 'Lafka_CLI_Seed_Demo' ) ) {
 			$manifest = self::load_manifest();
 
 			$this->ensure_wc_pages();
+			$this->make_store_live();
 			$this->seed_categories( $fixtures, $manifest );
 			$this->seed_products( $fixtures, $manifest );
 			$this->seed_addon_groups( $fixtures, $manifest );
@@ -329,6 +330,18 @@ if ( ! class_exists( 'Lafka_CLI_Seed_Demo' ) ) {
 
 			$products = isset( $manifest['ids']['products'] ) ? count( $manifest['ids']['products'] ) : 0;
 			WP_CLI::success( sprintf( 'Demo store seeded: %d products across %d categories, addons + branch + delivery zone + hours ready.', $products, count( $fixtures['categories'] ) ) );
+		}
+
+		/**
+		 * Turn off WooCommerce's "Coming soon" mode, which new stores start in
+		 * and which hides the shop, products, cart and checkout from visitors.
+		 * A demo store must be browsable and orderable.
+		 *
+		 * @return void
+		 */
+		private function make_store_live(): void {
+			update_option( 'woocommerce_coming_soon', 'no' );
+			WP_CLI::log( 'Turned WooCommerce "Coming soon" off so the store is visible.' );
 		}
 
 		/**
