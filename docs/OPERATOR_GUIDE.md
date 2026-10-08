@@ -214,7 +214,7 @@ Fast pages mean better Core Web Vitals, better local ranking and more orders.
   Settings → Restaurant → Homepage Hero). With the Lafka theme, the active
   preset's display font is preloaded too.
 - **CSS and JS:** page-specific files load only where needed; non-critical CSS is
-  deferred; block-library CSS, Font Awesome, Contact Form 7 and gateway assets are
+  deferred; block-library CSS, Contact Form 7 and gateway assets are
   dequeued where a page does not use them.
 - **Markup:** one JSON-LD `@graph`, with no duplicate SEO-plugin output.
 

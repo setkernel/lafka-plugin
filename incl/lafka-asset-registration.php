@@ -11,9 +11,9 @@
  *     shortcodes keep working with a non-Lafka theme).
  *  2. lafka_register_theme_script_fallbacks() — wp_enqueue_scripts @20, i.e.
  *     AFTER the Lafka theme registered its own handles at @10. Only fills in
- *     handles nobody registered: the bundled Font Awesome copy (standalone),
- *     and — with the Lafka theme active — theme-directory handles the theme
- *     leaves to the plugin (magnific) or doesn't register on a given request.
+ *     handles nobody registered: with the Lafka theme active, theme-directory
+ *     handles the theme leaves to the plugin (magnific) or doesn't register
+ *     on a given request.
  *     The theme's own registration (e.g. its `defer` strategy) always wins.
  *  3. lafka_register_admin_plugin_scripts() — admin_enqueue_scripts.
  *
@@ -154,11 +154,6 @@ if ( ! function_exists( 'lafka_register_theme_script_fallbacks' ) ) {
 				wp_register_style( $handle, $src, $deps, $ver );
 			}
 		};
-
-		// Font Awesome Free (bundled) for the plugin's icon shortcodes when the
-		// active theme does not provide the handle (standalone use).
-		$register_style( 'font_awesome_6_v4shims', plugins_url( 'assets/vendor/font-awesome/css/v4-shims.min.css', LAFKA_PLUGIN_FILE ), array(), lafka_plugin_asset_version( 'assets/vendor/font-awesome/css/v4-shims.min.css' ) );
-		$register_style( 'font_awesome_6', plugins_url( 'assets/vendor/font-awesome/css/all.min.css', LAFKA_PLUGIN_FILE ), array( 'font_awesome_6_v4shims' ), lafka_plugin_asset_version( 'assets/vendor/font-awesome/css/all.min.css' ) );
 
 		// Theme-directory handles: only meaningful (and only non-404) when the
 		// Lafka theme — parent or child — is active.

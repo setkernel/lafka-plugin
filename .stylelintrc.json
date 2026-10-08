@@ -4,20 +4,19 @@
 		"vendor/**",
 		"node_modules/**",
 		"assets/js/flatpickr/**",
-		"assets/css/schedule/**",
-		"assets/vendor/**"
+		"assets/css/schedule/**"
 	],
 	"rules": {
 		"selector-class-pattern": [
-			"^(?:[a-z][a-z0-9]*(?:[-_][a-z0-9]+)*(?:__[a-z0-9]+(?:[-_][a-z0-9]+)*)?(?:--[a-z0-9]+(?:[-_][a-z0-9]+)*)?|(?:woocommerce|wc|wp|ui|select2|flatpickr|dashicons|fa)[-_][A-Za-z0-9_-]+)$",
+			"^(?:[a-z][a-z0-9]*(?:[-_][a-z0-9]+)*(?:__[a-z0-9]+(?:[-_][a-z0-9]+)*)?(?:--[a-z0-9]+(?:[-_][a-z0-9]+)*)?|(?:woocommerce|wc|wp|ui|select2|flatpickr|dashicons)[-_][A-Za-z0-9_-]+)$",
 			{
-				"message": "Use lowercase words separated by - or _ (BEM __ and -- allowed); only WooCommerce/WP/jQuery UI/Select2/flatpickr/Dashicons/Font Awesome names may be mixed case (see CONTRIBUTING.md) (selector-class-pattern)"
+				"message": "Use lowercase words separated by - or _ (BEM __ and -- allowed); only WooCommerce/WP/jQuery UI/Select2/flatpickr/Dashicons names may be mixed case (see CONTRIBUTING.md) (selector-class-pattern)"
 			}
 		],
 		"selector-id-pattern": [
-			"^(?:[a-z][a-z0-9]*(?:[-_][a-z0-9]+)*(?:__[a-z0-9]+(?:[-_][a-z0-9]+)*)?(?:--[a-z0-9]+(?:[-_][a-z0-9]+)*)?|(?:woocommerce|wc|wp|ui|select2|flatpickr|dashicons|fa)[-_][A-Za-z0-9_-]+)$",
+			"^(?:[a-z][a-z0-9]*(?:[-_][a-z0-9]+)*(?:__[a-z0-9]+(?:[-_][a-z0-9]+)*)?(?:--[a-z0-9]+(?:[-_][a-z0-9]+)*)?|(?:woocommerce|wc|wp|ui|select2|flatpickr|dashicons)[-_][A-Za-z0-9_-]+)$",
 			{
-				"message": "Use lowercase words separated by - or _ (BEM __ and -- allowed); only WooCommerce/WP/jQuery UI/Select2/flatpickr/Dashicons/Font Awesome names may be mixed case (see CONTRIBUTING.md) (selector-id-pattern)"
+				"message": "Use lowercase words separated by - or _ (BEM __ and -- allowed); only WooCommerce/WP/jQuery UI/Select2/flatpickr/Dashicons names may be mixed case (see CONTRIBUTING.md) (selector-id-pattern)"
 			}
 		]
 	}

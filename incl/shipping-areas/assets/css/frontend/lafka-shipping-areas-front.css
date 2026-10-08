@@ -280,9 +280,11 @@ a.lafka-change-branch-button {
 
 a.lafka-change-branch-button::before, .lafka-change-branch-button-select::before {
     display: block;
-    font-family: 'Font Awesome 6 Free', sans-serif;
-    font-weight: 900;
-    content: "\f303";
+    content: "";
+    background-image: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M16.5%203.5a2.1%202.1%200%200%201%203%203L7%2019l-4%201%201-4z%22%2F%3E%3C%2Fsvg%3E);
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 12px 12px;
     font-size: 10px;
     border-radius: 50px;
     color: #fff;
@@ -330,9 +332,12 @@ a.lafka-change-branch-button:hover::before, .lafka-change-branch-button-select:h
 }
 
 .lafka-delivery-time-toggle::before {
-    font-family: 'Font Awesome 6 Free', sans-serif;
-    font-weight: 400;
-    content: "\f017";
+    content: "";
+    width: 1em;
+    height: 1em;
+    background-color: currentcolor;
+    -webkit-mask: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%229%22%2F%3E%3Cpath%20d%3D%22M12%207v5l3%202%22%2F%3E%3C%2Fsvg%3E) center / 1em 1em no-repeat;
+    mask: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%229%22%2F%3E%3Cpath%20d%3D%22M12%207v5l3%202%22%2F%3E%3C%2Fsvg%3E) center / 1em 1em no-repeat;
     display: inline-block;
     margin-right: 4px;
     vertical-align: middle;
@@ -371,9 +376,10 @@ a.lafka-change-branch-button:hover::before, .lafka-change-branch-button-select:h
 }
 
 .lafka-checkout-datetime-fields .lafka-datetime-clear::before {
-    font-family: 'Font Awesome 6 Free', sans-serif;
-    font-weight: 400;
-    content: "\f057";
+    content: "";
+    background-color: currentcolor;
+    -webkit-mask: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%229%22%2F%3E%3Cpath%20d%3D%22M9%209l6%206%22%2F%3E%3Cpath%20d%3D%22M15%209l-6%206%22%2F%3E%3C%2Fsvg%3E) center / 1em 1em no-repeat;
+    mask: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%229%22%2F%3E%3Cpath%20d%3D%22M9%209l6%206%22%2F%3E%3Cpath%20d%3D%22M15%209l-6%206%22%2F%3E%3C%2Fsvg%3E) center / 1em 1em no-repeat;
     display: block;
     margin-right: 4px;
     vertical-align: middle;
@@ -410,9 +416,11 @@ form.checkout tr.woocommerce-shipping-totals, form.checkout tr.order-total {
 }
 
 .lafka-estimated-time::before {
-    font-family: 'Font Awesome 6 Free', sans-serif;
-    font-weight: 400;
-    content: "\f017";
+    content: "";
+    height: 1em;
+    background-color: currentcolor;
+    -webkit-mask: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%229%22%2F%3E%3Cpath%20d%3D%22M12%207v5l3%202%22%2F%3E%3C%2Fsvg%3E) center / 1em 1em no-repeat;
+    mask: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%229%22%2F%3E%3Cpath%20d%3D%22M12%207v5l3%202%22%2F%3E%3C%2Fsvg%3E) center / 1em 1em no-repeat;
     display: block;
     font-size: 16px;
     width: 100%;

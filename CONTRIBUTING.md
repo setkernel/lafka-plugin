@@ -80,7 +80,7 @@ lafka-plugin, lafka-child and lafka-theme:
 - BEM is allowed: `lafka-engine-group__header`, `lafka-bogo-banner--fixed`.
 - Mixed case is accepted only for names owned by someone else, recognised by
   prefix: `woocommerce-` (for example `woocommerce-Price-amount`), `wc-`, `wp-`,
-  jQuery UI `ui-`, `select2-`, `flatpickr-`, `dashicons-` and `fa-`.
+  jQuery UI `ui-`, `select2-`, `flatpickr-` and `dashicons-`.
 - camelCase or a capital in a `lafka-` / `lafka_` name is rejected.
 
 The regex lives in `.stylelintrc.json`. Do not rename an existing class or id

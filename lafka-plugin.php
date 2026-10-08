@@ -697,7 +697,7 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/cli/class-lafka-cli-seed-demo.p
 
 /**
  * P6-PERF-4 (W3-T2, 2026-04-28): Asset pruning — dequeue heavy third-party assets
- * on pages that don't use them (Contact Form 7 and Font Awesome).
+ * on pages that don't use them (block-library CSS, jQuery Migrate).
  * Self-gates via is_admin() inside the module; safe to load unconditionally.
  */
 require_once plugin_dir_path( __FILE__ ) . 'incl/perf/lafka-asset-pruning.php';

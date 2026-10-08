@@ -221,7 +221,7 @@ class Lafka_Branch_Locations {
 									placeholder="<?php esc_html_e( 'Enter a delivery address', 'lafka-plugin' ); ?>"/>
 							<?php if ( empty( $options_branches['disable_current_location'] ) ) : ?>
 								<a href="javascript:" class="lafka-branch-auto-locate" title="<?php esc_html_e( 'Use current location', 'lafka-plugin' ); ?>">
-									<i class="fa fa-location-arrow"></i>
+									<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 11l18-8-8 18-2-8-8-2z"/></svg>
 									<?php esc_html_e( 'or detect my current location', 'lafka-plugin' ); ?>
 								</a>
 							<?php endif; ?>

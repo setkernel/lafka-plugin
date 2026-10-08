@@ -117,6 +117,15 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
   theme folder (`lafka_register_theme_script_fallbacks()`); the theme no longer ships those
   libraries.
 
+- **The bundled Font Awesome copy** (`assets/vendor/font-awesome/`), its fallback handles
+  and `lafka_perf_dequeue_unused_font_awesome()` with its content and
+  `_lafka-menu-item-icon` meta scans (filters `lafka_keep_font_awesome_css` and
+  `lafka_header_renders_fa_icons`). The branch modal's "use my location" icon is an inline
+  SVG, and the shipping-areas pseudo-element icons (change branch, delivery time, clear
+  date, estimated time; admin order type and delivery date) are CSS masks with their own
+  SVG data URIs, so no stylesheet needs an icon font. `fa-` is no longer an allowed
+  class prefix in `.stylelintrc.json`.
+
 ### Fixed
 - Promo tooltips never matched their default zone: the theme default
   `promo_tooltip_N_position` was `above_price` while the plugin compared against
