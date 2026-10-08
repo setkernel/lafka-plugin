@@ -206,8 +206,60 @@ browser caches them, the site does not. Filters: `lafka_map_default_view`,
 `none` to switch maps off), `lafka_geocoder_contact_email`,
 `lafka_geocoder_user_agent`, `lafka_delivery_pinpoint_ui_available`.
 
-Distance-priced delivery comes from the separate WooCommerce Distance Rate Shipping
-plugin, which uses its own Google key and Google's Routes API.
+### Delivery by distance
+
+A WooCommerce shipping method that prices delivery by how far the customer is from the
+restaurant. No other plugin and no Google account are needed.
+
+**Setup.** Make sure the store location is set (Lafka Shipping Settings → Advanced; it is
+the origin). Then **WooCommerce → Settings → Shipping → your zone → Add shipping method →
+Delivery by distance**, and open it:
+
+- **Distance bands**: "Up to" a distance, the **Fee**, and an optional **Plus per km**
+  (fee + rate × distance). The first band the distance fits in sets the price. A band with
+  no "Up to" covers everything further. To add a band, fill a blank row and save; empty a
+  row to remove it.
+- **Maximum distance**: beyond it there is no delivery rate. The customer is told, and
+  can choose Pickup. Leave it empty for no limit.
+- **Distance unit** (km or miles), **tax status**, **title**, and whether to show the
+  distance ("Delivery · 4.2 km" under the rate, on the order, in emails and on the
+  kitchen display).
+- **Free over the store's free-delivery threshold**: on by default. The threshold itself
+  is set in one place (WooCommerce → Settings → Restaurant → Promotions); this method only
+  reads it. A delivery minimum is the Promotions **delivery minimum**, also set once.
+
+With branch selection on, the distance is measured from the chosen branch; otherwise from
+the store location.
+
+**Where the customer's point comes from.** The pin on the classic checkout map when there
+is one (and it was placed for the address now typed); else the address is looked up once
+(Nominatim, cached 30 days). If the address is not found to street level, the lookup fails
+or the country differs, no delivery rate is offered and a line is written to WooCommerce →
+Status → Logs (`lafka-shipping`) so you can see why. It never guesses a price.
+
+**Keyless or driving distance?**
+
+| | Straight line × road factor (default) | Driving distance |
+| --- | --- | --- |
+| Needs | nothing | the Google Maps key (Google Routes API, billed by Google) or your own OSRM server (`lafka_distance_osrm_endpoint` filter) |
+| Accuracy | an estimate: roads are about 1.3× the straight line in most towns (change the factor); rivers, highways and one-way grids make some addresses over- or under-priced | the real road distance |
+| Failure | none beyond the address lookup | if Google or OSRM is unreachable or the key is removed, there is no delivery rate until it works |
+
+Start with straight line, compare a few real addresses against what you charged before,
+and adjust the factor. Enable the **Routes API** on the key if you choose driving.
+Filters: `lafka_distance_osrm_endpoint`, `lafka_distance_driving_meters` (any other
+router), `lafka_distance_google_endpoint`, `lafka_distance_origin`,
+`lafka_distance_default_bands`, `lafka_distance_unavailable_message`.
+
+**Switching from WooCommerce Distance Rate Shipping.** Run
+`wp lafka shipping migrate-drs` to see every Distance Rate Shipping instance, its rules and
+how they map to bands (the Google key is never printed), plus what cannot be mapped
+(travel-time, weight or quantity rules, order-total conditions, shipping classes, per-item
+costs, percentage fees, "avoid tolls", walking mode). Then
+`wp lafka shipping migrate-drs --apply` adds a **disabled** copy to the same zone. Compare
+the fees for a few real addresses, then disable the old method and enable the new one in
+the zone (and deactivate the old plugin when you are happy). Check the DRS origin address
+is the same place as your store location.
 
 ## Local SEO
 

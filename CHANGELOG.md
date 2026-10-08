@@ -8,6 +8,20 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
 ## [Unreleased]
 
 ### Added
+- **Delivery by distance** (`lafka_distance`): a native WooCommerce shipping method for
+  zones, replacing the paid Distance Rate Shipping extension. Distance bands (up to N km
+  or miles gives a fee, plus an optional amount per unit), a maximum distance, straight
+  line x road factor (keyless) or driving distance (Google Routes with the one Maps key,
+  or an OSRM server through `lafka_distance_osrm_endpoint`), tax status, and free over
+  the store's free-delivery threshold. It measures from the chosen branch or the store
+  point to the checkout pin, else to a cached server-side geocode of the address; a
+  geocode or route failure, a street-less match or an address beyond the maximum offers
+  no rate (with a plain explanation and a `shipping` log line), never a guessed price.
+  The distance shows under the rate ("Delivery · 4.2 km") and on the order, emails and
+  the kitchen display. Classic checkout: a new pin reprices the order.
+- `wp lafka shipping migrate-drs [--apply]`: prints every Distance Rate Shipping
+  instance (zone, rules, settings; never the API key), the equivalent bands and what
+  cannot be mapped; `--apply` adds a disabled copy to the same zone to compare.
 - **Deals** (`lafka_deal` product type): "any 2 pizzas for $20" where the customer
   picks each item and its options. Slots by category or hand-picked items, locked
   options (e.g. size), optional add-on items, premiums that pay the difference;

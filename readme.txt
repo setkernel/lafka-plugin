@@ -77,10 +77,11 @@ enabled WordPress loads the sources.
 
 = External services =
 
-Only when the Delivery areas module draws a map or looks up an address:
+Only when the Delivery areas module draws a map or looks up an address, or when a shipping zone uses the "Delivery by distance" method:
 
 * **OpenStreetMap tiles** (https://tile.openstreetmap.org), when no Google Maps key is set: the visitor's browser loads the map images for the area shown. [Tile usage policy](https://operations.osmfoundation.org/policies/tiles/), [privacy policy](https://osmfoundation.org/wiki/Privacy_Policy). Another tile server can be set with the `lafka_map_tile_url` filter.
 * **Nominatim** (https://nominatim.openstreetmap.org), when no Google Maps key is set: your server sends the address a customer or shop manager entered (or the point they chose) to find it on the map; it also sends your site address and admin email to identify the site. Answers are cached for 30 days. [Usage policy](https://operations.osmfoundation.org/policies/nominatim/), [privacy policy](https://osmfoundation.org/wiki/Privacy_Policy). The `lafka_geocoder_endpoint` filter points it at another geocoder.
+* **Delivery by distance** (WooCommerce > Settings > Shipping > a zone > "Delivery by distance"): your server looks the customer's delivery address up on Nominatim (above; this happens even when a Google Maps key is set) to measure the distance from your restaurant. Answers are cached for 30 days. Only with "Driving distance" chosen does it also send the two coordinates (never a name or address) to a road-distance service: **Google Routes API** (https://routes.googleapis.com) when you enter a Google Maps API key ([Terms](https://cloud.google.com/maps-platform/terms), [privacy policy](https://policies.google.com/privacy)), or an OSRM server of your choosing (`lafka_distance_osrm_endpoint` filter). The default "Straight line" measure contacts no service beyond the address lookup.
 * **Google Maps Platform** (https://maps.googleapis.com), only when you enter a Google Maps API key: the visitor's browser loads Google's maps, address suggestions and address lookups. [Terms](https://cloud.google.com/maps-platform/terms), [privacy policy](https://policies.google.com/privacy).
 
 = Privacy =
