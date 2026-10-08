@@ -231,7 +231,7 @@ if ( ! class_exists( 'Lafka_Module_Registry' ) ) {
 					array(
 						'id'              => 'promotions',
 						'label'           => esc_html__( 'Promotions', 'lafka-plugin' ),
-						'description'     => esc_html__( 'BOGO, delivery-minimum and promo-banner engine that coordinates order discounts.', 'lafka-plugin' ),
+						'description'     => esc_html__( 'Buy-one-get-one discount, delivery minimum and the promo banner. First-order, slow-day, combo and free-delivery offers have their own switches in WooCommerce → Settings → Restaurant.', 'lafka-plugin' ),
 						'category'        => 'conversion',
 						'storage'         => 'lafka_option',
 						'default_enabled' => false,

@@ -96,6 +96,28 @@ if ( ! class_exists( 'Lafka_Promotions' ) ) {
 		}
 
 		/**
+		 * Whether BOGO discounts anything (a 0% setting switches it off,
+		 * labels and banner included).
+		 *
+		 * @return bool
+		 */
+		public static function bogo_active(): bool {
+			return (float) self::knob( 'bogo_discount' ) > 0;
+		}
+
+		/**
+		 * Drop BOGO bookkeeping restored from the session.
+		 *
+		 * @param array<string,mixed> $item Cart item being restored.
+		 * @return array<string,mixed>
+		 */
+		public function forget_bogo_state( $item ): array {
+			$item = (array) $item;
+			unset( $item['_bogo_original_price'], $item['_bogo_50'], $item['_bogo_discounted_qty'], $item['_bogo_savings'] );
+			return $item;
+		}
+
+		/**
 		 * The deal in plain words: "Buy 1, get 1 free" / "Buy 1, get 1 50% off"
 		 * (banner and cart line; no emoji, sentence case).
 		 *
@@ -136,7 +158,15 @@ if ( ! class_exists( 'Lafka_Promotions' ) ) {
 			add_action( 'woocommerce_before_cart', array( $this, 'render_delivery_notice' ) );
 			add_action( 'woocommerce_before_checkout_form', array( $this, 'render_delivery_notice' ) );
 
-			// BOGO 50%
+			// A BOGO price is worked out fresh on every request from the item's
+			// current price; never carry a stored "original" price over from the
+			// session (a price change after add-to-cart would be ignored).
+			add_filter( 'woocommerce_get_cart_item_from_session', array( $this, 'forget_bogo_state' ), 5 );
+
+			// BOGO, its labels and its banner exist only while it discounts something.
+			if ( ! self::bogo_active() ) {
+				return;
+			}
 			add_action( 'woocommerce_before_calculate_totals', array( $this, 'apply_bogo_to_cart' ), 20, 1 );
 			add_filter( 'woocommerce_get_item_data', array( $this, 'render_bogo_label' ), 10, 2 );
 			add_filter( 'woocommerce_cart_item_price', array( $this, 'render_bogo_unit_price' ), 10, 2 );
