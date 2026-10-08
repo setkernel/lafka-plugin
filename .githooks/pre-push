@@ -1,73 +1,45 @@
 #!/usr/bin/env bash
 #
-# Pre-push hook for lafka-plugin.
-#
-# Runs the gates CI runs — version SSOT check, PHPCS, ESLint, Stylelint,
-# minified-build freshness — but only the ones the pushed commits can affect,
-# and the independent ones in parallel. PHPCS / ESLint / Stylelint use their
-# on-disk caches, so unchanged files are not re-linted. Nothing is skipped:
-# a missing dependency fails the push with the command that installs it.
+# Pre-push hook for lafka-plugin: runs every CI gate (version SSOT, PHP
+# syntax, PHPCS, ESLint, Stylelint, .min.js freshness) on every push, the
+# independent ones in parallel. Lint caches keep unchanged files fast.
+# Nothing is optional: a missing dependency fails the push.
 #
 # Install (one-time per clone):
 #     git config core.hooksPath .githooks
 #
 
 set -uo pipefail
-
 cd "$(git rev-parse --show-toplevel)" || exit 1
 
 red()   { printf '\033[31m%s\033[0m\n' "$1"; }
 green() { printf '\033[32m%s\033[0m\n' "$1"; }
 blue()  { printf '\033[36m%s\033[0m\n' "$1"; }
 
-# Files changed by the pushed commits (git feeds "<local ref> <local sha>
-# <remote ref> <remote sha>" lines on stdin). Unknown range → check everything.
-zero=0000000000000000000000000000000000000000
-changed=""
-run_all=0
-while read -r _local_ref local_sha _remote_ref remote_sha; do
-	[ "$local_sha" = "$zero" ] && continue # branch deletion
-	if [ "$remote_sha" = "$zero" ]; then
-		base=$(git merge-base "$local_sha" origin/main 2>/dev/null) || { run_all=1; continue; }
-	else
-		base=$remote_sha
-	fi
-	changed+=$(git diff --name-only "$base" "$local_sha" 2>/dev/null)$'\n' || run_all=1
-done
-[ -z "$changed" ] && run_all=1
-
-touches() { [ "$run_all" = 1 ] || grep -Eq "$1" <<<"$changed"; }
-
-# Every gate below needs the installed toolchains; fail early and say how.
 [ -d node_modules ] || { red "✖ pre-push: node_modules missing — run: npm ci"; exit 1; }
 [ -d vendor ] || { red "✖ pre-push: vendor missing — run: composer install"; exit 1; }
 
-# Version SSOT guard first — cheapest gate, needs only node.
-blue "▸ pre-push: check-version"
-npm run check-version --silent >/dev/null 2>&1 || { red "✖ check-version failed — run: npm run check-version"; exit 1; }
+blue "▸ pre-push: version SSOT"
+npm run check-version --silent || { red "✖ pre-push: version check FAILED"; exit 1; }
 
 logdir=$(mktemp -d)
 trap 'rm -rf "$logdir"' EXIT
 pids=()
 names=()
-
-run() { # run <name> <command...> — in the background, output to a log
-	local name=$1; shift
+run() { # run <name> <command...> in the background, output to a log
+	local name=$1
+	shift
 	blue "▸ pre-push: $name"
-	( "$@" >"$logdir/$name.log" 2>&1 ) &
+	( "$@" > "$logdir/$name.log" 2>&1 ) &
 	pids+=($!)
 	names+=("$name")
 }
 
-if touches '\.php$|^composer\.|^\.phpcs\.xml'; then
-	run phpcs composer phpcs --quiet
-fi
-
-if touches '\.(js|mjs|css)$|^package|^eslint\.config|^\.stylelintrc'; then
-	run eslint npm run lint:js --silent
-	run stylelint npm run lint:css --silent
-	run min-build sh -c 'npm run build --silent >/dev/null && git diff --exit-code -- "*.min.js"'
-fi
+run php-syntax composer lint:php --quiet
+run phpcs composer phpcs --quiet
+run eslint npm run lint:js --silent
+run stylelint npm run lint:css --silent
+run min-build sh -c 'npm run build --silent > /dev/null && git diff --exit-code -- "*.min.js"'
 
 failed=0
 for i in "${!pids[@]}"; do

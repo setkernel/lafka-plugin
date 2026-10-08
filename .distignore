@@ -1,0 +1,25 @@
+# Dev-only paths kept out of the installable zip. Single source of truth:
+# release.yml and plugin-check.yml build the release tree with
+# `rsync --exclude-from=.distignore`, and `wp dist-archive` honours it too.
+/.git
+/.github
+/.githooks
+/.gitignore
+/.distignore
+/.npmrc
+/.phpcs.cache
+/.eslintcache
+/.stylelintcache
+.DS_Store
+/node_modules
+/vendor
+/package.json
+/package-lock.json
+/composer.json
+/composer.lock
+/.phpcs.xml.dist
+/.stylelintrc.json
+/eslint.config.mjs
+/scripts
+/CONTRIBUTING.md
+/README.md

@@ -3,23 +3,15 @@ name: CodeQL
 on:
   workflow_dispatch:
   push:
-    branches: [main, master]
+    branches: [main]
     paths-ignore:
       - '**.md'
-      - 'docs/**'
-      - 'languages/**'
       - 'LICENSE'
-      - '.gitignore'
-      - '.editorconfig'
   pull_request:
-    branches: [main, master]
+    branches: [main]
     paths-ignore:
       - '**.md'
-      - 'docs/**'
-      - 'languages/**'
       - 'LICENSE'
-      - '.gitignore'
-      - '.editorconfig'
   schedule:
     # Mondays at 06:00 UTC — runs even on quiet weeks so CodeQL DB stays fresh
     # and new advisories get flagged within the week.
@@ -38,15 +30,14 @@ jobs:
   analyze:
     name: Analyze ${{ matrix.language }}
     runs-on: ubuntu-latest
-    # JS-only analysis ~5 min on a codebase this size; cap at 30 to catch
-    # a hung scanner. PHP is NOT a CodeQL-supported language
-    # (https://codeql.github.com/docs/codeql-overview/supported-languages-and-frameworks/),
-    # so PHP source-quality checks live in the `php` job in ci.yml (PHPCS).
+    # CodeQL has no PHP support; PHP is covered by PHPCS in ci.yml. The
+    # `actions` language scans these workflows for injection and
+    # permission issues.
     timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
-        language: [javascript-typescript]
+        language: [actions, javascript-typescript]
     steps:
       - uses: actions/checkout@v7
 

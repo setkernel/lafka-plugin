@@ -1,104 +1,51 @@
-name: Build Release Zip
+name: Release
 
 on:
   push:
     tags:
       - 'v*'
 
-# `contents: write` is required so the gh CLI can create / update the
-# GitHub Release. No other write scopes needed.
 permissions:
-  contents: write
+  contents: read
 
-# Two `git push --tags` racing against each other (e.g. ops manually
-# pushed a tag while a script was also pushing) shouldn't double-build.
-# `cancel-in-progress: false` because we want both releases to publish
-# — just not in parallel — if both tags are valid.
 concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: false
 
-# POLICY: First-party GitHub-org actions only (actions/*, github/*).
-# Release publishing uses the pre-installed `gh` CLI on the runner —
-# no third-party release action.
+# POLICY: first-party GitHub-org actions only; publishing uses the runner's
+# pre-installed `gh` CLI.
 
 jobs:
+  # A tag ships only code that passes every CI gate.
+  ci:
+    uses: ./.github/workflows/ci.yml
+
   release:
+    needs: ci
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    # Only this job may write: it creates the GitHub Release.
+    permissions:
+      contents: write
     steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-
-      - name: Get version from tag
-        id: version
-        run: echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
-
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          cache: npm
-
-      # Regenerate every first-party .min.js from its readable source so the
-      # zip can never ship a stale build (WP.org guideline 4: sources ship
-      # alongside the minified files).
-      - name: Build assets
-        run: |
-          npm ci --no-audit --no-fund
-          npm run build
+      - uses: actions/checkout@v7
 
       - name: Build zip
+        # .distignore is the single list of dev-only paths.
         run: |
           mkdir lafka-plugin
-          # NX1-10d: dev-only files must never ship in the installable zip.
-          # Excluded: VCS/CI metadata, dependencies, package manifests, lint
-          # tooling, and ops/build scripts.
-          # Runtime files STAY — readme.txt,
-          # COMPATIBILITY.md, the operator guides under docs/, languages/,
-          # and LICENSE (GPLv2 requires shipping the licence text).
-          rsync -a --exclude='.git' \
-                   --exclude='.github' \
-                   --exclude='.gitignore' \
-                   --exclude='.githooks' \
-                   --exclude='.npmrc' \
-                   --exclude='.phpcs.cache' \
-                   --exclude='.eslintcache' \
-                   --exclude='.stylelintcache' \
-                   --exclude='.DS_Store' \
-                   --exclude='node_modules' \
-                   --exclude='/vendor' \
-                   --exclude='package.json' \
-                   --exclude='package-lock.json' \
-                   --exclude='composer.json' \
-                   --exclude='composer.lock' \
-                   --exclude='.phpcs.xml.dist' \
-                   --exclude='.stylelintrc.json' \
-                   --exclude='eslint.config.mjs' \
-                   --exclude='scripts' \
-                   --exclude='CONTRIBUTING.md' \
-                   --exclude='README.md' \
-                   ./ lafka-plugin/
-          zip -r lafka-plugin.zip lafka-plugin/
-
-      # Integrity check operators can verify with `sha256sum -c`.
-      # Both files are uploaded to the GitHub Release.
-      - name: Generate SHA256 checksum
-        run: |
+          rsync -a --exclude-from=.distignore ./ lafka-plugin/
+          zip -qr lafka-plugin.zip lafka-plugin/
           sha256sum lafka-plugin.zip > lafka-plugin.zip.sha256
           cat lafka-plugin.zip.sha256
 
-      # Idempotent release publish via the pre-installed `gh` CLI.
-      # Race-free: create-tolerated + upload-clobber covers all states
-      # (release missing, release exists, partial assets, re-runs). No
-      # check-then-act window where a concurrent manual `gh release create`
-      # can wedge the workflow.
-      - name: Create or update release
+      # The GitHub updater looks for the asset name `lafka-plugin.zip`.
+      - name: Publish release
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ steps.version.outputs.tag }}
+          TAG: ${{ github.ref_name }}
         run: |
-          gh release create "$TAG" --title "$TAG" --generate-notes || true
-          gh release upload "$TAG" \
-            lafka-plugin.zip \
-            lafka-plugin.zip.sha256 \
-            --clobber
+          if ! gh release view "$TAG" > /dev/null 2>&1; then
+            gh release create "$TAG" --title "$TAG" --generate-notes --verify-tag
+          fi
+          gh release upload "$TAG" lafka-plugin.zip lafka-plugin.zip.sha256 --clobber

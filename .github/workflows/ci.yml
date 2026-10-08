@@ -1,45 +1,37 @@
 name: CI
 
 on:
-  # Manual trigger from the Actions UI (re-run on any branch without an empty commit).
   workflow_dispatch:
+  # release.yml calls this workflow so a tag only ships code that passes it.
+  workflow_call:
   push:
-    branches: [main, master]
-    # Skip CI only for changes nothing checks. Markdown / docs changes still
-    # run: PHPUnit carries doc-guard tests (TRACKING.md contract, no operator
-    # literals in docs, release packaging) that must see them.
+    branches: [main]
     paths-ignore:
-      - 'languages/**'
+      - '**.md'
       - 'LICENSE'
-      - '.gitignore'
   pull_request:
-    branches: [main, master]
+    branches: [main]
     paths-ignore:
-      - 'languages/**'
+      - '**.md'
       - 'LICENSE'
-      - '.gitignore'
 
-# Default to read-only at the workflow level; jobs that need to write
-# (none here) must opt in explicitly. Defense in depth against
-# compromised actions.
+# Read-only by default; no job here needs to write.
 permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# POLICY: This workflow uses ONLY first-party GitHub-org actions
-# (actions/*, github/*). No community actions. Multi-PHP matrix testing
-# was traded for this constraint — we test against ubuntu-latest's
-# pre-installed PHP (currently 8.3) which matches prod. Plugin's PHP
-# floor (8.1) is documented in the lafka-plugin.php header and enforced
-# by Requires PHP — runtime will surface syntax issues if anyone ships
-# 8.4-only constructs.
+# POLICY: first-party GitHub-org actions only (actions/*, github/*). PHP is
+# the runner's pre-installed PHP 8.3, which is the plugin's PHP floor
+# (`Requires PHP` in the plugin header); PHPCompatibilityWP checks 8.3+
+# statically. Every gate below is the same npm/composer script the pre-push
+# hook runs.
 
 jobs:
   lint-js-css:
-    name: ESLint & Stylelint
+    name: Version, ESLint, Stylelint & build
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -48,54 +40,36 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 24
-          # Built-in npm cache keyed on package-lock.json hash. Cuts
-          # `npm ci` install time from ~30s to ~5s on cache hit.
           cache: npm
 
-      # Version single-source-of-truth guard: fails if the WordPress header,
-      # versioned docs, or package-lock.json have drifted from package.json.
-      # Cheap and dependency-free, so it runs before `npm ci`.
-      - name: Version SSOT guard
-        run: node scripts/sync-version.mjs --check
+      - name: Version single source of truth
+        run: npm run check-version
 
-      # `npm ci` is a reproducible install (fails on package-lock drift)
-      # and is the right choice in CI; `npm install` would silently
-      # mutate package-lock.json on lockfile/registry inconsistencies.
       - run: npm ci --no-audit --no-fund
 
-      - name: ESLint
+      - name: ESLint (zero warnings)
         run: npm run lint:js
 
-      - name: Stylelint
+      - name: Stylelint (zero warnings)
         run: npm run lint:css
 
-      # Behavioural tests for the front-end JS (node:test, no dependencies).
-      - name: JS tests
-        run: npm test
-
-      # The committed .min.js builds must match their sources.
-      - name: Minified builds are up to date
+      - name: Committed .min.js files match their sources
         run: |
           npm run build
-          git diff --exit-code -- '*.min.js' || { echo "::error::Run npm run build and commit the regenerated .min.js files."; exit 1; }
+          git diff --exit-code -- '*.min.js'
 
   php:
-    name: PHP
+    name: PHP syntax & PHPCS
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
 
-      # Use the runner's pre-installed PHP + Composer. No third-party
-      # action required. Verify versions print so a runner-image change
-      # surfaces in the log.
       - name: Show PHP + Composer versions
         run: |
           php --version
           composer --version
 
-      # Composer cache: keyed on composer.lock so installs replay
-      # offline when the lock hasn't moved.
       - name: Get Composer cache directory
         id: composer-cache
         run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
@@ -103,48 +77,23 @@ jobs:
       - uses: actions/cache@v6
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('composer.lock') }}
           restore-keys: |
             ${{ runner.os }}-composer-
+
+      - name: Validate composer.json
+        run: composer validate --strict
 
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist --no-progress
 
-      # PHPCS result cache (.phpcs.cache): files unchanged since the cached run
-      # are not re-sniffed. Keyed on the ruleset + locked sniff versions; each
-      # run saves a fresh cache under its own SHA and restores the newest.
-      - uses: actions/cache@v6
-        with:
-          path: .phpcs.cache
-          key: ${{ runner.os }}-phpcs-${{ hashFiles('.phpcs.xml.dist', 'composer.lock') }}-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-phpcs-${{ hashFiles('.phpcs.xml.dist', 'composer.lock') }}-
+      - name: PHP syntax
+        run: composer lint:php
 
-      - name: PHPCS
+      - name: PHPCS (warnings fail)
         run: composer phpcs
 
-      - name: PHPUnit
-        run: composer test
-
-      # Order independence. Reverse order runs every test class after the ones
-      # it normally precedes, so a test that only passes because another ran
-      # first fails deterministically on the PR that adds it.
-      - name: PHPUnit (reverse order)
-        run: vendor/bin/phpunit --do-not-cache-result --order-by=reverse
-
-      # Random order shuffles the rest. The seed is the run number (a re-run of
-      # the same run reuses it) and is printed, so a failure reproduces locally
-      # with the exact command from the log.
-      - name: PHPUnit (random order)
-        env:
-          SEED: ${{ github.run_number }}
-        run: |
-          echo "Random-order seed: $SEED (reproduce: vendor/bin/phpunit --order-by=random --random-order-seed=$SEED)"
-          vendor/bin/phpunit --do-not-cache-result --order-by=random --random-order-seed="$SEED"
-
-  # Flags any PR that introduces a new vulnerable composer or npm
-  # dependency at moderate severity or above. PR-only — push events
-  # have nothing to compare against.
+  # Blocks a PR that adds a vulnerable dependency (moderate or worse).
   dependency-review:
     name: Dependency review
     if: github.event_name == 'pull_request'
@@ -156,8 +105,7 @@ jobs:
         with:
           fail-on-severity: moderate
 
-  # Single status check that all CI jobs pass. Use this in branch
-  # protection rules instead of every individual matrix job.
+  # The single status check for branch protection.
   ci-passed:
     name: CI passed
     needs: [lint-js-css, php]
@@ -166,10 +114,10 @@ jobs:
     steps:
       - name: Verify all required jobs succeeded
         env:
-          JOBS_FAILED: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}
+          JOBS_FAILED: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped') }}
         run: |
           if [ "$JOBS_FAILED" = "true" ]; then
-            echo "::error::One or more required jobs failed or were cancelled."
+            echo "::error::One or more required jobs failed, were cancelled or were skipped."
             exit 1
           fi
           echo "All required CI jobs passed."

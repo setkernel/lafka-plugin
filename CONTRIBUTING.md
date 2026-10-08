@@ -11,19 +11,23 @@ composer install
 # Boot a full WP + WC + Lafka stack: the Docker environment in ../local-env
 # (this repo is bind-mounted live; see its README). Then seed a deterministic
 # demo restaurant (products, addons, branch, zone, hours):
-../local-env/wp.sh lafka seed-demo          # add --reset to rebuild
+git config core.hooksPath .githooks   # pre-push runs every gate
+../local-env/lafka wp lafka seed-demo        # add --reset to rebuild
 ```
 
 ## Before opening a PR
 
 ```bash
-npm run lint           # ESLint + Stylelint
+npm run check-version  # version single source of truth
+npm run lint           # ESLint + Stylelint, zero warnings
 npm run build          # regenerate .min.js from sources — commit both
-npm run check-version  # version SSOT drift guard
-composer phpcs         # (composer phpcbf auto-fixes what it can)
+composer lint:php      # PHP syntax at the 8.3 floor
+composer phpcs         # full WordPress-Extra, warnings fail (composer phpcbf auto-fixes)
 ```
 
-The `.githooks/pre-push` hook runs the affected gates in parallel and never skips one (`git config core.hooksPath .githooks`; it fails with the install command when `node_modules` or `vendor` is missing).
+The `.githooks/pre-push` hook and CI run exactly these gates, every time. No
+lint rule is excluded and no inline suppression (`phpcs:ignore`,
+`eslint-disable`, `stylelint-disable`) is allowed.
 
 The plugin currently ships no automated test suite.
 
@@ -72,12 +76,12 @@ The plugin declares both HPOS and `cart_checkout_blocks` compatibility in `lafka
 
 `package.json` is the single source of truth for the version.
 
-0. When translatable strings changed, regenerate the POT:
-   `../local-env/wp.sh i18n make-pot wp-content/plugins/lafka-plugin wp-content/plugins/lafka-plugin/languages/lafka-plugin.pot --domain=lafka-plugin --exclude=scripts,node_modules,vendor,assets/vendor --skip-audit`
+0. When translatable strings changed, regenerate the POT with the local stack
+   running: `npm run i18n:pot`.
 
-1. `npm version <major|minor|patch>` — bumps `package.json`, rewrites the derived copies (`lafka-plugin.php` header, `readme.txt` Stable tag, `languages/lafka-plugin.pot`) via `scripts/sync-version.mjs`, commits and creates the `vX.Y.Z` tag. `npm run check-version` (CI + `VersionConsistencyTest`) catches drift.
-2. `git push --follow-tags` — pushing the tag triggers `.github/workflows/release.yml`.
-3. `release.yml` runs `npm run build`, then builds the zip (dev-only files — `.git`, `node_modules`, `vendor`, `scripts`, lint configs and caches, `README.md`, `CONTRIBUTING.md` — are excluded), then creates/updates the GitHub Release with the zip + SHA256.
+1. `npm version <major|minor|patch>` — bumps `package.json` and rewrites the derived copies (`lafka-plugin.php` header, `readme.txt` Stable tag, `languages/lafka-plugin.pot`) via `scripts/sync-version.mjs`, then commits and creates the `vX.Y.Z` tag. `npm run check-version` catches drift.
+2. Push the branch, then the tag on its own (`git push origin main`, then `git push origin vX.Y.Z`).
+3. The tag runs `.github/workflows/release.yml`: it calls the CI workflow and, only if every gate passes, zips the tree minus the paths in `.distignore` and creates or updates the GitHub Release with the zip and its SHA-256.
 
 ## Security
 
