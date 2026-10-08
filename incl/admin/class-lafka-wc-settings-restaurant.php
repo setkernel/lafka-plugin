@@ -338,8 +338,8 @@ if ( ! function_exists( 'lafka_define_wc_settings_restaurant_class' ) ) {
 					);
 				};
 
-				$llms_urls = function_exists( 'home_url' )
-					? implode( ' · ', array_map( static fn( $p ) => home_url( '/' . $p ), array( 'llms.txt', 'llms-full.txt', 'menu.md', 'menu.json' ) ) )
+				$llms_urls = function_exists( 'lafka_llms_documents' )
+					? implode( ' · ', array_map( static fn( $p ) => home_url( '/' . $p ), array_keys( lafka_llms_documents() ) ) )
 					: '';
 
 				return array(

@@ -62,6 +62,11 @@ if ( ! function_exists( 'lafka_llms_enabled' ) ) {
 	 */
 	function lafka_llms_enabled(): bool {
 		$on = function_exists( 'lafka_seo_is_on' ) ? lafka_seo_is_on( 'lafka_seo_llms_enabled' ) : true;
+		// Settings → Reading → "Discourage search engines" (staging, a site
+		// not yet launched): publish nothing for crawlers to find.
+		if ( '0' === (string) get_option( 'blog_public', '1' ) ) {
+			$on = false;
+		}
 		/**
 		 * Filter whether /llms.txt, /llms-full.txt, /menu.md, /menu.json are served.
 		 *
@@ -582,6 +587,25 @@ if ( ! function_exists( 'lafka_llms_serve' ) ) {
 	}
 }
 
+if ( ! function_exists( 'lafka_llms_discovery_link' ) ) {
+	/**
+	 * `wp_head` on the front page: point to /llms.txt so an assistant that
+	 * reads the home page finds the short index (llms.txt has no registered
+	 * link relation, so this is a plain text alternate).
+	 *
+	 * @return void
+	 */
+	function lafka_llms_discovery_link() {
+		if ( ! is_front_page() || ! lafka_llms_enabled() ) {
+			return;
+		}
+		printf(
+			'<link rel="alternate" type="text/plain" title="llms.txt" href="%s" />' . "\n",
+			esc_url( home_url( '/' . array_search( 'llms', lafka_llms_documents(), true ) ) )
+		);
+	}
+}
+
 if ( ! function_exists( 'lafka_llms_escape_text' ) ) {
 	/**
 	 * Escape a machine-readable document (text/plain, text/markdown or JSON,
@@ -638,6 +662,7 @@ add_action( 'init', 'lafka_llms_register_rewrites' );
 add_action( 'init', 'lafka_seo_maybe_flush_rewrites', 99 );
 add_filter( 'query_vars', 'lafka_llms_query_vars' );
 add_action( 'template_redirect', 'lafka_llms_serve', 0 );
+add_action( 'wp_head', 'lafka_llms_discovery_link', 5 );
 add_action( 'lafka_menu_data_changed', 'lafka_llms_flush_cache' );
 add_action( 'updated_option', 'lafka_llms_maybe_flush_on_option' );
 add_action( 'added_option', 'lafka_llms_maybe_flush_on_option' );
