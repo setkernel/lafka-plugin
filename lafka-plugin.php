@@ -761,6 +761,11 @@ add_action(
 			// unconditionally: an operator on classic mode is still compatible with
 			// blocks — the declaration only removes WC's incompatibility warning.
 			\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'cart_checkout_blocks', __FILE__, true );
+			// The Deal product type and the add-on tabs live in the classic product
+			// editor only, so say so rather than leaving WooCommerce to guess: the
+			// block product editor stays off for products until they have block
+			// versions.
+			\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'product_block_editor', __FILE__, false );
 		}
 	}
 );
@@ -924,11 +929,6 @@ function lafka_plugin_after_plugins_loaded() {
 		}
 		require_once plugin_dir_path( __FILE__ ) . '/incl/woocommerce-functions.php';
 
-		// Removed because it makes categories appear twice in shop and category
-		// view. Functionality is not lost: the theme calls
-		// woocommerce_maybe_show_product_subcategories() itself.
-		remove_filter( 'woocommerce_product_loop_start', 'woocommerce_maybe_show_product_subcategories' );
-
 		// Check if WPML and WooCommerce Multilingual are active
 		if ( class_exists( 'SitePress' ) && class_exists( 'woocommerce_wpml' ) ) {
 			define( 'LAFKA_PLUGIN_IS_WPML_WCML', true );
@@ -942,16 +942,6 @@ function lafka_plugin_after_plugins_loaded() {
 			require_once plugin_dir_path( __FILE__ ) . '/incl/wpml/addons/class-lafka-wcml-product-addons.php';
 			$lafka_product_addons = new Lafka_WCML_Product_Addons( $sitepress, $woocommerce_wpml );
 			$lafka_product_addons->add_hooks();
-		}
-
-		// Suspend account notices on the cart page, because cart notices got taken by the account form in header
-		add_action( 'wp', 'lafka_suspend_account_notice' );
-		if ( ! function_exists( 'lafka_suspend_account_notice' ) ) {
-			function lafka_suspend_account_notice() {
-				if ( is_cart() ) {
-					remove_action( 'woocommerce_before_customer_login_form', 'woocommerce_output_all_notices', 10 );
-				}
-			}
 		}
 	}
 
