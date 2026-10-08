@@ -105,6 +105,7 @@ if ( ! class_exists( 'Lafka_Blocks_Integration' )
 					'wp-i18n',
 					'wc-blocks-checkout',
 					'wc-settings',
+					'lafka-core',
 				),
 				$version,
 				true
@@ -137,10 +138,9 @@ if ( ! class_exists( 'Lafka_Blocks_Integration' )
 		 */
 		public function get_script_data() {
 			return array(
-				'currencySymbol' => self::currency_symbol(),
-				'ajaxUrl'        => admin_url( 'admin-ajax.php' ),
-				'timeslot'       => self::timeslot_config(),
-				'i18n'           => array(
+				'ajaxUrl'  => admin_url( 'admin-ajax.php' ),
+				'timeslot' => self::timeslot_config(),
+				'i18n'     => array(
 					'freeDeliveryRemaining' => /* translators: %s: amount still needed to qualify for free delivery. */ __( 'Add %s more for free delivery', 'lafka-plugin' ),
 					'freeDeliveryReached'   => __( 'You have unlocked free delivery!', 'lafka-plugin' ),
 					'timeslotHeading'       => __( 'Delivery / pickup time', 'lafka-plugin' ),
@@ -179,21 +179,6 @@ if ( ! class_exists( 'Lafka_Blocks_Integration' )
 				'daysAhead' => (int) $days_ahead,
 				'nonce'     => $enabled ? wp_create_nonce( 'time_slots_for_date' ) : '',
 			);
-		}
-
-		/**
-		 * Active currency symbol as plain text (HTML entities decoded) for the
-		 * progress copy.
-		 *
-		 * @return string
-		 */
-		private static function currency_symbol() {
-			if ( ! function_exists( 'get_woocommerce_currency_symbol' ) ) {
-				return '';
-			}
-			$symbol = get_woocommerce_currency_symbol();
-
-			return function_exists( 'html_entity_decode' ) ? html_entity_decode( $symbol ) : $symbol;
 		}
 	}
 }

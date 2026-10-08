@@ -92,7 +92,7 @@ class Lafka_Engine_Display {
 		wp_enqueue_script(
 			'lafka-addons',
 			plugins_url( '../assets/js/addons' . $suffix . '.js', LAFKA_ADDONS_ENGINE_PATH . '/.' ),
-			array( 'jquery', 'wc-accounting' ),
+			array( 'lafka-core', 'jquery', 'wc-accounting' ),
 			function_exists( 'lafka_plugin_asset_version' ) ? lafka_plugin_asset_version( $addons_rel ) : '8.15.0',
 			true
 		);

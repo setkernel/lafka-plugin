@@ -5,11 +5,9 @@
 (function ($) {
 	'use strict';
 
-	if (!$ || !window.lafkaTips) {
+	if (!$ || !window.lafkaTips || !window.lafka) {
 		return;
 	}
-
-	let timer = null;
 
 	function save() {
 		const box = document.querySelector('[data-lafka-tips]');
@@ -28,6 +26,14 @@
 		});
 	}
 
+	const markOtherAndSave = window.lafka.debounce(function (field) {
+		const other = field.closest('label').querySelector('input[type="radio"]');
+		if (other) {
+			other.checked = true;
+		}
+		save();
+	}, 600);
+
 	document.addEventListener('change', function (event) {
 		if (event.target.closest && event.target.closest('[data-lafka-tips]')) {
 			if (event.target.name === 'lafka_tip_amount') {
@@ -42,14 +48,7 @@
 
 	document.addEventListener('input', function (event) {
 		if (event.target.name === 'lafka_tip_amount' && event.target.closest('[data-lafka-tips]')) {
-			clearTimeout(timer);
-			timer = setTimeout(function () {
-				const other = event.target.closest('label').querySelector('input[type="radio"]');
-				if (other) {
-					other.checked = true;
-				}
-				save();
-			}, 600);
+			markOtherAndSave(event.target);
 		}
 	});
 })(window.jQuery);

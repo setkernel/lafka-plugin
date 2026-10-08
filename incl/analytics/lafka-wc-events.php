@@ -826,7 +826,7 @@ if ( ! function_exists( 'lafka_dl_enqueue_client' ) ) {
 		wp_enqueue_script(
 			'lafka-dl-client',
 			$src,
-			array(),
+			array( 'lafka-core' ),
 			$version,
 			true
 		);

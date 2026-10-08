@@ -86,26 +86,21 @@
 	// search — the menu search text field ([data-lafka-menu-search-input]),
 	// debounced. Delegated so it works whenever the field is rendered.
 	// ------------------------------------------------------------------
-	let searchTimer = null;
+	const sendSearch = window.lafka.debounce(function (term) {
+		if (term.length < 2) {
+			return;
+		}
+		window.lafka.track('search', {
+			search_term: term,
+			results_count: countSearchResults()
+		});
+	}, 350);
 	document.addEventListener('input', function (ev) {
 		const input = ev.target && ev.target.closest ? ev.target.closest('[data-lafka-menu-search-input]') : null;
 		if (!input) {
 			return;
 		}
-		const term = (input.value || '').trim();
-		if (searchTimer) {
-			clearTimeout(searchTimer);
-		}
-		searchTimer = setTimeout(function () {
-			if (term.length < 2) {
-				return;
-			}
-			window.dataLayer.push({
-				event: 'search',
-				search_term: term,
-				results_count: countSearchResults()
-			});
-		}, 350);
+		sendSearch((input.value || '').trim());
 	});
 
 	/**

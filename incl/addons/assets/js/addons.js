@@ -155,10 +155,7 @@ jQuery( document ).ready( function($) {
 		// from firing on every keystroke/rapid interaction. 300ms delay batches rapid
 		// changes (typing in textarea addons, number spinner clicks, gift card amount)
 		// into a single update, reducing AJAX calls by 90%+.
-		let _lafkaAddonsUpdateTimer = null;
-		$( this ).on( 'lafka-product-addons-update', function() {
-			clearTimeout( _lafkaAddonsUpdateTimer );
-			_lafkaAddonsUpdateTimer = setTimeout( function() {
+		$( this ).on( 'lafka-product-addons-update', window.lafka.debounce( function() {
 			const $totals      = $cart.find( '#product-addons-total' ),
 				is_variable  = $variation_input && $variation_input.length > 0,
 				product_id   = is_variable ? $variation_input.val() : $totals.data( 'product-id' ),
@@ -381,8 +378,7 @@ jQuery( document ).ready( function($) {
 				$cart.trigger( 'updated_addons' );
 			}
 
-		}, 300 ); // End debounce setTimeout
-		});
+		}, 300 ) );
 
 		$( this ).find( '.addon-custom, .addon-custom-textarea, .product-addon input, .product-addon textarea, .product-addon select, input.qty' ).trigger( 'change' );
 

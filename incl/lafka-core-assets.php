@@ -34,7 +34,7 @@ if ( ! function_exists( 'lafka_core_currency' ) ) {
 
 		return array(
 			'symbol'      => html_entity_decode( get_woocommerce_currency_symbol(), ENT_QUOTES, 'UTF-8' ),
-			'format'      => (string) get_woocommerce_price_format(),
+			'format'      => html_entity_decode( (string) get_woocommerce_price_format(), ENT_QUOTES, 'UTF-8' ),
 			'decimals'    => (int) wc_get_price_decimals(),
 			'decimalSep'  => (string) wc_get_price_decimal_separator(),
 			'thousandSep' => (string) wc_get_price_thousand_separator(),

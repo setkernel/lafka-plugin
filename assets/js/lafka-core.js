@@ -69,7 +69,7 @@
 			if ( isNaN( n ) ) {
 				n = 0;
 			}
-			const whole = Math.abs( n - Math.round( n ) ) < 0.005;
+			const whole = Math.abs( n - Math.round( n ) ) < 0.5 * Math.pow( 10, -decimals );
 			const places = options && options.trim && whole ? 0 : decimals;
 			const parts = Math.abs( n ).toFixed( places ).split( '.' );
 			parts[ 0 ] = parts[ 0 ].replace( /\B(?=(\d{3})+(?!\d))/g, c.thousandSep === undefined ? ',' : c.thousandSep );

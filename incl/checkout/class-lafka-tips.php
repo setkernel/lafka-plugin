@@ -257,7 +257,7 @@ if ( ! class_exists( 'Lafka_Tips' ) ) {
 				return;
 			}
 			$classic = lafka_plugin_script_path( 'assets/js/lafka-tips.min.js' );
-			wp_enqueue_script( 'lafka-tips', plugins_url( $classic, LAFKA_PLUGIN_FILE ), array( 'jquery' ), lafka_plugin_asset_version( $classic ), true );
+			wp_enqueue_script( 'lafka-tips', plugins_url( $classic, LAFKA_PLUGIN_FILE ), array( 'lafka-core', 'jquery' ), lafka_plugin_asset_version( $classic ), true );
 			wp_localize_script( 'lafka-tips', 'lafkaTips', array( 'ajaxUrl' => admin_url( 'admin-ajax.php' ) ) );
 
 			if ( wp_script_is( 'wc-blocks-checkout', 'registered' ) ) {

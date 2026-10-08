@@ -43,9 +43,7 @@
 	const i18n = settings.i18n || {};
 
 	function money( amount ) {
-		const symbol = settings.currencySymbol || '';
-		const value = Math.round( ( parseFloat( amount ) || 0 ) * 100 ) / 100;
-		return symbol + value.toFixed( 2 );
+		return window.lafka.money.format( amount );
 	}
 
 	/* ------------------------------------------------------------------ *
