@@ -76,11 +76,33 @@ class Lafka_Kitchen_Display {
 			new Lafka_KDS_Admin();
 		}
 
-		// Register email classes
+		// Register email classes, and the kitchen status changes that send them
+		// (WooCommerce fires an email's *_notification hook only for transitions
+		// listed in woocommerce_email_actions).
 		add_filter( 'woocommerce_email_classes', array( $this, 'register_emails' ) );
+		add_filter( 'woocommerce_email_actions', array( $this, 'register_email_actions' ) );
 
 		// Add KDS notification email to WC new-order recipient list
 		add_filter( 'woocommerce_email_recipient_new_order', array( $this, 'add_kds_admin_to_new_order' ), 10, 1 );
+	}
+
+	/**
+	 * The order-status transitions the kitchen emails are sent on.
+	 *
+	 * @param string[] $actions WooCommerce's email actions.
+	 * @return string[]
+	 */
+	public function register_email_actions( $actions ) {
+		return array_merge(
+			(array) $actions,
+			array(
+				'woocommerce_order_status_processing_to_accepted',
+				'woocommerce_order_status_accepted_to_preparing',
+				'woocommerce_order_status_preparing_to_ready',
+				'woocommerce_order_status_processing_to_rejected',
+				'woocommerce_order_status_accepted_to_rejected',
+			)
+		);
 	}
 
 	/**
