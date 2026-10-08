@@ -347,7 +347,7 @@ class Lafka_Engine_Display {
 			return $url;
 		}
 
-		$is_quick_view = isset( $_GET['wc-api'] ) && 'WC_Quick_View' === sanitize_text_field( wp_unslash( $_GET['wc-api'] ) );
+		$is_quick_view = 'WC_Quick_View' === lafka_input_get_text( 'wc-api' );
 		$applicable    = ! is_single( $product->get_id() )
 			&& in_array( $product->get_type(), (array) apply_filters( 'lafka_product_addons_add_to_cart_product_types', array( 'subscription', 'simple' ) ), true )
 			&& ! $is_quick_view;

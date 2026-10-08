@@ -411,7 +411,7 @@ class Lafka_Product_Filter_Widget extends WC_Widget {
 			}
 
 			$filter_name    = 'filter_' . wc_attribute_taxonomy_slug( $taxonomy );
-			$current_filter = isset( $_GET[ $filter_name ] ) ? explode( ',', wc_clean( wp_unslash( $_GET[ $filter_name ] ) ) ) : array();
+			$current_filter = lafka_input_has_get( $filter_name ) ? explode( ',', lafka_input_get_text( $filter_name ) ) : array();
 			$current_filter = array_map( 'sanitize_title', $current_filter );
 
 			if ( ! in_array( $term->slug, $current_filter, true ) ) {
@@ -455,7 +455,7 @@ class Lafka_Product_Filter_Widget extends WC_Widget {
 			$term_html .= ' ' . apply_filters( 'woocommerce_layered_nav_count', '<span class="count">(' . absint( $count ) . ')</span>', $count, $term );
 
 			echo '<li class="woocommerce-widget-layered-nav-list__item wc-layered-nav-term ' . ( $option_is_set ? 'woocommerce-widget-layered-nav-list__item--chosen chosen' : '' ) . '">';
-			echo apply_filters( 'woocommerce_layered_nav_term_html', $term_html, $term, $link, $count );
+			echo wp_kses_post( apply_filters( 'woocommerce_layered_nav_term_html', $term_html, $term, $link, $count ) );
 			echo '</li>';
 		}
 
@@ -491,7 +491,7 @@ class Lafka_Product_Filter_Widget extends WC_Widget {
 			}
 
 			$filter_name    = 'filter_' . wc_attribute_taxonomy_slug( $taxonomy );
-			$current_filter = isset( $_GET[ $filter_name ] ) ? explode( ',', wc_clean( wp_unslash( $_GET[ $filter_name ] ) ) ) : array();
+			$current_filter = lafka_input_has_get( $filter_name ) ? explode( ',', lafka_input_get_text( $filter_name ) ) : array();
 			$current_filter = array_map( 'sanitize_title', $current_filter );
 
 			if ( ! in_array( $term->slug, $current_filter, true ) ) {

@@ -56,11 +56,11 @@ class Lafka_Engine_Addons_List_Table extends WP_List_Table {
 
 	public function prepare_items(): void {
 		$per_page = 25;
-		$paged    = max( 1, (int) ( $_REQUEST['paged'] ?? 1 ) );
+		$paged    = max( 1, lafka_input_get_int( 'paged', 1 ) );
 
-		$orderby = sanitize_key( $_REQUEST['orderby'] ?? 'title' );
-		$order   = strtolower( (string) ( $_REQUEST['order'] ?? 'asc' ) ) === 'desc' ? 'DESC' : 'ASC';
-		$search  = sanitize_text_field( $_REQUEST['s'] ?? '' );
+		$orderby = sanitize_key( lafka_input_get_text( 'orderby', 'title' ) );
+		$order   = 'desc' === strtolower( lafka_input_get_text( 'order', 'asc' ) ) ? 'DESC' : 'ASC';
+		$search  = lafka_input_get_text( 's' );
 
 		$query_args = array(
 			'post_type'      => 'lafka_glb_addon',

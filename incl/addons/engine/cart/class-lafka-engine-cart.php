@@ -31,6 +31,21 @@ require_once dirname( __DIR__, 3 ) . '/observability/class-lafka-checkout-block-
 
 class Lafka_Engine_Cart {
 
+	/**
+	 * The add-to-cart form body.
+	 *
+	 * WooCommerce does not put a nonce on add-to-cart (so product pages stay
+	 * full-page cacheable) and verifies none itself; the cart is the only thing
+	 * these values can change. Read from the raw request, so the values are
+	 * already unslashed.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public static function request_post_data(): array {
+		$raw = filter_input_array( INPUT_POST, FILTER_UNSAFE_RAW );
+		return is_array( $raw ) ? $raw : array();
+	}
+
 	public function __construct() {
 		add_filter( 'woocommerce_add_cart_item', array( $this, 'add_cart_item' ), 20 );
 		add_filter( 'woocommerce_get_cart_item_from_session', array( $this, 'get_cart_item_from_session' ), 20, 2 );
@@ -54,14 +69,12 @@ class Lafka_Engine_Cart {
 
 		$price = (float) $cart_item['data']->get_price( 'edit' );
 
-		// Smart Coupons self-declared gift amount compat. Reads $_POST in
-		// woocommerce_add_cart_item filter context — WC verifies its own nonces
-		// upstream (woocommerce-add-to-cart / order-again flows) before this
-		// hook fires.
-		if ( empty( $price ) && ! empty( $_POST['credit_called'] ) ) {
-			$id = $cart_item['data']->get_id();
-			if ( isset( $_POST['credit_called'][ $id ] ) ) {
-				$price = (float) wc_format_decimal( sanitize_text_field( wp_unslash( $_POST['credit_called'][ $id ] ) ) );
+		// Smart Coupons self-declared gift amount compat.
+		if ( empty( $price ) ) {
+			$credit_called = self::request_post_data()['credit_called'] ?? array();
+			$id            = $cart_item['data']->get_id();
+			if ( is_array( $credit_called ) && isset( $credit_called[ $id ] ) ) {
+				$price = (float) wc_format_decimal( sanitize_text_field( $credit_called[ $id ] ) );
 			}
 		}
 		if ( empty( $price ) && ! empty( $cart_item['credit_amount'] ) ) {
@@ -147,8 +160,8 @@ class Lafka_Engine_Cart {
 	 * @throws Exception When a field validation returns WP_Error.
 	 */
 	public function add_cart_item_data( $cart_item_meta, $product_id, $post_data = null ): array {
-		if ( null === $post_data && isset( $_POST ) ) {
-			$post_data = $_POST;
+		if ( null === $post_data ) {
+			$post_data = wp_slash( self::request_post_data() );
 		}
 
 		// Grouped products: $product_id we get is the parent's id; the actual
@@ -206,8 +219,8 @@ class Lafka_Engine_Cart {
 			// classic request → $_POST fallback below (byte-identical classic path).
 			$post_data = apply_filters( 'lafka_addons_request_post_data', null );
 		}
-		if ( null === $post_data && isset( $_POST ) ) {
-			$post_data = $_POST;
+		if ( null === $post_data ) {
+			$post_data = wp_slash( self::request_post_data() );
 		}
 
 		$product_addons = Lafka_Engine_Helper::get_product_addons( $product_id );
@@ -318,7 +331,7 @@ class Lafka_Engine_Cart {
 			if ( $data ) {
 				$cart_item_meta['addons'] = array_merge(
 					$cart_item_meta['addons'],
-					(array) apply_filters( 'lafka_product_addon_reorder_cart_item_data', $data, $addon, $product['product_id'], $_POST )
+					(array) apply_filters( 'lafka_product_addon_reorder_cart_item_data', $data, $addon, $product['product_id'], array() )
 				);
 			}
 		}

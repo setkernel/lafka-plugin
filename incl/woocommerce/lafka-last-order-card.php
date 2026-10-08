@@ -164,7 +164,7 @@ if ( ! function_exists( 'lafka_pdp_confirmed_order_id' ) ) {
 			return 0;
 		}
 		$order_id = absint( get_query_var( 'order-received' ) );
-		$key      = isset( $_GET['key'] ) ? wc_clean( wp_unslash( $_GET['key'] ) ) : '';
+		$key      = lafka_input_get_text( 'key' );
 		$order    = $order_id > 0 ? wc_get_order( $order_id ) : null;
 		if ( ! $order || '' === $key || ! hash_equals( (string) $order->get_order_key(), (string) $key ) ) {
 			return 0;

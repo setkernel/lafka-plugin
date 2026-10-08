@@ -159,7 +159,7 @@ if ( ! class_exists( 'Lafka_Promotions_Admin' ) ) {
 			$promo_key     = Lafka_Promotions::knob( 'promo_key' );
 			$dismiss_days  = Lafka_Promotions::knob( 'dismiss_days' );
 			$gated_on      = function_exists( 'is_lafka_promotions' ) && is_lafka_promotions();
-			$updated       = isset( $_GET['updated'] );
+			$updated       = lafka_input_has_get( 'updated' );
 			?>
 			<div class="wrap">
 				<h1><?php esc_html_e( 'Lafka Promotions', 'lafka-plugin' ); ?></h1>

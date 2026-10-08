@@ -790,7 +790,7 @@ if ( ! class_exists( 'Lafka_Store_Api' ) ) {
 			);
 
 			if ( class_exists( '\Automattic\WooCommerce\StoreApi\Exceptions\RouteException' ) ) {
-				throw new \Automattic\WooCommerce\StoreApi\Exceptions\RouteException( esc_html( $code ), esc_html( $message ), $status );
+				throw new \Automattic\WooCommerce\StoreApi\Exceptions\RouteException( esc_html( $code ), esc_html( $message ), absint( $status ) );
 			}
 
 			throw new \RuntimeException( esc_html( $message ) );

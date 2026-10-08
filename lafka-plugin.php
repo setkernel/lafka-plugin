@@ -61,6 +61,9 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/lafka-asset-helpers.php';
 // wp_kses() allowlists shared across the plugin.
 require_once plugin_dir_path( __FILE__ ) . 'incl/lafka-kses-helpers.php';
 
+// Readers for public read-only query-string parameters.
+require_once plugin_dir_path( __FILE__ ) . 'incl/lafka-input-helpers.php';
+
 // Typed feature-module registry (NX1-01) — the single list of gated modules
 // the Modules dashboard, Site Health and (later) the setup wizard read from.
 // Foundational: required before Site Health / the Modules page below.

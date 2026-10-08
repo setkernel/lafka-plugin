@@ -69,14 +69,14 @@ class Lafka_Engine_Admin {
 		}
 
 		// Add / edit mode.
-		if ( ! empty( $_GET['add'] ) || ! empty( $_GET['edit'] ) ) {
+		if ( lafka_input_get_flag( 'add' ) || lafka_input_get_flag( 'edit' ) ) {
 			$this->editor->dispatch();
 			return;
 		}
 
 		// Trash action — performed before list render.
-		if ( ! empty( $_GET['delete'] ) ) {
-			$this->handle_trash( absint( $_GET['delete'] ) );
+		if ( lafka_input_get_flag( 'delete' ) ) {
+			$this->handle_trash( absint( lafka_input_get_text( 'delete' ) ) );
 		}
 
 		$this->render_list();

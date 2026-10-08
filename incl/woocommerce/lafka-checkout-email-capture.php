@@ -47,9 +47,7 @@ if ( ! function_exists( 'lafka_pdp_render_checkout_email_capture' ) ) {
 
 if ( ! function_exists( 'lafka_pdp_save_checkout_email_capture' ) ) {
 	function lafka_pdp_save_checkout_email_capture( int $order_id ): void {
-		// CSRF: hooked to woocommerce_checkout_order_processed; WC core verifies
-		// its own checkout nonce upstream before this hook fires.
-		if ( empty( $_POST['lafka_winback_email'] ) ) {
+		if ( ! lafka_verify_checkout_nonce() || empty( $_POST['lafka_winback_email'] ) ) {
 			return;
 		}
 		$raw   = wp_unslash( $_POST['lafka_winback_email'] );

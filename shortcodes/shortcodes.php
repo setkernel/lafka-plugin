@@ -2006,7 +2006,7 @@ if ( ! function_exists( 'lafka_woo_products_slider_shortcode' ) ) {
 						<span class="lafka-product-slide-price"><?php echo wp_kses_post( $product->get_price_html() ); ?></span>
 						<span class="lafka-product-slide-cart">
 							<?php
-							echo apply_filters( 'woocommerce_loop_add_to_cart_link', sprintf( '<a href="%s" rel="nofollow" data-product_id="%s" data-product_sku="%s" data-quantity="%s" class="button %s product_type_%s %s">%s</a>', esc_url( $product->add_to_cart_url() ), esc_attr( $product->get_id() ), esc_attr( $product->get_sku() ), esc_attr( isset( $quantity ) ? $quantity : 1 ), $product->is_purchasable() && $product->is_in_stock() ? 'add_to_cart_button' : '', esc_attr( $product->get_type() ), ( ( 'yes' === get_option( 'woocommerce_enable_ajax_add_to_cart' ) && $product->get_type() === 'simple' ) ? 'ajax_add_to_cart' : '' ), esc_html( $product->add_to_cart_text() ) ), $product );
+							echo wp_kses_post( apply_filters( 'woocommerce_loop_add_to_cart_link', sprintf( '<a href="%s" rel="nofollow" data-product_id="%s" data-product_sku="%s" data-quantity="%s" class="button %s product_type_%s %s">%s</a>', esc_url( $product->add_to_cart_url() ), esc_attr( $product->get_id() ), esc_attr( $product->get_sku() ), esc_attr( isset( $quantity ) ? $quantity : 1 ), $product->is_purchasable() && $product->is_in_stock() ? 'add_to_cart_button' : '', esc_attr( $product->get_type() ), ( ( 'yes' === get_option( 'woocommerce_enable_ajax_add_to_cart' ) && $product->get_type() === 'simple' ) ? 'ajax_add_to_cart' : '' ), esc_html( $product->add_to_cart_text() ) ), $product ) );
 							?>
 						</span>
 					</div>

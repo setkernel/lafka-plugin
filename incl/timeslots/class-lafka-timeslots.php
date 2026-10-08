@@ -113,11 +113,11 @@ class Lafka_Timeslots {
 	}
 
 	public function __clone() {
-		wc_doing_it_wrong( __FUNCTION__, __( 'Cloning is forbidden.', 'lafka-plugin' ), '9.4.0' );
+		wc_doing_it_wrong( __FUNCTION__, esc_html__( 'Cloning is forbidden.', 'lafka-plugin' ), '9.4.0' );
 	}
 
 	public function __wakeup() {
-		_doing_it_wrong( __FUNCTION__, __( 'Foul!', 'lafka-plugin' ), '9.4.0' );
+		_doing_it_wrong( __FUNCTION__, esc_html__( 'Foul!', 'lafka-plugin' ), '9.4.0' );
 	}
 
 	/**
@@ -229,8 +229,12 @@ class Lafka_Timeslots {
 	public function validate_datetime_fields() {
 		$mandatory = ! empty( $this->order_date_time_mandatory );
 
-		$raw_date = isset( $_POST['lafka_checkout_date'] ) ? sanitize_text_field( wp_unslash( $_POST['lafka_checkout_date'] ) ) : '';
-		$raw_slot = isset( $_POST['lafka_checkout_timeslot'] ) ? sanitize_text_field( wp_unslash( $_POST['lafka_checkout_timeslot'] ) ) : '';
+		$raw_date = '';
+		$raw_slot = '';
+		if ( lafka_verify_checkout_nonce() ) {
+			$raw_date = isset( $_POST['lafka_checkout_date'] ) ? sanitize_text_field( wp_unslash( $_POST['lafka_checkout_date'] ) ) : '';
+			$raw_slot = isset( $_POST['lafka_checkout_timeslot'] ) ? sanitize_text_field( wp_unslash( $_POST['lafka_checkout_timeslot'] ) ) : '';
+		}
 
 		// The classic checkout reads the pair from POST; the decision itself lives
 		// in evaluate_datetime_selection() so the Store API / block-checkout gate
@@ -382,8 +386,11 @@ class Lafka_Timeslots {
 			return;
 		}
 		// Pure meta writer: the mandatory gate lives in validate_datetime_fields()
-		// on woocommerce_checkout_process. WC core verifies its checkout nonce
-		// upstream before woocommerce_checkout_create_order fires.
+		// on woocommerce_checkout_process. The posted pair is only trusted for a
+		// genuine classic-checkout submission.
+		if ( ! lafka_verify_checkout_nonce() ) {
+			return;
+		}
 		if ( ! empty( $_POST['lafka_checkout_date'] ) ) {
 			$order->update_meta_data( 'lafka_checkout_date', sanitize_text_field( wp_unslash( $_POST['lafka_checkout_date'] ) ) );
 		}

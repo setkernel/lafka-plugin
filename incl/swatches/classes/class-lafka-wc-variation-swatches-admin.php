@@ -3,6 +3,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+require_once dirname( __DIR__, 2 ) . '/admin/lafka-term-form-nonce.php';
+
 /**
  * Class Lafka_WC_Variation_Swatches_Admin
  */
@@ -215,9 +217,11 @@ class Lafka_WC_Variation_Swatches_Admin {
 			return;
 		}
 
-		// Note: WP's term-edit form supplies its own nonce (verified by
-		// edit_terms / wp-admin/edit-tags.php) before hitting this hook,
-		// so an explicit per-field nonce here would be redundant.
+		// Guard 3: a genuine core term add/edit form submission.
+		if ( ! lafka_verify_term_form_nonce( $term_id ) ) {
+			return;
+		}
+
 		foreach ( lafka_wcvs()->types as $type => $label ) {
 			if ( isset( $_POST[ $type ] ) ) {
 				update_term_meta( $term_id, $type, sanitize_text_field( wp_unslash( $_POST[ $type ] ) ) );
@@ -241,7 +245,7 @@ class Lafka_WC_Variation_Swatches_Admin {
 		$taxonomy_name = wc_attribute_taxonomy_name( $taxonomy->attribute_name );
 
 		$product_id = $thepostid;
-		if ( is_null( $thepostid ) && isset( $_POST['post_id'] ) ) {
+		if ( is_null( $thepostid ) && wp_doing_ajax() && check_ajax_referer( 'add-attribute', 'security', false ) && isset( $_POST['post_id'] ) ) {
 			$product_id = absint( $_POST['post_id'] );
 		}
 		?>
@@ -299,7 +303,7 @@ class Lafka_WC_Variation_Swatches_Admin {
 	 * @param $term_id
 	 */
 	public function add_attribute_column_content( $columns, $column, $term_id ) {
-		$attr  = lafka_wcvs()->get_tax_attribute( sanitize_text_field( wp_unslash( $_REQUEST['taxonomy'] ) ) );
+		$attr  = lafka_wcvs()->get_tax_attribute( lafka_input_request_text( 'taxonomy' ) );
 		$value = get_term_meta( $term_id, $attr->attribute_type, true );
 
 		switch ( $attr->attribute_type ) {

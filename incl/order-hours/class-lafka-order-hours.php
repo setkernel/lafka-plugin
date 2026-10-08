@@ -675,8 +675,12 @@ class Lafka_Order_Hours {
 		if ( self::can_order_ahead() ) {
 			// A chosen slot is validated (offered, in the future, not full) by
 			// Lafka_Timeslots::validate_datetime_fields() on this same hook.
-			$date = isset( $_POST['lafka_checkout_date'] ) ? sanitize_text_field( wp_unslash( $_POST['lafka_checkout_date'] ) ) : '';
-			$slot = isset( $_POST['lafka_checkout_timeslot'] ) ? sanitize_text_field( wp_unslash( $_POST['lafka_checkout_timeslot'] ) ) : '';
+			$date = '';
+			$slot = '';
+			if ( lafka_verify_checkout_nonce() ) {
+				$date = isset( $_POST['lafka_checkout_date'] ) ? sanitize_text_field( wp_unslash( $_POST['lafka_checkout_date'] ) ) : '';
+				$slot = isset( $_POST['lafka_checkout_timeslot'] ) ? sanitize_text_field( wp_unslash( $_POST['lafka_checkout_timeslot'] ) ) : '';
+			}
 			if ( '' !== $date && '' !== $slot ) {
 				return;
 			}

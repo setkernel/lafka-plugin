@@ -520,7 +520,9 @@ if ( ! class_exists( 'Lafka_Pickup_Checkout' ) ) {
 		 * @return string
 		 */
 		private static function current_gateway(): string {
-			if ( isset( $_POST['payment_method'] ) ) {
+			// The posted gateway is only trusted on a genuine checkout submission or
+			// order-review refresh (the nonces WooCommerce itself checks).
+			if ( ( lafka_verify_checkout_nonce() || lafka_verify_order_review_nonce() ) && isset( $_POST['payment_method'] ) ) {
 				return sanitize_text_field( (string) wp_unslash( $_POST['payment_method'] ) );
 			}
 			$session = self::session();
@@ -602,7 +604,7 @@ if ( ! class_exists( 'Lafka_Pickup_Checkout' ) ) {
 		 * @return bool
 		 */
 		private static function is_classic_checkout_request(): bool {
-			return isset( $_GET['wc-ajax'] ) || isset( $_POST['woocommerce-process-checkout-nonce'] );
+			return filter_has_var( INPUT_GET, 'wc-ajax' ) || filter_has_var( INPUT_POST, 'woocommerce-process-checkout-nonce' );
 		}
 
 		/**

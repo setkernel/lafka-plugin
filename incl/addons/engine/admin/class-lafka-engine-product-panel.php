@@ -92,10 +92,13 @@ class Lafka_Engine_Product_Panel {
 		if ( ! current_user_can( 'edit_post', $post_id ) ) {
 			return;
 		}
-		// CSRF: hook fires from WC's product editor (`save_post_product`) which
-		// only runs after WP-core verifies `update-post_<post_id>` nonce. The
-		// current_user_can('edit_post', $post_id) gate above blocks unauthorized
-		// callers. PHPCS doesn't trace WP's upstream verification.
+		// The product editor form carries WordPress's own `update-post_<id>`
+		// nonce; verify it here so no other `save_post_product` caller can
+		// reach the POST body below.
+		$nonce = isset( $_POST['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ) : '';
+		if ( ! wp_verify_nonce( $nonce, 'update-post_' . $post_id ) ) {
+			return;
+		}
 		// `lafka_addon_groups` is the panel's canonical marker. If absent,
 		// the addon panel wasn't part of this save — bail rather than wipe.
 		if ( ! isset( $_POST['lafka_addon_groups'] ) ) {

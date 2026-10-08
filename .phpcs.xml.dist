@@ -51,6 +51,8 @@
 		<properties>
 			<property name="customNonceVerificationFunctions" type="array">
 				<element value="lafka_verify_term_form_nonce"/>
+				<element value="lafka_verify_checkout_nonce"/>
+				<element value="lafka_verify_order_review_nonce"/>
 			</property>
 		</properties>
 	</rule>

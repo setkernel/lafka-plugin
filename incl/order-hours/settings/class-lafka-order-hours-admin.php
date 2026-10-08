@@ -220,7 +220,7 @@ class Lafka_Order_Hours_Admin {
 
 		// check if the user have submitted the settings
 		// WordPress will add the "settings-updated" $_GET parameter to the url
-		if ( isset( $_GET['settings-updated'] ) ) {
+		if ( lafka_input_has_get( 'settings-updated' ) ) {
 			// add settings saved message with the class of "updated"
 			add_settings_error( 'lafka_order_hours_messages', 'lafka_order_hours_message', __( 'Settings Saved', 'lafka-plugin' ), 'updated' );
 		}

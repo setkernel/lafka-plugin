@@ -1,12 +1,11 @@
 <?php defined( 'ABSPATH' ) || exit; ?>
 <?php
-// CSRF: this template runs in two contexts:
-//   1. Shortcode render (PHP include from shortcodes.php): no POST data
-//      is processed for state mutation; values populate form fields.
-//   2. AJAX submit (wp_ajax_(nopriv_)lafka_submit_contact in lafka-plugin.php):
-//      `check_ajax_referer('lafka_contact_form_submit')` runs BEFORE this
-//      template is included.
-// PHPCS can't trace either path; disable the sniff for this template scope.
+// This template runs in two contexts:
+//   1. Shortcode render (PHP include from shortcodes.php): nothing is posted;
+//      the form is rendered empty.
+//   2. AJAX submit (the lafka_submit_contact handler in lafka-plugin.php),
+//      which carries the `lafka_contactform` nonce. The posted fields below are
+//      only read when that nonce verifies.
 wp_enqueue_script( 'jquery-form' );
 
 //fields translatable strings
@@ -25,15 +24,28 @@ $lafka_email_invalid   = esc_html__( 'Email Address Invalid.', 'lafka-plugin' );
 $lafka_message_unsent  = esc_html__( 'Message was not sent. Try Again.', 'lafka-plugin' );
 $lafka_message_sent    = esc_html__( 'Thanks! Your message has been sent.', 'lafka-plugin' );
 
-//user posted variables
-$lafka_subject        = array_key_exists( 'lafka_subject', $_POST ) ? sanitize_text_field( wp_unslash( $_POST['lafka_subject'] ) ) : '';
-$lafka_email          = array_key_exists( 'lafka_email', $_POST ) ? sanitize_email( wp_unslash( $_POST['lafka_email'] ) ) : '';
-$lafka_name           = array_key_exists( 'lafka_name', $_POST ) ? sanitize_text_field( wp_unslash( $_POST['lafka_name'] ) ) : '';
-$lafka_phone          = array_key_exists( 'lafka_phone', $_POST ) ? sanitize_text_field( wp_unslash( $_POST['lafka_phone'] ) ) : '';
-$lafka_address        = array_key_exists( 'lafka_address', $_POST ) ? sanitize_text_field( wp_unslash( $_POST['lafka_address'] ) ) : '';
-$lafka_message        = array_key_exists( 'lafka_enquiry', $_POST ) ? sanitize_textarea_field( wp_unslash( $_POST['lafka_enquiry'] ) ) : '';
-$lafka_captcha_rand   = array_key_exists( 'lafka_contact_submitted', $_POST ) ? sanitize_text_field( $_POST['lafka_contact_submitted'] ) : '';
-$lafka_captcha_answer = array_key_exists( 'lafka_captcha_answer', $_POST ) ? sanitize_text_field( $_POST['lafka_captcha_answer'] ) : '';
+//user posted variables (only trusted with a valid form nonce)
+$lafka_form_nonce = isset( $_POST['_ajax_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['_ajax_nonce'] ) ) : '';
+$lafka_form_valid = '' !== $lafka_form_nonce && false !== wp_verify_nonce( $lafka_form_nonce, 'lafka_contactform' );
+
+$lafka_subject        = '';
+$lafka_email          = '';
+$lafka_name           = '';
+$lafka_phone          = '';
+$lafka_address        = '';
+$lafka_message        = '';
+$lafka_captcha_rand   = '';
+$lafka_captcha_answer = '';
+if ( $lafka_form_valid ) {
+	$lafka_subject        = isset( $_POST['lafka_subject'] ) ? sanitize_text_field( wp_unslash( $_POST['lafka_subject'] ) ) : '';
+	$lafka_email          = isset( $_POST['lafka_email'] ) ? sanitize_email( wp_unslash( $_POST['lafka_email'] ) ) : '';
+	$lafka_name           = isset( $_POST['lafka_name'] ) ? sanitize_text_field( wp_unslash( $_POST['lafka_name'] ) ) : '';
+	$lafka_phone          = isset( $_POST['lafka_phone'] ) ? sanitize_text_field( wp_unslash( $_POST['lafka_phone'] ) ) : '';
+	$lafka_address        = isset( $_POST['lafka_address'] ) ? sanitize_text_field( wp_unslash( $_POST['lafka_address'] ) ) : '';
+	$lafka_message        = isset( $_POST['lafka_enquiry'] ) ? sanitize_textarea_field( wp_unslash( $_POST['lafka_enquiry'] ) ) : '';
+	$lafka_captcha_rand   = isset( $_POST['lafka_contact_submitted'] ) ? sanitize_text_field( wp_unslash( $_POST['lafka_contact_submitted'] ) ) : '';
+	$lafka_captcha_answer = isset( $_POST['lafka_captcha_answer'] ) ? sanitize_text_field( wp_unslash( $_POST['lafka_captcha_answer'] ) ) : '';
+}
 /*
  * SECURITY: do NOT honour POST-supplied `shortcode_params_for_tpl` for the
  * recipient. Earlier versions used a variable-variable assignment that let an
@@ -114,7 +126,7 @@ $lafka_subject_error = false;
 $lafka_message_error = false;
 $lafka_captcha_error = false;
 
-if ( isset( $_POST['lafka_contact_submitted'] ) ) {
+if ( $lafka_form_valid && isset( $_POST['lafka_contact_submitted'] ) ) {
 
 	/* Validate Email address */
 	if ( $lafka_email && $lafka_contacts_fields['email'] && ! filter_var( $lafka_email, FILTER_VALIDATE_EMAIL ) ) {

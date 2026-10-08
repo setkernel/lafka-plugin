@@ -148,7 +148,9 @@ if ( ! function_exists( 'lafka_product_serves_save' ) ) {
 	 * @return void
 	 */
 	function lafka_product_serves_save( $product ) {
-		if ( ! is_object( $product ) || ! isset( $_POST[ LAFKA_PRODUCT_SERVES_META ] ) ) {
+		// The product edit form carries WooCommerce's own save nonce.
+		$nonce = isset( $_POST['woocommerce_meta_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['woocommerce_meta_nonce'] ) ) : '';
+		if ( ! is_object( $product ) || ! wp_verify_nonce( $nonce, 'woocommerce_save_data' ) || ! isset( $_POST[ LAFKA_PRODUCT_SERVES_META ] ) ) {
 			return;
 		}
 		$serves = lafka_sanitize_product_serves( wp_unslash( $_POST[ LAFKA_PRODUCT_SERVES_META ] ) );

@@ -358,8 +358,8 @@ class Lafka_WCML_Product_Addons {
 	public function load_assets() {
 		global $pagenow;
 
-		$is_product_page     = 'post.php' === $pagenow && isset( $_GET['post'] );
-		$is_product_new_page = 'post-new.php' === $pagenow && isset( $_GET['post_type'] ) && 'product' === $_GET['post_type'];
+		$is_product_page     = 'post.php' === $pagenow && lafka_input_has_get( 'post' );
+		$is_product_new_page = 'post-new.php' === $pagenow && 'product' === lafka_input_get_text( 'post_type' );
 		if ( $is_product_page || $is_product_new_page ) {
 			wp_enqueue_script( 'wcml-product-addons', WCML_PLUGIN_URL . '/compatibility/res/js/wcml-product-addons' . WCML_JS_MIN . '.js', array( 'jquery' ), WCML_VERSION, true );
 			wp_enqueue_style( 'wcml-product-addons', WCML_PLUGIN_URL . '/compatibility/res/css/wcml-product-addons.css', '', WCML_VERSION );
@@ -373,6 +373,13 @@ class Lafka_WCML_Product_Addons {
 
 		if ( $this->is_multi_currency_on() ) {
 			$this->save_global_addon_prices_setting( $product_id );
+
+			// The custom prices travel with WCML's own form nonce.
+			$nonce = isset( $_POST['_wcml_custom_prices_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['_wcml_custom_prices_nonce'] ) ) : '';
+			if ( ! wp_verify_nonce( $nonce, 'wcml_save_custom_prices' ) ) {
+				return;
+			}
+			$posted_prices  = isset( $_POST[ self::PRICE_OPTION_KEY ] ) && is_array( $_POST[ self::PRICE_OPTION_KEY ] ) ? wp_unslash( $_POST[ self::PRICE_OPTION_KEY ] ) : array();
 			$product_addons = $this->get_product_addons( $product_id );
 
 			if ( $product_addons ) {
@@ -381,12 +388,10 @@ class Lafka_WCML_Product_Addons {
 				foreach ( $product_addons as $addon_key => $product_addon ) {
 
 					foreach ( $active_currencies as $code => $currency ) {
-						$price_option_key = self::PRICE_OPTION_KEY;
-
 						if ( in_array( $product_addon['type'], $this->get_one_price_types(), true ) ) {
-							$product_addons = $this->update_single_option_prices( $product_addons, $price_option_key, $addon_key, $code );
+							$product_addons = $this->update_single_option_prices( $product_addons, $posted_prices, $addon_key, $code );
 						} else {
-							$product_addons = $this->update_multiple_options_prices( $product_addons, $price_option_key, $addon_key, $code );
+							$product_addons = $this->update_multiple_options_prices( $product_addons, $posted_prices, $addon_key, $code );
 						}
 					}
 				}
@@ -398,15 +403,15 @@ class Lafka_WCML_Product_Addons {
 
 	/**
 	 * @param array $product_addons
-	 * @param string $price_option_key
+	 * @param array $posted_prices The verified, unslashed POST price table.
 	 * @param string $addon_key
 	 * @param string $code
 	 *
 	 * @return array
 	 */
-	private function update_single_option_prices( $product_addons, $price_option_key, $addon_key, $code ) {
-		if ( isset( $_POST[ $price_option_key ][ $addon_key ][ 'price_' . $code ][0] ) ) {
-			$product_addons[ $addon_key ][ 'price_' . $code ] = wc_format_decimal( $_POST[ $price_option_key ][ $addon_key ][ 'price_' . $code ][0] );
+	private function update_single_option_prices( $product_addons, $posted_prices, $addon_key, $code ) {
+		if ( isset( $posted_prices[ $addon_key ][ 'price_' . $code ][0] ) ) {
+			$product_addons[ $addon_key ][ 'price_' . $code ] = wc_format_decimal( sanitize_text_field( $posted_prices[ $addon_key ][ 'price_' . $code ][0] ) );
 		}
 
 		return $product_addons;
@@ -414,16 +419,16 @@ class Lafka_WCML_Product_Addons {
 
 	/**
 	 * @param array $product_addons
-	 * @param string $price_option_key
+	 * @param array $posted_prices The verified, unslashed POST price table.
 	 * @param string $addon_key
 	 * @param string $code
 	 *
 	 * @return array
 	 */
-	private function update_multiple_options_prices( $product_addons, $price_option_key, $addon_key, $code ) {
+	private function update_multiple_options_prices( $product_addons, $posted_prices, $addon_key, $code ) {
 		foreach ( $product_addons[ $addon_key ]['options'] as $option_key => $option ) {
-			if ( isset( $_POST[ $price_option_key ][ $addon_key ][ 'price_' . $code ][ $option_key ] ) ) {
-				$product_addons[ $addon_key ]['options'][ $option_key ][ 'price_' . $code ] = wc_format_decimal( $_POST[ $price_option_key ][ $addon_key ][ 'price_' . $code ][ $option_key ] );
+			if ( isset( $posted_prices[ $addon_key ][ 'price_' . $code ][ $option_key ] ) ) {
+				$product_addons[ $addon_key ]['options'][ $option_key ][ 'price_' . $code ] = wc_format_decimal( sanitize_text_field( $posted_prices[ $addon_key ][ 'price_' . $code ][ $option_key ] ) );
 			}
 		}
 
@@ -438,10 +443,10 @@ class Lafka_WCML_Product_Addons {
 	 */
 	private function save_global_addon_prices_setting( $global_addon_id ) {
 
-		$nonce = filter_var( isset( $_POST['_wcml_custom_prices_nonce'] ) ? $_POST['_wcml_custom_prices_nonce'] : '', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+		$nonce = isset( $_POST['_wcml_custom_prices_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['_wcml_custom_prices_nonce'] ) ) : '';
 
-		if ( isset( $_POST['_wcml_custom_prices'] ) && isset( $nonce ) && wp_verify_nonce( $nonce, 'wcml_save_custom_prices' ) ) {
-			update_post_meta( $global_addon_id, '_wcml_custom_prices_status', $_POST['_wcml_custom_prices'] );
+		if ( isset( $_POST['_wcml_custom_prices'] ) && wp_verify_nonce( $nonce, 'wcml_save_custom_prices' ) ) {
+			update_post_meta( $global_addon_id, '_wcml_custom_prices_status', sanitize_text_field( wp_unslash( $_POST['_wcml_custom_prices'] ) ) );
 		}
 	}
 }

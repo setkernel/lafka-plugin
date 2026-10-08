@@ -1,8 +1,7 @@
 <?php defined( 'ABSPATH' ) || exit; ?>
 <?php
-// $_POST reads in this template are for preserving form state on re-render
-// during validation failures. WC verifies the add-to-cart nonce upstream
-// before this template is included in the variations form output.
+// The posted add-to-cart values read in this template only preserve form state
+// on re-render during validation failures.
 /** @var array $addon */
 foreach ( $addon['options'] as $lafka_i => $lafka_option ) :
 	/**
@@ -30,8 +29,9 @@ foreach ( $addon['options'] as $lafka_i => $lafka_option ) :
 	$lafka_option_id = ! empty( $lafka_option['id'] ) ? $lafka_option['id'] : sanitize_title( $lafka_option['label'] );
 
 	$lafka_selected = array();
-	if ( isset( $_POST[ 'addon-' . sanitize_title( $addon['field-name'] ) ] ) ) {
-		$lafka_selected = $_POST[ 'addon-' . sanitize_title( $addon['field-name'] ) ];
+	$lafka_posted   = Lafka_Engine_Cart::request_post_data();
+	if ( isset( $lafka_posted[ 'addon-' . sanitize_title( $addon['field-name'] ) ] ) ) {
+		$lafka_selected = $lafka_posted[ 'addon-' . sanitize_title( $addon['field-name'] ) ];
 	} elseif ( ! empty( $lafka_option['default'] ) ) {
 		$lafka_selected = array( $lafka_option_id );
 	}

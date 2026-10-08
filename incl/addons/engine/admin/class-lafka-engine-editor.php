@@ -37,7 +37,7 @@ class Lafka_Engine_Editor {
 			if ( ! current_user_can( 'manage_woocommerce' ) ) {
 				wp_die( esc_html__( 'You do not have permission to save addons.', 'lafka-plugin' ) );
 			}
-			$saved_id = $this->save( $edit_id );
+			$saved_id = $this->save( $edit_id, wp_unslash( $_POST ) );
 			if ( $saved_id ) {
 				echo '<div class="updated"><p>' . esc_html__( 'Add-on saved.', 'lafka-plugin' ) . '</p></div>';
 				$edit_id = $saved_id;
@@ -123,10 +123,9 @@ class Lafka_Engine_Editor {
 	 * Save the editor POST. Returns the addon-group post ID on success, 0 on
 	 * failure. Insert + update both flow through this single method.
 	 */
-	private function save( int $edit_id ): int {
-		// Nonce verified by caller (line 36): check_admin_referer( self::NONCE_ACTION ).
-		$post_data = wp_unslash( $_POST );
-
+	private function save( int $edit_id, array $post_data ): int {
+		// The caller verified the nonce and capability before handing over the
+		// unslashed POST body.
 		$reference = sanitize_text_field( $post_data['lafka_addon_reference'] ?? '' );
 		$priority  = isset( $post_data['lafka_addon_priority'] ) ? (int) $post_data['lafka_addon_priority'] : 10;
 		// applies_to_all is now a radio (values "1" or "0") rather than a

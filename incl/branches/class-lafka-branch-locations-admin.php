@@ -4,11 +4,6 @@ defined( 'ABSPATH' ) || exit;
 require_once __DIR__ . '/../admin/lafka-term-form-nonce.php';
 require_once __DIR__ . '/../lafka-asset-helpers.php';
 
-// $_GET reads across this admin class are for filter state on the
-// order-list / branch-list / shop-order screens (branch_location_filter,
-// order_type_filter, etc.). All are read-only display logic; no state
-// mutation. Write paths (edit_branch_location) have explicit nonce checks.
-
 class Lafka_Branch_Locations_Admin {
 	/**
 	 * Setup Admin class.
@@ -773,7 +768,7 @@ class Lafka_Branch_Locations_Admin {
 			$current_screen = get_current_screen();
 			if ( is_admin() && ! empty( $current_screen ) && 'edit-shop_order' === $current_screen->id ) {
 				$meta_query_args = array();
-				$branch_id       = $_GET['branch_location_filter'] ?? '';
+				$branch_id       = lafka_input_get_text( 'branch_location_filter' );
 				if ( is_numeric( $branch_id ) ) {
 					$meta_query_args[] = array(
 						'key'   => 'lafka_selected_branch_id',
@@ -790,7 +785,7 @@ class Lafka_Branch_Locations_Admin {
 					}
 				}
 
-				$order_type = $_GET['order_type_filter'] ?? '';
+				$order_type = lafka_input_get_text( 'order_type_filter' );
 				if ( $order_type ) {
 					$meta_query_args[] = array(
 						'key'   => 'lafka_order_type',
@@ -826,8 +821,8 @@ class Lafka_Branch_Locations_Admin {
 					$query->set(
 						'orderby',
 						array(
-							'lafka_checkout_date_clause' => sanitize_text_field( $_GET['order'] ),
-							'lafka_checkout_timeslot_clause' => sanitize_text_field( $_GET['order'] ),
+							'lafka_checkout_date_clause' => lafka_input_get_text( 'order' ),
+							'lafka_checkout_timeslot_clause' => lafka_input_get_text( 'order' ),
 						)
 					);
 				}
@@ -840,10 +835,10 @@ class Lafka_Branch_Locations_Admin {
 	}
 
 	public static function orders_list_define_sort_and_search_queries_for_custom_fields_hpos( $args ): array {
-		$current_page = sanitize_text_field( $_GET['page'] ?? '' );
+		$current_page = lafka_input_get_text( 'page' );
 
 		if ( 'wc-orders' === $current_page ) {
-			$branch_id = $_GET['branch_location_filter'] ?? '';
+			$branch_id = lafka_input_get_text( 'branch_location_filter' );
 			if ( is_numeric( $branch_id ) ) {
 				$args['meta_query'][] = array(
 					'key'   => 'lafka_selected_branch_id',
@@ -860,7 +855,7 @@ class Lafka_Branch_Locations_Admin {
 				}
 			}
 
-			$order_type = $_GET['order_type_filter'] ?? '';
+			$order_type = lafka_input_get_text( 'order_type_filter' );
 			if ( $order_type ) {
 				$args['meta_query'][] = array(
 					'key'   => 'lafka_order_type',
@@ -868,7 +863,7 @@ class Lafka_Branch_Locations_Admin {
 				);
 			}
 
-			if ( isset( $_GET['orderby'] ) && sanitize_text_field( $_GET['orderby'] ) === 'lafka_selected_branch_id' ) {
+			if ( 'lafka_selected_branch_id' === lafka_input_get_text( 'orderby' ) ) {
 				$args['orderby']      = 'lafka_selected_branch_id';
 				$args['meta_query'][] = array(
 					'relation' => 'OR',
@@ -887,7 +882,7 @@ class Lafka_Branch_Locations_Admin {
 				);
 			}
 
-			if ( isset( $_GET['orderby'] ) && sanitize_text_field( $_GET['orderby'] ) === 'lafka_order_type' ) {
+			if ( 'lafka_order_type' === lafka_input_get_text( 'orderby' ) ) {
 				$args['orderby']      = 'lafka_order_type';
 				$args['meta_query'][] = array(
 					'relation' => 'OR',
@@ -906,7 +901,7 @@ class Lafka_Branch_Locations_Admin {
 				);
 			}
 
-			if ( isset( $_GET['orderby'] ) && sanitize_text_field( $_GET['orderby'] ) === 'lafka_checkout_date' ) {
+			if ( 'lafka_checkout_date' === lafka_input_get_text( 'orderby' ) ) {
 				$args['meta_query'][] = array(
 					'relation' => 'OR',
 					array(
@@ -931,8 +926,8 @@ class Lafka_Branch_Locations_Admin {
 					),
 				);
 				$args['orderby']      = array(
-					'lafka_checkout_date_clause'     => sanitize_text_field( $_GET['order'] ),
-					'lafka_checkout_timeslot_clause' => sanitize_text_field( $_GET['order'] ),
+					'lafka_checkout_date_clause'     => lafka_input_get_text( 'order' ),
+					'lafka_checkout_timeslot_clause' => lafka_input_get_text( 'order' ),
 				);
 			}
 		}
@@ -959,7 +954,7 @@ class Lafka_Branch_Locations_Admin {
 
 			// No branches → no branch filter to offer.
 			if ( ! empty( $branches_for_select ) ) {
-				$filtered_branch_id = $_GET['branch_location_filter'] ?? '';
+				$filtered_branch_id = lafka_input_get_text( 'branch_location_filter' );
 				?>
 				<select id="branch_location_filter" name="branch_location_filter">
 					<option value=""><?php esc_html_e( 'All Branches', 'lafka-plugin' ); ?></option>
@@ -972,7 +967,7 @@ class Lafka_Branch_Locations_Admin {
 				<?php
 			}
 		}
-		$filtered_order_type = $_GET['order_type_filter'] ?? '';
+		$filtered_order_type = lafka_input_get_text( 'order_type_filter' );
 		?>
 		<select id="order_type_filter" name="order_type_filter">
 			<option value=""><?php esc_html_e( 'All Order Types', 'lafka-plugin' ); ?></option>

@@ -35,14 +35,14 @@ class Lafka_Shipping_Areas {
 	 * Cloning is forbidden.
 	 */
 	public function __clone() {
-		wc_doing_it_wrong( __FUNCTION__, __( 'Cloning is forbidden.', 'lafka-plugin' ), '1.0.0' );
+		wc_doing_it_wrong( __FUNCTION__, esc_html__( 'Cloning is forbidden.', 'lafka-plugin' ), '1.0.0' );
 	}
 
 	/**
 	 * Unserializing instances of this class is forbidden.
 	 */
 	public function __wakeup() {
-		_doing_it_wrong( __FUNCTION__, __( 'Foul!', 'lafka-plugin' ), '1.0.0' );
+		_doing_it_wrong( __FUNCTION__, esc_html__( 'Foul!', 'lafka-plugin' ), '1.0.0' );
 	}
 
 	/**
@@ -329,8 +329,11 @@ class Lafka_Shipping_Areas {
 		if ( ! $order instanceof WC_Order ) {
 			return;
 		}
-		// CSRF: hooked to woocommerce_checkout_order_processed; WC core verifies
-		// its own checkout nonce upstream before this hook fires.
+		// The posted pin is only trusted for a genuine classic-checkout
+		// submission (the nonce WooCommerce itself checks before this hook).
+		if ( ! lafka_verify_checkout_nonce() ) {
+			return;
+		}
 		// Malformed / out-of-zone input never reaches the persisted order:
 		// validate_checkout_field_process() runs on the earlier
 		// woocommerce_checkout_process hook and aborts the checkout (via
@@ -616,7 +619,10 @@ class Lafka_Shipping_Areas {
 	public function validate_checkout_field_process() {
 		// The classic form posts the chosen rates; WC only copies them into the
 		// session after woocommerce_checkout_process, so read the POST first.
-		$posted_methods = isset( $_POST['shipping_method'] ) ? array_map( 'sanitize_text_field', (array) wp_unslash( $_POST['shipping_method'] ) ) : null;
+		// Without a valid checkout nonce nothing posted is trusted, so a required
+		// pin counts as missing (fail closed).
+		$nonce_ok       = lafka_verify_checkout_nonce();
+		$posted_methods = $nonce_ok && isset( $_POST['shipping_method'] ) ? array_map( 'sanitize_text_field', (array) wp_unslash( $_POST['shipping_method'] ) ) : null;
 
 		// Geo-fencing only applies to delivered orders when pinpoint delivery
 		// is on AND mandatory. Pickup orders (Lafka order type or a WC pickup
@@ -628,7 +634,7 @@ class Lafka_Shipping_Areas {
 		// (a) Missing OR blank must both fail. Omitting the hidden field from the
 		// POST previously slipped through `isset() && empty()`; `empty()` alone
 		// closes that bypass.
-		if ( empty( $_POST['lafka_picked_delivery_geocoded'] ) ) {
+		if ( ! $nonce_ok || empty( $_POST['lafka_picked_delivery_geocoded'] ) ) {
 			wc_add_notice( esc_html__( 'Please precise your address on the map.', 'lafka-plugin' ), 'error' );
 			self::report_checkout_block( 'lafka_delivery_location_required' );
 

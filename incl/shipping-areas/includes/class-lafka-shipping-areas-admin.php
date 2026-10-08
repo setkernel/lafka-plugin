@@ -3,10 +3,6 @@ defined( 'ABSPATH' ) || exit;
 
 require_once __DIR__ . '/../../lafka-asset-helpers.php';
 
-// $_GET/$_POST reads in this admin file for display state (which tab,
-// post_id metabox context, settings-api updated flag) — no state mutation.
-// Settings API submits are nonce-verified by WP core.
-
 class Lafka_Shipping_Areas_Admin {
 	/**
 	 * Setup Admin class.
@@ -52,7 +48,7 @@ class Lafka_Shipping_Areas_Admin {
 
 		// check if the user have submitted the settings
 		// WordPress will add the "settings-updated" $_GET parameter to the url
-		if ( isset( $_GET['settings-updated'] ) ) {
+		if ( lafka_input_has_get( 'settings-updated' ) ) {
 			// add settings saved message with the class of "updated"
 			add_settings_error( 'lafka_shipping_areas_messages', 'lafka_shipping_areas_message', esc_html__( 'Settings Saved', 'lafka-plugin' ), 'updated' );
 		}
@@ -63,7 +59,7 @@ class Lafka_Shipping_Areas_Admin {
 		<div class="lafka-shipping-areas-admin-wrap wrap">
 			<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
 			<?php
-			$active_tab      = isset( $_GET['tab'] ) ? sanitize_text_field( wp_unslash( $_GET['tab'] ) ) : 'general';
+			$active_tab      = lafka_input_get_text( 'tab', 'general' );
 			$active_general  = ( 'general' === (string) $active_tab ? 'nav-tab-active' : '' );
 			$active_advanced = ( 'advanced' === (string) $active_tab ? 'nav-tab-active' : '' );
 			$active_datetime = ( 'datetime' === (string) $active_tab ? 'nav-tab-active' : '' );

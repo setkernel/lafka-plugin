@@ -68,7 +68,7 @@ class Lafka_KDS_Ajax {
 	 * an attacker cannot probe nonce-vs-token state. Failed attempts are counted
 	 * by IP via {@see track_auth_failure()}; sustained failures yield 429.
 	 */
-	private function verify_kds_auth() {
+	private function verify_kds_auth(): array {
 		// Don't auto-die on bad nonce — we want to count it toward the rate limit.
 		$valid_nonce = (bool) check_ajax_referer( 'lafka_kds_nonce', 'nonce', false );
 
@@ -77,7 +77,13 @@ class Lafka_KDS_Ajax {
 		$valid_token = Lafka_Kitchen_Display::token_matches( $token );
 
 		if ( $valid_nonce && $valid_token ) {
-			return;
+			// Authenticated: hand the order-action fields (read here, after the
+			// nonce check) to the handlers that need them.
+			return array(
+				'order_id'   => isset( $_POST['order_id'] ) ? absint( $_POST['order_id'] ) : 0,
+				'new_status' => isset( $_POST['new_status'] ) ? sanitize_text_field( wp_unslash( $_POST['new_status'] ) ) : '',
+				'minutes'    => isset( $_POST['minutes'] ) ? (int) $_POST['minutes'] : 0,
+			);
 		}
 
 		if ( $this->track_auth_failure( 'kds_auth' ) ) {
@@ -250,15 +256,15 @@ class Lafka_KDS_Ajax {
 	 * Update order status (with transition validation).
 	 */
 	public function update_status() {
-		$this->verify_kds_auth();
+		$request = $this->verify_kds_auth();
 
 		// Issue #18: Add capability check
 		if ( is_user_logged_in() && ! current_user_can( 'edit_shop_orders' ) ) {
 			wp_send_json_error( array( 'message' => 'Insufficient permissions' ), 403 );
 		}
 
-		$order_id   = isset( $_POST['order_id'] ) ? absint( $_POST['order_id'] ) : 0;
-		$new_status = isset( $_POST['new_status'] ) ? sanitize_text_field( $_POST['new_status'] ) : '';
+		$order_id   = $request['order_id'];
+		$new_status = $request['new_status'];
 
 		if ( ! $order_id || ! $new_status ) {
 			wp_send_json_error( array( 'message' => 'Missing parameters' ) );
@@ -314,15 +320,15 @@ class Lafka_KDS_Ajax {
 	 * Set ETA for an order.
 	 */
 	public function set_eta() {
-		$this->verify_kds_auth();
+		$request = $this->verify_kds_auth();
 
 		// Issue #18: Add capability check
 		if ( is_user_logged_in() && ! current_user_can( 'edit_shop_orders' ) ) {
 			wp_send_json_error( array( 'message' => 'Insufficient permissions' ), 403 );
 		}
 
-		$order_id = isset( $_POST['order_id'] ) ? absint( $_POST['order_id'] ) : 0;
-		$minutes  = isset( $_POST['minutes'] ) ? (int) $_POST['minutes'] : 0;
+		$order_id = $request['order_id'];
+		$minutes  = $request['minutes'];
 
 		// Issue #14: Add reasonable upper bound (180 minutes = 3 hours)
 		if ( ! $order_id || $minutes < 1 || $minutes > 180 ) {
@@ -400,7 +406,10 @@ class Lafka_KDS_Ajax {
 	 * caps brute-force at 5/min per IP. Legit operators hit this 2×/hour at most.
 	 */
 	public function refresh_nonce() {
-		$token = isset( $_POST['kds_token'] ) ? sanitize_text_field( $_POST['kds_token'] ) : '';
+		// Token-only authentication by design: the secret token is the credential,
+		// so there is no session nonce to check on this endpoint.
+		$token = filter_input( INPUT_POST, 'kds_token', FILTER_UNSAFE_RAW, FILTER_REQUIRE_SCALAR );
+		$token = is_string( $token ) ? sanitize_text_field( $token ) : '';
 
 		if ( ! Lafka_Kitchen_Display::token_matches( $token ) ) {
 			if ( $this->track_auth_failure( 'refresh_nonce' ) ) {

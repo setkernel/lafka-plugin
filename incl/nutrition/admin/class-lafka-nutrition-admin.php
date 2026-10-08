@@ -73,8 +73,11 @@ class Lafka_Nutrition_Admin {
 	 * @param int $post_id Post ID.
 	 */
 	public function process_meta_box( $post_id ) {
-		// WC's product-edit screen supplies the nonce verified by the WC
-		// product save flow before this hook fires; we rely on that gate.
+		// The product edit form carries WooCommerce's own save nonce.
+		$nonce = isset( $_POST['woocommerce_meta_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['woocommerce_meta_nonce'] ) ) : '';
+		if ( ! wp_verify_nonce( $nonce, 'woocommerce_save_data' ) || ! current_user_can( 'edit_post', (int) $post_id ) ) {
+			return;
+		}
 		if ( ! isset( $_POST['_lafka_nutrition_panel_present'] ) ) {
 			return;
 		}
