@@ -171,9 +171,11 @@ function is_lafka_kitchen_display() {
 /**
  * BOGO + delivery-minimum + promo banner (P2-01).
  *
- * Default OFF. OFF means no promotions at all: the legacy lafka-child
- * implementation was removed in lafka-child 6.0.0, so there is no fallback.
- * Sites upgrading from lafka-child <= 5.x must enable this module explicitly.
+ * Default OFF. OFF means no BOGO, delivery minimum or promo banner: the legacy
+ * lafka-child implementation was removed in lafka-child 6.0.0, so there is no
+ * fallback. Sites upgrading from lafka-child <= 5.x must enable this module
+ * explicitly. The first-order, slow-day, combo and free-delivery offers are not
+ * part of this module: each runs when its own amount is set (Restaurant settings).
  */
 function is_lafka_promotions() {
 	return Lafka_Options::is_enabled( 'promotions' );
