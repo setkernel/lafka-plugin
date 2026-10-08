@@ -19,6 +19,7 @@ final class Lafka_Addon_Group {
 	public string $type;
 	public int $position;
 	public int $required;
+	public int $half_placement;
 	public int $variations;
 	public int $attribute;
 	/** @var Lafka_Addon_Option[] */
@@ -47,6 +48,7 @@ final class Lafka_Addon_Group {
 		$group->type                     = (string) $merged['type'];
 		$group->position                 = (int) $merged['position'];
 		$group->required                 = (int) $merged['required'];
+		$group->half_placement           = (int) $merged['half_placement'];
 		$group->variations               = (int) $merged['variations'];
 		$group->attribute                = (int) $merged['attribute'];
 		$group->pricing_mode             = (string) $merged['pricing_mode'];
@@ -76,6 +78,7 @@ final class Lafka_Addon_Group {
 			'type'                     => $this->type,
 			'position'                 => $this->position,
 			'required'                 => $this->required,
+			'half_placement'           => $this->half_placement,
 			'variations'               => $this->variations,
 			'attribute'                => $this->attribute,
 			'options'                  => array_map(

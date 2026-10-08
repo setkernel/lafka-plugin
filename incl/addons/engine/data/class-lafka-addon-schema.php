@@ -47,6 +47,9 @@ class Lafka_Addon_Schema {
 			'type'                     => 'checkbox',
 			'position'                 => 0,
 			'required'                 => 0,
+			// Checkbox groups only: each option can go on the left half, the
+			// right half or the whole item (half-and-half pizza toppings).
+			'half_placement'           => 0,
 			'variations'               => 0,
 			'attribute'                => 0,
 			'options'                  => array(),

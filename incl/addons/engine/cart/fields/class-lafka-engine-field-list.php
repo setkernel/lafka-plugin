@@ -90,17 +90,80 @@ class Lafka_Engine_Field_List extends Lafka_Engine_Field {
 		$value_lower = array_map( 'strtolower', $value );
 
 		foreach ( $this->addon['options'] as $option ) {
-			if ( $this->option_matches( $option, $value_lower ) ) {
+			foreach ( $value_lower as $submitted ) {
+				list( $base, $half ) = $this->split_placement( $submitted );
+				if ( ! $this->option_matches( $option, array( $base ) ) ) {
+					continue;
+				}
+				$label = (string) ( $option['label'] ?? '' );
+				$price = $this->get_option_price( $option );
+				if ( '' !== $half ) {
+					$label = sprintf(
+						/* translators: 1: option, e.g. "Olives"; 2: "left half" or "right half". */
+						__( '%1$s (%2$s)', 'lafka-plugin' ),
+						$label,
+						'left' === $half ? __( 'left half', 'lafka-plugin' ) : __( 'right half', 'lafka-plugin' )
+					);
+					$price = self::scale_price( $price, self::half_factor() );
+				}
 				$cart_item_data[] = array(
 					'name'  => $this->addon['name'],
 					'image' => $option['image'] ?? '',
-					'value' => $option['label'] ?? '',
-					'price' => $this->get_option_price( $option ),
+					'value' => $label,
+					'price' => $price,
 				);
 			}
 		}
 
 		return $cart_item_data;
+	}
+
+	/**
+	 * A submitted value and its half: "olives--left" → [ "olives", "left" ];
+	 * a plain value (or a group without halves) → [ value, "" ].
+	 *
+	 * @param string $submitted Lower-cased submitted value.
+	 * @return array{0: string, 1: string}
+	 */
+	private function split_placement( string $submitted ): array {
+		if ( ! empty( $this->addon['half'] ) && preg_match( '/^(.+)--(left|right)$/', $submitted, $m ) ) {
+			return array( $m[1], $m[2] );
+		}
+		return array( $submitted, '' );
+	}
+
+	/**
+	 * What a half costs relative to the whole (default half).
+	 *
+	 * @return float
+	 */
+	public static function half_factor(): float {
+		/**
+		 * Filter the share of an option's price charged for one half.
+		 *
+		 * @since 10.4.0
+		 * @param float $factor 0.5 by default.
+		 */
+		return max( 0.0, min( 1.0, (float) apply_filters( 'lafka_addon_half_price_factor', 0.5 ) ) );
+	}
+
+	/**
+	 * Scale a price, including every price in a per-size matrix.
+	 *
+	 * @param mixed $price  Scalar or nested per-attribute array.
+	 * @param float $factor Factor.
+	 * @return mixed
+	 */
+	private static function scale_price( $price, float $factor ) {
+		if ( is_array( $price ) ) {
+			return array_map(
+				static function ( $inner ) use ( $factor ) {
+					return self::scale_price( $inner, $factor );
+				},
+				$price
+			);
+		}
+		return is_numeric( $price ) ? wc_format_decimal( (float) $price * $factor, wc_get_price_decimals() ) : $price;
 	}
 
 	/**
@@ -133,7 +196,7 @@ class Lafka_Engine_Field_List extends Lafka_Engine_Field {
 	 * legacy label slug), or null when none matches.
 	 */
 	private function find_option( string $submitted ): ?array {
-		$needle = array( strtolower( $submitted ) );
+		$needle = array( $this->split_placement( strtolower( $submitted ) )[0] );
 		foreach ( $this->addon['options'] as $option ) {
 			if ( $this->option_matches( $option, $needle ) ) {
 				return $option;

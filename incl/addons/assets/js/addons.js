@@ -460,3 +460,77 @@ jQuery( document ).ready( function($) {
 		}
 	} );
 }() );
+/*
+ * Half and half: an option of a "half placement" group can go on the left
+ * half, the right half or the whole item. The Left / Whole / Right control
+ * beside it rewrites the checkbox value the server reads ("olives",
+ * "olives--left", "olives--right") and scales the prices the totals read, then
+ * fires the checkbox's change so the totals (and a deal builder's quote)
+ * update. Choosing a half also ticks the option.
+ */
+( function () {
+	if ( typeof document === 'undefined' || ! document.addEventListener ) {
+		return;
+	}
+	const factor = window.lafka_addons_params && window.lafka_addons_params.half_factor !== undefined ? Number( window.lafka_addons_params.half_factor ) : 0.5;
+
+	function scale( value, by ) {
+		if ( value === null || value === undefined || value === '' ) {
+			return value;
+		}
+		if ( typeof value === 'object' ) {
+			const out = Array.isArray( value ) ? [] : {};
+			Object.keys( value ).forEach( function ( key ) {
+				out[ key ] = scale( value[ key ], by );
+			} );
+			return out;
+		}
+		const number = Number( value );
+		return isNaN( number ) ? value : String( Math.round( number * by * 100 ) / 100 );
+	}
+
+	document.addEventListener( 'change', function ( event ) {
+		const radio = event.target;
+		if ( ! radio || ! radio.closest || ! radio.closest( '[data-lafka-half]' ) ) {
+			return;
+		}
+		const row = radio.closest( '.form-row' );
+		const box = row ? row.querySelector( 'input.addon-checkbox' ) : null;
+		if ( ! box ) {
+			return;
+		}
+		if ( ! box.hasAttribute( 'data-lafka-base' ) ) {
+			box.setAttribute( 'data-lafka-base', box.value );
+			[ 'data-price', 'data-raw-price', 'data-attribute-prices', 'data-attribute-raw-prices' ].forEach( function ( name ) {
+				if ( box.hasAttribute( name ) ) {
+					box.setAttribute( name + '-whole', box.getAttribute( name ) );
+				}
+			} );
+		}
+		const half = 'whole' !== radio.value;
+		box.value = box.getAttribute( 'data-lafka-base' ) + ( half ? '--' + radio.value : '' );
+		[ 'data-price', 'data-raw-price' ].forEach( function ( name ) {
+			const whole = box.getAttribute( name + '-whole' );
+			if ( whole !== null ) {
+				box.setAttribute( name, half ? scale( whole, factor ) : whole );
+			}
+		} );
+		[ 'data-attribute-prices', 'data-attribute-raw-prices' ].forEach( function ( name ) {
+			const whole = box.getAttribute( name + '-whole' );
+			if ( whole !== null ) {
+				try {
+					box.setAttribute( name, half ? JSON.stringify( scale( JSON.parse( whole ), factor ) ) : whole );
+				} catch {
+					// Leave a value that is not JSON as it is.
+				}
+			}
+		} );
+		if ( ! box.checked ) {
+			box.checked = true;
+		}
+		box.dispatchEvent( new Event( 'change', { bubbles: true } ) );
+		if ( window.jQuery ) {
+			window.jQuery( box ).trigger( 'change' );
+		}
+	} );
+}() );

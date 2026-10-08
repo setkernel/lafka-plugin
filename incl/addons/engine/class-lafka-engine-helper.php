@@ -116,6 +116,7 @@ class Lafka_Engine_Helper {
 			'type'        => $group->type,
 			'position'    => $group->position,
 			'required'    => (string) $group->required,
+			'half'        => ( 'checkbox' === $group->type && $group->half_placement ) ? 1 : 0,
 			'limit'       => (string) $group->limit,
 			'variations'  => $group->variations,
 			'attribute'   => $group->attribute,

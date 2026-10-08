@@ -256,6 +256,7 @@ class Lafka_Engine_Editor {
 				'type'                     => sanitize_key( $raw['type'] ?? 'checkbox' ),
 				'limit'                    => isset( $raw['limit'] ) ? (int) $raw['limit'] : 0,
 				'required'                 => ! empty( $raw['required'] ) ? 1 : 0,
+				'half_placement'           => ! empty( $raw['half_placement'] ) ? 1 : 0,
 				'position'                 => $position,
 				'variations'               => $variations,
 				'attribute'                => $attribute,

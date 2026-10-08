@@ -105,6 +105,7 @@ class Lafka_Engine_Display {
 			'i18n_addon_total'             => esc_html__( 'Options total:', 'lafka-plugin' ),
 			'i18n_sub_total'               => esc_html__( 'Sub total:', 'lafka-plugin' ),
 			'i18n_remaining'               => esc_html__( 'characters remaining', 'lafka-plugin' ),
+			'half_factor'                  => class_exists( 'Lafka_Engine_Field_List' ) ? Lafka_Engine_Field_List::half_factor() : 0.5,
 			'currency_format_num_decimals' => absint( get_option( 'woocommerce_price_num_decimals' ) ),
 			'currency_format_symbol'       => get_woocommerce_currency_symbol(),
 			'currency_format_decimal_sep'  => esc_attr( stripslashes( get_option( 'woocommerce_price_decimal_sep' ) ) ),

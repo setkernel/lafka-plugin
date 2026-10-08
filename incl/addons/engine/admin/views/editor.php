@@ -66,6 +66,15 @@ $lafka_prefix = 'lafka_addon_groups[' . $lafka_group_index . ']';
 			</td>
 		</tr>
 		<tr>
+			<th scope="row"><?php esc_html_e( 'Half and half', 'lafka-plugin' ); ?></th>
+			<td>
+				<label>
+					<input type="checkbox" name="<?php echo esc_attr( $lafka_prefix . '[half_placement]' ); ?>" value="1" <?php checked( 1, $lafka_group->half_placement ); ?> />
+					<?php esc_html_e( 'Customers can put each option on the left half, the right half or the whole item (checkboxes only). A half costs half the option price.', 'lafka-plugin' ); ?>
+				</label>
+			</td>
+		</tr>
+		<tr>
 			<th scope="row"><label><?php esc_html_e( 'Max selections', 'lafka-plugin' ); ?></label></th>
 			<td>
 				<input type="number" name="<?php echo esc_attr( $lafka_prefix . '[limit]' ); ?>" value="<?php echo esc_attr( (string) $lafka_group->limit ); ?>" min="0" class="small-text" />

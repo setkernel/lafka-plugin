@@ -73,6 +73,14 @@ foreach ( $addon['options'] as $lafka_i => $lafka_option ) :
 			echo esc_html( wptexturize( $lafka_option['label'] ) ) . ' ' . wp_kses_post( $lafka_price );
 			?>
 			</label>
+		<?php if ( ! empty( $addon['half'] ) ) : ?>
+			<?php $lafka_half_name = 'lafka-half-' . sanitize_title( $addon['field-name'] ) . '-' . $lafka_i; ?>
+			<span class="lafka-addon-half" data-lafka-half role="radiogroup" aria-label="<?php echo esc_attr( sprintf( /* translators: %s: option, e.g. "Olives". */ __( 'Where to put %s', 'lafka-plugin' ), $lafka_option['label'] ) ); ?>">
+				<label><input type="radio" name="<?php echo esc_attr( $lafka_half_name ); ?>" value="left"> <?php echo esc_html_x( 'Left', 'half of a pizza', 'lafka-plugin' ); ?></label>
+				<label><input type="radio" name="<?php echo esc_attr( $lafka_half_name ); ?>" value="whole" checked> <?php esc_html_e( 'Whole', 'lafka-plugin' ); ?></label>
+				<label><input type="radio" name="<?php echo esc_attr( $lafka_half_name ); ?>" value="right"> <?php echo esc_html_x( 'Right', 'half of a pizza', 'lafka-plugin' ); ?></label>
+			</span>
+		<?php endif; ?>
 	</p>
 
 <?php endforeach; ?>
