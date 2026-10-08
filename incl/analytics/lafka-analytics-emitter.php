@@ -270,6 +270,31 @@ if ( ! function_exists( 'lafka_has_consent' ) ) {
 	}
 }
 
+if ( ! function_exists( 'lafka_has_explicit_consent' ) ) {
+	/**
+	 * Opt-in only: true when the visitor actually granted the category. A
+	 * registered WP Consent API manager's answer, else the visitor's own banner
+	 * cookie equal to '1'. The configured Consent Mode defaults never count, so
+	 * this is what an "explicit consent required" feature (Insights
+	 * consent_required) asks. Server-side conversions use lafka_has_consent(),
+	 * which mirrors the client-side defaults.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param string $category 'analytics' or 'ads'.
+	 * @return bool
+	 */
+	function lafka_has_explicit_consent( string $category ): bool {
+		if ( lafka_consent_api_active() && function_exists( 'wp_has_consent' ) ) {
+			return (bool) wp_has_consent( 'ads' === $category ? 'marketing' : 'statistics' );
+		}
+		$cookie = lafka_consent_cookie_name( $category );
+		return lafka_analytics_banner_enabled()
+			&& isset( $_COOKIE[ $cookie ] )
+			&& '1' === sanitize_text_field( wp_unslash( $_COOKIE[ $cookie ] ) );
+	}
+}
+
 if ( ! function_exists( 'lafka_analytics_needs_consent_banner' ) ) {
 	/**
 	 * Whether anything on the page needs the visitor's consent decision: a
