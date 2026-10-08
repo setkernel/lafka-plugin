@@ -7,6 +7,11 @@ defined( 'ABSPATH' ) || exit;
 require_once __DIR__ . '/../lafka-asset-helpers.php';
 
 class Lafka_Branch_Locations {
+	/**
+	 * Address parts kept in the branch session (same names as WC's fields).
+	 */
+	const SESSION_ADDRESS_FIELDS = array( 'country', 'address_1', 'address_2', 'city', 'state', 'postcode' );
+
 	public static function init() {
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_scripts' ) );
 		add_action( 'wp_footer', array( __CLASS__, 'output_in_footer' ) );
@@ -52,6 +57,7 @@ class Lafka_Branch_Locations {
 
 		// Update the infobox address the checkout address
 		add_action( 'woocommerce_checkout_update_order_review', array( __CLASS__, 'update_lafka_session_address' ) );
+		add_action( 'woocommerce_store_api_cart_update_customer_from_request', array( __CLASS__, 'update_lafka_session_address_from_customer' ) );
 
 		// Disable shipping locations if Pick Up is selected
 		add_filter( 'wc_shipping_enabled', array( __CLASS__, 'enable_shipping_only_for_delivery' ) );
@@ -550,55 +556,61 @@ class Lafka_Branch_Locations {
 		return implode( ', ', $address_components );
 	}
 
+	/**
+	 * Classic checkout: keep the branch session's delivery address in step with
+	 * the address typed at checkout (the "To:" line in the branch info box).
+	 *
+	 * @param string $post_data Serialised checkout form (verified by WC).
+	 * @return void
+	 */
 	public static function update_lafka_session_address( $post_data ) {
+		parse_str( (string) $post_data, $post_data_array );
+		$prefix  = empty( $post_data_array['ship_to_different_address'] ) ? 'billing_' : 'shipping_';
+		$address = array();
+		foreach ( self::SESSION_ADDRESS_FIELDS as $field ) {
+			$address[ $field ] = isset( $post_data_array[ $prefix . $field ] ) ? wc_clean( $post_data_array[ $prefix . $field ] ) : '';
+		}
+		self::sync_session_address( $address );
+	}
+
+	/**
+	 * Block checkout: the same, from the address the Store API just saved on
+	 * the customer (the shipping address is the delivery address there).
+	 *
+	 * @param WC_Customer $customer Customer.
+	 * @return void
+	 */
+	public static function update_lafka_session_address_from_customer( $customer ) {
+		if ( ! $customer instanceof WC_Customer ) {
+			return;
+		}
+		$address = array();
+		foreach ( self::SESSION_ADDRESS_FIELDS as $field ) {
+			$address[ $field ] = (string) $customer->{'get_shipping_' . $field}();
+		}
+		self::sync_session_address( $address );
+	}
+
+	/**
+	 * Write an address into the branch session (when a branch is chosen).
+	 *
+	 * @param array<string,string> $address Keys from SESSION_ADDRESS_FIELDS.
+	 * @return void
+	 */
+	private static function sync_session_address( array $address ): void {
 		if ( ! isset( WC()->session ) ) {
 			return;
 		}
 		$lafka_branch_location_session = WC()->session->get( 'lafka_branch_location' );
-
-		if ( ! empty( $lafka_branch_location_session ) ) {
-			parse_str( $post_data, $post_data_array );
-
-			if ( empty( $post_data_array['ship_to_different_address'] ) ) {
-				$lafka_branch_location_session['country'] = isset( $post_data_array['billing_country'] ) ? wc_clean( $post_data_array['billing_country'] ) : '';
-			} else {
-				$lafka_branch_location_session['country'] = isset( $post_data_array['shipping_country'] ) ? wc_clean( $post_data_array['shipping_country'] ) : '';
-			}
-
-			if ( empty( $post_data_array['ship_to_different_address'] ) ) {
-				$lafka_branch_location_session['address_1'] = isset( $post_data_array['billing_address_1'] ) ? wc_clean( $post_data_array['billing_address_1'] ) : '';
-			} else {
-				$lafka_branch_location_session['address_1'] = isset( $post_data_array['shipping_address_1'] ) ? wc_clean( $post_data_array['shipping_address_1'] ) : '';
-			}
-
-			if ( empty( $post_data_array['ship_to_different_address'] ) ) {
-				$lafka_branch_location_session['address_2'] = isset( $post_data_array['billing_address_2'] ) ? wc_clean( $post_data_array['billing_address_2'] ) : '';
-			} else {
-				$lafka_branch_location_session['address_2'] = isset( $post_data_array['shipping_address_2'] ) ? wc_clean( $post_data_array['shipping_address_2'] ) : '';
-			}
-
-			if ( empty( $post_data_array['ship_to_different_address'] ) ) {
-				$lafka_branch_location_session['city'] = isset( $post_data_array['billing_city'] ) ? wc_clean( $post_data_array['billing_city'] ) : '';
-			} else {
-				$lafka_branch_location_session['city'] = isset( $post_data_array['shipping_city'] ) ? wc_clean( $post_data_array['shipping_city'] ) : '';
-			}
-
-			if ( empty( $post_data_array['ship_to_different_address'] ) ) {
-				$lafka_branch_location_session['state'] = isset( $post_data_array['billing_state'] ) ? wc_clean( $post_data_array['billing_state'] ) : '';
-			} else {
-				$lafka_branch_location_session['state'] = isset( $post_data_array['shipping_state'] ) ? wc_clean( $post_data_array['shipping_state'] ) : '';
-			}
-
-			if ( empty( $post_data_array['ship_to_different_address'] ) ) {
-				$lafka_branch_location_session['postcode'] = isset( $post_data_array['billing_postcode'] ) ? wc_clean( $post_data_array['billing_postcode'] ) : '';
-			} else {
-				$lafka_branch_location_session['postcode'] = isset( $post_data_array['shipping_postcode'] ) ? wc_clean( $post_data_array['shipping_postcode'] ) : '';
-			}
-
-			$lafka_branch_location_session['full_address'] = self::build_full_address_from_components( $lafka_branch_location_session );
-
-			WC()->session->set( 'lafka_branch_location', $lafka_branch_location_session );
+		if ( empty( $lafka_branch_location_session ) || ! is_array( $lafka_branch_location_session ) ) {
+			return;
 		}
+		foreach ( self::SESSION_ADDRESS_FIELDS as $field ) {
+			$lafka_branch_location_session[ $field ] = (string) ( $address[ $field ] ?? '' );
+		}
+		$lafka_branch_location_session['full_address'] = self::build_full_address_from_components( $lafka_branch_location_session );
+
+		WC()->session->set( 'lafka_branch_location', $lafka_branch_location_session );
 	}
 
 	public static function enable_shipping_only_for_delivery(): bool {
