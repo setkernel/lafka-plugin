@@ -505,24 +505,4 @@ if ( ! class_exists( 'Lafka_Fulfilment' ) ) {
 	}
 }
 
-if ( ! function_exists( 'lafka_fulfilment_modes' ) ) {
-	/**
-	 * The fulfilment modes the store offers ('pickup', 'delivery').
-	 *
-	 * @return string[]
-	 */
-	function lafka_fulfilment_modes(): array {
-		return Lafka_Fulfilment::modes();
-	}
-}
-
-if ( ! function_exists( 'lafka_fulfilment_preference' ) ) {
-	/**
-	 * The customer's fulfilment preference: 'pickup', 'delivery' or ''.
-	 *
-	 * @return string
-	 */
-	function lafka_fulfilment_preference(): string {
-		return Lafka_Fulfilment::preference();
-	}
-}
+require_once __DIR__ . '/lafka-fulfilment-functions.php';

@@ -921,17 +921,4 @@ class Lafka_Shipping_Areas {
 	}
 }
 
-/**
- * Function for delaying initialization of the extension until after WooCommerce is loaded.
- */
-function lafka_shipping_areas_initialize() {
-
-	// This is also a great place to check for the existence of the WooCommerce class
-	if ( ! class_exists( 'WooCommerce' ) ) {
-		return;
-	}
-
-	$GLOBALS['lafka_shipping_areas'] = Lafka_Shipping_Areas::instance();
-}
-
-add_action( 'plugins_loaded', 'lafka_shipping_areas_initialize', 10 );
+require_once __DIR__ . '/lafka-shipping-areas-init.php';
