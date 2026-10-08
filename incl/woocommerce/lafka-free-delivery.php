@@ -29,7 +29,9 @@ require_once __DIR__ . '/../lafka-shipping-method-helpers.php';
 
 if ( ! function_exists( 'lafka_get_free_delivery_threshold' ) ) {
 	/**
-	 * SSOT free-delivery threshold in store currency (0 = off).
+	 * SSOT free-delivery threshold in store currency (0 = off). Every surface that
+	 * cites or enforces the threshold reads it here (the theme through
+	 * lafka_free_delivery_threshold()).
 	 *
 	 * @return float
 	 */
@@ -46,6 +48,10 @@ if ( ! function_exists( 'lafka_get_free_delivery_threshold' ) ) {
 		if ( $zone_amount > 0 ) {
 			$value = $zone_amount;
 		}
+		$value = max( 0.0, $value );
+		// Deprecated: child overrides keyed to the legacy filter keep working here, the
+		// one place the threshold is resolved, until they move to the canonical filter.
+		$value = (float) apply_filters_deprecated( 'lafka_pdp_free_delivery_threshold', array( $value ), '10.4.0', 'lafka_free_delivery_threshold' );
 		return (float) apply_filters( 'lafka_free_delivery_threshold', max( 0.0, $value ) );
 	}
 }

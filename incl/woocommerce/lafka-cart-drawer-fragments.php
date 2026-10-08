@@ -348,9 +348,6 @@ if ( ! function_exists( 'lafka_cart_drawer_render_total' ) ) {
 		// amount, else the operator option), so the drawer hint can never disagree
 		// with the rule the shipping methods enforce. 0 = disabled, no progress.
 		$threshold = lafka_get_free_delivery_threshold();
-		// Deprecated: child overrides keyed to the legacy filter keep working
-		// until they move to 'lafka_free_delivery_threshold'.
-		$threshold = (float) apply_filters_deprecated( 'lafka_pdp_free_delivery_threshold', array( (float) $threshold ), '10.4.0', 'lafka_free_delivery_threshold' );
 
 		// Threshold disabled — render no progress component (matches the
 		// free-delivery-progress.php gate). The .lafka-cart-drawer__total
