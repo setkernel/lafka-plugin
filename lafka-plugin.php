@@ -70,6 +70,9 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/lafka-shipping-method-helpers.p
 // SCRIPT_DEBUG-aware script path helper.
 require_once plugin_dir_path( __FILE__ ) . 'incl/lafka-asset-helpers.php';
 
+// The shared storefront script (window.lafka: track, cookie, money, debounce, api).
+require_once plugin_dir_path( __FILE__ ) . 'incl/lafka-core-assets.php';
+
 // wp_kses() allowlists shared across the plugin.
 require_once plugin_dir_path( __FILE__ ) . 'incl/lafka-kses-helpers.php';
 
