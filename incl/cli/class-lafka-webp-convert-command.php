@@ -20,7 +20,7 @@
  *   wp lafka images convert-webp --quality=85       # higher quality
  *   wp lafka images convert-webp --dry-run          # preview, no writes
  *   wp lafka images convert-webp --force            # re-convert existing
- *   wp lafka images convert-webp --path=2026/01     # one subdir only
+ *   wp lafka images convert-webp --dir=2026/01      # one subdir only
  *
  * Safe to re-run: idempotent unless --force.
  *
@@ -50,7 +50,7 @@ class Lafka_WebP_Convert_Command {
 	 * [--force]
 	 * : Overwrite existing .webp siblings.
 	 *
-	 * [--path=<subdir>]
+	 * [--dir=<subdir>]
 	 * : Restrict to a subdirectory of uploads (e.g. "2026/01"). Default: all.
 	 *
 	 * [--min-bytes=<n>]
@@ -61,8 +61,9 @@ class Lafka_WebP_Convert_Command {
 	 *
 	 *     wp lafka images convert-webp
 	 *     wp lafka images convert-webp --quality=85 --force
-	 *     wp lafka images convert-webp --path=2026/01 --dry-run
+	 *     wp lafka images convert-webp --dir=2026/01 --dry-run
 	 *
+	 * @subcommand convert-webp
 	 * @when after_wp_load
 	 */
 	public function convert_webp( $args, $assoc_args ) {
@@ -70,7 +71,8 @@ class Lafka_WebP_Convert_Command {
 		$dry_run   = ! empty( $assoc_args['dry-run'] );
 		$force     = ! empty( $assoc_args['force'] );
 		$min_bytes = isset( $assoc_args['min-bytes'] ) ? max( 0, (int) $assoc_args['min-bytes'] ) : 5120;
-		$subpath   = isset( $assoc_args['path'] ) ? trim( (string) $assoc_args['path'], '/' ) : '';
+		// --dir, not --path: WP-CLI reserves --path for the WordPress location.
+		$subpath = isset( $assoc_args['dir'] ) ? trim( (string) $assoc_args['dir'], '/' ) : '';
 
 		$upload_dir = wp_get_upload_dir();
 		$root       = $upload_dir['basedir'] . ( '' !== $subpath ? '/' . $subpath : '' );

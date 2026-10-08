@@ -256,7 +256,7 @@ Cloudflare, if you use it:
   wp media regenerate --yes                # optional: rebuild every thumbnail size
   ```
 
-  `convert-webp` is idempotent (`--force` re-converts, `--path=2026/01` limits to a
+  `convert-webp` is idempotent (`--force` re-converts, `--dir=2026/01` limits to a
   folder, `--quality=85` raises quality). Pages then use the `.webp` sibling
   automatically; opt out with the `lafka_disable_webp_swap` filter.
 - [ ] Give every product an image; missing photos hurt conversion and the

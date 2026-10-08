@@ -654,7 +654,7 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/cli/class-lafka-reviews-cli-com
  *
  *   wp lafka images convert-webp
  *   wp lafka images convert-webp --quality=85 --force
- *   wp lafka images convert-webp --path=2026/01 --dry-run
+ *   wp lafka images convert-webp --dir=2026/01 --dry-run
  */
 require_once plugin_dir_path( __FILE__ ) . 'incl/cli/class-lafka-webp-convert-command.php';
 
