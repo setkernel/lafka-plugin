@@ -106,12 +106,10 @@ if ( ! function_exists( 'lafka_layout_callback' ) ) {
 
 		// Set default values
 		$values = array(
-			'lafka_layout'                 => 'default',
-			'lafka_footer_style'           => 'default',
-			'lafka_header_syle'            => '',
-			'lafka_page_subtitle'          => '',
-			'lafka_title_background_imgid' => '',
-			'lafka_title_alignment'        => 'left_title',
+			'lafka_layout'        => 'default',
+			'lafka_footer_style'  => 'default',
+			'lafka_header_syle'   => '',
+			'lafka_page_subtitle' => '',
 		);
 
 		if ( isset( $custom['lafka_layout'] ) && '' !== (string) $custom['lafka_layout'][0] ) {
@@ -125,12 +123,6 @@ if ( ! function_exists( 'lafka_layout_callback' ) ) {
 		}
 		if ( isset( $custom['lafka_page_subtitle'] ) && '' !== (string) $custom['lafka_page_subtitle'][0] ) {
 			$values['lafka_page_subtitle'] = esc_attr( $custom['lafka_page_subtitle'][0] );
-		}
-		if ( isset( $custom['lafka_title_background_imgid'] ) && '' !== (string) $custom['lafka_title_background_imgid'][0] ) {
-			$values['lafka_title_background_imgid'] = esc_attr( $custom['lafka_title_background_imgid'][0] );
-		}
-		if ( isset( $custom['lafka_title_alignment'] ) && '' !== (string) $custom['lafka_title_alignment'][0] ) {
-			$values['lafka_title_alignment'] = esc_attr( $custom['lafka_title_alignment'][0] );
 		}
 
 		// description
@@ -154,7 +146,7 @@ if ( ! function_exists( 'lafka_layout_callback' ) ) {
 		$output .= '<input id="lafka_footer_style_hide" ' . checked( $values['lafka_footer_style'], 'lafka-reveal-footer', false ) . ' type="radio" value="lafka-reveal-footer" name="lafka_footer_style">';
 		$output .= '<label for="lafka_footer_style_hide">' . esc_html__( 'Reveal', 'lafka-plugin' ) . '</label>';
 
-		// Transparent header and Title with Image Background (posts, pages and products)
+		// Header style and subtitle (posts and pages)
 		$screen = get_current_screen();
 		if ( $screen && in_array( $screen->post_type, array( 'post', 'page', 'product' ), true ) ) {
 
@@ -188,40 +180,8 @@ if ( ! function_exists( 'lafka_layout_callback' ) ) {
 
 				$output .= '</select>';
 
-				// The image
-				$image_id = get_post_meta(
-					$post->ID,
-					'lafka_title_background_imgid',
-					true
-				);
-
-				$add_link_style = '';
-				$del_link_style = '';
-
-				$output .= '<p class="hide-if-no-js">';
-				$output .= '<span id="lafka_title_background_imgid_images" class="lafka_featured_img_holder">';
-
-				if ( $image_id ) {
-					$add_link_style = 'style="display:none"';
-					$output        .= wp_get_attachment_image( $image_id, 'medium' );
-				} else {
-					$del_link_style = 'style="display:none"';
-				}
-
-				$output .= '</span>';
-				$output .= '</p>';
-				$output .= '<p class="hide-if-no-js">';
-				$output .= '<input id="lafka_title_background_imgid" name="lafka_title_background_imgid" type="hidden" value="' . esc_attr( $image_id ) . '" />';
-				$output .= '<input type="button" value="' . esc_attr__( 'Manage Images', 'lafka-plugin' ) . '" id="upload_lafka_title_background_imgid" class="lafka_upload_image_button" data-uploader_title="' . esc_attr__( 'Select Title Background Image', 'lafka-plugin' ) . '" data-uploader_button_text="' . esc_attr__( 'Select', 'lafka-plugin' ) . '">';
-				$output .= '</p>';
-
 				$output .= '<p><label for="lafka_page_subtitle">' . esc_html__( 'Page Subtitle', 'lafka-plugin' ) . '</label></p>';
 				$output .= '<input type="text" id="lafka_page_subtitle" name="lafka_page_subtitle" value="' . esc_attr( $values['lafka_page_subtitle'] ) . '" class="large-text" />';
-				$output .= '<p><label for="lafka_title_alignment">' . esc_html__( 'Title alignment', 'lafka-plugin' ) . '</label></p>';
-				$output .= '<select name="lafka_title_alignment">';
-				$output .= '<option ' . ( 'left_title' === (string) $values['lafka_title_alignment'] ? 'selected="selected"' : '' ) . ' value="left_title">Left</option>';
-				$output .= '<option ' . ( 'centered_title' === (string) $values['lafka_title_alignment'] ? 'selected="selected"' : '' ) . ' value="centered_title">Center</option>';
-				$output .= '</select>';
 			}
 		}
 
@@ -270,14 +230,6 @@ if ( ! function_exists( 'lafka_save_layout_postdata' ) ) {
 
 		if ( isset( $_POST['lafka_header_syle'] ) ) {
 			update_post_meta( $post_id, 'lafka_header_syle', sanitize_text_field( wp_unslash( $_POST['lafka_header_syle'] ) ) );
-		}
-
-		if ( isset( $_POST['lafka_title_background_imgid'] ) ) {
-			update_post_meta( $post_id, 'lafka_title_background_imgid', sanitize_text_field( wp_unslash( $_POST['lafka_title_background_imgid'] ) ) );
-		}
-
-		if ( isset( $_POST['lafka_title_alignment'] ) ) {
-			update_post_meta( $post_id, 'lafka_title_alignment', sanitize_text_field( wp_unslash( $_POST['lafka_title_alignment'] ) ) );
 		}
 	}
 
@@ -333,9 +285,6 @@ if ( ! function_exists( 'lafka_page_options_callback' ) ) {
 		// Set default values
 		$values = array(
 			'lafka_top_menu'                 => 'default',
-			'lafka_show_title_page'          => 'yes',
-			'lafka_show_breadcrumb'          => 'yes',
-			'lafka_show_feat_image_in_post'  => 'yes',
 			'lafka_show_sidebar'             => 'yes',
 			'lafka_sidebar_position'         => 'default',
 			'lafka_show_offcanvas_sidebar'   => 'yes',
@@ -345,15 +294,6 @@ if ( ! function_exists( 'lafka_page_options_callback' ) ) {
 
 		if ( isset( $custom['lafka_top_menu'] ) && '' !== (string) $custom['lafka_top_menu'][0] ) {
 			$values['lafka_top_menu'] = $custom['lafka_top_menu'][0];
-		}
-		if ( isset( $custom['lafka_show_title_page'] ) && '' !== (string) $custom['lafka_show_title_page'][0] ) {
-			$values['lafka_show_title_page'] = $custom['lafka_show_title_page'][0];
-		}
-		if ( isset( $custom['lafka_show_breadcrumb'] ) && '' !== (string) $custom['lafka_show_breadcrumb'][0] ) {
-			$values['lafka_show_breadcrumb'] = $custom['lafka_show_breadcrumb'][0];
-		}
-		if ( isset( $custom['lafka_show_feat_image_in_post'] ) && '' !== (string) $custom['lafka_show_feat_image_in_post'][0] ) {
-			$values['lafka_show_feat_image_in_post'] = $custom['lafka_show_feat_image_in_post'][0];
 		}
 		if ( isset( $custom['lafka_show_sidebar'] ) && '' !== (string) $custom['lafka_show_sidebar'][0] ) {
 			$values['lafka_show_sidebar'] = $custom['lafka_show_sidebar'][0];
@@ -383,30 +323,6 @@ if ( ! function_exists( 'lafka_page_options_callback' ) ) {
 			$output .= "<option value='" . esc_attr( $key ) . "' " . esc_attr( selected( $values['lafka_top_menu'], $key, false ) ) . ' >' . esc_html( $val ) . '</option>';
 		}
 		$output .= '</select>';
-
-		// Show title
-		$output .= '<p><label for="lafka_show_title_page"><b>' . esc_html__( 'Show Title', 'lafka-plugin' ) . '</b></label></p>';
-		$output .= '<input id="lafka_show_title_page_yes" ' . checked( $values['lafka_show_title_page'], 'yes', false ) . ' type="radio" value="yes" name="lafka_show_title_page">';
-		$output .= '<label for="lafka_show_title_page_yes">' . esc_html__( 'Yes', 'lafka-plugin' ) . ' </label>&nbsp;';
-		$output .= '<input id="lafka_show_title_page_no" ' . checked( $values['lafka_show_title_page'], 'no', false ) . ' type="radio" value="no" name="lafka_show_title_page">';
-		$output .= '<label for="lafka_show_title_page_no">' . esc_html__( 'No', 'lafka-plugin' ) . '</label>';
-
-		// Show breadcrumb
-		$output .= '<p><label for="lafka_show_breadcrumb"><b>' . esc_html__( 'Show Breadcrumb', 'lafka-plugin' ) . '</b></label></p>';
-		$output .= "<input id='lafka_show_breadcrumb_yes' " . checked( $values['lafka_show_breadcrumb'], 'yes', false ) . " type='radio' value='yes' name='lafka_show_breadcrumb'>";
-		$output .= '<label for="lafka_show_breadcrumb_yes">' . esc_html__( 'Yes', 'lafka-plugin' ) . ' </label>&nbsp;';
-		$output .= '<input id="lafka_show_breadcrumb_no" ' . checked( $values['lafka_show_breadcrumb'], 'no', false ) . ' type="radio" value="no" name="lafka_show_breadcrumb">';
-		$output .= '<label for="lafka_show_breadcrumb_no">' . esc_html__( 'No', 'lafka-plugin' ) . '</label>';
-
-		// Show featured image inside post in single post view
-		$screen = get_current_screen();
-		if ( $screen && in_array( $screen->post_type, array( 'post' ), true ) ) {
-			$output .= '<p><label for="lafka_show_feat_image_in_post"><b>' . esc_html__( 'Featured Image in Single Post View', 'lafka-plugin' ) . '</b></label></p>';
-			$output .= '<input id="lafka_show_feat_image_in_post_yes" ' . checked( $values['lafka_show_feat_image_in_post'], 'yes', false ) . ' type="radio" value="yes" name="lafka_show_feat_image_in_post">';
-			$output .= '<label for="lafka_show_feat_image_in_post_yes">' . esc_html__( 'Yes', 'lafka-plugin' ) . ' </label>&nbsp;';
-			$output .= '<input id="lafka_show_feat_image_in_post_no" ' . checked( $values['lafka_show_feat_image_in_post'], 'no', false ) . ' type="radio" value="no" name="lafka_show_feat_image_in_post">';
-			$output .= '<label for="lafka_show_feat_image_in_post_no">' . esc_html__( 'No', 'lafka-plugin' ) . '</label>';
-		}
 
 		// Show Main sidebar
 		$output .= '<p><label for="lafka_show_sidebar"><b>' . esc_html__( 'Main Sidebar', 'lafka-plugin' ) . '</b></label></p>';
@@ -503,15 +419,6 @@ if ( ! function_exists( 'lafka_save_page_options_postdata' ) ) {
 		if ( isset( $_POST['lafka_top_menu'] ) ) {
 			update_post_meta( $post_id, 'lafka_top_menu', sanitize_text_field( wp_unslash( $_POST['lafka_top_menu'] ) ) );
 		}
-		if ( isset( $_POST['lafka_show_title_page'] ) ) {
-			update_post_meta( $post_id, 'lafka_show_title_page', sanitize_text_field( wp_unslash( $_POST['lafka_show_title_page'] ) ) );
-		}
-		if ( isset( $_POST['lafka_show_breadcrumb'] ) ) {
-			update_post_meta( $post_id, 'lafka_show_breadcrumb', sanitize_text_field( wp_unslash( $_POST['lafka_show_breadcrumb'] ) ) );
-		}
-		if ( isset( $_POST['lafka_show_feat_image_in_post'] ) ) {
-			update_post_meta( $post_id, 'lafka_show_feat_image_in_post', sanitize_text_field( wp_unslash( $_POST['lafka_show_feat_image_in_post'] ) ) );
-		}
 		if ( isset( $_POST['lafka_show_sidebar'] ) ) {
 			update_post_meta( $post_id, 'lafka_show_sidebar', sanitize_text_field( wp_unslash( $_POST['lafka_show_sidebar'] ) ) );
 		}
@@ -526,217 +433,6 @@ if ( ! function_exists( 'lafka_save_page_options_postdata' ) ) {
 		}
 		if ( isset( $_POST['lafka_custom_offcanvas_sidebar'] ) ) {
 			update_post_meta( $post_id, 'lafka_custom_offcanvas_sidebar', sanitize_text_field( wp_unslash( $_POST['lafka_custom_offcanvas_sidebar'] ) ) );
-		}
-	}
-
-}
-
-/**
- * Register video background metaboxes
- */
-add_action( 'add_meta_boxes', 'lafka_add_video_bckgr_metabox' );
-add_action( 'save_post', 'lafka_save_video_bckgr_postdata' );
-
-/* Adds a box to the side column on the Page edit screens */
-if ( ! function_exists( 'lafka_add_video_bckgr_metabox' ) ) {
-
-	function lafka_add_video_bckgr_metabox() {
-
-		$posttypes = array( 'page', 'post' );
-		if ( LAFKA_PLUGIN_IS_WOOCOMMERCE ) {
-			$posttypes[] = 'product';
-		}
-
-		foreach ( $posttypes as $pt ) {
-			add_meta_box(
-				'lafka_video_bckgr',
-				esc_html__( 'Video Background', 'lafka-plugin' ),
-				'lafka_video_bckgr_callback',
-				$pt,
-				'side'
-			);
-		}
-	}
-
-}
-
-/* Prints the box content */
-if ( ! function_exists( 'lafka_video_bckgr_callback' ) ) {
-
-	function lafka_video_bckgr_callback( $post ) {
-		// If current page is set as Blog page - don't show the options
-		if ( (int) get_option( 'page_for_posts' ) === (int) $post->ID ) {
-			echo esc_html__( 'Video Background options are disabled for this page, because the page is set as Blog page from Settings->Reading.', 'lafka-plugin' );
-			return;
-		}
-
-		// If current page is set as Shop page - don't show the options
-		if ( LAFKA_PLUGIN_IS_WOOCOMMERCE && (int) wc_get_page_id( 'shop' ) === (int) $post->ID ) {
-			echo esc_html__( 'Video Background options are disabled for this page, because the page is set as Shop page.', 'lafka-plugin' );
-			return;
-		}
-
-		// Use nonce for verification
-		wp_nonce_field( 'lafka_save_video_bckgr_postdata', 'video_bckgr_nonce' );
-
-		$custom = get_post_custom( $post->ID );
-
-		// Set default values
-		$values = array(
-			'lafka_video_bckgr_url' => '',
-		);
-
-		if ( isset( $custom['lafka_video_bckgr_url'] ) && '' !== (string) $custom['lafka_video_bckgr_url'][0] ) {
-			$values['lafka_video_bckgr_url'] = esc_attr( $custom['lafka_video_bckgr_url'][0] );
-		}
-
-		// description
-		$output = '<p>' . esc_html__( 'Define the video background options for this page/post.', 'lafka-plugin' ) . '</p>';
-
-		// Video URL
-		$output .= '<p><label for="lafka_video_bckgr_url"><b>' . esc_html__( 'YouTube video URL', 'lafka-plugin' ) . '</b></label></p>';
-		$output .= '<input type="text" id="lafka_video_bckgr_url" name="lafka_video_bckgr_url" value="' . esc_attr( $values['lafka_video_bckgr_url'] ) . '" class="large-text" />';
-
-		echo wp_kses( $output, lafka_metabox_allowed_html() );
-	}
-
-}
-
-/* When the post is saved, saves our custom data */
-if ( ! function_exists( 'lafka_save_video_bckgr_postdata' ) ) {
-
-	function lafka_save_video_bckgr_postdata( $post_id ) {
-		global $pagenow;
-
-		// verify if this is an auto save routine.
-		// If it is our form has not been submitted, so we dont want to do anything
-		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
-			return;
-		}
-
-		// verify this came from our screen and with proper authorization,
-		// because save_post can be triggered at other times
-
-		if ( ! isset( $_POST['video_bckgr_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['video_bckgr_nonce'] ) ), 'lafka_save_video_bckgr_postdata' ) ) {
-			return;
-		}
-
-		if ( ! current_user_can( 'edit_post', $post_id ) ) {
-			return;
-		}
-
-		if ( 'post-new.php' === (string) $pagenow ) {
-			return;
-		}
-
-		if ( isset( $_POST['lafka_video_bckgr_url'] ) ) {
-			update_post_meta( $post_id, 'lafka_video_bckgr_url', esc_url_raw( wp_unslash( $_POST['lafka_video_bckgr_url'] ) ) );
-		}
-	}
-
-}
-
-/**
- * Register additional featured images metaboxes (5)
- */
-add_action( 'add_meta_boxes', 'lafka_add_additonal_featured_meta' );
-add_action( 'save_post', 'lafka_save_additonal_featured_meta_postdata' );
-
-/* Adds a box to the side column on the Page/Post edit screens */
-if ( ! function_exists( 'lafka_add_additonal_featured_meta' ) ) {
-
-	function lafka_add_additonal_featured_meta() {
-		$post_types_array = array( 'page', 'post' );
-
-		for ( $i = 2; $i <= 6; $i++ ) {
-			foreach ( $post_types_array as $post_type ) {
-				add_meta_box(
-					'lafka_featured_' . $i,
-					esc_html__( 'Featured Image', 'lafka-plugin' ) . ' ' . $i,
-					'lafka_additonal_featured_meta_callback',
-					$post_type,
-					'side',
-					'default',
-					array( 'num' => $i )
-				);
-			}
-		}
-	}
-
-}
-
-/* Prints the box content */
-if ( ! function_exists( 'lafka_additonal_featured_meta_callback' ) ) {
-
-	function lafka_additonal_featured_meta_callback( $post, $args ) {
-		// Use nonce for verification
-		wp_nonce_field( 'lafka_save_additonal_featured_meta_postdata', 'lafka_featuredmeta' );
-
-		$num = esc_attr( $args['args']['num'] );
-
-		$image_id = get_post_meta(
-			$post->ID,
-			'lafka_featured_imgid_' . $num,
-			true
-		);
-
-		$add_link_style = '';
-		$del_link_style = '';
-
-		$output  = '<p class="hide-if-no-js">';
-		$output .= '<span id="lafka_featured_imgid_' . esc_attr( $num ) . '_images" class="lafka_featured_img_holder">';
-
-		if ( $image_id ) {
-			$add_link_style = 'style="display:none"';
-			$output        .= wp_get_attachment_image( $image_id, 'medium' );
-		} else {
-			$del_link_style = 'style="display:none"';
-		}
-
-		$output .= '</span>';
-		$output .= '</p>';
-
-		$output .= '<p class="hide-if-no-js">';
-		$output .= '<input id="lafka_featured_imgid_' . esc_attr( $num ) . '" name="lafka_featured_imgid_' . esc_attr( $num ) . '" type="hidden" value="' . esc_attr( $image_id ) . '" />';
-
-		// delete link
-		$output .= '<a id="delete_lafka_featured_imgid_' . esc_attr( $num ) . '" ' . wp_kses_data( $del_link_style ) . ' class="lafka_delete_image_button" href="#" title="' . esc_attr__( 'Remove featured image', 'lafka-plugin' ) . ' ' . esc_attr( $num ) . '">' . esc_html__( 'Remove featured image', 'lafka-plugin' ) . ' ' . esc_attr( $num ) . '</a>';
-
-		// add link
-		$output .= '<a id="upload_lafka_featured_imgid_' . esc_attr( $num ) . '" ' . wp_kses_data( $add_link_style ) . ' data-uploader_title="' . esc_attr__( 'Select Featured Image', 'lafka-plugin' ) . ' ' . esc_attr( $num ) . '" data-uploader_button_text="' . esc_attr__( 'Set Featured Image', 'lafka-plugin' ) . ' ' . esc_attr( $num ) . '" class="lafka_upload_image_button is_upload_link" href="#" title="' . esc_attr__( 'Set featured image', 'lafka-plugin' ) . ' ' . esc_attr( $num ) . '">' . esc_html__( 'Set featured image', 'lafka-plugin' ) . ' ' . esc_attr( $num ) . '</a>';
-
-		$output .= '</p>';
-
-		echo wp_kses( $output, lafka_metabox_allowed_html() );
-	}
-
-}
-
-/* When the post is saved, saves our custom data */
-if ( ! function_exists( 'lafka_save_additonal_featured_meta_postdata' ) ) {
-
-	function lafka_save_additonal_featured_meta_postdata( $post_id ) {
-		// verify if this is an auto save routine.
-		// If it is our form has not been submitted, so we dont want to do anything
-		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
-			return;
-		}
-
-		// verify this came from our screen and with proper authorization,
-		// because save_post can be triggered at other times
-
-		if ( ! isset( $_POST['lafka_featuredmeta'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['lafka_featuredmeta'] ) ), 'lafka_save_additonal_featured_meta_postdata' ) ) {
-			return;
-		}
-
-		if ( ! current_user_can( 'edit_post', $post_id ) ) {
-			return;
-		}
-
-		foreach ( $_POST as $key => $value ) {
-			if ( strstr( $key, 'lafka_featured_imgid_' ) ) {
-				update_post_meta( $post_id, sanitize_key( $key ), sanitize_text_field( $value ) );
-			}
 		}
 	}
 

@@ -126,6 +126,18 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
   SVG data URIs, so no stylesheet needs an icon font. `fa-` is no longer an allowed
   class prefix in `.stylelintrc.json`.
 
+- **Meta boxes whose values nothing reads**: "Video Background" (it only added an unstyled
+  body class), "Featured Image 2–6" (shown only by a blog-list branch single posts never
+  reach), and from "Page Layout Options" the title background image and title alignment,
+  from "Page Structure Options" Show Title, Show Breadcrumb and Featured Image in Single
+  Post View (read only by the removed food-menu templates). The WPML keys go with them.
+  Kept because they are read: layout, footer and header style, page subtitle, top menu,
+  sidebars, product video URL, product gallery type
+  (`lafka_single_product_gallery_type`). Stored values are left in the database.
+- Dead `combo` product-type branches in `addons.js` (no such type is registered) and the
+  `add_to_cart_text` / `woocommerce_add_to_cart_url` filters, which WooCommerce 11 never
+  applies (`woocommerce_product_add_to_cart_text` / `_url` stay).
+
 ### Fixed
 - Promo tooltips never matched their default zone: the theme default
   `promo_tooltip_N_position` was `above_price` while the plugin compared against

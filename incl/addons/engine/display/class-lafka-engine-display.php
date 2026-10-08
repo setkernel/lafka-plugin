@@ -63,9 +63,7 @@ class Lafka_Engine_Display {
 		add_action( 'lafka_product_addons_end', array( $this, 'totals' ), 10 );
 
 		// Add-to-cart button overrides for products with required addons.
-		add_filter( 'add_to_cart_text', array( $this, 'add_to_cart_text' ), 15 );
 		add_filter( 'woocommerce_product_add_to_cart_text', array( $this, 'add_to_cart_text' ), 15, 2 );
-		add_filter( 'woocommerce_add_to_cart_url', array( $this, 'add_to_cart_url' ), 10 );
 		add_filter( 'woocommerce_product_add_to_cart_url', array( $this, 'add_to_cart_url' ), 10, 2 );
 		add_filter( 'woocommerce_product_supports', array( $this, 'ajax_add_to_cart_supports' ), 10, 3 );
 

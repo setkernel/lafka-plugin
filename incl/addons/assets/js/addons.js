@@ -324,10 +324,7 @@ jQuery( document ).ready( function($) {
 				}
 
 				if ( $( '.entry-summary .subscription-details' ).length ) {
-					// Add-Ons added at combo level only affect the up-front price.
-					if ( ! $cart.hasClass( 'combo_data' ) ) {
-						subscription_details = $( '.entry-summary .subscription-details' ).clone().wrap( '<p>' ).parent().html();
-					}
+					subscription_details = $( '.entry-summary .subscription-details' ).clone().wrap( '<p>' ).parent().html();
 				}
 
 				if ( 'grouped' === product_type ) {
@@ -346,7 +343,7 @@ jQuery( document ).ready( function($) {
 
 				let html = '<dl class="product-addon-totals"><dt>' + lafka_addons_params.i18n_addon_total + '</dt><dd><strong><span class="amount">' + formatted_addon_total + '</span></strong></dd>';
 
-				if ( 'combo' !== product_type && formatted_sub_total && '1' === String( $totals.data( 'show-sub-total' ) ) ) {
+				if ( formatted_sub_total && '1' === String( $totals.data( 'show-sub-total' ) ) ) {
 
 					// To show our "price display suffix" we have to do some magic since the string can contain variables (excl/incl tax values)
 					// so we have to take our sub total and find out what the tax value is, which we can do via an ajax call

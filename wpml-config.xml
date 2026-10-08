@@ -3,19 +3,9 @@
         <custom-field action="copy">lafka_transparent_header</custom-field>
         <custom-field action="copy">lafka_layout</custom-field>
         <custom-field action="copy">lafka_footer_style</custom-field>
-        <custom-field action="copy">lafka_show_title_page</custom-field>
-        <custom-field action="copy">lafka_show_breadcrumb</custom-field>
         <custom-field action="copy">lafka_show_sidebar</custom-field>
         <custom-field action="copy">lafka_custom_sidebar</custom-field>
-        <custom-field action="copy">lafka_video_bckgr_url</custom-field>
-        <custom-field action="copy">lafka_featured_imgid_2</custom-field>
-        <custom-field action="copy">lafka_featured_imgid_3</custom-field>
-        <custom-field action="copy">lafka_featured_imgid_4</custom-field>
-        <custom-field action="copy">lafka_featured_imgid_5</custom-field>
-        <custom-field action="copy">lafka_featured_imgid_6</custom-field>
         <custom-field action="translate">lafka_page_subtitle</custom-field>
-        <custom-field action="copy">lafka_title_background_imgid</custom-field>
-        <custom-field action="copy">lafka_title_alignment</custom-field>
         <custom-field action="copy">lafka_show_offcanvas_sidebar</custom-field>
         <custom-field action="copy">lafka_custom_offcanvas_sidebar</custom-field>
         <custom-field action="copy">lafka_header_syle</custom-field>
@@ -29,7 +19,6 @@
         <custom-field action="copy">lafka_nutrition_sodium</custom-field>
         <custom-field action="copy">lafka_nutrition_sugars</custom-field>
         <custom-field action="copy">lafka_product_video_url</custom-field>
-        <custom-field action="copy">lafka_show_feat_image_in_post</custom-field>
         <custom-field action="copy">lafka_sidebar_position</custom-field>
         <custom-field action="copy">lafka_term_header_alignment</custom-field>
         <custom-field action="copy">lafka_term_header_img_id</custom-field>
