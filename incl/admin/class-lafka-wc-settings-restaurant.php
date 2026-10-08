@@ -341,6 +341,16 @@ if ( ! function_exists( 'lafka_define_wc_settings_restaurant_class' ) ) {
 
 				return array(
 					array(
+						'title' => __( 'Order links for search and maps', 'lafka-plugin' ),
+						'type'  => 'title',
+						'desc'  => $this->order_links_html(),
+						'id'    => 'lafka_restaurant_order_links',
+					),
+					array(
+						'type' => 'sectionend',
+						'id'   => 'lafka_restaurant_order_links_end',
+					),
+					array(
 						'title' => __( 'Search & AI visibility', 'lafka-plugin' ),
 						'type'  => 'title',
 						'desc'  => $this->intro_html(
@@ -535,6 +545,44 @@ if ( ! function_exists( 'lafka_define_wc_settings_restaurant_class' ) ) {
 			 * @param string $body Section-specific description.
 			 * @return string Combined HTML safe for WC's settings 'desc'.
 			 */
+			/**
+			 * The links to paste into Google Business Profile, Apple Business
+			 * Connect and Bing Places, each tagged so Insights and analytics
+			 * credit the order to the listing. Ordering inside Google Search
+			 * ended in 2024; a direct link from the listing is what remains.
+			 *
+			 * @return string
+			 */
+			private function order_links_html() {
+				$info = function_exists( 'lafka_get_restaurant_info' ) ? lafka_get_restaurant_info() : array();
+				$menu = (string) ( $info['menu_url'] ?? '' );
+				if ( '' === $menu ) {
+					return esc_html__( 'Publish a menu page first; its address becomes the order link.', 'lafka-plugin' );
+				}
+				$link  = static function ( string $source, string $campaign ) use ( $menu ): string {
+					return add_query_arg(
+						array(
+							'utm_source'   => $source,
+							'utm_medium'   => 'organic',
+							'utm_campaign' => $campaign,
+						),
+						$menu
+					);
+				};
+				$rows  = array(
+					array( __( 'Google Business Profile → Edit profile → Food ordering → Add link (then "Set preferred")', 'lafka-plugin' ), $link( 'google', 'gbp_order' ) ),
+					array( __( 'Google Business Profile → Menu → Menu link', 'lafka-plugin' ), $link( 'google', 'gbp_menu' ) ),
+					array( __( 'Apple Business Connect → your location → Action links → Order', 'lafka-plugin' ), $link( 'apple', 'abc_order' ) ),
+					array( __( 'Bing Places → your listing → Order online / Menu', 'lafka-plugin' ), $link( 'bing', 'bing_order' ) ),
+				);
+				$html  = '<p>' . esc_html__( 'Customers who find the restaurant on Google, Apple Maps or Bing can order here directly, with no app and no commission. Paste each link where shown; the tags let Lafka Insights and your analytics count those orders.', 'lafka-plugin' ) . '</p>';
+				$html .= '<table class="widefat striped" style="max-width:900px"><tbody>';
+				foreach ( $rows as $row ) {
+					$html .= '<tr><td style="width:45%">' . esc_html( $row[0] ) . '</td><td><code style="user-select:all;word-break:break-all">' . esc_html( $row[1] ) . '</code></td></tr>';
+				}
+				return $html . '</tbody></table>';
+			}
+
 			private function intro_html( $body ) {
 				$wc_general    = admin_url( 'admin.php?page=wc-settings&tab=general' );
 				$wp_general    = admin_url( 'options-general.php' );
