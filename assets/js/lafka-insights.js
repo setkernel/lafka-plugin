@@ -22,24 +22,24 @@
 (function (w, d) {
 	'use strict';
 
-	var cfg = w.lafkaInsightsCfg || {};
-	var nav = w.navigator || {};
+	const cfg = w.lafkaInsightsCfg || {};
+	const nav = w.navigator || {};
 	if (!cfg.u || typeof nav.sendBeacon !== 'function') {
 		return;
 	}
 
-	var MAX = 30;
-	var ALLOW = { view_item_list: 'l', view_item: 'v', select_item: 'i', search: 's', store_closed_view: 'c', select_fulfilment: 'f', order_channel_click: 'o', add_shipping_info: 'h' };
-	var queue = [];
-	var pageType = '';
-	var sent = false;
+	const MAX = 30;
+	const ALLOW = { view_item_list: 'l', view_item: 'v', select_item: 'i', search: 's', store_closed_view: 'c', select_fulfilment: 'f', order_channel_click: 'o', add_shipping_info: 'h' };
+	const queue = [];
+	let pageType = '';
+	let sent = false;
 
 	function str(v, n) {
 		return String(v == null ? '' : v).slice(0, n);
 	}
 
 	function itemId(o) {
-		var items = o.ecommerce && o.ecommerce.items;
+		const items = o.ecommerce && o.ecommerce.items;
 		return items && items[0] ? str(items[0].item_id, 20) : '';
 	}
 
@@ -51,13 +51,13 @@
 			pageType = str(o.page_type, 16);
 			return;
 		}
-		var code = ALLOW[o.event];
+		const code = ALLOW[o.event];
 		if (!code || queue.length >= MAX) {
 			return;
 		}
-		var e = [code];
+		const e = [code];
 		if (code === 'v' || code === 'i') {
-			var id = itemId(o);
+			const id = itemId(o);
 			if (!/^\d+$/.test(id)) {
 				return;
 			}
@@ -66,7 +66,7 @@
 			e.push(str(o.search_term, 64), parseInt(o.results_count, 10) || 0);
 			// The search box pushes while the visitor types ("pi", "piz",
 			// "pizza"): keep only the latest refinement of the same search.
-			var last = queue[queue.length - 1];
+			const last = queue[queue.length - 1];
 			if (last && last[0] === 's' && (e[1].indexOf(last[1]) === 0 || last[1].indexOf(e[1]) === 0)) {
 				queue.pop();
 			}
@@ -78,13 +78,13 @@
 		queue.push(e);
 	}
 
-	var dl = (w.dataLayer = w.dataLayer || []);
-	for (var i = 0; i < dl.length; i++) {
+	const dl = (w.dataLayer = w.dataLayer || []);
+	for (let i = 0; i < dl.length; i++) {
 		take(dl[i]);
 	}
-	var push = dl.push;
+	const push = dl.push;
 	dl.push = function () {
-		for (var j = 0; j < arguments.length; j++) {
+		for (let j = 0; j < arguments.length; j++) {
 			take(arguments[j]);
 		}
 		return push.apply(dl, arguments);
@@ -93,7 +93,7 @@
 	function allowed() {
 		if (cfg.m === 'c') {
 			try {
-				var c = JSON.parse(w.localStorage.getItem('lafka_consent_v1') || 'null');
+				const c = JSON.parse(w.localStorage.getItem('lafka_consent_v1') || 'null');
 				return !!(c && c.analytics_storage);
 			} catch {
 				return false;
@@ -103,16 +103,16 @@
 	}
 
 	function payload() {
-		var loc = w.location;
-		var ref = '';
+		const loc = w.location;
+		let ref;
 		try {
 			ref = d.referrer ? new URL(d.referrer).hostname : '';
 		} catch {
 			ref = '';
 		}
-		var q = new URLSearchParams(loc.search || '');
-		var width = w.innerWidth || 0;
-		var body = {
+		const q = new URLSearchParams(loc.search || '');
+		const width = w.innerWidth || 0;
+		const body = {
 			v: 1,
 			p: str(loc.pathname, 100),
 			t: pageType,
@@ -123,7 +123,7 @@
 			d: width && width < 768 ? 'm' : width && width < 1024 ? 't' : 'd',
 			e: queue
 		};
-		var json = JSON.stringify(body);
+		let json = JSON.stringify(body);
 		while (json.length > 2000 && body.e.length) {
 			body.e.pop();
 			json = JSON.stringify(body);

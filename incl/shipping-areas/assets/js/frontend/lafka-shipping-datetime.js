@@ -11,14 +11,14 @@
 						allowClear: !lafka_datetime_options.datetime_mandatory,
 					};
 				n.select2(i);
-				var a = {
+				const a = {
 					minDate: 'today',
 					maxDate: new Date().fp_incr(lafka_datetime_options.days_ahead),
 					enable: lafka_datetime_options.enabled_dates,
 					locale: lafka_datetime_options.flatpickr_locale,
 				};
 				const t = e.flatpickr(a);
-				(t.config.onChange.push(function (a, e, t) {
+				(t.config.onChange.push(function (a, e) {
 					if (a.length) {
 						const o = d('body').find('.lafka-checkout-datetime-fields');
 						n.prop('disabled', !0);

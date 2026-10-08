@@ -82,9 +82,9 @@
 		}
 	}),
 		window.addEventListener('DOMContentLoaded', function () {
-			var a;
+			let a;
 			(!(function (e, o) {
-				var a = document.getElementById('lafka_geocode_branch_location_map');
+				let a = document.getElementById('lafka_geocode_branch_location_map');
 				if (null === a) return;
 				void 0 === e &&
 					((e = new google.maps.Map(a, {
@@ -136,7 +136,7 @@
 							button: { text: lafka_branch_location_properties.use_image_label },
 							multiple: !1,
 						})).on('select', function () {
-							var a = o.state().get('selection').first().toJSON();
+							const a = o.state().get('selection').first().toJSON();
 							let e;
 							((e = (void 0 === a.sizes.thumbnail ? a.sizes.full : a.sizes.thumbnail).url),
 								i('#lafka_branch_location_img_id').val(a.id),
@@ -154,9 +154,11 @@
 					i(document.body).find('#tagsdiv-lafka_branch_location').hide(),
 				(a = (function (a) {
 					try {
-						var e = JSON.parse(a);
+						const e = JSON.parse(a);
 						if (e && 'object' == typeof e) return e;
-					} catch (a) {}
+					} catch {
+						return [];
+					}
 					return [];
 				})(i('#lafka_branch_order_hours_schedule').val())),
 				i(document).find('#lafka_branch_order_hours_container').jqs({ data: a, periodOptions: !1 }),
@@ -164,7 +166,7 @@
 					.find(
 						'body.taxonomy-lafka_branch_location form#addtag input:submit, body.taxonomy-lafka_branch_location form#edittag input:submit',
 					)
-					.on('click', function (a) {
+					.on('click', function () {
 						i(document)
 							.find('#lafka_branch_order_hours_schedule')
 							.val(i(document).find('#lafka_branch_order_hours_container').jqs('export'));

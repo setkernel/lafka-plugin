@@ -17,32 +17,32 @@
 ( function () {
 	'use strict';
 
-	var wp = window.wp;
-	var wc = window.wc;
+	const wp = window.wp;
+	const wc = window.wc;
 	if ( ! wp || ! wp.element || ! wp.plugins || ! wc || ! wc.blocksCheckout ) {
 		return;
 	}
 
-	var el = wp.element.createElement;
-	var useState = wp.element.useState;
-	var useEffect = wp.element.useEffect;
-	var registerPlugin = wp.plugins.registerPlugin;
-	var ExperimentalOrderMeta = wc.blocksCheckout.ExperimentalOrderMeta;
-	var extensionCartUpdate = wc.blocksCheckout.extensionCartUpdate;
+	const el = wp.element.createElement;
+	const useState = wp.element.useState;
+	const useEffect = wp.element.useEffect;
+	const registerPlugin = wp.plugins.registerPlugin;
+	const ExperimentalOrderMeta = wc.blocksCheckout.ExperimentalOrderMeta;
+	const extensionCartUpdate = wc.blocksCheckout.extensionCartUpdate;
 
 	if ( ! registerPlugin || ! ExperimentalOrderMeta ) {
 		return;
 	}
 
-	var settings =
+	const settings =
 		wc.wcSettings && wc.wcSettings.getSetting
 			? wc.wcSettings.getSetting( 'lafka-checkout_data', {} )
 			: {};
-	var i18n = settings.i18n || {};
+	const i18n = settings.i18n || {};
 
 	function money( amount ) {
-		var symbol = settings.currencySymbol || '';
-		var value = Math.round( ( parseFloat( amount ) || 0 ) * 100 ) / 100;
+		const symbol = settings.currencySymbol || '';
+		const value = Math.round( ( parseFloat( amount ) || 0 ) * 100 ) / 100;
 		return symbol + value.toFixed( 2 );
 	}
 
@@ -51,20 +51,20 @@
 	 * ------------------------------------------------------------------ */
 
 	function FreeDeliveryProgress( props ) {
-		var lafka = ( props && props.extensions && props.extensions.lafka ) || {};
-		var threshold = parseFloat( lafka.free_delivery_threshold ) || 0;
-		var remaining = parseFloat( lafka.free_delivery_remaining ) || 0;
+		const lafka = ( props && props.extensions && props.extensions.lafka ) || {};
+		const threshold = parseFloat( lafka.free_delivery_threshold ) || 0;
+		const remaining = parseFloat( lafka.free_delivery_remaining ) || 0;
 
 		if ( ! ( threshold > 0 ) ) {
 			return null;
 		}
 
-		var reached = remaining <= 0;
-		var pct = Math.max(
+		const reached = remaining <= 0;
+		const pct = Math.max(
 			0,
 			Math.min( 100, Math.round( ( ( threshold - remaining ) / threshold ) * 100 ) )
 		);
-		var message = reached
+		const message = reached
 			? i18n.freeDeliveryReached || 'You have unlocked free delivery!'
 			: ( i18n.freeDeliveryRemaining || 'Add %s more for free delivery' ).replace(
 					'%s',
@@ -107,7 +107,7 @@
 	// withholds delivery rates (Lafka_Delivery_Quote_Guard) and flags it on the
 	// `lafka` cart extension; this tells the customer why delivery is missing.
 	function DeliveryAddressNotice( props ) {
-		var lafka = ( props && props.extensions && props.extensions.lafka ) || {};
+		const lafka = ( props && props.extensions && props.extensions.lafka ) || {};
 		if ( ! lafka.delivery_address_required || ! lafka.delivery_address_message ) {
 			return null;
 		}
@@ -118,7 +118,7 @@
 		);
 	}
 
-	var ShippingSlot = wc.blocksCheckout.ExperimentalOrderShippingPackages || ExperimentalOrderMeta;
+	const ShippingSlot = wc.blocksCheckout.ExperimentalOrderShippingPackages || ExperimentalOrderMeta;
 
 	function renderDeliveryAddressNotice() {
 		return el( ShippingSlot, null, el( DeliveryAddressNotice ) );
@@ -142,18 +142,18 @@
 	}
 
 	function dateOptions( daysAhead ) {
-		var out = [];
-		var base = new Date();
-		for ( var i = 0; i <= daysAhead; i++ ) {
-			var d = new Date( base.getFullYear(), base.getMonth(), base.getDate() + i );
-			var ymd = d.getFullYear() + '-' + pad( d.getMonth() + 1 ) + '-' + pad( d.getDate() );
+		const out = [];
+		const base = new Date();
+		for ( let i = 0; i <= daysAhead; i++ ) {
+			const d = new Date( base.getFullYear(), base.getMonth(), base.getDate() + i );
+			const ymd = d.getFullYear() + '-' + pad( d.getMonth() + 1 ) + '-' + pad( d.getDate() );
 			out.push( ymd );
 		}
 		return out;
 	}
 
 	function fetchSlots( date ) {
-		var body = new window.URLSearchParams();
+		const body = new window.URLSearchParams();
 		body.append( 'action', 'time_slots_for_date' );
 		body.append( 'date', date );
 		body.append( '_ajax_nonce', ( settings.timeslot && settings.timeslot.nonce ) || '' );
@@ -190,24 +190,24 @@
 	}
 
 	function TimeslotPicker() {
-		var cfg = settings.timeslot || {};
-		var dates = dateOptions( parseInt( cfg.daysAhead, 10 ) || 30 );
+		const cfg = settings.timeslot || {};
+		const dates = dateOptions( parseInt( cfg.daysAhead, 10 ) || 30 );
 
-		var dateState = useState( '' );
-		var date = dateState[ 0 ];
-		var setDate = dateState[ 1 ];
+		const dateState = useState( '' );
+		const date = dateState[ 0 ];
+		const setDate = dateState[ 1 ];
 
-		var slotState = useState( '' );
-		var slot = slotState[ 0 ];
-		var setSlot = slotState[ 1 ];
+		const slotState = useState( '' );
+		const slot = slotState[ 0 ];
+		const setSlot = slotState[ 1 ];
 
-		var slotsState = useState( [] );
-		var slots = slotsState[ 0 ];
-		var setSlots = slotsState[ 1 ];
+		const slotsState = useState( [] );
+		const slots = slotsState[ 0 ];
+		const setSlots = slotsState[ 1 ];
 
-		var loadingState = useState( false );
-		var loading = loadingState[ 0 ];
-		var setLoading = loadingState[ 1 ];
+		const loadingState = useState( false );
+		const loading = loadingState[ 0 ];
+		const setLoading = loadingState[ 1 ];
 
 		useEffect(
 			function () {
@@ -215,7 +215,7 @@
 					setSlots( [] );
 					return undefined;
 				}
-				var active = true;
+				let active = true;
 				setLoading( true );
 				fetchSlots( date ).then( function ( list ) {
 					if ( ! active ) {
@@ -232,19 +232,19 @@
 		);
 
 		function onDateChange( event ) {
-			var value = event.target.value;
+			const value = event.target.value;
 			setDate( value );
 			setSlot( '' );
 			pushSelection( value, '' );
 		}
 
 		function onSlotChange( event ) {
-			var value = event.target.value;
+			const value = event.target.value;
 			setSlot( value );
 			pushSelection( date, value );
 		}
 
-		var dateSelect = el(
+		const dateSelect = el(
 			'select',
 			{
 				className: 'lafka-block-timeslot__date',
@@ -258,7 +258,7 @@
 			)
 		);
 
-		var slotChildren = [
+		const slotChildren = [
 			el( 'option', { key: '', value: '' }, i18n.chooseTime || 'Choose a time' ),
 		].concat(
 			slots.map( function ( s ) {
@@ -270,7 +270,7 @@
 			} )
 		);
 
-		var slotSelect = el(
+		const slotSelect = el(
 			'select',
 			{
 				className: 'lafka-block-timeslot__time',
@@ -281,7 +281,7 @@
 			slotChildren
 		);
 
-		var note = null;
+		let note = null;
 		if ( loading ) {
 			note = el(
 				'p',

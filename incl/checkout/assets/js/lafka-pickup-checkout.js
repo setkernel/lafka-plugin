@@ -13,9 +13,9 @@
 ( function () {
 	'use strict';
 
-	var doc = window.document;
-	var wantsAddress = false;
-	var TOGGLE_CLASS = 'lafka-pickup-address-toggle';
+	const doc = window.document;
+	let wantsAddress = false;
+	const TOGGLE_CLASS = 'lafka-pickup-address-toggle';
 
 	function config() {
 		return window.lafkaPickupCheckout || null;
@@ -28,11 +28,11 @@
 	function chosenShippingMethods() {
 		// A chosen radio per package, or the hidden input WooCommerce prints
 		// when a package has a single rate.
-		var out = [];
-		var inputs = doc.querySelectorAll(
+		const out = [];
+		const inputs = doc.querySelectorAll(
 			'input[name^="shipping_method["]:checked, input[type="hidden"][name^="shipping_method["]'
 		);
-		for ( var i = 0; i < inputs.length; i++ ) {
+		for ( let i = 0; i < inputs.length; i++ ) {
 			out.push( inputs[ i ].value );
 		}
 		return out;
@@ -45,11 +45,11 @@
 		if ( 'delivery' === cfg.orderType ) {
 			return false;
 		}
-		var chosen = chosenShippingMethods();
+		const chosen = chosenShippingMethods();
 		if ( ! chosen.length ) {
 			return false;
 		}
-		for ( var i = 0; i < chosen.length; i++ ) {
+		for ( let i = 0; i < chosen.length; i++ ) {
 			if ( -1 === ( cfg.pickupMethods || [] ).indexOf( methodId( chosen[ i ] ) ) ) {
 				return false;
 			}
@@ -62,7 +62,7 @@
 		if ( ! doc.querySelector( 'input[name="payment_method"]' ) ) {
 			return false;
 		}
-		var checked = doc.querySelector( 'input[name="payment_method"]:checked' );
+		const checked = doc.querySelector( 'input[name="payment_method"]:checked' );
 		if ( ! checked ) {
 			return true;
 		}
@@ -75,7 +75,7 @@
 		} else {
 			row.classList.remove( 'validate-required', 'woocommerce-invalid', 'woocommerce-invalid-required-field' );
 		}
-		var label = row.querySelector( 'label' );
+		const label = row.querySelector( 'label' );
 		if ( ! label ) {
 			return;
 		}
@@ -83,12 +83,12 @@
 		// render, and address-i18n.js on country changes): <abbr class=
 		// "required"> (older), <span class="required" aria-hidden="true">
 		// (WC 9+), and <span class="optional">. Exactly one survives.
-		var marks = label.querySelectorAll( '.required, .optional' );
-		for ( var i = 0; i < marks.length; i++ ) {
+		const marks = label.querySelectorAll( '.required, .optional' );
+		for ( let i = 0; i < marks.length; i++ ) {
 			marks[ i ].parentNode.removeChild( marks[ i ] );
 		}
 		label.classList.toggle( 'required_field', required );
-		var mark = doc.createElement( 'span' );
+		const mark = doc.createElement( 'span' );
 		if ( required ) {
 			mark.className = 'required';
 			mark.setAttribute( 'aria-hidden', 'true' );
@@ -101,9 +101,9 @@
 	}
 
 	function rows( cfg ) {
-		var out = [];
+		const out = [];
 		( cfg.fields || [] ).forEach( function ( field ) {
-			var row = doc.getElementById( field.id + '_field' );
+			const row = doc.getElementById( field.id + '_field' );
 			if ( row ) {
 				out.push( { row: row, required: !! field.required } );
 			}
@@ -112,7 +112,7 @@
 	}
 
 	function syncToggle( show, list, cfg ) {
-		var existing = doc.querySelector( '.' + TOGGLE_CLASS );
+		const existing = doc.querySelector( '.' + TOGGLE_CLASS );
 		// No "Want delivery?" when this order cannot be delivered (e.g. under the
 		// delivery minimum): the address would never bring a delivery rate.
 		if ( ! show || false === cfg.addressToggle ) {
@@ -124,9 +124,9 @@
 		if ( existing || ! list.length ) {
 			return;
 		}
-		var wrap = doc.createElement( 'p' );
+		const wrap = doc.createElement( 'p' );
 		wrap.className = 'form-row form-row-wide ' + TOGGLE_CLASS;
-		var button = doc.createElement( 'button' );
+		const button = doc.createElement( 'button' );
 		button.type = 'button';
 		button.className = TOGGLE_CLASS + '__button';
 		button.textContent = ( cfg.i18n && cfg.i18n.addAddress ) || 'Want delivery? Add your address';
@@ -135,13 +135,13 @@
 	}
 
 	function update() {
-		var cfg = config();
+		const cfg = config();
 		if ( ! cfg || ! cfg.enabled ) {
 			return;
 		}
-		var slim = isPickup( cfg ) && ! gatewayNeedsAddress( cfg );
-		var hide = slim && ! wantsAddress;
-		var list = rows( cfg );
+		const slim = isPickup( cfg ) && ! gatewayNeedsAddress( cfg );
+		const hide = slim && ! wantsAddress;
+		const list = rows( cfg );
 
 		list.forEach( function ( item ) {
 			item.row.style.display = hide ? 'none' : '';
@@ -151,14 +151,14 @@
 	}
 
 	doc.addEventListener( 'click', function ( event ) {
-		var target = event.target;
+		const target = event.target;
 		if ( ! target || ! target.closest || ! target.closest( '.' + TOGGLE_CLASS + '__button' ) ) {
 			return;
 		}
 		event.preventDefault();
 		wantsAddress = true;
 		update();
-		var street = doc.getElementById( 'billing_address_1' );
+		const street = doc.getElementById( 'billing_address_1' );
 		if ( street && street.focus ) {
 			street.focus();
 		}
@@ -169,8 +169,8 @@
 	// keydown. Browser autofill, paste-and-tap and password managers fire
 	// change/input without keydown, so the street + postcode arrived but the
 	// delivery rate never appeared. Ask for a refresh on any address change.
-	var ADDRESS_FIELD = /^(billing|shipping)_(address_1|address_2|city|postcode|state|country)$/;
-	var refreshTimer = null;
+	const ADDRESS_FIELD = /^(billing|shipping)_(address_1|address_2|city|postcode|state|country)$/;
+	let refreshTimer = null;
 
 	function requestTotalsRefresh() {
 		if ( ! window.jQuery ) {
@@ -189,19 +189,19 @@
 	// "Want delivery?" means delivery: once a delivery rate shows up for the
 	// address the customer revealed, choose it for them (once — they can still
 	// switch back to pickup).
-	var autoChoseDelivery = false;
+	let autoChoseDelivery = false;
 	function chooseDeliveryIfAsked( cfg ) {
 		if ( ! wantsAddress || autoChoseDelivery || ! isPickup( cfg ) || 'pickup' === cfg.orderType ) {
 			return;
 		}
-		var radios = doc.querySelectorAll( 'input[type="radio"][name^="shipping_method["]' );
-		for ( var i = 0; i < radios.length; i++ ) {
+		const radios = doc.querySelectorAll( 'input[type="radio"][name^="shipping_method["]' );
+		for ( let i = 0; i < radios.length; i++ ) {
 			if ( -1 !== ( cfg.pickupMethods || [] ).indexOf( methodId( radios[ i ].value ) ) ) {
 				continue;
 			}
-			var target = radios[ i ];
-			var group = radioGroup( target );
-			for ( var j = 0; j < group.length; j++ ) {
+			const target = radios[ i ];
+			const group = radioGroup( target );
+			for ( let j = 0; j < group.length; j++ ) {
 				group[ j ].checked = group[ j ] === target;
 				if ( group[ j ] === target ) {
 					group[ j ].setAttribute( 'checked', 'checked' );
@@ -217,7 +217,7 @@
 	}
 
 	doc.addEventListener( 'change', function ( event ) {
-		var name = ( event.target && event.target.name ) || '';
+		const name = ( event.target && event.target.name ) || '';
 		if ( 0 === name.indexOf( 'shipping_method[' ) || 'payment_method' === name ) {
 			update();
 		} else if ( ADDRESS_FIELD.test( name ) ) {
@@ -227,7 +227,7 @@
 
 	function afterCheckoutRefresh() {
 		update();
-		var cfg = config();
+		const cfg = config();
 		if ( cfg && cfg.enabled ) {
 			chooseDeliveryIfAsked( cfg );
 		}

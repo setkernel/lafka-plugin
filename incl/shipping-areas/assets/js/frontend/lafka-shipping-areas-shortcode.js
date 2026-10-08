@@ -4,10 +4,10 @@ function lafka_handle_areas_shortcode() {
 		document.getElementById(lafka_shipping_areas_shortcode_php_variables.shortcode_id + '_map'),
 		{ center: new google.maps.LatLng('0', '0'), zoom: 2 },
 	);
-	let a = [];
+	let a;
 	try {
 		a = JSON.parse(lafka_shipping_areas_shortcode_php_variables.areas);
-	} catch (a) {
+	} catch {
 		return !1;
 	}
 	const t = new google.maps.LatLngBounds();
@@ -52,17 +52,17 @@ function lafka_add_area_label(a, e, o) {
 		});
 }
 function lafka_get_polygon_label_coordinates(a, e) {
-	let o = [],
+	const o = [],
 		r = [];
 	(a.forEach((a) => {
 		(o.push(a.lng()), r.push(a.lat()));
 	}),
 		r.sort(),
 		o.sort());
-	var t = r[0],
-		a = r[r.length - 1],
+	const t = r[0],
+		maxLat = r[r.length - 1],
 		s = o[0],
-		_ = t + (a - t) / 2,
+		_ = t + (maxLat - t) / 2,
 		l = s + (o[r.length - 1] - s) / 2;
 	let n = _,
 		i = l;
@@ -103,7 +103,7 @@ async function lafka_geocode_address(a) {
 		await new google.maps.Geocoder()
 			.geocode({ address: a })
 			.then(({ results: a }) => {
-				((o = a[0].hasOwnProperty('partial_match') && a[0].partial_match),
+				((o = Object.prototype.hasOwnProperty.call(a[0], 'partial_match') && a[0].partial_match),
 					(e = a[0].geometry.location));
 			})
 			.catch((a) => {

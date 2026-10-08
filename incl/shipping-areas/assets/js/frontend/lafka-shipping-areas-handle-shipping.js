@@ -1,7 +1,7 @@
 !(function (_) {
 	'use strict';
-	(_(document).ajaxStart(function (e) {
-		var o;
+	(_(document).ajaxStart(function () {
+		let o;
 		((o = { message: null, overlayCSS: { background: '#fff', opacity: 0.6 } }),
 			_(document.body).find('#lafka_pick_delivery_address_field').block(o),
 			_(document.body).find('.lafka-change-branch').block(o));
@@ -19,11 +19,13 @@
 		(_(document.body).find('h3.lafka-address-marked').hide(),
 			_(document.body).find('h3.lafka-address-not-found').show());
 		const n = _(document.body).find('#shipping_method');
-		var o = n.find('li').find('input[value*="lafka_shipping_areas_method"]'),
+		const o = n.find('li').find('input[value*="lafka_shipping_areas_method"]'),
 			a = _(document.body).find('#lafka-pick-delivery-address-checkout-map');
 		const t = _(document.body).find('#lafka_picked_delivery_geocoded');
 		let d = '',
-			i = '';
+			i = '',
+			s,
+			c;
 		if (
 			(t.val() && 'undefined' !== t.val()
 				? ((s = JSON.parse(t.val())), (d = new google.maps.LatLng(s.lat, s.lng)), t.val(''))
@@ -32,7 +34,7 @@
 							? (function (e) {
 									let o = '';
 									{
-										var a;
+										let a;
 										void 0 !== e.state &&
 											e.state &&
 											('undefined' != typeof wc_country_select_params
@@ -58,7 +60,7 @@
 							: ''),
 			void 0 !== e.fragments.delivery_address)
 		) {
-			var s = e.fragments.delivery_address;
+			s = e.fragments.delivery_address;
 			const r = _(document).find('.lafka-change-branch-full-address');
 			if (r.length) {
 				let e = '';
@@ -75,7 +77,7 @@
 					s.city && l.push(s.city),
 					e && l.push(e),
 					s.country_label && l.push(s.country_label));
-				var c = l.join(', ');
+				c = l.join(', ');
 				r.html(c);
 			}
 		}
@@ -94,10 +96,10 @@
 						const i = [];
 						for (const l of o) {
 							const p = _(l);
-							var s = p.closest('li'),
-								c = p.val().substring(p.val().indexOf(':') + 1),
-								r = lafka_shipping_properties['shipping_area_instance_' + c],
-								r =
+							const s = p.closest('li');
+							let c = p.val().substring(p.val().indexOf(':') + 1),
+								r = lafka_shipping_properties['shipping_area_instance_' + c];
+							r =
 									(void 0 !== r &&
 										a &&
 										!(function (e, o) {
@@ -131,12 +133,13 @@
 				: d.length && f(n, i);
 			return s;
 		})(o, n, i, d, a).then((e) => {
+			let i, a;
 			((a = n),
 				(i = e),
 				a.find('li').each(function () {
 					if (!p(_(this), i)) {
 						const n = _(this).find('input');
-						var a = n.val().substring(n.val().indexOf(':') + 1),
+						const a = n.val().substring(n.val().indexOf(':') + 1),
 							t = lafka_shipping_properties['shipping_area_instance_' + a],
 							d = lafka_shipping_properties['radius_area_instance_' + a];
 						let e = 0,
@@ -151,8 +154,7 @@
 					}
 				}),
 				(e = i));
-			var i,
-				a = (function (e, a) {
+			a = (function (e, a) {
 					if (lafka_lowest_cost_shipping) {
 						let o = Number.MAX_SAFE_INTEGER;
 						(e.find('li').each(function () {
@@ -211,8 +213,8 @@
 				(document.getElementById('lafka_picked_delivery_geocoded').value = ''),
 				void _(document.body).find('#lafka_pick_delivery_address_field').addClass('hidden')
 			);
-		let a, t;
-		t = null === e ? ((a = new google.maps.LatLng('50.8550625', '4.3053505')), 1) : ((a = e), 15);
+		let a;
+		const t = null === e ? ((a = new google.maps.LatLng('50.8550625', '4.3053505')), 1) : ((a = e), 15);
 		const d = new google.maps.Map(
 			document.getElementById('lafka-pick-delivery-address-checkout-map'),
 			{ center: a, zoom: t },
@@ -232,7 +234,7 @@
 			await new google.maps.Geocoder()
 				.geocode({ address: t })
 				.then(({ results: e }) => {
-					var o, a;
+					let o, a;
 					((o = t),
 						(a = e),
 						lafka_debug_mode &&
@@ -243,7 +245,7 @@
 									JSON.stringify(a) +
 									'</div>',
 							),
-						(n = e[0].hasOwnProperty('geometry') && 'APPROXIMATE' === e[0].geometry.location_type),
+						(n = Object.prototype.hasOwnProperty.call(e[0], 'geometry') && 'APPROXIMATE' === e[0].geometry.location_type),
 						(d = e[0].geometry.location));
 				})
 				.catch((e) => {

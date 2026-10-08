@@ -6,14 +6,14 @@
 	 */
 	$.fn.lafka_wcs_variation_swatches_form = function () {
 		return this.each( function() {
-			var $form = $( this ),
-				selected = [];
+			const $form = $( this );
+			let selected = [];
 
 			$form
 				.addClass( 'swatches-support' )
 				.on( 'click', '.swatch', function ( e ) {
 					e.preventDefault();
-					var $el = $( this ),
+					const $el = $( this ),
 						$select = $el.closest( '.value' ).find( 'select' ),
 						attribute_name = $select.data( 'attribute_name' ) || $select.attr( 'name' ),
 						value = $el.data( 'value' );

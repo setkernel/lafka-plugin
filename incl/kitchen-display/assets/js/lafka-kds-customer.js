@@ -1,19 +1,19 @@
 (function () {
 	'use strict';
 
-	var config = window.LAFKA_KDS_CUSTOMER;
+	const config = window.LAFKA_KDS_CUSTOMER;
 	if (!config) return;
 
-	var steps = ['processing', 'accepted', 'preparing', 'ready', 'completed'];
-	var pollTimer = null;
-	var serverTimeOffset = 0; // difference: serverTime - clientTime (in seconds)
-	var lastKnownStatus = null; // track for status-change animation
+	const steps = ['processing', 'accepted', 'preparing', 'ready', 'completed'];
+	let pollTimer = null;
+	let serverTimeOffset = 0; // difference: serverTime - clientTime (in seconds)
+	let lastKnownStatus = null; // track for status-change animation
 
 	/**
 	 * Return the user-facing label for a step, order-type aware for "ready".
 	 */
 	function getStepLabel(step) {
-		var isPickup = (config.orderType === 'pickup');
+		const isPickup = (config.orderType === 'pickup');
 		switch (step) {
 			case 'processing': return config.i18n.received;
 			case 'accepted':   return config.i18n.accepted;
@@ -32,10 +32,10 @@
 
 		// Handle rejected status — replace progress bar with message, stop polling
 		if (status === 'rejected') {
-			var container = document.getElementById('lafka-kds-progress');
-			if (container) {
-				container.className = 'lafka-kds-progress lafka-kds-rejected';
-				container.innerHTML = '<p class="lafka-kds-rejected-msg">' + escHtml(config.i18n.rejected) + '</p>';
+			const rejectedBar = document.getElementById('lafka-kds-progress');
+			if (rejectedBar) {
+				rejectedBar.className = 'lafka-kds-progress lafka-kds-rejected';
+				rejectedBar.innerHTML = '<p class="lafka-kds-rejected-msg">' + escHtml(config.i18n.rejected) + '</p>';
 			}
 			if (pollTimer) {
 				clearInterval(pollTimer);
@@ -44,21 +44,21 @@
 			return;
 		}
 
-		var currentIdx = steps.indexOf(status);
+		const currentIdx = steps.indexOf(status);
 		if (currentIdx === -1) return;
 
-		container = document.getElementById('lafka-kds-progress');
+		const container = document.getElementById('lafka-kds-progress');
 		if (!container) return;
 
 		// Detect status change for animation
-		var statusChanged = (lastKnownStatus !== null && lastKnownStatus !== status);
+		const statusChanged = (lastKnownStatus !== null && lastKnownStatus !== status);
 		lastKnownStatus = status;
 
 		container.setAttribute('data-status', status);
 
 		// Update step classes and labels
 		steps.forEach(function (step, idx) {
-			var stepEl = container.querySelector('[data-step="' + step + '"]');
+			const stepEl = container.querySelector('[data-step="' + step + '"]');
 			if (!stepEl) return;
 
 			stepEl.className = 'lafka-kds-step';
@@ -76,14 +76,14 @@
 			}
 
 			// Refresh label (pickup vs delivery awareness)
-			var labelEl = stepEl.querySelector('.lafka-kds-label');
+			const labelEl = stepEl.querySelector('.lafka-kds-label');
 			if (labelEl) {
 				labelEl.textContent = getStepLabel(step);
 			}
 		});
 
 		// Update ETA
-		var etaContainer = document.getElementById('lafka-kds-eta');
+		let etaContainer = document.getElementById('lafka-kds-eta');
 		if (eta && (status === 'accepted' || status === 'preparing')) {
 			if (!etaContainer) {
 				etaContainer = document.createElement('div');
@@ -107,10 +107,10 @@
 	}
 
 	function updateEtaCountdown(eta, serverTime) {
-		var valueEl = document.getElementById('lafka-kds-eta-value');
+		const valueEl = document.getElementById('lafka-kds-eta-value');
 		if (!valueEl) return;
 
-		var remaining = eta - serverTime;
+		const remaining = eta - serverTime;
 		if (remaining <= 0) {
 			valueEl.textContent = config.i18n.delayed;
 			valueEl.classList.add('lafka-kds-eta-overdue');
@@ -118,19 +118,19 @@
 		}
 
 		valueEl.classList.remove('lafka-kds-eta-overdue');
-		var m = Math.floor(remaining / 60);
-		var s = remaining % 60;
+		const m = Math.floor(remaining / 60);
+		const s = remaining % 60;
 		valueEl.textContent = m + ':' + (s < 10 ? '0' : '') + s;
 	}
 
 	function escHtml(str) {
-		var div = document.createElement('div');
+		const div = document.createElement('div');
 		div.appendChild(document.createTextNode(str || ''));
 		return div.innerHTML;
 	}
 
 	function poll() {
-		var formData = new FormData();
+		const formData = new FormData();
 		formData.append('action', 'lafka_kds_customer_status');
 		formData.append('nonce', config.nonce);
 		formData.append('order_id', config.orderId);
@@ -154,23 +154,23 @@
 
 	function initEtaCountdownTick() {
 		setInterval(function () {
-			var etaEl = document.getElementById('lafka-kds-eta');
+			const etaEl = document.getElementById('lafka-kds-eta');
 			if (!etaEl) return;
-			var eta = parseInt(etaEl.getAttribute('data-eta'), 10);
+			const eta = parseInt(etaEl.getAttribute('data-eta'), 10);
 			if (!eta) return;
 			// Use server-client time offset for accurate countdown against server timestamps
-			var now = Math.floor(Date.now() / 1000) + serverTimeOffset;
+			const now = Math.floor(Date.now() / 1000) + serverTimeOffset;
 			updateEtaCountdown(eta, now);
 		}, 1000);
 	}
 
 	function init() {
 		// Initial ETA display
-		var etaEl = document.getElementById('lafka-kds-eta');
+		const etaEl = document.getElementById('lafka-kds-eta');
 		if (etaEl) {
-			var eta = parseInt(etaEl.getAttribute('data-eta'), 10);
+			const eta = parseInt(etaEl.getAttribute('data-eta'), 10);
 			if (eta) {
-				var now = Math.floor(Date.now() / 1000);
+				const now = Math.floor(Date.now() / 1000);
 				updateEtaCountdown(eta, now);
 			}
 		}

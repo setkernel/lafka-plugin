@@ -20,7 +20,7 @@
 (function () {
 	'use strict';
 
-	var dl = (window.dataLayer = window.dataLayer || []);
+	const dl = (window.dataLayer = window.dataLayer || []);
 	function push(obj) { dl.push(obj); }
 
 	function closest(el, selector) {
@@ -33,7 +33,7 @@
 
 	// ── order_channel_click — direct vs UberEats/Skip/DoorDash/phone ──────────
 	document.addEventListener('click', function (e) {
-		var el = closest(e.target, '[data-lafka-order-channel]');
+		const el = closest(e.target, '[data-lafka-order-channel]');
 		if (!el) { return; }
 		push({
 			event: 'order_channel_click',
@@ -44,7 +44,7 @@
 
 	// ── select_fulfilment — delivery vs pickup ────────────────────────────────
 	document.addEventListener('click', function (e) {
-		var el = closest(e.target, '[data-lafka-fulfilment]');
+		const el = closest(e.target, '[data-lafka-fulfilment]');
 		if (!el) { return; }
 		push({
 			event: 'select_fulfilment',
@@ -55,11 +55,11 @@
 
 	// ── select_addon — addons-engine option changes ───────────────────────────
 	document.addEventListener('change', function (e) {
-		var input = e.target;
+		const input = e.target;
 		if (!input || !input.closest) { return; }
-		var addon = input.closest('.product-addon');
+		const addon = input.closest('.product-addon');
 		if (!addon) { return; }
-		var price = input.getAttribute('data-price') || input.getAttribute('data-raw-price') || '';
+		const price = input.getAttribute('data-price') || input.getAttribute('data-raw-price') || '';
 		push({
 			event: 'select_addon',
 			product_id: addon.getAttribute('data-product-id') || '',
@@ -71,9 +71,9 @@
 
 	// ── store_closed_view — one-shot when the closed card scrolls into view ───
 	function watchStoreClosed() {
-		var cards = document.querySelectorAll('.lafka-store-closed-card');
+		const cards = document.querySelectorAll('.lafka-store-closed-card');
 		if (!cards.length || typeof IntersectionObserver !== 'function') { return; }
-		var io = new IntersectionObserver(function (entries) {
+		const io = new IntersectionObserver(function (entries) {
 			entries.forEach(function (entry) {
 				if (!entry.isIntersecting) { return; }
 				push({

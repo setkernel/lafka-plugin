@@ -26,7 +26,7 @@
 	}
 
 	// Funnel step from ecommerce events → a single ordered tag.
-	var FUNNEL = {
+	const FUNNEL = {
 		view_item_list: 'menu',
 		view_item: 'pdp',
 		add_to_cart: 'add_to_cart',
@@ -47,13 +47,13 @@
 		}
 	}
 
-	var dl = (window.dataLayer = window.dataLayer || []);
+	const dl = (window.dataLayer = window.dataLayer || []);
 	// Replay anything already pushed (page_context emits at wp_head pri 3).
-	for (var i = 0; i < dl.length; i++) { handleEvent(dl[i]); }
+	for (let i = 0; i < dl.length; i++) { handleEvent(dl[i]); }
 	// Intercept future pushes without breaking GTM (which also reads dataLayer).
-	var origPush = dl.push.bind(dl);
+	const origPush = dl.push.bind(dl);
 	dl.push = function () {
-		for (var j = 0; j < arguments.length; j++) { handleEvent(arguments[j]); }
+		for (let j = 0; j < arguments.length; j++) { handleEvent(arguments[j]); }
 		return origPush.apply(null, arguments);
 	};
 })();

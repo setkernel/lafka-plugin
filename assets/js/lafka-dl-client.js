@@ -61,15 +61,15 @@
 	// select_item — product link clicks anywhere in the page.
 	// ------------------------------------------------------------------
 	document.addEventListener('click', function (ev) {
-		var link = ev.target && ev.target.closest ? ev.target.closest('a[data-lafka-item-id]') : null;
+		const link = ev.target && ev.target.closest ? ev.target.closest('a[data-lafka-item-id]') : null;
 		if (!link) {
 			return;
 		}
-		var itemId = link.getAttribute('data-lafka-item-id') || '';
-		var itemName = link.getAttribute('data-lafka-item-name') || '';
-		var itemCategory = link.getAttribute('data-lafka-item-category') || '';
-		var listName = link.getAttribute('data-lafka-list-name') || 'Unknown list';
-		var price = parseFloat(link.getAttribute('data-lafka-item-price') || '0') || 0;
+		const itemId = link.getAttribute('data-lafka-item-id') || '';
+		const itemName = link.getAttribute('data-lafka-item-name') || '';
+		const itemCategory = link.getAttribute('data-lafka-item-category') || '';
+		const listName = link.getAttribute('data-lafka-list-name') || 'Unknown list';
+		const price = parseFloat(link.getAttribute('data-lafka-item-price') || '0') || 0;
 		push('select_item', {
 			item_list_name: listName,
 			items: [{
@@ -86,13 +86,13 @@
 	// search — the menu search text field ([data-lafka-menu-search-input]),
 	// debounced. Delegated so it works whenever the field is rendered.
 	// ------------------------------------------------------------------
-	var searchTimer = null;
+	let searchTimer = null;
 	document.addEventListener('input', function (ev) {
-		var input = ev.target && ev.target.closest ? ev.target.closest('[data-lafka-menu-search-input]') : null;
+		const input = ev.target && ev.target.closest ? ev.target.closest('[data-lafka-menu-search-input]') : null;
 		if (!input) {
 			return;
 		}
-		var term = (input.value || '').trim();
+		const term = (input.value || '').trim();
 		if (searchTimer) {
 			clearTimeout(searchTimer);
 		}
@@ -114,12 +114,12 @@
 	 * else every rendered (not hidden) [data-lafka-item-id] on the page.
 	 */
 	function countSearchResults() {
-		var container = document.querySelector('[data-lafka-menu-results]');
-		var nodes = (container || document).querySelectorAll('[data-lafka-item-id]');
+		const container = document.querySelector('[data-lafka-menu-results]');
+		const nodes = (container || document).querySelectorAll('[data-lafka-item-id]');
 		if (container) {
 			return nodes.length;
 		}
-		var count = 0;
+		let count = 0;
 		nodes.forEach(function (el) {
 			if (!el.closest('[hidden]')) {
 				count++;
@@ -132,13 +132,13 @@
 	// add_shipping_info / add_payment_info — checkout radio changes.
 	// ------------------------------------------------------------------
 	document.addEventListener('change', function (ev) {
-		var target = ev.target;
+		const target = ev.target;
 		if (!target || !target.name) {
 			return;
 		}
 		// Shipping method radio
 		if (/^shipping_method/.test(target.name)) {
-			var tier = (target.value || '').toString();
+			const tier = (target.value || '').toString();
 			push('add_shipping_info', withCheckoutTotals({
 				shipping_tier: tier,
 				items: collectCheckoutItemsFromDom()
@@ -147,7 +147,7 @@
 		}
 		// Payment method radio
 		if (target.name === 'payment_method') {
-			var ptype = (target.value || '').toString();
+			const ptype = (target.value || '').toString();
 			push('add_payment_info', withCheckoutTotals({
 				payment_type: ptype,
 				items: collectCheckoutItemsFromDom()
@@ -159,7 +159,7 @@
 	 * Add GA4's currency + value from the server-localized checkout totals.
 	 */
 	function withCheckoutTotals(payload) {
-		var ctx = window.lafkaDlCheckout;
+		const ctx = window.lafkaDlCheckout;
 		if (ctx && ctx.currency) {
 			payload.currency = ctx.currency;
 			payload.value = Number(ctx.value) || 0;
@@ -173,8 +173,8 @@
 	 * checkout page (window.lafkaDlCheckout, same shape as begin_checkout).
 	 */
 	function collectCheckoutItemsFromDom() {
-		var nodes = document.querySelectorAll('[data-lafka-checkout-item]');
-		var out = [];
+		const nodes = document.querySelectorAll('[data-lafka-checkout-item]');
+		let out = [];
 		nodes.forEach(function (el) {
 			out.push({
 				item_id: el.getAttribute('data-lafka-item-id') || '',

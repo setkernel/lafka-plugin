@@ -43,9 +43,9 @@
 			return;
 		}
 		if (window.dataLayer) {
-			var payload = { event: event };
+			const payload = { event: event };
 			if (params && typeof params === 'object') {
-				for (var k in params) {
+				for (const k in params) {
 					if (Object.prototype.hasOwnProperty.call(params, k)) {
 						payload[k] = params[k];
 					}
@@ -71,7 +71,7 @@
 			return 'unknown';
 		}
 		// Order matters: more-specific containers checked first.
-		var ancestor = el.closest(
+		const ancestor = el.closest(
 			'.lafka-announce-bar,' +
 			'.announce_bar,' +
 			'.lafka-sticky-cart,' +
@@ -93,8 +93,8 @@
 		if (!ancestor) {
 			return 'unknown';
 		}
-		var cls = ancestor.className || '';
-		var tag = (ancestor.tagName || '').toLowerCase();
+		const cls = ancestor.className || '';
+		const tag = (ancestor.tagName || '').toLowerCase();
 
 		if (/(?:^|\s)(lafka-announce-bar|announce_bar)(?:\s|$)/.test(cls)) {
 			return 'announce_bar';
@@ -138,7 +138,7 @@
 		if (!href || typeof href !== 'string') {
 			return '';
 		}
-		var trimmed = href.trim();
+		const trimmed = href.trim();
 		if (!trimmed) {
 			return '';
 		}
@@ -151,7 +151,7 @@
 		// Use URL() constructor with current location as base so we get a
 		// canonical host either way. Wrapped in a guard so a malformed href
 		// (e.g. URL containing whitespace from a CMS paste) can't throw.
-		var parsed = null;
+		let parsed;
 		try {
 			parsed = new URL(trimmed, window.location.href);
 		} catch {
@@ -166,8 +166,8 @@
 		}
 		// Subdomain of current host: treat as internal.
 		// e.g. current=example.com  link=blog.example.com  → internal
-		var currentRoot = window.location.host.split(':')[0].split('.').slice(-2).join('.');
-		var linkRoot    = parsed.host.split(':')[0].split('.').slice(-2).join('.');
+		const currentRoot = window.location.host.split(':')[0].split('.').slice(-2).join('.');
+		const linkRoot    = parsed.host.split(':')[0].split('.').slice(-2).join('.');
 		if (currentRoot && linkRoot && currentRoot === linkRoot) {
 			return '';
 		}
@@ -181,7 +181,7 @@
 		if (!link) {
 			return false;
 		}
-		var href = (link.getAttribute('href') || '').toLowerCase();
+		const href = (link.getAttribute('href') || '').toLowerCase();
 		if (
 			href.indexOf('maps.google.') !== -1 ||
 			href.indexOf('maps.apple.') !== -1 ||
@@ -190,7 +190,7 @@
 		) {
 			return true;
 		}
-		var text = (link.textContent || '').toLowerCase();
+		const text = (link.textContent || '').toLowerCase();
 		if (/directions/.test(text)) {
 			return true;
 		}
@@ -204,15 +204,15 @@
 	//    via .closest() to find the matching element.
 	// ─────────────────────────────────────────────────────────────────────
 	document.addEventListener('click', function (ev) {
-		var target = ev.target;
+		const target = ev.target;
 		if (!target || !target.closest) {
 			return;
 		}
 
 		// --- 4a. phone_click ---------------------------------------------
-		var tel = target.closest('a[href^="tel:"]');
+		const tel = target.closest('a[href^="tel:"]');
 		if (tel) {
-			var rawTel = tel.getAttribute('href') || '';
+			const rawTel = tel.getAttribute('href') || '';
 			push('phone_click', {
 				phone_number: rawTel.replace(/^tel:/i, '').trim(),
 				source: resolveSource(tel)
@@ -224,9 +224,9 @@
 		}
 
 		// --- 4b. email_click ---------------------------------------------
-		var mail = target.closest('a[href^="mailto:"]');
+		const mail = target.closest('a[href^="mailto:"]');
 		if (mail) {
-			var rawMail = mail.getAttribute('href') || '';
+			const rawMail = mail.getAttribute('href') || '';
 			push('email_click', {
 				email: rawMail.replace(/^mailto:/i, '').split('?')[0].trim(),
 				source: resolveSource(mail)
@@ -235,13 +235,13 @@
 		}
 
 		// --- 4c. filter_apply (menu chip) --------------------------------
-		var chip = target.closest('.lafka-menu__chip, .lafka-menu__category-chip');
+		const chip = target.closest('.lafka-menu__chip, .lafka-menu__category-chip');
 		if (chip) {
-			var filterValue =
+			const filterValue =
 				chip.getAttribute('data-filter-value') ||
 				chip.getAttribute('data-value') ||
 				(chip.textContent || '').trim();
-			var filterType = chip.classList && chip.classList.contains('lafka-menu__category-chip')
+			const filterType = chip.classList && chip.classList.contains('lafka-menu__category-chip')
 				? 'category'
 				: 'dietary';
 			push('filter_apply', {
@@ -252,7 +252,7 @@
 		}
 
 		// --- 4d. get_directions_click ------------------------------------
-		var link = target.closest('a[href]');
+		const link = target.closest('a[href]');
 		if (link && isDirectionsLink(link)) {
 			push('get_directions_click', {
 				source: resolveSource(link)
@@ -262,7 +262,7 @@
 
 		// --- 4e. outbound_link -------------------------------------------
 		if (link) {
-			var outboundHost = detectOutboundHost(link.getAttribute('href') || '');
+			const outboundHost = detectOutboundHost(link.getAttribute('href') || '');
 			if (outboundHost) {
 				push('outbound_link', {
 					destination_host: outboundHost,
@@ -280,7 +280,7 @@
 	//    way down) and check the target inside.
 	// ─────────────────────────────────────────────────────────────────────
 	document.addEventListener('toggle', function (ev) {
-		var details = ev.target;
+		const details = ev.target;
 		if (!details || details.tagName !== 'DETAILS') {
 			return;
 		}
@@ -291,13 +291,13 @@
 			// Only emit on open transitions.
 			return;
 		}
-		var summary = details.querySelector('summary');
-		var question = summary ? (summary.textContent || '').trim() : '';
+		const summary = details.querySelector('summary');
+		const question = summary ? (summary.textContent || '').trim() : '';
 
 		// Position is 1-indexed among sibling faq items in the same parent.
-		var position = 1;
-		var sib = details.parentNode ? details.parentNode.children : [];
-		for (var i = 0; i < sib.length; i++) {
+		let position = 1;
+		const sib = details.parentNode ? details.parentNode.children : [];
+		for (let i = 0; i < sib.length; i++) {
 			if (sib[i] === details) {
 				position = i + 1;
 				break;
@@ -317,26 +317,26 @@
 	//    navigations get fresh milestones (Lafka is not currently SPA, but
 	//    cheap insurance).
 	// ─────────────────────────────────────────────────────────────────────
-	var scrollMilestones = [25, 50, 75, 100];
-	var firedMilestones = {};
-	var scrollScheduled = false;
+	const scrollMilestones = [25, 50, 75, 100];
+	let firedMilestones = {};
+	let scrollScheduled = false;
 
 	function evaluateScrollDepth() {
 		scrollScheduled = false;
-		var doc        = document.documentElement || document.body;
-		var winHeight  = window.innerHeight || doc.clientHeight || 0;
-		var pageHeight = Math.max(
+		const doc        = document.documentElement || document.body;
+		const winHeight  = window.innerHeight || doc.clientHeight || 0;
+		const pageHeight = Math.max(
 			doc.scrollHeight || 0,
 			doc.offsetHeight || 0,
 			document.body ? document.body.scrollHeight : 0,
 			document.body ? document.body.offsetHeight : 0
 		);
-		var scrolled = window.pageYOffset || doc.scrollTop || 0;
-		var denom    = Math.max(1, pageHeight - winHeight);
-		var pct      = Math.min(100, Math.round((scrolled / denom) * 100));
+		const scrolled = window.pageYOffset || doc.scrollTop || 0;
+		const denom    = Math.max(1, pageHeight - winHeight);
+		const pct      = Math.min(100, Math.round((scrolled / denom) * 100));
 
-		for (var i = 0; i < scrollMilestones.length; i++) {
-			var m = scrollMilestones[i];
+		for (let i = 0; i < scrollMilestones.length; i++) {
+			const m = scrollMilestones[i];
 			if (pct >= m && !firedMilestones[m]) {
 				firedMilestones[m] = true;
 				push('scroll_milestone', {
@@ -378,8 +378,8 @@
 	//    GA4 doesn't model close events; the open is the conversion signal.
 	// ─────────────────────────────────────────────────────────────────────
 	function snapshotCart() {
-		var dl    = window.lafkaDataLayer || null;
-		var snap  = (dl && dl.cartSnapshot) || {};
+		const dl    = window.lafkaDataLayer || null;
+		const snap  = (dl && dl.cartSnapshot) || {};
 		return {
 			items_count: parseInt(snap.items_count, 10) || 0,
 			value:       parseFloat(snap.value) || 0
@@ -387,17 +387,17 @@
 	}
 
 	function bindStickyCart() {
-		var sticky = document.querySelector('.lafka-sticky-cart');
+		const sticky = document.querySelector('.lafka-sticky-cart');
 		if (!sticky) {
 			return;
 		}
-		var fired = false;
+		let fired = false;
 		function fireOnce() {
 			if (fired) {
 				return;
 			}
 			fired = true;
-			var snap = snapshotCart();
+			const snap = snapshotCart();
 			push('sticky_cart_open', {
 				items_count: snap.items_count,
 				value:       snap.value
@@ -407,8 +407,8 @@
 		// Path a: IntersectionObserver (only when supported — older
 		// browsers silently skip this signal rather than throwing).
 		if (typeof window.IntersectionObserver === 'function') {
-			var io = new window.IntersectionObserver(function (entries) {
-				for (var i = 0; i < entries.length; i++) {
+			const io = new window.IntersectionObserver(function (entries) {
+				for (let i = 0; i < entries.length; i++) {
 					if (entries[i].isIntersecting) {
 						fireOnce();
 						io.disconnect();
@@ -421,7 +421,7 @@
 
 		// Path b: class-toggle MutationObserver.
 		if (typeof window.MutationObserver === 'function') {
-			var mo = new window.MutationObserver(function () {
+			const mo = new window.MutationObserver(function () {
 				if (sticky.classList && sticky.classList.contains('is-open')) {
 					fireOnce();
 				}

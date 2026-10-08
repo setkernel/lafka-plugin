@@ -31,11 +31,11 @@ function lafka_shipping_areas_define_events(a, n) {
 			}
 		}),
 		n.getPath().addListener('set_at', () => {
-			var a = n.getPath();
+			const a = n.getPath();
 			lafka_update_polygon_path_and_input(n, a);
 		}),
 		n.getPath().addListener('insert_at', () => {
-			var a = n.getPath();
+			const a = n.getPath();
 			lafka_update_polygon_path_and_input(n, a);
 		}));
 }

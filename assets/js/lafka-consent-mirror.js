@@ -11,8 +11,8 @@
  *     (tracking starts disabled in this mode).
  */
 (function (w) {
-	var dl = (w.dataLayer = w.dataLayer || []);
-	var push = dl.push;
+	const dl = (w.dataLayer = w.dataLayer || []);
+	const push = dl.push;
 
 	function mirror(state) {
 		try {
@@ -20,15 +20,15 @@
 		} catch {
 			// Cookies blocked: server-side events simply stay off.
 		}
-		var wc = w.wc_order_attribution;
+		const wc = w.wc_order_attribution;
 		if (wc && typeof wc.setOrderTracking === 'function') {
 			wc.setOrderTracking(!!state.analytics_storage);
 		}
 	}
 
 	dl.push = function () {
-		for (var i = 0; i < arguments.length; i++) {
-			var o = arguments[i];
+		for (let i = 0; i < arguments.length; i++) {
+			const o = arguments[i];
 			if (o && o.event === 'consent_update' && o.consent_state) {
 				mirror(o.consent_state);
 			}

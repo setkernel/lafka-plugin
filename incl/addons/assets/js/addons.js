@@ -3,8 +3,8 @@ jQuery( document ).ready( function($) {
 	$.fn.init_addon_totals = function() {
 
 		function isGroupedMixedProductType() {
-			var group  = $( '.product-type-grouped' ),
-				subs   = 0,
+			const group = $( '.product-type-grouped' );
+			let subs   = 0,
 				simple = 0;
 
 			if ( group.length ) {
@@ -28,8 +28,8 @@ jQuery( document ).ready( function($) {
 		}
 
 		function isGroupedSubsSelected() {
-			var group = $( '.product-type-grouped' ),
-				subs  = false;
+			const group = $( '.product-type-grouped' );
+			let subs = false;
 
 			if ( group.length ) {
 				group.find( '.group_table tr.product' ).each( function() {
@@ -45,14 +45,14 @@ jQuery( document ).ready( function($) {
 			return subs;
 		}
 
-		var $cart            = $( this ),
+		const $cart            = $( this ),
 			$variation_input = $cart.hasClass( 'variations_form' ) ? $cart.find( 'input[name="variation_id"], input.variation_id' ) : false;
 
 		// Clear all values on variable product when clear selection is clicked
 		$( this ).on( 'click', '.reset_variations', function() {
 
 			$.each( $cart.find( '.product-addon' ), function() {
-				var element = $( this ).find( '.addon' );
+				const element = $( this ).find( '.addon' );
 
 				if ( element.is( ':checkbox' ) || element.is( ':radio' ) ) {
 					element.prop( 'checked', false );
@@ -79,8 +79,8 @@ jQuery( document ).ready( function($) {
 
 			if ( $( this ).prop( 'maxlength' ) > 0 ) {
 
-				var value     = $( this ).val();
-				var remaining = $( this ).prop( 'maxlength' ) - value.length;
+				const value     = $( this ).val();
+				const remaining = $( this ).prop( 'maxlength' ) - value.length;
 
 				$( this ).next( '.chars_remaining' ).find( 'span' ).text( remaining );
 			}
@@ -88,9 +88,9 @@ jQuery( document ).ready( function($) {
 		});
 
 		$(this).on('change', '.product-addon.lafka-limit input', function () {
-			var $inputsContainer = $(this).parents('.product-addon');
-			var limit = parseInt($inputsContainer.data('addon-group-limit'));
-			var total_checked = $inputsContainer.find('input[name="' + $(this).prop('name') + '"]:checked').length;
+			const $inputsContainer = $(this).parents('.product-addon');
+			const limit = parseInt($inputsContainer.data('addon-group-limit'));
+			const total_checked = $inputsContainer.find('input[name="' + $(this).prop('name') + '"]:checked').length;
 
 			if (limit <= total_checked) {
 				$inputsContainer.find('input').each(function () {
@@ -122,7 +122,7 @@ jQuery( document ).ready( function($) {
 
 		$( this ).on( 'found_variation', function( event, variation ) {
 
-			var $variation_form = $( this ),
+			const $variation_form = $( this ),
 				$totals         = $variation_form.find( '#product-addons-total' );
 
 			if ( typeof( variation.display_price ) !== 'undefined' ) {
@@ -131,11 +131,11 @@ jQuery( document ).ready( function($) {
 
 			} else if ( $( variation.price_html ).find( '.amount:last' ).length ) {
 
-				var product_price = $( variation.price_html ).find( '.amount:last' ).text();
+				let product_price = $( variation.price_html ).find( '.amount:last' ).text();
 				product_price = product_price.replace( lafka_addons_params.currency_format_symbol, '' );
 				product_price = product_price.replace( lafka_addons_params.currency_format_thousand_sep, '' );
 				product_price = product_price.replace( lafka_addons_params.currency_format_decimal_sep, '.' );
-				product_price = product_price.replace(/[^0-9\.]/g, '' );
+				product_price = product_price.replace(/[^0-9.]/g, '' );
 				product_price = parseFloat( product_price );
 
 				$totals.data( 'price', product_price );
@@ -145,7 +145,7 @@ jQuery( document ).ready( function($) {
 		});
 
 		// Compatibility with Smart Coupons self declared gift amount purchase.
-		var custom_gift_card_amount = $( '#credit_called' );
+		const custom_gift_card_amount = $( '#credit_called' );
 
 		$( custom_gift_card_amount ).on( 'keyup', function() {
 			$cart.trigger( 'lafka-product-addons-update' );
@@ -155,17 +155,17 @@ jQuery( document ).ready( function($) {
 		// from firing on every keystroke/rapid interaction. 300ms delay batches rapid
 		// changes (typing in textarea addons, number spinner clicks, gift card amount)
 		// into a single update, reducing AJAX calls by 90%+.
-		var _lafkaAddonsUpdateTimer = null;
+		let _lafkaAddonsUpdateTimer = null;
 		$( this ).on( 'lafka-product-addons-update', function() {
 			clearTimeout( _lafkaAddonsUpdateTimer );
 			_lafkaAddonsUpdateTimer = setTimeout( function() {
-			var total         = 0,
+			const $totals      = $cart.find( '#product-addons-total' ),
+				is_variable  = $variation_input && $variation_input.length > 0,
+				product_id   = is_variable ? $variation_input.val() : $totals.data( 'product-id' ),
+				product_type = $totals.data( 'type' );
+			let total         = 0,
 				total_raw     = 0,
-				$totals       = $cart.find( '#product-addons-total' ),
-				is_variable   = $variation_input && $variation_input.length > 0,
-				product_id    = is_variable ? $variation_input.val() : $totals.data( 'product-id' ),
 				product_price = $totals.data( 'price' ),
-				product_type  = $totals.data( 'type' ),
 				qty           = $cart.find( '.quantity .qty' ).val();
 
 			// Compatibility with Smart Coupons self declared gift amount purchase.
@@ -174,13 +174,13 @@ jQuery( document ).ready( function($) {
 			}
 
 			$cart.find( '.addon' ).each( function() {
-				var $current_addon = $(this);
-				var addon_cost     = 0;
-				var addon_cost_raw = 0;
-				var raw_prices_data_json = $( this ).data( 'attribute-raw-prices' );
-				var prices_data_json = $( this ).data( 'attribute-prices' );
-				var attribute_custom_raw_price = null;
-				var attribute_custom_price = null;
+				const $current_addon = $(this);
+				let addon_cost     = 0;
+				let addon_cost_raw = 0;
+				const raw_prices_data_json = $( this ).data( 'attribute-raw-prices' );
+				const prices_data_json = $( this ).data( 'attribute-prices' );
+				let attribute_custom_raw_price = null;
+				let attribute_custom_price = null;
 
 				// Resolve attribute selections from BOTH WC's standard variation
 				// form (<table.variations select id="pa_size">) and the lafka
@@ -188,13 +188,13 @@ jQuery( document ).ready( function($) {
 				// Without this, the redesign's radio-only picker never reaches
 				// per-attribute addon pricing — addons silently bill at
 				// flat/medium price regardless of size.
-				var attribute_selections = {};
+				const attribute_selections = {};
 				$cart.find('table.variations select').each(function () {
-					var n = $(this).attr('id');
+					const n = $(this).attr('id');
 					if (n) attribute_selections[n] = $(this).find('option:selected').val();
 				});
 				$cart.find('.lafka-pdp-pickers input[type=radio]:checked').each(function () {
-					var n = $(this).attr('name') || '';
+					const n = $(this).attr('name') || '';
 					if (n.indexOf('attribute_') === 0) {
 						attribute_selections[n.substring('attribute_'.length)] = $(this).val();
 					}
@@ -204,7 +204,7 @@ jQuery( document ).ready( function($) {
 						attribute_custom_raw_price = raw_prices_data_json[attribute_name][selected_attribute_value];
 						attribute_custom_price = prices_data_json[attribute_name][selected_attribute_value];
 
-						var formatted_price = $current_addon.data(selected_attribute_value + '-formatted-price');
+						const formatted_price = $current_addon.data(selected_attribute_value + '-formatted-price');
 
 						// Replace the inner wc_price span inside the
 						// <span class="lafka-addon-price"> wrapper that the
@@ -295,13 +295,14 @@ jQuery( document ).ready( function($) {
 
 			if ( total !== 0 && qty > 0 ) {
 
-				var product_total_price,
+				let product_total_price,
+					formatted_sub_total,
 					subscription_details = false;
 
 				total     = parseFloat( total * qty );
 				total_raw = parseFloat( total_raw * qty );
 
-				var formatted_addon_total = accounting.formatMoney( total, {
+				let formatted_addon_total = accounting.formatMoney( total, {
 					symbol 		: lafka_addons_params.currency_format_symbol,
 					decimal 	: lafka_addons_params.currency_format_decimal_sep,
 					thousand	: lafka_addons_params.currency_format_thousand_sep,
@@ -313,7 +314,7 @@ jQuery( document ).ready( function($) {
 
 					product_total_price = parseFloat( product_price * qty );
 
-					var formatted_sub_total = accounting.formatMoney( product_total_price + total, {
+					formatted_sub_total = accounting.formatMoney( product_total_price + total, {
 						symbol 		: lafka_addons_params.currency_format_symbol,
 						decimal 	: lafka_addons_params.currency_format_decimal_sep,
 						thousand	: lafka_addons_params.currency_format_thousand_sep,
@@ -343,14 +344,14 @@ jQuery( document ).ready( function($) {
 					}
 				}
 
-				var html = '<dl class="product-addon-totals"><dt>' + lafka_addons_params.i18n_addon_total + '</dt><dd><strong><span class="amount">' + formatted_addon_total + '</span></strong></dd>';
+				let html = '<dl class="product-addon-totals"><dt>' + lafka_addons_params.i18n_addon_total + '</dt><dd><strong><span class="amount">' + formatted_addon_total + '</span></strong></dd>';
 
 				if ( 'combo' !== product_type && formatted_sub_total && '1' === String( $totals.data( 'show-sub-total' ) ) ) {
 
 					// To show our "price display suffix" we have to do some magic since the string can contain variables (excl/incl tax values)
 					// so we have to take our sub total and find out what the tax value is, which we can do via an ajax call
 					// if its a simple string, or no string at all, we can output the string without an extra call
-					var sub_total_string = typeof( $totals.data( 'i18n_sub_total' ) ) === 'undefined' ? lafka_addons_params.i18n_sub_total : $totals.data( 'i18n_sub_total' );
+					const sub_total_string = typeof( $totals.data( 'i18n_sub_total' ) ) === 'undefined' ? lafka_addons_params.i18n_sub_total : $totals.data( 'i18n_sub_total' );
 
 					// no sufix is present, so we can just output the total
 					if ( ! lafka_addons_params.price_display_suffix ) {
@@ -424,7 +425,7 @@ jQuery( document ).ready( function($) {
 	// redesign markers are present, then bind picker-radio change events
 	// so addon prices recompute on size/crust selection.
 	$(document.body).find('form.cart.variations_form').has('.lafka-pdp-pickers').each(function () {
-		var $form = $(this);
+		const $form = $(this);
 		$form.init_addon_totals();
 		$form.on('change', '.lafka-pdp-pickers input[type=radio]', function () {
 			$form.trigger('lafka-product-addons-update');
@@ -445,15 +446,15 @@ jQuery( document ).ready( function($) {
 		return;
 	}
 	document.addEventListener( 'click', function ( event ) {
-		var target = event.target;
-		var button = target && target.closest ? target.closest( '.lafka-addon-toggle' ) : null;
+		const target = event.target;
+		const button = target && target.closest ? target.closest( '.lafka-addon-toggle' ) : null;
 		if ( ! button ) {
 			return;
 		}
 		event.preventDefault();
-		var expanded = 'false' !== button.getAttribute( 'aria-expanded' );
+		const expanded = 'false' !== button.getAttribute( 'aria-expanded' );
 		button.setAttribute( 'aria-expanded', expanded ? 'false' : 'true' );
-		var group = button.closest( '.product-addon' );
+		const group = button.closest( '.product-addon' );
 		if ( group ) {
 			group.setAttribute( 'data-collapsed', expanded ? 'true' : 'false' );
 		}

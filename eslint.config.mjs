@@ -28,15 +28,11 @@ export default [
 			"no-unused-vars": "warn",
 			"no-undef": "error",
 			"eqeqeq": ["warn", "smart"],
-			"no-var": "off",
-			"prefer-const": "off",
-			"no-prototype-builtins": "off",
+			"no-var": "error",
+			"prefer-const": "error",
+			"no-prototype-builtins": "error",
 			// Allow user code to declare locals that shadow our wp_localize_script globals.
 			"no-redeclare": ["error", { "builtinGlobals": false }],
-			// Codebase pre-dates these modern rules — re-evaluate after a separate cleanup pass.
-			"no-useless-assignment": "off",
-			"no-useless-escape": "off",
-			"no-shadow-restricted-names": "off",
 		},
 	},
 	// Service worker file has its own global scope (NX1-08b order-notification worker).
@@ -53,8 +49,7 @@ export default [
 	},
 	// Shipping-areas / branch scripts: sources recovered by formatting the
 	// long-shipped minified builds (WP.org guideline 4). They read the
-	// wp_localize_script / inline-script globals below; the minifier's
-	// variable reuse trips a few stylistic rules.
+	// wp_localize_script / inline-script globals below.
 	{
 		files: ["incl/shipping-areas/assets/js/**/*.js"],
 		languageOptions: {
@@ -77,15 +72,10 @@ export default [
 				wc_country_select_params: "readonly",
 			},
 		},
-		rules: {
-			"no-redeclare": "off",
-			"no-unused-vars": "off",
-			"no-empty": "off",
-		},
 	},
-	// Node.js build scripts (ES modules).
+	// Node.js build scripts and this config (ES modules).
 	{
-		files: ["scripts/**/*.mjs"],
+		files: ["scripts/**/*.mjs", "eslint.config.mjs"],
 		languageOptions: {
 			sourceType: "module",
 			globals: {
@@ -97,7 +87,6 @@ export default [
 		ignores: [
 			"vendor/**",
 			"node_modules/**",
-			"eslint.config.mjs",
 			// Vendor JS libraries
 			"assets/js/flatpickr/**",
 			"assets/js/schedule/jquery.schedule.js",

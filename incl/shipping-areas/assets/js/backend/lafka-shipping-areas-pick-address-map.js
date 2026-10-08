@@ -24,7 +24,7 @@ function lafka_parse_saved_location( raw ) {
 	let value;
 	try {
 		value = JSON.parse( decodeURIComponent( raw ) );
-	} catch ( error ) {
+	} catch {
 		return null;
 	}
 	const lat = value ? parseFloat( value.lat ) : NaN;

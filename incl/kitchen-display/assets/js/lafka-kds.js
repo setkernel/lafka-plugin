@@ -1,37 +1,37 @@
 (function () {
 	'use strict';
 
-	var config = window.LAFKA_KDS;
+	const config = window.LAFKA_KDS;
 	if (!config) return;
 
-	var knownIds = new Set();
-	var firstLoad = true;
-	var audio = null;
-	var activeAlerts = []; // hold references to prevent GC
-	var soundReady = false;
+	let knownIds = new Set();
+	let firstLoad = true;
+	let audio = null;
+	const activeAlerts = []; // hold references to prevent GC
+	let soundReady = false;
 
-	var etaOrderId = null;
-	var etaSelectedMinutes = null;
-	var failCount = 0;
-	var AUTO_RELOAD_MS = 60 * 60 * 1000; // 1 hour
+	let etaOrderId = null;
+	let etaSelectedMinutes = null;
+	let failCount = 0;
+	const AUTO_RELOAD_MS = 60 * 60 * 1000; // 1 hour
 
-	var lastOrders = {};     // id → order data hash for diff-based rendering
+	let lastOrders = {};     // id → order data hash for diff-based rendering
 
 	// --- Helpers ---
 
 	function esc(str) {
 		if (!str) return '';
-		var div = document.createElement('div');
+		const div = document.createElement('div');
 		div.appendChild(document.createTextNode(str));
 		return div.innerHTML;
 	}
 
 	function formatElapsed(seconds) {
 		if (seconds < 0) seconds = 0;
-		var m = Math.floor(seconds / 60);
-		var s = seconds % 60;
+		let m = Math.floor(seconds / 60);
+		const s = seconds % 60;
 		if (m >= 60) {
-			var h = Math.floor(m / 60);
+			const h = Math.floor(m / 60);
 			m = m % 60;
 			return h + 'h ' + m + 'm';
 		}
@@ -40,19 +40,19 @@
 
 	function formatCountdown(seconds) {
 		if (seconds <= 0) return config.i18n.overdue;
-		var m = Math.floor(seconds / 60);
-		var s = seconds % 60;
+		const m = Math.floor(seconds / 60);
+		const s = seconds % 60;
 		return m + ':' + (s < 10 ? '0' : '') + s;
 	}
 
 	// --- Clock ---
 
 	function updateClock() {
-		var now = new Date();
-		var h = now.getHours();
-		var m = now.getMinutes();
-		var s = now.getSeconds();
-		var el = document.getElementById('kds-clock');
+		const now = new Date();
+		const h = now.getHours();
+		const m = now.getMinutes();
+		const s = now.getSeconds();
+		const el = document.getElementById('kds-clock');
 		if (el) {
 			el.textContent =
 				(h < 10 ? '0' : '') + h + ':' +
@@ -64,7 +64,7 @@
 	// --- Sound & Speech ---
 
 	function initSound() {
-		var overlay = document.getElementById('kds-sound-overlay');
+		const overlay = document.getElementById('kds-sound-overlay');
 
 		// If sound is disabled, hide overlay immediately
 		if (!config.soundEnabled) {
@@ -73,7 +73,7 @@
 		}
 
 		// Check if user has already enabled sounds (persisted in localStorage)
-		var soundsEnabled = localStorage.getItem('lafka_kds_sounds_enabled');
+		const soundsEnabled = localStorage.getItem('lafka_kds_sounds_enabled');
 		if (soundsEnabled === 'true') {
 			soundReady = true;
 			hideSoundOverlay();
@@ -117,7 +117,7 @@
 	}
 
 	function hideSoundOverlay() {
-		var overlay = document.getElementById('kds-sound-overlay');
+		const overlay = document.getElementById('kds-sound-overlay');
 		if (overlay) {
 			overlay.classList.add('kds-hidden');
 		}
@@ -133,13 +133,13 @@
 		}
 
 		// Play bell — hold reference until it finishes
-		var bell = new Audio(config.soundUrl);
+		const bell = new Audio(config.soundUrl);
 		bell.volume = 1;
 		activeAlerts.push(bell);
 
 		// Issue #13: Fix memory leak - properly clean up when audio ends
 		bell.addEventListener('ended', function() {
-			var idx = activeAlerts.indexOf(bell);
+			const idx = activeAlerts.indexOf(bell);
 			if (idx > -1) {
 				activeAlerts.splice(idx, 1);
 			}
@@ -148,7 +148,7 @@
 		// Also clean up on error
 		bell.addEventListener('error', function(err) {
 			console.error('KDS: Audio playback error:', err);
-			var idx = activeAlerts.indexOf(bell);
+			const idx = activeAlerts.indexOf(bell);
 			if (idx > -1) {
 				activeAlerts.splice(idx, 1);
 			}
@@ -172,7 +172,7 @@
 	function speakAnnouncement(text) {
 		if (!('speechSynthesis' in window) || !text) return;
 		// Queue instead of cancel — avoids cutting off previous announcement
-		var utterance = new SpeechSynthesisUtterance(text);
+		const utterance = new SpeechSynthesisUtterance(text);
 		utterance.volume = 1;
 		utterance.rate = 0.9;
 		utterance.pitch = 1.0;
@@ -180,7 +180,7 @@
 	}
 
 	function flashColumn(status) {
-		var header = document.querySelector('[data-status="' + status + '"] .kds-column-header');
+		const header = document.querySelector('[data-status="' + status + '"] .kds-column-header');
 		if (!header) return;
 		header.classList.remove('kds-flash');
 		void header.offsetWidth; // force reflow to restart animation
@@ -190,7 +190,7 @@
 	// --- Fullscreen ---
 
 	function initFullscreen() {
-		var btn = document.getElementById('kds-fullscreen');
+		const btn = document.getElementById('kds-fullscreen');
 		btn.addEventListener('click', function () {
 			if (!document.fullscreenElement) {
 				document.documentElement.requestFullscreen().catch(function () {});
@@ -203,7 +203,7 @@
 	// --- Print (Issue #35) ---
 
 	function initPrint() {
-		var btn = document.getElementById('kds-print');
+		const btn = document.getElementById('kds-print');
 		btn.addEventListener('click', function () {
 			window.print();
 		});
@@ -223,7 +223,7 @@
 	 * Get urgency CSS class based on elapsed time.
 	 */
 	function getUrgencyClass(elapsed) {
-		var mins = elapsed / 60;
+		const mins = elapsed / 60;
 		if (config.urgency && mins >= config.urgency.criticalMinutes) {
 			return 'kds-urgency-critical';
 		}
@@ -237,10 +237,10 @@
 	 * Group items by category for organized display.
 	 */
 	function groupItemsByCategory(items) {
-		var groups = {};
-		var order = [];
+		const groups = {};
+		const order = [];
 		items.forEach(function (item) {
-			var cat = item.category || config.i18n.uncategorized;
+			const cat = item.category || config.i18n.uncategorized;
 			if (!groups[cat]) {
 				groups[cat] = [];
 				order.push(cat);
@@ -251,7 +251,7 @@
 	}
 
 	function renderOrders(orders, serverTime) {
-		var columns = {
+		const columns = {
 			processing: [],
 			accepted: [],
 			preparing: [],
@@ -259,9 +259,9 @@
 			completed: []
 		};
 
-		var newOrderDetected = false;
-		var currentIds = new Set();
-		var currentOrders = {};
+		let newOrderDetected = false;
+		const currentIds = new Set();
+		const currentOrders = {};
 
 		orders.forEach(function (order) {
 			currentIds.add(order.id);
@@ -284,9 +284,9 @@
 		}
 
 		Object.keys(columns).forEach(function (status) {
-			var col = document.getElementById('col-' + status);
-			var countEl = document.getElementById('count-' + status);
-			var items = columns[status];
+			const col = document.getElementById('col-' + status);
+			const countEl = document.getElementById('count-' + status);
+			const items = columns[status];
 
 			countEl.textContent = items.length;
 
@@ -296,13 +296,13 @@
 			}
 
 			// Build set of expected order IDs in this column
-			var expectedIds = items.map(function (o) { return o.id; });
+			const expectedIds = items.map(function (o) { return o.id; });
 
 			// Remove cards that are no longer in this column
-			var existingCards = col.querySelectorAll('.kds-card');
-			var existingMap = {};
+			const existingCards = col.querySelectorAll('.kds-card');
+			const existingMap = {};
 			existingCards.forEach(function (card) {
-				var cardId = parseInt(card.getAttribute('data-order-id'), 10);
+				const cardId = parseInt(card.getAttribute('data-order-id'), 10);
 				if (expectedIds.indexOf(cardId) === -1) {
 					card.remove();
 				} else {
@@ -311,15 +311,15 @@
 			});
 
 			// Remove "no orders" placeholder if present
-			var placeholder = col.querySelector('.kds-no-orders');
+			const placeholder = col.querySelector('.kds-no-orders');
 			if (placeholder) placeholder.remove();
 
 			// Update or insert cards in order
-			var prevNode = null;
+			let prevNode = null;
 			items.forEach(function (order) {
-				var existing = existingMap[order.id];
-				var hash = orderHash(order);
-				var prevHash = lastOrders[order.id] ? orderHash(lastOrders[order.id]) : null;
+				const existing = existingMap[order.id];
+				const hash = orderHash(order);
+				const prevHash = lastOrders[order.id] ? orderHash(lastOrders[order.id]) : null;
 
 				if (existing && hash === prevHash) {
 					// Card unchanged — just update elapsed time & ETA in-place
@@ -327,9 +327,9 @@
 					prevNode = existing;
 				} else {
 					// Card is new or changed — render and insert/replace
-					var temp = document.createElement('div');
+					const temp = document.createElement('div');
 					temp.innerHTML = renderCard(order, serverTime);
-					var newCard = temp.firstChild;
+					const newCard = temp.firstChild;
 					bindCardActions(newCard);
 
 					if (existing) {
@@ -353,22 +353,22 @@
 	 * Update only the dynamic parts of a card (elapsed time, ETA, urgency) without re-rendering.
 	 */
 	function updateCardDynamic(card, order, serverTime) {
-		var elapsed = serverTime - order.date_created;
-		var elapsedEl = card.querySelector('.kds-elapsed');
+		const elapsed = serverTime - order.date_created;
+		const elapsedEl = card.querySelector('.kds-elapsed');
 		if (elapsedEl) {
 			elapsedEl.textContent = formatElapsed(elapsed) + ' ' + config.i18n.elapsed;
 		}
 
 		// Update urgency class
-		var urgencyClass = getUrgencyClass(elapsed);
+		const urgencyClass = getUrgencyClass(elapsed);
 		card.classList.remove('kds-urgency-warning', 'kds-urgency-critical');
 		if (urgencyClass && order.status !== 'completed') {
 			card.classList.add(urgencyClass);
 		}
 
-		var etaEl = card.querySelector('.kds-card-eta');
+		const etaEl = card.querySelector('.kds-card-eta');
 		if (etaEl && order.eta) {
-			var remaining = order.eta - serverTime;
+			const remaining = order.eta - serverTime;
 			etaEl.textContent = config.i18n.etaLabel + ': ' + formatCountdown(remaining);
 			if (remaining <= 0) {
 				etaEl.classList.add('kds-overdue');
@@ -384,15 +384,15 @@
 	function bindCardActions(card) {
 		card.querySelectorAll('[data-action="status"]').forEach(function (btn) {
 			btn.addEventListener('click', function () {
-				var orderId = parseInt(this.getAttribute('data-order-id'), 10);
-				var newStatus = this.getAttribute('data-new-status');
+				const orderId = parseInt(this.getAttribute('data-order-id'), 10);
+				const newStatus = this.getAttribute('data-new-status');
 				updateOrderStatus(orderId, newStatus);
 			});
 		});
 
 		card.querySelectorAll('[data-action="reject"]').forEach(function (btn) {
 			btn.addEventListener('click', function () {
-				var orderId = parseInt(this.getAttribute('data-order-id'), 10);
+				const orderId = parseInt(this.getAttribute('data-order-id'), 10);
 				if (confirm(config.i18n.rejectConfirm)) {
 					updateOrderStatus(orderId, 'rejected');
 				}
@@ -401,29 +401,29 @@
 
 		card.querySelectorAll('[data-action="undo"]').forEach(function (btn) {
 			btn.addEventListener('click', function () {
-				var orderId = parseInt(this.getAttribute('data-order-id'), 10);
-				var undoTo = this.getAttribute('data-undo-to');
+				const orderId = parseInt(this.getAttribute('data-order-id'), 10);
+				const undoTo = this.getAttribute('data-undo-to');
 				updateOrderStatus(orderId, undoTo);
 			});
 		});
 
 		card.querySelectorAll('[data-action="eta"]').forEach(function (btn) {
 			btn.addEventListener('click', function () {
-				var orderId = parseInt(this.getAttribute('data-order-id'), 10);
-				var orderType = this.getAttribute('data-order-type');
-				var orderNum = this.getAttribute('data-order-num');
+				const orderId = parseInt(this.getAttribute('data-order-id'), 10);
+				const orderType = this.getAttribute('data-order-type');
+				const orderNum = this.getAttribute('data-order-num');
 				openEtaModal(orderId, orderType, orderNum);
 			});
 		});
 	}
 
 	function renderCard(order, serverTime) {
-		var elapsed = serverTime - order.date_created;
-		var isPickup = order.order_type === 'pickup';
-		var typeBadgeClass = isPickup ? 'kds-badge-pickup' : 'kds-badge-delivery';
-		var typeLabel = isPickup ? config.i18n.pickup : config.i18n.delivery;
-		var payBadgeClass = order.is_paid_online ? 'kds-badge-paid' : 'kds-badge-cod';
-		var payLabel;
+		const elapsed = serverTime - order.date_created;
+		const isPickup = order.order_type === 'pickup';
+		const typeBadgeClass = isPickup ? 'kds-badge-pickup' : 'kds-badge-delivery';
+		const typeLabel = isPickup ? config.i18n.pickup : config.i18n.delivery;
+		const payBadgeClass = order.is_paid_online ? 'kds-badge-paid' : 'kds-badge-cod';
+		let payLabel;
 		if (order.is_paid_online) {
 			payLabel = config.i18n.paidOnline;
 		} else {
@@ -431,9 +431,9 @@
 		}
 
 		// Urgency class based on elapsed time
-		var urgencyClass = (order.status !== 'completed') ? getUrgencyClass(elapsed) : '';
+		const urgencyClass = (order.status !== 'completed') ? getUrgencyClass(elapsed) : '';
 
-		var html = '<div class="kds-card' + (urgencyClass ? ' ' + urgencyClass : '') + '" data-order-id="' + order.id + '">';
+		let html = '<div class="kds-card' + (urgencyClass ? ' ' + urgencyClass : '') + '" data-order-id="' + order.id + '">';
 
 		// Header
 		html += '<div class="kds-card-header">';
@@ -469,8 +469,8 @@
 		}
 
 		// Items grouped by category
-		var grouped = groupItemsByCategory(order.items);
-		var hasMultipleCategories = grouped.order.length > 1;
+		const grouped = groupItemsByCategory(order.items);
+		const hasMultipleCategories = grouped.order.length > 1;
 
 		html += '<div class="kds-items-container">';
 		grouped.order.forEach(function (cat) {
@@ -517,8 +517,8 @@
 
 		// ETA
 		if (order.eta && (order.status === 'accepted' || order.status === 'preparing')) {
-			var remaining = order.eta - serverTime;
-			var isOverdue = remaining <= 0;
+			const remaining = order.eta - serverTime;
+			const isOverdue = remaining <= 0;
 			html += '<div class="kds-card-eta' + (isOverdue ? ' kds-overdue' : '') + '">';
 			html += esc(config.i18n.etaLabel) + ': ' + formatCountdown(remaining);
 			html += '</div>';
@@ -527,7 +527,7 @@
 		// Actions (not for completed orders)
 		if (order.status !== 'completed') {
 			html += '<div class="kds-card-actions">';
-			var actionBtn = getActionButton(order);
+			const actionBtn = getActionButton(order);
 			if (actionBtn) {
 				html += '<button class="kds-btn kds-btn-action" data-action="status" data-order-id="' + order.id + '" data-new-status="' + actionBtn.status + '">' + esc(actionBtn.label) + '</button>';
 			}
@@ -537,8 +537,8 @@
 			html += '</div>';
 
 			// Secondary actions row: Undo + Reject
-			var undoBtn = getUndoButton(order);
-			var canReject = (order.status === 'processing' || order.status === 'accepted');
+			const undoBtn = getUndoButton(order);
+			const canReject = (order.status === 'processing' || order.status === 'accepted');
 			if (undoBtn || canReject) {
 				html += '<div class="kds-card-actions-secondary">';
 				if (undoBtn) {
@@ -586,7 +586,7 @@
 	// --- AJAX ---
 
 	function refreshNonce() {
-		var formData = new FormData();
+		const formData = new FormData();
 		formData.append('action', 'lafka_kds_refresh_nonce');
 		formData.append('kds_token', config.token);
 
@@ -607,7 +607,7 @@
 	}
 
 	function fetchOrders() {
-		var formData = new FormData();
+		const formData = new FormData();
 		formData.append('action', 'lafka_kds_get_orders');
 		formData.append('nonce', config.nonce);
 		formData.append('kds_token', config.token);
@@ -644,7 +644,7 @@
 	}
 
 	function setConnectionStatus(connected) {
-		var el = document.getElementById('kds-connection-lost');
+		const el = document.getElementById('kds-connection-lost');
 		if (!el) return;
 		if (connected) {
 			el.classList.add('kds-hidden');
@@ -655,13 +655,13 @@
 
 	function updateOrderStatus(orderId, newStatus) {
 		// Disable the button to prevent double-clicks
-		var btn = document.querySelector('[data-action="status"][data-order-id="' + orderId + '"]');
+		const btn = document.querySelector('[data-action="status"][data-order-id="' + orderId + '"]');
 		if (btn) {
 			btn.disabled = true;
 			btn.textContent = '...';
 		}
 
-		var formData = new FormData();
+		const formData = new FormData();
 		formData.append('action', 'lafka_kds_update_status');
 		formData.append('nonce', config.nonce);
 		formData.append('kds_token', config.token);
@@ -696,7 +696,7 @@
 	}
 
 	function setEta(orderId, minutes) {
-		var formData = new FormData();
+		const formData = new FormData();
 		formData.append('action', 'lafka_kds_set_eta');
 		formData.append('nonce', config.nonce);
 		formData.append('kds_token', config.token);
@@ -733,8 +733,8 @@
 
 		document.getElementById('kds-eta-order-num').textContent = '#' + orderNum;
 
-		var presets = orderType === 'pickup' ? config.pickupTimes : config.deliveryTimes;
-		var presetsEl = document.getElementById('kds-eta-presets');
+		const presets = orderType === 'pickup' ? config.pickupTimes : config.deliveryTimes;
+		const presetsEl = document.getElementById('kds-eta-presets');
 		presetsEl.innerHTML = presets.map(function (m) {
 			return '<button class="kds-eta-preset-btn" data-minutes="' + m + '">' + m + ' ' + esc(config.i18n.min) + '</button>';
 		}).join('');
@@ -761,8 +761,8 @@
 	}
 
 	function confirmEta() {
-		var customVal = parseInt(document.getElementById('kds-eta-custom-input').value, 10);
-		var minutes = customVal > 0 ? customVal : etaSelectedMinutes;
+		const customVal = parseInt(document.getElementById('kds-eta-custom-input').value, 10);
+		const minutes = customVal > 0 ? customVal : etaSelectedMinutes;
 
 		if (!minutes || minutes < 1 || !etaOrderId) return;
 

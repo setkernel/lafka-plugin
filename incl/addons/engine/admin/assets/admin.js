@@ -15,7 +15,7 @@
 	'use strict';
 
 	$( function () {
-		var $form = $( '.lafka-engine-form' );
+		const $form = $( '.lafka-engine-form' );
 		if ( ! $form.length ) {
 			return;
 		}
@@ -23,14 +23,14 @@
 		// Category visibility toggle. Now driven by radios (All vs Specific
 		// categories) — show category checkboxes only when "Specific" is on.
 		$form.on( 'change', 'input[name="lafka_addon_applies_to_all"]', function () {
-			var appliesToAll = $form.find( 'input[name="lafka_addon_applies_to_all"]:checked' ).val() === '1';
+			const appliesToAll = $form.find( 'input[name="lafka_addon_applies_to_all"]:checked' ).val() === '1';
 			$form.find( '.lafka-engine-categories' ).toggle( ! appliesToAll );
 		} );
 
 		// Group-level events: pricing mode + source toggles.
 		$form.on( 'change', '[data-lafka-pricing]', function () {
-			var $group = $( this ).closest( '[data-lafka-group]' );
-			var mode   = $( this ).val();
+			const $group = $( this ).closest( '[data-lafka-group]' );
+			const mode   = $( this ).val();
 
 			$group.find( '.lafka-engine-flat-group-input' ).toggle( mode === 'flat_group' );
 			$group.find( '.lafka-engine-per-size-input' ).toggle( mode === 'flat_per_size' );
@@ -46,34 +46,34 @@
 
 			// Matrix mode without saved size attribute → show notice instead
 			// of phantom (zero-column) matrix area.
-			var $matrixNeedsAttr = $group.find( '.lafka-engine-matrix-needs-attribute' );
+			const $matrixNeedsAttr = $group.find( '.lafka-engine-matrix-needs-attribute' );
 			if ( $matrixNeedsAttr.length ) {
-				var hasMatrixCols = $group.find( '.lafka-engine-options-table .lafka-col-matrix' ).length > 0;
+				const hasMatrixCols = $group.find( '.lafka-engine-options-table .lafka-col-matrix' ).length > 0;
 				$matrixNeedsAttr.toggle( mode === 'matrix' && ! hasMatrixCols );
 			}
 		} );
 
 		$form.on( 'change', '[data-lafka-source]', function () {
-			var $group = $( this ).closest( '[data-lafka-group]' );
+			const $group = $( this ).closest( '[data-lafka-group]' );
 			$group.find( '.lafka-engine-source-attribute' ).toggle( $( this ).val() === 'attribute' );
 		} );
 
 		// Group title live display.
 		$form.on( 'input', '[data-lafka-group-name]', function () {
-			var $group = $( this ).closest( '[data-lafka-group]' );
-			var label  = $( this ).val() || '—';
+			const $group = $( this ).closest( '[data-lafka-group]' );
+			const label  = $( this ).val() || '—';
 			$group.find( '.lafka-engine-group__title-display' ).text( label );
 		} );
 
 		// Add new group.
 		$form.on( 'click', '[data-lafka-add-group]', function ( e ) {
 			e.preventDefault();
-			var template = document.getElementById( 'lafka-engine-group-template' );
+			const template = document.getElementById( 'lafka-engine-group-template' );
 			if ( ! template ) {
 				return;
 			}
-			var nextIndex = $form.find( '[data-lafka-group]' ).length;
-			var html = template.innerHTML.replace( /__GROUP_INDEX__/g, nextIndex );
+			const nextIndex = $form.find( '[data-lafka-group]' ).length;
+			const html = template.innerHTML.replace( /__GROUP_INDEX__/g, nextIndex );
 			$form.find( '.lafka-engine-groups' ).append( html );
 		} );
 
@@ -89,15 +89,15 @@
 		// Add new option row.
 		$form.on( 'click', '[data-lafka-add-option]', function ( e ) {
 			e.preventDefault();
-			var $group     = $( this ).closest( '[data-lafka-group]' );
-			var groupIndex = $group.attr( 'data-group-index' );
-			var $rows      = $group.find( '[data-lafka-option-rows]' );
-			var nextIndex  = $rows.children( '[data-lafka-option-row]' ).length;
-			var template   = document.getElementById( 'lafka-engine-option-row-template' );
+			const $group     = $( this ).closest( '[data-lafka-group]' );
+			const groupIndex = $group.attr( 'data-group-index' );
+			const $rows      = $group.find( '[data-lafka-option-rows]' );
+			const nextIndex  = $rows.children( '[data-lafka-option-row]' ).length;
+			const template   = document.getElementById( 'lafka-engine-option-row-template' );
 			if ( ! template ) {
 				return;
 			}
-			var html = template.innerHTML
+			const html = template.innerHTML
 				.replace( /__GROUP_INDEX__/g, groupIndex )
 				.replace( /__OPTION_INDEX__/g, nextIndex );
 			$rows.append( html );
@@ -115,21 +115,21 @@
 		// Sync options from attribute.
 		$form.on( 'click', '[data-lafka-sync-attribute]', function ( e ) {
 			e.preventDefault();
-			var $btn   = $( this );
-			var $group = $btn.closest( '[data-lafka-group]' );
-			var taxonomy = $group.find( '[data-lafka-source-attribute]' ).val();
+			const $btn   = $( this );
+			const $group = $btn.closest( '[data-lafka-group]' );
+			const taxonomy = $group.find( '[data-lafka-source-attribute]' ).val();
 			if ( ! taxonomy ) {
 				window.alert( lafkaAddonsEngineAdmin.i18n.syncFailed );
 				return;
 			}
 
 			// Capture existing options so the server can preserve prices/include flags.
-			var existing = [];
+			const existing = [];
 			$group.find( '[data-lafka-option-row]' ).each( function () {
-				var $row     = $( this );
-				var label    = $row.find( 'input[name$="[label]"]' ).val() || '';
-				var included = $row.find( 'input[type=checkbox][name$="[included]"]:checked' ).length > 0;
-				var price    = $row.find( 'input[name$="[price]"]' ).val() || '';
+				const $row     = $( this );
+				const label    = $row.find( 'input[name$="[label]"]' ).val() || '';
+				const included = $row.find( 'input[type=checkbox][name$="[included]"]:checked' ).length > 0;
+				const price    = $row.find( 'input[name$="[price]"]' ).val() || '';
 				existing.push( { label: label, included: included, price: price } );
 			} );
 
@@ -154,18 +154,18 @@
 		} );
 
 		function rebuildOptionRows( $group, options ) {
-			var $rows      = $group.find( '[data-lafka-option-rows]' );
-			var groupIndex = $group.attr( 'data-group-index' );
-			var template   = document.getElementById( 'lafka-engine-option-row-template' );
+			const $rows      = $group.find( '[data-lafka-option-rows]' );
+			const groupIndex = $group.attr( 'data-group-index' );
+			const template   = document.getElementById( 'lafka-engine-option-row-template' );
 			if ( ! template ) {
 				return;
 			}
 			$rows.empty();
 			options.forEach( function ( option, idx ) {
-				var html = template.innerHTML
+				const html = template.innerHTML
 					.replace( /__GROUP_INDEX__/g, groupIndex )
 					.replace( /__OPTION_INDEX__/g, idx );
-				var $row = $( html );
+				const $row = $( html );
 				$row.find( 'input[name$="[id]"]' ).val( option.id || '' );
 				$row.find( 'input[name$="[label]"]' ).val( option.label || '' );
 				$row.find( '.lafka-engine-option-label-readonly' ).text( option.label || '' );

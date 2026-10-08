@@ -135,29 +135,29 @@
 		let t;
 		try {
 			t = JSON.parse(lafka_branch_locations_front.branch_locations_json_data);
-		} catch (e) {
+		} catch {
 			return (o.html(lafka_branch_locations_front.error_message_json_parse), !1);
 		}
 		if (!Array.isArray(t))
 			return (o.html(lafka_branch_locations_front.error_message_json_parse), !1);
-		var n = e.find('#lafka_user_geocoded_location').val();
+		const n = e.find('#lafka_user_geocoded_location').val();
 		const l = [];
 		if ('delivery' === a)
 			for (const c of t)
 				('delivery_pickup' !== c.order_type && 'delivery' !== c.order_type) ||
 					!(function (e, a, o) {
-						var t = o.filter((e) => parseInt(e.id) === parseInt(a));
+						let t = o.filter((e) => parseInt(e.id) === parseInt(a));
 						if (0 < t.length) {
 							t = t[0];
 							if (t.branch_address_geocoded) {
-								var e = JSON.parse(decodeURIComponent(e)),
-									n = new google.maps.LatLng(e.lat, e.lng),
-									e = JSON.parse(decodeURIComponent(t.branch_address_geocoded)),
-									e = new google.maps.LatLng(e.lat, e.lng);
+								const userCoords = JSON.parse(decodeURIComponent(e)),
+									n = new google.maps.LatLng(userCoords.lat, userCoords.lng),
+									branchCoords = JSON.parse(decodeURIComponent(t.branch_address_geocoded)),
+									branchPoint = new google.maps.LatLng(branchCoords.lat, branchCoords.lng);
 								if (!isNaN(parseInt(t.distance_restriction))) {
-									e = google.maps.geometry.spherical.computeDistanceBetween(n, e);
+									const meters = google.maps.geometry.spherical.computeDistanceBetween(n, branchPoint);
 									if (
-										('imperial' === o.distance_unit ? e / 1609.344 : e / 1e3) <
+										('imperial' === o.distance_unit ? meters / 1609.344 : meters / 1e3) <
 										parseInt(t.distance_restriction)
 									)
 										return 1;
@@ -213,7 +213,7 @@
 				i = d(document.body).find('.lafka-branch-select-message');
 			((function () {
 				if (null !== (f = document.querySelector('#lafka_branch_select_user_address'))) {
-					var t = lafka_branch_locations_front.autocomplete_area.trim().split(','),
+					const t = lafka_branch_locations_front.autocomplete_area.trim().split(','),
 						n = lafka_branch_locations_front.autocomplete_countries;
 					let e = null,
 						a = null,
@@ -370,7 +370,7 @@
 				})(o)
 			)
 				return !1;
-			var e = {
+			const e = {
 				_ajax_nonce: o.find('#_wpnonce').val(),
 				action: 'lafka_select_branch',
 				dataType: 'json',
@@ -398,7 +398,7 @@
 		}),
 			d(document.body).on('click', '.lafka-change-branch a', function () {
 				sessionStorage.removeItem('lafka_branch_selection_closed');
-				var e = {
+				const e = {
 					_ajax_nonce: d(this).data('nonce'),
 					action: 'lafka_change_branch',
 					dataType: 'json',

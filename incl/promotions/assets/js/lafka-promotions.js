@@ -21,15 +21,15 @@
 		return;
 	}
 
-	var PROMO_KEY = String( window.LAFKA_PROMO.promoKey || '' );
-	var DISMISS_KEY = String( window.LAFKA_PROMO.dismissKey || 'lafka_bogo_dismissed_' + PROMO_KEY );
-	var DISMISS_DAYS = parseInt( window.LAFKA_PROMO.dismissDays, 10 ) || 7;
-	var DAY_MS = 86400000;
-	var FOCUSABLE = 'a[href], button:not([disabled]), input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+	const PROMO_KEY = String( window.LAFKA_PROMO.promoKey || '' );
+	const DISMISS_KEY = String( window.LAFKA_PROMO.dismissKey || 'lafka_bogo_dismissed_' + PROMO_KEY );
+	const DISMISS_DAYS = parseInt( window.LAFKA_PROMO.dismissDays, 10 ) || 7;
+	const DAY_MS = 86400000;
+	const FOCUSABLE = 'a[href], button:not([disabled]), input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 	function isDismissed() {
 		try {
-			var ts = window.localStorage.getItem( DISMISS_KEY );
+			const ts = window.localStorage.getItem( DISMISS_KEY );
 			if ( ! ts ) {
 				return false;
 			}
@@ -40,9 +40,9 @@
 	}
 
 	function nextFocusable( banner ) {
-		var all = document.querySelectorAll( FOCUSABLE );
-		for ( var i = 0; i < all.length; i++ ) {
-			var el = all[ i ];
+		const all = document.querySelectorAll( FOCUSABLE );
+		for ( let i = 0; i < all.length; i++ ) {
+			const el = all[ i ];
 			if ( banner.contains( el ) ) {
 				continue;
 			}
@@ -63,8 +63,8 @@
 		} catch {
 			// Private mode / storage full — the banner just won't stay dismissed.
 		}
-		var hadFocus = banner.contains( document.activeElement );
-		var next = hadFocus ? nextFocusable( banner ) : null;
+		const hadFocus = banner.contains( document.activeElement );
+		const next = hadFocus ? nextFocusable( banner ) : null;
 		banner.classList.remove( 'is-visible' );
 		banner.hidden = true;
 		document.documentElement.classList.add( 'lafka-bogo-dismissed' );
@@ -72,7 +72,7 @@
 			if ( next && typeof next.focus === 'function' ) {
 				next.focus();
 			} else {
-				var main = document.querySelector( 'main, #content, [role="main"]' );
+				const main = document.querySelector( 'main, #content, [role="main"]' );
 				if ( main ) {
 					if ( ! main.hasAttribute( 'tabindex' ) ) {
 						main.setAttribute( 'tabindex', '-1' );
@@ -84,11 +84,11 @@
 	}
 
 	function init() {
-		var banner = document.getElementById( 'lafka-bogo-banner' );
+		const banner = document.getElementById( 'lafka-bogo-banner' );
 		if ( ! banner ) {
 			return;
 		}
-		var closeBtn = banner.querySelector( '.lafka-bogo-close' );
+		const closeBtn = banner.querySelector( '.lafka-bogo-close' );
 		if ( ! closeBtn ) {
 			return;
 		}

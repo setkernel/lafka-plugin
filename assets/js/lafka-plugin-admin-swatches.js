@@ -1,10 +1,9 @@
-var frame,
-	lafka_wcs = lafka_wcs || {};
-
 jQuery( document ).ready( function ( $ ) {
 	'use strict';
-	var wp = window.wp,
+	const wp = window.wp,
+		lafka_wcs = window.lafka_wcs || {},
 		$body = $( 'body' );
+	let frame;
 
 	$( '#term-color' ).wpColorPicker();
 
@@ -12,7 +11,7 @@ jQuery( document ).ready( function ( $ ) {
 	$body.on( 'click', '.lafka-wcs-upload-image-button', function ( event ) {
 		event.preventDefault();
 
-		var $button = $( this );
+		const $button = $( this );
 
 		// If the media frame already exists, reopen it.
 		if ( frame ) {
@@ -31,7 +30,7 @@ jQuery( document ).ready( function ( $ ) {
 
 		// When an image is selected, run a callback.
 		frame.on( 'select', function () {
-			var attachment = frame.state().get( 'selection' ).first().toJSON();
+			const attachment = frame.state().get( 'selection' ).first().toJSON();
 
 			$button.siblings( 'input.lafka-wcs-term-image' ).val( attachment.id );
 			$button.siblings( '.lafka-wcs-remove-image-button' ).show();
@@ -42,7 +41,7 @@ jQuery( document ).ready( function ( $ ) {
 		frame.open();
 
 	} ).on( 'click', '.lafka-wcs-remove-image-button', function () {
-		var $button = $( this );
+		const $button = $( this );
 
 		$button.siblings( 'input.lafka-wcs-term-image' ).val( '' );
 		$button.siblings( '.lafka-wcs-remove-image-button' ).show();
@@ -52,14 +51,14 @@ jQuery( document ).ready( function ( $ ) {
 	} );
 
 	// Toggle add new attribute term modal
-	var $modal = $( '#lafka-wcs-modal-container' ),
+	const $modal = $( '#lafka-wcs-modal-container' ),
 		$spinner = $modal.find( '.spinner' ),
-		$msg = $modal.find( '.message' ),
-		$metabox = null;
+		$msg = $modal.find( '.message' );
+	let $metabox = null;
 
 	$body.on( 'click', '.lafka-wcs_add_new_attribute', function ( e ) {
 		e.preventDefault();
-		var $button = $( this ),
+		const $button = $( this ),
 			taxInputTemplate = wp.template( 'lafka-wcs-input-tax' ),
 			data = {
 				type: $button.data( 'type' ),
@@ -67,7 +66,7 @@ jQuery( document ).ready( function ( $ ) {
 			};
 
 		// Insert input — validate type to prevent selector injection
-		var allowedTypes = ['color', 'image', 'label'];
+		const allowedTypes = ['color', 'image', 'label'];
 		if ( allowedTypes.indexOf( data.type ) === -1 ) {
 			return;
 		}
@@ -90,12 +89,12 @@ jQuery( document ).ready( function ( $ ) {
 	$body.on( 'click', '.lafka-wcs-new-attribute-submit', function ( e ) {
 		e.preventDefault();
 
-		var error = false,
-			data = {};
+		let error = false;
+		const data = {};
 
 		// Validate
 		$modal.find( '.lafka-wcs-input' ).each( function () {
-			var $this = $( this );
+			const $this = $( this );
 
 			if ( $this.attr( 'name' ) !== 'slug' && !$this.val() ) {
 				$this.addClass( 'error' );

@@ -11,7 +11,7 @@
 (function ($) {
 	"use strict";
 
-	var params = window.lafka_order_notifications_params || {};
+	const params = window.lafka_order_notifications_params || {};
 
 	if (params.new_orders_push_notifications !== 'yes') {
 		return;
@@ -70,7 +70,7 @@
 						url: ajaxurl,
 						success: function (response) {
 							if (response !== '') {
-								var data = {
+								const data = {
 									title: response.title,
 									body: response.body,
 									icon: response.icon,

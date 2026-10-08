@@ -3,10 +3,10 @@
 /* Modifided script from the simple-page-ordering plugin */
 jQuery( function( $ ) {
 
-    var table_selector   = 'table.wp-list-table',
+    const table_selector = 'table.wp-list-table',
         item_selector    = 'tbody tr:not(.inline-edit-row)',
-        term_id_selector = '.column-handle input[name="term_id"]',
         column_handle    = '<td class="column-handle"></td>';
+    let term_id_selector = '.column-handle input[name="term_id"]';
 
     if ( 0 === $( table_selector ).find( '.column-handle' ).length ) {
         $( table_selector ).find( 'tr:not(.inline-edit-row)' ).append( column_handle );
@@ -17,8 +17,8 @@ jQuery( function( $ ) {
     $( table_selector ).find( '.column-handle' ).show();
 
     $.lafka_add_missing_sort_handles = function() {
-        var all_table_rows = $( table_selector ).find('tbody > tr');
-        var rows_with_handle = $( table_selector ).find('tbody > tr > td.column-handle').parent();
+        const all_table_rows = $( table_selector ).find('tbody > tr');
+        const rows_with_handle = $( table_selector ).find('tbody > tr > td.column-handle').parent();
         if ( all_table_rows.length !== rows_with_handle.length ) {
             all_table_rows.each(function(index, elem){
                 if ( ! rows_with_handle.is( elem ) ) {
@@ -58,14 +58,14 @@ jQuery( function( $ ) {
             ui.item.children( 'td, th' ).css( 'border-bottom-width', '1px' );
         },
         update: function( event, ui ) {
-            var termid     = ui.item.find( term_id_selector ).val(); // this post id
-            var termparent = ui.item.find( '.parent' ).html();            // post parent
+            const termid     = ui.item.find( term_id_selector ).val(); // this post id
+            const termparent = ui.item.find( '.parent' ).html();            // post parent
 
-            var prevtermid = ui.item.prev().find( term_id_selector ).val();
-            var nexttermid = ui.item.next().find( term_id_selector ).val();
+            let prevtermid = ui.item.prev().find( term_id_selector ).val();
+            let nexttermid = ui.item.next().find( term_id_selector ).val();
 
             // Can only sort in same tree
-            var prevtermparent, nexttermparent;
+            let prevtermparent, nexttermparent;
             if ( prevtermid !== undefined ) {
                 prevtermparent = ui.item.prev().find( '.parent' ).html();
                 if ( prevtermparent !== termparent) {
@@ -102,7 +102,7 @@ jQuery( function( $ ) {
 
             // Fix cell colors
             $( 'table.widefat tbody tr' ).each( function() {
-                var i = jQuery( 'table.widefat tbody tr' ).index( this );
+                const i = jQuery( 'table.widefat tbody tr' ).index( this );
                 if ( i%2 === 0 ) {
                     jQuery( this ).addClass( 'alternate' );
                 } else {

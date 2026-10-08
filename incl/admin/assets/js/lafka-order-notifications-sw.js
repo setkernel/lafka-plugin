@@ -7,9 +7,9 @@
  * renders the browser notification and deep-links to the order on click.
  */
 self.addEventListener('message', function (event) {
-	var payload = event.data || {};
-	var title   = payload.title ? String(payload.title) : '';
-	var options = {
+	const payload = event.data || {};
+	const title   = payload.title ? String(payload.title) : '';
+	const options = {
 		body: payload.body ? String(payload.body) : '',
 		icon: payload.icon ? String(payload.icon) : undefined,
 		data: {
@@ -22,14 +22,14 @@ self.addEventListener('message', function (event) {
 
 self.addEventListener('notificationclick', function (event) {
 	event.notification.close();
-	var targetUrl = (event.notification && event.notification.data && event.notification.data.url)
+	const targetUrl = (event.notification && event.notification.data && event.notification.data.url)
 		? event.notification.data.url
 		: '/';
 
 	event.waitUntil(
 		clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function (clientList) {
-			for (var i = 0; i < clientList.length; i += 1) {
-				var client = clientList[i];
+			for (let i = 0; i < clientList.length; i += 1) {
+				const client = clientList[i];
 				if (client.url === targetUrl && 'focus' in client) {
 					return client.focus();
 				}
