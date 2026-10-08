@@ -78,6 +78,7 @@ if ( ! function_exists( 'lafka_settings_keys' ) ) {
 			'lafka_cod_title_delivery',
 			'lafka_cod_description_delivery',
 			'lafka_pickup_checkout_slim',
+			'lafka_address_autocomplete_enabled',
 			// SEO.
 			'lafka_default_locale',
 			'lafka_og_image_default',

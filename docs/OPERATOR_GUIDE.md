@@ -290,6 +290,38 @@ the fees for a few real addresses, then disable the old method and enable the ne
 the zone (and deactivate the old plugin when you are happy). Check the DRS origin address
 is the same place as your store location.
 
+### Address suggestions at checkout
+
+Customers get address suggestions as they type their street address, on the classic and the
+block checkout, through WooCommerce's own address-autocomplete feature. Lafka supplies the
+search; it needs no plugin and no account.
+
+**Turn it on.** **WooCommerce → Settings → General → Address autocomplete**: tick *Enable
+predictive address search*. With more than one provider installed, pick **Lafka address
+search** as the preferred one. The switch **Lafka → Modules → Address suggestions** (on by
+default) only decides whether Lafka offers its provider.
+
+**Which service answers.** With the Google Maps key set (Lafka Shipping Settings), Google
+Places answers; the key needs the **Places API (New)** enabled, and works with a website
+(HTTP referrer) restriction because the server sends your site as the referrer, but not with
+an IP restriction. Without a key, the free Photon service (OpenStreetMap data) answers,
+favouring places near the restaurant. Suggestions start at 4 characters after a short pause,
+show at most 5, and only for countries you sell to (WooCommerce → Settings → General →
+Selling location(s)).
+
+**Delivery price.** Choosing a suggestion also gives the delivery price the exact point, so
+a fee by distance uses it; the server still checks it against its own lookup of the address
+(see "Delivery by distance"), so a suggestion far from the typed address cannot get a cheaper
+fee. If the customer edits the street afterwards, the point is dropped.
+
+**Other third-party autocomplete plugins.** Deactivate them once this works: two tools
+drawing on the same field fight each other.
+
+Developers: filters `lafka_address_autocomplete_countries`, `lafka_address_photon_endpoint`
+(use your own Photon server for heavy traffic), `lafka_address_photon_params`,
+`lafka_address_google_endpoint`, `lafka_address_autocomplete_bias_radius`,
+`lafka_address_autocomplete_debounce`, `lafka_address_number_after_street`.
+
 ### Cart and Checkout pages: blocks or classic
 
 **Lafka → Modules → Checkout experience** chooses the checkout customers use; Lafka works

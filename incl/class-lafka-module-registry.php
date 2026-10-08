@@ -276,6 +276,30 @@ if ( ! class_exists( 'Lafka_Module_Registry' ) ) {
 				)
 			);
 
+			// ---- Address suggestions (Lafka's provider in WooCommerce's autocomplete system) ----
+			self::register(
+				new Lafka_Module(
+					array(
+						'id'              => 'address_autocomplete',
+						'label'           => esc_html__( 'Address suggestions', 'lafka-plugin' ),
+						'description'     => esc_html__( 'Suggest full addresses as customers type at checkout (classic and block) through WooCommerce\'s own address autocomplete, using Google Places with your Maps key or the free Photon service. Turn it on for customers in WooCommerce → Settings → General.', 'lafka-plugin' ),
+						'category'        => 'ordering',
+						'storage'         => 'option',
+						'default_enabled' => true,
+						'get_enabled'     => static function () {
+							return '1' === (string) lafka_setting( 'lafka_address_autocomplete_enabled', '1' );
+						},
+						'set_enabled'     => self::setting_setter( 'lafka_address_autocomplete_enabled' ),
+						// Configured once the customer-facing switch in WooCommerce is on.
+						'is_configured'   => static function () {
+							return class_exists( 'Lafka_Address_Search' ) && Lafka_Address_Search::woocommerce_enabled();
+						},
+						'settings_path'   => 'admin.php?page=wc-settings&tab=general',
+						'docs_slug'       => 'address-suggestions',
+					)
+				)
+			);
+
 			// ---- Tips (a WooCommerce yes/no option; the settings live with it) ----
 			self::register(
 				new Lafka_Module(

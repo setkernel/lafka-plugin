@@ -169,7 +169,7 @@ if ( ! class_exists( 'Lafka_Geocoder' ) ) {
 		 *
 		 * @return string
 		 */
-		private static function visitor_key(): string {
+		public static function visitor_key(): string {
 			$user = get_current_user_id();
 			if ( $user > 0 ) {
 				return 'u' . $user;

@@ -92,6 +92,20 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
     classic-editor only).
 
 ### Added
+- **Checkout address suggestions through WooCommerce's own address-autocomplete system.** A "Lafka address
+  search" provider (`incl/address-autocomplete/`) lists itself in WooCommerce → Settings → General →
+  Address autocomplete and works on the classic and the block checkout (WooCommerce draws the list, with
+  its keyboard and screen-reader support). It searches through server routes (`lafka/v1/address/suggest`
+  and `/place`: same-site, rate limited, cached): Google Places (New) when the one Maps key is set, else
+  Photon (OpenStreetMap data; Nominatim forbids search-as-you-type), biased to the store point and cut
+  to the selling countries; 4 characters and a 400 ms pause at least; at most 5 suggestions. A chosen
+  suggestion fills address, city, province/state, postcode and country in WooCommerce's formats and hands
+  its point to the delivery price like the checkout pin (classic: the pin field; block: a Store API update,
+  namespace `lafka-address-autocomplete`), so the distance resolver's pin tolerance still applies. Module
+  switch Lafka → Modules → Address suggestions (on by default; customers see nothing until the
+  WooCommerce setting is on). Filters `lafka_address_autocomplete_countries`, `lafka_address_photon_endpoint`,
+  `lafka_address_photon_params`, `lafka_address_google_endpoint`, `lafka_address_autocomplete_bias_radius`,
+  `lafka_address_autocomplete_debounce`, `lafka_address_number_after_street`. Service disclosure added to readme.txt.
 - Block checkout: when delivery was chosen and no delivery rate is on offer, the `lafka` cart
   extension carries `delivery_unavailable_message` (the distance method's reason, else the
   plain "we can't deliver") that the block cart/checkout shows under the shipping options,
