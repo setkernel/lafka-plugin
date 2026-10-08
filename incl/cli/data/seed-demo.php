@@ -347,6 +347,7 @@ return array(
 					'type'                     => 'checkbox',
 					'position'                 => 0,
 					'required'                 => 0,
+					'half_placement'           => 1,
 					'variations'               => 0,
 					'attribute'                => 0,
 					'options'                  => array(
