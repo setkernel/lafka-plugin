@@ -7,6 +7,32 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
 
 ## [Unreleased]
 
+### One source of truth: hours, money, fulfilment, the shared script
+- **Opening hours have one home.** `Lafka_Order_Hours::status( $now )` returns `is_open`, `closes_at`,
+  `next_open`, `source` (schedule, display, forced, holiday) and `gated`, from one engine
+  (`Lafka_Order_Hours_Engine`) that handles overnight spans, windows that meet at midnight, holidays
+  and the force override. The order gate, the next-opening lookup, schema `openingHoursSpecification`
+  (one row per window), `/llms.txt`, the PDP "Ready in" line, Insights and the theme's badges all read
+  it; the PDP hours helpers (`lafka_pdp_hours_to_minutes()`, `lafka_pdp_hours_window_is_open()`) and
+  `get_schedule_display_hours_map()` are gone. The class is always loaded; `is_lafka_order_hours()` is
+  replaced by `Lafka_Order_Hours::module_enabled()`. The per-day display-hours options apply only
+  without a schedule; Site Health and `wp lafka hours check|status|sync` report disagreements.
+  New: `GET /lafka/v1/open-status`, filter `lafka_order_hours_now`. A day missing from a saved
+  schedule is closed (it used to count as open).
+- **`lafka_price_plain()` moves to the plugin** (WooCommerce symbol, position, separators and decimals);
+  the deal builder and promotions use it.
+- **`lafka-core`**, one small script (`window.lafka`: `track`, `cookie`, `money`, `debounce`, `api`),
+  registered once and loaded only with a script that depends on it. `lafkaCore` carries the REST root,
+  nonce and the WooCommerce currency. The deal total, block-checkout free-delivery message, add-on
+  totals debounce, tips, and the dataLayer search event use it.
+- **Fulfilment**: `Lafka_Fulfilment::pickup_method_ids()` (the one list, filter
+  `lafka_pickup_shipping_method_ids`) and `::current_mode()`; the page-context event reports the mode
+  in force.
+- **Free delivery / delivery minimum**: the deprecated filter `lafka_pdp_free_delivery_threshold` is
+  applied once, inside `lafka_get_free_delivery_threshold()`; the zone's Free Shipping minimum is read
+  from its stored settings (no method objects, so no recursion with the distance method).
+  `lafka_delivery_minimum()` (and its filter) now governs what is enforced, not only what is shown.
+
 ### Settings, data and wiring
 - **Plugin settings are plugin options, not theme_mods.** Abandoned-cart, web-push, review-request,
   product-page, checkout (delivery-quote guard, short pickup checkout, cash-on-delivery wording),

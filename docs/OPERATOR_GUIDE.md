@@ -349,6 +349,28 @@ refused by the server on the classic and the block checkout. With "disable add t
 on, adding to the cart is refused with the closed message, while the products themselves
 stay purchasable in the admin, the REST API and other channels.
 
+### Opening hours
+
+One schedule decides everything. With the **Order hours** module on and a weekly schedule saved
+(Lafka → Order hours), that schedule gates ordering and is also what the site shows: the header and
+announce-bar status, the product-page "Ready in" line, the hours on the contact page, the schema
+`openingHoursSpecification`, `/llms.txt` and Insights' "visited while closed". Overnight hours (open
+6 pm, close 2 am) and a late close that carries on after midnight work; holidays close the whole
+day; the force open/closed switch beats the schedule.
+
+The per-day fields (Customizer → Restaurant Information → Hours, WooCommerce → Settings →
+Restaurant) are used only when there is no schedule (the module off, or no schedule saved). While a
+schedule is in use they are ignored; if they say something else, Site Health ("Lafka opening hours")
+and WP-CLI list the days:
+
+    wp lafka hours status [--at="2026-10-09 23:30"]   open now? closes / next opens, and why
+    wp lafka hours check                              per-day fields vs the schedule
+    wp lafka hours sync --yes                         copy the schedule into the per-day fields
+
+A cached page keeps its wording honest: the live status script asks `/wp-json/lafka/v1/open-status`
+when the printed closing or opening time passes. Developers can freeze the clock with the
+`lafka_order_hours_now` filter.
+
 ### Delivery chosen, no delivery rate
 
 A customer who chose Delivery is never turned into a pickup order without a word. When no
