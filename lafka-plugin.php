@@ -68,6 +68,12 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/lafka-kses-helpers.php';
 // Readers for public read-only query-string parameters.
 require_once plugin_dir_path( __FILE__ ) . 'incl/lafka-input-helpers.php';
 
+// Geo: the store point, the default map view, the map provider (keyless
+// OpenStreetMap, or Google with a key), the one Maps key and the geocoder.
+require_once plugin_dir_path( __FILE__ ) . 'incl/geo/lafka-geo.php';
+require_once plugin_dir_path( __FILE__ ) . 'incl/geo/class-lafka-geocoder.php';
+require_once plugin_dir_path( __FILE__ ) . 'incl/geo/lafka-maps-assets.php';
+
 // Typed feature-module registry (NX1-01) — the single list of gated modules
 // the Modules dashboard, Site Health and (later) the setup wizard read from.
 // Foundational: required before Site Health / the Modules page below.

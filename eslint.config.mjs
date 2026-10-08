@@ -89,6 +89,7 @@ export default [
 			"node_modules/**",
 			// Vendor JS libraries
 			"assets/js/flatpickr/**",
+			"assets/js/leaflet/**",
 			"assets/js/schedule/jquery.schedule.js",
 			"assets/js/schedule/jquery.schedule.min.js",
 			// Minified files

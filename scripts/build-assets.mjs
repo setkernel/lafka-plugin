@@ -6,7 +6,8 @@
  * regenerated from that source with esbuild in minify-only mode (no bundling,
  * no syntax lowering). Output is deterministic, so CI can rebuild and fail on
  * a diff — the shipped `.min.js` can never drift from its source. Vendored
- * libraries (flatpickr, jquery.schedule) are not first-party and are skipped.
+ * libraries (flatpickr, jquery.schedule, Leaflet) are not first-party and are
+ * skipped.
  *
  * At runtime the `.js` source is enqueued when SCRIPT_DEBUG is on, the
  * `.min.js` otherwise.
@@ -21,7 +22,7 @@ import { dirname, join, relative } from 'node:path';
 
 const ROOT = join( dirname( fileURLToPath( import.meta.url ) ), '..' );
 const SCAN = [ 'assets/js', 'incl' ];
-const SKIP_DIRS = new Set( [ 'node_modules', 'vendor', 'flatpickr', 'schedule' ] );
+const SKIP_DIRS = new Set( [ 'node_modules', 'vendor', 'flatpickr', 'schedule', 'leaflet' ] );
 
 /**
  * Readable first-party sources that have a `.min.js` sibling.

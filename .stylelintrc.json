@@ -4,6 +4,7 @@
 		"vendor/**",
 		"node_modules/**",
 		"assets/js/flatpickr/**",
+		"assets/js/leaflet/**",
 		"assets/css/schedule/**"
 	],
 	"rules": {

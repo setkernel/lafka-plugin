@@ -1,0 +1,86 @@
+/*
+ * Lafka maps (assets/js/lafka-maps.js): the keyless map's pin, the zone
+ * editor's handles and the area labels. Colours come from custom properties
+ * a theme may set; the defaults read on any background.
+ */
+
+.lafka-map {
+	position: relative;
+	z-index: 0; /* Keep Leaflet's pane z-indexes inside the map. */
+}
+
+/* Keep theme link styles off the map controls. */
+.lafka-map.leaflet-container .leaflet-bar a,
+.lafka-map.leaflet-container .leaflet-bar a:hover {
+	color: #1d2327;
+	text-decoration: none;
+}
+
+.lafka-map-pin {
+	color: var(--lafka-map-pin, #d63638);
+}
+
+.lafka-map-pin svg {
+	display: block;
+	filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.35));
+}
+
+.lafka-map-pin path {
+	fill: currentcolor;
+	stroke: #fff;
+	stroke-width: 1.5;
+}
+
+.lafka-map-pin circle {
+	fill: #fff;
+}
+
+.lafka-map-vertex,
+.lafka-map-midpoint {
+	box-sizing: border-box;
+	border: 2px solid var(--lafka-map-editor, #0073ff);
+	border-radius: 50%;
+	background: #fff;
+	cursor: move;
+}
+
+.lafka-map-midpoint {
+	opacity: 0.6;
+	transform: scale(0.75);
+}
+
+.lafka-map-label {
+	white-space: nowrap;
+}
+
+.lafka-map-label span {
+	display: inline-block;
+	padding: 2px 6px;
+	border-radius: 3px;
+	background: rgba(255, 255, 255, 0.85);
+	color: #1d2327;
+	font-size: 12px;
+	font-weight: 600;
+	transform: translate(-50%, -50%);
+}
+
+.lafka-map-locate {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	margin: 0 0 10px;
+}
+
+.lafka-map-locate svg {
+	width: 16px;
+	height: 16px;
+}
+
+.lafka-map-message {
+	margin: 0 0 10px;
+	color: #b32d2e;
+}
+
+.lafka-map-message:empty {
+	display: none;
+}

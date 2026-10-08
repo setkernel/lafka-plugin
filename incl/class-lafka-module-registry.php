@@ -177,13 +177,11 @@ if ( ! class_exists( 'Lafka_Module_Registry' ) ) {
 						'default_enabled' => false,
 						'get_enabled'     => self::flag_getter( 'shipping_areas' ),
 						'set_enabled'     => self::flag_setter( 'shipping_areas' ),
+						// Maps work without a key (OpenStreetMap); what the module
+						// needs is the store's location to start maps and measure
+						// delivery distances from.
 						'is_configured'   => static function () {
-							$general = get_option( 'lafka_shipping_areas_general' );
-							if ( is_array( $general ) && ! empty( $general['google_maps_api_key'] ) ) {
-								return true;
-							}
-							$key = Lafka_Options::get( 'google_maps_api_key', '' );
-							return is_string( $key ) && '' !== $key;
+							return function_exists( 'lafka_get_store_point' ) && null !== lafka_get_store_point();
 						},
 						'settings_path'   => 'admin.php?page=lafka_shipping_areas_admin',
 						'docs_slug'       => 'delivery-areas',
