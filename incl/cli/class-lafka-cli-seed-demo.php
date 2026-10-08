@@ -69,7 +69,7 @@ if ( ! class_exists( 'Lafka_CLI_Seed_Demo' ) ) {
 		 * @return array<int,string>
 		 */
 		private static function manifest_buckets(): array {
-			return array( 'categories', 'products', 'attachments', 'addon_groups', 'branches', 'areas', 'pages' );
+			return array( 'categories', 'products', 'attachments', 'addon_groups', 'branches', 'areas', 'pages', 'shipping_zones' );
 		}
 
 		// ─── Pure helpers (unit-tested, no live-WP requirement) ──────────────
@@ -320,6 +320,7 @@ if ( ! class_exists( 'Lafka_CLI_Seed_Demo' ) ) {
 			$this->seed_addon_groups( $fixtures, $manifest );
 			$this->write_business_info( $fixtures );
 			$this->write_order_hours( $fixtures );
+			$this->seed_shipping( $fixtures, $manifest );
 			$this->seed_area( $fixtures, $manifest );
 			$this->seed_branch( $fixtures, $manifest );
 			$this->seed_menu_page( $fixtures, $manifest );
@@ -342,6 +343,74 @@ if ( ! class_exists( 'Lafka_CLI_Seed_Demo' ) ) {
 		private function make_store_live(): void {
 			update_option( 'woocommerce_coming_soon', 'no' );
 			WP_CLI::log( 'Turned WooCommerce "Coming soon" off so the store is visible.' );
+		}
+
+		/**
+		 * WooCommerce shipping for the demo: a zone over the demo region with a
+		 * flat-rate Delivery method, and block-checkout Pickup at the demo
+		 * restaurant's address. Without shipping methods WooCommerce drops the
+		 * whole fulfilment step, so the store could not show pickup vs delivery.
+		 *
+		 * @param array<string,mixed> $fixtures Fixture data.
+		 * @param array<string,mixed> $manifest Manifest (by reference).
+		 * @return void
+		 */
+		private function seed_shipping( array $fixtures, array &$manifest ): void {
+			$shipping = $fixtures['shipping'];
+			$zone_id  = self::recorded_id( $manifest, 'shipping_zones', 'demo' );
+			$zone     = $zone_id > 0 ? WC_Shipping_Zones::get_zone( $zone_id ) : false;
+
+			if ( ! $zone ) {
+				$zone = new WC_Shipping_Zone();
+				$zone->set_zone_name( $shipping['zone_name'] );
+				foreach ( $shipping['locations'] as $location ) {
+					$zone->add_location( $location['code'], $location['type'] );
+				}
+				$zone->save();
+
+				$instance_id = $zone->add_shipping_method( 'flat_rate' );
+				$method      = WC_Shipping_Zones::get_shipping_method( $instance_id );
+				if ( $method ) {
+					update_option(
+						$method->get_instance_option_key(),
+						array(
+							'title'      => $shipping['delivery']['title'],
+							'cost'       => $shipping['delivery']['cost'],
+							'tax_status' => 'taxable',
+						)
+					);
+				}
+				$manifest = self::record( $manifest, 'shipping_zones', 'demo', (int) $zone->get_id() );
+			}
+
+			$business = $fixtures['business'];
+			update_option(
+				'woocommerce_pickup_location_settings',
+				array(
+					'enabled'    => 'yes',
+					'title'      => $shipping['pickup']['title'],
+					'tax_status' => 'taxable',
+					'cost'       => $shipping['pickup']['cost'],
+				)
+			);
+			update_option(
+				'pickup_location_pickup_locations',
+				array(
+					array(
+						'name'    => $business['lafka_business_name'],
+						'address' => array(
+							'address_1' => $business['lafka_business_street'],
+							'city'      => $business['lafka_business_city'],
+							'state'     => $business['lafka_business_region'],
+							'postcode'  => $business['lafka_business_postal'],
+							'country'   => $business['lafka_business_country'],
+						),
+						'details' => '',
+						'enabled' => true,
+					),
+				)
+			);
+			WP_CLI::log( 'Seeded shipping: Delivery (flat rate) in the demo region and block-checkout Pickup.' );
 		}
 
 		/**
@@ -855,6 +924,14 @@ if ( ! class_exists( 'Lafka_CLI_Seed_Demo' ) ) {
 					++$deleted;
 				}
 			}
+			foreach ( $manifest['ids']['shipping_zones'] as $id ) {
+				$id = (int) $id;
+				if ( $id > 0 ) {
+					WC_Shipping_Zones::delete_zone( $id );
+					++$deleted;
+				}
+			}
+			delete_option( 'pickup_location_pickup_locations' );
 			foreach ( $manifest['ids']['branches'] as $id ) {
 				$id = (int) $id;
 				if ( $id > 0 ) {

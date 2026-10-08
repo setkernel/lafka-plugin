@@ -464,6 +464,26 @@ return array(
 	),
 
 	// ── One shipping-area CPT with a square polygon around the fake centre ──
+	// ── WooCommerce shipping: Delivery (flat rate) in the demo region, and
+	//    block-checkout Pickup at the restaurant, so checkout offers both. ──
+	'shipping'     => array(
+		'zone_name' => 'Demo delivery area',
+		'locations' => array(
+			array(
+				'code' => 'US:CA',
+				'type' => 'state',
+			),
+		),
+		'delivery'  => array(
+			'title' => 'Delivery',
+			'cost'  => '3.99',
+		),
+		'pickup'    => array(
+			'title' => 'Pickup',
+			'cost'  => '',
+		),
+	),
+
 	'area'         => array(
 		'slug'       => 'demo-delivery-zone',
 		'title'      => 'Demo Delivery Zone',
