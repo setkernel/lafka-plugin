@@ -409,7 +409,7 @@
 			}),
 			d(document.body).trigger('updated_wc_div'));
 	}),
-		d(window).load(function () {
+		d(window).on('load', function () {
 			if (-1 < navigator.userAgent.toLowerCase().indexOf('firefox')) {
 				const e = d(document).find('form.woocommerce-checkout');
 				e.length && e[0].reset();

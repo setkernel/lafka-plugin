@@ -60,13 +60,15 @@
 		<properties>
 			<!-- Plugin sanitizers for already-unslashed input: a capped text line,
 			     a clamped integer, the FAQ repeater (text question, kses answer),
-			     and the last-order cookie parser that rejects any payload whose
-			     fields are not the types the plugin writes. -->
+			     the last-order cookie parser that rejects any payload whose
+			     fields are not the types the plugin writes, and the map-pin parser
+			     that returns two range-checked floats or null. -->
 			<property name="customSanitizingFunctions" type="array">
 				<element value="lafka_sanitize_category_tagline"/>
 				<element value="lafka_sanitize_product_serves"/>
 				<element value="lafka_sanitize_term_faq_rows"/>
 				<element value="lafka_pdp_parse_last_order_cookie"/>
+				<element value="lafka_parse_store_map_location"/>
 			</property>
 		</properties>
 	</rule>

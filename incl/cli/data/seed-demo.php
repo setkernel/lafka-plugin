@@ -459,13 +459,15 @@ return array(
 		'slug' => 'main-branch',
 		'name' => 'Main Branch',
 		'meta' => array(
-			'lafka_branch_order_type' => 'delivery',
-			'lafka_branch_address'    => '123 Example St, Example City',
-			'lafka_branch_timezone'   => 'default',
+			'lafka_branch_order_type'       => 'delivery',
+			'lafka_branch_address'          => '123 Example St, Example City',
+			// Geocoded at the delivery area's centre: only geocoded branches are
+			// selectable (Lafka_Shipping_Areas::get_all_legit_branch_locations).
+			'lafka_branch_address_geocoded' => '{"lat":44.65,"lng":-63.57}',
+			'lafka_branch_timezone'         => 'default',
 		),
 	),
 
-	// ── One shipping-area CPT with a square polygon around the fake centre ──
 	// ── WooCommerce shipping: Delivery (flat rate) in the demo region, and
 	//    block-checkout Pickup at the restaurant, so checkout offers both. ──
 	'shipping'     => array(
@@ -486,6 +488,7 @@ return array(
 		),
 	),
 
+	// ── One shipping-area CPT with a square polygon around the fake centre ──
 	'area'         => array(
 		'slug'       => 'demo-delivery-zone',
 		'title'      => 'Demo Delivery Zone',

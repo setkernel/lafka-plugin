@@ -604,17 +604,14 @@ class Lafka_Branch_Locations_Admin {
 			update_term_meta( $term_id, 'lafka_branch_address', sanitize_text_field( wp_unslash( $_POST['lafka_branch_address'] ) ) );
 		}
 		if ( isset( $_POST['lafka_branch_address_geocoded'] ) ) {
-			// A {"lat":…,"lng":…} JSON string; only the two floats are kept below.
-			$raw_geocoded = sanitize_text_field( wp_unslash( $_POST['lafka_branch_address_geocoded'] ) );
-			$decoded      = json_decode( $raw_geocoded );
-			if ( null !== $decoded && isset( $decoded->lat, $decoded->lng ) ) {
-				$safe_value = wp_json_encode(
-					array(
-						'lat' => floatval( $decoded->lat ),
-						'lng' => floatval( $decoded->lng ),
-					)
-				);
-				update_term_meta( $term_id, 'lafka_branch_address_geocoded', $safe_value );
+			// The admin script posts encodeURIComponent( JSON ) of {lat, lng}.
+			// A bare json_decode() cannot read that form, so no branch geocode
+			// was saved; the shared map-pin parser URL-decodes it and keeps only
+			// two in-range floats. Readers decodeURIComponent() before
+			// JSON.parse(), so the plain JSON stored here stays compatible.
+			$coords = lafka_parse_store_map_location( wp_unslash( $_POST['lafka_branch_address_geocoded'] ) );
+			if ( null !== $coords ) {
+				update_term_meta( $term_id, 'lafka_branch_address_geocoded', wp_json_encode( $coords ) );
 			}
 		}
 		if ( isset( $_POST['lafka_branch_shipping_areas'] ) ) {

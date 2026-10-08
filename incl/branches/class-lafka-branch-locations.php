@@ -79,8 +79,8 @@ class Lafka_Branch_Locations {
 
 		// Skip the front-end branch-locations JS entirely when Google Maps
 		// isn't configured: the script hard-depends on `google.maps.*` being
-		// loaded and would throw on every page-load otherwise. The branch
-		// selector falls back to the dropdown-only UX.
+		// loaded and would throw on every page-load otherwise. The modal
+		// markup (output_in_footer) is skipped with it.
 		if ( wp_script_is( 'lafka-google-maps', 'registered' ) ) {
 			$branch_front_js = lafka_plugin_script_path( 'incl/shipping-areas/assets/js/frontend/lafka-branch-locations-front.min.js' );
 			wp_enqueue_script(
@@ -132,6 +132,12 @@ class Lafka_Branch_Locations {
 	public static function output_in_footer() {
 		// PERF-C11: Skip branch modal HTML on non-WooCommerce pages (mirrors enqueue_scripts guard)
 		if ( function_exists( 'is_checkout' ) && ! is_checkout() && ! is_cart() && ! is_shop() && ! is_product() && ! is_product_category() && ! is_product_tag() && ! is_woocommerce() ) {
+			return;
+		}
+		// The modal is driven entirely by its script, which is only enqueued
+		// when Google Maps is configured; without it the markup would print
+		// as an inert block under the footer.
+		if ( ! wp_script_is( 'lafka-branch-locations-front', 'enqueued' ) ) {
 			return;
 		}
 
