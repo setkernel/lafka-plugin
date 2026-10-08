@@ -2,15 +2,15 @@
 /**
  * Phase 3B (v9.27.0): Abandoned-cart recovery — capture layer.
  *
- * Records (email, cart) into the abandoned-cart table whenever a customer:
- *   - blurs the checkout email field (AJAX listener — handled by JS in the
- *     theme; this file exposes the wp-admin/admin-ajax.php endpoint)
- *   - or triggers `woocommerce_checkout_update_order_review` (the standard
- *     WC AJAX that re-renders the order-review block when the email field is
- *     populated)
+ * Records (email, cart) into the abandoned-cart table once the customer has
+ * typed their email at checkout:
+ *   - classic checkout: `woocommerce_checkout_update_order_review` (the
+ *     standard WC AJAX that re-renders the order review as fields change);
+ *   - block checkout: `woocommerce_store_api_cart_update_customer_from_request`
+ *     (the Store API call that syncs the customer's details as they type).
  *
- * Marks the row as recovered when an order completes successfully via
- * `woocommerce_checkout_order_processed`.
+ * Marks the row as recovered when the order is placed
+ * (`woocommerce_checkout_order_processed` / the Store API equivalent).
  *
  * Self-gates on the `lafka_ac_enabled` Customizer toggle so an operator who
  * hasn't opted in pays zero overhead at request time.
@@ -209,11 +209,49 @@ if ( ! function_exists( 'lafka_ac_handle_update_order_review' ) ) {
 	 * @return void
 	 */
 	function lafka_ac_handle_update_order_review( $post_data = '' ): void {
-		if ( ! lafka_ac_capture_is_enabled() ) {
+		lafka_ac_capture_email( lafka_ac_capture_from_post( $post_data ) );
+	}
+}
+
+if ( ! function_exists( 'lafka_ac_handle_store_api_customer' ) ) {
+	/**
+	 * Block checkout: the Store API synced the customer's details.
+	 *
+	 * @param WC_Customer $customer Customer.
+	 * @return void
+	 */
+	function lafka_ac_handle_store_api_customer( $customer ): void {
+		if ( ! is_object( $customer ) || ! method_exists( $customer, 'get_billing_email' ) ) {
 			return;
 		}
-		$email = lafka_ac_capture_from_post( $post_data );
-		if ( '' === $email ) {
+		$email = strtolower( sanitize_email( (string) $customer->get_billing_email() ) );
+		lafka_ac_capture_email( is_email( $email ) ? $email : '' );
+	}
+}
+
+if ( ! function_exists( 'lafka_ac_handle_store_api_order' ) ) {
+	/**
+	 * Block checkout: the order was placed.
+	 *
+	 * @param WC_Order $order Order.
+	 * @return void
+	 */
+	function lafka_ac_handle_store_api_order( $order ): void {
+		if ( is_object( $order ) && method_exists( $order, 'get_id' ) ) {
+			lafka_ac_handle_order_processed( (int) $order->get_id() );
+		}
+	}
+}
+
+if ( ! function_exists( 'lafka_ac_capture_email' ) ) {
+	/**
+	 * Save the current cart against an email the customer typed at checkout.
+	 *
+	 * @param string $email Sanitised, lower-cased email ('' to skip).
+	 * @return void
+	 */
+	function lafka_ac_capture_email( string $email ): void {
+		if ( '' === $email || ! lafka_ac_capture_is_enabled() ) {
 			return;
 		}
 		$snapshot = lafka_ac_get_cart_snapshot();
@@ -318,6 +356,8 @@ if ( ! function_exists( 'lafka_ac_handle_account_deleted' ) ) {
 if ( function_exists( 'add_action' ) ) {
 	add_action( 'woocommerce_checkout_update_order_review', 'lafka_ac_handle_update_order_review', 20, 1 );
 	add_action( 'woocommerce_checkout_order_processed', 'lafka_ac_handle_order_processed', 20, 1 );
+	add_action( 'woocommerce_store_api_cart_update_customer_from_request', 'lafka_ac_handle_store_api_customer', 20, 1 );
+	add_action( 'woocommerce_store_api_checkout_order_processed', 'lafka_ac_handle_store_api_order', 20, 1 );
 	add_action( 'woocommerce_account_delete_completed', 'lafka_ac_handle_account_deleted', 10, 1 );
 	add_action( 'delete_user', 'lafka_ac_handle_account_deleted', 10, 1 );
 }
