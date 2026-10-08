@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-08T13:13:17+00:00\n"
+"POT-Creation-Date: 2026-10-08T17:22:03+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: lafka-plugin\n"
@@ -39,7 +39,6 @@ msgstr ""
 #: incl/addons/engine/admin/views/editor.php:37
 #: incl/swatches/classes/class-lafka-wc-variation-swatches-admin.php:341
 #: incl/wpml/addons/class-lafka-wcml-product-addons.php:177
-#: shortcodes/partials/contact-form.php:13
 msgid "Name"
 msgstr ""
 
@@ -196,6 +195,7 @@ msgid "Description"
 msgstr ""
 
 #: incl/addons/engine/admin/views/editor.php:60
+#: incl/deals/class-lafka-deals-admin.php:145
 msgid "Required"
 msgstr ""
 
@@ -204,10 +204,18 @@ msgid "Customer must make a selection."
 msgstr ""
 
 #: incl/addons/engine/admin/views/editor.php:69
+msgid "Half and half"
+msgstr ""
+
+#: incl/addons/engine/admin/views/editor.php:73
+msgid "Customers can put each option on the left half, the right half or the whole item (checkboxes only). A half costs half the option price."
+msgstr ""
+
+#: incl/addons/engine/admin/views/editor.php:78
 msgid "Max selections"
 msgstr ""
 
-#: incl/addons/engine/admin/views/editor.php:72
+#: incl/addons/engine/admin/views/editor.php:81
 msgid "0 = unlimited. Only relevant for checkboxes."
 msgstr ""
 
@@ -289,6 +297,8 @@ msgid "Include"
 msgstr ""
 
 #: incl/addons/engine/admin/views/parts/option-rows.php:59
+#: incl/admin/class-lafka-wc-settings-restaurant.php:495
+#: incl/deals/class-lafka-deals-admin.php:98
 #: incl/swatches/class-lafka-wc-variation-swatches.php:61
 #: incl/swatches/classes/class-lafka-wc-variation-swatches-admin.php:392
 #: incl/wpml/addons/class-lafka-wcml-product-addons.php:189
@@ -297,13 +307,12 @@ msgstr ""
 
 #: incl/addons/engine/admin/views/parts/option-rows.php:60
 #: incl/conversion/lafka-abandoned-cart-email.php:181
-#: incl/metaboxes.php:694
 msgid "Price"
 msgstr ""
 
 #: incl/addons/engine/admin/views/parts/option-rows.php:64
-#: incl/metaboxes.php:142
-#: incl/metaboxes.php:151
+#: incl/metaboxes.php:134
+#: incl/metaboxes.php:143
 msgid "Default"
 msgstr ""
 
@@ -450,6 +459,20 @@ msgstr ""
 msgid "Select up to %1$d \"%2$s\"."
 msgstr ""
 
+#. translators: 1: option, e.g. "Olives"; 2: "left half" or "right half".
+#: incl/addons/engine/cart/fields/class-lafka-engine-field-list.php:103
+#, php-format
+msgid "%1$s (%2$s)"
+msgstr ""
+
+#: incl/addons/engine/cart/fields/class-lafka-engine-field-list.php:105
+msgid "left half"
+msgstr ""
+
+#: incl/addons/engine/cart/fields/class-lafka-engine-field-list.php:105
+msgid "right half"
+msgstr ""
+
 #. translators: 1: addon name, 2: option label, 3: min length
 #: incl/addons/engine/cart/fields/class-lafka-engine-field-textarea.php:45
 #, php-format
@@ -471,19 +494,19 @@ msgstr ""
 msgid "Add-on Selections"
 msgstr ""
 
-#: incl/addons/engine/display/class-lafka-engine-display.php:105
+#: incl/addons/engine/display/class-lafka-engine-display.php:103
 msgid "Options total:"
 msgstr ""
 
-#: incl/addons/engine/display/class-lafka-engine-display.php:106
+#: incl/addons/engine/display/class-lafka-engine-display.php:104
 msgid "Sub total:"
 msgstr ""
 
-#: incl/addons/engine/display/class-lafka-engine-display.php:107
+#: incl/addons/engine/display/class-lafka-engine-display.php:105
 msgid "characters remaining"
 msgstr ""
 
-#: incl/addons/engine/display/class-lafka-engine-display.php:325
+#: incl/addons/engine/display/class-lafka-engine-display.php:324
 msgid "Select options"
 msgstr ""
 
@@ -528,8 +551,29 @@ msgstr ""
 msgid "Required field"
 msgstr ""
 
+#. translators: %s: option, e.g. "Olives".
+#: incl/addons/templates/checkbox.php:78
+#, php-format
+msgid "Where to put %s"
+msgstr ""
+
+#. translators: %s: option, e.g. "Olives".
+#: incl/addons/templates/checkbox.php:79
+msgctxt "half of a pizza"
+msgid "Left"
+msgstr ""
+
+#: incl/addons/templates/checkbox.php:80
+msgid "Whole"
+msgstr ""
+
+#: incl/addons/templates/checkbox.php:81
+msgctxt "half of a pizza"
+msgid "Right"
+msgstr ""
+
 #: incl/admin/class-lafka-diagnostics-page.php:81
-#: incl/class-lafka-module-registry.php:354
+#: incl/class-lafka-module-registry.php:392
 msgid "Diagnostics"
 msgstr ""
 
@@ -713,7 +757,7 @@ msgid "Order"
 msgstr ""
 
 #: incl/admin/class-lafka-diagnostics-page.php:522
-#: incl/shipping-areas/class-lafka-shipping-areas.php:463
+#: incl/shipping-areas/class-lafka-shipping-areas.php:443
 msgid "Date"
 msgstr ""
 
@@ -845,10 +889,10 @@ msgid "Disabled — Lafka records will not be written"
 msgstr ""
 
 #: incl/admin/class-lafka-diagnostics-page.php:670
-#: incl/branches/class-lafka-branch-locations-admin.php:247
-#: incl/branches/class-lafka-branch-locations-admin.php:534
+#: incl/branches/class-lafka-branch-locations-admin.php:242
+#: incl/branches/class-lafka-branch-locations-admin.php:529
 #: incl/observability/class-lafka-diagnostics-health.php:154
-#: incl/order-hours/settings/class-lafka-order-hours-admin.php:346
+#: incl/order-hours/settings/class-lafka-order-hours-admin.php:364
 #: incl/security/class-lafka-security-admin.php:134
 #: incl/site-health/class-lafka-site-health.php:193
 msgid "Enabled"
@@ -1017,7 +1061,7 @@ msgstr ""
 
 #: incl/admin/class-lafka-insights-page.php:63
 #: incl/admin/class-lafka-insights-page.php:90
-#: incl/class-lafka-module-registry.php:380
+#: incl/class-lafka-module-registry.php:418
 msgid "Insights"
 msgstr ""
 
@@ -1138,10 +1182,7 @@ msgid "Device"
 msgstr ""
 
 #: incl/admin/class-lafka-insights-page.php:261
-#: incl/seo/lafka-llms-txt.php:217
-#: shortcodes/partials/contact-form.php:15
-#: shortcodes/partials/contact-form.php:263
-#: shortcodes/partials/contact-form.php:265
+#: incl/seo/lafka-llms-txt.php:225
 msgid "Phone"
 msgstr ""
 
@@ -1226,6 +1267,7 @@ msgid "Gateway error"
 msgstr ""
 
 #: incl/admin/class-lafka-insights-page.php:332
+#: incl/checkout/class-lafka-tips.php:219
 msgid "Other"
 msgstr ""
 
@@ -1461,7 +1503,8 @@ msgid "Set Permission"
 msgstr ""
 
 #: incl/admin/class-lafka-order-notifications.php:139
-#: incl/analytics/lafka-analytics-emitter.php:599
+#: incl/analytics/lafka-analytics-emitter.php:814
+#: incl/branches/class-lafka-branch-locations.php:112
 msgid "Close"
 msgstr ""
 
@@ -1620,9 +1663,9 @@ msgid "Size"
 msgstr ""
 
 #: incl/admin/class-lafka-push-admin.php:231
-#: incl/branches/class-lafka-branch-locations-admin.php:691
-#: incl/order-hours/settings/class-lafka-order-hours-admin.php:56
-#: incl/order-hours/settings/class-lafka-order-hours-admin.php:251
+#: incl/branches/class-lafka-branch-locations-admin.php:690
+#: incl/order-hours/settings/class-lafka-order-hours-admin.php:74
+#: incl/order-hours/settings/class-lafka-order-hours-admin.php:269
 msgid "Status"
 msgstr ""
 
@@ -1635,6 +1678,7 @@ msgid "Sending…"
 msgstr ""
 
 #: incl/admin/class-lafka-push-admin.php:350
+#: incl/deals/class-lafka-deals-builder.php:113
 msgid "Done"
 msgstr ""
 
@@ -1748,13 +1792,13 @@ msgid "Hours"
 msgstr ""
 
 #: incl/admin/class-lafka-wc-settings-restaurant.php:93
-#: incl/admin/class-lafka-wc-settings-restaurant.php:165
+#: incl/admin/class-lafka-wc-settings-restaurant.php:168
 #: incl/customizer/class-lafka-customizer-restaurant-info.php:436
 msgid "Cuisine & Payment"
 msgstr ""
 
 #: incl/admin/class-lafka-wc-settings-restaurant.php:94
-#: incl/admin/class-lafka-wc-settings-restaurant.php:198
+#: incl/admin/class-lafka-wc-settings-restaurant.php:201
 msgid "Schema & Geo"
 msgstr ""
 
@@ -1768,387 +1812,462 @@ msgid "Search & AI"
 msgstr ""
 
 #: incl/admin/class-lafka-wc-settings-restaurant.php:97
-#: incl/admin/class-lafka-wc-settings-restaurant.php:441
-#: incl/class-lafka-module-registry.php:233
+#: incl/admin/class-lafka-wc-settings-restaurant.php:511
+#: incl/class-lafka-module-registry.php:231
 msgid "Promotions"
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:124
-#: incl/admin/class-lafka-wc-settings-restaurant.php:479
+#: incl/admin/class-lafka-wc-settings-restaurant.php:98
+#: incl/admin/class-lafka-wc-settings-restaurant.php:459
+#: incl/class-lafka-module-registry.php:267
+msgid "Tips"
+msgstr ""
+
+#: incl/admin/class-lafka-wc-settings-restaurant.php:127
+#: incl/admin/class-lafka-wc-settings-restaurant.php:549
 #: incl/customizer/class-lafka-customizer-restaurant-info.php:398
 msgid "Monday"
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:125
-#: incl/admin/class-lafka-wc-settings-restaurant.php:480
+#: incl/admin/class-lafka-wc-settings-restaurant.php:128
+#: incl/admin/class-lafka-wc-settings-restaurant.php:550
 #: incl/customizer/class-lafka-customizer-restaurant-info.php:399
 msgid "Tuesday"
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:126
-#: incl/admin/class-lafka-wc-settings-restaurant.php:481
+#: incl/admin/class-lafka-wc-settings-restaurant.php:129
+#: incl/admin/class-lafka-wc-settings-restaurant.php:551
 #: incl/customizer/class-lafka-customizer-restaurant-info.php:400
 msgid "Wednesday"
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:127
-#: incl/admin/class-lafka-wc-settings-restaurant.php:482
+#: incl/admin/class-lafka-wc-settings-restaurant.php:130
+#: incl/admin/class-lafka-wc-settings-restaurant.php:552
 #: incl/customizer/class-lafka-customizer-restaurant-info.php:401
 msgid "Thursday"
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:128
-#: incl/admin/class-lafka-wc-settings-restaurant.php:483
+#: incl/admin/class-lafka-wc-settings-restaurant.php:131
+#: incl/admin/class-lafka-wc-settings-restaurant.php:553
 #: incl/customizer/class-lafka-customizer-restaurant-info.php:402
 msgid "Friday"
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:129
-#: incl/admin/class-lafka-wc-settings-restaurant.php:484
+#: incl/admin/class-lafka-wc-settings-restaurant.php:132
+#: incl/admin/class-lafka-wc-settings-restaurant.php:554
 #: incl/customizer/class-lafka-customizer-restaurant-info.php:403
 msgid "Saturday"
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:130
-#: incl/admin/class-lafka-wc-settings-restaurant.php:485
+#: incl/admin/class-lafka-wc-settings-restaurant.php:133
+#: incl/admin/class-lafka-wc-settings-restaurant.php:555
 #: incl/customizer/class-lafka-customizer-restaurant-info.php:404
 msgid "Sunday"
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:135
-#: incl/seo/lafka-llms-txt.php:236
+#: incl/admin/class-lafka-wc-settings-restaurant.php:138
+#: incl/seo/lafka-llms-txt.php:244
 msgid "Opening hours"
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:138
+#: incl/admin/class-lafka-wc-settings-restaurant.php:141
 msgid "Per-day hours in 24h format \"HH:MM-HH:MM\" (e.g. 11:00-23:00). Use \"closed\" for closed days. Empty values are skipped from JSON-LD openingHoursSpecification."
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:168
+#: incl/admin/class-lafka-wc-settings-restaurant.php:171
 msgid "Free-text lists that flow into JSON-LD as servesCuisine and paymentAccepted. Comma-separate values."
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:173
+#: incl/admin/class-lafka-wc-settings-restaurant.php:176
 msgid "Cuisines"
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:174
+#: incl/admin/class-lafka-wc-settings-restaurant.php:177
 #: incl/customizer/class-lafka-customizer-restaurant-info.php:448
 msgid "Examples: Pizza, Donair, Poutine, Italian, Mediterranean."
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:181
+#: incl/admin/class-lafka-wc-settings-restaurant.php:184
 msgid "Payment methods"
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:182
+#: incl/admin/class-lafka-wc-settings-restaurant.php:185
 msgid "Examples: Cash, Credit Card, Visa, Mastercard, Amex, Apple Pay. Independent of WooCommerce gateways — this is for schema labelling only."
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:201
+#: incl/admin/class-lafka-wc-settings-restaurant.php:204
 msgid "JSON-LD-specific overrides. Schema-only fields — your business name, address, phone, and email flow directly from WordPress + WooCommerce settings (see links above)."
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:206
+#: incl/admin/class-lafka-wc-settings-restaurant.php:209
 msgid "Business type"
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:207
+#: incl/admin/class-lafka-wc-settings-restaurant.php:210
 msgid "Comma-separated schema.org type(s). E.g. \"Restaurant, LocalBusiness, FoodEstablishment\"."
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:213
+#: incl/admin/class-lafka-wc-settings-restaurant.php:216
 #: incl/customizer/class-lafka-customizer-restaurant-info.php:264
-#: incl/seo/lafka-llms-txt.php:226
+#: incl/seo/lafka-llms-txt.php:234
 msgid "Price range"
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:214
+#: incl/admin/class-lafka-wc-settings-restaurant.php:217
 msgid "Schema.org priceRange tier."
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:226
+#: incl/admin/class-lafka-wc-settings-restaurant.php:229
 msgid "Phone (tap-to-call / E.164)"
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:227
+#: incl/admin/class-lafka-wc-settings-restaurant.php:230
 msgid "Machine-readable phone in E.164 format used for the tap-to-call tel: link. Example: +19024042888 (no spaces or dashes, with country code). Leave blank to inherit from WooCommerce → Settings → General → Store phone. When this is empty but \"Phone (display format)\" is set, the resolver auto-derives an E.164 by stripping non-digits."
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:234
+#: incl/admin/class-lafka-wc-settings-restaurant.php:237
 msgid "Phone (display format)"
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:235
+#: incl/admin/class-lafka-wc-settings-restaurant.php:238
 msgid "Human-readable phone shown in the announce bar, contact page, footer, and JSON-LD. Example: (902) 404-2888. Leave blank to mirror the E.164 number above."
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:241
+#: incl/admin/class-lafka-wc-settings-restaurant.php:244
 msgid "Business email (customer-facing)"
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:242
+#: incl/admin/class-lafka-wc-settings-restaurant.php:245
 msgid "The address customers see and click — surfaces in the contact CTA, footer, and JSON-LD email field. Leave blank to fall back to the WordPress administration email at Settings → General."
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:248
+#: incl/admin/class-lafka-wc-settings-restaurant.php:251
 #: incl/customizer/class-lafka-customizer-restaurant-info.php:522
 msgid "Restaurant description"
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:249
+#: incl/admin/class-lafka-wc-settings-restaurant.php:252
 msgid "Two or three factual sentences about the restaurant (what you serve, where, since when). Used as the schema.org description, the /llms.txt summary and the home-page meta-description fallback."
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:256
+#: incl/admin/class-lafka-wc-settings-restaurant.php:259
 #: incl/customizer/class-lafka-customizer-restaurant-info.php:503
 msgid "Map / Business Profile URL"
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:257
+#: incl/admin/class-lafka-wc-settings-restaurant.php:260
 msgid "Your Google Maps / Google Business Profile share link. Emitted as schema.org hasMap and listed in /llms.txt."
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:264
-#: incl/seo/lafka-llms-txt.php:251
+#: incl/admin/class-lafka-wc-settings-restaurant.php:267
+#: incl/seo/lafka-llms-txt.php:259
 msgid "Service areas"
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:265
+#: incl/admin/class-lafka-wc-settings-restaurant.php:268
 msgid "Neighbourhoods / towns you deliver to, one per line. Emitted as schema.org areaServed and listed in /llms.txt. Leave empty to advertise your own city only."
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:272
+#: incl/admin/class-lafka-wc-settings-restaurant.php:275
 msgid "Latitude"
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:273
+#: incl/admin/class-lafka-wc-settings-restaurant.php:276
 msgid "Decimal degrees, e.g. 44.7711. For schema.org geo.latitude."
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:279
+#: incl/admin/class-lafka-wc-settings-restaurant.php:282
 msgid "Longitude"
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:280
+#: incl/admin/class-lafka-wc-settings-restaurant.php:283
 msgid "Decimal degrees, e.g. -63.6919. For schema.org geo.longitude."
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:295
+#: incl/admin/class-lafka-wc-settings-restaurant.php:298
 msgid "Social Profiles & Citations"
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:298
+#: incl/admin/class-lafka-wc-settings-restaurant.php:301
 msgid "Authoritative URLs Google uses to corroborate your business identity (schema.org sameAs). One URL per line. Invalid lines are silently dropped. Recommended: Facebook, Instagram, Yelp, TripAdvisor, Google Business Profile, YellowPages."
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:303
+#: incl/admin/class-lafka-wc-settings-restaurant.php:306
 msgid "URLs (one per line)"
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:325
+#: incl/admin/class-lafka-wc-settings-restaurant.php:328
 msgid "Tokens: {name} {city} {region} {cuisines} {term} {product} {short} {title} {price_from} {count} {phone} {sep}. Wrap a part in [square brackets] to drop it when a token inside is empty. Leave a field empty to restore the default."
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:344
+#: incl/admin/class-lafka-wc-settings-restaurant.php:347
+msgid "Order links for search and maps"
+msgstr ""
+
+#: incl/admin/class-lafka-wc-settings-restaurant.php:357
 #: incl/class-lafka-module-registry.php:124
 msgid "Search & AI visibility"
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:347
+#: incl/admin/class-lafka-wc-settings-restaurant.php:360
 msgid "How search engines and AI assistants see the restaurant. These settings are ignored while an SEO plugin (Yoast, Rank Math, SEOPress, All in One SEO) manages titles and descriptions."
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:351
+#: incl/admin/class-lafka-wc-settings-restaurant.php:364
 msgid "Home page title"
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:352
+#: incl/admin/class-lafka-wc-settings-restaurant.php:365
 msgid "Menu page title"
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:353
+#: incl/admin/class-lafka-wc-settings-restaurant.php:366
 msgid "Menu category title"
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:354
+#: incl/admin/class-lafka-wc-settings-restaurant.php:367
 msgid "Product title"
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:355
+#: incl/admin/class-lafka-wc-settings-restaurant.php:368
 msgid "Page / post title"
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:357
+#: incl/admin/class-lafka-wc-settings-restaurant.php:370
 msgid "Title separator"
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:362
+#: incl/admin/class-lafka-wc-settings-restaurant.php:375
 msgid "The character {sep} renders as (spaces are added around it)."
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:364
+#: incl/admin/class-lafka-wc-settings-restaurant.php:377
 msgid "Category description fallback"
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:364
+#: incl/admin/class-lafka-wc-settings-restaurant.php:377
 msgid "Used for menu categories without a description. A category description (Products → Categories) always wins."
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:365
+#: incl/admin/class-lafka-wc-settings-restaurant.php:378
 msgid "Product description fallback"
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:365
+#: incl/admin/class-lafka-wc-settings-restaurant.php:378
 msgid "Used for products without a short description, or with one under 70 characters ({short} inserts it). A longer short description is used as is."
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:366
+#: incl/admin/class-lafka-wc-settings-restaurant.php:379
 msgid "Menu page description"
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:366
+#: incl/admin/class-lafka-wc-settings-restaurant.php:379
 msgid "Used on the menu page unless it has its own description (SEO box on the page) or excerpt."
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:367
+#: incl/admin/class-lafka-wc-settings-restaurant.php:380
 msgid "Page description fallback"
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:367
+#: incl/admin/class-lafka-wc-settings-restaurant.php:380
 msgid "Used on pages with no description (SEO box), excerpt or enough text of their own, so no two pages share one description."
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:369
+#: incl/admin/class-lafka-wc-settings-restaurant.php:382
 msgid "Full menu schema on the home page"
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:370
+#: incl/admin/class-lafka-wc-settings-restaurant.php:383
 msgid "Also emit the complete Menu structured data on the home page (it is always emitted on the menu page; category pages carry only their own section)."
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:376
+#: incl/admin/class-lafka-wc-settings-restaurant.php:389
 msgid "Dietary tag map"
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:377
+#: incl/admin/class-lafka-wc-settings-restaurant.php:390
 msgid "Extra \"tag-or-category-slug = Diet\" lines for schema.org suitableForDiet, e.g. \"plant-based = VeganDiet\". vegan, vegetarian, gluten-free, halal, kosher, dairy-free … are mapped already. Only items you tagged are ever labelled."
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:385
+#: incl/admin/class-lafka-wc-settings-restaurant.php:398
 msgid "Machine-readable menu"
 msgstr ""
 
 #. translators: %s: the four endpoint URLs.
-#: incl/admin/class-lafka-wc-settings-restaurant.php:387
+#: incl/admin/class-lafka-wc-settings-restaurant.php:400
 #, php-format
 msgid "Publish /llms.txt, /llms-full.txt, /menu.md and /menu.json — plain-text / JSON facts (hours, address, menu with prices) for AI assistants: %s"
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:393
+#: incl/admin/class-lafka-wc-settings-restaurant.php:406
 #: incl/seo/lafka-indexnow.php:393
 msgid "IndexNow"
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:394
+#: incl/admin/class-lafka-wc-settings-restaurant.php:407
 msgid "Notify Bing / IndexNow search engines within minutes when products, pages or prices change. Production sites only; nothing is sent from staging or local copies."
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:412
+#: incl/admin/class-lafka-wc-settings-restaurant.php:425
 msgid "— Select a category —"
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:444
-msgid "Each promotion is independent and stays OFF until you give it a value (0 / none = off). These power the website-direct ordering incentives — they do not affect the delivery apps."
-msgstr ""
-
-#: incl/admin/class-lafka-wc-settings-restaurant.php:449
-msgid "Free delivery over ($)"
-msgstr ""
-
-#: incl/admin/class-lafka-wc-settings-restaurant.php:450
-msgid "Cart subtotal at/above which delivery becomes free. 0 = off. Shown to customers as a \"free over $X\" nudge."
-msgstr ""
-
-#: incl/admin/class-lafka-wc-settings-restaurant.php:457
-msgid "First-order discount (%)"
-msgstr ""
-
-#: incl/admin/class-lafka-wc-settings-restaurant.php:458
-msgid "Automatic discount on a logged-in customer's first order. 0 = off. Encourages account creation (and repeat orders)."
+#: incl/admin/class-lafka-wc-settings-restaurant.php:461
+msgid "Let customers add a tip at checkout, on the classic and the block checkout. The tip is a separate, non-taxable line on the order."
 msgstr ""
 
 #: incl/admin/class-lafka-wc-settings-restaurant.php:465
-msgid "Slow-day discount (%)"
+msgid "Offer tips"
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:466
-msgid "Discount applied only on the days selected below. 0 = off."
+#: incl/admin/class-lafka-wc-settings-restaurant.php:471
+msgid "Suggested tips (%)"
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:473
-msgid "Slow days"
+#: incl/admin/class-lafka-wc-settings-restaurant.php:472
+msgid "Comma-separated percentages of the order's items, e.g. 10,15,20."
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:474
-msgid "Days the slow-day discount applies (store timezone)."
+#: incl/admin/class-lafka-wc-settings-restaurant.php:478
+msgid "Custom amount"
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:489
-msgid "Combo: category A"
+#: incl/admin/class-lafka-wc-settings-restaurant.php:479
+msgid "Customers can enter their own amount."
+msgstr ""
+
+#: incl/admin/class-lafka-wc-settings-restaurant.php:485
+msgid "Offer on"
 msgstr ""
 
 #: incl/admin/class-lafka-wc-settings-restaurant.php:490
-msgid "First category in the combo pair (e.g. Pizza)."
+msgid "Every order"
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:497
-msgid "Combo: category B"
+#: incl/admin/class-lafka-wc-settings-restaurant.php:491
+msgid "Delivery orders only"
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:498
-msgid "Second category (e.g. Poutine). A cart with one of each gets the combo discount."
+#: incl/admin/class-lafka-wc-settings-restaurant.php:499
+#: incl/checkout/class-lafka-tips.php:85
+msgid "Tip"
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:505
-msgid "Combo: amount"
-msgstr ""
-
-#: incl/admin/class-lafka-wc-settings-restaurant.php:506
-msgid "Discount value when the combo pair is in the cart. 0 = off."
-msgstr ""
-
-#: incl/admin/class-lafka-wc-settings-restaurant.php:513
-msgid "Combo: amount type"
-msgstr ""
-
-#: incl/admin/class-lafka-wc-settings-restaurant.php:518
-msgid "Fixed ($)"
+#: incl/admin/class-lafka-wc-settings-restaurant.php:514
+msgid "Each promotion is independent and stays OFF until you give it a value (0 / none = off). These power the website-direct ordering incentives — they do not affect the delivery apps."
 msgstr ""
 
 #: incl/admin/class-lafka-wc-settings-restaurant.php:519
+msgid "Free delivery over ($)"
+msgstr ""
+
+#: incl/admin/class-lafka-wc-settings-restaurant.php:520
+msgid "Cart subtotal at/above which delivery becomes free. 0 = off. Shown to customers as a \"free over $X\" nudge."
+msgstr ""
+
+#: incl/admin/class-lafka-wc-settings-restaurant.php:527
+msgid "First-order discount (%)"
+msgstr ""
+
+#: incl/admin/class-lafka-wc-settings-restaurant.php:528
+msgid "Automatic discount on a logged-in customer's first order. 0 = off. Encourages account creation (and repeat orders)."
+msgstr ""
+
+#: incl/admin/class-lafka-wc-settings-restaurant.php:535
+msgid "Slow-day discount (%)"
+msgstr ""
+
+#: incl/admin/class-lafka-wc-settings-restaurant.php:536
+msgid "Discount applied only on the days selected below. 0 = off."
+msgstr ""
+
+#: incl/admin/class-lafka-wc-settings-restaurant.php:543
+msgid "Slow days"
+msgstr ""
+
+#: incl/admin/class-lafka-wc-settings-restaurant.php:544
+msgid "Days the slow-day discount applies (store timezone)."
+msgstr ""
+
+#: incl/admin/class-lafka-wc-settings-restaurant.php:559
+msgid "Combo: category A"
+msgstr ""
+
+#: incl/admin/class-lafka-wc-settings-restaurant.php:560
+msgid "First category in the combo pair (e.g. Pizza)."
+msgstr ""
+
+#: incl/admin/class-lafka-wc-settings-restaurant.php:567
+msgid "Combo: category B"
+msgstr ""
+
+#: incl/admin/class-lafka-wc-settings-restaurant.php:568
+msgid "Second category (e.g. Poutine). A cart with one of each gets the combo discount."
+msgstr ""
+
+#: incl/admin/class-lafka-wc-settings-restaurant.php:575
+msgid "Combo: amount"
+msgstr ""
+
+#: incl/admin/class-lafka-wc-settings-restaurant.php:576
+msgid "Discount value when the combo pair is in the cart. 0 = off."
+msgstr ""
+
+#: incl/admin/class-lafka-wc-settings-restaurant.php:583
+msgid "Combo: amount type"
+msgstr ""
+
+#: incl/admin/class-lafka-wc-settings-restaurant.php:588
+msgid "Fixed ($)"
+msgstr ""
+
+#: incl/admin/class-lafka-wc-settings-restaurant.php:589
 msgid "Percent (%)"
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:545
+#: incl/admin/class-lafka-wc-settings-restaurant.php:620
+msgid "Publish a menu page first; its address becomes the order link."
+msgstr ""
+
+#: incl/admin/class-lafka-wc-settings-restaurant.php:633
+msgid "Google Business Profile → Edit profile → Food ordering → Add link (then \"Set preferred\")"
+msgstr ""
+
+#: incl/admin/class-lafka-wc-settings-restaurant.php:634
+msgid "Google Business Profile → Menu → Menu link"
+msgstr ""
+
+#: incl/admin/class-lafka-wc-settings-restaurant.php:635
+msgid "Apple Business Connect → your location → Action links → Order"
+msgstr ""
+
+#: incl/admin/class-lafka-wc-settings-restaurant.php:636
+msgid "Bing Places → your listing → Order online / Menu"
+msgstr ""
+
+#: incl/admin/class-lafka-wc-settings-restaurant.php:638
+msgid "Customers who find the restaurant on Google, Apple Maps or Bing can order here directly, with no app and no commission. Paste each link where shown; the tags let Lafka Insights and your analytics count those orders."
+msgstr ""
+
+#: incl/admin/class-lafka-wc-settings-restaurant.php:653
 msgid "Canonical fallback locations — fill in fields below only to override:"
 msgstr ""
 
 #. translators: 1: site title link; 2: WC store address link; 3: WP admin email link
-#: incl/admin/class-lafka-wc-settings-restaurant.php:548
+#: incl/admin/class-lafka-wc-settings-restaurant.php:656
 #, php-format
 msgid "Site name → %1$s · Store address & phone → %2$s · Administration email → %3$s"
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:549
+#: incl/admin/class-lafka-wc-settings-restaurant.php:657
 msgid "Site Identity"
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:550
+#: incl/admin/class-lafka-wc-settings-restaurant.php:658
 msgid "WooCommerce → Settings → General"
 msgstr ""
 
-#: incl/admin/class-lafka-wc-settings-restaurant.php:551
+#: incl/admin/class-lafka-wc-settings-restaurant.php:659
 msgid "WordPress → Settings → General"
 msgstr ""
 
@@ -2190,139 +2309,138 @@ msgstr ""
 msgid "Hide from search engines (noindex, and leave out of the sitemap) — for legacy, duplicate or utility pages."
 msgstr ""
 
-#: incl/analytics/lafka-analytics-emitter.php:583
+#: incl/analytics/lafka-analytics-emitter.php:798
 msgid "Cookie consent"
 msgstr ""
 
-#: incl/analytics/lafka-analytics-emitter.php:593
+#: incl/analytics/lafka-analytics-emitter.php:808
 msgid "Cookie preferences"
 msgstr ""
 
-#: incl/analytics/lafka-analytics-emitter.php:594
+#: incl/analytics/lafka-analytics-emitter.php:809
 msgid "Analytics (site usage)"
 msgstr ""
 
-#: incl/analytics/lafka-analytics-emitter.php:595
+#: incl/analytics/lafka-analytics-emitter.php:810
 msgid "Advertising cookies"
 msgstr ""
 
-#: incl/analytics/lafka-analytics-emitter.php:596
+#: incl/analytics/lafka-analytics-emitter.php:811
 msgid "Send data to ad partners"
 msgstr ""
 
-#: incl/analytics/lafka-analytics-emitter.php:597
+#: incl/analytics/lafka-analytics-emitter.php:812
 msgid "Personalized ads"
 msgstr ""
 
-#: incl/analytics/lafka-analytics-emitter.php:600
+#: incl/analytics/lafka-analytics-emitter.php:815
 msgid "Save preferences"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:80
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:264
+#: incl/branches/class-lafka-branch-locations-admin.php:75
 msgid "Geocode"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:81
+#: incl/branches/class-lafka-branch-locations-admin.php:76
 #: incl/timeslots/class-lafka-timeslots.php:649
 msgid "Clear"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:82
+#: incl/branches/class-lafka-branch-locations-admin.php:77
 msgid "Geocode was not successful for the following reason"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:83
+#: incl/branches/class-lafka-branch-locations-admin.php:78
 msgid "The entered address leads to approximate result. Please precise the address or pick from the map."
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:84
+#: incl/branches/class-lafka-branch-locations-admin.php:79
 #: incl/swatches/classes/class-lafka-wc-variation-swatches-admin.php:94
 #: incl/woocommerce-metaboxes.php:58
 #: incl/woocommerce-metaboxes.php:195
 msgid "Choose an image"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:85
+#: incl/branches/class-lafka-branch-locations-admin.php:80
 #: incl/swatches/classes/class-lafka-wc-variation-swatches-admin.php:95
 #: incl/woocommerce-metaboxes.php:60
 #: incl/woocommerce-metaboxes.php:197
 msgid "Use image"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:104
-#: incl/branches/class-lafka-branch-locations-admin.php:106
-#: incl/branches/class-lafka-branch-locations-admin.php:316
-#: incl/branches/class-lafka-branch-locations-admin.php:320
+#: incl/branches/class-lafka-branch-locations-admin.php:99
+#: incl/branches/class-lafka-branch-locations-admin.php:101
+#: incl/branches/class-lafka-branch-locations-admin.php:311
+#: incl/branches/class-lafka-branch-locations-admin.php:315
 msgid "Branch Manager"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:106
-#: incl/branches/class-lafka-branch-locations-admin.php:108
-#: incl/branches/class-lafka-branch-locations-admin.php:320
-#: incl/branches/class-lafka-branch-locations-admin.php:321
+#: incl/branches/class-lafka-branch-locations-admin.php:101
+#: incl/branches/class-lafka-branch-locations-admin.php:103
+#: incl/branches/class-lafka-branch-locations-admin.php:315
+#: incl/branches/class-lafka-branch-locations-admin.php:316
 msgid "Choose Branch Manager&hellip;"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:113
-#: incl/branches/class-lafka-branch-locations-admin.php:327
+#: incl/branches/class-lafka-branch-locations-admin.php:108
+#: incl/branches/class-lafka-branch-locations-admin.php:322
 msgid "Selected user will see only the orders for this or any other assigned to him branches. The user will also get new orders push and email notifications only for his branches."
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:116
-#: incl/branches/class-lafka-branch-locations-admin.php:117
-#: incl/branches/class-lafka-branch-locations-admin.php:332
-#: incl/branches/class-lafka-branch-locations-admin.php:335
-#: incl/branches/class-lafka-branch-locations-admin.php:689
-#: incl/branches/class-lafka-branch-locations-admin.php:734
-#: incl/shipping-areas/class-lafka-shipping-areas.php:455
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:959
+#: incl/branches/class-lafka-branch-locations-admin.php:111
+#: incl/branches/class-lafka-branch-locations-admin.php:112
+#: incl/branches/class-lafka-branch-locations-admin.php:327
+#: incl/branches/class-lafka-branch-locations-admin.php:330
+#: incl/branches/class-lafka-branch-locations-admin.php:688
+#: incl/branches/class-lafka-branch-locations-admin.php:733
+#: incl/shipping-areas/class-lafka-shipping-areas.php:435
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:974
 msgid "Order Type"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:118
-#: incl/branches/class-lafka-branch-locations-admin.php:336
-#: incl/branches/class-lafka-branch-locations-admin.php:712
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:501
+#: incl/branches/class-lafka-branch-locations-admin.php:113
+#: incl/branches/class-lafka-branch-locations-admin.php:331
+#: incl/branches/class-lafka-branch-locations-admin.php:711
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:479
 msgid "Delivery and Pickup"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:119
-#: incl/branches/class-lafka-branch-locations-admin.php:337
-#: incl/branches/class-lafka-branch-locations-admin.php:713
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:502
+#: incl/branches/class-lafka-branch-locations-admin.php:114
+#: incl/branches/class-lafka-branch-locations-admin.php:332
+#: incl/branches/class-lafka-branch-locations-admin.php:712
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:480
 msgid "Only Delivery"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:120
-#: incl/branches/class-lafka-branch-locations-admin.php:338
-#: incl/branches/class-lafka-branch-locations-admin.php:714
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:503
+#: incl/branches/class-lafka-branch-locations-admin.php:115
+#: incl/branches/class-lafka-branch-locations-admin.php:333
+#: incl/branches/class-lafka-branch-locations-admin.php:713
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:481
 msgid "Only Pickup"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:122
-#: incl/branches/class-lafka-branch-locations-admin.php:340
+#: incl/branches/class-lafka-branch-locations-admin.php:117
+#: incl/branches/class-lafka-branch-locations-admin.php:335
 msgid "Specify which order types will be accepted by the branch."
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:125
-#: incl/branches/class-lafka-branch-locations-admin.php:345
+#: incl/branches/class-lafka-branch-locations-admin.php:120
+#: incl/branches/class-lafka-branch-locations-admin.php:340
 msgid "Estimated Delivery/Prep Time"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:127
-#: incl/branches/class-lafka-branch-locations-admin.php:349
+#: incl/branches/class-lafka-branch-locations-admin.php:122
+#: incl/branches/class-lafka-branch-locations-admin.php:344
 msgid "Enter the average delivery/prep time for this branch. Will be displayed in the branch info box."
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:130
-#: incl/branches/class-lafka-branch-locations-admin.php:353
+#: incl/branches/class-lafka-branch-locations-admin.php:125
+#: incl/branches/class-lafka-branch-locations-admin.php:348
 msgid "Branch Location Image"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:136
-#: incl/branches/class-lafka-branch-locations-admin.php:361
+#: incl/branches/class-lafka-branch-locations-admin.php:131
+#: incl/branches/class-lafka-branch-locations-admin.php:356
 #: incl/swatches/classes/class-lafka-wc-variation-swatches-admin.php:163
 #: incl/swatches/classes/class-lafka-wc-variation-swatches-admin.php:383
 #: incl/woocommerce-metaboxes.php:32
@@ -2330,8 +2448,8 @@ msgstr ""
 msgid "Upload/Add image"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:138
-#: incl/branches/class-lafka-branch-locations-admin.php:363
+#: incl/branches/class-lafka-branch-locations-admin.php:133
+#: incl/branches/class-lafka-branch-locations-admin.php:358
 #: incl/swatches/classes/class-lafka-wc-variation-swatches-admin.php:169
 #: incl/swatches/classes/class-lafka-wc-variation-swatches-admin.php:384
 #: incl/woocommerce-metaboxes.php:34
@@ -2339,398 +2457,411 @@ msgstr ""
 msgid "Remove image"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:141
-#: incl/branches/class-lafka-branch-locations-admin.php:366
+#: incl/branches/class-lafka-branch-locations-admin.php:136
+#: incl/branches/class-lafka-branch-locations-admin.php:361
 msgid "The image will be shown on the popup for selecting the branch."
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:144
-#: incl/branches/class-lafka-branch-locations-admin.php:148
-#: incl/branches/class-lafka-branch-locations-admin.php:371
-#: incl/branches/class-lafka-branch-locations-admin.php:377
+#: incl/branches/class-lafka-branch-locations-admin.php:139
+#: incl/branches/class-lafka-branch-locations-admin.php:143
+#: incl/branches/class-lafka-branch-locations-admin.php:366
+#: incl/branches/class-lafka-branch-locations-admin.php:372
 msgid "Shipping Areas"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:147
-#: incl/branches/class-lafka-branch-locations-admin.php:376
+#: incl/branches/class-lafka-branch-locations-admin.php:142
+#: incl/branches/class-lafka-branch-locations-admin.php:371
 msgid "Choose Shipping Areas&hellip;"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:155
-#: incl/branches/class-lafka-branch-locations-admin.php:384
+#: incl/branches/class-lafka-branch-locations-admin.php:150
+#: incl/branches/class-lafka-branch-locations-admin.php:379
 msgid "Choose Lafka Shipping Areas covered by this branch."
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:158
-#: incl/branches/class-lafka-branch-locations-admin.php:389
+#: incl/branches/class-lafka-branch-locations-admin.php:153
+#: incl/branches/class-lafka-branch-locations-admin.php:384
 msgid "Radius Restriction"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:160
-#: incl/branches/class-lafka-branch-locations-admin.php:393
+#: incl/branches/class-lafka-branch-locations-admin.php:155
+#: incl/branches/class-lafka-branch-locations-admin.php:388
 msgid "Suitable for radius based delivery restrictions. This option is only used for the initial check (popup) of the delivery availability based on the user address."
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:163
-#: incl/branches/class-lafka-branch-locations-admin.php:398
+#: incl/branches/class-lafka-branch-locations-admin.php:158
+#: incl/branches/class-lafka-branch-locations-admin.php:393
 msgid "Distance Unit"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:165
-#: incl/branches/class-lafka-branch-locations-admin.php:402
+#: incl/branches/class-lafka-branch-locations-admin.php:160
+#: incl/branches/class-lafka-branch-locations-admin.php:397
 msgid "Metric (km)"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:166
-#: incl/branches/class-lafka-branch-locations-admin.php:403
+#: incl/branches/class-lafka-branch-locations-admin.php:161
+#: incl/branches/class-lafka-branch-locations-admin.php:398
 msgid "Imperial (miles)"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:170
-#: incl/branches/class-lafka-branch-locations-admin.php:409
-#: incl/branches/class-lafka-branch-locations-admin.php:694
-#: incl/branches/class-lafka-branch-locations.php:213
-#: incl/seo/lafka-llms-txt.php:214
+#: incl/branches/class-lafka-branch-locations-admin.php:165
+#: incl/branches/class-lafka-branch-locations-admin.php:404
+#: incl/branches/class-lafka-branch-locations-admin.php:693
+#: incl/branches/class-lafka-branch-locations.php:214
+#: incl/seo/lafka-llms-txt.php:222
 msgid "Address"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:171
-#: incl/branches/class-lafka-branch-locations-admin.php:412
+#: incl/branches/class-lafka-branch-locations-admin.php:166
+#: incl/branches/class-lafka-branch-locations-admin.php:407
 msgid "Enter a location"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:174
-#: incl/branches/class-lafka-branch-locations-admin.php:416
+#: incl/branches/class-lafka-branch-locations-admin.php:169
+#: incl/branches/class-lafka-branch-locations-admin.php:411
 msgid "The full address for the branch to calculate distance shipping and apply radius restrictions."
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:175
-#: incl/branches/class-lafka-branch-locations-admin.php:417
+#: incl/branches/class-lafka-branch-locations-admin.php:170
+#: incl/branches/class-lafka-branch-locations-admin.php:412
 msgid "Note: Branch Location will be active only if it is properly geocoded."
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:177
-#: incl/branches/class-lafka-branch-locations-admin.php:419
+#: incl/branches/class-lafka-branch-locations-admin.php:172
+#: incl/branches/class-lafka-branch-locations-admin.php:414
 msgid "Instructions"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:177
-#: incl/branches/class-lafka-branch-locations-admin.php:419
+#: incl/branches/class-lafka-branch-locations-admin.php:172
+#: incl/branches/class-lafka-branch-locations-admin.php:414
 msgid "Enter an address in the textbox and geocode or click on the map to set the location."
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:184
-#: incl/branches/class-lafka-branch-locations-admin.php:429
+#: incl/branches/class-lafka-branch-locations-admin.php:179
+#: incl/branches/class-lafka-branch-locations-admin.php:424
 msgid "Branch Specific Delivery/Pickup Date Time Settings"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:188
-#: incl/branches/class-lafka-branch-locations-admin.php:438
+#: incl/branches/class-lafka-branch-locations-admin.php:183
+#: incl/branches/class-lafka-branch-locations-admin.php:433
 msgid "Override Global Delivery/Pickup Date Time Settings"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:194
-#: incl/branches/class-lafka-branch-locations-admin.php:447
+#: incl/branches/class-lafka-branch-locations-admin.php:189
+#: incl/branches/class-lafka-branch-locations-admin.php:442
 msgid "Make Delivery/Pickup date and time fields mandatory"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:198
-#: incl/branches/class-lafka-branch-locations-admin.php:452
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:819
+#: incl/branches/class-lafka-branch-locations-admin.php:193
+#: incl/branches/class-lafka-branch-locations-admin.php:447
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:834
 msgid "Number of days ahead to order"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:200
-#: incl/branches/class-lafka-branch-locations-admin.php:456
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:311
+#: incl/branches/class-lafka-branch-locations-admin.php:195
+#: incl/branches/class-lafka-branch-locations-admin.php:451
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:289
 msgid "Enter for how many days ahead user can make an order. The following days will be disabled in the calendar on the checkout page."
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:203
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:832
+#: incl/branches/class-lafka-branch-locations-admin.php:198
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:847
 msgid "Time Slot Duration"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:204
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:326
+#: incl/branches/class-lafka-branch-locations-admin.php:199
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:304
 msgid "Minutes"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:205
-#: incl/branches/class-lafka-branch-locations-admin.php:465
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:328
+#: incl/branches/class-lafka-branch-locations-admin.php:200
+#: incl/branches/class-lafka-branch-locations-admin.php:460
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:306
 msgid "Enter the time in minutes for the slots in which the user can request the order to be completed."
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:208
-#: incl/branches/class-lafka-branch-locations-admin.php:470
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:845
+#: incl/branches/class-lafka-branch-locations-admin.php:203
+#: incl/branches/class-lafka-branch-locations-admin.php:465
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:860
 msgid "Orders Per Time Slot"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:210
-#: incl/branches/class-lafka-branch-locations-admin.php:474
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:344
+#: incl/branches/class-lafka-branch-locations-admin.php:205
+#: incl/branches/class-lafka-branch-locations-admin.php:469
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:322
 msgid "Enter the number of orders which can be made in one time slot. If the number is reached for particular time slot, the users will still be able to see it, but it will be disabled."
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:214
-#: incl/branches/class-lafka-branch-locations-admin.php:481
+#: incl/branches/class-lafka-branch-locations-admin.php:209
+#: incl/branches/class-lafka-branch-locations-admin.php:476
 msgid "Branch Specific Order Hours Settings"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:218
-#: incl/branches/class-lafka-branch-locations-admin.php:490
+#: incl/branches/class-lafka-branch-locations-admin.php:213
+#: incl/branches/class-lafka-branch-locations-admin.php:485
 msgid "Override Global Order Hours Settings"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:224
-#: incl/branches/class-lafka-branch-locations-admin.php:497
+#: incl/branches/class-lafka-branch-locations-admin.php:219
+#: incl/branches/class-lafka-branch-locations-admin.php:492
 msgid "Use WordPress default"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:227
-#: incl/branches/class-lafka-branch-locations-admin.php:500
+#: incl/branches/class-lafka-branch-locations-admin.php:222
+#: incl/branches/class-lafka-branch-locations-admin.php:495
 msgid "Time Zone"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:236
-#: incl/branches/class-lafka-branch-locations-admin.php:514
-#: incl/order-hours/settings/class-lafka-order-hours-admin.php:130
+#: incl/branches/class-lafka-branch-locations-admin.php:231
+#: incl/branches/class-lafka-branch-locations-admin.php:509
+#: incl/order-hours/settings/class-lafka-order-hours-admin.php:148
 msgid "Force Override Store Schedule"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:240
+#: incl/branches/class-lafka-branch-locations-admin.php:235
 msgid "Override current working time schedule and change the store status"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:244
-#: incl/branches/class-lafka-branch-locations-admin.php:529
-#: incl/order-hours/settings/class-lafka-order-hours-admin.php:148
+#: incl/branches/class-lafka-branch-locations-admin.php:239
+#: incl/branches/class-lafka-branch-locations-admin.php:524
+#: incl/order-hours/settings/class-lafka-order-hours-admin.php:166
 msgid "Ordering Status"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:246
-#: incl/branches/class-lafka-branch-locations-admin.php:533
-#: incl/order-hours/settings/class-lafka-order-hours-admin.php:343
+#: incl/branches/class-lafka-branch-locations-admin.php:241
+#: incl/branches/class-lafka-branch-locations-admin.php:528
+#: incl/order-hours/settings/class-lafka-order-hours-admin.php:361
 #: incl/security/class-lafka-security-admin.php:131
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:169
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:183
 msgid "Disabled"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:250
-#: incl/branches/class-lafka-branch-locations-admin.php:540
-#: incl/order-hours/settings/class-lafka-order-hours-admin.php:159
+#: incl/branches/class-lafka-branch-locations-admin.php:245
+#: incl/branches/class-lafka-branch-locations-admin.php:535
+#: incl/order-hours/settings/class-lafka-order-hours-admin.php:177
 msgid "Days Schedule"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:252
-#: incl/branches/class-lafka-branch-locations-admin.php:545
-#: incl/order-hours/settings/class-lafka-order-hours-admin.php:166
+#: incl/branches/class-lafka-branch-locations-admin.php:247
+#: incl/branches/class-lafka-branch-locations-admin.php:540
+#: incl/order-hours/settings/class-lafka-order-hours-admin.php:184
 msgid "Open Hours Periods"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:254
-#: incl/branches/class-lafka-branch-locations-admin.php:549
-#: incl/order-hours/settings/class-lafka-order-hours-admin.php:355
+#: incl/branches/class-lafka-branch-locations-admin.php:249
+#: incl/branches/class-lafka-branch-locations-admin.php:544
+#: incl/order-hours/settings/class-lafka-order-hours-admin.php:373
 msgid "Drag over the table to create order hours periods. Use X and Copy icons to delete or duplicate periods."
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:257
-#: incl/branches/class-lafka-branch-locations-admin.php:559
-#: incl/order-hours/settings/class-lafka-order-hours-admin.php:177
+#: incl/branches/class-lafka-branch-locations-admin.php:252
+#: incl/branches/class-lafka-branch-locations-admin.php:554
+#: incl/order-hours/settings/class-lafka-order-hours-admin.php:195
 msgid "Holidays Schedule"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:259
-#: incl/branches/class-lafka-branch-locations-admin.php:564
-#: incl/order-hours/settings/class-lafka-order-hours-admin.php:184
+#: incl/branches/class-lafka-branch-locations-admin.php:254
+#: incl/branches/class-lafka-branch-locations-admin.php:559
+#: incl/order-hours/settings/class-lafka-order-hours-admin.php:202
 msgid "Holidays Calendar"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:265
-#: incl/branches/class-lafka-branch-locations-admin.php:573
-#: incl/order-hours/settings/class-lafka-order-hours-admin.php:375
+#: incl/branches/class-lafka-branch-locations-admin.php:260
+#: incl/branches/class-lafka-branch-locations-admin.php:568
+#: incl/order-hours/settings/class-lafka-order-hours-admin.php:393
 msgid "Click on Text Box to Open Calendar and Select Your Holidays"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:434
+#: incl/branches/class-lafka-branch-locations-admin.php:429
 msgid "Override Global Delivery/Pickup Date Time"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:443
+#: incl/branches/class-lafka-branch-locations-admin.php:438
 msgid "Mandatory Delivery/Pickup Date Time"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:461
+#: incl/branches/class-lafka-branch-locations-admin.php:456
 msgid "Time Slot Duration (Minutes)"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:486
+#: incl/branches/class-lafka-branch-locations-admin.php:481
 msgid "Override Global Order Hours"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:519
+#: incl/branches/class-lafka-branch-locations-admin.php:514
 msgid "Turn on Force Override"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:524
-#: incl/order-hours/settings/class-lafka-order-hours-admin.php:332
+#: incl/branches/class-lafka-branch-locations-admin.php:519
+#: incl/order-hours/settings/class-lafka-order-hours-admin.php:350
 msgid "Override current working time schedule and change the store status."
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:693
+#: incl/branches/class-lafka-branch-locations-admin.php:692
 msgid "Manager"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:733
+#: incl/branches/class-lafka-branch-locations-admin.php:732
 #: incl/checkout/class-lafka-checkout-fields.php:109
-#: incl/shipping-areas/class-lafka-shipping-areas.php:481
+#: incl/shipping-areas/class-lafka-shipping-areas.php:461
 msgid "Branch"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:751
-#: incl/branches/class-lafka-branch-locations-admin.php:973
-#: incl/branches/class-lafka-branch-locations.php:206
-#: incl/branches/class-lafka-branch-locations.php:409
+#: incl/branches/class-lafka-branch-locations-admin.php:750
+#: incl/branches/class-lafka-branch-locations-admin.php:972
+#: incl/branches/class-lafka-branch-locations.php:207
+#: incl/branches/class-lafka-branch-locations.php:419
 #: incl/checkout/class-lafka-checkout-fields.php:204
 #: incl/checkout/class-lafka-delivery-quote-guard.php:159
 #: incl/checkout/class-lafka-order-path.php:128
 #: incl/kitchen-display/includes/class-lafka-kds-frontend.php:118
-#: incl/shipping-areas/class-lafka-shipping-areas.php:395
-#: incl/shipping-areas/class-lafka-shipping-areas.php:448
-#: incl/shipping-areas/lafka-store-location.php:178
+#: incl/shipping-areas/class-lafka-shipping-areas.php:375
+#: incl/shipping-areas/class-lafka-shipping-areas.php:428
+#: incl/shipping-areas/lafka-store-location.php:83
 #: incl/timeslots/class-lafka-timeslots.php:609
 msgid "Delivery"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:753
-#: incl/branches/class-lafka-branch-locations-admin.php:974
-#: incl/branches/class-lafka-branch-locations.php:412
+#: incl/branches/class-lafka-branch-locations-admin.php:752
+#: incl/branches/class-lafka-branch-locations-admin.php:973
+#: incl/branches/class-lafka-branch-locations.php:422
 #: incl/checkout/class-lafka-checkout-fields.php:205
 #: incl/checkout/class-lafka-order-path.php:127
 #: incl/kitchen-display/includes/class-lafka-kds-frontend.php:117
-#: incl/shipping-areas/class-lafka-shipping-areas.php:398
-#: incl/shipping-areas/class-lafka-shipping-areas.php:451
+#: incl/shipping-areas/class-lafka-shipping-areas.php:378
+#: incl/shipping-areas/class-lafka-shipping-areas.php:431
 #: incl/timeslots/class-lafka-timeslots.php:615
 msgid "Pickup"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:959
+#: incl/branches/class-lafka-branch-locations-admin.php:958
 msgid "All Branches"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations-admin.php:972
+#: incl/branches/class-lafka-branch-locations-admin.php:971
 msgid "All Order Types"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations.php:117
+#: incl/branches/class-lafka-branch-locations.php:111
 msgid "Please wait"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations.php:118
+#: incl/branches/class-lafka-branch-locations.php:113
 msgid "Select from branches serving your area"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations.php:119
+#: incl/branches/class-lafka-branch-locations.php:114
 msgid "Select a branch"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations.php:120
-msgid "Please type your address and select suggestion or click on \"Use current location...\"."
+#: incl/branches/class-lafka-branch-locations.php:116
+msgid "Please type your address and choose a suggestion, or use your current location."
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations.php:121
+#: incl/branches/class-lafka-branch-locations.php:117
+msgid "Please type your address and press Find, or use your current location."
+msgstr ""
+
+#: incl/branches/class-lafka-branch-locations.php:118
 msgid "Something is wrong. Please try again."
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations.php:122
+#: incl/branches/class-lafka-branch-locations.php:119
 msgid "Sorry, your address cannot be served by any of our branches."
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations.php:123
+#: incl/branches/class-lafka-branch-locations.php:120
 msgid "No results found."
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations.php:124
+#: incl/branches/class-lafka-branch-locations.php:121
 msgid "Geocoder failed due to"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations.php:125
+#: incl/branches/class-lafka-branch-locations.php:122
 msgid "Please enter precise address."
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations.php:126
-#: incl/branches/class-lafka-branch-locations.php:305
+#: incl/branches/class-lafka-branch-locations.php:123
+#: incl/branches/class-lafka-branch-locations.php:315
 msgid "Please select branch to continue."
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations.php:209
+#: incl/branches/class-lafka-branch-locations.php:141
+msgid "Choose delivery or pickup"
+msgstr ""
+
+#: incl/branches/class-lafka-branch-locations.php:210
 msgid "Local pickup"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations.php:215
+#: incl/branches/class-lafka-branch-locations.php:217
 msgid "Enter a delivery address"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations.php:217
+#: incl/branches/class-lafka-branch-locations.php:219
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:239
+msgid "Find"
+msgstr ""
+
+#: incl/branches/class-lafka-branch-locations.php:222
 msgid "Use current location"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations.php:219
+#: incl/branches/class-lafka-branch-locations.php:224
 msgid "or detect my current location"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations.php:232
+#: incl/branches/class-lafka-branch-locations.php:237
 msgid "Sorry, no location available to order for this address."
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations.php:258
+#: incl/branches/class-lafka-branch-locations.php:263
 msgid "Select Branch"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations.php:275
+#: incl/branches/class-lafka-branch-locations.php:280
 msgid "Start Order"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations.php:309
+#: incl/branches/class-lafka-branch-locations.php:319
 msgid "Please select order type."
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations.php:313
+#: incl/branches/class-lafka-branch-locations.php:323
 msgid "Please type your address and select suggested address or click on \"Use current location\"."
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations.php:325
-#: incl/branches/class-lafka-branch-locations.php:345
-#: incl/store-api/class-lafka-store-api.php:557
-#: incl/store-api/class-lafka-store-api.php:560
+#: incl/branches/class-lafka-branch-locations.php:335
+#: incl/branches/class-lafka-branch-locations.php:355
+#: incl/store-api/class-lafka-store-api.php:556
+#: incl/store-api/class-lafka-store-api.php:559
 msgid "Something is wrong. No such branch location."
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations.php:335
+#: incl/branches/class-lafka-branch-locations.php:345
 #: incl/store-api/class-lafka-store-api.php:171
-#: incl/store-api/class-lafka-store-api.php:563
+#: incl/store-api/class-lafka-store-api.php:562
 msgid "The selected order type is not available for this branch."
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations.php:420
+#: incl/branches/class-lafka-branch-locations.php:430
 msgid "from"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations.php:423
+#: incl/branches/class-lafka-branch-locations.php:433
 msgid "To"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations.php:427
+#: incl/branches/class-lafka-branch-locations.php:437
 msgid "Change"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations.php:435
+#: incl/branches/class-lafka-branch-locations.php:445
 msgid "Select Location"
 msgstr ""
 
-#: incl/branches/class-lafka-branch-locations.php:449
+#: incl/branches/class-lafka-branch-locations.php:459
 msgid "Something is wrong. No session."
 msgstr ""
 
@@ -2811,6 +2942,10 @@ msgstr ""
 msgid "Enter your street address to see the delivery cost."
 msgstr ""
 
+#: incl/checkout/class-lafka-fulfilment.php:513
+msgid "We can't deliver to this address. Check the street and postcode, or choose Pickup to collect your order."
+msgstr ""
+
 #: incl/checkout/class-lafka-order-path.php:131
 msgid "Pickup or delivery"
 msgstr ""
@@ -2841,6 +2976,7 @@ msgid "required"
 msgstr ""
 
 #: incl/checkout/class-lafka-pickup-checkout.php:349
+#: incl/deals/class-lafka-deals-builder.php:176
 #: incl/timeslots/class-lafka-timeslots.php:625
 msgid "(optional)"
 msgstr ""
@@ -2849,8 +2985,31 @@ msgstr ""
 msgid "Want delivery? Add your address"
 msgstr ""
 
-#: incl/checkout/class-lafka-pickup-checkout.php:446
+#: incl/checkout/class-lafka-pickup-checkout.php:351
+msgid "Collect it myself instead"
+msgstr ""
+
+#: incl/checkout/class-lafka-pickup-checkout.php:447
 msgid "Please enter your billing street address, city and postcode."
+msgstr ""
+
+#: incl/checkout/class-lafka-tips.php:206
+#: incl/checkout/class-lafka-tips.php:335
+msgid "No tip"
+msgstr ""
+
+#: incl/checkout/class-lafka-tips.php:220
+#: incl/checkout/class-lafka-tips.php:337
+msgid "Tip amount"
+msgstr ""
+
+#: incl/checkout/class-lafka-tips.php:336
+msgid "Other amount"
+msgstr ""
+
+#: incl/checkout/class-lafka-tips.php:338
+#: incl/woocommerce/lafka-upsell-row.php:168
+msgid "Add"
 msgstr ""
 
 #: incl/class-lafka-module-registry.php:119
@@ -2890,72 +3049,84 @@ msgstr ""
 msgid "Draw delivery zones on a map, validate customer addresses, and route orders to the right branch."
 msgstr ""
 
-#: incl/class-lafka-module-registry.php:197
+#: incl/class-lafka-module-registry.php:195
 msgid "Order hours"
 msgstr ""
 
-#: incl/class-lafka-module-registry.php:198
+#: incl/class-lafka-module-registry.php:196
 msgid "Control when the store accepts online orders with a weekly schedule, holidays and instant open/close."
 msgstr ""
 
-#: incl/class-lafka-module-registry.php:217
+#: incl/class-lafka-module-registry.php:215
 msgid "Kitchen display (KDS)"
 msgstr ""
 
-#: incl/class-lafka-module-registry.php:218
+#: incl/class-lafka-module-registry.php:216
 msgid "Full-screen kitchen screen with a live order state machine and customer-facing status tracking."
 msgstr ""
 
-#: incl/class-lafka-module-registry.php:234
-msgid "BOGO, delivery-minimum and promo-banner engine that coordinates order discounts."
+#: incl/class-lafka-module-registry.php:232
+msgid "Buy-one-get-one discount, delivery minimum and the promo banner. First-order, slow-day, combo and free-delivery offers have their own switches in WooCommerce → Settings → Restaurant."
 msgstr ""
 
-#: incl/class-lafka-module-registry.php:257
+#: incl/class-lafka-module-registry.php:249
+msgid "Deals"
+msgstr ""
+
+#: incl/class-lafka-module-registry.php:250
+msgid "Deal products where the customer picks each item, e.g. any 2 pizzas for $20, each with its own options."
+msgstr ""
+
+#: incl/class-lafka-module-registry.php:268
+msgid "Suggested tips and a custom amount at checkout, added as a separate non-taxable line."
+msgstr ""
+
+#: incl/class-lafka-module-registry.php:295
 msgid "New-order alerts"
 msgstr ""
 
-#: incl/class-lafka-module-registry.php:258
+#: incl/class-lafka-module-registry.php:296
 msgid "Browser notification + sound for shop managers each time a new order is ready to process, routed to the assigned branch operator."
 msgstr ""
 
-#: incl/class-lafka-module-registry.php:286
+#: incl/class-lafka-module-registry.php:324
 #: incl/conversion/class-lafka-abandoned-cart-email.php:36
 msgid "Abandoned cart recovery"
 msgstr ""
 
-#: incl/class-lafka-module-registry.php:287
+#: incl/class-lafka-module-registry.php:325
 msgid "Email a one-click resume link when a customer enters their email at checkout but does not finish."
 msgstr ""
 
-#: incl/class-lafka-module-registry.php:302
+#: incl/class-lafka-module-registry.php:340
 msgid "Web push notifications"
 msgstr ""
 
-#: incl/class-lafka-module-registry.php:303
+#: incl/class-lafka-module-registry.php:341
 msgid "Browser-native alerts for order updates and reorder reminders, sent even when the site is closed."
 msgstr ""
 
-#: incl/class-lafka-module-registry.php:327
+#: incl/class-lafka-module-registry.php:365
 msgid "Review requests"
 msgstr ""
 
-#: incl/class-lafka-module-registry.php:328
+#: incl/class-lafka-module-registry.php:366
 msgid "Ask happy customers for a review after a completed order via a scheduled email."
 msgstr ""
 
-#: incl/class-lafka-module-registry.php:355
+#: incl/class-lafka-module-registry.php:393
 msgid "Incident list, \"why no order\" checkout-failure reasons, Site Health checks and a daily error digest email. Logging to WooCommerce → Status → Logs stays on either way."
 msgstr ""
 
-#: incl/class-lafka-module-registry.php:381
+#: incl/class-lafka-module-registry.php:419
 msgid "First-party, cookieless funnel analytics: where visitors drop out and why no order was placed, plus a weekly plain-English email. No Google account needed."
 msgstr ""
 
-#: incl/class-lafka-module-registry.php:398
+#: incl/class-lafka-module-registry.php:436
 msgid "Analytics & tracking"
 msgstr ""
 
-#: incl/class-lafka-module-registry.php:399
+#: incl/class-lafka-module-registry.php:437
 msgid "GA4 / GTM / Clarity / Meta Pixel with Consent Mode v2. Active whenever a destination is configured."
 msgstr ""
 
@@ -3018,7 +3189,7 @@ msgid "Abandoned Carts"
 msgstr ""
 
 #: incl/conversion/class-lafka-conversion-privacy.php:178
-#: incl/seo/lafka-llms-txt.php:220
+#: incl/seo/lafka-llms-txt.php:228
 msgid "Email"
 msgstr ""
 
@@ -3086,7 +3257,7 @@ msgid "Unsubscribe from these emails"
 msgstr ""
 
 #: incl/conversion/lafka-push-reorder-cron.php:158
-#: incl/woocommerce/lafka-last-order-card.php:264
+#: incl/woocommerce/lafka-last-order-card.php:317
 msgid "Your usual?"
 msgstr ""
 
@@ -3208,199 +3379,239 @@ msgstr ""
 msgid "One email per line. Listed addresses NEVER receive a recovery email — use for staff test accounts, GDPR right-to-be-forgotten requests, or known-bouncing addresses."
 msgstr ""
 
-#: incl/customizer/class-lafka-customizer-analytics.php:48
+#: incl/customizer/class-lafka-customizer-analytics.php:64
 msgid "Lafka — Analytics"
 msgstr ""
 
-#: incl/customizer/class-lafka-customizer-analytics.php:49
+#: incl/customizer/class-lafka-customizer-analytics.php:65
 msgid "Multi-platform tracking via Google Tag Manager (orchestrator) plus direct platform fallbacks for GA4, Microsoft Clarity, and Meta Pixel. Consent Mode v2 defaults emit BEFORE any tag fires so the site is CPPA/GDPR-compliant out of the box. Paste your IDs once here — the plugin handles emit order, escaping, and consent gating."
 msgstr ""
 
-#: incl/customizer/class-lafka-customizer-analytics.php:235
+#: incl/customizer/class-lafka-customizer-analytics.php:296
 msgid "Tag manager"
 msgstr ""
 
-#: incl/customizer/class-lafka-customizer-analytics.php:236
+#: incl/customizer/class-lafka-customizer-analytics.php:297
 msgid "Google Tag Manager is the recommended orchestrator. Once GTM is set, you wire GA4 / Clarity / Meta Pixel inside the GTM UI and the plugin emits a single container snippet. The direct-platform fields below are only used when this field is empty (operator can pick the simpler path during early setup)."
 msgstr ""
 
-#: incl/customizer/class-lafka-customizer-analytics.php:253
+#: incl/customizer/class-lafka-customizer-analytics.php:315
 msgid "GTM Container ID"
 msgstr ""
 
-#: incl/customizer/class-lafka-customizer-analytics.php:254
+#: incl/customizer/class-lafka-customizer-analytics.php:316
 msgid "Format: GTM-XXXXXXX. Find it at tagmanager.google.com → your container → top-right. When set, the plugin emits the GTM head snippet + body noscript iframe per Google's install spec. Leave blank to use direct-platform IDs below."
 msgstr ""
 
-#: incl/customizer/class-lafka-customizer-analytics.php:272
+#: incl/customizer/class-lafka-customizer-analytics.php:334
 msgid "Direct platform IDs (used only if GTM is empty)"
 msgstr ""
 
-#: incl/customizer/class-lafka-customizer-analytics.php:273
+#: incl/customizer/class-lafka-customizer-analytics.php:335
 msgid "Override-not-additive: if any GTM Container ID is set above, the plugin emits ONLY the GTM snippet and lets you wire these platforms via GTM tags (avoids double-firing). GA4 has a hard cap of 500 distinct event names per property — Microsoft Clarity is unlimited and complements GA4 for heatmaps + session replay. Meta Pixel is required only if you run paid Facebook/Instagram ads. GSC verification turns on the data feed for Google Search Console (rank tracking + click metrics)."
 msgstr ""
 
-#: incl/customizer/class-lafka-customizer-analytics.php:290
+#: incl/customizer/class-lafka-customizer-analytics.php:353
 msgid "GA4 Measurement ID"
 msgstr ""
 
-#: incl/customizer/class-lafka-customizer-analytics.php:291
+#: incl/customizer/class-lafka-customizer-analytics.php:354
 msgid "Format: G-XXXXXXXXXX. Find it at analytics.google.com → Admin → Data Streams → Web → Measurement ID. Only used when GTM is empty."
 msgstr ""
 
-#: incl/customizer/class-lafka-customizer-analytics.php:311
+#: incl/customizer/class-lafka-customizer-analytics.php:375
 msgid "Microsoft Clarity Project ID"
 msgstr ""
 
-#: incl/customizer/class-lafka-customizer-analytics.php:312
+#: incl/customizer/class-lafka-customizer-analytics.php:376
 msgid "Alphanumeric project ID from clarity.microsoft.com. Free, unlimited heatmaps + session replay — complements GA4. Only used when GTM is empty."
 msgstr ""
 
-#: incl/customizer/class-lafka-customizer-analytics.php:329
+#: incl/customizer/class-lafka-customizer-analytics.php:394
 msgid "Cloudflare Web Analytics token"
 msgstr ""
 
-#: incl/customizer/class-lafka-customizer-analytics.php:330
-msgid "32-character token from dash.cloudflare.com → Analytics & Logs → Web Analytics → your site → \"JS snippet\" (the data-cf-beacon token). Cookieless + privacy-first, so it emits independently of GTM and consent."
-msgstr ""
-
-#: incl/customizer/class-lafka-customizer-analytics.php:350
-msgid "Meta Pixel ID"
-msgstr ""
-
-#: incl/customizer/class-lafka-customizer-analytics.php:351
-msgid "15-16 digit numeric ID from business.facebook.com → Events Manager → Data Sources. Only needed when running paid Facebook / Instagram ads. Only used when GTM is empty."
-msgstr ""
-
-#: incl/customizer/class-lafka-customizer-analytics.php:368
-msgid "Google Search Console verification token"
-msgstr ""
-
-#: incl/customizer/class-lafka-customizer-analytics.php:369
-msgid "Paste only the content=\"...\" value from the HTML verification snippet Google gave you (not the full meta tag). Required once to claim the property in search.google.com/search-console — after verification you can leave it set or remove it."
-msgstr ""
-
-#: incl/customizer/class-lafka-customizer-analytics.php:384
-msgid "Consent + privacy"
-msgstr ""
-
-#: incl/customizer/class-lafka-customizer-analytics.php:385
-msgid "Google Consent Mode v2 defaults emit BEFORE any tag fires so the site is compliant from the first byte. The banner appears at the bottom of the viewport until the visitor Accepts, Rejects, or sets per-category preferences. Defaults are denied (most-restrictive) — set to granted only if your legal review allows opt-out-rather-than-opt-in (some EU jurisdictions do not)."
-msgstr ""
-
-#: incl/customizer/class-lafka-customizer-analytics.php:402
-msgid "Show consent banner"
-msgstr ""
-
-#: incl/customizer/class-lafka-customizer-analytics.php:403
-msgid "When ON, the banner appears for every new visitor until they decide. When OFF, the plugin still emits the Consent Mode v2 default state (still safer than no consent at all) but never asks for an explicit decision."
-msgstr ""
-
-#: incl/customizer/class-lafka-customizer-analytics.php:410
-msgid "Denied (most-restrictive default)"
-msgstr ""
-
-#: incl/customizer/class-lafka-customizer-analytics.php:411
-msgid "Granted (opt-out flow — check your jurisdiction first)"
+#: incl/customizer/class-lafka-customizer-analytics.php:395
+msgid "32-character token from the Cloudflare dashboard → Analytics & Logs → Web Analytics → your site → \"JS snippet\" (the data-cf-beacon token). Cookieless + privacy-first, so it emits independently of GTM and consent."
 msgstr ""
 
 #: incl/customizer/class-lafka-customizer-analytics.php:416
-msgid "Default state: analytics_storage"
+msgid "Meta Pixel ID"
 msgstr ""
 
 #: incl/customizer/class-lafka-customizer-analytics.php:417
+msgid "15-16 digit numeric ID from business.facebook.com → Events Manager → Data Sources. Only needed when running paid Facebook / Instagram ads. Only used when GTM is empty."
+msgstr ""
+
+#: incl/customizer/class-lafka-customizer-analytics.php:435
+msgid "TikTok Pixel ID"
+msgstr ""
+
+#: incl/customizer/class-lafka-customizer-analytics.php:436
+msgid "TikTok Ads Manager → Assets → Events → Web events → your pixel (the ID in capitals, e.g. C1ABCD2EFGHIJK3LMN4O). Only needed when running TikTok ads. Only used when GTM is empty."
+msgstr ""
+
+#: incl/customizer/class-lafka-customizer-analytics.php:454
+msgid "Meta Conversions API access token"
+msgstr ""
+
+#: incl/customizer/class-lafka-customizer-analytics.php:455
+msgid "Events Manager → your Pixel → Settings → Conversions API → Generate access token. With it, every paid order is also sent from the server (deduplicated with the Pixel), so ad blockers and payment redirects no longer hide sales. Needs ad consent. Left alone when the official Meta for WooCommerce plugin is active."
+msgstr ""
+
+#: incl/customizer/class-lafka-customizer-analytics.php:473
+msgid "GA4 Measurement Protocol API secret"
+msgstr ""
+
+#: incl/customizer/class-lafka-customizer-analytics.php:474
+msgid "GA4 Admin → Data streams → your web stream → Measurement Protocol API secrets → Create. With it, a paid order whose thank-you page never loaded (closed tab, payment redirect) is still recorded in GA4. Needs analytics consent."
+msgstr ""
+
+#: incl/customizer/class-lafka-customizer-analytics.php:492
+msgid "Google Ads conversion ID"
+msgstr ""
+
+#: incl/customizer/class-lafka-customizer-analytics.php:493
+msgid "Format: AW-123456789. Google Ads → Goals → Conversions → your purchase action → Tag setup. Only used when GTM is empty."
+msgstr ""
+
+#: incl/customizer/class-lafka-customizer-analytics.php:514
+msgid "Google Ads purchase conversion label"
+msgstr ""
+
+#: incl/customizer/class-lafka-customizer-analytics.php:515
+msgid "The label after the slash in send_to (AW-123456789/AbC-dEfGhIj). Each order sends one conversion with its value and order number; with ad_user_data consent the order email and phone go along as enhanced conversion data (hashed by Google's tag before sending)."
+msgstr ""
+
+#: incl/customizer/class-lafka-customizer-analytics.php:533
+msgid "Google Search Console verification token"
+msgstr ""
+
+#: incl/customizer/class-lafka-customizer-analytics.php:534
+msgid "Paste only the content=\"...\" value from the HTML verification snippet Google gave you (not the full meta tag). Required once to claim the property in search.google.com/search-console — after verification you can leave it set or remove it."
+msgstr ""
+
+#: incl/customizer/class-lafka-customizer-analytics.php:549
+msgid "Consent + privacy"
+msgstr ""
+
+#: incl/customizer/class-lafka-customizer-analytics.php:550
+msgid "Google Consent Mode v2 defaults emit BEFORE any tag fires so the site is compliant from the first byte. The banner appears at the bottom of the viewport until the visitor Accepts, Rejects, or sets per-category preferences. Defaults are denied (most-restrictive) — set to granted only if your legal review allows opt-out-rather-than-opt-in (some EU jurisdictions do not)."
+msgstr ""
+
+#: incl/customizer/class-lafka-customizer-analytics.php:568
+msgid "Show consent banner"
+msgstr ""
+
+#: incl/customizer/class-lafka-customizer-analytics.php:569
+msgid "When ON, the banner appears for every new visitor until they decide. When OFF, the plugin still emits the Consent Mode v2 default state (still safer than no consent at all) but never asks for an explicit decision."
+msgstr ""
+
+#: incl/customizer/class-lafka-customizer-analytics.php:576
+msgid "Denied (most-restrictive default)"
+msgstr ""
+
+#: incl/customizer/class-lafka-customizer-analytics.php:577
+msgid "Granted (opt-out flow — check your jurisdiction first)"
+msgstr ""
+
+#: incl/customizer/class-lafka-customizer-analytics.php:582
+msgid "Default state: analytics_storage"
+msgstr ""
+
+#: incl/customizer/class-lafka-customizer-analytics.php:583
 msgid "GA4 / Clarity / behavioural-analytics storage. Required for any usage metric. Defaults to denied (Consent Mode v2 baseline)."
 msgstr ""
 
-#: incl/customizer/class-lafka-customizer-analytics.php:420
+#: incl/customizer/class-lafka-customizer-analytics.php:586
 msgid "Default state: ad_storage"
 msgstr ""
 
-#: incl/customizer/class-lafka-customizer-analytics.php:421
+#: incl/customizer/class-lafka-customizer-analytics.php:587
 msgid "Cookies/identifiers used for advertising (Meta Pixel, Google Ads). Defaults to denied."
 msgstr ""
 
-#: incl/customizer/class-lafka-customizer-analytics.php:424
+#: incl/customizer/class-lafka-customizer-analytics.php:590
 msgid "Default state: ad_user_data"
 msgstr ""
 
-#: incl/customizer/class-lafka-customizer-analytics.php:425
+#: incl/customizer/class-lafka-customizer-analytics.php:591
 msgid "Sending user data to Google for advertising. Required for Enhanced Conversions. Defaults to denied."
 msgstr ""
 
-#: incl/customizer/class-lafka-customizer-analytics.php:428
+#: incl/customizer/class-lafka-customizer-analytics.php:594
 msgid "Default state: ad_personalization"
 msgstr ""
 
-#: incl/customizer/class-lafka-customizer-analytics.php:429
+#: incl/customizer/class-lafka-customizer-analytics.php:595
 msgid "Personalised ads / remarketing audiences. Defaults to denied."
 msgstr ""
 
-#: incl/customizer/class-lafka-customizer-analytics.php:465
+#: incl/customizer/class-lafka-customizer-analytics.php:633
 msgid "Banner body text"
 msgstr ""
 
-#: incl/customizer/class-lafka-customizer-analytics.php:466
+#: incl/customizer/class-lafka-customizer-analytics.php:634
 msgid "Shown above the Accept / Reject / Settings buttons. Inline markup (a, strong, em) is allowed; everything else is stripped."
 msgstr ""
 
-#: incl/customizer/class-lafka-customizer-analytics.php:475
+#: incl/customizer/class-lafka-customizer-analytics.php:643
 msgid "Accept button label"
 msgstr ""
 
-#: incl/customizer/class-lafka-customizer-analytics.php:476
+#: incl/customizer/class-lafka-customizer-analytics.php:644
 msgid "Primary action — grants all categories."
 msgstr ""
 
-#: incl/customizer/class-lafka-customizer-analytics.php:480
+#: incl/customizer/class-lafka-customizer-analytics.php:648
 msgid "Reject button label"
 msgstr ""
 
-#: incl/customizer/class-lafka-customizer-analytics.php:481
+#: incl/customizer/class-lafka-customizer-analytics.php:649
 msgid "Secondary action — keeps everything denied."
 msgstr ""
 
-#: incl/customizer/class-lafka-customizer-analytics.php:485
+#: incl/customizer/class-lafka-customizer-analytics.php:653
 msgid "Settings button label"
 msgstr ""
 
-#: incl/customizer/class-lafka-customizer-analytics.php:486
+#: incl/customizer/class-lafka-customizer-analytics.php:654
 msgid "Opens the per-category toggle modal."
 msgstr ""
 
-#: incl/customizer/class-lafka-customizer-analytics.php:519
+#: incl/customizer/class-lafka-customizer-analytics.php:688
 msgid "Insights (first-party)"
 msgstr ""
 
-#: incl/customizer/class-lafka-customizer-analytics.php:520
+#: incl/customizer/class-lafka-customizer-analytics.php:689
 msgid "Lafka Insights measures your ordering funnel on your own site — no Google account, no third party. Turn the module on under Lafka → Modules; read the results under Lafka → Insights. These settings only apply while the module is on."
 msgstr ""
 
-#: incl/customizer/class-lafka-customizer-analytics.php:537
+#: incl/customizer/class-lafka-customizer-analytics.php:707
 msgid "Consent mode"
 msgstr ""
 
-#: incl/customizer/class-lafka-customizer-analytics.php:538
+#: incl/customizer/class-lafka-customizer-analytics.php:708
 msgid "Aggregate (default): cookieless and anonymous — visits are told apart with a daily-rotating, never-stored hash; browsers sending Global Privacy Control or Do Not Track are skipped; no cookie banner is needed for it. Consent required: nothing is measured until the visitor allows analytics in the consent banner (keep the banner on), and WooCommerce order attribution waits for consent too. Off: nothing is collected; existing reports stay readable."
 msgstr ""
 
-#: incl/customizer/class-lafka-customizer-analytics.php:542
+#: incl/customizer/class-lafka-customizer-analytics.php:712
 msgid "Aggregate — cookieless, no consent needed"
 msgstr ""
 
-#: incl/customizer/class-lafka-customizer-analytics.php:543
+#: incl/customizer/class-lafka-customizer-analytics.php:713
 msgid "Consent required — wait for the banner"
 msgstr ""
 
-#: incl/customizer/class-lafka-customizer-analytics.php:544
+#: incl/customizer/class-lafka-customizer-analytics.php:714
 msgid "Off — collect nothing"
 msgstr ""
 
-#: incl/customizer/class-lafka-customizer-analytics.php:560
+#: incl/customizer/class-lafka-customizer-analytics.php:731
 msgid "This site is behind Cloudflare"
 msgstr ""
 
-#: incl/customizer/class-lafka-customizer-analytics.php:561
+#: incl/customizer/class-lafka-customizer-analytics.php:732
 msgid "Tick only when all traffic reaches the site through the Cloudflare proxy (orange cloud). Insights then reads the real visitor IP from the CF-Connecting-IP header to tell visits apart; the IP is never stored. Leave unticked otherwise — the header could be forged."
 msgstr ""
 
@@ -3525,16 +3736,10 @@ msgid "Variation options without their own order (no custom term order set under
 msgstr ""
 
 #: incl/customizer/class-lafka-customizer-pdp.php:163
-#: incl/metaboxes.php:390
-#: incl/metaboxes.php:397
-#: incl/metaboxes.php:406
 msgid "Yes"
 msgstr ""
 
 #: incl/customizer/class-lafka-customizer-pdp.php:164
-#: incl/metaboxes.php:392
-#: incl/metaboxes.php:399
-#: incl/metaboxes.php:408
 msgid "No"
 msgstr ""
 
@@ -3986,6 +4191,273 @@ msgstr ""
 msgid "Enable social share links on single product pages."
 msgstr ""
 
+#: incl/deals/class-lafka-deals-admin.php:45
+msgid "Deal slots"
+msgstr ""
+
+#: incl/deals/class-lafka-deals-admin.php:99
+msgid "Pizza 1"
+msgstr ""
+
+#: incl/deals/class-lafka-deals-admin.php:102
+msgid "Categories"
+msgstr ""
+
+#: incl/deals/class-lafka-deals-admin.php:103
+msgid "Any item in these categories"
+msgstr ""
+
+#: incl/deals/class-lafka-deals-admin.php:112
+msgid "Also these items"
+msgstr ""
+
+#: incl/deals/class-lafka-deals-admin.php:113
+msgid "Never these items"
+msgstr ""
+
+#: incl/deals/class-lafka-deals-admin.php:119
+msgid "Search for an item…"
+msgstr ""
+
+#: incl/deals/class-lafka-deals-admin.php:132
+msgid "Lock options"
+msgstr ""
+
+#: incl/deals/class-lafka-deals-admin.php:133
+msgid "e.g. Size: Medium"
+msgstr ""
+
+#: incl/deals/class-lafka-deals-admin.php:144
+msgid "Rules"
+msgstr ""
+
+#: incl/deals/class-lafka-deals-admin.php:146
+msgid "Premium items pay the difference over the cheapest choice"
+msgstr ""
+
+#: incl/deals/class-lafka-deals-admin.php:148
+msgid "Remove slot"
+msgstr ""
+
+#: incl/deals/class-lafka-deals-admin.php:175
+msgid "The deal price is this product's Regular / Sale price (General tab). Each slot is one item the customer chooses; each chosen item becomes its own cart line with its own options, and the deal price is split across them. Extra toppings and other add-ons are charged on top."
+msgstr ""
+
+#: incl/deals/class-lafka-deals-admin.php:180
+msgid "Item 1"
+msgstr ""
+
+#: incl/deals/class-lafka-deals-admin.php:180
+msgid "Item 2"
+msgstr ""
+
+#: incl/deals/class-lafka-deals-admin.php:189
+msgid "Add slot"
+msgstr ""
+
+#: incl/deals/class-lafka-deals-admin.php:211
+msgid "Runs on"
+msgstr ""
+
+#: incl/deals/class-lafka-deals-admin.php:218
+msgid "Leave every day unticked to run it every day. Outside its days and dates the deal page says when it runs, and a deal left in a cart is removed."
+msgstr ""
+
+#: incl/deals/class-lafka-deals-admin.php:222
+msgid "First day (optional)"
+msgstr ""
+
+#: incl/deals/class-lafka-deals-admin.php:223
+msgid "Last day (optional)"
+msgstr ""
+
+#: incl/deals/class-lafka-deals-builder.php:78
+#: incl/deals/class-lafka-deals-builder.php:242
+msgid "This deal is not available right now."
+msgstr ""
+
+#. translators: %s: when the deal runs, e.g. "every Tuesday · until October 31".
+#: incl/deals/class-lafka-deals-builder.php:81
+#, php-format
+msgid "It runs %s."
+msgstr ""
+
+#. translators: %s: when the deal runs.
+#: incl/deals/class-lafka-deals-builder.php:88
+#, php-format
+msgid "Runs %s."
+msgstr ""
+
+#. translators: %s: slot label, e.g. "Pizza 1".
+#: incl/deals/class-lafka-deals-builder.php:110
+#: incl/deals/class-lafka-deals-builder.php:152
+#: incl/deals/class-lafka-deals-builder.php:197
+#, php-format
+msgid "Choose %s"
+msgstr ""
+
+#. translators: %s: deal total, e.g. "$21.50".
+#: incl/deals/class-lafka-deals-builder.php:112
+#, php-format
+msgid "Add to order · %s"
+msgstr ""
+
+#: incl/deals/class-lafka-deals-builder.php:114
+msgid "Adding…"
+msgstr ""
+
+#: incl/deals/class-lafka-deals-builder.php:115
+msgid "Added to your order"
+msgstr ""
+
+#: incl/deals/class-lafka-deals-builder.php:116
+#: incl/deals/class-lafka-deals-builder.php:589
+#: incl/observability/class-lafka-log.php:480
+msgid "Something went wrong. Please try again."
+msgstr ""
+
+#. translators: 1: number of items, 2: list of slot labels.
+#: incl/deals/class-lafka-deals-builder.php:127
+#, php-format
+msgid "Choose %1$d item: %2$s. Extras are added to the price."
+msgid_plural "Choose %1$d items: %2$s. Extras are added to the price."
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %s: amount, e.g. "$8.97".
+#: incl/deals/class-lafka-deals-builder.php:134
+#, php-format
+msgid "Save up to %s."
+msgstr ""
+
+#: incl/deals/class-lafka-deals-builder.php:177
+msgid "Choose"
+msgstr ""
+
+#: incl/deals/class-lafka-deals-builder.php:203
+msgid "No thanks"
+msgstr ""
+
+#: incl/deals/class-lafka-deals-builder.php:286
+msgid "That item is not part of this deal."
+msgstr ""
+
+#: incl/deals/class-lafka-deals-builder.php:297
+msgid "Choose…"
+msgstr ""
+
+#. translators: %s: slot label.
+#: incl/deals/class-lafka-deals-builder.php:363
+#, php-format
+msgid "%s: that item is not part of this deal."
+msgstr ""
+
+#. translators: %s: amount of extras.
+#: incl/deals/class-lafka-deals-builder.php:515
+#, php-format
+msgid "incl. %s extras"
+msgstr ""
+
+#. translators: %s: amount saved.
+#: incl/deals/class-lafka-deals-builder.php:519
+#, php-format
+msgid "you save %s"
+msgstr ""
+
+#: incl/deals/class-lafka-deals-builder.php:547
+msgid "We are closed for orders right now."
+msgstr ""
+
+#. translators: %s: list of slot labels still to choose.
+#: incl/deals/class-lafka-deals-builder.php:554
+#, php-format
+msgid "Please choose: %s."
+msgstr ""
+
+#. translators: %s: deal name.
+#: incl/deals/class-lafka-deals-cart.php:198
+#, php-format
+msgid "\"%s\" is no longer available as chosen and was removed from your order."
+msgstr ""
+
+#: incl/deals/class-lafka-deals-cart.php:302
+#: incl/deals/class-lafka-deals-cart.php:324
+#: incl/promotions/class-lafka-promotions.php:449
+msgid "Deal"
+msgstr ""
+
+#: incl/deals/class-lafka-deals-cart.php:340
+msgid "Choose the items of this deal on its page."
+msgstr ""
+
+#: incl/deals/class-lafka-deals.php:86
+msgid "Deal (customer picks the items)"
+msgstr ""
+
+#. translators: %d: slot number.
+#: incl/deals/class-lafka-deals.php:184
+#, php-format
+msgid "Item %d"
+msgstr ""
+
+#. translators: %s: weekdays, e.g. "Tuesday and Thursday".
+#: incl/deals/class-lafka-deals.php:397
+#, php-format
+msgid "every %s"
+msgstr ""
+
+#. translators: %s: date.
+#: incl/deals/class-lafka-deals.php:402
+#, php-format
+msgid "from %s"
+msgstr ""
+
+#. translators: %s: date.
+#: incl/deals/class-lafka-deals.php:406
+#, php-format
+msgid "until %s"
+msgstr ""
+
+#: incl/deals/class-wc-product-lafka-deal.php:53
+msgid "Build your deal"
+msgstr ""
+
+#: incl/deals/class-wc-product-lafka-deal.php:62
+msgid "Add to order"
+msgstr ""
+
+#: incl/geo/class-lafka-geocoder.php:127
+msgid "Address lookup is only available on this site."
+msgstr ""
+
+#: incl/geo/class-lafka-geocoder.php:130
+msgid "Too many address lookups. Please place the pin on the map instead."
+msgstr ""
+
+#: incl/geo/class-lafka-geocoder.php:152
+msgid "Enter an address, or a latitude and longitude."
+msgstr ""
+
+#: incl/geo/class-lafka-geocoder.php:341
+msgid "The address lookup service could not be reached. Please place the pin on the map."
+msgstr ""
+
+#: incl/geo/class-lafka-geocoder.php:345
+msgid "The address lookup service is busy. Please place the pin on the map."
+msgstr ""
+
+#: incl/geo/lafka-maps-assets.php:125
+msgid "No address found. Place the pin on the map."
+msgstr ""
+
+#: incl/geo/lafka-maps-assets.php:126
+msgid "The address lookup did not answer. Place the pin on the map."
+msgstr ""
+
+#: incl/geo/lafka-maps-assets.php:127
+msgid "Your location is not available. Place the pin on the map."
+msgstr ""
+
 #: incl/insights/class-lafka-email-weekly-insights.php:37
 msgid "Weekly Insights"
 msgstr ""
@@ -4028,9 +4500,6 @@ msgstr ""
 
 #: incl/insights/class-lafka-email-weekly-insights.php:158
 #: incl/observability/class-lafka-email-error-digest.php:115
-#: shortcodes/partials/contact-form.php:17
-#: shortcodes/partials/contact-form.php:285
-#: shortcodes/partials/contact-form.php:287
 msgid "Subject"
 msgstr ""
 
@@ -4676,7 +5145,6 @@ msgid "Special Instructions"
 msgstr ""
 
 #: incl/kitchen-display/includes/class-lafka-kds-frontend.php:136
-#: incl/metaboxes.php:708
 #: incl/nutrition/admin/views/html-nutrition-panel.php:31
 #: incl/nutrition/templates/nutrition-info.php:27
 msgid "Allergens"
@@ -4959,10 +5427,6 @@ msgstr ""
 msgid "Share"
 msgstr ""
 
-#: incl/map-shortcode/shortcode-lafka-shipping-areas.php:59
-msgid "Lafka shipping-areas shortcode: set a Google Maps API key under WooCommerce → Lafka Shipping Settings to render the delivery-zone map."
-msgstr ""
-
 #: incl/metaboxes.php:76
 msgid "Page Layout Options"
 msgstr ""
@@ -4975,303 +5439,153 @@ msgstr ""
 msgid "Page Layout Options is disabled for this page, because the page is set as Shop page."
 msgstr ""
 
-#: incl/metaboxes.php:137
+#: incl/metaboxes.php:129
 msgid "You can define layout specific options here."
 msgstr ""
 
-#: incl/metaboxes.php:140
+#: incl/metaboxes.php:132
 msgid "Choose Page Layout"
 msgstr ""
 
-#: incl/metaboxes.php:144
+#: incl/metaboxes.php:136
 msgid "Full-Width"
 msgstr ""
 
-#: incl/metaboxes.php:146
+#: incl/metaboxes.php:138
 msgid "Boxed"
 msgstr ""
 
-#: incl/metaboxes.php:149
+#: incl/metaboxes.php:141
 msgid "Footer style"
 msgstr ""
 
-#: incl/metaboxes.php:153
+#: incl/metaboxes.php:145
 msgid "Standard"
 msgstr ""
 
-#: incl/metaboxes.php:155
+#: incl/metaboxes.php:147
 msgid "Reveal"
 msgstr ""
 
-#: incl/metaboxes.php:164
+#: incl/metaboxes.php:156
 #: incl/woocommerce-metaboxes.php:108
 #: incl/woocommerce-metaboxes.php:231
 msgid "Header Style"
 msgstr ""
 
-#: incl/metaboxes.php:173
+#: incl/metaboxes.php:165
 #: incl/woocommerce-metaboxes.php:110
 #: incl/woocommerce-metaboxes.php:142
 msgid "Normal"
 msgstr ""
 
-#: incl/metaboxes.php:177
+#: incl/metaboxes.php:169
 #: incl/woocommerce-metaboxes.php:111
 #: incl/woocommerce-metaboxes.php:143
 msgid "Transparent - Light Scheme"
 msgstr ""
 
-#: incl/metaboxes.php:178
+#: incl/metaboxes.php:170
 #: incl/woocommerce-metaboxes.php:112
 #: incl/woocommerce-metaboxes.php:144
 msgid "Transparent - Dark Scheme"
 msgstr ""
 
-#: incl/metaboxes.php:215
-msgid "Manage Images"
-msgstr ""
-
-#: incl/metaboxes.php:215
-msgid "Select Title Background Image"
-msgstr ""
-
-#: incl/metaboxes.php:215
-msgid "Select"
-msgstr ""
-
-#: incl/metaboxes.php:218
+#: incl/metaboxes.php:183
 msgid "Page Subtitle"
 msgstr ""
 
-#: incl/metaboxes.php:220
-#: incl/woocommerce-metaboxes.php:123
-#: incl/woocommerce-metaboxes.php:259
-msgid "Title alignment"
-msgstr ""
-
-#: incl/metaboxes.php:302
+#: incl/metaboxes.php:254
 msgid "Page Structure Options"
 msgstr ""
 
-#: incl/metaboxes.php:318
+#: incl/metaboxes.php:270
 msgid "Page Structure Options are disabled for this page, because the page is set as Blog page from Settings->Reading."
 msgstr ""
 
-#: incl/metaboxes.php:323
+#: incl/metaboxes.php:275
 msgid "Page Structure Options are disabled for this page, because the page is set as Shop page."
 msgstr ""
 
-#: incl/metaboxes.php:375
+#: incl/metaboxes.php:315
 msgid "You can configure the page structure, using this options."
 msgstr ""
 
-#: incl/metaboxes.php:379
+#: incl/metaboxes.php:319
 msgid "Choose Top Menu"
 msgstr ""
 
-#: incl/metaboxes.php:388
-msgid "Show Title"
-msgstr ""
-
-#: incl/metaboxes.php:395
-msgid "Show Breadcrumb"
-msgstr ""
-
-#: incl/metaboxes.php:404
-msgid "Featured Image in Single Post View"
-msgstr ""
-
-#: incl/metaboxes.php:412
+#: incl/metaboxes.php:328
 msgid "Main Sidebar"
 msgstr ""
 
-#: incl/metaboxes.php:414
-#: incl/metaboxes.php:451
+#: incl/metaboxes.php:330
+#: incl/metaboxes.php:367
 msgid "Show"
 msgstr ""
 
-#: incl/metaboxes.php:416
-#: incl/metaboxes.php:453
+#: incl/metaboxes.php:332
+#: incl/metaboxes.php:369
 msgid "Hide"
 msgstr ""
 
-#: incl/metaboxes.php:425
-#: incl/metaboxes.php:443
-#: incl/metaboxes.php:463
+#: incl/metaboxes.php:341
+#: incl/metaboxes.php:359
+#: incl/metaboxes.php:379
 msgid "default"
 msgstr ""
 
-#: incl/metaboxes.php:441
+#: incl/metaboxes.php:357
 msgid "Main Sidebar Position"
 msgstr ""
 
-#: incl/metaboxes.php:444
+#: incl/metaboxes.php:360
 #: incl/woocommerce-metaboxes.php:125
 #: incl/woocommerce-metaboxes.php:148
 msgid "Left"
 msgstr ""
 
-#: incl/metaboxes.php:445
+#: incl/metaboxes.php:361
 msgid "Right"
 msgstr ""
 
-#: incl/metaboxes.php:449
+#: incl/metaboxes.php:365
 msgid "Off Canvas Sidebar"
 msgstr ""
 
-#: incl/metaboxes.php:553
-msgid "Video Background"
-msgstr ""
-
-#: incl/metaboxes.php:569
-msgid "Video Background options are disabled for this page, because the page is set as Blog page from Settings->Reading."
-msgstr ""
-
-#: incl/metaboxes.php:575
-msgid "Video Background options are disabled for this page, because the page is set as Shop page."
-msgstr ""
-
-#: incl/metaboxes.php:594
-msgid "Define the video background options for this page/post."
-msgstr ""
-
-#: incl/metaboxes.php:597
-msgid "YouTube video URL"
-msgstr ""
-
-#: incl/metaboxes.php:651
-msgid "Menu Entry Fields"
-msgstr ""
-
-#: incl/metaboxes.php:669
-msgid "The currency for all price fields will be the one set up in WooCommerce"
-msgstr ""
-
-#: incl/metaboxes.php:672
-msgid "Item Price"
-msgstr ""
-
-#: incl/metaboxes.php:677
-msgid "Item Weight"
-msgstr ""
-
-#: incl/metaboxes.php:681
-msgid "Units (g)"
-msgstr ""
-
-#: incl/metaboxes.php:685
-msgid "Fill up to three option->price pairs. E.g. Small -> +5, Big -> 10"
-msgstr ""
-
-#: incl/metaboxes.php:690
-msgid "Option"
-msgstr ""
-
-#: incl/metaboxes.php:703
-msgid "Ingredients"
-msgstr ""
-
-#: incl/metaboxes.php:713
-msgid "Nutrition Information:"
-msgstr ""
-
-#: incl/metaboxes.php:724
-msgid "Menu Entry External Links:"
-msgstr ""
-
-#: incl/metaboxes.php:726
-msgid "First Button Title"
-msgstr ""
-
-#: incl/metaboxes.php:731
-msgid "First Button Url"
-msgstr ""
-
-#: incl/metaboxes.php:735
-msgid "Short Description"
-msgstr ""
-
-#: incl/metaboxes.php:827
-msgid "Featured Image"
-msgstr ""
-
-#: incl/metaboxes.php:875
-msgid "Remove featured image"
-msgstr ""
-
-#: incl/metaboxes.php:878
-msgid "Select Featured Image"
-msgstr ""
-
-#: incl/metaboxes.php:878
-msgid "Set Featured Image"
-msgstr ""
-
-#: incl/metaboxes.php:878
-msgid "Set featured image"
-msgstr ""
-
-#: incl/metaboxes.php:928
-msgid "Menu Entry Options"
-msgstr ""
-
-#: incl/metaboxes.php:959
-msgid "Custom Content:"
-msgstr ""
-
-#: incl/metaboxes.php:964
-msgid "Don't use the menu entry gallery and all fields. Use only the content."
-msgstr ""
-
-#: incl/metaboxes.php:966
-msgid "Menu entry gallery will appear as:"
-msgstr ""
-
-#: incl/metaboxes.php:969
-msgid "Flex Slider"
-msgstr ""
-
-#: incl/metaboxes.php:971
-msgid "Cloud Zoom"
-msgstr ""
-
-#: incl/metaboxes.php:973
-msgid "Image List"
-msgstr ""
-
-#: incl/metaboxes.php:1034
+#: incl/metaboxes.php:453
 msgid "Product Video"
 msgstr ""
 
-#: incl/metaboxes.php:1063
+#: incl/metaboxes.php:482
 msgid "Product Video to be displayed on the product page (YouTube, Vimeo, Self-hosted)."
 msgstr ""
 
-#: incl/metaboxes.php:1066
+#: incl/metaboxes.php:485
 msgid "Video URL"
 msgstr ""
 
-#: incl/metaboxes.php:1120
+#: incl/metaboxes.php:539
 msgid "Product Gallery Type"
 msgstr ""
 
-#: incl/metaboxes.php:1148
+#: incl/metaboxes.php:567
 msgid "Use Theme Options Setting"
 msgstr ""
 
-#: incl/metaboxes.php:1149
+#: incl/metaboxes.php:568
 msgid "WooCommerce Default Gallery"
 msgstr ""
 
-#: incl/metaboxes.php:1150
+#: incl/metaboxes.php:569
 msgid "Image List Gallery"
 msgstr ""
 
-#: incl/metaboxes.php:1151
+#: incl/metaboxes.php:570
 msgid "Mosaic Images Gallery"
 msgstr ""
 
-#: incl/metaboxes.php:1153
+#: incl/metaboxes.php:572
 msgid "Choose between default WooCommerce gallery and image list gallery."
 msgstr ""
 
@@ -5558,12 +5872,8 @@ msgid_plural "%d problems were recorded since the last summary:"
 msgstr[0] ""
 msgstr[1] ""
 
-#: incl/observability/class-lafka-log.php:480
-msgid "Something went wrong. Please try again."
-msgstr ""
-
 #: incl/order-hours/class-lafka-order-hours.php:190
-#: incl/seo/lafka-llms-txt.php:239
+#: incl/seo/lafka-llms-txt.php:247
 msgid "Closed"
 msgstr ""
 
@@ -5642,89 +5952,89 @@ msgstr ""
 msgid "Lafka Order Hours"
 msgstr ""
 
-#: incl/order-hours/settings/class-lafka-order-hours-admin.php:63
+#: incl/order-hours/settings/class-lafka-order-hours-admin.php:81
 msgid "Message"
 msgstr ""
 
-#: incl/order-hours/settings/class-lafka-order-hours-admin.php:70
+#: incl/order-hours/settings/class-lafka-order-hours-admin.php:88
 msgid "Closed Store Message"
 msgstr ""
 
-#: incl/order-hours/settings/class-lafka-order-hours-admin.php:81
+#: incl/order-hours/settings/class-lafka-order-hours-admin.php:99
 msgid "Disable Add to Cart"
 msgstr ""
 
-#: incl/order-hours/settings/class-lafka-order-hours-admin.php:92
+#: incl/order-hours/settings/class-lafka-order-hours-admin.php:110
 msgid "Countdown"
 msgstr ""
 
-#: incl/order-hours/settings/class-lafka-order-hours-admin.php:103
+#: incl/order-hours/settings/class-lafka-order-hours-admin.php:121
 msgid "Handle All Branches Closed"
 msgstr ""
 
-#: incl/order-hours/settings/class-lafka-order-hours-admin.php:109
+#: incl/order-hours/settings/class-lafka-order-hours-admin.php:127
 msgid "Enable All Branches Closed Message"
 msgstr ""
 
-#: incl/order-hours/settings/class-lafka-order-hours-admin.php:119
+#: incl/order-hours/settings/class-lafka-order-hours-admin.php:137
 msgid "All Branches Closed Message"
 msgstr ""
 
-#: incl/order-hours/settings/class-lafka-order-hours-admin.php:137
+#: incl/order-hours/settings/class-lafka-order-hours-admin.php:155
 msgid "Turn-on Force Override"
 msgstr ""
 
-#: incl/order-hours/settings/class-lafka-order-hours-admin.php:195
+#: incl/order-hours/settings/class-lafka-order-hours-admin.php:213
 msgid "Cache Management"
 msgstr ""
 
-#: incl/order-hours/settings/class-lafka-order-hours-admin.php:202
+#: incl/order-hours/settings/class-lafka-order-hours-admin.php:220
 msgid "Enable Shopping Cart Cache Clearing"
 msgstr ""
 
-#: incl/order-hours/settings/class-lafka-order-hours-admin.php:225
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:53
+#: incl/order-hours/settings/class-lafka-order-hours-admin.php:243
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:49
 msgid "Settings Saved"
 msgstr ""
 
-#: incl/order-hours/settings/class-lafka-order-hours-admin.php:240
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:92
+#: incl/order-hours/settings/class-lafka-order-hours-admin.php:258
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:88
 msgid "Save Settings"
 msgstr ""
 
-#: incl/order-hours/settings/class-lafka-order-hours-admin.php:249
+#: incl/order-hours/settings/class-lafka-order-hours-admin.php:267
 msgid "WooCommerce main store current time"
 msgstr ""
 
-#: incl/order-hours/settings/class-lafka-order-hours-admin.php:266
+#: incl/order-hours/settings/class-lafka-order-hours-admin.php:284
 msgid "Enter message that will appear below \"Add to Cart\" and instead of \"Checkout\" and \"Place Order\" links."
 msgstr ""
 
-#: incl/order-hours/settings/class-lafka-order-hours-admin.php:279
+#: incl/order-hours/settings/class-lafka-order-hours-admin.php:297
 msgid "Disable add to cart when closed for orders."
 msgstr ""
 
-#: incl/order-hours/settings/class-lafka-order-hours-admin.php:292
+#: incl/order-hours/settings/class-lafka-order-hours-admin.php:310
 msgid "Countdown the time to the next opening. Shown next to the closed store message."
 msgstr ""
 
-#: incl/order-hours/settings/class-lafka-order-hours-admin.php:293
+#: incl/order-hours/settings/class-lafka-order-hours-admin.php:311
 msgid "NOTE: Countdown will not be shown if shop status is forced. Countdown will not take into account the vacation schedule. "
 msgstr ""
 
-#: incl/order-hours/settings/class-lafka-order-hours-admin.php:306
+#: incl/order-hours/settings/class-lafka-order-hours-admin.php:324
 msgid "Show message in the location confirmation popup when all branches are closed and disable branch selection."
 msgstr ""
 
-#: incl/order-hours/settings/class-lafka-order-hours-admin.php:319
+#: incl/order-hours/settings/class-lafka-order-hours-admin.php:337
 msgid "The message when all branches are closed."
 msgstr ""
 
-#: incl/order-hours/settings/class-lafka-order-hours-admin.php:388
+#: incl/order-hours/settings/class-lafka-order-hours-admin.php:406
 msgid "Shopping Cart cache will be cleared on each request."
 msgstr ""
 
-#: incl/order-hours/settings/class-lafka-order-hours-admin.php:389
+#: incl/order-hours/settings/class-lafka-order-hours-admin.php:407
 msgid "This will ensure that the presence of \"Checkout\" button in the cart is in sync with store status. Cart content stays intact."
 msgstr ""
 
@@ -5820,43 +6130,39 @@ msgstr ""
 msgid "%s%% Off"
 msgstr ""
 
-#: incl/promotions/class-lafka-promotions.php:107
+#: incl/promotions/class-lafka-promotions.php:129
 msgid "Buy 1, get 1 free"
 msgstr ""
 
 #. translators: %s: discount percentage, e.g. 50
-#: incl/promotions/class-lafka-promotions.php:110
+#: incl/promotions/class-lafka-promotions.php:132
 #, php-format
 msgid "Buy 1, get 1 %s%% off"
 msgstr ""
 
 #. translators: 1: minimum in store currency, 2: remaining amount
-#: incl/promotions/class-lafka-promotions.php:334
+#: incl/promotions/class-lafka-promotions.php:364
 #, php-format
 msgid "Delivery is available on orders over %1$s. Add %2$s more to your cart for delivery."
 msgstr ""
 
 #. translators: 1: the deal, e.g. "Buy 1, get 1 50% off", 2: amount saved, e.g. "$2.00"
-#: incl/promotions/class-lafka-promotions.php:408
+#: incl/promotions/class-lafka-promotions.php:445
 #, php-format
 msgid "%1$s — saved %2$s"
 msgstr ""
 
-#: incl/promotions/class-lafka-promotions.php:412
-msgid "Deal"
-msgstr ""
-
 #. translators: %s: amount saved in store currency
-#: incl/promotions/class-lafka-promotions.php:437
+#: incl/promotions/class-lafka-promotions.php:474
 #, php-format
 msgid "You save %s"
 msgstr ""
 
-#: incl/promotions/class-lafka-promotions.php:521
+#: incl/promotions/class-lafka-promotions.php:558
 msgid "Promotion"
 msgstr ""
 
-#: incl/promotions/class-lafka-promotions.php:529
+#: incl/promotions/class-lafka-promotions.php:566
 msgid "Close banner"
 msgstr ""
 
@@ -5867,7 +6173,7 @@ msgstr ""
 #: incl/schema/lafka-schema-breadcrumb.php:47
 #: incl/schema/lafka-schema-breadcrumb.php:69
 #: incl/schema/lafka-schema-breadcrumb.php:81
-#: incl/seo/lafka-llms-txt.php:399
+#: incl/seo/lafka-llms-txt.php:407
 msgid "Menu"
 msgstr ""
 
@@ -5969,102 +6275,102 @@ msgid "Tell Bing and other IndexNow search engines within minutes when menu item
 msgstr ""
 
 #. translators: 1: restaurant name, 2: cuisine list, 3: city, region.
-#: incl/seo/lafka-llms-txt.php:185
+#: incl/seo/lafka-llms-txt.php:193
 #, php-format
 msgid "%1$s serves %2$s in %3$s, with online ordering on this website."
 msgstr ""
 
 #. translators: 1: restaurant name, 2: city, region.
-#: incl/seo/lafka-llms-txt.php:189
+#: incl/seo/lafka-llms-txt.php:197
 #, php-format
 msgid "%1$s is a restaurant in %2$s, with online ordering on this website."
 msgstr ""
 
-#: incl/seo/lafka-llms-txt.php:223
+#: incl/seo/lafka-llms-txt.php:231
 msgid "Map"
 msgstr ""
 
-#: incl/seo/lafka-llms-txt.php:229
+#: incl/seo/lafka-llms-txt.php:237
 msgid "Location & contact"
 msgstr ""
 
 #. translators: %s: timezone identifier.
-#: incl/seo/lafka-llms-txt.php:244
+#: incl/seo/lafka-llms-txt.php:252
 #, php-format
 msgid "Times are local (%s)."
 msgstr ""
 
-#: incl/seo/lafka-llms-txt.php:259
+#: incl/seo/lafka-llms-txt.php:267
 msgid "How to order"
 msgstr ""
 
-#: incl/seo/lafka-llms-txt.php:262
+#: incl/seo/lafka-llms-txt.php:270
 msgid "Online"
 msgstr ""
 
-#: incl/seo/lafka-llms-txt.php:265
+#: incl/seo/lafka-llms-txt.php:273
 msgid "By phone"
 msgstr ""
 
-#: incl/seo/lafka-llms-txt.php:305
+#: incl/seo/lafka-llms-txt.php:313
 msgid "currently unavailable"
 msgstr ""
 
 #. translators: %s: menu category name.
-#: incl/seo/lafka-llms-txt.php:322
+#: incl/seo/lafka-llms-txt.php:330
 #, php-format
 msgid "%s — questions"
 msgstr ""
 
 #. translators: %s: restaurant name.
-#: incl/seo/lafka-llms-txt.php:387
+#: incl/seo/lafka-llms-txt.php:395
 #, php-format
 msgid "%s — Menu"
 msgstr ""
 
 #. translators: 1: ISO currency code, 2: date.
-#: incl/seo/lafka-llms-txt.php:391
+#: incl/seo/lafka-llms-txt.php:399
 #, php-format
 msgid "Prices in %1$s. Generated %2$s from the live online menu:"
 msgstr ""
 
 #. translators: %d: number of menu items.
-#: incl/seo/lafka-llms-txt.php:408
+#: incl/seo/lafka-llms-txt.php:416
 #, php-format
 msgid "%d item"
 msgid_plural "%d items"
 msgstr[0] ""
 msgstr[1] ""
 
-#: incl/seo/lafka-llms-txt.php:425
+#: incl/seo/lafka-llms-txt.php:433
 msgid "Frequently asked questions"
 msgstr ""
 
-#: incl/seo/lafka-llms-txt.php:434
+#: incl/seo/lafka-llms-txt.php:442
 msgid "Links"
 msgstr ""
 
-#: incl/seo/lafka-llms-txt.php:437
+#: incl/seo/lafka-llms-txt.php:445
 msgid "Order online"
 msgstr ""
 
-#: incl/seo/lafka-llms-txt.php:439
+#: incl/seo/lafka-llms-txt.php:447
 msgid "Full menu (Markdown)"
 msgstr ""
 
-#: incl/seo/lafka-llms-txt.php:440
+#: incl/seo/lafka-llms-txt.php:448
 msgid "Full menu (schema.org JSON)"
 msgstr ""
 
-#: incl/seo/lafka-llms-txt.php:442
+#: incl/seo/lafka-llms-txt.php:450
 msgid "Everything in one file"
 msgstr ""
 
-#: incl/seo/lafka-llms-txt.php:614
+#: incl/seo/lafka-llms-txt.php:641
 msgid "AI-readable menu (llms.txt)"
 msgstr ""
 
-#: incl/seo/lafka-llms-txt.php:615
+#: incl/seo/lafka-llms-txt.php:642
 msgid "Publish /llms.txt, /llms-full.txt, /menu.md and /menu.json: your hours, address and full menu with prices, in plain text for AI assistants."
 msgstr ""
 
@@ -6152,7 +6458,6 @@ msgstr ""
 
 #: incl/shipping-areas/class-lafka-shipping-areas.php:142
 #: incl/swatches/classes/class-lafka-wc-variation-swatches-admin.php:360
-#: lafka-plugin.php:1175
 msgid "Add New"
 msgstr ""
 
@@ -6221,402 +6526,386 @@ msgstr ""
 msgid "No Branch Locations found"
 msgstr ""
 
-#: incl/shipping-areas/class-lafka-shipping-areas.php:263
-msgid "There are no shipping options available. Please ensure that your address has been entered correctly, or contact us if you need any help."
+#: incl/shipping-areas/class-lafka-shipping-areas.php:249
+msgid "Finding your location…"
 msgstr ""
 
-#: incl/shipping-areas/class-lafka-shipping-areas.php:303
+#: incl/shipping-areas/class-lafka-shipping-areas.php:283
 msgid "Select time..."
 msgstr ""
 
-#: incl/shipping-areas/class-lafka-shipping-areas.php:401
+#: incl/shipping-areas/class-lafka-shipping-areas.php:381
 msgid "Order Type:"
 msgstr ""
 
-#: incl/shipping-areas/class-lafka-shipping-areas.php:407
+#: incl/shipping-areas/class-lafka-shipping-areas.php:387
 msgid "Date:"
 msgstr ""
 
-#: incl/shipping-areas/class-lafka-shipping-areas.php:413
+#: incl/shipping-areas/class-lafka-shipping-areas.php:393
 msgid "Time:"
 msgstr ""
 
-#: incl/shipping-areas/class-lafka-shipping-areas.php:421
+#: incl/shipping-areas/class-lafka-shipping-areas.php:401
 msgid "Branch:"
 msgstr ""
 
-#: incl/shipping-areas/class-lafka-shipping-areas.php:430
+#: incl/shipping-areas/class-lafka-shipping-areas.php:410
 msgid "Picked Delivery Location:"
 msgstr ""
 
-#: incl/shipping-areas/class-lafka-shipping-areas.php:471
+#: incl/shipping-areas/class-lafka-shipping-areas.php:451
 #: incl/timeslots/class-lafka-timeslots.php:623
 msgid "Time"
 msgstr ""
 
-#: incl/shipping-areas/class-lafka-shipping-areas.php:492
+#: incl/shipping-areas/class-lafka-shipping-areas.php:472
 msgid "Picked Delivery Location"
 msgstr ""
 
-#: incl/shipping-areas/class-lafka-shipping-areas.php:514
+#: incl/shipping-areas/class-lafka-shipping-areas.php:494
 msgid "Address not found! You can pinpoint Your Location on the map."
 msgstr ""
 
-#: incl/shipping-areas/class-lafka-shipping-areas.php:516
+#: incl/shipping-areas/class-lafka-shipping-areas.php:496
 msgid "Address not found! Pinpoint Your Location on the map to Continue"
 msgstr ""
 
-#: incl/shipping-areas/class-lafka-shipping-areas.php:521
+#: incl/shipping-areas/class-lafka-shipping-areas.php:501
 msgid "Pinpoint your location on the map if it's not accurately marked."
 msgstr ""
 
-#: incl/shipping-areas/class-lafka-shipping-areas.php:530
-msgid "Please Precise Your Location"
+#: incl/shipping-areas/class-lafka-shipping-areas.php:508
+msgid "Use my location"
 msgstr ""
 
-#: incl/shipping-areas/class-lafka-shipping-areas.php:638
-#: incl/shipping-areas/class-lafka-shipping-areas.php:647
-#: incl/shipping-areas/class-lafka-shipping-areas.php:656
+#: incl/shipping-areas/class-lafka-shipping-areas.php:622
+#: incl/shipping-areas/class-lafka-shipping-areas.php:631
+#: incl/shipping-areas/class-lafka-shipping-areas.php:640
 #: incl/store-api/class-lafka-store-api.php:317
 msgid "Please precise your address on the map."
 msgstr ""
 
-#: incl/shipping-areas/class-lafka-shipping-areas.php:670
+#: incl/shipping-areas/class-lafka-shipping-areas.php:653
 #: incl/store-api/class-lafka-store-api.php:329
 msgid "The selected location is outside our delivery area. Please pinpoint an address inside the delivery zone."
 msgstr ""
 
-#: incl/shipping-areas/class-lafka-shipping-areas.php:869
+#: incl/shipping-areas/class-lafka-shipping-areas.php:851
 msgid "Open delivery location with Google Maps"
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:29
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:30
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:25
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:26
 msgid "Lafka Shipping Settings"
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:69
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:65
 msgid "General"
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:70
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:66
 msgid "Advanced"
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:72
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:68
 msgid "Delivery/Pickup Date Time"
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:74
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:70
 msgid "Branch Locations"
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:155
-msgid "This is the same key as the Google Maps API key in"
-msgstr ""
-
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:156
-msgid "Customizer → Lafka — Site Settings → General"
-msgstr ""
-
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:157
-msgid "(Lafka theme); a key saved in either place is used by both."
-msgstr ""
-
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:159
-msgid "If you don't have API key, see how to "
-msgstr ""
-
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:160
-msgid "Generate Google Maps JavaScript API key"
-msgstr ""
-
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:161
-msgid "(Enable following APIs: Places API, Geocoding API, Distance Matrix API)"
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:136
+msgid "Looking up the address…"
 msgstr ""
 
 #: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:170
-msgid "Always show the delivery map"
+msgid "Optional. Without a key every map works with OpenStreetMap: delivery zones, the store and branch locations, the checkout pin and \"use my location\". With a key the maps use Google Maps instead, and the location popup suggests addresses as customers type."
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:171
-msgid "Show the delivery map when Google fail to geocode the delivery address"
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:172
+msgid "This is the same key as the Google Maps API key in the Lafka theme's Customizer; changing it in either place changes it in both. Leave it empty to remove it."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:174
+msgid "Get a Google Maps API key"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:175
+msgid "(enable the Maps JavaScript API, Places API and Geocoding API, and restrict the key to your site)."
 msgstr ""
 
 #: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:184
-msgid "A map can be shown at checkout that let users pick their precise delivery location."
+msgid "Always show the delivery map"
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:199
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:185
+msgid "Show the delivery map only when the delivery address cannot be found precisely"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:198
+msgid "A map can be shown at the classic checkout that lets customers pin their precise delivery location (drag the pin, click the map, or \"Use my location\"). The block checkout has no pin map yet, so a pin is never required there."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:213
 msgid "Make it mandatory to pick delivery address from map."
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:207
-msgid "Geocode WooCommerce Store Address on Checkout"
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:231
+msgid "Where your store is: delivery maps start here and the checkout measures delivery distances from it. It is the same point as the restaurant coordinates under WooCommerce → Settings → Restaurant (and in the search-engine schema); pinning it here changes them there."
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:208
-msgid "Pick Store Location from Map"
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:234
+msgid "Coordinates:"
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:221
-msgid "This location will be used as starting point when calculating dynamic shipping rates and as center point when using radius as shipping method restriction."
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:235
+msgid "not set"
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:223
-msgid "IMPORTANT: It is highly recommended to use the \"Pick Store Location from Map\" option whenever possible. Otherwise large amount of google traffic will be generated, which will cause slow performance and may generate additional costs."
-msgstr ""
-
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:225
-msgid "NOTE: If you have set up Branch Locations (Products -> Lafka Branch Locations) and are using them in the shipping methods, then selected Branch Location will be used for calculating the radius restriction."
-msgstr ""
-
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:258
-msgid "Try to Geocode WooCommerce Store Address and save the coordinates"
-msgstr ""
-
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:260
-msgid "Or click on the map to pinpoint the exact store location. Note that this will not change the address set in WooCommerce settings."
-msgstr ""
-
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:263
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:238
 msgid "Search an address"
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:280
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:240
+msgid "Use the WooCommerce store address"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:243
+msgid "Or click the map, or drag the pin, to the exact spot. Save the settings to keep it."
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:258
 msgid "Enable Delivery/Pickup date and time fields in the checkout page."
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:295
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:273
 msgid "Make Delivery/Pickup date and time fields mandatory."
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:352
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:330
 msgid "Branch Location entries can be managed from \"Products\" -> \"Lafka Branch Locations\""
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:353
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:331
 msgid "Manage Lafka Branch Locations"
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:368
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:346
 msgid "Enable order details form to appear on page load."
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:371
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:349
 msgid "Modal popup will be shown, allowing the user to choose order type, enter his address and select branch location where he will get or pick order from."
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:386
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:364
 msgid "Show close button on the popup with order details form."
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:389
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:367
 msgid "Allows users to enter the site without providing any details. They will be able to pick store and provide details at later stage, but will not be forced to do so. Works only if \"Different Products in Branches\" is disabled."
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:404
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:382
 msgid "Allow entering of partial addresses in the Location Confirmation Popup."
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:408
-msgid "In some areas Google doesn't resolve to the full addresses. If you operate in such areas, you can enable this option to allow entering partial addresses in the popup. The users will be able to enter the site and can precise their location at checkout."
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:386
+msgid "In some areas the address lookup does not resolve full street addresses. If you operate in such areas, enable this option to accept a street without a house number in the popup. Customers can still pin their exact location at checkout."
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:427
-msgid "Rectangle coordinates to set strict bounds where google will look to autocomplete the address. Enter the coordinates, separated by commas in the following format"
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:405
+msgid "Google Maps key only. Rectangle coordinates to set strict bounds where Google will look to autocomplete the address. Enter the coordinates, separated by commas in the following format"
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:429
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:407
 msgid "East longitude, North latitude, South latitude, West longitude"
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:431
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:409
 msgid "For example, to restrict to New York addresses, enter:"
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:443
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:421
 msgid "Choose up to 5 countries"
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:444
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:422
 msgid "Country / Region"
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:451
-msgid "Limit Google address autocomplete to up to 5 countries. This is the maximum allowed number by Google."
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:429
+msgid "Google Maps key only. Limit Google address autocomplete to up to 5 countries. This is the maximum allowed number by Google."
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:466
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:444
 msgid "Branches can have different products."
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:469
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:447
 msgid "Assigning products to branches can be done from the Products screen in WooCommerce. NOTE: Clear all transient fields from WooCommerce -> Status -> Tools to make sure related products works correctly."
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:477
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:455
 msgid "Mini Cart"
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:478
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:456
 msgid "Cart"
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:479
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:457
 msgid "Checkout"
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:480
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:458
 msgid "Shop and Category"
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:493
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:471
 msgid "Choose where to show the branch and order type info box."
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:516
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:494
 msgid "Choose what options will the customers have to choose for order type."
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:531
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:509
 msgid "Disable address fields for \"Pickup\" order type on checkout page."
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:539
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:517
 msgid "Branch Images"
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:540
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:518
 msgid "Dropdown"
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:553
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:531
 msgid "Choose how branches will be selected from the popup."
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:568
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:546
 msgid "Disable \"Use Current Location\" link."
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:571
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:549
 msgid "Remove \"Use Current Location\" link next to user address input which allows automatic location address population."
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:586
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:564
 msgid "Do not send emails to branch manager about orders."
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:589
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:567
 msgid "By default, branch managers receive emails about new, canceled and failed orders for their branches. This can be disabled with this setting."
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:624
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:575
 msgid "Draw Shipping Area"
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:722
-msgid "Google Maps API Key"
-msgstr ""
-
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:735
-msgid "Pick Precise Delivery Address from Map"
-msgstr ""
-
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:748
-msgid "Mandatory to pick address"
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:751
+msgid "Google Maps API Key (optional)"
 msgstr ""
 
 #: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:764
-msgid "Set Store Location"
+msgid "Pick Precise Delivery Address from Map"
 msgstr ""
 
 #: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:777
-msgid "Pick Store Location"
+msgid "Mandatory to pick address"
 msgstr ""
 
 #: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:793
+msgid "Store location"
+msgstr ""
+
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:808
 msgid "Enable Date Time Picker"
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:806
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:821
 msgid "Mandatory"
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:868
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:883
 msgid "Location Confirmation Popup"
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:881
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:896
 msgid "Closable Popup"
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:894
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:909
 msgid "Allow Partial Address"
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:907
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:922
 msgid "Google Autocomplete Predictions Area Bounds"
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:920
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:935
 msgid "Google Autocomplete Predictions Limit By Countries"
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:933
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:948
 msgid "Different Products in Branches"
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:946
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:961
 msgid "Show Branches Info Box in"
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:972
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:987
 msgid "Hide Address Fields"
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:985
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:1000
 msgid "Branch Selection Type"
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:998
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:1013
 msgid "Disable Current Location"
 msgstr ""
 
-#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:1011
+#: incl/shipping-areas/includes/class-lafka-shipping-areas-admin.php:1026
 msgid "Disable Order Emails to Branch Managers"
 msgstr ""
 
-#: incl/shipping-areas/lafka-store-location.php:124
-msgid "The saved store location is the old built-in placeholder (Sydney, Australia), not your store. Until you pin your store on the map, delivery distances are measured from a geocode of your WooCommerce store address."
+#: incl/shipping-areas/lafka-store-location.php:32
+msgid "The saved store location is the old built-in placeholder (Sydney, Australia), not your store. Pin your store on the map so delivery maps start there and distances are measured from it."
 msgstr ""
 
-#: incl/shipping-areas/lafka-store-location.php:127
-msgid "No store location has been pinned on the map yet. Until you pin your store, delivery distances are measured from a geocode of your WooCommerce store address."
+#: incl/shipping-areas/lafka-store-location.php:35
+msgid "Your store has no map location yet. Pin it on the map (or enter the coordinates under WooCommerce → Settings → Restaurant) so delivery maps start there and distances are measured from it."
 msgstr ""
 
-#: incl/shipping-areas/lafka-store-location.php:161
+#: incl/shipping-areas/lafka-store-location.php:66
 msgid "Delivery areas need your store location."
 msgstr ""
 
-#: incl/shipping-areas/lafka-store-location.php:164
-#: incl/shipping-areas/lafka-store-location.php:197
+#: incl/shipping-areas/lafka-store-location.php:69
+#: incl/shipping-areas/lafka-store-location.php:102
 msgid "Set the store location"
 msgstr ""
 
-#: incl/shipping-areas/lafka-store-location.php:184
+#: incl/shipping-areas/lafka-store-location.php:89
 msgid "Delivery areas have a store location"
 msgstr ""
 
-#: incl/shipping-areas/lafka-store-location.php:187
+#: incl/shipping-areas/lafka-store-location.php:92
 msgid "Delivery distances are measured from your store."
 msgstr ""
 
-#: incl/shipping-areas/lafka-store-location.php:193
+#: incl/shipping-areas/lafka-store-location.php:98
 msgid "Delivery areas need your store location"
 msgstr ""
 
-#: incl/shipping-areas/lafka-store-location.php:215
+#: incl/shipping-areas/lafka-store-location.php:120
 msgid "Lafka delivery store location"
 msgstr ""
 
@@ -6974,12 +7263,12 @@ msgstr ""
 msgid "Customer-facing explanation shown while delivery prices are withheld."
 msgstr ""
 
-#: incl/store-api/class-lafka-store-api.php:607
+#: incl/store-api/class-lafka-store-api.php:606
 #: incl/timeslots/class-lafka-timeslots.php:296
 msgid "Please select a Delivery/Pickup date."
 msgstr ""
 
-#: incl/store-api/class-lafka-store-api.php:610
+#: incl/store-api/class-lafka-store-api.php:609
 #: incl/timeslots/class-lafka-timeslots.php:330
 msgid "The selected Delivery/Pickup date is invalid. Please choose another."
 msgstr ""
@@ -7243,6 +7532,11 @@ msgstr ""
 msgid "Subtitle"
 msgstr ""
 
+#: incl/woocommerce-metaboxes.php:123
+#: incl/woocommerce-metaboxes.php:259
+msgid "Title alignment"
+msgstr ""
+
 #: incl/woocommerce-metaboxes.php:126
 #: incl/woocommerce-metaboxes.php:149
 msgid "Center"
@@ -7360,18 +7654,18 @@ msgstr ""
 msgid "Sorry, that did not work. Please try again."
 msgstr ""
 
-#: incl/woocommerce/lafka-cart-drawer-upsell.php:172
+#: incl/woocommerce/lafka-cart-drawer-upsell.php:166
 msgid "Complete your meal"
 msgstr ""
 
 #. translators: %s product
-#: incl/woocommerce/lafka-cart-drawer-upsell.php:203
-#: incl/woocommerce/lafka-cart-drawer-upsell.php:234
+#: incl/woocommerce/lafka-cart-drawer-upsell.php:197
+#: incl/woocommerce/lafka-cart-drawer-upsell.php:228
 msgid "+ Add"
 msgstr ""
 
 #. translators: %s product
-#: incl/woocommerce/lafka-cart-drawer-upsell.php:233
+#: incl/woocommerce/lafka-cart-drawer-upsell.php:227
 #, php-format
 msgid "Add %s to your order"
 msgstr ""
@@ -7397,7 +7691,7 @@ msgstr ""
 msgid "your@email.com"
 msgstr ""
 
-#: incl/woocommerce/lafka-combo-deal.php:218
+#: incl/woocommerce/lafka-combo-deal.php:221
 msgid "Combo deal"
 msgstr ""
 
@@ -7443,12 +7737,12 @@ msgstr ""
 msgid "Discount"
 msgstr ""
 
-#: incl/woocommerce/lafka-last-order-card.php:277
-#: incl/woocommerce/lafka-last-order-card.php:299
+#: incl/woocommerce/lafka-last-order-card.php:330
+#: incl/woocommerce/lafka-last-order-card.php:352
 msgid "Reorder"
 msgstr ""
 
-#: incl/woocommerce/lafka-last-order-card.php:298
+#: incl/woocommerce/lafka-last-order-card.php:351
 msgid "Could not reorder — add items from the menu"
 msgstr ""
 
@@ -7488,10 +7782,6 @@ msgstr ""
 msgid "Make it a meal"
 msgstr ""
 
-#: incl/woocommerce/lafka-upsell-row.php:168
-msgid "Add"
-msgstr ""
-
 #. translators: %s: add-on group name.
 #: incl/wpml/addons/class-lafka-wcml-product-addons.php:174
 #, php-format
@@ -7504,239 +7794,8 @@ msgstr ""
 msgid "You can translate the Group Name, Group Description and every Option Label of your product add-on on the %1$sWooCommerce product translation page%2$s"
 msgstr ""
 
-#: lafka-plugin.php:1107
-#: lafka-plugin.php:1118
-msgid "Restaurant Menu"
-msgstr ""
-
-#: lafka-plugin.php:1108
-msgid "Menu Entry"
-msgstr ""
-
-#: lafka-plugin.php:1109
-#: lafka-plugin.php:1110
-msgid "Add New Menu Entry"
-msgstr ""
-
-#: lafka-plugin.php:1111
-msgid "Edit Restaurant Menu Entry"
-msgstr ""
-
-#: lafka-plugin.php:1112
-msgid "New Menu Entry"
-msgstr ""
-
-#: lafka-plugin.php:1113
-msgid "View Menu Entry"
-msgstr ""
-
-#: lafka-plugin.php:1114
-msgid "Search Menu Entries"
-msgstr ""
-
-#: lafka-plugin.php:1115
-msgid "No Menu Entries Found"
-msgstr ""
-
-#: lafka-plugin.php:1116
-msgid "No Menu Entries found in Trash"
-msgstr ""
-
-#: lafka-plugin.php:1117
-msgid "Parent Menu Entry:"
-msgstr ""
-
-#: lafka-plugin.php:1124
-msgid "Lafka Restaurant Menu Post Type"
-msgstr ""
-
-#: lafka-plugin.php:1147
-msgid "restaurant-menu"
-msgstr ""
-
-#: lafka-plugin.php:1166
-#: lafka-plugin.php:1180
-msgid "Menu Categories"
-msgstr ""
-
-#: lafka-plugin.php:1167
-msgid "Menu Category"
-msgstr ""
-
-#: lafka-plugin.php:1168
-msgid "Search Menu Categories"
-msgstr ""
-
-#: lafka-plugin.php:1169
-msgid "Popular Menu Categories"
-msgstr ""
-
-#: lafka-plugin.php:1170
-msgid "All Menu Categories"
-msgstr ""
-
-#: lafka-plugin.php:1171
-msgid "Parent Menu Category"
-msgstr ""
-
-#: lafka-plugin.php:1172
-msgid "Parent Menu Category:"
-msgstr ""
-
-#: lafka-plugin.php:1173
-msgid "Edit Menu Category"
-msgstr ""
-
-#: lafka-plugin.php:1174
-msgid "Update Menu Category"
-msgstr ""
-
-#: lafka-plugin.php:1176
-msgid "New Menu Category"
-msgstr ""
-
-#: lafka-plugin.php:1177
-msgid "Separate Menu Categories with commas"
-msgstr ""
-
-#: lafka-plugin.php:1178
-msgid "Add or remove Menu Category"
-msgstr ""
-
-#: lafka-plugin.php:1179
-msgid "Choose from the most used Menu Categories"
-msgstr ""
-
-#: lafka-plugin.php:1240
+#: lafka-plugin.php:1150
 msgid "Theme Options"
-msgstr ""
-
-#: shortcodes/partials/contact-form.php:14
-#: shortcodes/partials/contact-form.php:252
-#: shortcodes/partials/contact-form.php:254
-msgid "E-Mail Address"
-msgstr ""
-
-#: shortcodes/partials/contact-form.php:16
-#: shortcodes/partials/contact-form.php:274
-#: shortcodes/partials/contact-form.php:276
-msgid "Street Address"
-msgstr ""
-
-#. translators: %s: name of the missing form field.
-#: shortcodes/partials/contact-form.php:20
-#, php-format
-msgid "Please enter %s."
-msgstr ""
-
-#. translators: %s: name of the missing form field.
-#: shortcodes/partials/contact-form.php:21
-msgid "Please enter a message."
-msgstr ""
-
-#: shortcodes/partials/contact-form.php:22
-msgid "Calculation result was not correct."
-msgstr ""
-
-#: shortcodes/partials/contact-form.php:23
-msgid "Email Address Invalid."
-msgstr ""
-
-#: shortcodes/partials/contact-form.php:24
-msgid "Message was not sent. Try Again."
-msgstr ""
-
-#: shortcodes/partials/contact-form.php:25
-msgid "Thanks! Your message has been sent."
-msgstr ""
-
-#: shortcodes/partials/contact-form.php:210
-msgid "You are sending too many messages. Please try again later."
-msgstr ""
-
-#. translators: %s: site name.
-#: shortcodes/partials/contact-form.php:215
-#, php-format
-msgid "Someone sent a message from %s"
-msgstr ""
-
-#: shortcodes/partials/contact-form.php:233
-msgid "Send us a message"
-msgstr ""
-
-#: shortcodes/partials/contact-form.php:240
-#: shortcodes/partials/contact-form.php:242
-msgid "Your Name"
-msgstr ""
-
-#: shortcodes/partials/contact-form.php:295
-#: shortcodes/partials/contact-form.php:297
-msgid "Message Text"
-msgstr ""
-
-#: shortcodes/partials/contact-form.php:314
-msgid "Prove you're a human"
-msgstr ""
-
-#: shortcodes/partials/contact-form.php:316
-msgid "Captcha answer: 1 plus the number shown"
-msgstr ""
-
-#: shortcodes/partials/contact-form.php:328
-msgid "Send message"
-msgstr ""
-
-#: shortcodes/shortcodes.php:324
-msgid "Next &raquo;"
-msgstr ""
-
-#: shortcodes/shortcodes.php:325
-msgid "&laquo; Back"
-msgstr ""
-
-#: shortcodes/shortcodes.php:488
-msgid "show all"
-msgstr ""
-
-#: shortcodes/shortcodes.php:525
-#: shortcodes/shortcodes.php:541
-msgid "View more"
-msgstr ""
-
-#: shortcodes/shortcodes.php:533
-msgid "No image available"
-msgstr ""
-
-#: shortcodes/shortcodes.php:1192
-msgid "Google Maps shortcode: set a Google Maps API key (Customizer → Lafka — Site Settings → General, or WooCommerce → Lafka Shipping Settings) to render this map."
-msgstr ""
-
-#: shortcodes/shortcodes.php:1209
-msgid "Our Location"
-msgstr ""
-
-#: shortcodes/shortcodes.php:1219
-msgid "Get Directions"
-msgstr ""
-
-#: shortcodes/shortcodes.php:1220
-msgid "Fill in your address or zipcode to calculate the route"
-msgstr ""
-
-#: shortcodes/shortcodes.php:1222
-msgid "Address or postcode"
-msgstr ""
-
-#: shortcodes/shortcodes.php:1223
-msgid "Calculate route"
-msgstr ""
-
-#: shortcodes/shortcodes.php:1651
-msgid "Recently viewed products"
-msgstr ""
-
-#: shortcodes/shortcodes.php:1992
-msgid "Placeholder"
 msgstr ""
 
 #: widgets/class-lafka-about-widget.php:12
@@ -7755,7 +7814,6 @@ msgstr ""
 
 #: widgets/class-lafka-about-widget.php:45
 #: widgets/class-lafka-contacts-widget.php:152
-#: widgets/class-lafka-latest-menu-entries-widget.php:115
 #: widgets/class-lafka-payment-options-widget.php:89
 #: widgets/class-lafka-popular-posts-widget.php:117
 msgid "Title:"
@@ -7795,22 +7853,6 @@ msgstr ""
 
 #: widgets/class-lafka-contacts-widget.php:175
 msgid "Email address:"
-msgstr ""
-
-#: widgets/class-lafka-latest-menu-entries-widget.php:12
-msgid "List Restaurant Menu Entries with configurable options."
-msgstr ""
-
-#: widgets/class-lafka-latest-menu-entries-widget.php:14
-msgid "Lafka Latest Menu Entries"
-msgstr ""
-
-#: widgets/class-lafka-latest-menu-entries-widget.php:40
-msgid "Latest Menu Entries"
-msgstr ""
-
-#: widgets/class-lafka-latest-menu-entries-widget.php:118
-msgid "Number of entries to show:"
 msgstr ""
 
 #: widgets/class-lafka-payment-options-widget.php:10

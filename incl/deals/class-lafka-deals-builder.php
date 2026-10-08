@@ -106,7 +106,7 @@ if ( ! class_exists( 'Lafka_Deals_Builder' ) ) {
 				'dealId'  => $product->get_id(),
 				'cartUrl' => wc_get_cart_url(),
 				'i18n'    => array(
-					/* translators: %s: slot label, e.g. "Pizza 2". */
+					/* translators: %s: slot label, e.g. "Pizza 1". */
 					'choose' => __( 'Choose %s', 'lafka-plugin' ),
 					/* translators: %s: deal total, e.g. "$21.50". */
 					'add'    => __( 'Add to order · %s', 'lafka-plugin' ),
@@ -193,7 +193,7 @@ if ( ! class_exists( 'Lafka_Deals_Builder' ) ) {
 						<fieldset class="lafka-deal-slot__pool">
 							<legend class="screen-reader-text">
 								<?php
-								/* translators: %s: slot label. */
+								/* translators: %s: slot label, e.g. "Pizza 1". */
 								echo esc_html( sprintf( __( 'Choose %s', 'lafka-plugin' ), (string) $slot['label'] ) );
 								?>
 							</legend>
