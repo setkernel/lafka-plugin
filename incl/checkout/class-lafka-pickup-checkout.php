@@ -340,6 +340,9 @@ if ( ! class_exists( 'Lafka_Pickup_Checkout' ) ) {
 				'pickupMethods'   => array_values( array_map( 'strval', (array) apply_filters( 'lafka_pickup_shipping_method_ids', array( 'local_pickup', 'pickup_location' ) ) ) ),
 				'addressGateways' => $address_gateways,
 				'addressToggle'   => self::delivery_possible(),
+				// The customer chose Delivery (header / cart toggle): open the
+				// address straight away instead of behind "Want delivery?".
+				'prefersDelivery' => class_exists( 'Lafka_Fulfilment' ) && 'delivery' === Lafka_Fulfilment::preference(),
 				'fields'          => $fields,
 				'i18n'            => array(
 					'required'   => __( 'required', 'lafka-plugin' ),

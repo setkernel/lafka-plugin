@@ -134,10 +134,21 @@
 		list[ 0 ].row.parentNode.insertBefore( wrap, list[ 0 ].row );
 	}
 
+	let preferenceApplied = false;
+
 	function update() {
 		const cfg = config();
 		if ( ! cfg || ! cfg.enabled ) {
 			return;
+		}
+		// A customer who already chose Delivery sees the address at once (when
+		// delivery is possible at all), and the delivery rate is picked for them
+		// as soon as the address brings one.
+		if ( ! preferenceApplied ) {
+			preferenceApplied = true;
+			if ( cfg.prefersDelivery && false !== cfg.addressToggle ) {
+				wantsAddress = true;
+			}
 		}
 		const slim = isPickup( cfg ) && ! gatewayNeedsAddress( cfg );
 		const hide = slim && ! wantsAddress;
