@@ -125,6 +125,9 @@ if ( ! function_exists( 'lafka_pdp_render_upsell_row' ) ) {
 		if ( empty( $ids ) ) {
 			return;
 		}
+		// While ordering is closed the cards still link to the products, but
+		// offer no Add button (it would only fail).
+		$cart_blocked = class_exists( 'Lafka_Order_Hours' ) && Lafka_Order_Hours::is_add_to_cart_blocked();
 		?>
 		<div class="lafka-pdp-upsell">
 			<h2 class="lafka-pdp-upsell__heading"><?php esc_html_e( 'Make it a meal', 'lafka-plugin' ); ?></h2>
@@ -156,13 +159,15 @@ if ( ! function_exists( 'lafka_pdp_render_upsell_row' ) ) {
 							<span class="lafka-pdp-upsell__name"><?php echo esc_html( $product->get_name() ); ?></span>
 							<span class="lafka-pdp-upsell__price"><?php echo wp_kses_post( $price ); ?></span>
 						</a>
-						<button type="button"
-							class="lafka-pdp-upsell__add"
-							data-product-id="<?php echo esc_attr( (string) $id ); ?>"
-							data-product-type="<?php echo esc_attr( $type ); ?>"
-							data-permalink="<?php echo esc_url( $url ); ?>">
-							<?php esc_html_e( 'Add', 'lafka-plugin' ); ?><span class="screen-reader-text"> <?php echo esc_html( $product->get_name() ); ?></span>
-						</button>
+						<?php if ( ! $cart_blocked ) : ?>
+							<button type="button"
+								class="lafka-pdp-upsell__add"
+								data-product-id="<?php echo esc_attr( (string) $id ); ?>"
+								data-product-type="<?php echo esc_attr( $type ); ?>"
+								data-permalink="<?php echo esc_url( $url ); ?>">
+								<?php esc_html_e( 'Add', 'lafka-plugin' ); ?><span class="screen-reader-text"> <?php echo esc_html( $product->get_name() ); ?></span>
+							</button>
+						<?php endif; ?>
 					</article>
 				<?php endforeach; ?>
 			</div>

@@ -388,18 +388,69 @@ class Lafka_Order_Hours {
 			return '';
 		}
 
-		/**
-		 * Filter the date-format string used to render the next-open time.
-		 * Default 'l \a\t g:i A' produces "Saturday at 11:00 AM".
-		 *
-		 * @param string   $format   WP date_i18n format string.
-		 * @param DateTime $datetime The next-open DateTime.
-		 */
-		/* translators: WP date_i18n format for "next-open" rendering. Default 'l \a\t g:i A' produces "Saturday at 11:00 AM". Translators: provide a localized format like 'l \à H\hi' for "samedi à 11h00". */
-		$default_format = _x( 'l \a\t g:i A', 'next-open time format', 'lafka-plugin' );
-		$format         = apply_filters( 'lafka_next_open_time_format', $default_format, $datetime );
+		// Sites that customised the old date-format filter keep their format.
+		if ( has_filter( 'lafka_next_open_time_format' ) ) {
+			/**
+			 * Legacy: the WP date format for the next-open time. Hooking it keeps
+			 * the old absolute "Saturday at 11:00 AM" style.
+			 *
+			 * @param string   $format   WP date format string.
+			 * @param DateTime $datetime The next-open time.
+			 */
+			$format = (string) apply_filters( 'lafka_next_open_time_format', 'l \a\t g:i A', $datetime );
+			return wp_date( $format, $datetime->getTimestamp(), $datetime->getTimezone() );
+		}
 
-		return wp_date( $format, $datetime->getTimestamp(), $datetime->getTimezone() );
+		$timezone = $datetime->getTimezone();
+		$today    = new DateTime( 'now', $timezone );
+		$today->setTime( 0, 0 );
+		$day = clone $datetime;
+		$day->setTime( 0, 0 );
+		$days_away = (int) $today->diff( $day )->format( '%r%a' );
+		$time      = self::format_time_plain( $datetime );
+
+		if ( 0 === $days_away ) {
+			/* translators: %s: opening time, e.g. "11 am". */
+			$text = sprintf( __( 'today at %s', 'lafka-plugin' ), $time );
+		} elseif ( 1 === $days_away ) {
+			/* translators: %s: opening time, e.g. "11 am". */
+			$text = sprintf( __( 'tomorrow at %s', 'lafka-plugin' ), $time );
+		} else {
+			/* translators: 1: weekday name, 2: opening time, e.g. "Saturday at 11 am". */
+			$text = sprintf( __( '%1$s at %2$s', 'lafka-plugin' ), wp_date( 'l', $datetime->getTimestamp(), $timezone ), $time );
+		}
+
+		/**
+		 * Filter the human next-open text ("today at 11 am", "Saturday at 4:30 pm").
+		 *
+		 * @param string   $text     Rendered text.
+		 * @param DateTime $datetime The next-open time.
+		 */
+		return (string) apply_filters( 'lafka_next_open_time_text', $text, $datetime );
+	}
+
+	/**
+	 * A short spoken time, matching the theme's open-status copy: "11 am",
+	 * "4:30 pm", "noon", "midnight".
+	 *
+	 * @param DateTime $datetime Time to format.
+	 * @return string
+	 */
+	public static function format_time_plain( DateTime $datetime ): string {
+		$hour   = (int) $datetime->format( 'G' );
+		$minute = (int) $datetime->format( 'i' );
+		if ( 0 === $minute && 0 === $hour ) {
+			return __( 'midnight', 'lafka-plugin' );
+		}
+		if ( 0 === $minute && 12 === $hour ) {
+			return __( 'noon', 'lafka-plugin' );
+		}
+		$hour12 = 0 === $hour % 12 ? 12 : $hour % 12;
+		$clock  = 0 === $minute ? (string) $hour12 : $hour12 . ':' . sprintf( '%02d', $minute );
+		/* translators: %s: hour (and minutes), e.g. "11" or "11:30". */
+		$spoken = $hour < 12 ? sprintf( __( '%s am', 'lafka-plugin' ), $clock ) : sprintf( __( '%s pm', 'lafka-plugin' ), $clock );
+		// A no-break space keeps "11 am" on one line when the text wraps.
+		return str_replace( ' ', "\u{00A0}", $spoken );
 	}
 
 	public static function get_first_opening_branch_datetime( $all_legit_branches ) {

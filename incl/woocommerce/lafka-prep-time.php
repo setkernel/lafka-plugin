@@ -3,8 +3,9 @@
  * Prep-time trust signal — "Ready in X min".
  *
  * Per-category override via lafka_pdp_prep_time_<slug>; falls back to
- * lafka_pdp_prep_time_default. When closed, copy switches to
- * "Closed — order ahead".
+ * lafka_pdp_prep_time_default. When closed, it says "Closed — order ahead"
+ * only if a later slot can be ordered; otherwise the store-closed notice
+ * already says when ordering opens, so nothing is printed.
  *
  * @package Lafka\Plugin\WooCommerce
  * @since   8.12.0
@@ -155,10 +156,12 @@ if ( ! function_exists( 'lafka_pdp_is_store_open' ) ) {
 if ( ! function_exists( 'lafka_pdp_render_prep_time' ) ) {
 	function lafka_pdp_render_prep_time( int $product_id ): void {
 		if ( ! lafka_pdp_is_store_open() ) {
-			printf(
-				'<span class="lafka-pdp-trust lafka-pdp-trust--closed">%s</span>',
-				esc_html__( 'Closed — order ahead', 'lafka-plugin' )
-			);
+			if ( class_exists( 'Lafka_Order_Hours' ) && Lafka_Order_Hours::can_order_ahead() ) {
+				printf(
+					'<span class="lafka-pdp-trust lafka-pdp-trust--closed">%s</span>',
+					esc_html__( 'Closed — order ahead', 'lafka-plugin' )
+				);
+			}
 			return;
 		}
 		$minutes = lafka_pdp_get_prep_time( $product_id );
