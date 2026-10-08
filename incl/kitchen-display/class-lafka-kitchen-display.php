@@ -85,7 +85,11 @@ class Lafka_Kitchen_Display {
 	}
 
 	/**
-	 * The order-status transitions the kitchen emails are sent on.
+	 * The order statuses the kitchen emails are sent on: the email goes out when
+	 * an order ENTERS the status, whichever status it came from (the kitchen
+	 * board's forward steps, a bulk action from on-hold, or an admin jump such
+	 * as processing to preparing). Each email sends once per order and status
+	 * (its sent-flag meta), so stepping back and forward again does not repeat it.
 	 *
 	 * @param string[] $actions WooCommerce's email actions.
 	 * @return string[]
@@ -94,11 +98,10 @@ class Lafka_Kitchen_Display {
 		return array_merge(
 			(array) $actions,
 			array(
-				'woocommerce_order_status_processing_to_accepted',
-				'woocommerce_order_status_accepted_to_preparing',
-				'woocommerce_order_status_preparing_to_ready',
-				'woocommerce_order_status_processing_to_rejected',
-				'woocommerce_order_status_accepted_to_rejected',
+				'woocommerce_order_status_accepted',
+				'woocommerce_order_status_preparing',
+				'woocommerce_order_status_ready',
+				'woocommerce_order_status_rejected',
 			)
 		);
 	}

@@ -141,7 +141,10 @@ class Lafka_KDS_Ajax {
 			wp_send_json_error( array( 'message' => 'Insufficient permissions' ), 403 );
 		}
 
-		// Active orders (all statuses in the workflow)
+		// Active orders (all statuses in the workflow). On-hold orders are
+		// deliberately not on the board: they wait for payment (bank transfer,
+		// cheque), and cooking must not start before it clears. Staff move one to
+		// Accepted from the Orders screen (bulk action) once it is paid.
 		$orders = wc_get_orders(
 			array(
 				'status'  => array( 'processing', 'accepted', 'preparing', 'ready' ),

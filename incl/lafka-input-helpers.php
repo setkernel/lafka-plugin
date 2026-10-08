@@ -61,21 +61,6 @@ function lafka_input_get_int( string $key, int $default_value = 0 ): int {
 }
 
 /**
- * Read a query-string parameter that may be an array of text values
- * (for example filter[]=a&filter[]=b), each element sanitised.
- *
- * @param string $key Parameter name.
- * @return string[]
- */
-function lafka_input_get_text_list( string $key ): array {
-	$value = filter_input( INPUT_GET, $key, FILTER_UNSAFE_RAW, FILTER_REQUIRE_ARRAY );
-	if ( ! is_array( $value ) ) {
-		return array();
-	}
-	return array_map( 'sanitize_text_field', array_filter( $value, 'is_string' ) );
-}
-
-/**
  * Read a request parameter as sanitised text, query string first and then the
  * POST body, for choosing what to render (never for changing state).
  *

@@ -23,10 +23,8 @@ class Lafka_KDS_Email_Rejected extends Lafka_KDS_Email_Base {
 		);
 		$this->sent_flag_meta_key = '_lafka_kds_rejected_email_sent';
 
-		// Rejection can happen from processing OR from accepted (operator
-		// accepted, then realised they can't fulfil), so we wire two transitions.
-		add_action( 'woocommerce_order_status_processing_to_rejected_notification', array( $this, 'trigger' ), 10, 2 );
-		add_action( 'woocommerce_order_status_accepted_to_rejected_notification', array( $this, 'trigger' ), 10, 2 );
+		// Sent when the order enters Rejected, from any status.
+		add_action( 'woocommerce_order_status_rejected_notification', array( $this, 'trigger' ), 10, 2 );
 
 		parent::__construct();
 	}

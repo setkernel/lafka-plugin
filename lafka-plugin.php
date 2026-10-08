@@ -961,11 +961,6 @@ function lafka_plugin_after_plugins_loaded() {
 	/* Load variation product swatches */
 	require_once plugin_dir_path( __FILE__ ) . 'incl/swatches/class-lafka-wc-variation-swatches.php';
 
-	/* include metaboxes.php — PERF-H09: admin-only (add_meta_boxes + save_post with nonce) */
-	if ( is_admin() ) {
-		require_once plugin_dir_path( __FILE__ ) . '/incl/metaboxes.php';
-	}
-
 	/* P6-UX-6 W3-T10: mobile menu IA grouping walker (opt-in via Customizer) */
 	require_once plugin_dir_path( __FILE__ ) . 'incl/menu/class-lafka-mobile-grouped-walker.php';
 
@@ -1038,22 +1033,17 @@ function lafka_plugin_after_plugins_loaded() {
 	require_once plugin_dir_path( __FILE__ ) . 'incl/woocommerce/lafka-combo-deal.php';
 
 	/**
-	 * Real customer reviews (WooCommerce product reviews) for the storefront:
-	 * the quotes and the average rating the theme shows; nothing hand-typed.
-	 */
-	require_once plugin_dir_path( __FILE__ ) . 'incl/woocommerce/lafka-store-reviews.php';
-
-	/**
-	 * P6-PDP (W4-T8, 2026-04-29): Checkout email-capture field.
-	 */
-	require_once plugin_dir_path( __FILE__ ) . 'incl/woocommerce/lafka-checkout-email-capture.php';
-
-	/**
 	 * v9.13.0 (2026-05-15): Dietary tag seeder — ensures the four filter
 	 * chip terms (popular/vegetarian/vegan/spicy) exist so the menu
 	 * archive dietary filter actually has terms to match against.
 	 */
 	require_once plugin_dir_path( __FILE__ ) . 'incl/woocommerce/lafka-dietary-tags.php';
+
+	/**
+	 * Real customer reviews (WooCommerce product reviews) for the storefront:
+	 * the quotes and the average rating the theme shows; nothing hand-typed.
+	 */
+	require_once plugin_dir_path( __FILE__ ) . 'incl/woocommerce/lafka-store-reviews.php';
 
 	/**
 	 * v9.22.2 (2026-05-18): Runtime product-image alt-text backfill. Fills in
@@ -1194,126 +1184,6 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/seo/lafka-llms-txt.php';
 // GX3: IndexNow key file + debounced, batched pings (default off; production only).
 require_once plugin_dir_path( __FILE__ ) . 'incl/seo/lafka-indexnow.php';
 
-add_action( 'woocommerce_single_product_summary', 'lafka_show_custom_product_popup_link', 12 );
-if ( ! function_exists( 'lafka_show_custom_product_popup_link' ) ) {
-	function lafka_show_custom_product_popup_link() {
-		if ( function_exists( 'lafka_get_option' ) && trim( lafka_get_option( 'custom_product_popup_link' ) ) !== '' && trim( lafka_get_option( 'custom_product_popup_content' ) ) !== '' ) {
-			global $product;
-
-			$link_text     = lafka_get_option( 'custom_product_popup_link' );
-			$popup_content = lafka_get_option( 'custom_product_popup_content' );
-
-			echo '<div class="lafka-product-popup-link"><a href="#lafka-product-' . esc_attr( $product->get_id() ) . '-popup-content" title="' . esc_attr( $link_text ) . '" >' . esc_html( $link_text ) . '</a></div>';
-
-			echo '<div id="lafka-product-' . esc_attr( $product->get_id() ) . '-popup-content" class="mfp-hide">';
-			echo wp_kses_post( do_shortcode( $popup_content ) );
-			echo '</div>';
-
-			// P3-04: product-popup-link migrated from magnificPopup to lafkaDialog.
-			// Pure vanilla — no jQuery dependency. Click handler matches the same
-			// `.lafka-product-popup-link a` selector and opens the linked anchor
-			// element's content inside a native <dialog>.
-			$inline_script_data = "(function () {
-                document.addEventListener('click', function (e) {
-                    var link = e.target.closest('.lafka-product-popup-link a');
-                    if (!link || !window.lafkaDialog) { return; }
-                    var href = link.getAttribute('href') || '';
-                    if (href.charAt(0) !== '#') { return; }
-                    var src = document.querySelector(href);
-                    if (!src) { return; }
-                    e.preventDefault();
-                    window.lafkaDialog.inline(src.innerHTML, { className: 'lafka-product-popup-content' });
-                });
-            })();";
-
-			wp_add_inline_script( 'lafka-dialog', $inline_script_data );
-
-		}
-	}
-}
-
-// Promo info tooltips
-if ( ! function_exists( 'lafka_promo_tooltip_zones' ) ) {
-	/**
-	 * The single product page zones a promo tooltip can sit in, mapped to the
-	 * `woocommerce_single_product_summary` priority each renders at.
-	 *
-	 * This is the one place the zone slugs live: they are the stored
-	 * `promo_tooltip_N_position` values and the `lafka-promo-{zone}` CSS modifier.
-	 * The first zone is the default. Themes that render their own summary hook can
-	 * loop over this map instead of repeating the slugs and priorities.
-	 *
-	 * @return array<string,int> Zone slug => summary hook priority.
-	 */
-	function lafka_promo_tooltip_zones(): array {
-		return array(
-			'above-price'       => 9,
-			'below-price'       => 11,
-			'below-add-to-cart' => 39,
-		);
-	}
-}
-
-if ( ! function_exists( 'lafka_promo_tooltip_position' ) ) {
-	/**
-	 * The zone a promo tooltip is placed in. An unset, unknown or underscore-style
-	 * value (`above_price`) resolves to the zone slug, falling back to the default.
-	 *
-	 * @param int $index Tooltip number, 1-3.
-	 * @return string One of the lafka_promo_tooltip_zones() slugs.
-	 */
-	function lafka_promo_tooltip_position( int $index ): string {
-		$zones  = array_keys( lafka_promo_tooltip_zones() );
-		$stored = str_replace( '_', '-', (string) lafka_get_option( 'promo_tooltip_' . $index . '_position' ) );
-
-		return in_array( $stored, $zones, true ) ? $stored : $zones[0];
-	}
-}
-
-foreach ( lafka_promo_tooltip_zones() as $lafka_promo_zone => $lafka_promo_priority ) {
-	add_action(
-		'woocommerce_single_product_summary',
-		static function () use ( $lafka_promo_zone ) {
-			lafka_output_info_tooltips( $lafka_promo_zone );
-		},
-		$lafka_promo_priority
-	);
-}
-add_action(
-	'woocommerce_after_shop_loop_item_title',
-	function () {
-		lafka_output_info_tooltips( '', true );
-	},
-	11
-);
-
-if ( ! function_exists( 'lafka_output_info_tooltips' ) ) {
-	function lafka_output_info_tooltips( $position, $show_in_listing = false ) {
-		for ( $i = 1; $i <= 3; $i++ ) {
-			if ( function_exists( 'lafka_get_option' ) && lafka_get_option( 'promo_tooltip_' . $i . '_trigger_text' ) && ( lafka_promo_tooltip_position( $i ) === $position || ( $show_in_listing && lafka_get_option( 'promo_tooltip_' . $i . '_show_in_listing' ) ) ) ) {
-				?>
-				<div class="lafka-promo-wrapper
-				<?php
-				if ( $position ) {
-					echo ' lafka-promo-' . esc_attr( $position );}
-				?>
-				">
-					<div class="lafka-promo-text">
-						<?php echo wp_kses_post( lafka_get_option( 'promo_tooltip_' . $i . '_text' ) ); ?>
-						<span class="lafka-promo-trigger">
-							<?php echo wp_kses_post( lafka_get_option( 'promo_tooltip_' . $i . '_trigger_text' ) ); ?>
-							<span class="lafka-promo-content">
-								<?php echo wp_kses_post( lafka_get_option( 'promo_tooltip_' . $i . '_content' ) ); ?>
-							</span>
-						</span>
-					</div>
-				</div>
-				<?php
-			}
-		}
-	}
-}
-
 // Allow safe HTML descriptions in WordPress Menu (related to Mega menu)
 remove_filter( 'nav_menu_description', 'strip_tags' );
 add_filter( 'nav_menu_description', 'wp_kses_post' );
@@ -1328,20 +1198,6 @@ add_filter(
 		return $excerpt;
 	}
 );
-
-add_action( 'after_setup_theme', 'lafka_after_setup_theme' );
-if ( ! function_exists( 'lafka_after_setup_theme' ) ) {
-	/**
-	 * Doing stuff which require theme to be loaded so we have 'lafka_get_option' function available etc.
-	 */
-	function lafka_after_setup_theme() {
-		// Move product taxonomy description below products if 'category_description_position' = 'bottom'
-		if ( function_exists( 'lafka_get_option' ) && lafka_get_option( 'category_description_position' ) === 'lafka-bottom-description' ) {
-			remove_action( 'woocommerce_archive_description', 'woocommerce_taxonomy_archive_description', 10 );
-			add_action( 'woocommerce_after_main_content', 'woocommerce_taxonomy_archive_description', 1 );
-		}
-	}
-}
 
 add_filter( 'sgo_js_async_exclude', 'lafka_js_async_exclude' );
 if ( ! function_exists( 'lafka_js_async_exclude' ) ) {

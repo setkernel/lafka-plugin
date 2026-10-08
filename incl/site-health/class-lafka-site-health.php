@@ -171,19 +171,32 @@ if ( ! class_exists( 'Lafka_Site_Health' ) ) {
 		}
 
 		/**
+		 * Whether a module is on, as a label. The module's own is_enabled() decides:
+		 * a default-on module (add-ons, deals, order tracking) that was never saved
+		 * is Enabled, not "disabled by default".
+		 *
+		 * @param \Lafka_Module $module Module.
+		 * @return string
+		 */
+		private function module_label( $module ) {
+			if ( $module->is_enabled() ) {
+				return esc_html__( 'Enabled', 'lafka-plugin' );
+			}
+			return $this->flag_label( $module->get_id() );
+		}
+
+		/**
 		 * Format a feature-flag value as a human-readable label.
 		 *
 		 * The `enable_security_headers` flag lives in the dedicated
-		 * `lafka_security_options` array (see Lafka_Security_Headers::OPTION_KEY)
-		 * — falls back to the main `lafka` option for back-compat with
-		 * pre-P2-05a-fix installs.
+		 * `lafka_security_options` array (see Lafka_Security_Headers::OPTION_KEY).
 		 */
 		private function flag_label( $key ) {
 			if ( 'enable_security_headers' === $key && class_exists( '\Lafka_Security_Headers' ) ) {
 				$opts  = get_option( \Lafka_Security_Headers::OPTION_KEY, array() );
 				$value = is_array( $opts ) && isset( $opts[ \Lafka_Security_Headers::TOGGLE_OPTION_KEY ] )
 					? $opts[ \Lafka_Security_Headers::TOGGLE_OPTION_KEY ]
-					: \Lafka_Options::get( $key, '' );
+					: '';
 			} else {
 				$value = \Lafka_Options::get( $key, '' );
 			}
@@ -215,7 +228,7 @@ if ( ! class_exists( 'Lafka_Site_Health' ) ) {
 			foreach ( \Lafka_Module_Registry::modules_by_storage( 'lafka_option' ) as $id => $module ) {
 				$fields[ $id ] = array(
 					'label' => $module->get_label(),
-					'value' => $this->flag_label( $id ),
+					'value' => $this->module_label( $module ),
 				);
 			}
 			return $fields;

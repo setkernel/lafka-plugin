@@ -24,7 +24,7 @@ class Lafka_KDS_Email_Ready extends Lafka_KDS_Email_Base {
 		);
 		$this->sent_flag_meta_key = '_lafka_kds_ready_email_sent';
 
-		add_action( 'woocommerce_order_status_preparing_to_ready_notification', array( $this, 'trigger' ), 10, 2 );
+		add_action( 'woocommerce_order_status_ready_notification', array( $this, 'trigger' ), 10, 2 );
 
 		parent::__construct();
 	}

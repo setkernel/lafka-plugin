@@ -277,14 +277,13 @@ class Lafka_Shipping_Areas {
 				'lafka-shipping-datetime',
 				'lafka_datetime_options',
 				array(
-					'is_order_hours_enabled' => class_exists( 'Lafka_Order_Hours' ),
-					'days_ahead'             => $days_ahead,
-					'enabled_dates'          => $enabled_dates,
-					'ajax_url'               => admin_url( 'admin-ajax.php' ),
-					'nonce'                  => wp_create_nonce( 'time_slots_for_date' ),
-					'select_time_label'      => esc_html__( 'Select time...', 'lafka-plugin' ),
-					'datetime_mandatory'     => $datetime_mandatory,
-					'flatpickr_locale'       => $flatpickr_locale,
+					'days_ahead'         => $days_ahead,
+					'enabled_dates'      => $enabled_dates,
+					'ajax_url'           => admin_url( 'admin-ajax.php' ),
+					'nonce'              => wp_create_nonce( 'time_slots_for_date' ),
+					'select_time_label'  => esc_html__( 'Select time...', 'lafka-plugin' ),
+					'datetime_mandatory' => $datetime_mandatory,
+					'flatpickr_locale'   => $flatpickr_locale,
 				)
 			);
 		}

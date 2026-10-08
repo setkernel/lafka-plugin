@@ -23,7 +23,7 @@ class Lafka_KDS_Email_Preparing extends Lafka_KDS_Email_Base {
 		);
 		$this->sent_flag_meta_key = '_lafka_kds_preparing_email_sent';
 
-		add_action( 'woocommerce_order_status_accepted_to_preparing_notification', array( $this, 'trigger' ), 10, 2 );
+		add_action( 'woocommerce_order_status_preparing_notification', array( $this, 'trigger' ), 10, 2 );
 
 		parent::__construct();
 	}

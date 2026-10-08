@@ -42,7 +42,7 @@ class Lafka_Customizer {
 			'lafka_social_share',
 			array(
 				'title'       => esc_html__( 'Social Share Links', 'lafka-plugin' ),
-				'description' => esc_html__( 'Configure globally the social networks share links. They can be overridden for each post, page or portfolio on the edit page.', 'lafka-plugin' ),
+				'description' => esc_html__( 'Configure globally the social networks share links.', 'lafka-plugin' ),
 				'priority'    => 10,
 				'panel'       => 'lafka_plugin',
 			)

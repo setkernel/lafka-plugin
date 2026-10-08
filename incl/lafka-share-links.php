@@ -115,18 +115,14 @@ if ( ! function_exists( 'lafka_has_to_show_share' ) ) {
 		if ( function_exists( 'lafka_get_option' ) ) {
 			$general_option         = get_option( 'lafka_share_on_posts' ) === 'yes';
 			$general_option_product = get_option( 'lafka_share_on_products' ) === 'yes';
-			$single_meta            = get_post_meta( get_the_ID(), 'lafka_show_share', true );
-
-			$target = 'single';
+			$target                 = 'single';
 			if ( function_exists( 'is_product' ) && is_product() ) {
 				$target = 'product';
 			}
 
 			$has_to_show_share = false;
 
-			if ( 'single' === $target && 'yes' === $single_meta ) {
-				$has_to_show_share = true;
-			} elseif ( 'single' === $target && $general_option && 'no' !== $single_meta ) {
+			if ( 'single' === $target && $general_option ) {
 				$has_to_show_share = true;
 			} elseif ( 'product' === $target && $general_option_product ) {
 				$has_to_show_share = true;

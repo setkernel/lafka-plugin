@@ -28,10 +28,8 @@ if ( ! class_exists( 'Lafka_Security_Headers' ) ) {
 		 * `register_setting('lafka', ...)` sanitize callback would otherwise drop
 		 * unregistered keys on save (caught during P2-05a admin-UI smoke test).
 		 *
-		 * Backwards compat: also reads `lafka['enable_security_headers']` if the
-		 * dedicated option is absent — so existing WP-CLI users who set the flag
-		 * via `wp option patch update lafka enable_security_headers enabled`
-		 * still get the right behavior until they re-save through the admin UI.
+		 * (An earlier version kept the flag in the `lafka` array; the settings
+		 * migration in incl/settings/lafka-settings.php moves it here once.)
 		 */
 		const OPTION_KEY = 'lafka_security_options';
 
@@ -60,18 +58,11 @@ if ( ! class_exists( 'Lafka_Security_Headers' ) ) {
 		 * Order of precedence:
 		 *   1. Dedicated option `lafka_security_options['enable_security_headers']`
 		 *      — what the admin UI writes to.
-		 *   2. Back-compat: `lafka['enable_security_headers']` — what early
-		 *      WP-CLI adopters may have set before P2-05a moved storage out of
-		 *      the main option array.
-		 *   3. Otherwise the install-time default returned by {@see should_default_on()}.
+		 *   2. Otherwise the install-time default returned by {@see should_default_on()}.
 		 */
 		public function is_active() {
 			$opts     = get_option( self::OPTION_KEY, array() );
 			$override = is_array( $opts ) && isset( $opts[ self::TOGGLE_OPTION_KEY ] ) ? $opts[ self::TOGGLE_OPTION_KEY ] : '';
-			if ( '' === $override ) {
-				// Fall back to the legacy storage location.
-				$override = Lafka_Options::get( self::TOGGLE_OPTION_KEY, '' );
-			}
 			if ( 'enabled' === $override ) {
 				return true;
 			}
@@ -92,7 +83,7 @@ if ( ! class_exists( 'Lafka_Security_Headers' ) ) {
 		 * mode than leaving headers off until an admin acknowledges them.
 		 *
 		 * Operator: enable on a site with WP-CLI:
-		 *   `wp option patch update lafka enable_security_headers enabled`
+		 *   `wp option patch insert lafka_security_options enable_security_headers enabled`
 		 */
 		public static function should_default_on() {
 			return false;
