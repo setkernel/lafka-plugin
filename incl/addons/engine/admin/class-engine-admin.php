@@ -20,7 +20,6 @@ defined( 'ABSPATH' ) || exit;
 // $_GET reads in this admin controller are for routing display state
 // (list vs edit mode, edit_id, action, paged) — no state mutation.
 // Write actions (save/trash) go through check_admin_referer() in their handlers.
-// phpcs:disable WordPress.Security.NonceVerification.Recommended
 
 class Lafka_Engine_Admin {
 
@@ -115,7 +114,7 @@ class Lafka_Engine_Admin {
 		}
 		// Two screens use the editor: the global addons page AND the WC
 		// product editor (where the per-product addon panel lives).
-		$is_addons_page = self::SCREEN_ID === $screen->id;
+		$is_addons_page  = self::SCREEN_ID === $screen->id;
 		$is_product_edit = ( 'product' === $screen->id || 'product' === ( $screen->post_type ?? '' ) );
 		if ( ! $is_addons_page && ! $is_product_edit ) {
 			return;
@@ -143,12 +142,12 @@ class Lafka_Engine_Admin {
 			'lafka-addons-engine-admin',
 			'lafkaAddonsEngineAdmin',
 			array(
-				'ajaxUrl'    => admin_url( 'admin-ajax.php' ),
-				'syncNonce'  => wp_create_nonce( Lafka_Engine_Ajax::SYNC_NONCE ),
-				'i18n'       => array(
-					'syncFailed'        => __( 'Could not sync from attribute. Try again.', 'lafka-plugin' ),
-					'confirmRemoveOpt'  => __( 'Remove this option?', 'lafka-plugin' ),
-					'confirmRemoveGrp'  => __( 'Remove this addon group?', 'lafka-plugin' ),
+				'ajaxUrl'   => admin_url( 'admin-ajax.php' ),
+				'syncNonce' => wp_create_nonce( Lafka_Engine_Ajax::SYNC_NONCE ),
+				'i18n'      => array(
+					'syncFailed'       => __( 'Could not sync from attribute. Try again.', 'lafka-plugin' ),
+					'confirmRemoveOpt' => __( 'Remove this option?', 'lafka-plugin' ),
+					'confirmRemoveGrp' => __( 'Remove this addon group?', 'lafka-plugin' ),
 				),
 			)
 		);

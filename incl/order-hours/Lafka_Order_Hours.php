@@ -227,7 +227,7 @@ class Lafka_Order_Hours {
 	 */
 	public static function get_schedule_display_hours_map( $schedule_json = null ): array {
 		if ( null === $schedule_json ) {
-			$options = is_array( self::$lafka_order_hours_options )
+			$options       = is_array( self::$lafka_order_hours_options )
 				? self::$lafka_order_hours_options
 				: ( function_exists( 'get_option' ) ? (array) get_option( 'lafka_order_hours_options' ) : array() );
 			$schedule_json = $options['lafka_order_hours_schedule'] ?? '';
@@ -408,8 +408,8 @@ class Lafka_Order_Hours {
 		foreach ( $all_legit_branches as $branch_id => $branch_name ) {
 			$is_overridden = get_term_meta( $branch_id, 'lafka_branch_override_order_hours_global', true );
 			if ( ! empty( $is_overridden ) ) {
-				$branch_timezone_string = get_term_meta( $branch_id, 'lafka_branch_timezone', true );
-				$branch_timezone = self::resolve_timezone( (string) $branch_timezone_string );
+				$branch_timezone_string       = get_term_meta( $branch_id, 'lafka_branch_timezone', true );
+				$branch_timezone              = self::resolve_timezone( (string) $branch_timezone_string );
 				$branch_schedule              = htmlspecialchars_decode( get_term_meta( $branch_id, 'lafka_branch_order_hours_schedule', true ) );
 				$branch_force_override_check  = get_term_meta( $branch_id, 'lafka_branch_order_hours_force_override_check', true );
 				$branch_force_override_status = get_term_meta( $branch_id, 'lafka_branch_order_hours_force_override_status', true );
@@ -452,8 +452,8 @@ class Lafka_Order_Hours {
 		$branch_schedule              = null;
 		$branch_holidays_calendar     = null;
 		if ( ! empty( $is_overridden ) ) {
-			$branch_timezone_string = get_term_meta( $branch_id, 'lafka_branch_timezone', true );
-			$branch_timezone = self::resolve_timezone( (string) $branch_timezone_string );
+			$branch_timezone_string       = get_term_meta( $branch_id, 'lafka_branch_timezone', true );
+			$branch_timezone              = self::resolve_timezone( (string) $branch_timezone_string );
 			$branch_schedule              = htmlspecialchars_decode( get_term_meta( $branch_id, 'lafka_branch_order_hours_schedule', true ) );
 			$branch_force_override_check  = get_term_meta( $branch_id, 'lafka_branch_order_hours_force_override_check', true );
 			$branch_force_override_status = get_term_meta( $branch_id, 'lafka_branch_order_hours_force_override_status', true );
@@ -675,10 +675,8 @@ class Lafka_Order_Hours {
 		if ( self::can_order_ahead() ) {
 			// A chosen slot is validated (offered, in the future, not full) by
 			// Lafka_Timeslots::validate_datetime_fields() on this same hook.
-			// phpcs:disable WordPress.Security.NonceVerification.Missing -- woocommerce_checkout_process: WC core verified the checkout nonce.
 			$date = isset( $_POST['lafka_checkout_date'] ) ? sanitize_text_field( wp_unslash( $_POST['lafka_checkout_date'] ) ) : '';
 			$slot = isset( $_POST['lafka_checkout_timeslot'] ) ? sanitize_text_field( wp_unslash( $_POST['lafka_checkout_timeslot'] ) ) : '';
-			// phpcs:enable WordPress.Security.NonceVerification.Missing
 			if ( '' !== $date && '' !== $slot ) {
 				return;
 			}

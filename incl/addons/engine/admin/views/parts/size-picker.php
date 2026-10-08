@@ -65,8 +65,8 @@ $is_size_mode = in_array(
 				<span class="description"><?php esc_html_e( 'Deselect a size to hide this addon group on PDPs for that size.', 'lafka-plugin' ); ?></span>
 			</p>
 			<?php
-            foreach ( $size_terms as $term ) :
-				$slug = $term->slug;
+			foreach ( $size_terms as $term ) :
+				$slug     = $term->slug;
 				$included = empty( $group->included_size_slugs ) || in_array( $slug, $group->included_size_slugs, true );
 				?>
 				<label class="lafka-engine-size-term">

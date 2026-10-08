@@ -91,7 +91,7 @@ if ( ! class_exists( 'Lafka_Diagnostics_Page' ) ) {
 		 */
 		public function handle_status() {
 			$this->authorize();
-			$id = isset( $_GET['incident'] ) ? absint( wp_unslash( $_GET['incident'] ) ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- verified by check_admin_referer() on the next line (the nonce action embeds the id).
+			$id = isset( $_GET['incident'] ) ? absint( wp_unslash( $_GET['incident'] ) ) : 0;
 			check_admin_referer( self::STATUS_ACTION . '_' . $id );
 			$status = isset( $_GET['status'] ) ? sanitize_key( wp_unslash( $_GET['status'] ) ) : '';
 			$ok     = Lafka_Incidents::set_status( $id, $status );
@@ -209,9 +209,8 @@ if ( ! class_exists( 'Lafka_Diagnostics_Page' ) ) {
 				'health'    => __( 'Health', 'lafka-plugin' ),
 				'settings'  => __( 'Settings', 'lafka-plugin' ),
 			);
-			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only tab switch.
-			$tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'incidents';
-			$tab = isset( $tabs[ $tab ] ) ? $tab : 'incidents';
+			$tab  = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'incidents';
+			$tab  = isset( $tabs[ $tab ] ) ? $tab : 'incidents';
 
 			echo '<div class="wrap lafka-diagnostics">';
 			echo '<h1>' . esc_html__( 'Lafka Diagnostics', 'lafka-plugin' ) . '</h1>';
@@ -223,14 +222,14 @@ if ( ! class_exists( 'Lafka_Diagnostics_Page' ) ) {
 				printf(
 					'<a href="%1$s" class="nav-tab%2$s">%3$s</a>',
 					esc_url(
-                        add_query_arg(
-                            array(
+						add_query_arg(
+							array(
 								'page' => self::MENU_SLUG,
-								'tab' => $slug,
-                            ),
-                            admin_url( 'admin.php' ) 
-                        ) 
-                    ),
+								'tab'  => $slug,
+							),
+							admin_url( 'admin.php' )
+						)
+					),
 					$slug === $tab ? ' nav-tab-active' : '',
 					esc_html( $label )
 				);
@@ -259,7 +258,6 @@ if ( ! class_exists( 'Lafka_Diagnostics_Page' ) ) {
 		 * @return void
 		 */
 		private function render_notice() {
-			// phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only result flags set by our own redirects.
 			$flag = isset( $_GET['lafka_diag'] ) ? sanitize_key( wp_unslash( $_GET['lafka_diag'] ) ) : '';
 			if ( '' === $flag ) {
 				return;
@@ -284,7 +282,6 @@ if ( ! class_exists( 'Lafka_Diagnostics_Page' ) ) {
 			} else {
 				$text = $messages[ $flag ] ?? '';
 			}
-			// phpcs:enable WordPress.Security.NonceVerification.Recommended
 			if ( '' !== $text ) {
 				$class = 'status_failed' === $flag ? 'notice-error' : 'notice-success';
 				echo '<div class="notice ' . esc_attr( $class ) . ' is-dismissible"><p>' . esc_html( $text ) . '</p></div>';
@@ -297,10 +294,8 @@ if ( ! class_exists( 'Lafka_Diagnostics_Page' ) ) {
 		 * @return void
 		 */
 		private function render_incidents_tab() {
-			// phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only list filters.
 			$status = isset( $_GET['status'] ) ? sanitize_key( wp_unslash( $_GET['status'] ) ) : 'open';
 			$paged  = isset( $_GET['paged'] ) ? max( 1, absint( wp_unslash( $_GET['paged'] ) ) ) : 1;
-			// phpcs:enable WordPress.Security.NonceVerification.Recommended
 			$status = in_array( $status, array_merge( Lafka_Incidents::STATUSES, array( 'all' ) ), true ) ? $status : 'open';
 			$counts = Lafka_Incidents::status_counts();
 
@@ -317,21 +312,21 @@ if ( ! class_exists( 'Lafka_Diagnostics_Page' ) ) {
 				$links[] = sprintf(
 					'<li><a href="%1$s"%2$s>%3$s <span class="count">(%4$d)</span></a></li>',
 					esc_url(
-                        add_query_arg(
-                            array(
-								'page' => self::MENU_SLUG,
-								'tab' => 'incidents',
+						add_query_arg(
+							array(
+								'page'   => self::MENU_SLUG,
+								'tab'    => 'incidents',
 								'status' => $slug,
-                            ),
-                            admin_url( 'admin.php' ) 
-                        ) 
-                    ),
+							),
+							admin_url( 'admin.php' )
+						)
+					),
 					$slug === $status ? ' class="current"' : '',
 					esc_html( $label ),
 					(int) $n
 				);
 			}
-			echo implode( ' | ', $links ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- each item escaped above.
+			echo implode( ' | ', $links );
 			echo '</ul><div class="clear"></div>';
 
 			if ( ! Lafka_Incidents::is_installed() ) {
@@ -437,7 +432,7 @@ if ( ! class_exists( 'Lafka_Diagnostics_Page' ) ) {
 			echo '<td>' . esc_html( number_format_i18n( (int) $row->hit_count ) ) . '</td>';
 			echo '<td>' . esc_html( $this->local_time( (string) $row->first_seen ) ) . '</td>';
 			echo '<td>' . esc_html( $this->local_time( (string) $row->last_seen ) ) . '</td>';
-			echo '<td>' . implode( ' | ', $actions ) . '</td>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- each link escaped above.
+			echo '<td>' . implode( ' | ', $actions ) . '</td>';
 			echo '</tr>';
 		}
 
@@ -545,7 +540,6 @@ if ( ! class_exists( 'Lafka_Diagnostics_Page' ) ) {
 		 * @return void
 		 */
 		private function render_traces() {
-			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only view toggle.
 			$show_finished = isset( $_GET['show_finished'] ) && '1' === sanitize_key( wp_unslash( $_GET['show_finished'] ) );
 
 			echo '<h2>' . esc_html__( 'Checkout attempts that never finished', 'lafka-plugin' ) . '</h2>';
@@ -628,27 +622,27 @@ if ( ! class_exists( 'Lafka_Diagnostics_Page' ) ) {
 			$logging = class_exists( '\Automattic\WooCommerce\Utilities\LoggingUtil' );
 
 			$rows = array(
-				__( 'Lafka plugin', 'lafka-plugin' )            => (string) ( $plugin['Version'] ?? '' ),
-				__( 'Theme', 'lafka-plugin' )                   => $parent->get( 'Name' ) . ' ' . $parent->get( 'Version' ),
-				__( 'Child theme', 'lafka-plugin' )             => is_child_theme() ? $theme->get( 'Name' ) . ' ' . $theme->get( 'Version' ) : __( 'None', 'lafka-plugin' ),
-				__( 'WooCommerce', 'lafka-plugin' )             => $wc,
-				__( 'PHP', 'lafka-plugin' )                     => PHP_VERSION,
-				__( 'Checkout experience', 'lafka-plugin' )     => class_exists( 'Lafka_Checkout_Mode' )
+				__( 'Lafka plugin', 'lafka-plugin' )       => (string) ( $plugin['Version'] ?? '' ),
+				__( 'Theme', 'lafka-plugin' )              => $parent->get( 'Name' ) . ' ' . $parent->get( 'Version' ),
+				__( 'Child theme', 'lafka-plugin' )        => is_child_theme() ? $theme->get( 'Name' ) . ' ' . $theme->get( 'Version' ) : __( 'None', 'lafka-plugin' ),
+				__( 'WooCommerce', 'lafka-plugin' )        => $wc,
+				__( 'PHP', 'lafka-plugin' )                => PHP_VERSION,
+				__( 'Checkout experience', 'lafka-plugin' ) => class_exists( 'Lafka_Checkout_Mode' )
 					/* translators: 1: configured checkout mode, 2: mode the Checkout page renders */
 					? sprintf( __( '%1$s (setting) · %2$s (checkout page)', 'lafka-plugin' ), Lafka_Checkout_Mode::get_mode(), Lafka_Checkout_Mode::get_effective_mode() )
 					: '',
 				__( 'Lafka minimum log level', 'lafka-plugin' ) => Lafka_Log::min_level(),
-				__( 'WooCommerce logging', 'lafka-plugin' )     => $logging && ! \Automattic\WooCommerce\Utilities\LoggingUtil::logging_is_enabled() ? __( 'Disabled — Lafka records will not be written', 'lafka-plugin' ) : __( 'Enabled', 'lafka-plugin' ),
+				__( 'WooCommerce logging', 'lafka-plugin' ) => $logging && ! \Automattic\WooCommerce\Utilities\LoggingUtil::logging_is_enabled() ? __( 'Disabled — Lafka records will not be written', 'lafka-plugin' ) : __( 'Enabled', 'lafka-plugin' ),
 				__( 'WooCommerce log handler', 'lafka-plugin' ) => Lafka_Diagnostics::log_handler(),
 				__( 'WooCommerce log retention', 'lafka-plugin' ) => $logging
 					? sprintf( /* translators: %d: days */ __( '%d days (30 recommended)', 'lafka-plugin' ), (int) \Automattic\WooCommerce\Utilities\LoggingUtil::get_retention_period() )
 					: '',
-				__( 'Incident table', 'lafka-plugin' )          => Lafka_Incidents::is_installed()
+				__( 'Incident table', 'lafka-plugin' )     => Lafka_Incidents::is_installed()
 					? sprintf( /* translators: 1: open, 2: muted, 3: resolved */ __( 'Installed — %1$d open, %2$d muted, %3$d resolved', 'lafka-plugin' ), $counts['open'], $counts['muted'], $counts['resolved'] )
 					: __( 'Not installed', 'lafka-plugin' ),
-				__( 'Incident retention', 'lafka-plugin' )      => sprintf( /* translators: %d: days */ __( '%d days after last seen', 'lafka-plugin' ), Lafka_Diagnostics::retention_days() ),
-				__( 'Daily check — next run', 'lafka-plugin' )  => is_int( $next ) ? wp_date( 'Y-m-d H:i', $next ) : ( true === $next ? __( 'Running', 'lafka-plugin' ) : __( 'Not scheduled', 'lafka-plugin' ) ),
-				__( 'Daily check — last run', 'lafka-plugin' )  => $last > 0 ? wp_date( 'Y-m-d H:i', $last ) : __( 'Never', 'lafka-plugin' ),
+				__( 'Incident retention', 'lafka-plugin' ) => sprintf( /* translators: %d: days */ __( '%d days after last seen', 'lafka-plugin' ), Lafka_Diagnostics::retention_days() ),
+				__( 'Daily check — next run', 'lafka-plugin' ) => is_int( $next ) ? wp_date( 'Y-m-d H:i', $next ) : ( true === $next ? __( 'Running', 'lafka-plugin' ) : __( 'Not scheduled', 'lafka-plugin' ) ),
+				__( 'Daily check — last run', 'lafka-plugin' ) => $last > 0 ? wp_date( 'Y-m-d H:i', $last ) : __( 'Never', 'lafka-plugin' ),
 			);
 
 			echo '<h2>' . esc_html__( 'Environment', 'lafka-plugin' ) . '</h2>';

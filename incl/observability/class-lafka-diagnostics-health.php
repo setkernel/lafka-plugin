@@ -141,31 +141,31 @@ if ( ! class_exists( 'Lafka_Diagnostics_Health' ) ) {
 			$info['lafka_diagnostics'] = array(
 				'label'  => __( 'Lafka diagnostics', 'lafka-plugin' ),
 				'fields' => array(
-					'module'        => array(
+					'module'       => array(
 						'label' => __( 'Diagnostics module', 'lafka-plugin' ),
 						'value' => Lafka_Diagnostics::is_enabled() ? __( 'Enabled', 'lafka-plugin' ) : __( 'Disabled (logging still on)', 'lafka-plugin' ),
 					),
-					'min_level'     => array(
+					'min_level'    => array(
 						'label' => __( 'Minimum log level', 'lafka-plugin' ),
 						'value' => Lafka_Log::min_level(),
 					),
-					'wc_handler'    => array(
+					'wc_handler'   => array(
 						'label' => __( 'WooCommerce log handler', 'lafka-plugin' ),
 						'value' => '' !== Lafka_Diagnostics::log_handler() ? Lafka_Diagnostics::log_handler() : __( 'Unknown', 'lafka-plugin' ),
 					),
-					'open'          => array(
+					'open'         => array(
 						'label' => __( 'Open incidents', 'lafka-plugin' ),
 						'value' => (string) $counts['open'],
 					),
-					'checkout_30d'  => array(
+					'checkout_30d' => array(
 						'label' => __( 'Checkout refusals (30 days)', 'lafka-plugin' ),
 						'value' => (string) array_sum( Lafka_Checkout_Failures::totals( 30 ) ),
 					),
-					'last_daily'    => array(
+					'last_daily'   => array(
 						'label' => __( 'Daily job last run', 'lafka-plugin' ),
 						'value' => $last > 0 ? gmdate( 'Y-m-d H:i', $last ) . ' UTC' : __( 'Never', 'lafka-plugin' ),
 					),
-					'incidents_db'  => array(
+					'incidents_db' => array(
 						'label' => __( 'Incident table', 'lafka-plugin' ),
 						'value' => Lafka_Incidents::is_installed() ? Lafka_Incidents::DB_VERSION : __( 'Not installed', 'lafka-plugin' ),
 					),

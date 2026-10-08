@@ -198,7 +198,6 @@ if ( ! function_exists( 'lafka_push_save_subscription' ) ) {
 		if ( method_exists( $wpdb, 'get_var' ) && method_exists( $wpdb, 'prepare' ) ) {
 			$existing_id = (int) $wpdb->get_var(
 				$wpdb->prepare(
-					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 					"SELECT id FROM {$table} WHERE endpoint = %s LIMIT 1",
 					$endpoint
 				)
@@ -341,7 +340,6 @@ if ( ! function_exists( 'lafka_push_get_active_subscriptions' ) ) {
 			$args         = array_merge( $ids, array( $limit ) );
 			$rows         = $wpdb->get_results(
 				$wpdb->prepare(
-					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 					"SELECT * FROM {$table} WHERE unsubscribed_at IS NULL AND user_id IN ({$placeholders}) ORDER BY id ASC LIMIT %d",
 					$args
 				)
@@ -351,7 +349,6 @@ if ( ! function_exists( 'lafka_push_get_active_subscriptions' ) ) {
 
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				"SELECT * FROM {$table} WHERE unsubscribed_at IS NULL ORDER BY id ASC LIMIT %d",
 				$limit
 			)
@@ -378,7 +375,6 @@ if ( ! function_exists( 'lafka_push_get_subscription_by_endpoint' ) ) {
 		$table = lafka_push_table_name();
 		$row   = $wpdb->get_row(
 			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				"SELECT * FROM {$table} WHERE endpoint = %s LIMIT 1",
 				$endpoint
 			)
@@ -418,7 +414,6 @@ if ( ! function_exists( 'lafka_push_cleanup' ) ) {
 		$table    = lafka_push_table_name();
 		$result   = $wpdb->query(
 			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				"DELETE FROM {$table} WHERE unsubscribed_at IS NOT NULL AND unsubscribed_at < DATE_SUB(NOW(), INTERVAL %d DAY)",
 				$days_old
 			)

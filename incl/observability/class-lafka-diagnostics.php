@@ -189,9 +189,9 @@ if ( ! class_exists( 'Lafka_Diagnostics' ) ) {
 				update_option( self::LAST_RUN_OPTION, time(), false );
 			}
 			$summary = array(
-				'pruned'  => class_exists( 'Lafka_Incidents' ) ? Lafka_Incidents::prune( self::retention_days() ) : 0,
-				'traces'  => self::index_place_order_traces(),
-				'digest'  => 0,
+				'pruned' => class_exists( 'Lafka_Incidents' ) ? Lafka_Incidents::prune( self::retention_days() ) : 0,
+				'traces' => self::index_place_order_traces(),
+				'digest' => 0,
 			);
 			if ( class_exists( 'Lafka_Incidents' ) ) {
 				Lafka_Incidents::resolve_finished_trace_incidents();
@@ -325,7 +325,7 @@ if ( ! class_exists( 'Lafka_Diagnostics' ) ) {
 
 			$traces = array();
 			foreach ( array_slice( $files, 0, max( 1, $limit ) ) as $file ) {
-				$contents = file_get_contents( $file, false, null, 0, 262144 ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- reading a local WooCommerce log file.
+				$contents = file_get_contents( $file, false, null, 0, 262144 );
 				if ( false === $contents ) {
 					continue;
 				}
@@ -555,7 +555,6 @@ if ( ! class_exists( 'Lafka_Diagnostics' ) ) {
 			$table = $wpdb->prefix . 'woocommerce_log';
 			$rows  = $wpdb->get_results(
 				$wpdb->prepare(
-					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- WooCommerce's own log table name (prefix concatenation).
 					"SELECT source, timestamp, level, message, context FROM {$table} WHERE source LIKE %s ORDER BY log_id ASC LIMIT 2000",
 					$wpdb->esc_like( 'place-order-debug-' ) . '%'
 				)

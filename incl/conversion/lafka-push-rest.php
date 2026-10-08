@@ -134,13 +134,13 @@ if ( ! function_exists( 'lafka_push_rest_nonce_permission' ) ) {
 		}
 		if ( '' === $nonce && isset( $_SERVER['HTTP_X_WP_NONCE'] ) ) {
 			$nonce = function_exists( 'wp_unslash' )
-				? (string) wp_unslash( $_SERVER['HTTP_X_WP_NONCE'] ) // phpcs:ignore WordPressVIPMinimum.Variables.ServerVariables.UserControlledHeaders
-				: (string) $_SERVER['HTTP_X_WP_NONCE']; // phpcs:ignore WordPressVIPMinimum.Variables.ServerVariables.UserControlledHeaders
+				? (string) wp_unslash( $_SERVER['HTTP_X_WP_NONCE'] )
+				: (string) $_SERVER['HTTP_X_WP_NONCE'];
 		}
 		if ( '' === $nonce && isset( $_REQUEST['_wpnonce'] ) ) {
 			$nonce = function_exists( 'wp_unslash' )
-				? (string) wp_unslash( $_REQUEST['_wpnonce'] ) // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-				: (string) $_REQUEST['_wpnonce']; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				? (string) wp_unslash( $_REQUEST['_wpnonce'] )
+				: (string) $_REQUEST['_wpnonce'];
 		}
 		if ( function_exists( 'sanitize_text_field' ) ) {
 			$nonce = sanitize_text_field( $nonce );
@@ -246,8 +246,8 @@ if ( ! function_exists( 'lafka_push_rest_request_ip' ) ) {
 			return '';
 		}
 		$ip = function_exists( 'wp_unslash' )
-			? (string) wp_unslash( $_SERVER['REMOTE_ADDR'] ) // phpcs:ignore WordPressVIPMinimum.Variables.ServerVariables.UserControlledHeaders
-			: (string) $_SERVER['REMOTE_ADDR']; // phpcs:ignore WordPressVIPMinimum.Variables.ServerVariables.UserControlledHeaders
+			? (string) wp_unslash( $_SERVER['REMOTE_ADDR'] )
+			: (string) $_SERVER['REMOTE_ADDR'];
 		$ip = trim( $ip );
 		if ( filter_var( $ip, FILTER_VALIDATE_IP ) ) {
 			return $ip;
@@ -365,7 +365,6 @@ if ( ! function_exists( 'lafka_push_rest_subscribe' ) ) {
 		$user_id    = function_exists( 'get_current_user_id' ) ? (int) get_current_user_id() : 0;
 		$user_agent = '';
 		if ( isset( $_SERVER['HTTP_USER_AGENT'] ) ) {
-			// phpcs:ignore WordPressVIPMinimum.Variables.ServerVariables.UserControlledHeaders
 			$user_agent = (string) $_SERVER['HTTP_USER_AGENT'];
 			if ( function_exists( 'sanitize_text_field' ) ) {
 				$user_agent = sanitize_text_field( $user_agent );
@@ -476,7 +475,6 @@ if ( ! function_exists( 'lafka_push_rest_vapid_key' ) ) {
 	 * @return array
 	 */
 	function lafka_push_rest_vapid_key( $request = null ) {
-		// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
 		unset( $request );
 
 		$key = function_exists( 'get_theme_mod' )
@@ -514,7 +512,6 @@ if ( ! function_exists( 'lafka_push_rest_extract_body' ) ) {
 		// Raw fallback (unit tests, edge runtimes).
 		$raw = '';
 		if ( function_exists( 'file_get_contents' ) ) {
-			// phpcs:ignore WordPressVIPMinimum.Performance.FetchingRemoteData.FileGetContentsUnknown
 			$raw = (string) @file_get_contents( 'php://input' );
 		}
 		if ( '' === $raw ) {

@@ -90,7 +90,7 @@ if ( ! class_exists( 'Lafka_Tools_Page' ) ) {
 
 			// The payload is our own generated JSON; echo verbatim so the file is
 			// byte-for-byte the bundle (escaping would corrupt it).
-			echo $json; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JSON file download body, not HTML.
+			echo $json;
 			exit;
 		}
 
@@ -135,7 +135,6 @@ if ( ! class_exists( 'Lafka_Tools_Page' ) ) {
 			// The only caller (handle_import_preview) verifies the nonce with
 			// check_admin_referer() before delegating here, so these $_FILES
 			// reads are already CSRF-guarded; the sniff can't see across methods.
-			// phpcs:disable WordPress.Security.NonceVerification.Missing
 			if ( empty( $_FILES['lafka_config_file']['tmp_name'] ) ) {
 				return null;
 			}
@@ -144,11 +143,10 @@ if ( ! class_exists( 'Lafka_Tools_Page' ) ) {
 				return null;
 			}
 			$tmp = sanitize_text_field( wp_unslash( $_FILES['lafka_config_file']['tmp_name'] ) );
-			// phpcs:enable WordPress.Security.NonceVerification.Missing
 			if ( '' === $tmp || ! is_uploaded_file( $tmp ) ) {
 				return null;
 			}
-			$contents = file_get_contents( $tmp ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- reading a just-uploaded local temp file.
+			$contents = file_get_contents( $tmp );
 			if ( false === $contents || '' === $contents ) {
 				return null;
 			}
@@ -234,7 +232,6 @@ if ( ! class_exists( 'Lafka_Tools_Page' ) ) {
 		private function render_import_card() {
 			// $_GET['lafka_import'] is display-state only; the state-changing paths
 			// (preview/apply) each verify their own nonce via check_admin_referer().
-			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			$state = isset( $_GET['lafka_import'] ) ? sanitize_key( wp_unslash( $_GET['lafka_import'] ) ) : '';
 
 			echo '<div class="lafka-tools-card">';

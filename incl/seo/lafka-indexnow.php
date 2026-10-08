@@ -195,7 +195,7 @@ if ( ! function_exists( 'lafka_indexnow_flush' ) ) {
 					),
 				)
 			);
-			$code = is_wp_error( $response ) ? 0 : (int) wp_remote_retrieve_response_code( $response );
+			$code     = is_wp_error( $response ) ? 0 : (int) wp_remote_retrieve_response_code( $response );
 			if ( $code >= 200 && $code < 300 ) {
 				$sent += count( $batch );
 			} elseif ( 0 === $code || 429 === $code || $code >= 500 ) {

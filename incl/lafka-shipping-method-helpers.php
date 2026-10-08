@@ -72,9 +72,7 @@ if ( ! function_exists( 'lafka_current_fulfilment_type' ) ) {
 		$wc      = function_exists( 'WC' ) ? WC() : null;
 		$session = ( is_object( $wc ) && isset( $wc->session ) && is_object( $wc->session ) ) ? $wc->session : null;
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- read-only decision; WooCommerce verifies its own nonce before it acts on a checkout / order-review request.
 		if ( isset( $_POST['shipping_method'] ) ) {
-			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- see above.
 			$chosen = array_map( 'sanitize_text_field', (array) wp_unslash( $_POST['shipping_method'] ) );
 		} else {
 			$chosen = null === $session ? array() : (array) $session->get( 'chosen_shipping_methods' );

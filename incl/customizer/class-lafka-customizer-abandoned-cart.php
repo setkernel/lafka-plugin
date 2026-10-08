@@ -108,7 +108,7 @@ if ( ! class_exists( 'Lafka_Customizer_Abandoned_Cart' ) ) {
 			if ( ! is_scalar( $value ) ) {
 				return '';
 			}
-			$lines  = preg_split( '/[\s,]+/', (string) $value );
+			$lines = preg_split( '/[\s,]+/', (string) $value );
 			if ( ! is_array( $lines ) ) {
 				return '';
 			}

@@ -125,7 +125,7 @@ if ( ! class_exists( 'Lafka_Insights_Session' ) ) {
 			if ( ! isset( $_SERVER['HTTP_USER_AGENT'] ) ) {
 				return '';
 			}
-			return substr( sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ), 0, 512 ); // phpcs:ignore WordPressVIPMinimum.Variables.RestrictedVariables.cache_constraints___SERVER__HTTP_USER_AGENT__
+			return substr( sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ), 0, 512 );
 		}
 
 		/**
@@ -173,7 +173,7 @@ if ( ! class_exists( 'Lafka_Insights_Session' ) ) {
 			if ( ! isset( $_SERVER[ $key ] ) ) {
 				return '';
 			}
-			$ip = trim( sanitize_text_field( wp_unslash( $_SERVER[ $key ] ) ) ); // phpcs:ignore WordPressVIPMinimum.Variables.ServerVariables.UserControlledHeaders
+			$ip = trim( sanitize_text_field( wp_unslash( $_SERVER[ $key ] ) ) );
 			return false !== filter_var( $ip, FILTER_VALIDATE_IP ) ? $ip : '';
 		}
 

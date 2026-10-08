@@ -5,7 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 require_once __DIR__ . '/../lafka-asset-helpers.php';
 
-function lafka_shipping_areas_shortcode( $atts = [], $content = null, $tag = '' ): string {
+function lafka_shipping_areas_shortcode( $atts = array(), $content = null, $tag = '' ): string {
 	// normalize attribute keys, lowercase
 	$atts = array_change_key_case( (array) $atts, CASE_LOWER );
 
@@ -56,8 +56,8 @@ function lafka_shipping_areas_shortcode( $atts = [], $content = null, $tag = '' 
 	if ( ! wp_script_is( 'lafka-google-maps', 'registered' ) ) {
 		return current_user_can( 'manage_options' )
 			? '<div class="lafka-shipping-areas-shortcode lafka-shipping-areas-shortcode--no-key" style="padding:1rem;border:1px dashed #ccc;color:#666;">'
-			  . esc_html__( 'Lafka shipping-areas shortcode: set a Google Maps API key under WooCommerce → Lafka Shipping Settings to render the delivery-zone map.', 'lafka-plugin' )
-			  . '</div>'
+				. esc_html__( 'Lafka shipping-areas shortcode: set a Google Maps API key under WooCommerce → Lafka Shipping Settings to render the delivery-zone map.', 'lafka-plugin' )
+				. '</div>'
 			: '';
 	}
 	$shortcode_js = lafka_plugin_script_path( 'incl/shipping-areas/assets/js/frontend/lafka-shipping-areas-shortcode.min.js' );

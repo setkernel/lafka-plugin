@@ -16,7 +16,6 @@
 // $_GET reads in this admin file are for display state (which tab is active,
 // banner dismissals, etc.) — no state mutation. Form submits go through WP
 // Settings API which verifies its own nonce.
-// phpcs:disable WordPress.Security.NonceVerification.Recommended
 
 defined( 'ABSPATH' ) || exit;
 
@@ -77,14 +76,14 @@ if ( ! class_exists( 'Lafka_Security_Admin' ) ) {
 			update_option( Lafka_Security_Headers::OPTION_KEY, $opts );
 
 			wp_safe_redirect(
-                add_query_arg(
-                    array(
+				add_query_arg(
+					array(
 						'page'    => self::PAGE_SLUG,
 						'updated' => $value,
-                    ),
-                    admin_url( 'tools.php' ) 
-                ) 
-            );
+					),
+					admin_url( 'tools.php' )
+				)
+			);
 			exit;
 		}
 
@@ -108,12 +107,12 @@ if ( ! class_exists( 'Lafka_Security_Admin' ) ) {
 				<?php if ( '' !== $updated ) : ?>
 					<div class="notice notice-success is-dismissible">
 						<p>
-                        <?php
+						<?php
 							echo 'enabled' === $updated
 								? esc_html__( 'Security headers enabled.', 'lafka-plugin' )
 								: esc_html__( 'Security headers disabled.', 'lafka-plugin' );
 						?>
-                        </p>
+						</p>
 					</div>
 				<?php endif; ?>
 
@@ -138,12 +137,12 @@ if ( ! class_exists( 'Lafka_Security_Admin' ) ) {
 								<p class="description">
 									<?php esc_html_e( 'Currently:', 'lafka-plugin' ); ?>
 									<strong>
-                                    <?php
+									<?php
 										echo $active
 											? esc_html__( 'ACTIVE', 'lafka-plugin' )
 											: esc_html__( 'INACTIVE', 'lafka-plugin' );
 									?>
-                                    </strong>
+									</strong>
 								</p>
 							</td>
 						</tr>

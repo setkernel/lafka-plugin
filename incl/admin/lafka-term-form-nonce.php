@@ -19,7 +19,6 @@ if ( ! function_exists( 'lafka_verify_term_form_nonce' ) ) {
 	 * @return bool
 	 */
 	function lafka_verify_term_form_nonce( $term_id ) {
-		// phpcs:disable WordPress.Security.NonceVerification.Missing -- this function IS the nonce verification.
 		$action = isset( $_POST['action'] ) ? sanitize_key( wp_unslash( $_POST['action'] ) ) : '';
 		if ( 'editedtag' === $action ) {
 			$field        = '_wpnonce';
@@ -29,7 +28,6 @@ if ( ! function_exists( 'lafka_verify_term_form_nonce' ) ) {
 			$nonce_action = 'add-tag';
 		}
 		$nonce = isset( $_POST[ $field ] ) ? sanitize_text_field( wp_unslash( $_POST[ $field ] ) ) : '';
-		// phpcs:enable WordPress.Security.NonceVerification.Missing
 
 		return '' !== $nonce && false !== wp_verify_nonce( $nonce, $nonce_action );
 	}

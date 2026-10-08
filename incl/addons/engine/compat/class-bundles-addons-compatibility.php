@@ -88,7 +88,7 @@ class Lafka_Bundles_Addons_Compatibility {
 	 * @param WC_Bundled_Item $bundled_item The bundled item wrapper.
 	 */
 	public static function render_addons( $product_id, $bundled_item ): void {
-		$Lafka_Engine_Display = $GLOBALS['Lafka_Engine_Display'] ?? null; // phpcs:ignore WordPress.NamingConventions.ValidVariableName.VariableNotSnakeCase
+		$Lafka_Engine_Display = $GLOBALS['Lafka_Engine_Display'] ?? null;
 		if ( ! $Lafka_Engine_Display instanceof Lafka_Engine_Display ) {
 			return;
 		}
@@ -131,7 +131,7 @@ class Lafka_Bundles_Addons_Compatibility {
 	 * @param int    $product_id The product whose addons are being prefixed.
 	 * @return string
 	 */
-	public static function field_prefix( $prefix, $product_id ): string { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
+	public static function field_prefix( $prefix, $product_id ): string {
 		if ( '' !== self::$addons_prefix ) {
 			return self::$addons_prefix . '-' . $prefix;
 		}
@@ -150,7 +150,7 @@ class Lafka_Bundles_Addons_Compatibility {
 	 * @param string $prefix     Explicit prefix arg, if any (usually empty here).
 	 * @return string
 	 */
-	public static function cache_key_extra( $extra, $post_id, $prefix ): string { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
+	public static function cache_key_extra( $extra, $post_id, $prefix ): string {
 		if ( '' !== self::$addons_prefix ) {
 			return $extra . '|bundle:' . self::$addons_prefix;
 		}
@@ -167,17 +167,17 @@ class Lafka_Bundles_Addons_Compatibility {
 	 * @param int             $variation_id
 	 * @return bool
 	 */
-	public static function validate_addons( $passed, $bundle_id, $bundled_item, $quantity, $variation_id ): bool { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
+	public static function validate_addons( $passed, $bundle_id, $bundled_item, $quantity, $variation_id ): bool {
 		// Order-again submissions skip revalidation: the cart data is being
 		// rebuilt from a saved order, not from a fresh user submission.
 		if (
 			isset( $_GET['order_again'], $_GET['_wpnonce'] )
-			&& wp_verify_nonce( wc_clean( wp_unslash( $_GET['_wpnonce'] ) ), 'woocommerce-order_again' ) // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			&& wp_verify_nonce( wc_clean( wp_unslash( $_GET['_wpnonce'] ) ), 'woocommerce-order_again' )
 		) {
 			return (bool) $passed;
 		}
 
-		$Lafka_Engine_Cart = $GLOBALS['Lafka_Engine_Cart'] ?? null; // phpcs:ignore WordPress.NamingConventions.ValidVariableName.VariableNotSnakeCase
+		$Lafka_Engine_Cart = $GLOBALS['Lafka_Engine_Cart'] ?? null;
 		if ( ! $Lafka_Engine_Cart instanceof Lafka_Engine_Cart ) {
 			return (bool) $passed;
 		}
@@ -201,7 +201,7 @@ class Lafka_Bundles_Addons_Compatibility {
 	 * @return array
 	 */
 	public static function stamp_addons( $stamp, $bundled_item_id ): array {
-		$Lafka_Engine_Cart = $GLOBALS['Lafka_Engine_Cart'] ?? null; // phpcs:ignore WordPress.NamingConventions.ValidVariableName.VariableNotSnakeCase
+		$Lafka_Engine_Cart = $GLOBALS['Lafka_Engine_Cart'] ?? null;
 		if ( ! $Lafka_Engine_Cart instanceof Lafka_Engine_Cart ) {
 			return (array) $stamp;
 		}
@@ -232,8 +232,8 @@ class Lafka_Bundles_Addons_Compatibility {
 	 * add-to-cart is running. The addon data is already in the parent stamp;
 	 * letting the engine re-process per-bundled-item would duplicate it.
 	 */
-	public static function before_bundled_add_to_cart( $product_id, $quantity, $variation_id, $variations, $bundled_item_cart_data ): void { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
-		$Lafka_Engine_Cart = $GLOBALS['Lafka_Engine_Cart'] ?? null; // phpcs:ignore WordPress.NamingConventions.ValidVariableName.VariableNotSnakeCase
+	public static function before_bundled_add_to_cart( $product_id, $quantity, $variation_id, $variations, $bundled_item_cart_data ): void {
+		$Lafka_Engine_Cart = $GLOBALS['Lafka_Engine_Cart'] ?? null;
 		if ( ! $Lafka_Engine_Cart instanceof Lafka_Engine_Cart ) {
 			return;
 		}
@@ -250,8 +250,8 @@ class Lafka_Bundles_Addons_Compatibility {
 	 * bundled add-to-cart completes, so non-bundled add-to-cart submissions
 	 * keep working.
 	 */
-	public static function after_bundled_add_to_cart( $product_id, $quantity, $variation_id, $variations, $bundled_item_cart_data ): void { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
-		$Lafka_Engine_Cart = $GLOBALS['Lafka_Engine_Cart'] ?? null; // phpcs:ignore WordPress.NamingConventions.ValidVariableName.VariableNotSnakeCase
+	public static function after_bundled_add_to_cart( $product_id, $quantity, $variation_id, $variations, $bundled_item_cart_data ): void {
+		$Lafka_Engine_Cart = $GLOBALS['Lafka_Engine_Cart'] ?? null;
 		if ( ! $Lafka_Engine_Cart instanceof Lafka_Engine_Cart ) {
 			return;
 		}

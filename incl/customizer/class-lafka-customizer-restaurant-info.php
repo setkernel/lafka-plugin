@@ -41,8 +41,8 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 		public static function register( $wp_customize ): void {
 
 			$wp_customize->add_panel(
-                'lafka_restaurant_info',
-                array(
+				'lafka_restaurant_info',
+				array(
 					'title'       => esc_html__( 'Lafka — Restaurant Information', 'lafka-plugin' ),
 					'description' => esc_html__( 'Restaurant-specific extras for JSON-LD schema, the [lafka_nap] shortcode, and editorial templates: opening hours, cuisine, geo coordinates, social/citation URLs, and price range. Address, phone, and country are read from WooCommerce → Settings → General by default — only fill them in here if you want to override the WC values for schema/branding (e.g. multi-location).', 'lafka-plugin' ),
 					// Priority 32 groups this with the other Lafka panels
@@ -50,8 +50,8 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 					// Site Settings 30, Home Page 35) — pure positioning,
 					// not a visibility hack.
 					'priority'    => 32,
-                )
-            );
+				)
+			);
 
 			self::register_identity_section( $wp_customize );
 			self::register_location_section( $wp_customize );
@@ -82,8 +82,8 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 					: ( 'email' === $type ? 'sanitize_email' : 'sanitize_text_field' );
 			}
 			$wp_customize->add_setting(
-                $id,
-                array(
+				$id,
+				array(
 					// GX3: business facts live in ONE store — wp_options
 					// `lafka_business_*`, the same option the WooCommerce →
 					// Settings → Restaurant tab writes (see lafka-nap-migration.php).
@@ -91,17 +91,17 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 					'default'           => $default,
 					'transport'         => 'refresh',
 					'sanitize_callback' => $sanitize,
-                ) 
-            );
+				)
+			);
 			$wp_customize->add_control(
-                $id,
-                array(
+				$id,
+				array(
 					'label'       => $label,
 					'description' => $description,
 					'section'     => $section,
 					'type'        => $type,
-                ) 
-            );
+				)
+			);
 		}
 
 		/**
@@ -132,7 +132,7 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 		 * Sanitize a price-range string ($, $$, $$$, $$$$).
 		 */
 		public static function sanitize_price_range( $value ): string {
-			$value = is_scalar( $value ) ? trim( (string) $value ) : '';
+			$value   = is_scalar( $value ) ? trim( (string) $value ) : '';
 			$allowed = array( '$', '$$', '$$$', '$$$$' );
 			return in_array( $value, $allowed, true ) ? $value : '$$';
 		}
@@ -213,17 +213,17 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 
 		private static function register_identity_section( $wp_customize ): void {
 			$wp_customize->add_section(
-                'lafka_business_identity',
-                array(
+				'lafka_business_identity',
+				array(
 					'title'    => esc_html__( 'Identity', 'lafka-plugin' ),
 					'panel'    => 'lafka_restaurant_info',
 					'priority' => 10,
-                ) 
-            );
+				)
+			);
 
 			self::add_text(
-                $wp_customize,
-                'lafka_business_name',
+				$wp_customize,
+				'lafka_business_name',
 				'lafka_business_identity',
 				esc_html__( 'Restaurant name', 'lafka-plugin' ),
 				'',
@@ -231,36 +231,36 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 			);
 
 			$wp_customize->add_setting(
-                'lafka_business_business_type',
-                array(
+				'lafka_business_business_type',
+				array(
 					'type'              => 'option', // GX3: single NAP store (wp_options).
 					'default'           => 'Restaurant, LocalBusiness, FoodEstablishment',
 					'transport'         => 'refresh',
 					'sanitize_callback' => array( __CLASS__, 'sanitize_business_type' ),
-                ) 
-            );
+				)
+			);
 			$wp_customize->add_control(
-                'lafka_business_business_type',
-                array(
+				'lafka_business_business_type',
+				array(
 					'label'       => esc_html__( 'Schema.org business types (comma-separated)', 'lafka-plugin' ),
 					'description' => esc_html__( 'Examples: Restaurant, CafeOrCoffeeShop, BarOrPub, Bakery, FastFoodRestaurant. Multi-typed JSON-LD lets Google match more local-intent queries.', 'lafka-plugin' ),
 					'section'     => 'lafka_business_identity',
 					'type'        => 'text',
-                ) 
-            );
+				)
+			);
 
 			$wp_customize->add_setting(
-                'lafka_business_price_range',
-                array(
+				'lafka_business_price_range',
+				array(
 					'type'              => 'option', // GX3: single NAP store (wp_options).
 					'default'           => '$$',
 					'transport'         => 'refresh',
 					'sanitize_callback' => array( __CLASS__, 'sanitize_price_range' ),
-                ) 
-            );
+				)
+			);
 			$wp_customize->add_control(
-                'lafka_business_price_range',
-                array(
+				'lafka_business_price_range',
+				array(
 					'label'       => esc_html__( 'Price range', 'lafka-plugin' ),
 					'description' => esc_html__( '$ = inexpensive, $$$$ = very expensive. Used by JSON-LD priceRange.', 'lafka-plugin' ),
 					'section'     => 'lafka_business_identity',
@@ -271,12 +271,12 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 						'$$$'  => '$$$  (expensive)',
 						'$$$$' => '$$$$  (very expensive)',
 					),
-                ) 
-            );
+				)
+			);
 
 			self::add_text(
-                $wp_customize,
-                'lafka_business_email',
+				$wp_customize,
+				'lafka_business_email',
 				'lafka_business_identity',
 				esc_html__( 'Public contact email', 'lafka-plugin' ),
 				'',
@@ -292,13 +292,13 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 
 		private static function register_location_section( $wp_customize ): void {
 			$wp_customize->add_section(
-                'lafka_business_location',
-                array(
+				'lafka_business_location',
+				array(
 					'title'    => esc_html__( 'Location', 'lafka-plugin' ),
 					'panel'    => 'lafka_restaurant_info',
 					'priority' => 20,
-                ) 
-            );
+				)
+			);
 
 			$wc_default_msg = esc_html__( 'Leave blank to inherit from WooCommerce → Settings → General.', 'lafka-plugin' );
 			self::add_text( $wp_customize, 'lafka_business_street', 'lafka_business_location', esc_html__( 'Street address', 'lafka-plugin' ), '', $wc_default_msg );
@@ -308,42 +308,42 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 			self::add_text( $wp_customize, 'lafka_business_country', 'lafka_business_location', esc_html__( 'Country (2-letter ISO, e.g. CA, US)', 'lafka-plugin' ), '', $wc_default_msg );
 
 			$wp_customize->add_setting(
-                'lafka_business_geo_lat',
-                array(
+				'lafka_business_geo_lat',
+				array(
 					'type'              => 'option', // GX3: single NAP store (wp_options).
 					'default'           => '',
 					'transport'         => 'refresh',
 					'sanitize_callback' => array( __CLASS__, 'sanitize_geo' ),
-                ) 
-            );
+				)
+			);
 			$wp_customize->add_control(
-                'lafka_business_geo_lat',
-                array(
+				'lafka_business_geo_lat',
+				array(
 					'label'       => esc_html__( 'Geo latitude', 'lafka-plugin' ),
 					'description' => esc_html__( 'Decimal degrees, 4-6 places (e.g. 40.7128). Leave both lat & lng empty to omit geo from JSON-LD.', 'lafka-plugin' ),
 					'section'     => 'lafka_business_location',
 					'type'        => 'text',
-                ) 
-            );
+				)
+			);
 
 			$wp_customize->add_setting(
-                'lafka_business_geo_lng',
-                array(
+				'lafka_business_geo_lng',
+				array(
 					'type'              => 'option', // GX3: single NAP store (wp_options).
 					'default'           => '',
 					'transport'         => 'refresh',
 					'sanitize_callback' => array( __CLASS__, 'sanitize_geo' ),
-                ) 
-            );
+				)
+			);
 			$wp_customize->add_control(
-                'lafka_business_geo_lng',
-                array(
+				'lafka_business_geo_lng',
+				array(
 					'label'       => esc_html__( 'Geo longitude', 'lafka-plugin' ),
 					'description' => esc_html__( 'Decimal degrees, 4-6 places (e.g. -74.0060).', 'lafka-plugin' ),
 					'section'     => 'lafka_business_location',
 					'type'        => 'text',
-                ) 
-            );
+				)
+			);
 		}
 
 		// ====================================================================
@@ -352,17 +352,17 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 
 		private static function register_contact_section( $wp_customize ): void {
 			$wp_customize->add_section(
-                'lafka_business_contact',
-                array(
+				'lafka_business_contact',
+				array(
 					'title'    => esc_html__( 'Contact', 'lafka-plugin' ),
 					'panel'    => 'lafka_restaurant_info',
 					'priority' => 30,
-                ) 
-            );
+				)
+			);
 
 			self::add_text(
-                $wp_customize,
-                'lafka_business_phone_e164',
+				$wp_customize,
+				'lafka_business_phone_e164',
 				'lafka_business_contact',
 				esc_html__( 'Phone (E.164 format)', 'lafka-plugin' ),
 				'',
@@ -370,8 +370,8 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 			);
 
 			self::add_text(
-                $wp_customize,
-                'lafka_business_phone_display',
+				$wp_customize,
+				'lafka_business_phone_display',
 				'lafka_business_contact',
 				esc_html__( 'Phone (human-friendly display)', 'lafka-plugin' ),
 				'',
@@ -385,14 +385,14 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 
 		private static function register_hours_section( $wp_customize ): void {
 			$wp_customize->add_section(
-                'lafka_business_hours',
-                array(
-					'title'           => esc_html__( 'Hours', 'lafka-plugin' ),
-					'panel'           => 'lafka_restaurant_info',
-					'description'     => esc_html__( 'Per-day opening hours in 24h format "HH:MM-HH:MM" (e.g. 11:00-23:00). Use "closed" for closed days. Empty values are simply skipped.', 'lafka-plugin' ),
-					'priority'        => 40,
-                )
-            );
+				'lafka_business_hours',
+				array(
+					'title'       => esc_html__( 'Hours', 'lafka-plugin' ),
+					'panel'       => 'lafka_restaurant_info',
+					'description' => esc_html__( 'Per-day opening hours in 24h format "HH:MM-HH:MM" (e.g. 11:00-23:00). Use "closed" for closed days. Empty values are simply skipped.', 'lafka-plugin' ),
+					'priority'    => 40,
+				)
+			);
 
 			$days = array(
 				'mon' => esc_html__( 'Monday', 'lafka-plugin' ),
@@ -405,23 +405,23 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 			);
 			foreach ( $days as $key => $label ) {
 				$wp_customize->add_setting(
-                    'lafka_business_hours_' . $key,
-                    array(
+					'lafka_business_hours_' . $key,
+					array(
 						'type'              => 'option', // GX3: single NAP store (wp_options).
 						'default'           => '',
 						'transport'         => 'refresh',
 						'sanitize_callback' => array( __CLASS__, 'sanitize_hours' ),
-                    ) 
-                );
+					)
+				);
 				$wp_customize->add_control(
-                    'lafka_business_hours_' . $key,
-                    array(
+					'lafka_business_hours_' . $key,
+					array(
 						'label'       => $label,
 						'description' => esc_html__( 'Format: HH:MM-HH:MM or "closed". Leave empty to omit.', 'lafka-plugin' ),
 						'section'     => 'lafka_business_hours',
 						'type'        => 'text',
-                    ) 
-                );
+					)
+				);
 			}
 		}
 
@@ -431,17 +431,17 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 
 		private static function register_cuisine_payment_section( $wp_customize ): void {
 			$wp_customize->add_section(
-                'lafka_business_cuisine_payment',
-                array(
+				'lafka_business_cuisine_payment',
+				array(
 					'title'    => esc_html__( 'Cuisine & Payment', 'lafka-plugin' ),
 					'panel'    => 'lafka_restaurant_info',
 					'priority' => 50,
-                ) 
-            );
+				)
+			);
 
 			self::add_text(
-                $wp_customize,
-                'lafka_business_cuisines',
+				$wp_customize,
+				'lafka_business_cuisines',
 				'lafka_business_cuisine_payment',
 				esc_html__( 'Cuisines (comma-separated)', 'lafka-plugin' ),
 				'',
@@ -450,8 +450,8 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 			);
 
 			self::add_text(
-                $wp_customize,
-                'lafka_business_payment_methods',
+				$wp_customize,
+				'lafka_business_payment_methods',
 				'lafka_business_cuisine_payment',
 				esc_html__( 'Payment methods (comma-separated)', 'lafka-plugin' ),
 				'',
@@ -466,32 +466,32 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 
 		private static function register_same_as_section( $wp_customize ): void {
 			$wp_customize->add_section(
-                'lafka_business_same_as',
-                array(
+				'lafka_business_same_as',
+				array(
 					'title'       => esc_html__( 'Social Profiles & Citations (sameAs)', 'lafka-plugin' ),
 					'description' => esc_html__( 'Authoritative URLs Google uses to corroborate your business identity. One URL per line. Invalid lines are silently dropped at render. Recommended: Facebook, Instagram, Yelp, TripAdvisor, Google Business Profile, YellowPages.', 'lafka-plugin' ),
 					'panel'       => 'lafka_restaurant_info',
 					'priority'    => 60,
-                ) 
-            );
+				)
+			);
 
 			$wp_customize->add_setting(
-                'lafka_business_same_as',
-                array(
+				'lafka_business_same_as',
+				array(
 					'type'              => 'option', // GX3: single NAP store (wp_options).
 					'default'           => '',
 					'transport'         => 'refresh',
 					'sanitize_callback' => array( __CLASS__, 'sanitize_url_list' ),
-                ) 
-            );
+				)
+			);
 			$wp_customize->add_control(
-                'lafka_business_same_as',
-                array(
+				'lafka_business_same_as',
+				array(
 					'label'   => esc_html__( 'sameAs URLs (one per line)', 'lafka-plugin' ),
 					'section' => 'lafka_business_same_as',
 					'type'    => 'textarea',
-                )
-            );
+				)
+			);
 
 			// GX3 — same options the WooCommerce → Settings → Restaurant →
 			// Schema & Geo section edits (single store; add_text() makes every
@@ -532,23 +532,23 @@ if ( ! class_exists( 'Lafka_Customizer_Restaurant_Info' ) ) {
 
 		private static function register_homepage_hero_section( $wp_customize ): void {
 			$wp_customize->add_section(
-                'lafka_homepage_hero',
-                array(
+				'lafka_homepage_hero',
+				array(
 					'title'       => esc_html__( 'Homepage Hero (LCP)', 'lafka-plugin' ),
 					'description' => esc_html__( 'Image preloaded on the homepage for fastest Largest Contentful Paint. Used by the lafka_lcp_image_url filter in lafka-plugin (incl/perf/lcp-preload.php). Image emitted as a `<link rel="preload">` from the theme\'s header.php.', 'lafka-plugin' ),
 					'panel'       => 'lafka_restaurant_info',
 					'priority'    => 70,
-                )
-            );
+				)
+			);
 
 			$wp_customize->add_setting(
-                'lafka_homepage_hero_image',
-                array(
+				'lafka_homepage_hero_image',
+				array(
 					'default'           => '',
 					'transport'         => 'refresh',
 					'sanitize_callback' => 'esc_url_raw',
-                )
-            );
+				)
+			);
 			$wp_customize->add_control(
 				new WP_Customize_Image_Control(
 					$wp_customize,

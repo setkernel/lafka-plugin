@@ -412,15 +412,15 @@ if ( ! class_exists( 'Lafka_Customizer_Analytics' ) ) {
 			);
 
 			$consent_categories = array(
-				'lafka_consent_default_analytics'        => array(
+				'lafka_consent_default_analytics'          => array(
 					'label'       => esc_html__( 'Default state: analytics_storage', 'lafka-plugin' ),
 					'description' => esc_html__( 'GA4 / Clarity / behavioural-analytics storage. Required for any usage metric. Defaults to denied (Consent Mode v2 baseline).', 'lafka-plugin' ),
 				),
-				'lafka_consent_default_ad_storage'       => array(
+				'lafka_consent_default_ad_storage'         => array(
 					'label'       => esc_html__( 'Default state: ad_storage', 'lafka-plugin' ),
 					'description' => esc_html__( 'Cookies/identifiers used for advertising (Meta Pixel, Google Ads). Defaults to denied.', 'lafka-plugin' ),
 				),
-				'lafka_consent_default_ad_user_data'     => array(
+				'lafka_consent_default_ad_user_data'       => array(
 					'label'       => esc_html__( 'Default state: ad_user_data', 'lafka-plugin' ),
 					'description' => esc_html__( 'Sending user data to Google for advertising. Required for Enhanced Conversions. Defaults to denied.', 'lafka-plugin' ),
 				),

@@ -26,7 +26,7 @@ defined( 'ABSPATH' ) || exit;
 		<select name="<?php echo esc_attr( $prefix . '[options_source_attribute]' ); ?>" data-lafka-source-attribute>
 			<option value=""><?php esc_html_e( '— Pick an attribute —', 'lafka-plugin' ); ?></option>
 			<?php
-            foreach ( $product_attributes as $tax ) :
+			foreach ( $product_attributes as $tax ) :
 				$slug = function_exists( 'wc_attribute_taxonomy_name' ) ? wc_attribute_taxonomy_name( $tax->attribute_name ) : 'pa_' . $tax->attribute_name;
 				?>
 				<option value="<?php echo esc_attr( $slug ); ?>" <?php selected( $group->options_source_attribute, $slug ); ?>>

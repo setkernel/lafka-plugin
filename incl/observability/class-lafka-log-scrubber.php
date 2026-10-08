@@ -103,21 +103,21 @@ if ( ! class_exists( 'Lafka_Log_Scrubber' ) ) {
 		public static function default_patterns(): array {
 			return array(
 				// JWT (three base64url segments starting with eyJ).
-				'/\beyJ[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]*/'             => '[token]',
+				'/\beyJ[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]*/' => '[token]',
 				// Bearer / Basic credentials.
-				'/\b(Bearer|Basic)\s+[A-Za-z0-9\-._~+\/]+=*/i'                         => '$1 [token]',
+				'/\b(Bearer|Basic)\s+[A-Za-z0-9\-._~+\/]+=*/i' => '$1 [token]',
 				// Email addresses.
-				'/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}/i'                           => '[email]',
+				'/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}/i' => '[email]',
 				// E.164 phone numbers.
-				'/(?<![\w+])\+\d{8,15}(?!\d)/'                                         => '[phone]',
+				'/(?<![\w+])\+\d{8,15}(?!\d)/'            => '[phone]',
 				// NANP phone numbers: 902-555-0142, (902) 555-0142, 1 902 555 0142.
 				'/(?<![\w])(?:\+?1[\s.\-]?)?(?:\(\d{3}\)|\d{3})[\s.\-]?\d{3}[\s.\-]?\d{4}(?!\d)/' => '[phone]',
 				// Canadian postal codes (A1A 1A1).
 				'/\b[ABCEGHJ-NPRSTVXY]\d[ABCEGHJ-NPRSTV-Z][ \-]?\d[ABCEGHJ-NPRSTV-Z]\d\b/i' => '[postcode]',
 				// UK postcodes (upper-case, as written on addresses).
-				'/\b[A-Z]{1,2}\d[A-Z\d]?\s+\d[A-Z]{2}\b/'                             => '[postcode]',
+				'/\b[A-Z]{1,2}\d[A-Z\d]?\s+\d[A-Z]{2}\b/' => '[postcode]',
 				// US ZIP+4.
-				'/\b\d{5}-\d{4}\b/'                                                    => '[postcode]',
+				'/\b\d{5}-\d{4}\b/'                       => '[postcode]',
 				// IPv4.
 				'/(?<![\d.])(?:(?:25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|1?\d?\d)(?![\d.])/' => '[ip]',
 			);
@@ -242,7 +242,7 @@ if ( ! class_exists( 'Lafka_Log_Scrubber' ) ) {
 			);
 
 			foreach ( $patterns as $regex => $replacement ) {
-				$result = @preg_replace( (string) $regex, (string) $replacement, $value ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- a filtered-in bad regex must never break logging.
+				$result = @preg_replace( (string) $regex, (string) $replacement, $value );
 				if ( is_string( $result ) ) {
 					$value = $result;
 				}

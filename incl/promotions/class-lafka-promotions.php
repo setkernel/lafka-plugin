@@ -66,7 +66,7 @@ if ( ! class_exists( 'Lafka_Promotions' ) ) {
 				$opts        = get_option( self::OPTION_KEY, array() );
 				self::$knobs = is_array( $opts ) ? $opts : array();
 			}
-			$opts = self::$knobs;
+			$opts     = self::$knobs;
 			$defaults = array(
 				'delivery_min'  => self::DELIVERY_MIN,
 				'bogo_discount' => self::BOGO_DISCOUNT,

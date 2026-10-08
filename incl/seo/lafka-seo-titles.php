@@ -132,7 +132,7 @@ if ( ! function_exists( 'lafka_seo_resolve_title' ) ) {
 
 		$paged = max( (int) get_query_var( 'paged' ), (int) get_query_var( 'page' ) );
 		if ( '' !== $title && $paged > 1 ) {
-			$base  = lafka_seo_base_tokens();
+			$base = lafka_seo_base_tokens();
 			/* translators: %s: page number of a paginated archive. */
 			$title .= $base['sep'] . sprintf( __( 'Page %s', 'lafka-plugin' ), number_format_i18n( $paged ) );
 		}

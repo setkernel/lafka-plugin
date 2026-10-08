@@ -276,7 +276,6 @@ if ( ! function_exists( 'lafka_blogposts_shortcode' ) ) {
 					//]]>
 				</script>
 				<?php
-				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- captured ob_start() block above is a literal <script> tag with hardcoded JS; no dynamic data.
 				echo ob_get_clean();
 				break;
 		}
@@ -829,7 +828,6 @@ if ( ! function_exists( 'lafka_cloudzoom_gallery_shortcode' ) ) {
 					$first_image_attach_id  = $images[0];
 					$first_image            = wp_get_attachment_image( $first_image_attach_id, $img_size );
 					$first_image_attach_url = wp_get_attachment_url( $first_image_attach_id );
-					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- %s argument $first_image is wp_get_attachment_image() output (trusted WP-core HTML with attributes pre-escaped).
 					printf( '<a id="%s" href="%s" itemprop="image" class="cloud-zoom" rel="position: \'inside\' , showTitle: false, adjustX:-4, adjustY:-4">%s</a>', esc_attr( $unique_id ), esc_url( $first_image_attach_url ), $first_image );
 					?>
 
@@ -843,7 +841,6 @@ if ( ! function_exists( 'lafka_cloudzoom_gallery_shortcode' ) ) {
 							?>
 							<li>
 								<?php
-								// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- %s argument $thumb_image is wp_get_attachment_image() output (trusted WP-core HTML with attributes pre-escaped).
 								printf( '<a rel="useZoom: \'%s\', smallImage: \'%s\'" class="cloud-zoom-gallery" href="%s">%s</a>', esc_attr( $unique_id ), esc_url( $small_image_params[0] ), esc_url( $image_attach_url ), $thumb_image );
 								?>
 							</li>
@@ -1146,8 +1143,8 @@ if ( ! function_exists( 'lafka_map_shortcode' ) ) {
 			if ( ! wp_script_is( 'lafka-google-maps', 'registered' ) ) {
 				return current_user_can( 'manage_options' )
 					? '<div class="lafka-google-maps lafka-map-shortcode lafka-map-shortcode--no-key" style="padding:1rem;border:1px dashed #ccc;color:#666;">'
-					  . esc_html__( 'Google Maps shortcode: set a Google Maps API key (Customizer → Lafka — Site Settings → General, or WooCommerce → Lafka Shipping Settings) to render this map.', 'lafka-plugin' )
-					  . '</div>'
+						. esc_html__( 'Google Maps shortcode: set a Google Maps API key (Customizer → Lafka — Site Settings → General, or WooCommerce → Lafka Shipping Settings) to render this map.', 'lafka-plugin' )
+						. '</div>'
 					: '';
 			}
 
@@ -1603,7 +1600,7 @@ if ( ! function_exists( 'lafka_woo_recent_viewed_products_shortcode' ) ) {
 			$atts
 		);
 
-        $viewed_products = ! empty( $_COOKIE['woocommerce_recently_viewed'] ) ? (array) explode( '|', wp_unslash( $_COOKIE['woocommerce_recently_viewed'] ) ) : array(); // @codingStandardsIgnoreLine
+		$viewed_products = ! empty( $_COOKIE['woocommerce_recently_viewed'] ) ? (array) explode( '|', wp_unslash( $_COOKIE['woocommerce_recently_viewed'] ) ) : array();
 		$viewed_products = array_reverse( array_filter( array_map( 'absint', $viewed_products ) ) );
 
 		if ( empty( $viewed_products ) ) {
@@ -1954,7 +1951,6 @@ if ( ! function_exists( 'lafka_woo_products_slider_shortcode' ) ) {
 						<span class="lafka-product-slide-price"><?php echo wp_kses_post( $product->get_price_html() ); ?></span>
 						<span class="lafka-product-slide-cart">
 							<?php
-							// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- matches WC core pattern: sprintf args are esc_url/esc_attr/esc_html escaped; filter consumers responsible for safe output.
 							echo apply_filters( 'woocommerce_loop_add_to_cart_link', sprintf( '<a href="%s" rel="nofollow" data-product_id="%s" data-product_sku="%s" data-quantity="%s" class="button %s product_type_%s %s">%s</a>', esc_url( $product->add_to_cart_url() ), esc_attr( $product->get_id() ), esc_attr( $product->get_sku() ), esc_attr( isset( $quantity ) ? $quantity : 1 ), $product->is_purchasable() && $product->is_in_stock() ? 'add_to_cart_button' : '', esc_attr( $product->get_type() ), ( ( 'yes' === get_option( 'woocommerce_enable_ajax_add_to_cart' ) && $product->get_type() === 'simple' ) ? 'ajax_add_to_cart' : '' ), esc_html( $product->add_to_cart_text() ) ), $product );
 							?>
 						</span>

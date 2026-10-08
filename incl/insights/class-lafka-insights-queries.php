@@ -115,34 +115,34 @@ if ( ! class_exists( 'Lafka_Insights_Queries' ) ) {
 				$funnel[ $stage ] = (int) ( $m['funnel'][ $stage ] ?? 0 );
 			}
 
-			$report = array(
-				'days'            => $days,
-				'from'            => $from,
-				'to'              => $today,
-				'since'           => $since,
-				'coverage_from'   => $coverage,
-				'coverage_days'   => $covered,
-				'funnel'          => $funnel,
-				'closed_visits'   => (int) ( $m['funnel']['closed'] ?? 0 ),
-				'pay_failed'      => (int) ( $m['funnel']['pay_failed'] ?? 0 ),
-				'abandon'         => self::sorted( $m['abandon'] ?? array() ),
-				'device'          => self::sorted( $m['device'] ?? array() ),
-				'source'          => self::sorted( $m['source'] ?? array() ),
-				'source_name'     => array_slice( self::sorted( $m['source_name'] ?? array() ), 0, 10, true ),
-				'campaign'        => array_slice( self::sorted( $m['campaign'] ?? array() ), 0, 10, true ),
-				'landing'         => self::sorted( $m['landing'] ?? array() ),
-				'hour_dow'        => $m['hour_dow'] ?? array(),
-				'closed_hour_dow' => $m['closed_hour_dow'] ?? array(),
-				'items'           => self::items( $live ),
-				'search'          => array_slice( self::sorted( $live['search'] ?? array() ), 0, 15, true ),
-				'search_zero'     => array_slice( self::sorted( $live['search_zero'] ?? array() ), 0, 15, true ),
-				'block'           => self::sorted( $live['block'] ?? array() ),
-				'pay_fail'        => self::sorted( $live['pay_fail'] ?? array() ),
-				'fulfilment'      => self::sorted( $live['fulfilment'] ?? array() ),
-				'order_channel'   => self::sorted( $live['order_channel'] ?? array() ),
-				'orders_by_source' => self::sorted( $m['source_order'] ?? array() ),
+			$report         = array(
+				'days'                => $days,
+				'from'                => $from,
+				'to'                  => $today,
+				'since'               => $since,
+				'coverage_from'       => $coverage,
+				'coverage_days'       => $covered,
+				'funnel'              => $funnel,
+				'closed_visits'       => (int) ( $m['funnel']['closed'] ?? 0 ),
+				'pay_failed'          => (int) ( $m['funnel']['pay_failed'] ?? 0 ),
+				'abandon'             => self::sorted( $m['abandon'] ?? array() ),
+				'device'              => self::sorted( $m['device'] ?? array() ),
+				'source'              => self::sorted( $m['source'] ?? array() ),
+				'source_name'         => array_slice( self::sorted( $m['source_name'] ?? array() ), 0, 10, true ),
+				'campaign'            => array_slice( self::sorted( $m['campaign'] ?? array() ), 0, 10, true ),
+				'landing'             => self::sorted( $m['landing'] ?? array() ),
+				'hour_dow'            => $m['hour_dow'] ?? array(),
+				'closed_hour_dow'     => $m['closed_hour_dow'] ?? array(),
+				'items'               => self::items( $live ),
+				'search'              => array_slice( self::sorted( $live['search'] ?? array() ), 0, 15, true ),
+				'search_zero'         => array_slice( self::sorted( $live['search_zero'] ?? array() ), 0, 15, true ),
+				'block'               => self::sorted( $live['block'] ?? array() ),
+				'pay_fail'            => self::sorted( $live['pay_fail'] ?? array() ),
+				'fulfilment'          => self::sorted( $live['fulfilment'] ?? array() ),
+				'order_channel'       => self::sorted( $live['order_channel'] ?? array() ),
+				'orders_by_source'    => self::sorted( $m['source_order'] ?? array() ),
 				'wc_orders_by_source' => self::orders_by_source( $from, $today ),
-				'prev'            => array(
+				'prev'                => array(
 					'covered' => $prev_covered,
 					'visit'   => (int) ( $prev['funnel']['visit'] ?? 0 ),
 					'order'   => (int) ( $prev['funnel']['order'] ?? 0 ),
@@ -222,7 +222,7 @@ if ( ! class_exists( 'Lafka_Insights_Queries' ) ) {
 			);
 			$out = array();
 			foreach ( $ids as $id ) {
-				$id          = (string) $id;
+				$id         = (string) $id;
 				$out[ $id ] = array(
 					'name'   => '',
 					'views'  => (int) ( $live['item_view'][ $id ] ?? 0 ),
@@ -268,7 +268,7 @@ if ( ! class_exists( 'Lafka_Insights_Queries' ) ) {
 					'return'       => 'objects',
 				)
 			);
-			$out = array();
+			$out    = array();
 			foreach ( is_array( $orders ) ? $orders : array() as $order ) {
 				if ( ! is_object( $order ) || ! method_exists( $order, 'get_meta' ) ) {
 					continue;

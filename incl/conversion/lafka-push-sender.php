@@ -78,7 +78,7 @@ if ( ! function_exists( 'lafka_push_get_vapid_config' ) ) {
 			? '1' === (string) get_theme_mod( 'lafka_push_enabled', '0' )
 			: false;
 
-		$public  = defined( 'LAFKA_PUSH_VAPID_PUBLIC_KEY' ) && '' !== (string) LAFKA_PUSH_VAPID_PUBLIC_KEY
+		$public = defined( 'LAFKA_PUSH_VAPID_PUBLIC_KEY' ) && '' !== (string) LAFKA_PUSH_VAPID_PUBLIC_KEY
 			? (string) LAFKA_PUSH_VAPID_PUBLIC_KEY
 			: ( function_exists( 'get_theme_mod' ) ? (string) get_theme_mod( 'lafka_push_vapid_public_key', '' ) : '' );
 
@@ -143,9 +143,9 @@ if ( ! function_exists( 'lafka_push_build_vapid_jwt' ) ) {
 			'exp' => time() + ( 12 * HOUR_IN_SECONDS ),
 			'sub' => $subject,
 		);
-		$h_enc = lafka_push_b64url_encode( function_exists( 'wp_json_encode' ) ? (string) wp_json_encode( $header ) : (string) json_encode( $header ) );
-		$p_enc = lafka_push_b64url_encode( function_exists( 'wp_json_encode' ) ? (string) wp_json_encode( $payload ) : (string) json_encode( $payload ) );
-		$body  = $h_enc . '.' . $p_enc;
+		$h_enc   = lafka_push_b64url_encode( function_exists( 'wp_json_encode' ) ? (string) wp_json_encode( $header ) : (string) json_encode( $header ) );
+		$p_enc   = lafka_push_b64url_encode( function_exists( 'wp_json_encode' ) ? (string) wp_json_encode( $payload ) : (string) json_encode( $payload ) );
+		$body    = $h_enc . '.' . $p_enc;
 
 		$pem = lafka_push_p256_pem_from_raw_private( $private_raw );
 		if ( '' === $pem ) {
@@ -191,7 +191,7 @@ if ( ! function_exists( 'lafka_push_p256_pem_from_raw_private' ) ) {
 				. "\x06\x07\x2a\x86\x48\xce\x3d\x02\x01"
 				. "\x06\x08\x2a\x86\x48\xce\x3d\x03\x01\x07"
 			. "\x04" . chr( strlen( $sec1 ) ) . $sec1;
-		$pkcs8 = "\x30" . chr( strlen( $pkcs8_inner ) ) . $pkcs8_inner;
+		$pkcs8       = "\x30" . chr( strlen( $pkcs8_inner ) ) . $pkcs8_inner;
 
 		$pem = "-----BEGIN PRIVATE KEY-----\n"
 			. chunk_split( base64_encode( $pkcs8 ), 64, "\n" )
@@ -796,7 +796,6 @@ if ( ! function_exists( 'lafka_push_count_active_subscriptions' ) ) {
 			$placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
 			$count        = (int) $wpdb->get_var(
 				$wpdb->prepare(
-					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 					"SELECT COUNT(*) FROM {$table} WHERE unsubscribed_at IS NULL AND user_id IN ({$placeholders})",
 					$ids
 				)
@@ -805,7 +804,6 @@ if ( ! function_exists( 'lafka_push_count_active_subscriptions' ) ) {
 		}
 
 		$count = (int) $wpdb->get_var(
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			"SELECT COUNT(*) FROM {$table} WHERE unsubscribed_at IS NULL"
 		);
 		return max( 0, $count );
@@ -855,7 +853,6 @@ if ( ! function_exists( 'lafka_push_get_active_subscriptions_after' ) ) {
 			$args         = array_merge( $ids, array( $after_id, $limit ) );
 			$rows         = $wpdb->get_results(
 				$wpdb->prepare(
-					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 					"SELECT * FROM {$table} WHERE unsubscribed_at IS NULL AND user_id IN ({$placeholders}) AND id > %d ORDER BY id ASC LIMIT %d",
 					$args
 				)
@@ -865,7 +862,6 @@ if ( ! function_exists( 'lafka_push_get_active_subscriptions_after' ) ) {
 
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				"SELECT * FROM {$table} WHERE unsubscribed_at IS NULL AND id > %d ORDER BY id ASC LIMIT %d",
 				$after_id,
 				$limit
@@ -1057,7 +1053,7 @@ if ( ! function_exists( 'lafka_push_run_broadcast_batch' ) ) {
 		// This runs in cron context; never let a slow provider kill the worker
 		// mid-batch and leave the job un-resumable.
 		if ( function_exists( 'set_time_limit' ) ) {
-			@set_time_limit( 0 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+			@set_time_limit( 0 );
 		}
 		if ( function_exists( 'ignore_user_abort' ) ) {
 			ignore_user_abort( true );

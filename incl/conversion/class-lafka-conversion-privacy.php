@@ -55,7 +55,7 @@ if ( ! class_exists( 'Lafka_Conversion_Privacy' ) ) {
 				'exporter_friendly_name' => __( 'Lafka Web-Push Subscriptions', 'lafka-plugin' ),
 				'callback'               => array( $this, 'export_push' ),
 			);
-			$exporters[ self::EXPORTER_AC ] = array(
+			$exporters[ self::EXPORTER_AC ]   = array(
 				'exporter_friendly_name' => __( 'Lafka Abandoned Carts', 'lafka-plugin' ),
 				'callback'               => array( $this, 'export_abandoned_carts' ),
 			);
@@ -71,7 +71,7 @@ if ( ! class_exists( 'Lafka_Conversion_Privacy' ) ) {
 				'eraser_friendly_name' => __( 'Lafka Web-Push Subscriptions', 'lafka-plugin' ),
 				'callback'             => array( $this, 'erase_push' ),
 			);
-			$erasers[ self::EXPORTER_AC ] = array(
+			$erasers[ self::EXPORTER_AC ]   = array(
 				'eraser_friendly_name' => __( 'Lafka Abandoned Carts', 'lafka-plugin' ),
 				'callback'             => array( $this, 'erase_abandoned_carts' ),
 			);
@@ -250,7 +250,6 @@ if ( ! class_exists( 'Lafka_Conversion_Privacy' ) ) {
 			$offset = ( max( 1, $page ) - 1 ) * self::PAGE_SIZE;
 			$rows   = $wpdb->get_results(
 				$wpdb->prepare(
-					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name derived from $wpdb->prefix.
 					"SELECT * FROM {$table} WHERE user_id = %d ORDER BY id ASC LIMIT %d OFFSET %d",
 					$user_id,
 					self::PAGE_SIZE,
@@ -274,7 +273,6 @@ if ( ! class_exists( 'Lafka_Conversion_Privacy' ) ) {
 			$offset = ( max( 1, $page ) - 1 ) * self::PAGE_SIZE;
 			$rows   = $wpdb->get_results(
 				$wpdb->prepare(
-					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name derived from $wpdb->prefix.
 					"SELECT * FROM {$table} WHERE customer_email = %s ORDER BY id ASC LIMIT %d OFFSET %d",
 					$email,
 					self::PAGE_SIZE,

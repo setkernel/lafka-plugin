@@ -7,7 +7,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 // product-save flow where nonce verification happens upstream in the WC
 // product editor (update-post_<id>) before our hook callbacks run. Reads
 // of $_GET in display methods are for admin UI state, not state mutation.
-// phpcs:disable WordPress.Security.NonceVerification.Missing,WordPress.Security.NonceVerification.Recommended
 
 /**
  * Class WCML_Lafka_Product_Addons
@@ -446,4 +445,3 @@ class WCML_Lafka_Product_Addons {
 		}
 	}
 }
-// phpcs:enable WordPress.Security.NonceVerification.Missing,WordPress.Security.NonceVerification.Recommended

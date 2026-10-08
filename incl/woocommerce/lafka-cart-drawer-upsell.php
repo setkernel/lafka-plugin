@@ -36,8 +36,8 @@ if ( ! function_exists( 'lafka_cart_drawer_get_upsell_ids' ) ) {
 				}
 			}
 		}
-		$deal_cats = lafka_cart_drawer_upsell_deal_category_ids();
-		$pool      = array(); // id => whether its category is new to the cart.
+		$deal_cats  = lafka_cart_drawer_upsell_deal_category_ids();
+		$pool       = array(); // id => whether its category is new to the cart.
 		$is_addable = static function ( $p ) use ( $deal_cats ) {
 			// One-tap add needs a SIMPLE, purchasable, in-stock product (drinks /
 			// sides / garlic fingers) — variable products need the PDP. Deals and
@@ -54,7 +54,7 @@ if ( ! function_exists( 'lafka_cart_drawer_get_upsell_ids' ) ) {
 
 			return array() === array_intersect( $cats, $deal_cats );
 		};
-		$consider = static function ( $id ) use ( &$pool, $in_cart, $cart_cats, $is_addable ) {
+		$consider   = static function ( $id ) use ( &$pool, $in_cart, $cart_cats, $is_addable ) {
 			$id = (int) $id;
 			if ( ! $id || in_array( $id, $in_cart, true ) || isset( $pool[ $id ] ) || count( $pool ) >= 8 ) {
 				return;
@@ -204,19 +204,19 @@ if ( ! function_exists( 'lafka_cart_drawer_render_upsell' ) ) {
 				 */
 				$add_label = trim( (string) apply_filters( 'lafka_cart_drawer_upsell_add_label', __( '+ Add', 'lafka-plugin' ), $p ) );
 				$img       = get_the_post_thumbnail(
-                    $id,
-                    'woocommerce_gallery_thumbnail',
-                    array(
+					$id,
+					'woocommerce_gallery_thumbnail',
+					array(
 						'loading' => 'lazy',
-						'class' => 'lafka-cart-drawer__upsell-img',
-                    ) 
-                );
+						'class'   => 'lafka-cart-drawer__upsell-img',
+					)
+				);
 				?>
 				<li class="lafka-cart-drawer__upsell-item">
 					<a class="lafka-cart-drawer__upsell-link" href="<?php echo esc_url( get_permalink( $id ) ); ?>">
 						<?php
 						if ( '' !== $img ) {
-							echo $img; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- WP-core thumbnail markup, pre-escaped.
+							echo $img;
 						} else {
 							echo '<span class="lafka-cart-drawer__upsell-img lafka-cart-drawer__upsell-img--ph" aria-hidden="true"></span>';
 						}

@@ -53,7 +53,7 @@ class LafkaAboutWidget extends WP_Widget {
 					printf(
 						'<option value="%d"%s>%s</option>' . "\n",
 						(int) $page->ID,
-						selected( $instance['aboutus_page'], $page->ID, false ), // already returns ' selected="selected"' or ''  // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+						selected( $instance['aboutus_page'], $page->ID, false ), // already returns ' selected="selected"' or ''
 						esc_html( $page->post_title )
 					);
 				}

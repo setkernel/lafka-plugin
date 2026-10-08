@@ -67,14 +67,14 @@ if ( $group->attribute > 0 && function_exists( 'wc_attribute_taxonomy_name_by_id
 		</thead>
 		<tbody data-lafka-option-rows>
 			<?php
-            // option-row.php now always renders the per-option price + matrix
-            // cells; CSS shows the right column set based on data-pricing-mode.
-            $shows_per_option_price = true; // always emit; CSS hides when not active mode
-            $shows_matrix_price     = true; // always emit if columns exist; CSS hides when not active mode
-            foreach ( $group->options as $option_index => $option ) {
+			// option-row.php now always renders the per-option price + matrix
+			// cells; CSS shows the right column set based on data-pricing-mode.
+			$shows_per_option_price = true; // always emit; CSS hides when not active mode
+			$shows_matrix_price     = true; // always emit if columns exist; CSS hides when not active mode
+			foreach ( $group->options as $option_index => $option ) {
 				require __DIR__ . '/option-row.php';
 			}
-            ?>
+			?>
 		</tbody>
 	</table>
 

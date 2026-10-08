@@ -38,7 +38,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 // `verify_kds_auth()` (or `verify_kds_customer_auth()`) as its first action,
 // which in turn calls `check_ajax_referer()`. PHPCS doesn't trace nonce
 // verification through helper methods; suppression is correct here.
-// phpcs:disable WordPress.Security.NonceVerification.Missing,WordPress.Security.NonceVerification.Recommended
 
 class Lafka_KDS_Ajax {
 
@@ -73,7 +72,7 @@ class Lafka_KDS_Ajax {
 		// Don't auto-die on bad nonce — we want to count it toward the rate limit.
 		$valid_nonce = (bool) check_ajax_referer( 'lafka_kds_nonce', 'nonce', false );
 
-		$token       = isset( $_POST['kds_token'] ) ? sanitize_text_field( $_POST['kds_token'] ) : '';
+		$token = isset( $_POST['kds_token'] ) ? sanitize_text_field( $_POST['kds_token'] ) : '';
 		// token_matches() is backward-compatible: validates legacy plaintext OR a hash-at-rest digest.
 		$valid_token = Lafka_Kitchen_Display::token_matches( $token );
 
@@ -420,4 +419,3 @@ class Lafka_KDS_Ajax {
 		);
 	}
 }
-// phpcs:enable WordPress.Security.NonceVerification.Missing,WordPress.Security.NonceVerification.Recommended

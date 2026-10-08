@@ -189,7 +189,7 @@ class Lafka_Engine_Resolver {
 		if ( isset( self::$category_addons_cache[ $cache_key ] ) ) {
 			return self::$category_addons_cache[ $cache_key ];
 		}
-		$args = (array) apply_filters(
+		$args                                      = (array) apply_filters(
 			'get_product_addons_global_query_args',
 			array(
 				'posts_per_page' => -1,

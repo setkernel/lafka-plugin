@@ -240,16 +240,16 @@ if ( ! class_exists( 'Lafka_CLI_Seed_Demo' ) ) {
 		 * @return string
 		 */
 		public static function encode_polygon_coordinates( array $points ): string {
-			$out       = '';
-			$prev_lat  = 0;
-			$prev_lng  = 0;
+			$out      = '';
+			$prev_lat = 0;
+			$prev_lng = 0;
 			foreach ( $points as $point ) {
-				$lat       = (int) round( (float) $point[0] * 100000 );
-				$lng       = (int) round( (float) $point[1] * 100000 );
-				$out      .= self::encode_signed( $lat - $prev_lat );
-				$out      .= self::encode_signed( $lng - $prev_lng );
-				$prev_lat  = $lat;
-				$prev_lng  = $lng;
+				$lat      = (int) round( (float) $point[0] * 100000 );
+				$lng      = (int) round( (float) $point[1] * 100000 );
+				$out     .= self::encode_signed( $lat - $prev_lat );
+				$out     .= self::encode_signed( $lng - $prev_lng );
+				$prev_lat = $lat;
+				$prev_lng = $lng;
 			}
 			return $out;
 		}
@@ -500,7 +500,7 @@ if ( ! class_exists( 'Lafka_CLI_Seed_Demo' ) ) {
 						'numberposts' => 1,
 					)
 				);
-				$post_id = ( is_array( $existing ) && ! empty( $existing ) ) ? (int) $existing[0]->ID : 0;
+				$post_id  = ( is_array( $existing ) && ! empty( $existing ) ) ? (int) $existing[0]->ID : 0;
 
 				if ( $post_id > 0 ) {
 					wp_update_post(
@@ -599,7 +599,7 @@ if ( ! class_exists( 'Lafka_CLI_Seed_Demo' ) ) {
 					'numberposts' => 1,
 				)
 			);
-			$post_id = ( is_array( $existing ) && ! empty( $existing ) ) ? (int) $existing[0]->ID : 0;
+			$post_id  = ( is_array( $existing ) && ! empty( $existing ) ) ? (int) $existing[0]->ID : 0;
 
 			if ( $post_id > 0 ) {
 				wp_update_post(
@@ -750,8 +750,8 @@ if ( ! class_exists( 'Lafka_CLI_Seed_Demo' ) ) {
 				return 0;
 			}
 
-			$filetype   = wp_check_filetype( $upload['file'], null );
-			$attachment = array(
+			$filetype      = wp_check_filetype( $upload['file'], null );
+			$attachment    = array(
 				'post_mime_type' => $filetype['type'] ? $filetype['type'] : 'image/png',
 				'post_title'     => $label,
 				'post_content'   => '',
@@ -785,7 +785,7 @@ if ( ! class_exists( 'Lafka_CLI_Seed_Demo' ) ) {
 				return '';
 			}
 			$hash       = md5( $key );
-			$background  = imagecolorallocate(
+			$background = imagecolorallocate(
 				$image,
 				(int) hexdec( substr( $hash, 0, 2 ) ),
 				(int) hexdec( substr( $hash, 2, 2 ) ),

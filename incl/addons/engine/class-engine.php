@@ -27,9 +27,9 @@ class Lafka_Addons_Engine {
 
 	private static ?Lafka_Addons_Engine $instance = null;
 
-	private ?Lafka_Pricing_Resolver $pricing = null;
+	private ?Lafka_Pricing_Resolver $pricing    = null;
 	private ?Lafka_Addon_Repository $repository = null;
-	private ?Lafka_Addons_Upgrader $upgrader = null;
+	private ?Lafka_Addons_Upgrader $upgrader    = null;
 	/** @var array<string, Lafka_Options_Source>|null */
 	private ?array $sources = null;
 

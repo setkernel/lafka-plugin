@@ -178,7 +178,6 @@ if ( ! function_exists( 'lafka_ac_capture_from_post' ) ) {
 		// woocommerce_checkout_update_order_review hook, which verifies its own
 		// checkout nonce upstream before invoking the action chain. Suppress the Missing-nonce sniff for the whole
 		// function since it never runs outside that protected context.
-		// phpcs:disable WordPress.Security.NonceVerification.Missing
 		$email = '';
 
 		// AJAX update_order_review payload — flat string of url-encoded form data.
@@ -188,8 +187,6 @@ if ( ! function_exists( 'lafka_ac_capture_from_post' ) ) {
 				$email = $parsed['billing_email'];
 			}
 		}
-
-		// phpcs:enable WordPress.Security.NonceVerification.Missing
 
 		if ( '' === $email ) {
 			return '';
@@ -272,10 +269,9 @@ if ( ! function_exists( 'lafka_ac_handle_order_processed' ) ) {
 		if ( ! isset( $wpdb ) || ! is_object( $wpdb ) || ! method_exists( $wpdb, 'get_var' ) ) {
 			return;
 		}
-		$table = lafka_ac_table_name();
+		$table  = lafka_ac_table_name();
 		$row_id = (int) $wpdb->get_var(
 			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				"SELECT id FROM {$table} WHERE customer_email = %s AND order_id = 0 ORDER BY last_seen_at DESC LIMIT 1",
 				$email
 			)

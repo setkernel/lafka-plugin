@@ -520,9 +520,7 @@ if ( ! class_exists( 'Lafka_Pickup_Checkout' ) ) {
 		 * @return string
 		 */
 		private static function current_gateway(): string {
-			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- read-only decision; WooCommerce verifies the checkout nonce before it validates or saves these fields.
 			if ( isset( $_POST['payment_method'] ) ) {
-				// phpcs:ignore WordPress.Security.NonceVerification.Missing -- see above.
 				return sanitize_text_field( (string) wp_unslash( $_POST['payment_method'] ) );
 			}
 			$session = self::session();
@@ -602,7 +600,6 @@ if ( ! class_exists( 'Lafka_Pickup_Checkout' ) ) {
 		 * @return bool
 		 */
 		private static function is_classic_checkout_request(): bool {
-			// phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing -- read-only routing check; nothing is saved.
 			return isset( $_GET['wc-ajax'] ) || isset( $_POST['woocommerce-process-checkout-nonce'] );
 		}
 

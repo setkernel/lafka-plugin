@@ -115,10 +115,10 @@ if ( ! class_exists( 'LAFKA_Abandoned_Cart_Email' ) ) {
 		 * @return string
 		 */
 		public function get_content_html(): string {
-			$sample_row                  = new \stdClass();
-			$sample_row->customer_email  = 'preview@example.com';
-			$sample_row->resume_token    = 'PREVIEWTOKEN0000PREVIEWTOKEN0000';
-			$sample_row->cart_contents   = wp_json_encode(
+			$sample_row                 = new \stdClass();
+			$sample_row->customer_email = 'preview@example.com';
+			$sample_row->resume_token   = 'PREVIEWTOKEN0000PREVIEWTOKEN0000';
+			$sample_row->cart_contents  = wp_json_encode(
 				array(
 					'items'    => array(
 						array(

@@ -76,7 +76,6 @@ if ( ! function_exists( 'lafka_cart_drawer_render_item' ) ) {
 		<li class="lafka-cart-drawer__item" data-cart-key="<?php echo esc_attr( $cart_item_key ); ?>">
 			<span class="lafka-cart-drawer__thumb">
 				<?php
-				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- WC_Product::get_image() returns trusted WC-core HTML with attributes pre-escaped.
 				echo $thumb;
 				?>
 			</span>
@@ -213,7 +212,6 @@ if ( ! function_exists( 'lafka_cart_drawer_render_stepper_item' ) ) {
 		<li class="lafka-cart-drawer__item lafka-cart-drawer__item--stepper" data-cart-key="<?php echo esc_attr( $cart_item_key ); ?>">
 			<span class="lafka-cart-drawer__thumb">
 				<?php
-				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- WC_Product::get_image() returns trusted WC-core HTML with attributes pre-escaped.
 				echo $thumb;
 				?>
 			</span>

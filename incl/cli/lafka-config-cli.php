@@ -52,7 +52,7 @@ class Lafka_Config_CLI_Command {
 			return;
 		}
 
-		if ( false === file_put_contents( $file, $json ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- CLI writes to an operator-chosen path.
+		if ( false === file_put_contents( $file, $json ) ) {
 			WP_CLI::error( "Could not write to: $file" );
 		}
 
@@ -93,7 +93,7 @@ class Lafka_Config_CLI_Command {
 		}
 		$dry_run = ! empty( $assoc_args['dry-run'] );
 
-		$json = file_get_contents( $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- CLI reads an operator-chosen local path.
+		$json = file_get_contents( $file );
 		if ( false === $json ) {
 			WP_CLI::error( "Could not read: $file" );
 		}

@@ -450,7 +450,7 @@ if ( ! class_exists( 'Lafka_Store_Api' ) ) {
 				: 0.0;
 			$free_remaining = $free_threshold > 0 ? max( 0.0, $free_threshold - $contents ) : 0.0;
 
-			$delivery_minimum = class_exists( 'Lafka_Promotions' )
+			$delivery_minimum   = class_exists( 'Lafka_Promotions' )
 				? (float) Lafka_Promotions::knob( 'delivery_min' )
 				: 0.0;
 			$delivery_remaining = $delivery_minimum > 0 ? max( 0.0, $delivery_minimum - $contents ) : 0.0;
@@ -514,7 +514,7 @@ if ( ! class_exists( 'Lafka_Store_Api' ) ) {
 		private static function apply_branch_update( array $data ) {
 			$session = self::get_branch_session();
 
-			$branch_id = array_key_exists( 'branch_id', $data )
+			$branch_id  = array_key_exists( 'branch_id', $data )
 				? (int) $data['branch_id']
 				: (int) ( $session['branch_id'] ?? 0 );
 			$order_type = array_key_exists( 'order_type', $data )
@@ -526,7 +526,7 @@ if ( ! class_exists( 'Lafka_Store_Api' ) ) {
 			$legit_branches = class_exists( 'Lafka_Shipping_Areas' )
 				? Lafka_Shipping_Areas::get_all_legit_branch_locations()
 				: array();
-			$is_legit = is_array( $legit_branches ) && array_key_exists( $branch_id, $legit_branches );
+			$is_legit       = is_array( $legit_branches ) && array_key_exists( $branch_id, $legit_branches );
 
 			$order_type_allowed = class_exists( 'Lafka_Branch_Locations' )
 				&& Lafka_Branch_Locations::is_order_type_allowed_for_branch( $order_type, $branch_id );

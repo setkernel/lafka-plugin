@@ -116,7 +116,7 @@ if ( ! class_exists( 'Lafka_Site_Health_Seo' ) ) {
 		 * @return bool
 		 */
 		public static function street_looks_like_name( string $street, string $name ): bool {
-			$norm = static function ( string $s ): string {
+			$norm   = static function ( string $s ): string {
 				$s = strtolower( str_replace( '&', ' and ', $s ) );
 				return trim( (string) preg_replace( '/[^a-z0-9]+/', ' ', $s ) );
 			};
@@ -334,8 +334,8 @@ if ( ! class_exists( 'Lafka_Site_Health_Seo' ) ) {
 					self::WEBP_SAMPLE
 				)
 			);
-			$not_webp = 0;
-			$checked  = 0;
+			$not_webp  = 0;
+			$checked   = 0;
 			foreach ( (array) $thumb_ids as $id ) {
 				$file = (string) get_attached_file( (int) $id );
 				if ( '' === $file ) {
@@ -473,7 +473,7 @@ if ( ! class_exists( 'Lafka_Site_Health_Seo' ) ) {
 
 		/** @return array<string,mixed> */
 		public static function test_indexnow() {
-			$issues = array();
+			$issues  = array();
 			$enabled = function_exists( 'lafka_indexnow_enabled' ) && lafka_indexnow_enabled();
 			if ( ! $enabled ) {
 				$issues[] = __( 'IndexNow is off. Turn it on (WooCommerce → Settings → Restaurant → Search & AI) so Bing — which feeds ChatGPT search and Copilot — sees menu and price changes within minutes.', 'lafka-plugin' );

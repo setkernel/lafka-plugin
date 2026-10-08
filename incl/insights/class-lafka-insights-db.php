@@ -196,7 +196,6 @@ if ( ! class_exists( 'Lafka_Insights_DB' ) ) {
 			}
 			$table = self::sessions_table_name();
 			$sql   = $wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is a code-controlled prefix concatenation.
 				"INSERT INTO {$table} (day,sid,stages,block_mask,last_block,device,source_type,source,medium,campaign,landing,hour,dow,pageviews)
 				VALUES (%s,UNHEX(%s),%d,%d,%s,%d,%s,%s,%s,%s,%s,%d,%d,%d)
 				ON DUPLICATE KEY UPDATE
@@ -225,7 +224,7 @@ if ( ! class_exists( 'Lafka_Insights_DB' ) ) {
 				(int) ( $row['dow'] ?? 0 ),
 				(int) ( $row['pageviews'] ?? 0 )
 			);
-			return false !== $wpdb->query( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- prepared above.
+			return false !== $wpdb->query( $sql );
 		}
 
 		/**
@@ -262,9 +261,8 @@ if ( ! class_exists( 'Lafka_Insights_DB' ) ) {
 			}
 			$table  = self::daily_table_name();
 			$update = $replace ? 'value = VALUES(value)' : 'value = value + VALUES(value)';
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- table + tuple placeholders are code-controlled; every value is a %s/%d placeholder.
-			$sql = $wpdb->prepare( "INSERT INTO {$table} (day,metric,dim,value) VALUES " . implode( ',', $tuples ) . " ON DUPLICATE KEY UPDATE {$update}", $args );
-			return false !== $wpdb->query( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- prepared above.
+			$sql    = $wpdb->prepare( "INSERT INTO {$table} (day,metric,dim,value) VALUES " . implode( ',', $tuples ) . " ON DUPLICATE KEY UPDATE {$update}", $args );
+			return false !== $wpdb->query( $sql );
 		}
 
 		/**
@@ -283,9 +281,8 @@ if ( ! class_exists( 'Lafka_Insights_DB' ) ) {
 			}
 			$sessions = self::sessions_table_name();
 			$daily    = self::daily_table_name();
-			$row      = $wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- live counters; caching would defeat the cap.
+			$row      = $wpdb->get_row(
 				$wpdb->prepare(
-					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names are code-controlled prefix concatenations.
 					"SELECT (SELECT pageviews FROM {$sessions} WHERE day = %s AND sid = UNHEX(%s)) AS pv, (SELECT value FROM {$daily} WHERE day = %s AND metric = 'beacons' AND dim = %s) AS g",
 					$day,
 					$sid,
@@ -309,9 +306,8 @@ if ( ! class_exists( 'Lafka_Insights_DB' ) ) {
 			}
 			$sessions = self::sessions_table_name();
 			$daily    = self::daily_table_name();
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- code-controlled table names, no input; one-off fallback, then persisted.
-			$day = $wpdb->get_var( "SELECT LEAST( COALESCE( (SELECT MIN(day) FROM {$sessions}), '9999-12-31' ), COALESCE( (SELECT MIN(day) FROM {$daily}), '9999-12-31' ) )" );
-			$day = is_string( $day ) ? substr( $day, 0, 10 ) : '';
+			$day      = $wpdb->get_var( "SELECT LEAST( COALESCE( (SELECT MIN(day) FROM {$sessions}), '9999-12-31' ), COALESCE( (SELECT MIN(day) FROM {$daily}), '9999-12-31' ) )" );
+			$day      = is_string( $day ) ? substr( $day, 0, 10 ) : '';
 			return ( 1 === preg_match( '/^\d{4}-\d{2}-\d{2}$/', $day ) && '9999-12-31' !== $day ) ? $day : '';
 		}
 
@@ -327,9 +323,8 @@ if ( ! class_exists( 'Lafka_Insights_DB' ) ) {
 				return array();
 			}
 			$table = self::sessions_table_name();
-			$rows  = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- nightly batch / admin report.
+			$rows  = $wpdb->get_results(
 				$wpdb->prepare(
-					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is a code-controlled prefix concatenation.
 					"SELECT stages, block_mask, last_block, device, source_type, source, medium, campaign, landing, hour, dow, pageviews FROM {$table} WHERE day = %s",
 					$day
 				),
@@ -358,9 +353,8 @@ if ( ! class_exists( 'Lafka_Insights_DB' ) ) {
 				$in   = ' AND metric IN (' . implode( ',', array_fill( 0, count( $metrics ), '%s' ) ) . ')';
 				$args = array_merge( $args, array_values( $metrics ) );
 			}
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- table + IN placeholders are code-controlled.
 			$sql  = $wpdb->prepare( "SELECT metric, dim, SUM(value) AS value FROM {$table} WHERE day BETWEEN %s AND %s{$in} GROUP BY metric, dim", $args );
-			$rows = $wpdb->get_results( $sql, ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- prepared above; the report layer caches.
+			$rows = $wpdb->get_results( $sql, ARRAY_A );
 			return is_array( $rows ) ? $rows : array();
 		}
 
@@ -381,10 +375,8 @@ if ( ! class_exists( 'Lafka_Insights_DB' ) ) {
 			$base     = strtotime( $today . ' 00:00:00 UTC' );
 			$sessions = self::sessions_table_name();
 			$daily    = self::daily_table_name();
-			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- code-controlled table names; retention batch.
 			$wpdb->query( $wpdb->prepare( "DELETE FROM {$sessions} WHERE day < %s", gmdate( 'Y-m-d', $base - $keep_days * 86400 ) ) );
 			$wpdb->query( $wpdb->prepare( "DELETE FROM {$daily} WHERE day < %s", gmdate( 'Y-m-d', $base - $counter_days * 86400 ) ) );
-			// phpcs:enable
 		}
 	}
 }

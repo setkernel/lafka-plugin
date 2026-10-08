@@ -137,10 +137,10 @@ if ( ! class_exists( 'Lafka_Blocks_Integration' )
 		 */
 		public function get_script_data() {
 			return array(
-				'currencySymbol'  => self::currency_symbol(),
-				'ajaxUrl'         => function_exists( 'admin_url' ) ? admin_url( 'admin-ajax.php' ) : '',
-				'timeslot'        => self::timeslot_config(),
-				'i18n'            => array(
+				'currencySymbol' => self::currency_symbol(),
+				'ajaxUrl'        => function_exists( 'admin_url' ) ? admin_url( 'admin-ajax.php' ) : '',
+				'timeslot'       => self::timeslot_config(),
+				'i18n'           => array(
 					'freeDeliveryRemaining' => __( 'Add %s more for free delivery', 'lafka-plugin' ),
 					'freeDeliveryReached'   => __( 'You have unlocked free delivery!', 'lafka-plugin' ),
 					'timeslotHeading'       => __( 'Delivery / pickup time', 'lafka-plugin' ),

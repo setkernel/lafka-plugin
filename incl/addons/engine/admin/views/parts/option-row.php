@@ -19,7 +19,7 @@ if ( ! isset( $option, $option_index, $group_index, $group ) ) {
 	return;
 }
 
-$option_prefix = 'lafka_addon_groups[' . $group_index . '][options][' . $option_index . ']';
+$option_prefix          = 'lafka_addon_groups[' . $group_index . '][options][' . $option_index . ']';
 $shows_per_option_price = $shows_per_option_price ?? ( Lafka_Addon_Schema::PRICING_FLAT_PER_OPTION === $group->pricing_mode );
 $shows_matrix_price     = $shows_matrix_price ?? ( Lafka_Addon_Schema::PRICING_MATRIX === $group->pricing_mode );
 $matrix_columns         = $matrix_columns ?? array();
@@ -45,20 +45,20 @@ $matrix_for_option = is_array( $option->price ) ? $option->price : array();
 	</td>
 
 	<?php
-    // Always emit the per-option price cell so CSS can toggle visibility when
-    // the user changes pricing_mode without saving. Engine save semantics
-    // ignore the field when pricing_mode isn't flat_per_option.
-    $scalar_price = is_scalar( $option->price ) ? (string) $option->price : '';
-    ?>
+	// Always emit the per-option price cell so CSS can toggle visibility when
+	// the user changes pricing_mode without saving. Engine save semantics
+	// ignore the field when pricing_mode isn't flat_per_option.
+	$scalar_price = is_scalar( $option->price ) ? (string) $option->price : '';
+	?>
 	<td class="lafka-col-price">
 		<input type="text" name="<?php echo esc_attr( $option_prefix . '[price]' ); ?>" value="<?php echo esc_attr( $scalar_price ); ?>" class="wc_input_price small-text" placeholder="0.00" />
 	</td>
 
 	<?php
-    // Always emit matrix cells when columns exist (regardless of current
-    // pricing_mode). CSS hides them outside matrix mode. If the saved data
-    // has no matrix prices yet, cells render empty for the user to fill in.
-    if ( ! empty( $matrix_columns ) ) :
+	// Always emit matrix cells when columns exist (regardless of current
+	// pricing_mode). CSS hides them outside matrix mode. If the saved data
+	// has no matrix prices yet, cells render empty for the user to fill in.
+	if ( ! empty( $matrix_columns ) ) :
 		foreach ( $matrix_columns as $col ) :
 			$cell_value = $matrix_for_option[ $col['taxonomy'] ][ $col['slug'] ] ?? '';
 			?>
@@ -70,9 +70,9 @@ $matrix_for_option = is_array( $option->price ) ? $option->price : array();
 					placeholder="0.00" />
 			</td>
 			<?php
-        endforeach;
+		endforeach;
 	endif;
-    ?>
+	?>
 
 	<td>
 		<input type="hidden" name="<?php echo esc_attr( $option_prefix . '[default]' ); ?>" value="0" />

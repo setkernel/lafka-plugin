@@ -143,7 +143,7 @@ class Lafka_Engine_Helper {
 				continue;
 			}
 			if ( empty( $addon['field-name'] ) ) {
-				$truncated_name        = substr( $addon['name'], 0, $max_addon_name_length );
+				$truncated_name               = substr( $addon['name'], 0, $max_addon_name_length );
 				$addons[ $key ]['field-name'] = sanitize_title( $prefix . $truncated_name . '-' . $counter );
 				++$counter;
 			}
@@ -179,29 +179,29 @@ class Lafka_Engine_Helper {
 		if ( is_object( $product ) ) {
 			$display_price = self::get_product_addon_tax_display_mode() === 'incl'
 				? wc_get_price_including_tax(
-                    $product,
-                    array(
-						'qty' => 1,
+					$product,
+					array(
+						'qty'   => 1,
 						'price' => $price,
-                    ) 
-                )
+					)
+				)
 				: wc_get_price_excluding_tax(
-                    $product,
-                    array(
-						'qty' => 1,
+					$product,
+					array(
+						'qty'   => 1,
 						'price' => $price,
-                    ) 
-                );
+					)
+				);
 
 			// Tax-exempt customer + prices-exclude-tax → cart/checkout shows excl.
 			if ( ( is_cart() || is_checkout() ) && ! empty( WC()->customer ) && WC()->customer->get_is_vat_exempt() && ! wc_prices_include_tax() ) {
 				$display_price = wc_get_price_excluding_tax(
-                    $product,
-                    array(
-						'qty' => 1,
+					$product,
+					array(
+						'qty'   => 1,
 						'price' => $price,
-                    ) 
-                );
+					)
+				);
 			}
 		} else {
 			$display_price = $price;

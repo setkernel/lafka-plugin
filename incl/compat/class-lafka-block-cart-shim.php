@@ -32,8 +32,8 @@ defined( 'ABSPATH' ) || exit;
 
 class Lafka_Block_Cart_Shim {
 
-	private const STATUS_OPTION      = 'lafka_block_cart_shim_done';
-	private const ORIGINAL_META      = '_lafka_shim_original_content';
+	private const STATUS_OPTION = 'lafka_block_cart_shim_done';
+	private const ORIGINAL_META = '_lafka_shim_original_content';
 
 	/**
 	 * Install the shim on `admin_init` so it runs once per admin request, before
@@ -212,13 +212,13 @@ class Lafka_Block_Cart_Shim {
 			printf(
 				/* translators: %s: list of swapped page labels (e.g. "Cart & Checkout"). */
 				esc_html__( 'Updated %s page(s) to the classic WooCommerce shortcodes for the classic checkout experience.', 'lafka-plugin' ),
-				$pages // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped above
+				$pages
 			);
 		} else {
 			printf(
 				/* translators: %s: list of restored page labels (e.g. "Cart & Checkout"). */
 				esc_html__( 'Restored the block %s page(s) for the block checkout experience.', 'lafka-plugin' ),
-				$pages // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped above
+				$pages
 			);
 		}
 		echo '</p></div>';

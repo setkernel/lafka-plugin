@@ -117,7 +117,6 @@ class Lafka_Timeslots {
 	}
 
 	public function __wakeup() {
-		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- _doing_it_wrong() emits to error log + do_action hook, not HTML; escaping would corrupt plain-text log output.
 		_doing_it_wrong( __FUNCTION__, __( 'Foul!', 'lafka-plugin' ), '9.4.0' );
 	}
 
@@ -230,9 +229,7 @@ class Lafka_Timeslots {
 	public function validate_datetime_fields() {
 		$mandatory = ! empty( $this->order_date_time_mandatory );
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WC core verifies the checkout nonce in WC_Checkout::process_checkout() before this hook fires.
 		$raw_date = isset( $_POST['lafka_checkout_date'] ) ? sanitize_text_field( wp_unslash( $_POST['lafka_checkout_date'] ) ) : '';
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WC core verifies the checkout nonce in WC_Checkout::process_checkout() before this hook fires.
 		$raw_slot = isset( $_POST['lafka_checkout_timeslot'] ) ? sanitize_text_field( wp_unslash( $_POST['lafka_checkout_timeslot'] ) ) : '';
 
 		// The classic checkout reads the pair from POST; the decision itself lives
@@ -387,14 +384,12 @@ class Lafka_Timeslots {
 		// Pure meta writer: the mandatory gate lives in validate_datetime_fields()
 		// on woocommerce_checkout_process. WC core verifies its checkout nonce
 		// upstream before woocommerce_checkout_create_order fires.
-		// phpcs:disable WordPress.Security.NonceVerification.Missing -- WC core verifies checkout nonce upstream.
 		if ( ! empty( $_POST['lafka_checkout_date'] ) ) {
 			$order->update_meta_data( 'lafka_checkout_date', sanitize_text_field( wp_unslash( $_POST['lafka_checkout_date'] ) ) );
 		}
 		if ( ! empty( $_POST['lafka_checkout_timeslot'] ) ) {
 			$order->update_meta_data( 'lafka_checkout_timeslot', sanitize_text_field( wp_unslash( $_POST['lafka_checkout_timeslot'] ) ) );
 		}
-		// phpcs:enable WordPress.Security.NonceVerification.Missing
 	}
 
 	public static function add_datetime_to_orders_list( $columns ): array {

@@ -42,7 +42,6 @@ class Lafka_Shipping_Areas {
 	 * Unserializing instances of this class is forbidden.
 	 */
 	public function __wakeup() {
-		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- _doing_it_wrong() emits to error log + do_action hook, not HTML; escaping would corrupt plain-text log output.
 		_doing_it_wrong( __FUNCTION__, __( 'Foul!', 'lafka-plugin' ), '1.0.0' );
 	}
 
@@ -153,11 +152,11 @@ class Lafka_Shipping_Areas {
 		);
 
 		$args = array(
-			'labels'                => $labels,
-			'public'                => true,
-			'publicly_queryable'    => false,
-			'show_ui'               => true,
-			'show_in_menu'          => 'woocommerce',
+			'labels'             => $labels,
+			'public'             => true,
+			'publicly_queryable' => false,
+			'show_ui'            => true,
+			'show_in_menu'       => 'woocommerce',
 			// PERF-29: shipping-areas posts hold delivery-zone configuration
 			// (lat/lng, fees, time windows, branch metadata). The CPT is
 			// `publicly_queryable => false` so it doesn't surface in archives or
@@ -165,13 +164,13 @@ class Lafka_Shipping_Areas {
 			// `/wp-json/wp/v2/lafka-shipping-areas` — anyone could scrape every
 			// branch's coordinates, fees, and hours. Disable REST exposure;
 			// the admin UI uses its own AJAX endpoints, not the REST API.
-			'show_in_rest'          => false,
-			'query_var'             => true,
-			'rewrite'               => false,
-			'capability_type'       => 'product',
-			'hierarchical'          => false,
-			'menu_position'         => null,
-			'supports'              => array( 'title', 'author' ),
+			'show_in_rest'       => false,
+			'query_var'          => true,
+			'rewrite'            => false,
+			'capability_type'    => 'product',
+			'hierarchical'       => false,
+			'menu_position'      => null,
+			'supports'           => array( 'title', 'author' ),
 		);
 
 		register_post_type( 'lafka_shipping_areas', $args );
@@ -290,7 +289,7 @@ class Lafka_Shipping_Areas {
 			$flatpickr_locale = apply_filters( 'lafka_flatpickr_locale', strtok( get_locale(), '_' ), get_locale() );
 			wp_enqueue_style( 'flatpickr' );
 			wp_enqueue_script( 'flatpickr-local' );
-			$datetime_js       = lafka_plugin_script_path( 'incl/shipping-areas/assets/js/frontend/lafka-shipping-datetime.min.js' );
+			$datetime_js = lafka_plugin_script_path( 'incl/shipping-areas/assets/js/frontend/lafka-shipping-datetime.min.js' );
 			wp_enqueue_script( 'lafka-shipping-datetime', plugins_url( $datetime_js, LAFKA_PLUGIN_FILE ), array( 'jquery', 'selectWoo', 'flatpickr' ), lafka_plugin_asset_version( $datetime_js ), true );
 			wp_localize_script(
 				'lafka-shipping-datetime',
@@ -338,9 +337,7 @@ class Lafka_Shipping_Areas {
 		// wc_add_notice) before this create-order hook fires. We re-validate the
 		// lat/lng bounds here as a final guard and simply skip the meta write if
 		// the payload is unusable, rather than silently storing junk.
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WC core verifies checkout nonce upstream.
 		if ( ! empty( $_POST['lafka_picked_delivery_geocoded'] ) && ! empty( $_POST['lafka_is_location_clicked'] ) ) {
-			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WC core verifies checkout nonce upstream.
 			$raw_geocoded = wp_unslash( $_POST['lafka_picked_delivery_geocoded'] );
 			$decoded      = json_decode( $raw_geocoded );
 
@@ -619,7 +616,6 @@ class Lafka_Shipping_Areas {
 	public function validate_checkout_field_process() {
 		// The classic form posts the chosen rates; WC only copies them into the
 		// session after woocommerce_checkout_process, so read the POST first.
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- woocommerce_checkout_process context; WC core verifies the checkout nonce upstream.
 		$posted_methods = isset( $_POST['shipping_method'] ) ? array_map( 'sanitize_text_field', (array) wp_unslash( $_POST['shipping_method'] ) ) : null;
 
 		// Geo-fencing only applies to delivered orders when pinpoint delivery
@@ -632,7 +628,6 @@ class Lafka_Shipping_Areas {
 		// (a) Missing OR blank must both fail. Omitting the hidden field from the
 		// POST previously slipped through `isset() && empty()`; `empty()` alone
 		// closes that bypass.
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- woocommerce_checkout_process context; WC core verifies the checkout nonce upstream.
 		if ( empty( $_POST['lafka_picked_delivery_geocoded'] ) ) {
 			wc_add_notice( esc_html__( 'Please precise your address on the map.', 'lafka-plugin' ), 'error' );
 			self::report_checkout_block( 'lafka_delivery_location_required' );
@@ -641,7 +636,6 @@ class Lafka_Shipping_Areas {
 		}
 
 		// (c) The payload must decode to numeric lat/lng inside planet bounds.
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WC core verifies the checkout nonce upstream.
 		$decoded = json_decode( sanitize_text_field( wp_unslash( $_POST['lafka_picked_delivery_geocoded'] ) ) );
 		if ( null === $decoded || ! isset( $decoded->lat, $decoded->lng ) || ! is_numeric( $decoded->lat ) || ! is_numeric( $decoded->lng ) ) {
 			wc_add_notice( esc_html__( 'Please precise your address on the map.', 'lafka-plugin' ), 'error' );

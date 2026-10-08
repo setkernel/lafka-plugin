@@ -46,37 +46,37 @@ return array(
 
 	// ── Business info (fake but schema-valid), written to lafka_business_* ──
 	'business'     => array(
-		'lafka_business_name'           => 'Demo Restaurant',
-		'lafka_business_street'         => '123 Example St',
-		'lafka_business_city'           => 'Example City',
-		'lafka_business_region'         => 'CA',
-		'lafka_business_postal'         => '12345',
-		'lafka_business_country'        => 'US',
-		'lafka_business_phone_e164'     => '+15555550100',
-		'lafka_business_phone_display'  => '+1 (555) 555-0100',
-		'lafka_business_email'          => 'demo@example.com',
-		'lafka_business_geo_lat'        => '44.65',
-		'lafka_business_geo_lng'        => '-63.57',
-		'lafka_business_price_range'    => '$$',
-		'lafka_business_business_type'  => 'Restaurant, LocalBusiness, FoodEstablishment',
-		'lafka_business_cuisines'       => 'Pizza, Salads, Fast Food',
+		'lafka_business_name'            => 'Demo Restaurant',
+		'lafka_business_street'          => '123 Example St',
+		'lafka_business_city'            => 'Example City',
+		'lafka_business_region'          => 'CA',
+		'lafka_business_postal'          => '12345',
+		'lafka_business_country'         => 'US',
+		'lafka_business_phone_e164'      => '+15555550100',
+		'lafka_business_phone_display'   => '+1 (555) 555-0100',
+		'lafka_business_email'           => 'demo@example.com',
+		'lafka_business_geo_lat'         => '44.65',
+		'lafka_business_geo_lng'         => '-63.57',
+		'lafka_business_price_range'     => '$$',
+		'lafka_business_business_type'   => 'Restaurant, LocalBusiness, FoodEstablishment',
+		'lafka_business_cuisines'        => 'Pizza, Salads, Fast Food',
 		'lafka_business_payment_methods' => 'Cash, Credit Card',
-		'lafka_business_hours_mon'      => '00:00-23:59',
-		'lafka_business_hours_tue'      => '00:00-23:59',
-		'lafka_business_hours_wed'      => '00:00-23:59',
-		'lafka_business_hours_thu'      => '00:00-23:59',
-		'lafka_business_hours_fri'      => '00:00-23:59',
-		'lafka_business_hours_sat'      => '00:00-23:59',
-		'lafka_business_hours_sun'      => '00:00-23:59',
+		'lafka_business_hours_mon'       => '00:00-23:59',
+		'lafka_business_hours_tue'       => '00:00-23:59',
+		'lafka_business_hours_wed'       => '00:00-23:59',
+		'lafka_business_hours_thu'       => '00:00-23:59',
+		'lafka_business_hours_fri'       => '00:00-23:59',
+		'lafka_business_hours_sat'       => '00:00-23:59',
+		'lafka_business_hours_sun'       => '00:00-23:59',
 	),
 
 	// ── Order hours: open now, every day (lafka_order_hours_options) ──
 	'order_hours'  => array(
-		'lafka_order_hours_schedule'                       => $lafka_seed_demo_open_schedule_json,
-		'lafka_order_hours_force_override_check'           => false,
-		'lafka_order_hours_force_override_status'          => '',
-		'lafka_order_hours_holidays_calendar'              => '',
-		'lafka_order_hours_closed_stores_message_enabled'  => false,
+		'lafka_order_hours_schedule'                      => $lafka_seed_demo_open_schedule_json,
+		'lafka_order_hours_force_override_check'          => false,
+		'lafka_order_hours_force_override_status'         => '',
+		'lafka_order_hours_holidays_calendar'             => '',
+		'lafka_order_hours_closed_stores_message_enabled' => false,
 	),
 
 	// ── Feature flags merged into the 'lafka' option so the gates fire ──
@@ -171,15 +171,15 @@ return array(
 			'attributes'        => array( 'Size' => array( 'Small', 'Medium', 'Large' ) ),
 			'variations'        => array(
 				array(
-					'Size' => 'Small',
+					'Size'  => 'Small',
 					'price' => '9.99',
 				),
 				array(
-					'Size' => 'Medium',
+					'Size'  => 'Medium',
 					'price' => '12.99',
 				),
 				array(
-					'Size' => 'Large',
+					'Size'  => 'Large',
 					'price' => '15.99',
 				),
 			),
@@ -195,15 +195,15 @@ return array(
 			'attributes'        => array( 'Size' => array( 'Small', 'Medium', 'Large' ) ),
 			'variations'        => array(
 				array(
-					'Size' => 'Small',
+					'Size'  => 'Small',
 					'price' => '10.99',
 				),
 				array(
-					'Size' => 'Medium',
+					'Size'  => 'Medium',
 					'price' => '13.99',
 				),
 				array(
-					'Size' => 'Large',
+					'Size'  => 'Large',
 					'price' => '16.99',
 				),
 			),
@@ -219,15 +219,15 @@ return array(
 			'attributes'        => array( 'Size' => array( 'Small', 'Medium', 'Large' ) ),
 			'variations'        => array(
 				array(
-					'Size' => 'Small',
+					'Size'  => 'Small',
 					'price' => '10.49',
 				),
 				array(
-					'Size' => 'Medium',
+					'Size'  => 'Medium',
 					'price' => '13.49',
 				),
 				array(
-					'Size' => 'Large',
+					'Size'  => 'Large',
 					'price' => '16.49',
 				),
 			),

@@ -204,9 +204,9 @@ if ( ! class_exists( 'Lafka_Insights_Narrative' ) ) {
 		 * @return array<int,string> Sentences.
 		 */
 		public static function build( array $report ): array {
-			$funnel = (array) ( $report['funnel'] ?? array() );
-			$visits = (int) ( $funnel['visit'] ?? 0 );
-			$days   = (int) ( $report['days'] ?? 7 );
+			$funnel  = (array) ( $report['funnel'] ?? array() );
+			$visits  = (int) ( $funnel['visit'] ?? 0 );
+			$days    = (int) ( $report['days'] ?? 7 );
 			$covered = (int) ( $report['coverage_days'] ?? $days );
 			$covered = $covered > 0 ? min( $covered, $days ) : $days;
 			$partial = $covered < $days && ! empty( $report['since'] );
@@ -353,7 +353,7 @@ if ( ! class_exists( 'Lafka_Insights_Narrative' ) ) {
 				}
 			}
 
-			$prev = (array) ( $report['prev'] ?? array() );
+			$prev        = (array) ( $report['prev'] ?? array() );
 			$prev_visits = (int) ( $prev['visit'] ?? 0 );
 			if ( ! $partial && false !== ( $prev['covered'] ?? true ) && self::trend_allowed( $visits, $prev_visits, $days ) ) {
 				$change = (int) round( 100 * ( $visits - $prev_visits ) / $prev_visits );

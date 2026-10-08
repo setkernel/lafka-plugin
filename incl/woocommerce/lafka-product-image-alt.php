@@ -63,7 +63,7 @@ if ( ! function_exists( 'lafka_backfill_product_image_alt' ) ) {
 		// post meta. We only do this lookup when the parent path failed —
 		// it's a DB query per image, so cache the result per request.
 		static $shared_cache = array();
-		$attachment_id = (int) $attachment->ID;
+		$attachment_id       = (int) $attachment->ID;
 		if ( ! isset( $shared_cache[ $attachment_id ] ) ) {
 			$shared_cache[ $attachment_id ] = lafka_resolve_attachment_product_name( $attachment_id );
 		}

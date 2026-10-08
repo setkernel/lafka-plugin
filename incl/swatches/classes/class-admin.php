@@ -175,7 +175,7 @@ class Lafka_WC_Variation_Swatches_Admin {
 		}
 
 		// Print the close tag of field container.
-		echo 'edit' === $form ? '</td></tr>' : '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		echo 'edit' === $form ? '</td></tr>' : '</div>';
 	}
 
 	/**
@@ -202,7 +202,7 @@ class Lafka_WC_Variation_Swatches_Admin {
 	 * @param int    $tt_id    Term-taxonomy row ID (unused).
 	 * @param string $taxonomy Taxonomy slug — provided by created_term/edit_term as 3rd arg.
 	 */
-	public function save_term_meta( $term_id, $tt_id, $taxonomy = '' ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
+	public function save_term_meta( $term_id, $tt_id, $taxonomy = '' ) {
 		// Guard 1: product-attribute taxonomies only. WC prefixes them with `pa_`.
 		if ( ! is_string( $taxonomy ) || 0 !== strpos( $taxonomy, 'pa_' ) ) {
 			return;
@@ -216,13 +216,11 @@ class Lafka_WC_Variation_Swatches_Admin {
 		// Note: WP's term-edit form supplies its own nonce (verified by
 		// edit_terms / wp-admin/edit-tags.php) before hitting this hook,
 		// so an explicit per-field nonce here would be redundant.
-		// phpcs:disable WordPress.Security.NonceVerification.Missing
 		foreach ( Lafka_WCVS()->types as $type => $label ) {
 			if ( isset( $_POST[ $type ] ) ) {
 				update_term_meta( $term_id, $type, sanitize_text_field( wp_unslash( $_POST[ $type ] ) ) );
 			}
 		}
-		// phpcs:enable WordPress.Security.NonceVerification.Missing
 	}
 
 	/**
@@ -241,9 +239,7 @@ class Lafka_WC_Variation_Swatches_Admin {
 		$taxonomy_name = wc_attribute_taxonomy_name( $taxonomy->attribute_name );
 
 		$product_id = $thepostid;
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WC product attribute metabox context; WC core verifies its metabox nonce upstream.
 		if ( is_null( $thepostid ) && isset( $_POST['post_id'] ) ) {
-			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WC product attribute metabox context; WC core verifies its metabox nonce upstream.
 			$product_id = absint( $_POST['post_id'] );
 		}
 		?>
@@ -299,7 +295,6 @@ class Lafka_WC_Variation_Swatches_Admin {
 	 * @param $term_id
 	 */
 	public function add_attribute_column_content( $columns, $column, $term_id ) {
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- WP terms-list-table display context; taxonomy URL arg from admin filter UI; no state mutation.
 		$attr  = Lafka_WCVS()->get_tax_attribute( sanitize_text_field( wp_unslash( $_REQUEST['taxonomy'] ) ) );
 		$value = get_term_meta( $term_id, $attr->attribute_type, true );
 

@@ -72,13 +72,11 @@ class Lafka_Nutrition_Admin {
 	 * @param int $post_id Post ID.
 	 */
 	public function process_meta_box( $post_id ) {
-		// phpcs:disable WordPress.Security.NonceVerification.Missing
 		// WC's product-edit screen supplies the nonce verified by the WC
 		// product save flow before this hook fires; we rely on that gate.
 		if ( ! isset( $_POST['_lafka_nutrition_panel_present'] ) ) {
 			return;
 		}
-		// phpcs:enable WordPress.Security.NonceVerification.Missing
 
 		$product = wc_get_product( $post_id );
 		if ( ! $product ) {
@@ -86,8 +84,8 @@ class Lafka_Nutrition_Admin {
 		}
 
 		foreach ( Lafka_Nutrition_Config::$nutrition_meta_fields as $field_name => $data ) {
-			if ( isset( $_POST[ '_' . $field_name ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
-				$product->update_meta_data( '_' . $field_name, sanitize_text_field( wp_unslash( $_POST[ '_' . $field_name ] ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
+			if ( isset( $_POST[ '_' . $field_name ] ) ) {
+				$product->update_meta_data( '_' . $field_name, sanitize_text_field( wp_unslash( $_POST[ '_' . $field_name ] ) ) );
 			} else {
 				$product->update_meta_data( '_' . $field_name, '' );
 			}
@@ -95,7 +93,7 @@ class Lafka_Nutrition_Admin {
 
 		$product->update_meta_data(
 			'_lafka_product_allergens',
-			sanitize_text_field( wp_unslash( $_POST['_lafka_product_allergens'] ?? '' ) ) // phpcs:ignore WordPress.Security.NonceVerification.Missing
+			sanitize_text_field( wp_unslash( $_POST['_lafka_product_allergens'] ?? '' ) )
 		);
 
 		$product->save();

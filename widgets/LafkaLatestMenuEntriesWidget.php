@@ -89,7 +89,7 @@ class LafkaLatestMenuEntriesWidget extends WP_Widget {
 	}
 
 	function update( $new_instance, $old_instance ) {
-		$instance           = $old_instance;
+		$instance = $old_instance;
 		// sanitize_text_field over strip_tags: also decodes entities + normalises whitespace.
 		$instance['title']  = isset( $new_instance['title'] ) ? sanitize_text_field( wp_unslash( $new_instance['title'] ) ) : '';
 		$instance['number'] = isset( $new_instance['number'] ) ? max( 1, (int) $new_instance['number'] ) : 5;

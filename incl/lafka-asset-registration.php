@@ -92,9 +92,9 @@ if ( ! function_exists( 'lafka_register_plugin_scripts' ) ) {
 		//   2. Full locale lowercased with underscore (e.g. en_ca.js)
 		//   3. Short-code only                       (e.g. en.js, fr.js)
 		// English is flatpickr's built-in default — no l10n file needed.
-		$fp_locale     = get_locale();
-		$fp_short      = strtolower( substr( $fp_locale, 0, 2 ) );
-		$fp_candidates = array(
+		$fp_locale        = get_locale();
+		$fp_short         = strtolower( substr( $fp_locale, 0, 2 ) );
+		$fp_candidates    = array(
 			str_replace( '_', '-', strtolower( $fp_locale ) ) . '.js',
 			strtolower( $fp_locale ) . '.js',
 			$fp_short . '.js',
@@ -131,7 +131,7 @@ if ( ! function_exists( 'lafka_register_plugin_scripts' ) ) {
 		if ( '' !== $maps_url ) {
 			// `defer` via the WP strategy API: WordPress keeps the loader blocking
 			// whenever a dependent (e.g. a map config with an inline script) needs it.
-			wp_register_script( 'lafka-google-maps', $maps_url, array( 'jquery' ), null, lafka_google_maps_script_args() ); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion -- the Maps loader is versioned by its own `v=weekly` query arg.
+			wp_register_script( 'lafka-google-maps', $maps_url, array( 'jquery' ), null, lafka_google_maps_script_args() );
 		}
 	}
 }
@@ -149,7 +149,7 @@ if ( ! function_exists( 'lafka_register_theme_script_fallbacks' ) ) {
 				wp_register_script( $handle, $src, $deps, $ver, true );
 			}
 		};
-		$register_style = static function ( $handle, $src, $deps, $ver ) {
+		$register_style  = static function ( $handle, $src, $deps, $ver ) {
 			if ( ! wp_style_is( $handle, 'registered' ) ) {
 				wp_register_style( $handle, $src, $deps, $ver );
 			}
@@ -214,7 +214,6 @@ if ( ! function_exists( 'lafka_register_admin_plugin_scripts' ) ) {
 
 		$screen    = get_current_screen();
 		$screen_id = $screen ? $screen->id : '';
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- admin taxonomy screen detection from $_GET['taxonomy']; read-only display gating, no state mutation.
 		if ( strstr( $screen_id, 'lafka_foodmenu_category' ) && ! empty( $_GET['taxonomy'] ) && in_array( wp_unslash( $_GET['taxonomy'] ), array( 'lafka_foodmenu_category' ), true ) ) {
 			wp_register_script( 'lafka-plugin-term-ordering', plugins_url( 'assets/js/lafka-plugin-foodmenu-cat-ordering.js', LAFKA_PLUGIN_FILE ), array( 'jquery-ui-sortable' ), lafka_plugin_asset_version( 'assets/js/lafka-plugin-foodmenu-cat-ordering.js' ), false );
 			wp_enqueue_script( 'lafka-plugin-term-ordering' );
@@ -231,7 +230,7 @@ if ( ! function_exists( 'lafka_register_admin_plugin_scripts' ) ) {
 		// Same fail-closed rule as the front end: no key, no handle.
 		$maps_url = lafka_google_maps_script_url( 'geometry' );
 		if ( '' !== $maps_url ) {
-			wp_register_script( 'lafka-google-maps', $maps_url, array( 'jquery' ), null, lafka_google_maps_script_args() ); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion -- versioned by `v=weekly`.
+			wp_register_script( 'lafka-google-maps', $maps_url, array( 'jquery' ), null, lafka_google_maps_script_args() );
 		}
 	}
 }

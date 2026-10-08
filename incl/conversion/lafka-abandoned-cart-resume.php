@@ -36,14 +36,12 @@ if ( ! function_exists( 'lafka_ac_handle_resume_request' ) ) {
 	 * @return void
 	 */
 	function lafka_ac_handle_resume_request(): void {
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- public link from the recovery email; token IS the auth.
 		if ( empty( $_GET['lafka_resume_cart'] ) || ! is_string( $_GET['lafka_resume_cart'] ) ) {
 			return;
 		}
 		if ( ! function_exists( 'WC' ) ) {
 			return;
 		}
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- token IS the auth.
 		$raw_token = wp_unslash( $_GET['lafka_resume_cart'] );
 		$token     = function_exists( 'sanitize_text_field' )
 			? sanitize_text_field( $raw_token )
@@ -129,7 +127,7 @@ if ( ! function_exists( 'lafka_ac_redirect_to_cart' ) ) {
 		if ( function_exists( 'wp_safe_redirect' ) ) {
 			wp_safe_redirect( $target, 302 );
 		} elseif ( function_exists( 'wp_redirect' ) ) {
-			wp_redirect( $target, 302 ); // phpcs:ignore WordPress.Security.SafeRedirect
+			wp_redirect( $target, 302 );
 		} else {
 			header( 'Location: ' . $target, true, 302 );
 		}

@@ -98,7 +98,7 @@ class Lafka_Addons_REST_Groups_Controller extends WP_REST_Controller {
 					'callback'            => array( $this, 'delete_item' ),
 					'permission_callback' => array( $this, 'permissions_check' ),
 					'args'                => array(
-						'id' => array(
+						'id'    => array(
 							'type'              => 'integer',
 							'required'          => true,
 							'sanitize_callback' => 'absint',
@@ -122,30 +122,30 @@ class Lafka_Addons_REST_Groups_Controller extends WP_REST_Controller {
 	 */
 	private function mutation_args(): array {
 		return array(
-			'title' => array(
+			'title'          => array(
 				'type'              => 'string',
 				'required'          => false,
 				'sanitize_callback' => 'sanitize_text_field',
 			),
-			'priority' => array(
+			'priority'       => array(
 				'type'              => 'integer',
 				'required'          => false,
 				'default'           => 10,
 				'sanitize_callback' => 'absint',
 			),
-			'all_products' => array(
+			'all_products'   => array(
 				'type'              => 'boolean',
 				'required'          => false,
 				'default'           => true,
 				'sanitize_callback' => 'rest_sanitize_boolean',
 			),
-			'category_ids' => array(
+			'category_ids'   => array(
 				'type'     => 'array',
 				'required' => false,
 				'default'  => array(),
 				'items'    => array( 'type' => 'integer' ),
 			),
-			'groups' => array(
+			'groups'         => array(
 				'type'        => 'array',
 				'required'    => false,
 				'default'     => array(),
@@ -405,14 +405,14 @@ class Lafka_Addons_REST_Groups_Controller extends WP_REST_Controller {
 	 */
 	private function build_post_item( WP_Post $post, array $groups ): array {
 		return array(
-			'id'              => (int) $post->ID,
-			'post_type'       => $post->post_type,
-			'title'           => $post->post_title,
-			'priority'        => (int) get_post_meta( $post->ID, '_priority', true ),
-			'all_products'    => (string) get_post_meta( $post->ID, '_all_products', true ) === '1',
-			'category_ids'    => $this->get_category_ids( $post->ID ),
-			'exclude_global'  => (string) get_post_meta( $post->ID, '_product_addons_exclude_global', true ) === '1',
-			'groups'          => array_map(
+			'id'             => (int) $post->ID,
+			'post_type'      => $post->post_type,
+			'title'          => $post->post_title,
+			'priority'       => (int) get_post_meta( $post->ID, '_priority', true ),
+			'all_products'   => (string) get_post_meta( $post->ID, '_all_products', true ) === '1',
+			'category_ids'   => $this->get_category_ids( $post->ID ),
+			'exclude_global' => (string) get_post_meta( $post->ID, '_product_addons_exclude_global', true ) === '1',
+			'groups'         => array_map(
 				static fn( Lafka_Addon_Group $g ) => $g->to_array(),
 				$groups
 			),

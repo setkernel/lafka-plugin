@@ -384,8 +384,8 @@ if ( ! function_exists( 'lafka_llms_render' ) ) {
 		$lines = array();
 		if ( 'menu-md' === $type ) {
 			/* translators: %s: restaurant name. */
-			$lines[] = '# ' . sprintf( __( '%s — Menu', 'lafka-plugin' ), lafka_llms_md( (string) ( $info['name'] ?? '' ) ) );
-			$lines[] = '';
+			$lines[]  = '# ' . sprintf( __( '%s — Menu', 'lafka-plugin' ), lafka_llms_md( (string) ( $info['name'] ?? '' ) ) );
+			$lines[]  = '';
 			$currency = lafka_schema_get_price_currency();
 			/* translators: 1: ISO currency code, 2: date. */
 			$lines[] = '> ' . sprintf( __( 'Prices in %1$s. Generated %2$s from the live online menu:', 'lafka-plugin' ), $currency, gmdate( 'Y-m-d' ) ) . ' ' . (string) ( $info['menu_url'] ?? '' );
@@ -523,7 +523,7 @@ if ( ! function_exists( 'lafka_llms_response_headers' ) ) {
 	 * @return list<string> Header lines.
 	 */
 	function lafka_llms_response_headers( string $type ): array {
-		$types = array(
+		$types   = array(
 			'llms'      => 'text/plain; charset=utf-8',
 			'llms-full' => 'text/plain; charset=utf-8',
 			'menu-md'   => 'text/markdown; charset=utf-8',
@@ -574,7 +574,7 @@ if ( ! function_exists( 'lafka_llms_serve' ) ) {
 		foreach ( lafka_llms_response_headers( $type ) as $line ) {
 			header( $line );
 		}
-		echo lafka_llms_document( $type ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- plain-text / JSON document, served with a non-HTML Content-Type and nosniff.
+		echo lafka_llms_document( $type );
 		exit;
 	}
 }

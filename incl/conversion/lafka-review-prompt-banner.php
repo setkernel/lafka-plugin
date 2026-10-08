@@ -290,7 +290,6 @@ if ( ! function_exists( 'lafka_review_banner_emit_setcookie' ) ) {
 				'httponly' => false, // JS must read it.
 				'samesite' => 'Lax',
 			);
-			// phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.cookies_setcookie -- standard cookie write, no PII.
 			@setcookie( $name, $value, $opts );
 		}
 	}
@@ -382,7 +381,6 @@ if ( ! function_exists( 'lafka_review_banner_rest_dismiss' ) ) {
 	 * @return array|WP_REST_Response
 	 */
 	function lafka_review_banner_rest_dismiss( $request = null ) {
-		// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
 		unset( $request );
 
 		$user_id = function_exists( 'get_current_user_id' ) ? (int) get_current_user_id() : 0;
@@ -426,7 +424,6 @@ if ( ! function_exists( 'lafka_review_banner_rest_shown' ) ) {
 	 * @return array|WP_REST_Response
 	 */
 	function lafka_review_banner_rest_shown( $request = null ) {
-		// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
 		unset( $request );
 
 		$ip = lafka_review_banner_request_ip();
@@ -476,7 +473,7 @@ if ( ! function_exists( 'lafka_review_banner_request_ip' ) ) {
 		if ( ! isset( $_SERVER['REMOTE_ADDR'] ) ) {
 			return '';
 		}
-		$ip = (string) $_SERVER['REMOTE_ADDR']; // phpcs:ignore WordPressVIPMinimum.Variables.ServerVariables.UserControlledHeaders
+		$ip = (string) $_SERVER['REMOTE_ADDR'];
 		$ip = trim( $ip );
 		// Validate — drop anything that doesn't look like an IP, never letting
 		// caller-controlled bytes into the transient key uncleansed.

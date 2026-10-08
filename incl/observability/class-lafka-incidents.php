@@ -189,7 +189,6 @@ if ( ! class_exists( 'Lafka_Incidents' ) ) {
 			$suppress = method_exists( $wpdb, 'suppress_errors' ) ? $wpdb->suppress_errors( true ) : null;
 			$result   = $wpdb->query(
 				$wpdb->prepare(
-					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is a code-controlled prefix concatenation.
 					"INSERT INTO {$table} (fingerprint, channel, level, code, message, sample_context, first_seen, last_seen, hit_count, last_request_id, status)
 					VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 1, %s, 'open')
 					ON DUPLICATE KEY UPDATE hit_count = hit_count + 1, last_seen = VALUES(last_seen), level = VALUES(level),
@@ -244,14 +243,12 @@ if ( ! class_exists( 'Lafka_Incidents' ) ) {
 			$params[] = $per_page;
 			$params[] = $offset;
 
-			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- table name is code-controlled; the WHERE fragments are fixed literals from this method with %s placeholders filled by prepare().
 			$rows = $wpdb->get_results(
 				$wpdb->prepare(
 					"SELECT * FROM {$table} WHERE " . implode( ' AND ', $where ) . ' ORDER BY last_seen DESC LIMIT %d OFFSET %d',
 					$params
 				)
 			);
-			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
 			return is_array( $rows ) ? $rows : array();
 		}
 
@@ -267,8 +264,7 @@ if ( ! class_exists( 'Lafka_Incidents' ) ) {
 				return $out;
 			}
 			$table = self::table_name();
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is a code-controlled prefix concatenation; no user input.
-			$rows = $wpdb->get_results( "SELECT status, COUNT(*) AS n FROM {$table} GROUP BY status" );
+			$rows  = $wpdb->get_results( "SELECT status, COUNT(*) AS n FROM {$table} GROUP BY status" );
 			foreach ( is_array( $rows ) ? $rows : array() as $row ) {
 				if ( isset( $out[ $row->status ] ) ) {
 					$out[ $row->status ] = (int) $row->n;
@@ -303,9 +299,8 @@ if ( ! class_exists( 'Lafka_Incidents' ) ) {
 			if ( $days < 1 || ! self::db_ready() ) {
 				return 0;
 			}
-			$table  = self::table_name();
-			$cutoff = gmdate( 'Y-m-d H:i:s', time() - $days * 86400 );
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is a code-controlled prefix concatenation.
+			$table   = self::table_name();
+			$cutoff  = gmdate( 'Y-m-d H:i:s', time() - $days * 86400 );
 			$deleted = $wpdb->query( $wpdb->prepare( "DELETE FROM {$table} WHERE last_seen < %s", $cutoff ) );
 			return is_numeric( $deleted ) ? (int) $deleted : 0;
 		}
@@ -325,7 +320,6 @@ if ( ! class_exists( 'Lafka_Incidents' ) ) {
 			$table   = self::table_name();
 			$updated = $wpdb->query(
 				$wpdb->prepare(
-					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is a code-controlled prefix concatenation.
 					"UPDATE {$table} SET status = 'resolved' WHERE code = 'place_order_incomplete' AND status <> 'resolved' AND ( message LIKE %s OR message LIKE %s )",
 					'%' . $wpdb->esc_like( '[Shortcode #6' ) . '%',
 					'%' . $wpdb->esc_like( '[Store API #9' ) . '%'
@@ -348,8 +342,7 @@ if ( ! class_exists( 'Lafka_Incidents' ) ) {
 			}
 			$table = self::table_name();
 			$since = gmdate( 'Y-m-d H:i:s', time() - $hours * 3600 );
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is a code-controlled prefix concatenation.
-			$n = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE channel = %s AND status <> 'muted' AND last_seen >= %s", $channel, $since ) );
+			$n     = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE channel = %s AND status <> 'muted' AND last_seen >= %s", $channel, $since ) );
 			return (int) $n;
 		}
 
@@ -372,7 +365,6 @@ if ( ! class_exists( 'Lafka_Incidents' ) ) {
 			$err      = implode( ',', array_fill( 0, count( self::ERROR_LEVELS ), '%s' ) );
 			$params   = array_merge( self::DIGEST_CHANNELS, self::WARNING_LEVELS, self::ERROR_LEVELS, array( max( 1, $limit ) ) );
 
-			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- table name is code-controlled; the IN() lists are generated %s placeholders for class constants, filled by prepare().
 			$rows = $wpdb->get_results(
 				$wpdb->prepare(
 					"SELECT * FROM {$table}
@@ -383,7 +375,6 @@ if ( ! class_exists( 'Lafka_Incidents' ) ) {
 					$params
 				)
 			);
-			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
 			return is_array( $rows ) ? $rows : array();
 		}
 
@@ -401,14 +392,12 @@ if ( ! class_exists( 'Lafka_Incidents' ) ) {
 			}
 			$table        = self::table_name();
 			$placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
-			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- table name is code-controlled; %d placeholders generated for the id list.
 			$wpdb->query(
 				$wpdb->prepare(
 					"UPDATE {$table} SET notified_at = %s WHERE id IN ({$placeholders})",
 					array_merge( array( gmdate( 'Y-m-d H:i:s' ) ), $ids )
 				)
 			);
-			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
 		}
 
 		/**

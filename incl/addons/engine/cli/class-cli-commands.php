@@ -146,8 +146,8 @@ class Lafka_Addons_CLI_Commands {
 			return;
 		}
 
-		$updated  = array();
-		$rebuilt  = array();
+		$updated = array();
+		$rebuilt = array();
 		foreach ( $groups as $idx => $group ) {
 			if ( Lafka_Addon_Schema::SOURCE_ATTRIBUTE !== $group->options_source ) {
 				$rebuilt[] = $group;
@@ -238,12 +238,12 @@ class Lafka_Addons_CLI_Commands {
 		}
 
 		// Per-product groups.
-		$repo            = \Lafka_Addons_Engine::instance()->repository();
-		$product_groups  = $repo->get_groups( $product_id );
+		$repo           = \Lafka_Addons_Engine::instance()->repository();
+		$product_groups = $repo->get_groups( $product_id );
 		\WP_CLI::log( sprintf( '  per-product groups:    %d', count( $product_groups ) ) );
 
 		// Parent product groups.
-		$parent_id = wp_get_post_parent_id( $product_id );
+		$parent_id     = wp_get_post_parent_id( $product_id );
 		$parent_groups = $parent_id > 0 ? $repo->get_groups( $parent_id ) : array();
 		\WP_CLI::log( sprintf( '  parent (id=%d) groups: %d', $parent_id, count( $parent_groups ) ) );
 
@@ -255,7 +255,7 @@ class Lafka_Addons_CLI_Commands {
 				'post_status'    => 'publish',
 				'meta_query'     => array(
 					array(
-						'key' => '_all_products',
+						'key'   => '_all_products',
 						'value' => '1',
 					),
 				),

@@ -394,7 +394,7 @@ if ( ! class_exists( 'Lafka_Virtual_Menu_Items' ) ) {
 		 * @return void
 		 */
 		public static function handle_dismiss() {
-			$id = isset( $_GET['post'] ) ? absint( wp_unslash( $_GET['post'] ) ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- verified by check_admin_referer() below, once the id is known.
+			$id = isset( $_GET['post'] ) ? absint( wp_unslash( $_GET['post'] ) ) : 0;
 			if ( $id <= 0 || ! current_user_can( 'edit_post', $id ) ) {
 				wp_die( esc_html__( 'You are not allowed to edit this item.', 'lafka-plugin' ), 403 );
 			}

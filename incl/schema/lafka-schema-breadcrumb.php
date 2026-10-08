@@ -30,9 +30,9 @@ function lafka_schema_breadcrumb(): ?array {
 		return null;
 	}
 
-	$home_url  = trailingslashit( home_url( '/' ) );
-	$items     = array();
-	$position  = 1;
+	$home_url = trailingslashit( home_url( '/' ) );
+	$items    = array();
+	$position = 1;
 
 	// Always start with Home. Labels are translatable so non-English stores
 	// emit breadcrumbs that match their locale (Google uses the label
@@ -95,7 +95,7 @@ function lafka_schema_breadcrumb(): ?array {
 				}
 			}
 			$items[] = lafka_schema_breadcrumb_item( $position++, get_the_title( $obj ), get_permalink( $obj ) );
-		}   
+		}
 	} elseif ( is_category() && $obj instanceof WP_Term ) {
 		$cat_url = get_term_link( $obj );
 		if ( ! is_wp_error( $cat_url ) ) {

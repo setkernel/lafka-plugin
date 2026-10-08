@@ -93,8 +93,7 @@ if ( ! function_exists( 'lafka_perf_dequeue_unused_font_awesome' ) ) {
 			$mega_menu_in_use = wp_cache_get( 'lafka_mega_menu_has_icons', 'lafka' );
 			if ( false === $mega_menu_in_use ) {
 				global $wpdb;
-				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- one-shot cached lookup; result memoized for the request.
-				$count = (int) $wpdb->get_var(
+				$count            = (int) $wpdb->get_var(
 					"SELECT COUNT(*) FROM {$wpdb->postmeta} WHERE meta_key = '_lafka-menu-item-icon' AND meta_value != ''"
 				);
 				$mega_menu_in_use = $count > 0 ? 1 : 0;

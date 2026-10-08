@@ -268,8 +268,8 @@ if ( ! class_exists( 'Lafka_Insights_Server_Events' ) ) {
 				return;
 			}
 			self::$failed_orders[ $order_id ] = true;
-			$class  = in_array( $class, array( 'declined', 'avs', 'cvv', 'gateway_error' ), true ) ? $class : 'other';
-			$reason = 'payment_' . $class;
+			$class                            = in_array( $class, array( 'declined', 'avs', 'cvv', 'gateway_error' ), true ) ? $class : 'other';
+			$reason                           = 'payment_' . $class;
 			self::record_for_order(
 				$order_id,
 				Lafka_Insights_DB::STAGE_PAY_FAILED,
@@ -474,7 +474,7 @@ if ( ! class_exists( 'Lafka_Insights_Server_Events' ) ) {
 					'limit'    => 1,
 				)
 			);
-			$note = is_array( $notes ) ? reset( $notes ) : null;
+			$note  = is_array( $notes ) ? reset( $notes ) : null;
 			return ( is_object( $note ) && isset( $note->content ) ) ? wp_strip_all_tags( (string) $note->content ) : '';
 		}
 

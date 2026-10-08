@@ -57,7 +57,7 @@ class LafkaPopularPostsWidget extends WP_Widget {
 					$instance
 				)
 			);
-			$ids = $query->posts;
+			$ids   = $query->posts;
 			wp_cache_set( $cache_key, $ids, 'widget', HOUR_IN_SECONDS );
 		}
 		if ( empty( $ids ) ) {
@@ -68,8 +68,8 @@ class LafkaPopularPostsWidget extends WP_Widget {
 		_prime_post_caches( $ids, true, true );
 		$popular_posts = array_map( 'get_post', $ids );
 		// Build a tiny "have_posts"-equivalent for the existing template loop.
-		$r          = new stdClass();
-		$r->posts   = $popular_posts;
+		$r        = new stdClass();
+		$r->posts = $popular_posts;
 
 		echo wp_kses_post( $args['before_widget'] );
 		if ( $title ) {
@@ -85,7 +85,6 @@ class LafkaPopularPostsWidget extends WP_Widget {
 					<a href="<?php echo esc_url( get_permalink( $popular_post->ID ) ); ?>"<?php echo $is_current ? ' aria-current="page"' : ''; ?> title="<?php echo esc_attr( get_the_title( $popular_post->ID ) ? get_the_title( $popular_post->ID ) : (string) $popular_post->ID ); ?>">
 						<?php if ( has_post_thumbnail( $popular_post->ID ) ) : ?>
 							<?php
-							// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- get_the_post_thumbnail() returns trusted WP-core HTML with attributes pre-escaped.
 							echo get_the_post_thumbnail( $popular_post->ID, 'lafka-widgets-thumb', '' );
 							?>
 						<?php endif; ?>

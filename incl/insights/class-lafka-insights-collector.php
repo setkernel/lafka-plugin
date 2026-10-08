@@ -264,14 +264,14 @@ if ( ! class_exists( 'Lafka_Insights_Collector' ) ) {
 						$stages |= Lafka_Insights_DB::STAGE_MENU;
 						break;
 					case 'v':
-						$stages                                  |= Lafka_Insights_DB::STAGE_PRODUCT;
-						$counters['item_view'][ $event[1] ]       = ( $counters['item_view'][ $event[1] ] ?? 0 ) + 1;
+						$stages                            |= Lafka_Insights_DB::STAGE_PRODUCT;
+						$counters['item_view'][ $event[1] ] = ( $counters['item_view'][ $event[1] ] ?? 0 ) + 1;
 						break;
 					case 's':
 						$term = self::normalize_search_term( (string) $event[1] );
 						if ( '' !== $term ) {
-							$metric                        = 0 === (int) $event[2] ? 'search_zero' : 'search';
-							$counters[ $metric ][ $term ]  = ( $counters[ $metric ][ $term ] ?? 0 ) + 1;
+							$metric                       = 0 === (int) $event[2] ? 'search_zero' : 'search';
+							$counters[ $metric ][ $term ] = ( $counters[ $metric ][ $term ] ?? 0 ) + 1;
 						}
 						$stages |= Lafka_Insights_DB::STAGE_MENU;
 						break;

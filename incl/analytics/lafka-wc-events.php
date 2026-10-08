@@ -229,8 +229,8 @@ if ( ! function_exists( 'lafka_dl_cart_value' ) ) {
 		$rows  = $wc->cart->get_cart();
 		if ( is_array( $rows ) ) {
 			foreach ( $rows as $row ) {
-				$qty   = isset( $row['quantity'] ) ? (int) $row['quantity'] : 1;
-				$price = ( isset( $row['data'] ) && is_object( $row['data'] ) && method_exists( $row['data'], 'get_price' ) )
+				$qty    = isset( $row['quantity'] ) ? (int) $row['quantity'] : 1;
+				$price  = ( isset( $row['data'] ) && is_object( $row['data'] ) && method_exists( $row['data'], 'get_price' ) )
 					? (float) $row['data']->get_price()
 					: 0.0;
 				$total += $qty * $price;
@@ -570,7 +570,7 @@ if ( ! function_exists( 'lafka_dl_emit_add_to_cart' ) ) {
 				$queue   = $wc->session->get( '_lafka_dl_pending_events', array() );
 				$queue   = is_array( $queue ) ? $queue : array();
 				$queue[] = array(
-					'event' => 'add_to_cart',
+					'event'   => 'add_to_cart',
 					'payload' => $payload,
 				);
 				$wc->session->set( '_lafka_dl_pending_events', $queue );
@@ -624,7 +624,7 @@ if ( ! function_exists( 'lafka_dl_emit_remove_from_cart' ) ) {
 			$queue   = $wc->session->get( '_lafka_dl_pending_events', array() );
 			$queue   = is_array( $queue ) ? $queue : array();
 			$queue[] = array(
-				'event' => 'remove_from_cart',
+				'event'   => 'remove_from_cart',
 				'payload' => $payload,
 			);
 			$wc->session->set( '_lafka_dl_pending_events', $queue );
@@ -683,11 +683,8 @@ if ( ! function_exists( 'lafka_dl_inject_ajax_add_to_cart' ) ) {
 
 		// Resolve the product from POST['product_id'] when WC didn't pass it.
 		if ( ! $product_id ) {
-			// phpcs:ignore WordPress.Security.NonceVerification.Missing
 			$product_id = isset( $_POST['product_id'] ) ? (int) $_POST['product_id'] : 0;
-			// phpcs:ignore WordPress.Security.NonceVerification.Missing
 			if ( ! $product_id && isset( $_POST['add-to-cart'] ) ) {
-				// phpcs:ignore WordPress.Security.NonceVerification.Missing
 				$product_id = (int) $_POST['add-to-cart'];
 			}
 		}
@@ -698,7 +695,6 @@ if ( ! function_exists( 'lafka_dl_inject_ajax_add_to_cart' ) ) {
 		if ( ! $product ) {
 			return $fragments;
 		}
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$qty  = isset( $_POST['quantity'] ) ? max( 1, (int) $_POST['quantity'] ) : 1;
 		$item = lafka_dl_item_payload( $product, $qty );
 

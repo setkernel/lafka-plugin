@@ -1307,7 +1307,6 @@ if ( ! function_exists( 'lafka_submit_contact' ) ) {
 		$output = ob_get_contents();
 		ob_end_clean();
 
-		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $output is captured contact-form template render; all dynamic values escaped at construction in the partial.
 		echo $output;
 		wp_die();
 	}

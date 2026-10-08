@@ -24,7 +24,6 @@
 // $_GET reads below are display-state only (which module was just updated, for
 // the success notice). The state-changing path is the admin-post toggle
 // handler, which verifies its own nonce via check_admin_referer().
-// phpcs:disable WordPress.Security.NonceVerification.Recommended
 
 defined( 'ABSPATH' ) || exit;
 
@@ -32,9 +31,9 @@ if ( ! class_exists( 'Lafka_Modules_Page' ) ) {
 
 	final class Lafka_Modules_Page {
 
-		const MENU_SLUG    = 'lafka-modules';
-		const CAPABILITY   = 'manage_woocommerce';
-		const NONCE_ACTION = 'lafka_module_toggle';
+		const MENU_SLUG     = 'lafka-modules';
+		const CAPABILITY    = 'manage_woocommerce';
+		const NONCE_ACTION  = 'lafka_module_toggle';
 		const TOGGLE_ACTION = 'lafka_module_toggle';
 
 		// NX1-06: opt-in "Remove all data on uninstall" toggle. The option name
@@ -276,8 +275,8 @@ if ( ! class_exists( 'Lafka_Modules_Page' ) ) {
 			echo '<label class="lafka-checkout-mode__choice">';
 			echo '<input type="radio" name="lafka_checkout_mode" value="' . esc_attr( $mode ) . '"';
 			checked( $current, $mode );
-			echo '> <span class="lafka-checkout-mode__choice-title">' . $title . '</span>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped by caller.
-			echo '<span class="lafka-checkout-mode__choice-desc">' . $desc . '</span>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped by caller.
+			echo '> <span class="lafka-checkout-mode__choice-title">' . $title . '</span>';
+			echo '<span class="lafka-checkout-mode__choice-desc">' . $desc . '</span>';
 			echo '</label>';
 		}
 
@@ -406,8 +405,8 @@ if ( ! class_exists( 'Lafka_Modules_Page' ) ) {
 		 * The plain nonce-verified POST toggle for a flippable module.
 		 */
 		private function render_toggle_form( Lafka_Module $module, $enabled ) {
-			$target      = $enabled ? '0' : '1';
-			$button_text = $enabled ? esc_html__( 'Disable', 'lafka-plugin' ) : esc_html__( 'Enable', 'lafka-plugin' );
+			$target       = $enabled ? '0' : '1';
+			$button_text  = $enabled ? esc_html__( 'Disable', 'lafka-plugin' ) : esc_html__( 'Enable', 'lafka-plugin' );
 			$button_class = $enabled ? 'button button-secondary' : 'button button-primary';
 
 			echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';

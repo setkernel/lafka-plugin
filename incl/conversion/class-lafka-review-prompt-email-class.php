@@ -132,7 +132,7 @@ if ( ! class_exists( 'LAFKA_Review_Prompt_Email' ) ) {
 		 * @return string
 		 */
 		public function get_subject(): string {
-			$tmpl = (string) $this->get_default_subject();
+			$tmpl  = (string) $this->get_default_subject();
 			$first = '';
 			$site  = $this->get_blogname();
 			if ( is_object( $this->object ) && method_exists( $this->object, 'get_billing_first_name' ) ) {

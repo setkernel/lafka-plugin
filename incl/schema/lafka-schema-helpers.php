@@ -114,7 +114,7 @@ if ( ! function_exists( 'lafka_get_restaurant_info' ) ) {
 		// Customizer fields then act as overrides — useful when the site is multi-
 		// location (one WC store, many physical addresses) or when the schema
 		// branding differs from the WC checkout/email branding.
-		$wc_country_split = static function (): array {
+		$wc_country_split           = static function (): array {
 			if ( ! function_exists( 'get_option' ) ) {
 				return array( '', '' );
 			}
@@ -270,12 +270,12 @@ if ( ! function_exists( 'lafka_get_restaurant_info' ) ) {
 		// of input shape. See `lafka_schema_normalize_csv_list()` below.
 
 		// Build address_display + address_short (template-friendly composites).
-		$line1 = $info['street'];
-		$line2_parts = array_filter( array( $info['city'], trim( $info['region'] . ' ' . $info['postal'] ) ) );
-		$line2 = implode( ', ', $line2_parts );
-		$address_lines = array_filter( array( $line1, $line2, $info['country'] ) );
+		$line1                   = $info['street'];
+		$line2_parts             = array_filter( array( $info['city'], trim( $info['region'] . ' ' . $info['postal'] ) ) );
+		$line2                   = implode( ', ', $line2_parts );
+		$address_lines           = array_filter( array( $line1, $line2, $info['country'] ) );
 		$info['address_display'] = implode( "\n", $address_lines );
-		$short_parts = array_filter( array( $info['street'], $info['city'] ) );
+		$short_parts             = array_filter( array( $info['street'], $info['city'] ) );
 		$info['address_short']   = implode( ', ', $short_parts );
 
 		// Hours: structured per-day. Read from theme_mod 'lafka_business_hours_<key>'
@@ -284,7 +284,7 @@ if ( ! function_exists( 'lafka_get_restaurant_info' ) ) {
 		//   - $info['opening_hours'] OpeningHoursSpecification array for JSON-LD
 		$info['hours']         = array();
 		$info['opening_hours'] = array();
-		$days = array(
+		$days                  = array(
 			'mon' => 'Monday',
 			'tue' => 'Tuesday',
 			'wed' => 'Wednesday',
@@ -303,8 +303,8 @@ if ( ! function_exists( 'lafka_get_restaurant_info' ) ) {
 				continue;
 			}
 			if ( preg_match( '/^(\d{2}:\d{2})\s*-\s*(\d{2}:\d{2})$/', $val, $m ) ) {
-				$info['hours'][ $day_name ]  = $m[1] . '-' . $m[2];
-				$info['opening_hours'][]      = array(
+				$info['hours'][ $day_name ] = $m[1] . '-' . $m[2];
+				$info['opening_hours'][]    = array(
 					'@type'     => 'OpeningHoursSpecification',
 					'dayOfWeek' => 'https://schema.org/' . $day_name,
 					'opens'     => $m[1],
@@ -352,7 +352,7 @@ if ( ! function_exists( 'lafka_get_restaurant_info' ) ) {
 		// Directions URL — Google Maps query when address is configured.
 		$info['directions_url'] = '';
 		if ( '' !== $info['address_short'] ) {
-			$query = $info['street'] . ', ' . $info['city'] . ', ' . $info['region'] . ' ' . $info['postal'];
+			$query                  = $info['street'] . ', ' . $info['city'] . ', ' . $info['region'] . ' ' . $info['postal'];
 			$info['directions_url'] = 'https://www.google.com/maps/dir/?api=1&destination=' . rawurlencode( trim( $query ) );
 		}
 
@@ -887,12 +887,12 @@ if ( ! function_exists( 'lafka_schema_normalize_csv_list' ) ) {
 		}
 		$items = array_map( 'trim', $items );
 		return array_values(
-            array_filter(
-                $items,
-                static function ( $v ) {
+			array_filter(
+				$items,
+				static function ( $v ) {
 					return '' !== $v && 0 !== strcasecmp( $v, 'Array' );
-				} 
-            ) 
-        );
+				}
+			)
+		);
 	}
 }

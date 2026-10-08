@@ -200,7 +200,6 @@ if ( ! function_exists( 'lafka_ac_save_cart' ) ) {
 		if ( method_exists( $wpdb, 'get_var' ) && method_exists( $wpdb, 'prepare' ) ) {
 			$existing_id = (int) $wpdb->get_var(
 				$wpdb->prepare(
-					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 					"SELECT id FROM {$table} WHERE customer_email = %s AND session_id = %s AND recovery_sent_at IS NULL AND order_id = 0 LIMIT 1",
 					$email,
 					$session_id
@@ -331,7 +330,6 @@ if ( ! function_exists( 'lafka_ac_get_pending' ) ) {
 
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				"SELECT * FROM {$table} WHERE recovery_sent_at IS NULL AND order_id = 0 AND last_seen_at < DATE_SUB(NOW(), INTERVAL %d MINUTE) ORDER BY last_seen_at ASC LIMIT %d",
 				$delay_minutes,
 				$limit
@@ -359,7 +357,6 @@ if ( ! function_exists( 'lafka_ac_get_row_by_token' ) ) {
 		$table = lafka_ac_table_name();
 		$row   = $wpdb->get_row(
 			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				"SELECT * FROM {$table} WHERE resume_token = %s LIMIT 1",
 				$token
 			)
@@ -384,7 +381,6 @@ if ( ! function_exists( 'lafka_ac_cleanup' ) ) {
 		$table    = lafka_ac_table_name();
 		$result   = $wpdb->query(
 			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				"DELETE FROM {$table} WHERE created_at < DATE_SUB(NOW(), INTERVAL %d DAY)",
 				$days_old
 			)

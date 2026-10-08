@@ -181,7 +181,6 @@ if ( ! class_exists( 'Lafka_JSON_LD' ) ) {
 			// remainder render as HTML. HEX_TAG escapes `<` and `>` as < /
 			// > so the closing tag literal cannot reach the parser.
 			// Not pretty-printed in production — saves ~20 % bytes.
-			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 			echo "\n<script type=\"application/ld+json\">"
 				. wp_json_encode(
 					$payload,

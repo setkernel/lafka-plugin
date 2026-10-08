@@ -91,7 +91,7 @@ if ( ! class_exists( 'Lafka_Checkout_Failures' ) ) {
 				Lafka_Log::warning( 'payment', sprintf( 'Payment failed: %s', $class ), $context );
 				return;
 			}
-			$context['code'] = isset( $context['code'] ) && '' !== $context['code'] ? $context['code'] : $reason;
+			$context['code']   = isset( $context['code'] ) && '' !== $context['code'] ? $context['code'] : $reason;
 			$context['reason'] = $reason;
 			Lafka_Log::notice( 'checkout', sprintf( 'Checkout blocked: %s', $reason ), $context );
 		}

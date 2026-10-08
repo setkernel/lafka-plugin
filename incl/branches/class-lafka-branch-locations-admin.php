@@ -8,7 +8,6 @@ require_once __DIR__ . '/../lafka-asset-helpers.php';
 // order-list / branch-list / shop-order screens (branch_location_filter,
 // order_type_filter, etc.). All are read-only display logic; no state
 // mutation. Write paths (edit_branch_location) have explicit nonce checks.
-// phpcs:disable WordPress.Security.NonceVerification.Recommended
 
 class Lafka_Branch_Locations_Admin {
 	/**

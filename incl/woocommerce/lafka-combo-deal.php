@@ -44,7 +44,7 @@ if ( ! function_exists( 'lafka_combo_deal_config' ) ) {
 	 * @return array{enabled:bool,cat_a:int,cat_b:int,amount:float,type:string}
 	 */
 	function lafka_combo_deal_config(): array {
-		$get = static function ( $key, $default = '' ) {
+		$get    = static function ( $key, $default = '' ) {
 			$v = function_exists( 'get_option' ) ? get_option( $key, '' ) : '';
 			if ( ( '' === $v || false === $v ) && function_exists( 'get_theme_mod' ) ) {
 				$v = get_theme_mod( $key, $default );

@@ -158,8 +158,8 @@ if ( ! class_exists( 'Lafka_Insights_Rollup' ) ) {
 				$last = ''; // New rollup metrics: re-roll every retained day once.
 				update_option( self::VERSION_OPTION, self::VERSION, false );
 			}
-			$floor     = gmdate( 'Y-m-d', strtotime( $today . ' 00:00:00 UTC' ) - self::SESSION_DAYS * 86400 );
-			$start     = ( '' !== $last && $last >= $floor ) ? gmdate( 'Y-m-d', strtotime( $last . ' 00:00:00 UTC' ) + 86400 ) : $floor;
+			$floor = gmdate( 'Y-m-d', strtotime( $today . ' 00:00:00 UTC' ) - self::SESSION_DAYS * 86400 );
+			$start = ( '' !== $last && $last >= $floor ) ? gmdate( 'Y-m-d', strtotime( $last . ' 00:00:00 UTC' ) + 86400 ) : $floor;
 
 			$rolled = array();
 			for ( $day = $start; $day <= $yesterday; $day = gmdate( 'Y-m-d', strtotime( $day . ' 00:00:00 UTC' ) + 86400 ) ) {

@@ -135,8 +135,8 @@ if ( ! function_exists( 'lafka_analytics_emit_page_context' ) ) {
 			$cart_total = (float) WC()->cart->get_cart_contents_total();
 		}
 
-		$logged_in   = is_user_logged_in();
-		$is_repeat    = false;
+		$logged_in = is_user_logged_in();
+		$is_repeat = false;
 		if ( $logged_in && function_exists( 'wc_get_customer_order_count' ) ) {
 			$is_repeat = wc_get_customer_order_count( get_current_user_id() ) > 1;
 		}
@@ -144,7 +144,7 @@ if ( ! function_exists( 'lafka_analytics_emit_page_context' ) ) {
 		// Fulfilment method from the order-method cookie (set by order-method.js).
 		$fulfilment = '';
 		if ( isset( $_COOKIE['lafka_order_method'] ) ) {
-			$fulfilment = sanitize_key( wp_unslash( $_COOKIE['lafka_order_method'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only analytics dimension, no state change.
+			$fulfilment = sanitize_key( wp_unslash( $_COOKIE['lafka_order_method'] ) );
 		}
 
 		$store_open = null;
@@ -161,17 +161,17 @@ if ( ! function_exists( 'lafka_analytics_emit_page_context' ) ) {
 		}
 
 		$ctx = array(
-			'event'               => 'page_context',
-			'page_type'           => lafka_analytics_page_type(),
-			'fulfilment_method'   => $fulfilment,
-			'store_open'          => $store_open,
-			'customer_logged_in'  => $logged_in,
-			'customer_is_repeat'  => $is_repeat,
-			'cart_items_count'    => $cart_count,
-			'cart_value_band'     => lafka_analytics_cart_value_band( $cart_total ),
-			'top_category'        => $top_category,
+			'event'              => 'page_context',
+			'page_type'          => lafka_analytics_page_type(),
+			'fulfilment_method'  => $fulfilment,
+			'store_open'         => $store_open,
+			'customer_logged_in' => $logged_in,
+			'customer_is_repeat' => $is_repeat,
+			'cart_items_count'   => $cart_count,
+			'cart_value_band'    => lafka_analytics_cart_value_band( $cart_total ),
+			'top_category'       => $top_category,
 		);
 
-		echo '<script>window.dataLayer = window.dataLayer || [];window.dataLayer.push(' . wp_json_encode( $ctx ) . ');</script>' . "\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- wp_json_encode output is safe JSON inside a script context.
+		echo '<script>window.dataLayer = window.dataLayer || [];window.dataLayer.push(' . wp_json_encode( $ctx ) . ');</script>' . "\n";
 	}
 }

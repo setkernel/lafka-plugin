@@ -31,11 +31,11 @@ if ( ! class_exists( 'Lafka_Insights_Scheduler' ) ) {
 		 * @return int
 		 */
 		public static function next_local( string $time, ?int $weekday = null, ?int $now = null, string $tz = '' ): int {
-			$now  = null === $now ? time() : $now;
-			$zone = '' !== $tz ? new DateTimeZone( $tz ) : wp_timezone();
-			$at   = ( new DateTimeImmutable( '@' . $now ) )->setTimezone( $zone );
+			$now           = null === $now ? time() : $now;
+			$zone          = '' !== $tz ? new DateTimeZone( $tz ) : wp_timezone();
+			$at            = ( new DateTimeImmutable( '@' . $now ) )->setTimezone( $zone );
 			list( $h, $m ) = array_map( 'intval', explode( ':', $time ) );
-			$candidate = $at->setTime( $h, $m, 0 );
+			$candidate     = $at->setTime( $h, $m, 0 );
 			if ( null !== $weekday ) {
 				$diff      = ( $weekday - (int) $candidate->format( 'N' ) + 7 ) % 7;
 				$candidate = $candidate->modify( '+' . $diff . ' days' )->setTime( $h, $m, 0 );

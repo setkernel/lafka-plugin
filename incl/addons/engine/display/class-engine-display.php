@@ -99,7 +99,7 @@ class Lafka_Engine_Display {
 			true
 		);
 
-		$params = array(
+		$params                    = array(
 			'price_display_suffix'         => esc_attr( get_option( 'woocommerce_price_display_suffix' ) ),
 			'ajax_url'                     => WC()->ajax_url(),
 			'i18n_addon_total'             => esc_html__( 'Options total:', 'lafka-plugin' ),
@@ -195,7 +195,7 @@ class Lafka_Engine_Display {
 				$this->plugin_path() . '/templates/'
 			);
 
-			echo $this->get_addon_html( $addon ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			echo $this->get_addon_html( $addon );
 
 			wc_get_template(
 				'addon-end.php',
@@ -327,7 +327,6 @@ class Lafka_Engine_Display {
 			return $url;
 		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- WC_Quick_View frontend $_GET param read for context detection; no state mutation.
 		$is_quick_view = isset( $_GET['wc-api'] ) && 'WC_Quick_View' === sanitize_text_field( wp_unslash( $_GET['wc-api'] ) );
 		$applicable    = ! is_single( $product->get_id() )
 			&& in_array( $product->get_type(), (array) apply_filters( 'lafka_product_addons_add_to_cart_product_types', array( 'subscription', 'simple' ) ), true )
@@ -371,7 +370,7 @@ class Lafka_Engine_Display {
 		if ( ! $custom_image_id ) {
 			return array();
 		}
-		$classes  = array( 'lafka-addon-image-icon' );
+		$classes   = array( 'lafka-addon-image-icon' );
 		$image_url = wp_get_attachment_image_url( $custom_image_id );
 		if ( is_string( $image_url ) && '.svg' === substr( $image_url, -4 ) ) {
 			$classes[] = 'lafka-svg-icon';

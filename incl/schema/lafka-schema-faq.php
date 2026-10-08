@@ -126,10 +126,10 @@ if ( ! function_exists( 'lafka_schema_faq_items_from_content' ) ) {
 
 		// Try block-editor parse first — yields tighter scoping than parsing
 		// the whole content blob when the FAQ lives inside a larger page.
-		$has_blocks = function_exists( 'has_blocks' ) ? has_blocks( $content ) : false;
+		$has_blocks  = function_exists( 'has_blocks' ) ? has_blocks( $content ) : false;
 		$html_chunks = array();
 		if ( $has_blocks && function_exists( 'parse_blocks' ) ) {
-			$blocks = parse_blocks( $content );
+			$blocks    = parse_blocks( $content );
 			$collector = static function ( array $block, callable $self ) use ( &$html_chunks ): void {
 				if ( ! empty( $block['innerHTML'] ) && false !== strpos( (string) $block['innerHTML'], 'lafka-contact__faq-item' ) ) {
 					$html_chunks[] = (string) $block['innerHTML'];

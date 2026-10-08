@@ -10,7 +10,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$modes = array(
+$modes   = array(
 	Lafka_Addon_Schema::PRICING_FLAT_GROUP      => __( 'Flat for whole group', 'lafka-plugin' ),
 	Lafka_Addon_Schema::PRICING_FLAT_PER_OPTION => __( 'Flat per option', 'lafka-plugin' ),
 	Lafka_Addon_Schema::PRICING_FLAT_PER_SIZE   => __( 'Flat per size', 'lafka-plugin' ),

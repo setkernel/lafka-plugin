@@ -133,7 +133,7 @@ if ( ! class_exists( 'Lafka_Config_Bundle' ) ) {
 			if ( function_exists( 'wp_json_encode' ) ) {
 				return (string) wp_json_encode( $data, $flags );
 			}
-			return (string) json_encode( $data, $flags ); // phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode -- pre-WP fallback only.
+			return (string) json_encode( $data, $flags );
 		}
 
 		/**
@@ -793,11 +793,11 @@ if ( ! class_exists( 'Lafka_Config_Bundle' ) ) {
 		private static function export_posts( string $post_type, array $meta_keys ): array {
 			$posts = get_posts(
 				array(
-					'post_type'      => $post_type,
-					'post_status'    => 'any',
-					'numberposts'    => -1,
-					'orderby'        => 'ID',
-					'order'          => 'ASC',
+					'post_type'        => $post_type,
+					'post_status'      => 'any',
+					'numberposts'      => -1,
+					'orderby'          => 'ID',
+					'order'            => 'ASC',
 					'suppress_filters' => false,
 				)
 			);
@@ -837,8 +837,8 @@ if ( ! class_exists( 'Lafka_Config_Bundle' ) ) {
 		private static function import_posts( array $data, string $post_type, array $meta_keys, bool $dry_run ): array {
 			$counts = self::zero_counts();
 			foreach ( $data as $record ) {
-				$title = (string) ( $record['title'] ?? '' );
-				$meta  = isset( $record['meta'] ) && is_array( $record['meta'] ) ? $record['meta'] : array();
+				$title  = (string) ( $record['title'] ?? '' );
+				$meta   = isset( $record['meta'] ) && is_array( $record['meta'] ) ? $record['meta'] : array();
 				$status = (string) ( $record['status'] ?? 'publish' );
 				if ( '' === $title ) {
 					continue;
@@ -852,9 +852,9 @@ if ( ! class_exists( 'Lafka_Config_Bundle' ) ) {
 						'numberposts' => 1,
 					)
 				);
-				$post    = ( is_array( $existing ) && ! empty( $existing ) ) ? $existing[0] : null;
-				$created = false;
-				$post_id = 0;
+				$post     = ( is_array( $existing ) && ! empty( $existing ) ) ? $existing[0] : null;
+				$created  = false;
+				$post_id  = 0;
 
 				if ( $post && isset( $post->ID ) ) {
 					$post_id = (int) $post->ID;

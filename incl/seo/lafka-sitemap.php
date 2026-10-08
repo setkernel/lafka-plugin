@@ -116,7 +116,7 @@ if ( ! function_exists( 'lafka_sitemap_filter_page_args' ) ) {
 		if ( empty( $excluded ) ) {
 			return $args;
 		}
-		$existing = isset( $args['post__not_in'] ) && is_array( $args['post__not_in'] )
+		$existing             = isset( $args['post__not_in'] ) && is_array( $args['post__not_in'] )
 			? array_map( 'intval', $args['post__not_in'] )
 			: array();
 		$args['post__not_in'] = array_values( array_unique( array_merge( $existing, $excluded ) ) );
@@ -279,12 +279,12 @@ if ( ! function_exists( 'lafka_sitemap_exclude_noindexed' ) ) {
 		if ( ! is_array( $args ) ) {
 			return $args;
 		}
-		$clause = array(
+		$clause   = array(
 			'key'     => '_lafka_seo_noindex',
 			'compare' => 'NOT EXISTS',
 		);
-		$existing           = isset( $args['meta_query'] ) && is_array( $args['meta_query'] ) ? $args['meta_query'] : array();
-		$combined           = array( $clause );
+		$existing = isset( $args['meta_query'] ) && is_array( $args['meta_query'] ) ? $args['meta_query'] : array();
+		$combined = array( $clause );
 		if ( ! empty( $existing ) ) {
 			$combined = array(
 				'relation' => 'AND',
@@ -292,7 +292,7 @@ if ( ! function_exists( 'lafka_sitemap_exclude_noindexed' ) ) {
 				$clause,
 			);
 		}
-		$args['meta_query'] = $combined; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- sitemap sub-query only.
+		$args['meta_query'] = $combined;
 		return $args;
 	}
 }
@@ -327,7 +327,7 @@ if ( ! function_exists( 'lafka_sitemap_use_image_renderer' ) ) {
 			return;
 		}
 		require_once __DIR__ . '/class-lafka-sitemaps-image-renderer.php';
-		$wp_sitemaps->renderer          = new Lafka_Sitemaps_Image_Renderer();
+		$wp_sitemaps->renderer           = new Lafka_Sitemaps_Image_Renderer();
 		$GLOBALS['lafka_sitemap_images'] = true;
 	}
 }

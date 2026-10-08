@@ -117,7 +117,7 @@ if ( ! class_exists( 'Lafka_Beacon_Guard' ) ) {
 			if ( '' === $ua ) {
 				return true;
 			}
-			$pattern = '/bot\b|bot\/|crawl|spider|slurp|headless|lighthouse|pagespeed|pingdom|uptime|monitor|curl\/|wget|python|go-http|java\/|okhttp|axios|node-fetch|http-client|facebookexternalhit|embedly|preview|scanner|wordpress\//i';
+			$pattern = '/bot\b|bot\/|crawl|spider|slurp|headless|lighthouse|pagespeed|pingdom|uptime|monitor|curl\/|wget|python|go-http|java\/|okhttp|axios|node-fetch|http-client|facebookexternalhit|embedly|preview|scanner|WordPress\//i';
 			if ( function_exists( 'apply_filters' ) ) {
 				$pattern = (string) apply_filters( 'lafka_beacon_bot_pattern', $pattern );
 			}
@@ -177,7 +177,7 @@ if ( ! class_exists( 'Lafka_Beacon_Guard' ) ) {
 				return true;
 			}
 
-			$state['g']++;
+			++$state['g'];
 			$state['k'][ $hkey ] = $count + 1;
 			if ( count( $state['k'] ) > self::MAX_TRACKED_KEYS ) {
 				$state['k'] = array_slice( $state['k'], -self::MAX_TRACKED_KEYS, null, true );

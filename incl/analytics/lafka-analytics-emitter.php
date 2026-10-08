@@ -93,10 +93,10 @@ if ( ! function_exists( 'lafka_analytics_consent_defaults' ) ) {
 			return 'granted' === $value ? 'granted' : 'denied';
 		};
 		return array(
-			'analytics_storage'    => $normalize( lafka_analytics_get_setting( 'lafka_consent_default_analytics', 'denied' ) ),
-			'ad_storage'           => $normalize( lafka_analytics_get_setting( 'lafka_consent_default_ad_storage', 'denied' ) ),
-			'ad_user_data'         => $normalize( lafka_analytics_get_setting( 'lafka_consent_default_ad_user_data', 'denied' ) ),
-			'ad_personalization'   => $normalize( lafka_analytics_get_setting( 'lafka_consent_default_ad_personalization', 'denied' ) ),
+			'analytics_storage'  => $normalize( lafka_analytics_get_setting( 'lafka_consent_default_analytics', 'denied' ) ),
+			'ad_storage'         => $normalize( lafka_analytics_get_setting( 'lafka_consent_default_ad_storage', 'denied' ) ),
+			'ad_user_data'       => $normalize( lafka_analytics_get_setting( 'lafka_consent_default_ad_user_data', 'denied' ) ),
+			'ad_personalization' => $normalize( lafka_analytics_get_setting( 'lafka_consent_default_ad_personalization', 'denied' ) ),
 		);
 	}
 }
@@ -158,9 +158,9 @@ if ( ! function_exists( 'lafka_emit_consent_mirror' ) ) {
 			return;
 		}
 		$file = dirname( __DIR__, 2 ) . '/assets/js/lafka-consent-mirror.min.js';
-		$code = is_readable( $file ) ? (string) file_get_contents( $file ) : ''; // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local, plugin-owned build file.
+		$code = is_readable( $file ) ? (string) file_get_contents( $file ) : '';
 		if ( '' !== $code ) {
-			echo '<script id="lafka-consent-mirror">' . $code . "</script>\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- the plugin's own built script, no interpolated values.
+			echo '<script id="lafka-consent-mirror">' . $code . "</script>\n";
 		}
 	}
 }
@@ -185,10 +185,10 @@ if ( ! function_exists( 'lafka_emit_consent_mode_defaults' ) ) {
 		// default; operator who wants per-tag security throttling can
 		// override via the lafka_consent_defaults filter.
 		$payload = array(
-			'analytics_storage'    => $defaults['analytics_storage'],
-			'ad_storage'           => $defaults['ad_storage'],
-			'ad_user_data'         => $defaults['ad_user_data'],
-			'ad_personalization'   => $defaults['ad_personalization'],
+			'analytics_storage'     => $defaults['analytics_storage'],
+			'ad_storage'            => $defaults['ad_storage'],
+			'ad_user_data'          => $defaults['ad_user_data'],
+			'ad_personalization'    => $defaults['ad_personalization'],
 			'functionality_storage' => 'granted',
 			'security_storage'      => 'granted',
 			'wait_for_update'       => 500,
@@ -569,7 +569,7 @@ CSS;
 		}
 
 		if ( '' !== trim( $styles ) ) {
-			echo '<style id="lafka-consent-banner-style">' . "\n" . $styles . "\n</style>\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static (or theme-filtered) CSS; escaping would corrupt the stylesheet.
+			echo '<style id="lafka-consent-banner-style">' . "\n" . $styles . "\n</style>\n";
 		}
 
 		?>

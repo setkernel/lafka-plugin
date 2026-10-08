@@ -26,8 +26,8 @@ composer phpcs         # full WordPress-Extra, warnings fail (composer phpcbf au
 ```
 
 The `.githooks/pre-push` hook and CI run exactly these gates, every time. No
-lint rule is excluded and no inline suppression (`phpcs:ignore`,
-`eslint-disable`, `stylelint-disable`) is allowed.
+lint rule is excluded and no inline suppression comment of any linter is
+allowed: fix the code.
 
 The plugin currently ships no automated test suite.
 

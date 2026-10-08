@@ -3,7 +3,6 @@
 // $_POST reads in this template are for preserving form state on re-render
 // during validation failures. WC verifies the add-to-cart nonce upstream
 // before this template is included in the variations form output.
-// phpcs:disable WordPress.Security.NonceVerification.Missing,WordPress.Security.NonceVerification.Recommended
 /** @var array $addon */
 foreach ( $addon['options'] as $i => $option ) :
 	/**
@@ -63,8 +62,7 @@ foreach ( $addon['options'] as $i => $option ) :
 			// See checkbox.php for the wp_kses_post-vs-esc_html rationale.
 			echo esc_html( wptexturize( $option['label'] ) ) . ' ' . wp_kses_post( $price );
 			?>
-            </label>
+			</label>
 	</p>
 
 <?php endforeach; ?>
-<?php // phpcs:enable WordPress.Security.NonceVerification.Missing,WordPress.Security.NonceVerification.Recommended ?>

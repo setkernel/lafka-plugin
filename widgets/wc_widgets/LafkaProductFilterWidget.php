@@ -191,7 +191,7 @@ class LafkaProductFilterWidget extends WC_Widget {
 		if ( ! $found ) {
 			ob_end_clean();
 		} else {
-			echo ob_get_clean(); // @codingStandardsIgnoreLine
+			echo ob_get_clean();
 		}
 	}
 
@@ -287,7 +287,7 @@ class LafkaProductFilterWidget extends WC_Widget {
 			}
 
 			echo '<input type="hidden" name="filter_' . esc_attr( $taxonomy_filter_name ) . '" value="' . esc_attr( implode( ',', $current_values ) ) . '" />';
-			echo wc_query_string_form_fields( null, array( 'filter_' . $taxonomy_filter_name, 'query_type_' . $taxonomy_filter_name ), '', true ); // @codingStandardsIgnoreLine
+			echo wc_query_string_form_fields( null, array( 'filter_' . $taxonomy_filter_name, 'query_type_' . $taxonomy_filter_name ), '', true );
 			echo '</form>';
 
 			wp_add_inline_script(
@@ -405,8 +405,7 @@ class LafkaProductFilterWidget extends WC_Widget {
 				continue;
 			}
 
-			$filter_name = 'filter_' . wc_attribute_taxonomy_slug( $taxonomy );
-			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$filter_name    = 'filter_' . wc_attribute_taxonomy_slug( $taxonomy );
 			$current_filter = isset( $_GET[ $filter_name ] ) ? explode( ',', wc_clean( wp_unslash( $_GET[ $filter_name ] ) ) ) : array();
 			$current_filter = array_map( 'sanitize_title', $current_filter );
 
@@ -451,7 +450,6 @@ class LafkaProductFilterWidget extends WC_Widget {
 			$term_html .= ' ' . apply_filters( 'woocommerce_layered_nav_count', '<span class="count">(' . absint( $count ) . ')</span>', $count, $term );
 
 			echo '<li class="woocommerce-widget-layered-nav-list__item wc-layered-nav-term ' . ( $option_is_set ? 'woocommerce-widget-layered-nav-list__item--chosen chosen' : '' ) . '">';
-			// phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.EscapeOutput.OutputNotEscaped
 			echo apply_filters( 'woocommerce_layered_nav_term_html', $term_html, $term, $link, $count );
 			echo '</li>';
 		}
@@ -487,8 +485,7 @@ class LafkaProductFilterWidget extends WC_Widget {
 				continue;
 			}
 
-			$filter_name = 'filter_' . wc_attribute_taxonomy_slug( $taxonomy );
-			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$filter_name    = 'filter_' . wc_attribute_taxonomy_slug( $taxonomy );
 			$current_filter = isset( $_GET[ $filter_name ] ) ? explode( ',', wc_clean( wp_unslash( $_GET[ $filter_name ] ) ) ) : array();
 			$current_filter = array_map( 'sanitize_title', $current_filter );
 

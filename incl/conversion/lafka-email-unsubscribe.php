@@ -203,7 +203,6 @@ if ( ! function_exists( 'lafka_unsub_handle_request' ) ) {
 	 * @return void
 	 */
 	function lafka_unsub_handle_request(): void {
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- HMAC token gates the action; opt-out is not a credentialed state change.
 		if ( ! isset( $_GET['lafka_unsubscribe'] ) || ! isset( $_GET['e'] ) ) {
 			return;
 		}
@@ -215,7 +214,6 @@ if ( ! function_exists( 'lafka_unsub_handle_request' ) ) {
 			$raw   = function_exists( 'wp_unslash' ) ? wp_unslash( $_GET['e'] ) : $_GET['e'];
 			$email = function_exists( 'sanitize_email' ) ? sanitize_email( $raw ) : (string) $raw;
 		}
-		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		if ( '' === $token || '' === $email ) {
 			return;

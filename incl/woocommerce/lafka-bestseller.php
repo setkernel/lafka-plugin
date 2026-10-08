@@ -77,7 +77,6 @@ if ( ! function_exists( 'lafka_pdp_get_bestseller_ids' ) ) {
 				  LIMIT 25";
 		}
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- no user input; all values are hardcoded SQL literals / table names.
 		$rows = $wpdb->get_col( $sql );
 
 		// Filter to live products only. wc_get_product() uses the WC object cache,

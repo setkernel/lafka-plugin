@@ -132,7 +132,7 @@ function lafka_schema_menu_data(): array {
 	$ids_by_term   = array();
 	$prices        = array();
 	foreach ( $terms as $id => $cat ) {
-		$products = wc_get_products(
+		$products             = wc_get_products(
 			array(
 				'category' => array( $cat->slug ),
 				'status'   => 'publish',
@@ -153,11 +153,11 @@ function lafka_schema_menu_data(): array {
 			if ( null === $item ) {
 				continue;
 			}
-			$pid                           = (int) $product->get_id();
-			$items_by_term[ $id ][ $pid ]  = $item;
-			$ids_by_term[ $id ][]          = $pid;
-			$low                           = lafka_schema_menu_item_low_price( $item );
-			$high                          = lafka_schema_menu_item_high_price( $item );
+			$pid                          = (int) $product->get_id();
+			$items_by_term[ $id ][ $pid ] = $item;
+			$ids_by_term[ $id ][]         = $pid;
+			$low                          = lafka_schema_menu_item_low_price( $item );
+			$high                         = lafka_schema_menu_item_high_price( $item );
 			if ( null !== $low ) {
 				$prices[ $id ][] = $low;
 			}
@@ -322,8 +322,8 @@ function lafka_schema_menu(): ?array {
 	if ( function_exists( 'is_product_category' ) && is_product_category() ) {
 		$term = get_queried_object();
 		if ( $term instanceof WP_Term ) {
-			$ids      = lafka_schema_menu_subtree( $data, (int) $term->term_id );
-			$scope    = 'category';
+			$ids   = lafka_schema_menu_subtree( $data, (int) $term->term_id );
+			$scope = 'category';
 			// T-18: the category slice gets its own @id (term URL + #menu) —
 			// reusing /menu/#menu declared a second, partial "full menu".
 			$node_url = (string) ( $data['sections'][ (int) $term->term_id ]['url'] ?? '' );

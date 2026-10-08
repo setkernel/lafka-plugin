@@ -5,7 +5,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // $_GET reads in this admin file are for routing/display state on the
 // Order Hours settings page; submits go through WP Settings API (nonce-verified).
-// phpcs:disable WordPress.Security.NonceVerification.Recommended
 
 class Lafka_Order_Hours_Admin {
 	public function __construct() {
@@ -72,9 +71,9 @@ class Lafka_Order_Hours_Admin {
 			array( $this, 'lafka_order_hours_message_cb' ),
 			'lafka_order_hours',
 			'lafka_order_hours_message_section',
-			[
+			array(
 				'label_for' => 'lafka_order_hours_message',
-			]
+			)
 		);
 
 		add_settings_field(
@@ -83,9 +82,9 @@ class Lafka_Order_Hours_Admin {
 			array( $this, 'lafka_order_hours_disable_add_to_cart_cb' ),
 			'lafka_order_hours',
 			'lafka_order_hours_message_section',
-			[
+			array(
 				'label_for' => 'lafka_order_hours_disable_add_to_cart',
-			]
+			)
 		);
 
 		add_settings_field(
@@ -94,9 +93,9 @@ class Lafka_Order_Hours_Admin {
 			array( $this, 'lafka_order_hours_message_countdown_cb' ),
 			'lafka_order_hours',
 			'lafka_order_hours_message_section',
-			[
+			array(
 				'label_for' => 'lafka_order_hours_message_countdown',
-			]
+			)
 		);
 
 		add_settings_section(
@@ -111,9 +110,9 @@ class Lafka_Order_Hours_Admin {
 			array( $this, 'lafka_order_hours_closed_stores_message_enabled_cb' ),
 			'lafka_order_hours',
 			'lafka_order_hours_closed_stores_section',
-			[
+			array(
 				'label_for' => 'lafka_order_hours_closed_stores_message_enabled',
-			]
+			)
 		);
 		add_settings_field(
 			'lafka_order_hours_closed_stores_message',
@@ -121,9 +120,9 @@ class Lafka_Order_Hours_Admin {
 			array( $this, 'lafka_order_hours_closed_stores_message_cb' ),
 			'lafka_order_hours',
 			'lafka_order_hours_closed_stores_section',
-			[
+			array(
 				'label_for' => 'lafka_order_hours_closed_stores_message',
-			]
+			)
 		);
 
 		add_settings_section(
@@ -139,9 +138,9 @@ class Lafka_Order_Hours_Admin {
 			array( $this, 'lafka_order_hours_force_override_check_cb' ),
 			'lafka_order_hours',
 			'lafka_order_hours_force_override_section',
-			[
+			array(
 				'label_for' => 'lafka_order_hours_force_override_check',
-			]
+			)
 		);
 
 		add_settings_field(
@@ -150,9 +149,9 @@ class Lafka_Order_Hours_Admin {
 			array( $this, 'lafka_order_hours_force_override_status_cb' ),
 			'lafka_order_hours',
 			'lafka_order_hours_force_override_section',
-			[
+			array(
 				'label_for' => 'lafka_order_hours_force_override_status',
-			]
+			)
 		);
 
 		add_settings_section(
@@ -168,9 +167,9 @@ class Lafka_Order_Hours_Admin {
 			array( $this, 'lafka_order_hours_schedule_cb' ),
 			'lafka_order_hours',
 			'lafka_order_hours_schedule_section',
-			[
+			array(
 				'label_for' => 'lafka_order_hours_schedule',
-			]
+			)
 		);
 
 		add_settings_section(
@@ -186,9 +185,9 @@ class Lafka_Order_Hours_Admin {
 			array( $this, 'lafka_order_hours_holidays_calendar_cb' ),
 			'lafka_order_hours',
 			'lafka_order_hours_holidays_section',
-			[
+			array(
 				'label_for' => 'lafka_order_hours_holidays_calendar',
-			]
+			)
 		);
 
 		add_settings_section(
@@ -204,9 +203,9 @@ class Lafka_Order_Hours_Admin {
 			array( $this, 'lafka_order_hours_cache_enable_cb' ),
 			'lafka_order_hours',
 			'lafka_order_hours_cache_section',
-			[
+			array(
 				'label_for' => 'lafka_order_hours_cache_enable',
-			]
+			)
 		);
 	}
 

@@ -32,16 +32,16 @@ function lafka_schema_product(): ?array {
 		return null;
 	}
 
-	$nap     = lafka_schema_get_nap();
-	$url     = get_permalink( $product_id );
-	$url     = $url ? (string) $url : '';
+	$nap = lafka_schema_get_nap();
+	$url = get_permalink( $product_id );
+	$url = $url ? (string) $url : '';
 
 	$schema = array(
-		'@type'  => 'Product',
-		'@id'    => $url . '#product',
-		'name'   => $product->get_name(),
-		'url'    => $url,
-		'brand'  => array(
+		'@type' => 'Product',
+		'@id'   => $url . '#product',
+		'name'  => $product->get_name(),
+		'url'   => $url,
+		'brand' => array(
 			'@type' => 'Brand',
 			'name'  => $nap['name'],
 		),
@@ -122,10 +122,10 @@ function lafka_schema_product(): ?array {
  * @return array<string, mixed>|null
  */
 function lafka_schema_build_product_offer( WC_Product $product, string $url ): ?array {
-	$avail          = $product->is_in_stock()
+	$avail       = $product->is_in_stock()
 		? 'https://schema.org/InStock'
 		: 'https://schema.org/OutOfStock';
-	$valid_until    = gmdate( 'Y-m-d', strtotime( '+1 year' ) );
+	$valid_until = gmdate( 'Y-m-d', strtotime( '+1 year' ) );
 
 	if ( $product->is_type( 'variable' ) && method_exists( $product, 'get_variation_prices' ) ) {
 		/** @var WC_Product_Variable $product */

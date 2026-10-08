@@ -7,7 +7,6 @@
 //      `check_ajax_referer('lafka_contact_form_submit')` runs BEFORE this
 //      template is included.
 // PHPCS can't trace either path; disable the sniff for this template scope.
-// phpcs:disable WordPress.Security.NonceVerification.Missing,WordPress.Security.NonceVerification.Recommended
 wp_enqueue_script( 'jquery-form' );
 
 //fields translatable strings
@@ -150,13 +149,13 @@ if ( isset( $_POST['lafka_contact_submitted'] ) ) {
 	// SECURITY: per-IP rate limit. 5 successful submissions per hour.
 	// Mirrors KDS auth pattern — pluggable via `lafka_contact_form_client_ip` filter
 	// for sites behind a reverse proxy (Cloudflare CF-Connecting-IP, etc.).
-	$lafka_client_ip = isset( $_SERVER['REMOTE_ADDR'] )
+	$lafka_client_ip  = isset( $_SERVER['REMOTE_ADDR'] )
 		? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) )
 		: '0.0.0.0';
-	$lafka_client_ip   = apply_filters( 'lafka_contact_form_client_ip', $lafka_client_ip );
-	$lafka_rate_key    = 'lafka_cf_rate_' . md5( $lafka_client_ip );
-	$lafka_rate_count  = (int) get_transient( $lafka_rate_key );
-	$lafka_rate_max    = (int) apply_filters( 'lafka_contact_form_rate_max', 5 );
+	$lafka_client_ip  = apply_filters( 'lafka_contact_form_client_ip', $lafka_client_ip );
+	$lafka_rate_key   = 'lafka_cf_rate_' . md5( $lafka_client_ip );
+	$lafka_rate_count = (int) get_transient( $lafka_rate_key );
+	$lafka_rate_max   = (int) apply_filters( 'lafka_contact_form_rate_max', 5 );
 	if ( $lafka_rate_count >= $lafka_rate_max ) {
 		$lafka_has_error            = true;
 		$lafka_contactform_response = lafka_contact_form_generate_response(
@@ -277,4 +276,3 @@ $lafka_contact_title = isset( $lafka_title ) ? $lafka_title : esc_html__( 'Send 
 		<div class="left"><input class="button button-orange" value="<?php esc_html_e( 'Send message', 'lafka-plugin' ); ?>" type="submit"></div>
 	</div>
 </form>
-<?php // phpcs:enable WordPress.Security.NonceVerification.Missing,WordPress.Security.NonceVerification.Recommended ?>

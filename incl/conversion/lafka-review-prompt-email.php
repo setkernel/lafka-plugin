@@ -408,7 +408,6 @@ if ( ! function_exists( 'lafka_review_email_handle_unsubscribe_request' ) ) {
 	 * @return void
 	 */
 	function lafka_review_email_handle_unsubscribe_request(): void {
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- HMAC token gates the action; no state-changing form submit.
 		if ( ! isset( $_GET['lafka_unsubscribe_reviews'] ) || ! isset( $_GET['u'] ) ) {
 			return;
 		}
@@ -416,7 +415,6 @@ if ( ! function_exists( 'lafka_review_email_handle_unsubscribe_request' ) ) {
 			? sanitize_text_field( wp_unslash( $_GET['lafka_unsubscribe_reviews'] ) )
 			: '';
 		$user_id = is_scalar( $_GET['u'] ) ? (int) $_GET['u'] : 0;
-		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		if ( '' === $token || $user_id <= 0 ) {
 			return;
@@ -513,15 +511,15 @@ if ( ! function_exists( 'lafka_review_email_render_body' ) ) {
 		if ( '' === $first_name ) {
 			$first_name = function_exists( '__' ) ? __( 'there', 'lafka-plugin' ) : 'there';
 		}
-		$order_number = method_exists( $order, 'get_order_number' )
+		$order_number  = method_exists( $order, 'get_order_number' )
 			? (string) $order->get_order_number()
 			: '';
 		$user_id       = method_exists( $order, 'get_customer_id' ) ? (int) $order->get_customer_id() : 0;
 		$billing_email = method_exists( $order, 'get_billing_email' ) ? (string) $order->get_billing_email() : '';
 
-		$intro      = lafka_review_email_intro();
-		$cta_label  = lafka_review_target_label();
-		$heading    = sprintf(
+		$intro     = lafka_review_email_intro();
+		$cta_label = lafka_review_target_label();
+		$heading   = sprintf(
 			/* translators: %s: customer first name */
 			function_exists( '__' ) ? __( 'How was your order, %s?', 'lafka-plugin' ) : 'How was your order, %s?',
 			$first_name

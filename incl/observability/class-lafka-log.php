@@ -256,7 +256,6 @@ if ( ! class_exists( 'Lafka_Log' ) ) {
 			}
 			if ( defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
 				$json = function_exists( 'wp_json_encode' ) ? wp_json_encode( $record['context'] ) : json_encode( $record['context'] );
-				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- documented fallback when WooCommerce's logger is unavailable.
 				error_log( sprintf( '[%s] %s: %s %s', $record['source'], strtoupper( $record['level'] ), $record['message'], (string) $json ) );
 			}
 		}

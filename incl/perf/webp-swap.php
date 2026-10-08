@@ -42,10 +42,10 @@ if ( ! function_exists( 'lafka_webp_get_sibling_url' ) ) {
 			return null;
 		}
 		// Strip a trailing query/fragment for file-resolution; preserve it on the swap.
-		$bare        = preg_replace( '/[?#].*$/', '', $url );
-		$query       = substr( $url, strlen( $bare ) );
-		$webp_url    = preg_replace( '/\.(png|jpe?g)$/i', '.webp', $bare ) . $query;
-		$local_path  = lafka_webp_url_to_local_path( $bare );
+		$bare       = preg_replace( '/[?#].*$/', '', $url );
+		$query      = substr( $url, strlen( $bare ) );
+		$webp_url   = preg_replace( '/\.(png|jpe?g)$/i', '.webp', $bare ) . $query;
+		$local_path = lafka_webp_url_to_local_path( $bare );
 		if ( ! $local_path ) {
 			$cache[ $url ] = null;
 			return null;
@@ -173,7 +173,7 @@ if ( ! function_exists( 'lafka_webp_filter_content_imgs' ) ) {
 							if ( ! empty( $bits[0] ) ) {
 								$webp = lafka_webp_get_sibling_url( $bits[0] );
 								if ( $webp ) {
-									$bits[0]    = $webp;
+									$bits[0]     = $webp;
 									$parts[ $i ] = trim( implode( ' ', $bits ) );
 								}
 							}

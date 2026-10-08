@@ -49,7 +49,6 @@ if ( ! function_exists( 'lafka_block_author_enumeration' ) ) {
 	 * @return void
 	 */
 	function lafka_block_author_enumeration() {
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- presence check of a public query arg; no state change.
 		if ( ! isset( $_GET['author'] ) || is_admin() || is_user_logged_in() || ! lafka_restrict_user_enumeration() ) {
 			return;
 		}

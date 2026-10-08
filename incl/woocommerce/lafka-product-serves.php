@@ -148,11 +148,9 @@ if ( ! function_exists( 'lafka_product_serves_save' ) ) {
 	 * @return void
 	 */
 	function lafka_product_serves_save( $product ) {
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WooCommerce verified woocommerce_meta_nonce and edit_post before firing woocommerce_admin_process_product_object.
 		if ( ! is_object( $product ) || ! isset( $_POST[ LAFKA_PRODUCT_SERVES_META ] ) ) {
 			return;
 		}
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- see above; sanitised to an int by lafka_sanitize_product_serves().
 		$serves = lafka_sanitize_product_serves( wp_unslash( $_POST[ LAFKA_PRODUCT_SERVES_META ] ) );
 		lafka_product_serves_write( $product, $serves );
 	}

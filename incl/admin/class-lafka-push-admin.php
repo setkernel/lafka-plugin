@@ -79,14 +79,14 @@ if ( ! class_exists( 'Lafka_Push_Admin' ) ) {
 				} else {
 					$action = sanitize_text_field( wp_unslash( $_POST['lafka_push_action'] ) );
 					if ( 'send' === $action ) {
-						$result = self::handle_send( $_POST ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
+						$result = self::handle_send( $_POST );
 						if ( is_array( $result ) ) {
 							$status = empty( $result['queued'] ) ? 'sent' : 'queued';
 						} else {
 							$status = 'error';
 						}
 					} elseif ( 'preview' === $action ) {
-						$result = self::handle_preview( $_POST ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
+						$result = self::handle_preview( $_POST );
 						$status = 'preview';
 					}
 				}
@@ -363,7 +363,6 @@ if ( ! class_exists( 'Lafka_Push_Admin' ) ) {
 			}
 			$table = lafka_push_table_name();
 			$count = (int) $wpdb->get_var(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				"SELECT COUNT(*) FROM {$table} WHERE unsubscribed_at IS NULL"
 			);
 			return max( 0, $count );

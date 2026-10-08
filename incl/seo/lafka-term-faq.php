@@ -124,7 +124,7 @@ if ( ! function_exists( 'lafka_term_faq_add_field' ) ) {
 		?>
 		<div class="form-field">
 			<label><?php esc_html_e( 'Category FAQ (optional)', 'lafka-plugin' ); ?></label>
-			<?php echo lafka_term_faq_rows_html( array() ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- every value escaped in lafka_term_faq_rows_html(). ?>
+			<?php echo lafka_term_faq_rows_html( array() ); ?>
 			<p class="description"><?php esc_html_e( 'Real questions customers ask about this category (e.g. "Is the donair sauce made in-house?"). Shown under the category grid and published as FAQ structured data. Leave empty to show nothing.', 'lafka-plugin' ); ?></p>
 		</div>
 		<?php
@@ -144,7 +144,7 @@ if ( ! function_exists( 'lafka_term_faq_edit_field' ) ) {
 		<tr class="form-field">
 			<th scope="row"><label><?php esc_html_e( 'Category FAQ (optional)', 'lafka-plugin' ); ?></label></th>
 			<td>
-				<?php echo lafka_term_faq_rows_html( $faqs, 2 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- every value escaped in lafka_term_faq_rows_html(). ?>
+				<?php echo lafka_term_faq_rows_html( $faqs, 2 ); ?>
 				<p class="description"><?php esc_html_e( 'Real questions customers ask about this category. Shown under the category grid and published as FAQ structured data. Clear both fields of a row to remove it.', 'lafka-plugin' ); ?></p>
 			</td>
 		</tr>
@@ -172,7 +172,7 @@ if ( ! function_exists( 'lafka_term_faq_save' ) ) {
 			return;
 		}
 		// Sanitised per field below; wp_unslash applied to the whole map first.
-		$raw  = isset( $_POST['lafka_term_faq'] ) && is_array( $_POST['lafka_term_faq'] ) ? wp_unslash( $_POST['lafka_term_faq'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$raw  = isset( $_POST['lafka_term_faq'] ) && is_array( $_POST['lafka_term_faq'] ) ? wp_unslash( $_POST['lafka_term_faq'] ) : array();
 		$rows = array();
 		foreach ( (array) $raw as $row ) {
 			if ( ! is_array( $row ) ) {

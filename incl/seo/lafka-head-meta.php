@@ -127,7 +127,7 @@ if ( ! function_exists( 'lafka_insert_og_tags' ) ) {
 			if ( is_singular() && $post ) {
 				$resolve_post_image( $post->ID );
 			}
-			$og_type     = 'restaurant.restaurant';
+			$og_type = 'restaurant.restaurant';
 		} elseif ( is_singular() && $post ) {
 			$title       = lafka_og_title_with_site( (string) get_the_title( $post ), $site_name );
 			$description = lafka_resolve_meta_description( $post );
@@ -342,7 +342,7 @@ if ( ! function_exists( 'lafka_filter_language_attributes' ) ) {
 		$override = (string) apply_filters( 'lafka_og_locale', str_replace( '-', '_', $override ) );
 		// `<html lang>` uses hyphen form per BCP-47 (e.g. en-CA), so flip
 		// the underscore the filter normalised on.
-		$lang_attr = str_replace( '_', '-', $override );
+		$lang_attr   = str_replace( '_', '-', $override );
 		$replacement = sprintf( 'lang="%s"', esc_attr( $lang_attr ) );
 		// Replace any existing lang="…" attribute; append when absent.
 		if ( preg_match( '/\blang="[^"]*"/', $output ) ) {

@@ -173,7 +173,6 @@ if ( ! function_exists( 'lafka_layout_callback' ) ) {
 			}
 		}
 
-		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $output built with esc_attr/esc_html/esc_html__ per dynamic value; static markup is literal.
 		echo $output;
 	}
 
@@ -424,7 +423,6 @@ if ( ! function_exists( 'lafka_page_options_callback' ) ) {
 
 		$output .= '</select>';
 
-		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $output built with esc_attr/esc_html/esc_html__ per dynamic value; static markup is literal.
 		echo $output;
 	}
 
@@ -533,7 +531,7 @@ if ( ! function_exists( 'lafka_video_bckgr_callback' ) ) {
 
 		// Set default values
 		$values = array(
-			'lafka_video_bckgr_url'   => '',
+			'lafka_video_bckgr_url' => '',
 		);
 
 		if ( isset( $custom['lafka_video_bckgr_url'] ) && $custom['lafka_video_bckgr_url'][0] != '' ) {
@@ -547,7 +545,6 @@ if ( ! function_exists( 'lafka_video_bckgr_callback' ) ) {
 		$output .= '<p><label for="lafka_video_bckgr_url"><b>' . esc_html__( 'YouTube video URL', 'lafka-plugin' ) . '</b></label></p>';
 		$output .= '<input type="text" id="lafka_video_bckgr_url" name="lafka_video_bckgr_url" value="' . esc_attr( $values['lafka_video_bckgr_url'] ) . '" class="large-text" />';
 
-		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $output built with esc_attr/esc_html/esc_html__ per dynamic value; static markup is literal.
 		echo $output;
 	}
 
@@ -830,7 +827,6 @@ if ( ! function_exists( 'lafka_additonal_featured_meta_callback' ) ) {
 
 		$output .= '</p>';
 
-		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $output built with esc_attr/esc_html/esc_html__ per dynamic value; static markup is literal.
 		echo $output;
 	}
 
@@ -924,7 +920,6 @@ if ( ! function_exists( 'lafka_foodmenu_cz_callback' ) ) {
 		$output .= '<div><input id="lafka_prtfl_gallery_list" ' . checked( $lafka_prtfl_gallery, 'list', false ) . ' type="radio" value="list" name="lafka_prtfl_gallery">';
 		$output .= '<label for="lafka_prtfl_gallery_list">' . esc_html__( 'Image List', 'lafka-plugin' ) . '</label></div>';
 
-		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $output built with esc_attr/esc_html/esc_html__ per dynamic value; static markup is literal.
 		echo $output;
 	}
 
@@ -1019,7 +1014,6 @@ if ( ! function_exists( 'lafka_product_video_callback' ) ) {
 		$output .= '<p><label for="lafka_product_video_url"><b>' . esc_html__( 'Video URL', 'lafka-plugin' ) . '</b></label></p>';
 		$output .= '<input type="text" id="lafka_product_video_url" name="lafka_product_video_url" value="' . esc_attr( $values['lafka_product_video_url'] ) . '" class="large-text" />';
 
-		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $output built with esc_attr/esc_html/esc_html__ per dynamic value; static markup is literal.
 		echo $output;
 	}
 
@@ -1113,7 +1107,6 @@ if ( ! function_exists( 'lafka_product_gallery_type_callback' ) ) {
 		}
 		$output .= '</select>';
 
-		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $output built with esc_attr/esc_html/esc_html__ per dynamic value; static markup is literal.
 		echo $output;
 	}
 

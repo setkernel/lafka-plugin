@@ -309,7 +309,6 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 			$table = $wpdb->prefix . 'woocommerce_attribute_taxonomies';
 			$wpdb->query(
 				$wpdb->prepare(
-					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is a code-controlled prefix concatenation.
 					"UPDATE {$table} SET attribute_type = %s WHERE attribute_type IN ( %s, %s, %s )",
 					'select',
 					'color',
@@ -333,7 +332,6 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 			}
 			foreach ( self::tables() as $suffix ) {
 				$table = $wpdb->prefix . $suffix;
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is a code-controlled prefix concatenation.
 				$wpdb->query( "DROP TABLE IF EXISTS {$table}" );
 			}
 		}
@@ -405,7 +403,6 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 				$like = $wpdb->esc_like( $prefix ) . '%';
 				$wpdb->query(
 					$wpdb->prepare(
-						// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $wpdb->options is a core-controlled table name.
 						"DELETE FROM {$options} WHERE option_name LIKE %s",
 						$like
 					)
@@ -432,7 +429,6 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 				$like = $wpdb->esc_like( $prefix ) . '%';
 				$wpdb->query(
 					$wpdb->prepare(
-						// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $wpdb->options is a core-controlled table name.
 						"DELETE FROM {$options} WHERE option_name LIKE %s",
 						$like
 					)
@@ -458,7 +454,6 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 			foreach ( self::post_types() as $post_type ) {
 				$ids = $wpdb->get_col(
 					$wpdb->prepare(
-						// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $wpdb->posts is a core-controlled table name.
 						"SELECT ID FROM {$posts} WHERE post_type = %s",
 						$post_type
 					)
@@ -515,7 +510,6 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 			foreach ( self::deleted_post_meta_keys() as $key ) {
 				$wpdb->query(
 					$wpdb->prepare(
-						// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $wpdb->postmeta is a core-controlled table name.
 						"DELETE FROM {$postmeta} WHERE meta_key = %s",
 						$key
 					)
@@ -526,7 +520,6 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 			foreach ( self::deleted_user_meta_keys() as $key ) {
 				$wpdb->query(
 					$wpdb->prepare(
-						// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $wpdb->usermeta is a core-controlled table name.
 						"DELETE FROM {$usermeta} WHERE meta_key = %s",
 						$key
 					)

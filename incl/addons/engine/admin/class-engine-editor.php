@@ -62,11 +62,11 @@ class Lafka_Engine_Editor {
 	 * }
 	 */
 	private function build_render_context( int $edit_id ): array {
-		$reference         = '';
-		$priority          = 10;
-		$applies_to_all    = true;
-		$category_ids      = array();
-		$groups            = array();
+		$reference          = '';
+		$priority           = 10;
+		$applies_to_all     = true;
+		$category_ids       = array();
+		$groups             = array();
 		$product_attributes = function_exists( 'wc_get_attribute_taxonomies' )
 			? wc_get_attribute_taxonomies()
 			: array();
@@ -83,10 +83,10 @@ class Lafka_Engine_Editor {
 		if ( $edit_id > 0 ) {
 			$post = get_post( $edit_id );
 			if ( $post ) {
-				$reference   = $post->post_title;
-				$priority    = (int) get_post_meta( $edit_id, '_priority', true );
+				$reference      = $post->post_title;
+				$priority       = (int) get_post_meta( $edit_id, '_priority', true );
 				$applies_to_all = (string) get_post_meta( $edit_id, '_all_products', true ) === '1';
-				$category_ids = wp_get_post_terms( $edit_id, 'product_cat', array( 'fields' => 'ids' ) );
+				$category_ids   = wp_get_post_terms( $edit_id, 'product_cat', array( 'fields' => 'ids' ) );
 				if ( $category_ids instanceof WP_Error ) {
 					$category_ids = array();
 				}
@@ -117,11 +117,10 @@ class Lafka_Engine_Editor {
 	 */
 	private function save( int $edit_id ): int {
 		// Nonce verified by caller (line 36): check_admin_referer( self::NONCE_ACTION ).
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- caller verifies nonce via check_admin_referer.
 		$post_data = wp_unslash( $_POST );
 
-		$reference      = sanitize_text_field( $post_data['lafka_addon_reference'] ?? '' );
-		$priority       = isset( $post_data['lafka_addon_priority'] ) ? (int) $post_data['lafka_addon_priority'] : 10;
+		$reference = sanitize_text_field( $post_data['lafka_addon_reference'] ?? '' );
+		$priority  = isset( $post_data['lafka_addon_priority'] ) ? (int) $post_data['lafka_addon_priority'] : 10;
 		// applies_to_all is now a radio (values "1" or "0") rather than a
 		// checkbox. String "0" is non-empty, so use explicit equality.
 		$applies_to_all = '1' === (string) ( $post_data['lafka_addon_applies_to_all'] ?? '1' );
@@ -270,12 +269,12 @@ class Lafka_Engine_Editor {
 	}
 
 	private function parse_one_option( array $raw, string $pricing_mode ): Lafka_Addon_Option {
-		$id      = isset( $raw['id'] ) && '' !== $raw['id']
+		$id       = isset( $raw['id'] ) && '' !== $raw['id']
 			? sanitize_text_field( (string) $raw['id'] )
 			: wp_generate_uuid4();
-		$label   = sanitize_text_field( $raw['label'] ?? '' );
-		$image   = isset( $raw['image'] ) ? absint( $raw['image'] ) : 0;
-		$default = ! empty( $raw['default'] ) ? '1' : '';
+		$label    = sanitize_text_field( $raw['label'] ?? '' );
+		$image    = isset( $raw['image'] ) ? absint( $raw['image'] ) : 0;
+		$default  = ! empty( $raw['default'] ) ? '1' : '';
 		$included = ! isset( $raw['included'] ) || ! empty( $raw['included'] );
 
 		// Per-option price field is only authoritative for flat_per_option

@@ -73,7 +73,6 @@ if ( ! class_exists( 'Lafka_Insights_Page' ) ) {
 		 * @return int
 		 */
 		public static function requested_range(): int {
-			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only report range, no state change.
 			$raw = isset( $_GET['range'] ) ? sanitize_text_field( wp_unslash( $_GET['range'] ) ) : '30';
 			return Lafka_Insights_Queries::sanitize_range( $raw );
 		}
@@ -149,7 +148,7 @@ if ( ! class_exists( 'Lafka_Insights_Page' ) ) {
 				echo '<tr' . ( $is_leak ? ' class="lafka-insights__leak"' : '' ) . '>';
 				echo '<td>' . esc_html( ucfirst( Lafka_Insights_Narrative::stage_label( (string) $stage ) ) ) . '</td>';
 				echo '<td>' . esc_html( number_format_i18n( (int) $count ) ) . '</td>';
-				echo '<td>' . self::bar( (int) $count, $max ) . '</td>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- bar() builds escaped SVG.
+				echo '<td>' . self::bar( (int) $count, $max ) . '</td>';
 				echo '<td>';
 				if ( null !== $prev && $prev > 0 ) {
 					$lost = max( 0, $prev - (int) $count );
@@ -382,7 +381,7 @@ if ( ! class_exists( 'Lafka_Insights_Page' ) ) {
 			$max = max( 1, (int) max( array_merge( array( 0 ), array_map( 'intval', $rows ) ) ) );
 			echo '<table class="widefat striped"><tbody>';
 			foreach ( $rows as $key => $count ) {
-				echo '<tr><td>' . esc_html( (string) call_user_func( $label, (string) $key ) ) . '</td><td>' . esc_html( Lafka_Insights_Narrative::share( (int) $count, max( 1, $total ) ) ) . '</td><td>' . self::bar( (int) $count, $max ) . '</td></tr>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- bar() builds escaped SVG.
+				echo '<tr><td>' . esc_html( (string) call_user_func( $label, (string) $key ) ) . '</td><td>' . esc_html( Lafka_Insights_Narrative::share( (int) $count, max( 1, $total ) ) ) . '</td><td>' . self::bar( (int) $count, $max ) . '</td></tr>';
 			}
 			echo '</tbody></table>';
 		}

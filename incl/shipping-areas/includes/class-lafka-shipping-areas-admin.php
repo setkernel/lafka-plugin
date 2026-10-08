@@ -6,7 +6,6 @@ require_once __DIR__ . '/../../lafka-asset-helpers.php';
 // $_GET/$_POST reads in this admin file for display state (which tab,
 // post_id metabox context, settings-api updated flag) — no state mutation.
 // Settings API submits are nonce-verified by WP core.
-// phpcs:disable WordPress.Security.NonceVerification.Recommended
 
 class Lafka_Shipping_Areas_Admin {
 	/**
@@ -732,9 +731,9 @@ class Lafka_Shipping_Areas_Admin {
 			),
 			'lafka_shipping_areas_general',
 			'general_section',
-			[
+			array(
 				'label_for' => 'google_maps_api_key',
-			]
+			)
 		);
 		add_settings_field(
 			'pick_delivery_address',
@@ -745,9 +744,9 @@ class Lafka_Shipping_Areas_Admin {
 			),
 			'lafka_shipping_areas_general',
 			'general_section',
-			[
+			array(
 				'label_for' => 'pick_delivery_address',
-			]
+			)
 		);
 		add_settings_field(
 			'mandatory_pickup_delivery',
@@ -758,10 +757,10 @@ class Lafka_Shipping_Areas_Admin {
 			),
 			'lafka_shipping_areas_general',
 			'general_section',
-			[
+			array(
 				'label_for' => 'mandatory_pickup_delivery',
 				'class'     => 'hidden',
-			]
+			)
 		);
 
 		add_settings_section( 'advanced_section', '', null, 'lafka_shipping_areas_advanced' );
@@ -774,9 +773,9 @@ class Lafka_Shipping_Areas_Admin {
 			),
 			'lafka_shipping_areas_advanced',
 			'advanced_section',
-			[
+			array(
 				'label_for' => 'set_store_location',
-			]
+			)
 		);
 		add_settings_field(
 			'store_map_location',
@@ -787,10 +786,10 @@ class Lafka_Shipping_Areas_Admin {
 			),
 			'lafka_shipping_areas_advanced',
 			'advanced_section',
-			[
+			array(
 				'label_for' => 'store_map_location',
 				'class'     => 'lafka-shipping-pick-store-location-container hidden',
-			]
+			)
 		);
 
 		add_settings_section( 'datetime_section', '', null, 'lafka_shipping_areas_datetime' );
@@ -803,9 +802,9 @@ class Lafka_Shipping_Areas_Admin {
 			),
 			'lafka_shipping_areas_datetime',
 			'datetime_section',
-			[
+			array(
 				'label_for' => 'enable_datetime_option',
-			]
+			)
 		);
 		add_settings_field(
 			'datetime_mandatory',
@@ -816,9 +815,9 @@ class Lafka_Shipping_Areas_Admin {
 			),
 			'lafka_shipping_areas_datetime',
 			'datetime_section',
-			[
+			array(
 				'label_for' => 'datetime_mandatory',
-			]
+			)
 		);
 		add_settings_field(
 			'days_ahead',
@@ -829,9 +828,9 @@ class Lafka_Shipping_Areas_Admin {
 			),
 			'lafka_shipping_areas_datetime',
 			'datetime_section',
-			[
+			array(
 				'label_for' => 'days_ahead',
-			]
+			)
 		);
 		add_settings_field(
 			'timeslot_duration',
@@ -842,9 +841,9 @@ class Lafka_Shipping_Areas_Admin {
 			),
 			'lafka_shipping_areas_datetime',
 			'datetime_section',
-			[
+			array(
 				'label_for' => 'timeslot_duration',
-			]
+			)
 		);
 		add_settings_field(
 			'orders_per_timeslot',
@@ -855,9 +854,9 @@ class Lafka_Shipping_Areas_Admin {
 			),
 			'lafka_shipping_areas_datetime',
 			'datetime_section',
-			[
+			array(
 				'label_for' => 'orders_per_timeslot',
-			]
+			)
 		);
 
 		add_settings_section(
@@ -878,9 +877,9 @@ class Lafka_Shipping_Areas_Admin {
 			),
 			'lafka_shipping_areas_branches',
 			'branches_section',
-			[
+			array(
 				'label_for' => 'enable_branch_selection_modal',
-			]
+			)
 		);
 		add_settings_field(
 			'closable_popup',
@@ -891,9 +890,9 @@ class Lafka_Shipping_Areas_Admin {
 			),
 			'lafka_shipping_areas_branches',
 			'branches_section',
-			[
+			array(
 				'label_for' => 'closable_popup',
-			]
+			)
 		);
 		add_settings_field(
 			'allow_partial_address',
@@ -904,9 +903,9 @@ class Lafka_Shipping_Areas_Admin {
 			),
 			'lafka_shipping_areas_branches',
 			'branches_section',
-			[
+			array(
 				'label_for' => 'allow_partial_address',
-			]
+			)
 		);
 		add_settings_field(
 			'autocomplete_area',
@@ -917,9 +916,9 @@ class Lafka_Shipping_Areas_Admin {
 			),
 			'lafka_shipping_areas_branches',
 			'branches_section',
-			[
+			array(
 				'label_for' => 'autocomplete_area',
-			]
+			)
 		);
 		add_settings_field(
 			'autocomplete_countries',
@@ -930,9 +929,9 @@ class Lafka_Shipping_Areas_Admin {
 			),
 			'lafka_shipping_areas_branches',
 			'branches_section',
-			[
+			array(
 				'label_for' => 'autocomplete_countries',
-			]
+			)
 		);
 		add_settings_field(
 			'products_by_branches',
@@ -943,9 +942,9 @@ class Lafka_Shipping_Areas_Admin {
 			),
 			'lafka_shipping_areas_branches',
 			'branches_section',
-			[
+			array(
 				'label_for' => 'products_by_branches',
-			]
+			)
 		);
 		add_settings_field(
 			'show_branches_info_in',
@@ -956,9 +955,9 @@ class Lafka_Shipping_Areas_Admin {
 			),
 			'lafka_shipping_areas_branches',
 			'branches_section',
-			[
+			array(
 				'label_for' => 'show_branches_info_in',
-			]
+			)
 		);
 		add_settings_field(
 			'order_type',
@@ -969,9 +968,9 @@ class Lafka_Shipping_Areas_Admin {
 			),
 			'lafka_shipping_areas_branches',
 			'branches_section',
-			[
+			array(
 				'label_for' => 'order_type',
-			]
+			)
 		);
 		add_settings_field(
 			'hide_address_fields',
@@ -982,9 +981,9 @@ class Lafka_Shipping_Areas_Admin {
 			),
 			'lafka_shipping_areas_branches',
 			'branches_section',
-			[
+			array(
 				'label_for' => 'hide_address_fields',
-			]
+			)
 		);
 		add_settings_field(
 			'branch_selection_type',
@@ -995,9 +994,9 @@ class Lafka_Shipping_Areas_Admin {
 			),
 			'lafka_shipping_areas_branches',
 			'branches_section',
-			[
+			array(
 				'label_for' => 'branch_selection_type',
-			]
+			)
 		);
 		add_settings_field(
 			'disable_current_location',
@@ -1008,9 +1007,9 @@ class Lafka_Shipping_Areas_Admin {
 			),
 			'lafka_shipping_areas_branches',
 			'branches_section',
-			[
+			array(
 				'label_for' => 'disable_current_location',
-			]
+			)
 		);
 		add_settings_field(
 			'disable_order_emails',
@@ -1021,9 +1020,9 @@ class Lafka_Shipping_Areas_Admin {
 			),
 			'lafka_shipping_areas_branches',
 			'branches_section',
-			[
+			array(
 				'label_for' => 'disable_order_emails',
-			]
+			)
 		);
 	}
 }

@@ -46,9 +46,9 @@ if ( ! class_exists( 'Lafka_Site_Health' ) ) {
 				? get_plugin_data( LAFKA_PLUGIN_FILE, false, false )
 				: array( 'Version' => 'unknown' );
 
-			$theme    = function_exists( 'wp_get_theme' ) ? wp_get_theme() : null;
-			$child    = function_exists( 'wp_get_theme' ) && is_child_theme() ? wp_get_theme() : null;
-			$parent   = $theme && $theme->parent() ? $theme->parent() : $theme;
+			$theme  = function_exists( 'wp_get_theme' ) ? wp_get_theme() : null;
+			$child  = function_exists( 'wp_get_theme' ) && is_child_theme() ? wp_get_theme() : null;
+			$parent = $theme && $theme->parent() ? $theme->parent() : $theme;
 
 			$lafka_options = get_option( 'lafka', array() );
 

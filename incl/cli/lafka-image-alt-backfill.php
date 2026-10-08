@@ -57,7 +57,7 @@ class Lafka_Image_Alt_Backfill_Command {
 			'posts_per_page' => $limit > 0 ? $limit : -1,
 			'fields'         => 'ids',
 		);
-		$ids = get_posts( $query_args );
+		$ids        = get_posts( $query_args );
 
 		$changes = array();
 		foreach ( $ids as $att_id ) {
@@ -104,7 +104,7 @@ class Lafka_Image_Alt_Backfill_Command {
 			$applied = 0;
 			foreach ( $changes as $c ) {
 				update_post_meta( $c['id'], '_wp_attachment_image_alt', $c['after'] );
-				$applied++;
+				++$applied;
 			}
 			WP_CLI::success( sprintf( 'Updated %d attachment alt%s.', $applied, $applied === 1 ? '' : 's' ) );
 		} else {

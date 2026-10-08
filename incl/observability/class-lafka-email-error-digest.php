@@ -152,7 +152,7 @@ if ( class_exists( 'WC_Email' ) && ! class_exists( 'Lafka_Email_Error_Digest' ) 
 		public function get_content_html() {
 			ob_start();
 			do_action( 'woocommerce_email_header', $this->get_heading(), $this );
-			echo self::render_rows_html( $this->rows ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- every value is escaped inside render_rows_html().
+			echo self::render_rows_html( $this->rows );
 			do_action( 'woocommerce_email_footer', $this );
 			return (string) ob_get_clean();
 		}
@@ -173,7 +173,7 @@ if ( class_exists( 'WC_Email' ) && ! class_exists( 'Lafka_Email_Error_Digest' ) 
 		 * @return string
 		 */
 		public static function render_rows_html( array $rows ): string {
-			$html  = '<p>' . esc_html(
+			$html = '<p>' . esc_html(
 				sprintf(
 					/* translators: %d: number of problems */
 					_n( '%d problem was recorded since the last summary:', '%d problems were recorded since the last summary:', count( $rows ), 'lafka-plugin' ),

@@ -3,7 +3,6 @@
 // $_POST reads in this template are for preserving form state on re-render
 // during validation failures. WC verifies the add-to-cart nonce upstream
 // before this template is included in the variations form output.
-// phpcs:disable WordPress.Security.NonceVerification.Missing,WordPress.Security.NonceVerification.Recommended
 /** @var array $addon */
 foreach ( $addon['options'] as $i => $option ) :
 	/**
@@ -73,8 +72,7 @@ foreach ( $addon['options'] as $i => $option ) :
 			// dangerous a hostile filter on lafka_product_addons_option_price might inject.
 			echo esc_html( wptexturize( $option['label'] ) ) . ' ' . wp_kses_post( $price );
 			?>
-            </label>
+			</label>
 	</p>
 
 <?php endforeach; ?>
-<?php // phpcs:enable WordPress.Security.NonceVerification.Missing,WordPress.Security.NonceVerification.Recommended ?>

@@ -84,12 +84,10 @@ if ( ! function_exists( 'lafka_save_variable_in_catalog_option' ) ) {
 	 * @param int $i            Loop index for the variation in the admin form.
 	 */
 	function lafka_save_variable_in_catalog_option( $variation_id, $i ) {
-		// phpcs:disable WordPress.Security.NonceVerification.Missing -- WC's variation save flow gates on its own nonce before this hook fires.
 		if ( ! isset( $_POST['_lafka_variable_in_catalog_field'][ $i ] ) ) {
 			return;
 		}
 		$show = isset( $_POST['_lafka_variable_in_catalog'][ $i ] );
-		// phpcs:enable WordPress.Security.NonceVerification.Missing
 		update_post_meta( $variation_id, lafka_meta_variable_in_catalog(), $show );
 	}
 }

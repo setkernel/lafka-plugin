@@ -120,7 +120,7 @@ if ( ! function_exists( 'lafka_category_tagline_add_field' ) ) {
 		?>
 		<div class="form-field">
 			<label for="lafka_tagline"><?php esc_html_e( 'Tagline (optional)', 'lafka-plugin' ); ?></label>
-			<?php echo lafka_category_tagline_input( '' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in lafka_category_tagline_input(). ?>
+			<?php echo lafka_category_tagline_input( '' ); ?>
 		</div>
 		<?php
 	}
@@ -138,7 +138,7 @@ if ( ! function_exists( 'lafka_category_tagline_edit_field' ) ) {
 		?>
 		<tr class="form-field">
 			<th scope="row"><label for="lafka_tagline"><?php esc_html_e( 'Tagline (optional)', 'lafka-plugin' ); ?></label></th>
-			<td><?php echo lafka_category_tagline_input( $value ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in lafka_category_tagline_input(). ?></td>
+			<td><?php echo lafka_category_tagline_input( $value ); ?></td>
 		</tr>
 		<?php
 	}
@@ -160,7 +160,7 @@ if ( ! function_exists( 'lafka_category_tagline_save' ) ) {
 		if ( ! current_user_can( 'manage_product_terms' ) || empty( $_POST['lafka_tagline_present'] ) ) {
 			return;
 		}
-		$line = isset( $_POST['lafka_tagline'] ) ? lafka_sanitize_category_tagline( wp_unslash( $_POST['lafka_tagline'] ) ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitised by lafka_sanitize_category_tagline().
+		$line = isset( $_POST['lafka_tagline'] ) ? lafka_sanitize_category_tagline( wp_unslash( $_POST['lafka_tagline'] ) ) : '';
 		if ( '' === $line ) {
 			delete_term_meta( (int) $term_id, LAFKA_CATEGORY_TAGLINE_META );
 		} else {
