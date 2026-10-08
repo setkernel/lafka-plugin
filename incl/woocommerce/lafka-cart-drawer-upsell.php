@@ -39,10 +39,11 @@ if ( ! function_exists( 'lafka_cart_drawer_get_upsell_ids' ) ) {
 		$deal_cats  = lafka_cart_drawer_upsell_deal_category_ids();
 		$pool       = array(); // id => whether its category is new to the cart.
 		$is_addable = static function ( $p ) use ( $deal_cats ) {
-			// One-tap add needs a SIMPLE, purchasable, in-stock product (drinks /
-			// sides / garlic fingers) — variable products need the PDP. Deals and
-			// combos are not "a little extra" (O-23).
-			if ( ! $p || ! $p->is_visible() || ! $p->is_purchasable() || ! $p->is_in_stock() || $p->is_type( 'variable' ) ) {
+			// One-tap add needs a purchasable, in-stock product WooCommerce can
+			// add from a list (drinks / sides / garlic fingers): variable products
+			// and Deals need their page. Deals and combos are not "a little
+			// extra" (O-23).
+			if ( ! $p || ! $p->is_visible() || ! $p->is_purchasable() || ! $p->is_in_stock() || ! $p->supports( 'ajax_add_to_cart' ) ) {
 				return false;
 			}
 			foreach ( array( 'bundle', 'grouped', 'composite', 'woosb' ) as $type ) {
@@ -126,24 +127,17 @@ if ( ! function_exists( 'lafka_cart_drawer_get_upsell_ids' ) ) {
 if ( ! function_exists( 'lafka_cart_drawer_upsell_deal_category_ids' ) ) {
 	/**
 	 * Product categories that hold deals / combos, never suggested as "a
-	 * little extra": the counter theme's deals category (theme_mod
-	 * `lafka_counter_deals_cat`) and categories named deals, combos or
-	 * specials (the theme's own automatic rule). Filter
+	 * little extra": the menu's deals category as the Lafka theme resolves it
+	 * (its Customizer pick, else its automatic slug rule). Filter
 	 * `lafka_cart_drawer_upsell_excluded_categories`.
 	 *
 	 * @return int[]
 	 */
 	function lafka_cart_drawer_upsell_deal_category_ids(): array {
-		$ids = array();
-		$mod = (int) get_theme_mod( 'lafka_counter_deals_cat', 0 );
-		if ( $mod > 0 ) {
-			$ids[] = $mod;
-		}
-		foreach ( array( 'deals', 'combos', 'combo', 'specials' ) as $slug ) {
-			$term = get_term_by( 'slug', $slug, 'product_cat' );
-			if ( is_object( $term ) && ! empty( $term->term_id ) ) {
-				$ids[] = (int) $term->term_id;
-			}
+		$ids  = array();
+		$deal = function_exists( 'lafka_counter_deals_term_id' ) ? (int) lafka_counter_deals_term_id() : 0;
+		if ( $deal > 0 ) {
+			$ids[] = $deal;
 		}
 
 		/**
