@@ -124,6 +124,45 @@ per-day counters in `lafka_log_checkout_stats`.
   `lafka_diag_js_beacon_enabled` forces it on or off. It runs with the
   `diagnostics` or `insights` module.
 
+## Ordering features
+
+### Deals: "any 2 pizzas for $20"
+
+Create a product and choose the type **Deal (customer picks the items)**. Its
+Regular / Sale price is the deal price. The **Deal slots** tab lists what the
+customer chooses, one slot per item:
+
+- **Categories** and/or **Also these items**: the slot's choices; **Never these
+  items** takes some out.
+- **Lock options**: for example *Size: Medium*, so every pizza in the slot is a
+  medium.
+- **Required**: untick for an optional add-on item ("Add a side"), which costs its
+  own price on top.
+- **Premium items pay the difference**: a dearer choice adds the difference over the
+  slot's cheapest choice (shown as "+$1.00").
+
+On the deal's page the customer picks each item and sets its own options (crust,
+toppings, half and half); a sticky bar shows the total and what is still missing.
+Each chosen item becomes its own cart line, so stock, tax, kitchen tickets and
+refunds work per item; the deal price is split across the lines, extras on top.
+Deal lines cannot change quantity, removing one removes the deal, and BOGO and the
+combo discount never apply to them. Lists and menu cards link to the deal's page.
+Lafka → Modules → **Deals** (on by default).
+
+### Half and half
+
+In a product add-on group (Products → Add-ons), tick **Half and half** (checkbox
+groups). Each ticked option then offers *Left / Whole / Right*; a half costs half the
+option price (filter `lafka_addon_half_price_factor`). The cart, order, emails and
+kitchen screen read "Olives (left half)".
+
+### Tips
+
+**WooCommerce → Settings → Restaurant → Tips** (also Lafka → Modules): suggested
+percentages of the order's items, an optional custom amount, every order or delivery
+only, and the label. The tip is a separate, non-taxable fee line on the order, on
+the classic and the block checkout.
+
 ## Local SEO
 
 Goal: rank in the Google Map Pack and local results for "[cuisine] near me" and
@@ -140,8 +179,12 @@ Manage at <https://business.google.com>.
   plus secondaries such as `Restaurant`, `Takeout restaurant`, `Delivery restaurant`.
 - [ ] Name, address and phone exactly as on the website (see 3).
 - [ ] Hours match **WooCommerce → Settings → Restaurant → Hours**. Set holiday hours.
-- [ ] "Has online ordering": point the order link at your website (`/menu/`), not
-  an aggregator. Set delivery and takeout to yes.
+- [ ] "Has online ordering": point the order link at your website, not an
+  aggregator. **WooCommerce → Settings → Restaurant → Search & AI** lists the exact
+  links to paste (Google order and menu links, Apple Business Connect, Bing Places),
+  each tagged so Insights counts the orders they bring. Set delivery and takeout to
+  yes. (Ordering inside Google Search ended in 2024; the listing's direct link is
+  what remains.)
 - [ ] 10 or more photos (storefront, interior, hero dishes, team); add a few weekly.
 - [ ] Best sellers with photos and prices under Products or Menu.
 - [ ] A weekly post (promo, new item, event).
@@ -163,8 +206,12 @@ Check: view the homepage source, search `application/ld+json`, and confirm
 `servesCuisine`, `sameAs`, `paymentAccepted` and `geo` appear, or run the URL
 through <https://search.google.com/test/rich-results>.
 
-The plugin emits `Restaurant` / `LocalBusiness` / `FoodEstablishment`, `WebSite`,
-`BreadcrumbList`, `Menu`, per-product `Product` / `Offer`, and `areaServed`.
+The plugin emits `Restaurant` / `LocalBusiness` / `FoodEstablishment` (with an
+`OrderAction` pointing at the menu for each way you hand food over), `WebSite`,
+`BreadcrumbList`, `Menu`, per-product `Product` / `Offer`, and `areaServed`. With an
+SEO plugin active (Yoast, Rank Math, SEOPress, All in One SEO) that plugin owns the
+`WebSite`, breadcrumb and product nodes; Lafka still emits the restaurant, menu and
+FAQ data those plugins do not have.
 `aggregateRating` appears only on `Product` nodes, from real WooCommerce product
 reviews. It is never put on the `Restaurant` node (Google's structured-data
 policy) and never comes from a decorative setting.
@@ -276,23 +323,37 @@ reach your tools depends on the setup.
 
 - **GTM mode** (a container ID is set): GTM routes everything. Wire GA4, Clarity
   and Meta Pixel inside GTM; the plugin emits no direct tags.
-- **Direct-tag mode** (no GTM): the plugin emits the GA4, Clarity and Meta Pixel
-  tags itself. For GA4 it adds a small `dataLayer.push` to `gtag('event', ...)`
-  forwarder, because gtag.js ignores GTM-format pushes.
+- **Direct-tag mode** (no GTM): the plugin emits the Google tag (GA4 and Google
+  Ads), Clarity and the Meta Pixel itself. Every dataLayer event reaches them through
+  one subscription point (`window.lafkaDL`): GA4 receives all events, ecommerce or
+  not; the Meta Pixel gets ViewContent, AddToCart, InitiateCheckout, AddPaymentInfo,
+  Purchase and Search; Google Ads gets one purchase conversion per order.
 - Cloudflare Web Analytics is cookieless and always emits directly.
+- **Consent.** Google tags follow Consent Mode v2. Clarity and the Meta Pixel ignore
+  it, so they load from the *effective* consent: the visitor's banner decision when
+  there is one, otherwise your defaults (so with the banner off and defaults granted,
+  they load). Clarity also receives its own consent signal.
 
 ### Configuration
 
-Customizer → **Lafka — Analytics** (theme_mods):
+Customizer → **Lafka — Analytics**. Everything is stored in one plugin option,
+`lafka_tracking`, so it survives a theme switch (older sites are migrated from
+theme_mods once, automatically).
 
 | Field | Purpose |
 |---|---|
 | `lafka_gtm_container_id` | GTM container (`GTM-...`). If set, only GTM emits. |
 | `lafka_ga4_measurement_id` | GA4 (`G-...`), used when GTM is empty. |
+| `lafka_ga4_api_secret` | GA4 Measurement Protocol secret: a paid order whose thank-you page never loaded is still recorded (server-side, with analytics consent). |
+| `lafka_google_ads_id`, `lafka_google_ads_purchase_label` | Google Ads purchase conversion (`AW-...` and the label). With `ad_user_data` consent the order's email and phone go along as enhanced-conversion data (hashed by Google's tag); GTM users can read them as `window.lafkaUserData` on the order-received page. |
 | `lafka_clarity_project_id` | Microsoft Clarity, used when GTM is empty. |
 | `lafka_cf_beacon_token` | Cloudflare Web Analytics token. |
 | `lafka_meta_pixel_id` | Meta Pixel, only for paid Facebook or Instagram ads. |
+| `lafka_meta_capi_token` | Meta Conversions API token: every paid order is also sent from the server, deduplicated with the Pixel (`purchase-<order id>`), with ad consent. Left alone when the official Meta for WooCommerce plugin is active. |
 | `lafka_gsc_*`, `lafka_consent_*` | Search Console verification and Consent Mode v2 defaults (default denied). |
+
+Server-side sends run ten minutes after an order is paid (Action Scheduler,
+`lafka_server_events_send`); failures are logged to the `analytics` channel.
 
 Nothing emits until a destination is configured (`lafka_analytics_is_active()`).
 Lafka Insights counts as a destination while it collects.

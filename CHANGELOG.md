@@ -7,7 +7,34 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
 
 ## [Unreleased]
 
+### Added
+- **Deals** (`lafka_deal` product type): "any 2 pizzas for $20" where the customer
+  picks each item and its options. Slots by category or hand-picked items, locked
+  options (e.g. size), optional add-on items, premiums that pay the difference;
+  server-priced builder on the product page; each item a quantity-locked cart line,
+  the deal price split across them; BOGO and the combo discount skip deal lines.
+  Lafka → Modules → Deals (on by default).
+- **Half and half**: add-on groups can offer Left / Whole / Right per option; a half
+  costs half (`lafka_addon_half_price_factor`).
+- **Tips** at checkout (classic and block): suggested percentages, a custom amount,
+  every order or delivery only; a non-taxable fee line.
+- **Analytics**: Google Ads purchase conversions with enhanced-conversion data; Meta
+  Pixel standard events; server-side Meta Conversions API and GA4 Measurement
+  Protocol (Action Scheduler, consent-gated, deduplicated); the full GA4 funnel on
+  the block cart and checkout; `view_item_list` on the menu page; purchase items at
+  the price paid.
+- **Search**: `OrderAction` on the restaurant schema; ready-to-paste order links for
+  Google Business Profile, Apple Business Connect and Bing Places under Search & AI.
+- Demo seed: a delivery zone and block-checkout pickup, a Deal, half-and-half
+  toppings and tips.
+
 ### Changed
+- Tracking settings moved from theme_mods to one plugin option, `lafka_tracking`
+  (migrated once), so they survive a theme switch. Clarity and the Meta Pixel load from
+  the effective consent (banner decision, else your defaults); direct GA4 receives
+  every event, not only ecommerce ones.
+- With an SEO plugin active, Lafka keeps emitting its restaurant, menu and FAQ
+  schema instead of dropping everything.
 - **No lint rule is switched off any more.** ESLint now enforces `no-var`, `prefer-const`,
   `no-prototype-builtins`, `no-redeclare`, `no-unused-vars`, `no-empty`, `no-useless-escape`,
   `no-useless-assignment` and `no-shadow-restricted-names` everywhere, including the
@@ -139,6 +166,21 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
   applies (`woocommerce_product_add_to_cart_text` / `_url` stay).
 
 ### Fixed
+- Default-on modules (Product add-ons, Deals) now load on a fresh install; before,
+  add-ons never loaded until the Modules page was saved.
+- A mandatory delivery pin refused every block-checkout delivery order (and every
+  classic one without a map); a pin is required only where the checkout can show one.
+- The block checkout announced the Promotions delivery minimum even with Promotions
+  off; BOGO at 0% still showed its labels and banner; BOGO prices were restored from
+  the session after a price change.
+- Branch selection: posted fields were garbled by sanitisation, branch geocodes never
+  saved, the modal printed as an inert block without its script, and a jQuery 3
+  `.load()` call threw.
+- `LAFKA_PLUGIN_VERSION` was never defined (config-bundle exports had no version).
+- Translations and the cron self-heal ran before `init` (WordPress 6.7+ notice).
+- A Customizer save warned and did not refresh the cached home hero.
+- Backslashes were stripped from category FAQs, branch hours, the seeded polygon and
+  the same-request last-order cookie.
 - Promo tooltips never matched their default zone: the theme default
   `promo_tooltip_N_position` was `above_price` while the plugin compared against
   `above-price`, so an unsaved tooltip never rendered on the product page. The zone
