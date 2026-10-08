@@ -12,8 +12,7 @@
  *  2. lafka_register_theme_script_fallbacks() — wp_enqueue_scripts @20, i.e.
  *     AFTER the Lafka theme registered its own handles at @10. Only fills in
  *     handles nobody registered: with the Lafka theme active, theme-directory
- *     handles the theme leaves to the plugin (magnific) or doesn't register
- *     on a given request.
+ *     handles the theme doesn't register on a given request.
  *     The theme's own registration (e.g. its `defer` strategy) always wins.
  *  3. lafka_register_admin_plugin_scripts() — admin_enqueue_scripts.
  *
@@ -127,12 +126,6 @@ if ( ! function_exists( 'lafka_register_theme_script_fallbacks' ) ) {
 		$dialog_suffix = ( ! ( defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ) && file_exists( get_template_directory() . '/js/lafka-dialog.min.js' ) ) ? '.min' : '';
 		$register_script( 'lafka-dialog', $theme_uri . '/js/lafka-dialog' . $dialog_suffix . '.js', array(), $theme_ver( '/js/lafka-dialog' . $dialog_suffix . '.js' ) );
 		$register_style( 'lafka-dialog', $theme_uri . '/styles/lafka-dialog.css', array(), $theme_ver( '/styles/lafka-dialog.css' ) );
-
-		// Magnific: the theme deliberately leaves it to the plugin; the
-		// branch-locations ordering modal (a pre-minified vendor file calling
-		// $.magnificPopup.open) depends on it.
-		$register_script( 'magnific', $theme_uri . '/js/magnific/jquery.magnific-popup.min.js', array( 'jquery' ), $theme_ver( '/js/magnific/jquery.magnific-popup.min.js' ) );
-		$register_style( 'magnific', $theme_uri . '/styles/magnific/magnific-popup.css', array(), $theme_ver( '/styles/magnific/magnific-popup.css' ) );
 	}
 }
 

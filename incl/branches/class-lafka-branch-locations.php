@@ -89,18 +89,12 @@ class Lafka_Branch_Locations {
 		$deps = array(
 			'jquery-blockui',
 			'wc-country-select',
-			// P3-04: this script calls $.magnificPopup.open() for the
-			// branch-selection modal; branch selection is on the order
-			// critical path, so magnific is preserved as a dep here while
-			// removed from the global enqueue everywhere else.
-			'magnific',
 		);
 		if ( in_array( 'delivery', self::get_order_type(), true ) && lafka_enqueue_maps( false ) ) {
 			$deps[] = 'lafka-maps';
 		}
 		$branch_front_js = lafka_plugin_script_path( 'incl/shipping-areas/assets/js/frontend/lafka-branch-locations-front.min.js' );
 		wp_enqueue_script( 'lafka-branch-locations-front', plugins_url( $branch_front_js, LAFKA_PLUGIN_FILE ), $deps, lafka_plugin_asset_version( $branch_front_js ), true );
-		wp_enqueue_style( 'magnific' );
 		wp_localize_script(
 			'lafka-branch-locations-front',
 			'lafka_branch_locations_front',
@@ -115,6 +109,7 @@ class Lafka_Branch_Locations {
 				'has_session_value'                   => ( isset( WC()->session ) && ! empty( WC()->session->get( 'lafka_branch_location' ) ) ),
 				'branch_locations_json_data'          => $branch_locations_json_data,
 				'please_wait_message'                 => esc_html__( 'Please wait', 'lafka-plugin' ),
+				'close_label'                         => esc_html__( 'Close', 'lafka-plugin' ),
 				'info_message_select_branch_delivery' => esc_html__( 'Select from branches serving your area', 'lafka-plugin' ),
 				'info_message_select_branch_pickup'   => esc_html__( 'Select a branch', 'lafka-plugin' ),
 				'error_message_no_address'            => 'google' === lafka_maps_provider()
@@ -128,7 +123,6 @@ class Lafka_Branch_Locations {
 				'error_message_select_branch'         => esc_html__( 'Please select branch to continue.', 'lafka-plugin' ),
 			)
 		);
-		wp_enqueue_style( 'wp-jquery-ui-dialog' );
 	}
 
 	public static function output_in_footer() {
@@ -144,7 +138,7 @@ class Lafka_Branch_Locations {
 
 		$options_branches = get_option( 'lafka_shipping_areas_branches' );
 		?>
-		<div id="lafka_select_branch_modal" class="mfp-hide">
+		<dialog id="lafka_select_branch_modal" class="lafka-branch-dialog" aria-label="<?php esc_attr_e( 'Choose delivery or pickup', 'lafka-plugin' ); ?>">
 			<?php
 			$show_all_closed_message    = false;
 			$all_legit_branch_locations = array();
@@ -286,7 +280,7 @@ class Lafka_Branch_Locations {
 					<button type="button" class="lafka-branch-select-submit button"><?php esc_html_e( 'Start Order', 'lafka-plugin' ); ?></button>
 				</form>
 			<?php endif; ?>
-		</div>
+		</dialog>
 		<?php
 	}
 

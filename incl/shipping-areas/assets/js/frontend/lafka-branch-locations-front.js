@@ -337,16 +337,59 @@
 		chooseOrderType( types[ params.order_type ] || 'delivery' );
 
 		const closable = ( params.closable_because_of_closed_branches && body().find( '.lafka-all-stores-closed' ).length ) || params.closable_because_of_option;
-		$.magnificPopup.open( {
-			items: { src: '#lafka_select_branch_modal' },
-			modal: ! closable,
-			focus: '#lafka_branch_select_user_address',
-			callbacks: {
-				close() {
-					window.sessionStorage.setItem( 'lafka_branch_selection_closed', '1' );
-				},
+		showDialog( closable, input );
+	}
+
+	/**
+	 * Show the popup: a native <dialog> opened in place (not in the top
+	 * layer, so Google's address suggestions, appended to <body>, still
+	 * stack above it) over a dimmed backdrop. Only a closable popup closes on
+	 * Escape, the close button or a backdrop click; closing it is remembered
+	 * for the browser session.
+	 *
+	 * @param {boolean}          closable Whether the customer may dismiss it.
+	 * @param {HTMLElement|null} input    The address field to focus.
+	 */
+	function showDialog( closable, input ) {
+		const dialog = document.getElementById( 'lafka_select_branch_modal' );
+		if ( ! dialog || dialog.open ) {
+			return;
+		}
+		const backdrop = document.createElement( 'div' );
+		backdrop.className = 'lafka-branch-dialog-backdrop';
+		const close = () => dialog.close();
+		const onKey = ( event ) => {
+			if ( 'Escape' === event.key ) {
+				close();
+			}
+		};
+		if ( closable ) {
+			const button = document.createElement( 'button' );
+			button.type = 'button';
+			button.className = 'lafka-branch-dialog__close';
+			button.setAttribute( 'aria-label', params.close_label || 'Close' );
+			button.textContent = '×';
+			button.addEventListener( 'click', close );
+			dialog.prepend( button );
+			backdrop.addEventListener( 'click', close );
+			document.addEventListener( 'keydown', onKey );
+		}
+		dialog.addEventListener(
+			'close',
+			() => {
+				backdrop.remove();
+				document.documentElement.classList.remove( 'lafka-branch-dialog-open' );
+				document.removeEventListener( 'keydown', onKey );
+				window.sessionStorage.setItem( 'lafka_branch_selection_closed', '1' );
 			},
-		} );
+			{ once: true }
+		);
+		dialog.before( backdrop );
+		document.documentElement.classList.add( 'lafka-branch-dialog-open' );
+		dialog.show();
+		if ( input && 'none' !== window.getComputedStyle( input ).display ) {
+			input.focus();
+		}
 	}
 
 	/**
