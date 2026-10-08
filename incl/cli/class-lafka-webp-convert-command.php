@@ -195,8 +195,12 @@ class Lafka_WebP_Convert_Command {
 	private function convert_with_gd( string $src, string $dst, int $quality ): bool {
 		$mime = wp_check_filetype( $src )['type'] ?? mime_content_type( $src );
 		$img  = false;
+		// Only hand GD a readable file whose header really is an image.
+		if ( ! is_readable( $src ) || ! is_array( wp_getimagesize( $src ) ) ) {
+			return false;
+		}
 		if ( 'image/png' === $mime ) {
-			$img = @imagecreatefrompng( $src );
+			$img = imagecreatefrompng( $src );
 			if ( $img ) {
 				// Preserve transparency in WebP output.
 				imagepalettetotruecolor( $img );
@@ -204,7 +208,7 @@ class Lafka_WebP_Convert_Command {
 				imagesavealpha( $img, true );
 			}
 		} elseif ( in_array( $mime, array( 'image/jpeg', 'image/jpg' ), true ) ) {
-			$img = @imagecreatefromjpeg( $src );
+			$img = imagecreatefromjpeg( $src );
 		}
 		if ( ! $img ) {
 			return false;

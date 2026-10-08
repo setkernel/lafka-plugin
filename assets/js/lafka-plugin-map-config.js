@@ -1,6 +1,6 @@
 "use strict";
 
-function initialize(location_title, lattitude, longitude, images, map_canvas_unique_id) { // Place the coordinates of your store here.
+window.initialize = function (location_title, lattitude, longitude, images, map_canvas_unique_id) { // Place the coordinates of your store here.
 	var latlng = new google.maps.LatLng(lattitude, longitude);
 	// Here you can customize the direction line color, weigth and opacity.
 	var polylineOptionsActual = new google.maps.Polyline({strokeColor: '#585858', strokeOpacity: 0.7, strokeWeight: 4});
@@ -45,10 +45,10 @@ function initialize(location_title, lattitude, longitude, images, map_canvas_uni
 			marker.setAnimation(google.maps.Animation.BOUNCE);
 		}
 	}
-}
+};
 
 // Change the coordinates below to those of your store. (should be the same as the coordinates above.
-function calcRoute(routeStart_unique_id, lattitude, longitude, map_canvas_unique_id) {
+window.calcRoute = function (routeStart_unique_id, lattitude, longitude, map_canvas_unique_id) {
 	var directionsService = new google.maps.DirectionsService();
 	var start = document.getElementById(routeStart_unique_id).value;
 // Fill in the cordinates of your store. See readme file for help.
@@ -56,8 +56,8 @@ function calcRoute(routeStart_unique_id, lattitude, longitude, map_canvas_unique
 	var request = {origin: start, destination: end, travelMode: google.maps.DirectionsTravelMode.DRIVING};
 
 	directionsService.route(request, function (response, status) {
-		if (status == google.maps.DirectionsStatus.OK) {
+		if (status === google.maps.DirectionsStatus.OK) {
 			window[map_canvas_unique_id].setDirections(response);
 		}
 	});
-}
+};

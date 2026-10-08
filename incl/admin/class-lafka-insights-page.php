@@ -73,8 +73,8 @@ if ( ! class_exists( 'Lafka_Insights_Page' ) ) {
 		 * @return int
 		 */
 		public static function requested_range(): int {
-			$raw = isset( $_GET['range'] ) ? sanitize_text_field( wp_unslash( $_GET['range'] ) ) : '30';
-			return Lafka_Insights_Queries::sanitize_range( $raw );
+			$raw = filter_input( INPUT_GET, 'range', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+			return Lafka_Insights_Queries::sanitize_range( is_string( $raw ) ? sanitize_text_field( $raw ) : '30' );
 		}
 
 		/**
@@ -148,7 +148,9 @@ if ( ! class_exists( 'Lafka_Insights_Page' ) ) {
 				echo '<tr' . ( $is_leak ? ' class="lafka-insights__leak"' : '' ) . '>';
 				echo '<td>' . esc_html( ucfirst( Lafka_Insights_Narrative::stage_label( (string) $stage ) ) ) . '</td>';
 				echo '<td>' . esc_html( number_format_i18n( (int) $count ) ) . '</td>';
-				echo '<td>' . self::bar( (int) $count, $max ) . '</td>';
+				echo '<td>';
+				self::print_bar( (int) $count, $max );
+				echo '</td>';
 				echo '<td>';
 				if ( null !== $prev && $prev > 0 ) {
 					$lost = max( 0, $prev - (int) $count );
@@ -381,7 +383,9 @@ if ( ! class_exists( 'Lafka_Insights_Page' ) ) {
 			$max = max( 1, (int) max( array_merge( array( 0 ), array_map( 'intval', $rows ) ) ) );
 			echo '<table class="widefat striped"><tbody>';
 			foreach ( $rows as $key => $count ) {
-				echo '<tr><td>' . esc_html( (string) call_user_func( $label, (string) $key ) ) . '</td><td>' . esc_html( Lafka_Insights_Narrative::share( (int) $count, max( 1, $total ) ) ) . '</td><td>' . self::bar( (int) $count, $max ) . '</td></tr>';
+				echo '<tr><td>' . esc_html( (string) call_user_func( $label, (string) $key ) ) . '</td><td>' . esc_html( Lafka_Insights_Narrative::share( (int) $count, max( 1, $total ) ) ) . '</td><td>';
+				self::print_bar( (int) $count, $max );
+				echo '</td></tr>';
 			}
 			echo '</tbody></table>';
 		}
@@ -430,15 +434,18 @@ if ( ! class_exists( 'Lafka_Insights_Page' ) ) {
 		}
 
 		/**
-		 * Inline SVG bar.
+		 * Print an inline SVG bar.
 		 *
 		 * @param int $value Value.
 		 * @param int $max   Scale maximum.
-		 * @return string
+		 * @return void
 		 */
-		public static function bar( int $value, int $max ): string {
+		public static function print_bar( int $value, int $max ): void {
 			$width = $max > 0 ? (int) round( 200 * max( 0, $value ) / $max ) : 0;
-			return '<svg width="200" height="12" viewBox="0 0 200 12" aria-hidden="true" focusable="false"><rect width="200" height="12" fill="#f0f0f1"/><rect width="' . esc_attr( (string) $width ) . '" height="12" fill="#2271b1"/></svg>';
+			printf(
+				'<svg width="200" height="12" viewBox="0 0 200 12" aria-hidden="true" focusable="false"><rect width="200" height="12" fill="#f0f0f1"/><rect width="%d" height="12" fill="#2271b1"/></svg>',
+				(int) $width
+			);
 		}
 
 		/**

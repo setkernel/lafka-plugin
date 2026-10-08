@@ -242,8 +242,9 @@ if ( ! class_exists( 'Lafka_Log' ) ) {
 		}
 
 		/**
-		 * Hand a record to the WC logger (or error_log when WC is absent and
-		 * WP_DEBUG_LOG is on).
+		 * Hand a record to the WC logger. Without WooCommerce there is no file
+		 * sink; warning-and-above records still reach the incident index and
+		 * the `lafka_log_record` action.
 		 *
 		 * @param array<string,mixed> $record Record.
 		 * @return void
@@ -252,11 +253,6 @@ if ( ! class_exists( 'Lafka_Log' ) ) {
 			$logger = self::logger();
 			if ( is_object( $logger ) && method_exists( $logger, 'log' ) ) {
 				$logger->log( $record['level'], $record['message'], array_merge( $record['context'], array( 'source' => $record['source'] ) ) );
-				return;
-			}
-			if ( defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ) {
-				$json = wp_json_encode( $record['context'] );
-				error_log( sprintf( '[%s] %s: %s %s', $record['source'], strtoupper( $record['level'] ), $record['message'], (string) $json ) );
 			}
 		}
 

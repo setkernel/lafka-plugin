@@ -3,6 +3,58 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 /**
+ * wp_kses allowlist for the metabox markup built in this file (every dynamic
+ * value is escaped where the markup is assembled).
+ *
+ * @return array<string,array<string,bool>>
+ */
+if ( ! function_exists( 'lafka_metabox_allowed_html' ) ) {
+	function lafka_metabox_allowed_html() {
+		return array(
+			'p'      => array(),
+			'b'      => array(),
+			'br'     => array(),
+			'span'   => array(
+				'class' => true,
+				'id'    => true,
+			),
+			'div'    => array(
+				'class' => true,
+				'id'    => true,
+			),
+			'label'  => array( 'for' => true ),
+			'select' => array(
+				'id'    => true,
+				'name'  => true,
+				'class' => true,
+			),
+			'option' => array(
+				'value'    => true,
+				'selected' => true,
+			),
+			'input'  => array(
+				'type'    => true,
+				'id'      => true,
+				'name'    => true,
+				'value'   => true,
+				'class'   => true,
+				'checked' => true,
+				'style'   => true,
+				'data-*'  => true,
+			),
+			'a'      => array(
+				'id'     => true,
+				'class'  => true,
+				'href'   => true,
+				'title'  => true,
+				'style'  => true,
+				'data-*' => true,
+			),
+		);
+	}
+}
+
+/**
  * Register page layout metaboxes
  */
 add_action( 'add_meta_boxes', 'lafka_add_layout_metabox' );
@@ -173,7 +225,7 @@ if ( ! function_exists( 'lafka_layout_callback' ) ) {
 			}
 		}
 
-		echo $output;
+		echo wp_kses( $output, lafka_metabox_allowed_html() );
 	}
 
 }
@@ -423,7 +475,7 @@ if ( ! function_exists( 'lafka_page_options_callback' ) ) {
 
 		$output .= '</select>';
 
-		echo $output;
+		echo wp_kses( $output, lafka_metabox_allowed_html() );
 	}
 
 }
@@ -545,7 +597,7 @@ if ( ! function_exists( 'lafka_video_bckgr_callback' ) ) {
 		$output .= '<p><label for="lafka_video_bckgr_url"><b>' . esc_html__( 'YouTube video URL', 'lafka-plugin' ) . '</b></label></p>';
 		$output .= '<input type="text" id="lafka_video_bckgr_url" name="lafka_video_bckgr_url" value="' . esc_attr( $values['lafka_video_bckgr_url'] ) . '" class="large-text" />';
 
-		echo $output;
+		echo wp_kses( $output, lafka_metabox_allowed_html() );
 	}
 
 }
@@ -827,7 +879,7 @@ if ( ! function_exists( 'lafka_additonal_featured_meta_callback' ) ) {
 
 		$output .= '</p>';
 
-		echo $output;
+		echo wp_kses( $output, lafka_metabox_allowed_html() );
 	}
 
 }
@@ -920,7 +972,7 @@ if ( ! function_exists( 'lafka_foodmenu_cz_callback' ) ) {
 		$output .= '<div><input id="lafka_prtfl_gallery_list" ' . checked( $lafka_prtfl_gallery, 'list', false ) . ' type="radio" value="list" name="lafka_prtfl_gallery">';
 		$output .= '<label for="lafka_prtfl_gallery_list">' . esc_html__( 'Image List', 'lafka-plugin' ) . '</label></div>';
 
-		echo $output;
+		echo wp_kses( $output, lafka_metabox_allowed_html() );
 	}
 
 }
@@ -1014,7 +1066,7 @@ if ( ! function_exists( 'lafka_product_video_callback' ) ) {
 		$output .= '<p><label for="lafka_product_video_url"><b>' . esc_html__( 'Video URL', 'lafka-plugin' ) . '</b></label></p>';
 		$output .= '<input type="text" id="lafka_product_video_url" name="lafka_product_video_url" value="' . esc_attr( $values['lafka_product_video_url'] ) . '" class="large-text" />';
 
-		echo $output;
+		echo wp_kses( $output, lafka_metabox_allowed_html() );
 	}
 
 }
@@ -1107,7 +1159,7 @@ if ( ! function_exists( 'lafka_product_gallery_type_callback' ) ) {
 		}
 		$output .= '</select>';
 
-		echo $output;
+		echo wp_kses( $output, lafka_metabox_allowed_html() );
 	}
 
 }

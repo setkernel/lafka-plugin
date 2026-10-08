@@ -78,20 +78,16 @@ if ( ! class_exists( 'Lafka_Tools_Page' ) ) {
 			}
 			check_admin_referer( self::EXPORT_ACTION );
 
-			$json     = Lafka_Config_Bundle::export_json();
 			$host     = wp_parse_url( home_url(), PHP_URL_HOST );
 			$host     = is_string( $host ) ? preg_replace( '/[^a-z0-9\-]/i', '-', $host ) : 'site';
 			$filename = 'lafka-config-' . $host . '-' . gmdate( 'Ymd-His' ) . '.json';
 
 			nocache_headers();
-			header( 'Content-Type: application/json; charset=utf-8' );
 			header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
-			header( 'Content-Length: ' . strlen( $json ) );
 
-			// The payload is our own generated JSON; echo verbatim so the file is
-			// byte-for-byte the bundle (escaping would corrupt it).
-			echo $json;
-			exit;
+			// wp_send_json() sets the JSON content type, encodes with the same
+			// flags as Lafka_Config_Bundle::export_json() and ends the request.
+			wp_send_json( Lafka_Config_Bundle::export(), 200, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
 		}
 
 		// ─── Import: preview (dry-run) ───────────────────────────────────────
@@ -106,7 +102,17 @@ if ( ! class_exists( 'Lafka_Tools_Page' ) ) {
 			}
 			check_admin_referer( self::IMPORT_ACTION );
 
-			$json = $this->read_uploaded_bundle();
+			$json = null;
+			if ( ! empty( $_FILES['lafka_config_file']['tmp_name'] ) ) {
+				$error = isset( $_FILES['lafka_config_file']['error'] ) ? (int) $_FILES['lafka_config_file']['error'] : UPLOAD_ERR_NO_FILE;
+				$tmp   = sanitize_text_field( wp_unslash( $_FILES['lafka_config_file']['tmp_name'] ) );
+				if ( UPLOAD_ERR_OK === $error && '' !== $tmp && is_uploaded_file( $tmp ) ) {
+					$contents = lafka_read_local_file( $tmp );
+					if ( false !== $contents && '' !== $contents ) {
+						$json = $contents;
+					}
+				}
+			}
 			if ( null === $json ) {
 				$this->redirect_to_page( array( 'lafka_import' => 'nofile' ) );
 			}
@@ -123,34 +129,6 @@ if ( ! class_exists( 'Lafka_Tools_Page' ) ) {
 			);
 
 			$this->redirect_to_page( array( 'lafka_import' => 'preview' ) );
-		}
-
-		/**
-		 * Read + validate the uploaded bundle file, returning its raw JSON or
-		 * null when nothing usable was uploaded.
-		 *
-		 * @return string|null
-		 */
-		private function read_uploaded_bundle() {
-			// The only caller (handle_import_preview) verifies the nonce with
-			// check_admin_referer() before delegating here, so these $_FILES
-			// reads are already CSRF-guarded; the sniff can't see across methods.
-			if ( empty( $_FILES['lafka_config_file']['tmp_name'] ) ) {
-				return null;
-			}
-			$error = isset( $_FILES['lafka_config_file']['error'] ) ? (int) $_FILES['lafka_config_file']['error'] : UPLOAD_ERR_NO_FILE;
-			if ( UPLOAD_ERR_OK !== $error ) {
-				return null;
-			}
-			$tmp = sanitize_text_field( wp_unslash( $_FILES['lafka_config_file']['tmp_name'] ) );
-			if ( '' === $tmp || ! is_uploaded_file( $tmp ) ) {
-				return null;
-			}
-			$contents = file_get_contents( $tmp );
-			if ( false === $contents || '' === $contents ) {
-				return null;
-			}
-			return $contents;
 		}
 
 		// ─── Import: apply (confirmed) ───────────────────────────────────────
@@ -230,9 +208,9 @@ if ( ! class_exists( 'Lafka_Tools_Page' ) ) {
 		 * Import card: upload form + (when previewing) a diff table + confirm.
 		 */
 		private function render_import_card() {
-			// $_GET['lafka_import'] is display-state only; the state-changing paths
+			// lafka_import is display-state only; the state-changing paths
 			// (preview/apply) each verify their own nonce via check_admin_referer().
-			$state = isset( $_GET['lafka_import'] ) ? sanitize_key( wp_unslash( $_GET['lafka_import'] ) ) : '';
+			$state = sanitize_key( (string) filter_input( INPUT_GET, 'lafka_import', FILTER_SANITIZE_FULL_SPECIAL_CHARS ) );
 
 			echo '<div class="lafka-tools-card">';
 			echo '<h2>' . esc_html__( 'Import configuration', 'lafka-plugin' ) . '</h2>';

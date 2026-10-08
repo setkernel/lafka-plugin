@@ -12,7 +12,7 @@
 	function clarityReady() { return typeof window.clarity === 'function'; }
 	function set(key, val) {
 		if (!clarityReady() || val === undefined || val === null || val === '') { return; }
-		try { window.clarity('set', key, String(val)); } catch (e) { /* no-op */ }
+		try { window.clarity('set', key, String(val)); } catch { /* no-op */ }
 	}
 
 	// Map page_context dimensions → Clarity tags.
@@ -43,7 +43,7 @@
 		if (obj.event === 'select_promotion' || obj.event === 'coupon_apply') { set('promo_code', obj.coupon_code || obj.promotion_id); }
 		if (obj.event === 'purchase' && obj.ecommerce && obj.ecommerce.transaction_id) {
 			// Stable, non-PII session correlation (the order id, not the customer).
-			try { if (clarityReady()) { window.clarity('identify', 'order_' + obj.ecommerce.transaction_id); } } catch (e) { /* no-op */ }
+			try { if (clarityReady()) { window.clarity('identify', 'order_' + obj.ecommerce.transaction_id); } } catch { /* no-op */ }
 		}
 	}
 

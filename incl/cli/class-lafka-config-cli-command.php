@@ -52,7 +52,7 @@ class Lafka_Config_CLI_Command {
 			return;
 		}
 
-		if ( false === file_put_contents( $file, $json ) ) {
+		if ( ! lafka_write_local_file( $file, $json ) ) {
 			WP_CLI::error( "Could not write to: $file" );
 		}
 
@@ -93,7 +93,7 @@ class Lafka_Config_CLI_Command {
 		}
 		$dry_run = ! empty( $assoc_args['dry-run'] );
 
-		$json = file_get_contents( $file );
+		$json = lafka_read_local_file( $file );
 		if ( false === $json ) {
 			WP_CLI::error( "Could not read: $file" );
 		}

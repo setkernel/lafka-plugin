@@ -49,7 +49,7 @@ if ( ! function_exists( 'lafka_block_author_enumeration' ) ) {
 	 * @return void
 	 */
 	function lafka_block_author_enumeration() {
-		if ( ! isset( $_GET['author'] ) || is_admin() || is_user_logged_in() || ! lafka_restrict_user_enumeration() ) {
+		if ( ! filter_has_var( INPUT_GET, 'author' ) || is_admin() || is_user_logged_in() || ! lafka_restrict_user_enumeration() ) {
 			return;
 		}
 

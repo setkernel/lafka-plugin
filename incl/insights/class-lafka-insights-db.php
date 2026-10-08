@@ -419,7 +419,7 @@ if ( ! class_exists( 'Lafka_Insights_DB' ) ) {
 			if ( ! isset( $wpdb ) || ! is_object( $wpdb ) ) {
 				return;
 			}
-			$base     = strtotime( $today . ' 00:00:00 UTC' );
+			$base = strtotime( $today . ' 00:00:00 UTC' );
 			$wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE day < %s', self::sessions_table_name(), gmdate( 'Y-m-d', $base - $keep_days * 86400 ) ) );
 			$wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE day < %s', self::daily_table_name(), gmdate( 'Y-m-d', $base - $counter_days * 86400 ) ) );
 		}

@@ -38,7 +38,6 @@ class Lafka_Branch_Locations_Admin {
 		add_action( 'restrict_manage_posts', array( __CLASS__, 'add_fields_to_orders_list_filter' ), 10, 1 );
 		// HPOS
 		add_action( 'woocommerce_order_list_table_restrict_manage_orders', array( __CLASS__, 'add_fields_to_orders_list_filter' ), 10, 1 );
-		// TODO: HPOS ???
 		add_filter( 'woocommerce_menu_order_count', array( __CLASS__, 'menu_order_count_for_user' ) );
 	}
 

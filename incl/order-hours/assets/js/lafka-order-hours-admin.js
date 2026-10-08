@@ -12,7 +12,7 @@
             mode: 'multiple'
         });
 
-        $("#lafka-plugin-open-hours-form").on("submit", function (event) {
+        $("#lafka-plugin-open-hours-form").on("submit", function () {
             $("#lafka_order_hours_schedule").val($("#lafka_order_hours_schedule_container").jqs('export'));
         })
     });
@@ -29,7 +29,7 @@
                 return o;
             }
         }
-        catch (_err) {
+        catch {
             // Invalid JSON — fall through to return [].
         }
 

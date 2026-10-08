@@ -3,11 +3,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-// PHPCS suppression for this WPML extension class: hooks fire from WPML/WC
-// product-save flow where nonce verification happens upstream in the WC
-// product editor (update-post_<id>) before our hook callbacks run. Reads
-// of $_GET in display methods are for admin UI state, not state mutation.
-
 /**
  * Class Lafka_WCML_Product_Addons
  */

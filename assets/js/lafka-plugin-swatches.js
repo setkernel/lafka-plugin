@@ -2,12 +2,11 @@
 	'use strict';
 
 	/**
-	 * @TODO Code a function the calculate available combination instead of use WC hooks
+	 * Swatch form behaviour; availability follows the WooCommerce variation hooks.
 	 */
 	$.fn.lafka_wcs_variation_swatches_form = function () {
 		return this.each( function() {
 			var $form = $( this ),
-				clicked = null,
 				selected = [];
 
 			$form
@@ -28,8 +27,6 @@
 						$form.trigger( 'lafka-wcs_no_matching_variations', [$el] );
 						return;
 					}
-
-					clicked = attribute_name;
 
 					if ( selected.indexOf( attribute_name ) === -1 ) {
 						selected.push(attribute_name);

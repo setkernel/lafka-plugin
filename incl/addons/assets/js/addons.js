@@ -71,7 +71,7 @@ jQuery( document ).ready( function($) {
 		});
 
 		// clicking on a number input scrollers updates the total continuously.
-		$( this ).on( 'mouseup', 'input[type=number]', function (e) {
+		$( this ).on( 'mouseup', 'input[type=number]', function () {
 			$( this ).trigger( 'lafka-product-addons-update' );
 		});
 
@@ -93,13 +93,13 @@ jQuery( document ).ready( function($) {
 			var total_checked = $inputsContainer.find('input[name="' + $(this).prop('name') + '"]:checked').length;
 
 			if (limit <= total_checked) {
-				$inputsContainer.find('input').each(function (index, element) {
+				$inputsContainer.find('input').each(function () {
 					if (!$(this).is( ':checked' )) {
 						$(this).prop('disabled', true);
 					}
 				});
 			} else {
-				$inputsContainer.find('input').each(function (index, element) {
+				$inputsContainer.find('input').each(function () {
 					$(this).prop('disabled', false);
 				});
 			}
@@ -220,11 +220,11 @@ jQuery( document ).ready( function($) {
 				if ( $( this ).is( '.addon-custom-price' ) ) {
 					addon_cost = $( this ).val();
 				} else if ( $( this ).is( '.addon-input_multiplier' ) ) {
-					if( isNaN( $( this ).val() ) || $( this ).val() == "" ) { // Number inputs return blank when invalid
+					if( isNaN( $( this ).val() ) || $( this ).val() === "" ) { // Number inputs return blank when invalid
 						$( this ).val( '' );
 						$( this ).closest( 'p' ).find( '.addon-alert' ).show();
 					} else {
-						if( $( this ).val() != "" ){
+						if( $( this ).val() !== "" ){
 							$( this ).val( Math.ceil( $( this ).val() ) );
 						}
 						$( this ).closest( 'p' ).find( '.addon-alert' ).hide();
@@ -345,7 +345,7 @@ jQuery( document ).ready( function($) {
 
 				var html = '<dl class="product-addon-totals"><dt>' + lafka_addons_params.i18n_addon_total + '</dt><dd><strong><span class="amount">' + formatted_addon_total + '</span></strong></dd>';
 
-				if ( 'combo' !== product_type && formatted_sub_total && '1' == $totals.data( 'show-sub-total' ) ) {
+				if ( 'combo' !== product_type && formatted_sub_total && '1' === String( $totals.data( 'show-sub-total' ) ) ) {
 
 					// To show our "price display suffix" we have to do some magic since the string can contain variables (excl/incl tax values)
 					// so we have to take our sub total and find out what the tax value is, which we can do via an ajax call

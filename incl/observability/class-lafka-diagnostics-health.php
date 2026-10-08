@@ -69,7 +69,11 @@ if ( ! class_exists( 'Lafka_Diagnostics_Health' ) ) {
 					'lafka_recent_fatals',
 					'critical',
 					'red',
-					sprintf( _n( 'Lafka code caused %d fatal error in the last 24 hours', 'Lafka code caused %d fatal errors in the last 24 hours', $count, 'lafka-plugin' ), $count ),
+					sprintf(
+						/* translators: %d: number of fatal errors */
+						_n( 'Lafka code caused %d fatal error in the last 24 hours', 'Lafka code caused %d fatal errors in the last 24 hours', $count, 'lafka-plugin' ),
+						$count
+					),
 					__( 'A PHP fatal error inside the Lafka plugin or theme stopped a page from loading. Open Lafka → Diagnostics for the file, line and how often it happened.', 'lafka-plugin' ),
 					true
 				);
@@ -90,7 +94,11 @@ if ( ! class_exists( 'Lafka_Diagnostics_Health' ) ) {
 					'lafka_payment_failures',
 					'recommended',
 					'orange',
-					sprintf( _n( '%d payment failed in the last 7 days', '%d payments failed in the last 7 days', $count, 'lafka-plugin' ), $count ),
+					sprintf(
+						/* translators: %d: number of failed payments */
+						_n( '%d payment failed in the last 7 days', '%d payments failed in the last 7 days', $count, 'lafka-plugin' ),
+						$count
+					),
 					__( 'Customers tried to pay and the payment was refused. Lafka → Diagnostics → Checkout failures shows whether cards were declined, failed the address check (AVS) or security code (CVV), or the gateway errored — address-check declines often mean the gateway\'s AVS rules are stricter than your customers\' billing details.', 'lafka-plugin' ),
 					true
 				);

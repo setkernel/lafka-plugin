@@ -196,24 +196,21 @@ if ( ! function_exists( 'lafka_unsub_handle_request' ) ) {
 	/**
 	 * `init` handler — opt the recipient out when ?lafka_unsubscribe + ?e are
 	 * present and the HMAC token matches. Works for both a GET click from the
-	 * email body and an RFC 8058 one-click POST (the query string populates $_GET
-	 * regardless of method). No confirmation page — matches the existing
-	 * review-prompt unsubscribe behaviour.
+	 * email body and an RFC 8058 one-click POST (the query string is read
+	 * regardless of method). The emailed HMAC token is the credential — a
+	 * nonce cannot be used in an email. No confirmation page — matches the
+	 * existing review-prompt unsubscribe behaviour.
 	 *
 	 * @return void
 	 */
 	function lafka_unsub_handle_request(): void {
-		if ( ! isset( $_GET['lafka_unsubscribe'] ) || ! isset( $_GET['e'] ) ) {
+		$raw_token = filter_input( INPUT_GET, 'lafka_unsubscribe', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+		$raw_email = filter_input( INPUT_GET, 'e', FILTER_SANITIZE_EMAIL );
+		if ( null === $raw_token || null === $raw_email ) {
 			return;
 		}
-		$token = ( is_string( $_GET['lafka_unsubscribe'] ) && function_exists( 'sanitize_text_field' ) && function_exists( 'wp_unslash' ) )
-			? sanitize_text_field( wp_unslash( $_GET['lafka_unsubscribe'] ) )
-			: '';
-		$email = '';
-		if ( is_string( $_GET['e'] ) ) {
-			$raw   = function_exists( 'wp_unslash' ) ? wp_unslash( $_GET['e'] ) : $_GET['e'];
-			$email = function_exists( 'sanitize_email' ) ? sanitize_email( $raw ) : (string) $raw;
-		}
+		$token = is_string( $raw_token ) ? sanitize_text_field( $raw_token ) : '';
+		$email = is_string( $raw_email ) ? sanitize_email( $raw_email ) : '';
 
 		if ( '' === $token || '' === $email ) {
 			return;
@@ -225,10 +222,8 @@ if ( ! function_exists( 'lafka_unsub_handle_request' ) ) {
 
 		lafka_unsub_record_opt_out( $email );
 
-		if ( function_exists( 'wp_safe_redirect' ) && function_exists( 'home_url' ) ) {
-			wp_safe_redirect( (string) home_url( '/?lafka_email_unsubscribed=1' ) );
-			exit;
-		}
+		wp_safe_redirect( (string) home_url( '/?lafka_email_unsubscribed=1' ) );
+		exit;
 	}
 }
 

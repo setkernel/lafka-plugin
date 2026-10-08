@@ -1,4 +1,4 @@
-/*global ajaxurl, woocommerce_term_ordering_params */
+/*global ajaxurl */
 
 /* Modifided script from the simple-page-ordering plugin */
 jQuery( function( $ ) {

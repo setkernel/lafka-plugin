@@ -67,7 +67,7 @@ if ( ! function_exists( 'lafka_inject_image_dimensions' ) ) {
 					} else {
 						$local_path = lafka_url_to_local_path( $url );
 						if ( $local_path && file_exists( $local_path ) ) {
-							$size = @getimagesize( $local_path );
+							$size = wp_getimagesize( $local_path );
 							if ( is_array( $size ) && $size[0] && $size[1] ) {
 								$w = (int) $size[0];
 								$h = (int) $size[1];

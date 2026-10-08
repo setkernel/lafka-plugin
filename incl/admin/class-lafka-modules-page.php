@@ -248,14 +248,14 @@ if ( ! class_exists( 'Lafka_Modules_Page' ) ) {
 			$this->render_checkout_mode_choice(
 				Lafka_Checkout_Mode::MODE_BLOCKS,
 				$current,
-				esc_html__( 'Block Cart & Checkout (recommended for new stores)', 'lafka-plugin' ),
-				esc_html__( 'The modern WooCommerce block checkout. This is the default WooCommerce gives new stores.', 'lafka-plugin' )
+				__( 'Block Cart & Checkout (recommended for new stores)', 'lafka-plugin' ),
+				__( 'The modern WooCommerce block checkout. This is the default WooCommerce gives new stores.', 'lafka-plugin' )
 			);
 			$this->render_checkout_mode_choice(
 				Lafka_Checkout_Mode::MODE_CLASSIC,
 				$current,
-				esc_html__( 'Classic Cart & Checkout (shortcodes)', 'lafka-plugin' ),
-				esc_html__( 'The classic shortcode checkout. Existing Lafka stores keep this on update so nothing changes.', 'lafka-plugin' )
+				__( 'Classic Cart & Checkout (shortcodes)', 'lafka-plugin' ),
+				__( 'The classic shortcode checkout. Existing Lafka stores keep this on update so nothing changes.', 'lafka-plugin' )
 			);
 
 			echo '<p><button type="submit" class="button button-primary">' . esc_html__( 'Save checkout experience', 'lafka-plugin' ) . '</button></p>';
@@ -268,15 +268,15 @@ if ( ! class_exists( 'Lafka_Modules_Page' ) ) {
 		 *
 		 * @param string $mode    The mode this choice sets.
 		 * @param string $current The currently active mode.
-		 * @param string $title   Escaped choice title.
-		 * @param string $desc    Escaped choice description.
+		 * @param string $title   Choice title (plain text).
+		 * @param string $desc    Choice description (plain text).
 		 */
 		private function render_checkout_mode_choice( $mode, $current, $title, $desc ) {
 			echo '<label class="lafka-checkout-mode__choice">';
 			echo '<input type="radio" name="lafka_checkout_mode" value="' . esc_attr( $mode ) . '"';
 			checked( $current, $mode );
-			echo '> <span class="lafka-checkout-mode__choice-title">' . $title . '</span>';
-			echo '<span class="lafka-checkout-mode__choice-desc">' . $desc . '</span>';
+			echo '> <span class="lafka-checkout-mode__choice-title">' . esc_html( $title ) . '</span>';
+			echo '<span class="lafka-checkout-mode__choice-desc">' . esc_html( $desc ) . '</span>';
 			echo '</label>';
 		}
 
@@ -284,7 +284,7 @@ if ( ! class_exists( 'Lafka_Modules_Page' ) ) {
 		 * Success/failure notice after saving the checkout mode.
 		 */
 		private function render_checkout_mode_notice() {
-			$mode = isset( $_GET['lafka_checkout_mode'] ) ? sanitize_key( wp_unslash( $_GET['lafka_checkout_mode'] ) ) : '';
+			$mode = sanitize_key( (string) filter_input( INPUT_GET, 'lafka_checkout_mode', FILTER_SANITIZE_FULL_SPECIAL_CHARS ) );
 			if ( '' === $mode ) {
 				return;
 			}
@@ -293,8 +293,8 @@ if ( ! class_exists( 'Lafka_Modules_Page' ) ) {
 				return;
 			}
 			$message = 'blocks' === $mode
-				? esc_html__( 'Customers now use the block Cart & Checkout. Place a test order to confirm.', 'lafka-plugin' )
-				: esc_html__( 'Customers now use the classic Cart & Checkout. Place a test order to confirm.', 'lafka-plugin' );
+				? __( 'Customers now use the block Cart & Checkout. Place a test order to confirm.', 'lafka-plugin' )
+				: __( 'Customers now use the classic Cart & Checkout. Place a test order to confirm.', 'lafka-plugin' );
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( $message ) . '</p></div>';
 		}
 
@@ -331,13 +331,13 @@ if ( ! class_exists( 'Lafka_Modules_Page' ) ) {
 		 * Success notice after saving the data-removal toggle.
 		 */
 		private function render_data_removal_notice() {
-			$state = isset( $_GET['lafka_data_removal'] ) ? sanitize_text_field( wp_unslash( $_GET['lafka_data_removal'] ) ) : '';
+			$state = sanitize_text_field( (string) filter_input( INPUT_GET, 'lafka_data_removal', FILTER_SANITIZE_FULL_SPECIAL_CHARS ) );
 			if ( 'on' !== $state && 'off' !== $state ) {
 				return;
 			}
 			$message = 'on' === $state
-				? esc_html__( 'Lafka will remove all its data when the plugin is uninstalled.', 'lafka-plugin' )
-				: esc_html__( 'Lafka will keep your data when the plugin is uninstalled.', 'lafka-plugin' );
+				? __( 'Lafka will remove all its data when the plugin is uninstalled.', 'lafka-plugin' )
+				: __( 'Lafka will keep your data when the plugin is uninstalled.', 'lafka-plugin' );
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( $message ) . '</p></div>';
 		}
 
@@ -345,19 +345,19 @@ if ( ! class_exists( 'Lafka_Modules_Page' ) ) {
 		 * Success notice after a toggle round-trip.
 		 */
 		private function render_notice() {
-			$updated = isset( $_GET['lafka_updated'] ) ? sanitize_text_field( wp_unslash( $_GET['lafka_updated'] ) ) : '';
+			$updated = sanitize_text_field( (string) filter_input( INPUT_GET, 'lafka_updated', FILTER_SANITIZE_FULL_SPECIAL_CHARS ) );
 			if ( '' === $updated || 'invalid' === $updated ) {
 				return;
 			}
-			$module_id = isset( $_GET['lafka_module'] ) ? sanitize_key( wp_unslash( $_GET['lafka_module'] ) ) : '';
+			$module_id = sanitize_key( (string) filter_input( INPUT_GET, 'lafka_module', FILTER_SANITIZE_FULL_SPECIAL_CHARS ) );
 			$module    = Lafka_Module_Registry::get( $module_id );
 			$name      = $module instanceof Lafka_Module ? $module->get_label() : $module_id;
 
 			$message = 'enabled' === $updated
 				/* translators: %s: module name. */
-				? sprintf( esc_html__( '%s enabled.', 'lafka-plugin' ), $name )
+				? sprintf( __( '%s enabled.', 'lafka-plugin' ), $name )
 				/* translators: %s: module name. */
-				: sprintf( esc_html__( '%s disabled.', 'lafka-plugin' ), $name );
+				: sprintf( __( '%s disabled.', 'lafka-plugin' ), $name );
 
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( $message ) . '</p></div>';
 		}

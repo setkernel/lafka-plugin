@@ -12,9 +12,10 @@
  *   4. POST the ciphertext to the subscription's endpoint with the VAPID
  *      Authorization header.
  *
- * We use raw cURL via the curl_* family (wp_remote_post would re-encode the
- * body and strip headers we need). Tested against FCM (Chrome / Android),
- * Apple Push Service (Safari 16.4+), and Mozilla autopush (Firefox).
+ * The ciphertext is POSTed with wp_remote_post() as a raw string body (WordPress
+ * only form-encodes array bodies) and the VAPID / Content-Encoding / TTL /
+ * Urgency headers. Tested against FCM (Chrome / Android), Apple Push Service
+ * (Safari 16.4+), and Mozilla autopush (Firefox).
  *
  * Why not the `minishlink/web-push` Composer library? The plugin's composer.json
  * intentionally has zero runtime deps so the .zip ships clean. Implementing the
@@ -40,22 +41,22 @@ if ( ! function_exists( 'lafka_push_b64url_encode' ) ) {
 	 * base64url-encode raw bytes (RFC 4648 section 5, no trailing padding).
 	 */
 	function lafka_push_b64url_encode( string $bytes ): string {
-		return rtrim( strtr( base64_encode( $bytes ), '+/', '-_' ), '=' );
+		return sodium_bin2base64( $bytes, SODIUM_BASE64_VARIANT_URLSAFE_NO_PADDING );
 	}
 }
 
 if ( ! function_exists( 'lafka_push_b64url_decode' ) ) {
 	/**
-	 * base64url-decode (RFC 4648 section 5). Pads back to a multiple of 4.
+	 * base64url-decode (RFC 4648 section 5). Accepts the url-safe or the
+	 * standard alphabet, with or without trailing padding; '' when invalid.
 	 */
 	function lafka_push_b64url_decode( string $str ): string {
-		$str  = strtr( $str, '-_', '+/' );
-		$mod4 = strlen( $str ) % 4;
-		if ( $mod4 ) {
-			$str .= str_repeat( '=', 4 - $mod4 );
+		$str = rtrim( strtr( $str, '+/', '-_' ), '=' );
+		try {
+			return sodium_base642bin( $str, SODIUM_BASE64_VARIANT_URLSAFE_NO_PADDING, " \t\r\n" );
+		} catch ( SodiumException $e ) {
+			return '';
 		}
-		$decoded = base64_decode( $str, true );
-		return false === $decoded ? '' : $decoded;
 	}
 }
 
@@ -151,12 +152,12 @@ if ( ! function_exists( 'lafka_push_build_vapid_jwt' ) ) {
 		if ( '' === $pem ) {
 			return '';
 		}
-		$pkey = @openssl_pkey_get_private( $pem );
+		$pkey = openssl_pkey_get_private( $pem );
 		if ( false === $pkey ) {
 			return '';
 		}
 		$der_signature = '';
-		$signed        = @openssl_sign( $body, $der_signature, $pkey, OPENSSL_ALGO_SHA256 );
+		$signed        = openssl_sign( $body, $der_signature, $pkey, OPENSSL_ALGO_SHA256 );
 		if ( ! $signed ) {
 			return '';
 		}
@@ -194,7 +195,7 @@ if ( ! function_exists( 'lafka_push_p256_pem_from_raw_private' ) ) {
 		$pkcs8       = "\x30" . chr( strlen( $pkcs8_inner ) ) . $pkcs8_inner;
 
 		$pem = "-----BEGIN PRIVATE KEY-----\n"
-			. chunk_split( base64_encode( $pkcs8 ), 64, "\n" )
+			. chunk_split( sodium_bin2base64( $pkcs8, SODIUM_BASE64_VARIANT_ORIGINAL ), 64, "\n" )
 			. "-----END PRIVATE KEY-----\n";
 		return $pem;
 	}
@@ -259,7 +260,7 @@ if ( ! function_exists( 'lafka_push_encrypt_payload' ) ) {
 			return null;
 		}
 
-		$ec = @openssl_pkey_new(
+		$ec = openssl_pkey_new(
 			array(
 				'private_key_type' => OPENSSL_KEYTYPE_EC,
 				'curve_name'       => 'prime256v1',
@@ -268,7 +269,7 @@ if ( ! function_exists( 'lafka_push_encrypt_payload' ) ) {
 		if ( false === $ec ) {
 			return null;
 		}
-		$details = @openssl_pkey_get_details( $ec );
+		$details = openssl_pkey_get_details( $ec );
 		if ( ! is_array( $details ) || empty( $details['ec']['x'] ) || empty( $details['ec']['y'] ) ) {
 			return null;
 		}
@@ -279,15 +280,15 @@ if ( ! function_exists( 'lafka_push_encrypt_payload' ) ) {
 			return null;
 		}
 		$ua_pem = "-----BEGIN PUBLIC KEY-----\n"
-			. chunk_split( base64_encode( $ua_spki ), 64, "\n" )
+			. chunk_split( sodium_bin2base64( $ua_spki, SODIUM_BASE64_VARIANT_ORIGINAL ), 64, "\n" )
 			. "-----END PUBLIC KEY-----\n";
-		$ua_key = @openssl_pkey_get_public( $ua_pem );
+		$ua_key = openssl_pkey_get_public( $ua_pem );
 		if ( false === $ua_key ) {
 			return null;
 		}
 		// P-256 ECDH yields the 32-byte shared secret on its own; the
 		// key_length argument is deprecated as of PHP 8.5.
-		$shared = @openssl_pkey_derive( $ua_key, $ec );
+		$shared = openssl_pkey_derive( $ua_key, $ec );
 		if ( false === $shared || '' === $shared ) {
 			return null;
 		}
@@ -303,7 +304,7 @@ if ( ! function_exists( 'lafka_push_encrypt_payload' ) ) {
 		$padded = $payload . "\x02";
 
 		$tag       = '';
-		$encrypted = @openssl_encrypt( $padded, 'aes-128-gcm', $cek, OPENSSL_RAW_DATA, $nonce, $tag );
+		$encrypted = openssl_encrypt( $padded, 'aes-128-gcm', $cek, OPENSSL_RAW_DATA, $nonce, $tag );
 		if ( false === $encrypted ) {
 			return null;
 		}
@@ -451,7 +452,7 @@ if ( ! function_exists( 'lafka_push_send' ) ) {
 
 if ( ! function_exists( 'lafka_push_is_safe_remote_host' ) ) {
 	/**
-	 * SSRF guard for the cURL sender: resolve $host and confirm EVERY address it
+	 * SSRF guard for the push sender: resolve $host and confirm EVERY address it
 	 * points at is a publicly-routable, non-reserved IP.
 	 *
 	 * We deliberately bypass wp_safe_remote_post() for body/header fidelity (see
@@ -463,7 +464,7 @@ if ( ! function_exists( 'lafka_push_is_safe_remote_host' ) ) {
 	 * FILTER_FLAG_NO_RES_RANGE.
 	 *
 	 * Fails closed: if the host cannot be resolved to any address we refuse to
-	 * connect rather than hand an unvetted name to cURL.
+	 * connect rather than hand an unvetted name to the HTTP transport.
 	 *
 	 * @param string $host Hostname (or IP literal) from the endpoint URL.
 	 * @return bool True only if the host resolves exclusively to safe addresses.
@@ -498,7 +499,7 @@ if ( ! function_exists( 'lafka_push_is_safe_remote_host' ) ) {
 
 		// Resolve AAAA (IPv6) records when DNS is available.
 		if ( function_exists( 'dns_get_record' ) && defined( 'DNS_AAAA' ) ) {
-			$aaaa = @dns_get_record( $host, DNS_AAAA );
+			$aaaa = checkdnsrr( $host, 'AAAA' ) ? dns_get_record( $host, DNS_AAAA ) : array();
 			if ( is_array( $aaaa ) ) {
 				foreach ( $aaaa as $rec ) {
 					if ( ! empty( $rec['ipv6'] ) ) {
@@ -523,42 +524,9 @@ if ( ! function_exists( 'lafka_push_is_safe_remote_host' ) ) {
 	}
 }
 
-if ( ! function_exists( 'lafka_push_curl_options' ) ) {
-	/**
-	 * cURL options for one push delivery (a POST to the provider endpoint).
-	 *
-	 * The transfer is confined to HTTPS and never follows redirects — an open
-	 * redirect on a provider must not be able to bounce us to http:// or to an
-	 * internal host lafka_push_http_post() just refused. The redirect rule
-	 * comes first, so it is applied even if a later option is rejected.
-	 *
-	 * Requires the cURL extension (callers check curl_init first).
-	 *
-	 * @param string[] $headers Request headers ("Name: value").
-	 * @param string   $body    Encrypted payload.
-	 * @return array<int, mixed> For curl_setopt_array().
-	 */
-	function lafka_push_curl_options( array $headers, string $body ): array {
-		$options = array(
-			CURLOPT_FOLLOWLOCATION => false,
-			CURLOPT_POST           => true,
-			CURLOPT_POSTFIELDS     => $body,
-			CURLOPT_HTTPHEADER     => $headers,
-			CURLOPT_RETURNTRANSFER => true,
-			CURLOPT_TIMEOUT        => 15,
-			CURLOPT_CONNECTTIMEOUT => 5,
-		);
-		if ( defined( 'CURLPROTO_HTTPS' ) ) {
-			$options[ CURLOPT_PROTOCOLS ]       = CURLPROTO_HTTPS;
-			$options[ CURLOPT_REDIR_PROTOCOLS ] = CURLPROTO_HTTPS;
-		}
-		return $options;
-	}
-}
-
 if ( ! function_exists( 'lafka_push_http_post' ) ) {
 	/**
-	 * Tiny cURL wrapper used by lafka_push_send().
+	 * Tiny HTTP POST wrapper used by lafka_push_send().
 	 */
 	function lafka_push_http_post( string $url, array $headers, string $body ): array {
 		if ( function_exists( 'apply_filters' ) ) {
@@ -584,25 +552,43 @@ if ( ! function_exists( 'lafka_push_http_post' ) ) {
 				'body'      => 'blocked_host',
 			);
 		}
-		if ( ! function_exists( 'curl_init' ) ) {
+		// Header list ("Name: value") -> associative array. Content-Length is
+		// dropped: the HTTP transport computes it from the raw string body.
+		$request_headers = array();
+		foreach ( $headers as $header_line ) {
+			$pair = explode( ':', (string) $header_line, 2 );
+			if ( 2 !== count( $pair ) ) {
+				continue;
+			}
+			$name = trim( $pair[0] );
+			if ( '' === $name || 'content-length' === strtolower( $name ) ) {
+				continue;
+			}
+			$request_headers[ $name ] = trim( $pair[1] );
+		}
+
+		// A string body is sent byte-for-byte (WordPress only encodes array bodies).
+		// Never follow redirects: an open redirect on a provider must not be able
+		// to bounce us to http:// or to an internal host refused above.
+		$response = wp_remote_post(
+			$url,
+			array(
+				'headers'     => $request_headers,
+				'body'        => $body,
+				'timeout'     => 15,
+				'redirection' => 0,
+				'sslverify'   => true,
+			)
+		);
+		if ( is_wp_error( $response ) ) {
 			return array(
 				'http_code' => 0,
-				'body'      => 'curl_missing',
+				'body'      => '',
 			);
 		}
-		$ch = curl_init( $url );
-		// Fail closed: never send with only part of the hardening applied.
-		if ( ! curl_setopt_array( $ch, lafka_push_curl_options( $headers, $body ) ) ) {
-			return array(
-				'http_code' => 0,
-				'body'      => 'curl_setopt_failed',
-			);
-		}
-		$resp_body = (string) curl_exec( $ch );
-		$http_code = (int) curl_getinfo( $ch, CURLINFO_HTTP_CODE );
 		return array(
-			'http_code' => $http_code,
-			'body'      => $resp_body,
+			'http_code' => (int) wp_remote_retrieve_response_code( $response ),
+			'body'      => (string) wp_remote_retrieve_body( $response ),
 		);
 	}
 }
@@ -1043,7 +1029,7 @@ if ( ! function_exists( 'lafka_push_run_broadcast_batch' ) ) {
 		// This runs in cron context; never let a slow provider kill the worker
 		// mid-batch and leave the job un-resumable.
 		if ( function_exists( 'set_time_limit' ) ) {
-			@set_time_limit( 0 );
+			set_time_limit( 0 );
 		}
 		if ( function_exists( 'ignore_user_abort' ) ) {
 			ignore_user_abort( true );

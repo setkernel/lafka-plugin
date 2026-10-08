@@ -25,6 +25,23 @@ if ( class_exists( 'WC_Email' ) && ! class_exists( 'Lafka_Email_Error_Digest' ) 
 	 */
 	class Lafka_Email_Error_Digest extends WC_Email {
 
+		/** Markup render_rows_html() emits (wp_kses allowlist). */
+		const ROWS_KSES = array(
+			'p'     => array(),
+			'a'     => array( 'href' => array() ),
+			'table' => array(
+				'cellspacing' => array(),
+				'cellpadding' => array(),
+				'border'      => array(),
+				'style'       => array(),
+			),
+			'thead' => array(),
+			'tbody' => array(),
+			'tr'    => array(),
+			'th'    => array( 'style' => array() ),
+			'td'    => array( 'style' => array() ),
+		);
+
 		/** @var array<int,object> Incidents being reported. */
 		private $rows = array();
 
@@ -70,7 +87,11 @@ if ( class_exists( 'WC_Email' ) && ! class_exists( 'Lafka_Email_Error_Digest' ) 
 		 * @return void
 		 */
 		public function init_form_fields() {
-			$placeholder_text  = sprintf( __( 'Available placeholders: %s', 'lafka-plugin' ), '<code>{site_title}</code>' );
+			$placeholder_text = sprintf(
+				/* translators: %s: list of available email placeholders */
+				__( 'Available placeholders: %s', 'lafka-plugin' ),
+				'<code>{site_title}</code>'
+			);
 			$this->form_fields = array(
 				'enabled'    => array(
 					'title'   => __( 'Enable/Disable', 'lafka-plugin' ),
@@ -81,7 +102,11 @@ if ( class_exists( 'WC_Email' ) && ! class_exists( 'Lafka_Email_Error_Digest' ) 
 				'recipient'  => array(
 					'title'       => __( 'Recipient(s)', 'lafka-plugin' ),
 					'type'        => 'text',
-					'description' => sprintf( __( 'Enter recipients (comma separated) for this email. Defaults to %s.', 'lafka-plugin' ), '<code>' . esc_html( (string) get_option( 'admin_email' ) ) . '</code>' ),
+					'description' => sprintf(
+						/* translators: %s: the site admin email address */
+						__( 'Enter recipients (comma separated) for this email. Defaults to %s.', 'lafka-plugin' ),
+						'<code>' . esc_html( (string) get_option( 'admin_email' ) ) . '</code>'
+					),
 					'placeholder' => '',
 					'default'     => '',
 					'desc_tip'    => true,
@@ -152,7 +177,7 @@ if ( class_exists( 'WC_Email' ) && ! class_exists( 'Lafka_Email_Error_Digest' ) 
 		public function get_content_html() {
 			ob_start();
 			WC()->mailer()->email_header( $this->get_heading() );
-			echo self::render_rows_html( $this->rows );
+			echo wp_kses( self::render_rows_html( $this->rows ), self::ROWS_KSES );
 			WC()->mailer()->email_footer();
 			return (string) ob_get_clean();
 		}

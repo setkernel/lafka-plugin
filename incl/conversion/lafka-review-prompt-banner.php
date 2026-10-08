@@ -280,9 +280,9 @@ if ( ! function_exists( 'lafka_review_banner_emit_setcookie' ) ) {
 	 * @return void
 	 */
 	function lafka_review_banner_emit_setcookie( string $name, string $value, int $expires, bool $secure ): void {
-		// PHP 7.3+ associative form — supports SameSite. Function is stubbable
-		// by tests via Brain Monkey.
-		if ( function_exists( 'setcookie' ) ) {
+		// Associative options form — supports SameSite. Headers already sent
+		// means the cookie cannot be set; skip instead of emitting a warning.
+		if ( ! headers_sent() ) {
 			$opts = array(
 				'expires'  => $expires,
 				'path'     => '/',
@@ -290,7 +290,7 @@ if ( ! function_exists( 'lafka_review_banner_emit_setcookie' ) ) {
 				'httponly' => false, // JS must read it.
 				'samesite' => 'Lax',
 			);
-			@setcookie( $name, $value, $opts );
+			setcookie( $name, $value, $opts );
 		}
 	}
 }

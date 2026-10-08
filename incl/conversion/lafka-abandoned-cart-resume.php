@@ -26,7 +26,10 @@ defined( 'ABSPATH' ) || exit;
 
 if ( ! function_exists( 'lafka_ac_handle_resume_request' ) ) {
 	/**
-	 * Inspect $_GET, restore cart, redirect to /cart/.
+	 * Inspect the resume link, restore the cart, redirect to /cart/.
+	 *
+	 * The link is emailed, so a nonce cannot protect it; the unguessable
+	 * per-cart resume token (looked up below) is the credential.
 	 *
 	 * Hooked on `wp_loaded` priority 20. Earlier (it used to run on `init` 5)
 	 * the restore was lost for guests: WC only sets the session and cart
@@ -36,17 +39,15 @@ if ( ! function_exists( 'lafka_ac_handle_resume_request' ) ) {
 	 * @return void
 	 */
 	function lafka_ac_handle_resume_request(): void {
-		if ( empty( $_GET['lafka_resume_cart'] ) || ! is_string( $_GET['lafka_resume_cart'] ) ) {
+		$raw_token = filter_input( INPUT_GET, 'lafka_resume_cart', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+		if ( ! is_string( $raw_token ) || '' === $raw_token ) {
 			return;
 		}
 		if ( ! function_exists( 'WC' ) ) {
 			return;
 		}
-		$raw_token = wp_unslash( $_GET['lafka_resume_cart'] );
-		$token     = function_exists( 'sanitize_text_field' )
-			? sanitize_text_field( $raw_token )
-			: preg_replace( '/[^a-zA-Z0-9]/', '', $raw_token );
-		if ( ! is_string( $token ) || strlen( $token ) < 16 ) {
+		$token = sanitize_text_field( $raw_token );
+		if ( strlen( $token ) < 16 ) {
 			return;
 		}
 
@@ -124,13 +125,7 @@ if ( ! function_exists( 'lafka_ac_redirect_to_cart' ) ) {
 			? (string) wc_get_cart_url()
 			: ( function_exists( 'home_url' ) ? (string) home_url( '/cart/' ) : '/cart/' );
 
-		if ( function_exists( 'wp_safe_redirect' ) ) {
-			wp_safe_redirect( $target, 302 );
-		} elseif ( function_exists( 'wp_redirect' ) ) {
-			wp_redirect( $target, 302 );
-		} else {
-			header( 'Location: ' . $target, true, 302 );
-		}
+		wp_safe_redirect( $target, 302 );
 
 		/**
 		 * Filters whether the request ends right after the resume redirect.
@@ -143,7 +138,7 @@ if ( ! function_exists( 'lafka_ac_redirect_to_cart' ) ) {
 		 * @param bool   $exit   Whether to exit. Default true.
 		 * @param string $target The redirect URL.
 		 */
-		if ( ! function_exists( 'apply_filters' ) || (bool) apply_filters( 'lafka_ac_resume_redirect_exit', true, $target ) ) {
+		if ( (bool) apply_filters( 'lafka_ac_resume_redirect_exit', true, $target ) ) {
 			exit;
 		}
 	}

@@ -96,7 +96,14 @@ if ( ! function_exists( 'lafka_foodmenu_cat_ordering' ) ) {
 if ( ! function_exists( 'lafka_reorder_terms' ) ) {
 	function lafka_reorder_terms( $the_term, $next_id, $taxonomy, $index = 0, $terms = null ) {
 		if ( ! $terms ) {
-			$terms = get_terms( $taxonomy, 'menu_order=ASC&hide_empty=0&parent=0' );
+			$terms = get_terms(
+				array(
+					'taxonomy'   => $taxonomy,
+					'menu_order' => 'ASC',
+					'hide_empty' => 0,
+					'parent'     => 0,
+				)
+			);
 		}
 		if ( empty( $terms ) ) {
 			return $index;
@@ -124,7 +131,14 @@ if ( ! function_exists( 'lafka_reorder_terms' ) ) {
 			$index = lafka_set_term_order( $term_id, $index, $taxonomy );
 
 			// If that term has children we walk through them.
-			$children = get_terms( $taxonomy, "parent={$term_id}&menu_order=ASC&hide_empty=0" );
+			$children = get_terms(
+				array(
+					'taxonomy'   => $taxonomy,
+					'parent'     => $term_id,
+					'menu_order' => 'ASC',
+					'hide_empty' => 0,
+				)
+			);
 			if ( ! empty( $children ) ) {
 				$index = lafka_reorder_terms( $the_term, $next_id, $taxonomy, $index, $children );
 			}
@@ -164,7 +178,14 @@ if ( ! function_exists( 'lafka_set_term_order' ) ) {
 			return $index;
 		}
 
-		$children = get_terms( $taxonomy, "parent=$term_id&menu_order=ASC&hide_empty=0" );
+		$children = get_terms(
+			array(
+				'taxonomy'   => $taxonomy,
+				'parent'     => $term_id,
+				'menu_order' => 'ASC',
+				'hide_empty' => 0,
+			)
+		);
 
 		foreach ( $children as $term ) {
 			++$index;
@@ -195,7 +216,7 @@ if ( ! function_exists( 'lafka_terms_clauses' ) ) {
 		}
 
 		// No sorting in admin when sorting by a column.
-		if ( is_admin() && isset( $_GET['orderby'] ) ) {
+		if ( is_admin() && null !== filter_input( INPUT_GET, 'orderby', FILTER_SANITIZE_FULL_SPECIAL_CHARS ) ) {
 			return $clauses;
 		}
 

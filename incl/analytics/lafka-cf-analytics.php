@@ -52,9 +52,13 @@ if ( ! function_exists( 'lafka_analytics_emit_cf_beacon' ) ) {
 		// Beacon config is a fixed JSON literal with a validated hex token;
 		// safe to emit directly. (data-cf-beacon must be valid JSON.)
 		$beacon = wp_json_encode( array( 'token' => $token ) );
-		printf(
-			'<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon=\'%s\'></script>' . "\n",
-			esc_attr( $beacon )
+		wp_print_script_tag(
+			array(
+				'defer'          => true,
+				'src'            => 'https://static.cloudflareinsights.com/beacon.min.js',
+				'data-cf-beacon' => (string) $beacon,
+			)
 		);
+		echo "\n";
 	}
 }

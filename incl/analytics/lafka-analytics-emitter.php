@@ -158,9 +158,10 @@ if ( ! function_exists( 'lafka_emit_consent_mirror' ) ) {
 			return;
 		}
 		$file = dirname( __DIR__, 2 ) . '/assets/js/lafka-consent-mirror.min.js';
-		$code = is_readable( $file ) ? (string) file_get_contents( $file ) : '';
+		$code = (string) lafka_read_local_file( $file );
 		if ( '' !== $code ) {
-			echo '<script id="lafka-consent-mirror">' . $code . "</script>\n";
+			wp_print_inline_script_tag( $code, array( 'id' => 'lafka-consent-mirror' ) );
+			echo "\n";
 		}
 	}
 }
@@ -201,9 +202,7 @@ if ( ! function_exists( 'lafka_emit_consent_mode_defaults' ) ) {
 		 *
 		 * @param array<string, mixed> $payload
 		 */
-		if ( function_exists( 'apply_filters' ) ) {
-			$payload = (array) apply_filters( 'lafka_consent_defaults', $payload );
-		}
+		$payload = (array) apply_filters( 'lafka_consent_defaults', $payload );
 
 		echo "<script>\n";
 		echo "window.dataLayer = window.dataLayer || [];\n";
@@ -376,7 +375,13 @@ if ( ! function_exists( 'lafka_emit_direct_ga4' ) ) {
 			return;
 		}
 		echo "<!-- Lafka — direct GA4 -->\n";
-		echo '<script async src="https://www.googletagmanager.com/gtag/js?id=' . esc_attr( $ga4_id ) . '"></script>' . "\n";
+		wp_print_script_tag(
+			array(
+				'async' => true,
+				'src'   => 'https://www.googletagmanager.com/gtag/js?id=' . rawurlencode( $ga4_id ),
+			)
+		);
+		echo "\n";
 		echo "<script>\n";
 		echo "window.dataLayer = window.dataLayer || [];\n";
 		echo "function gtag(){dataLayer.push(arguments);}\n";
@@ -564,12 +569,14 @@ CSS;
 		 *
 		 * @param string $styles Inline CSS, without the wrapping <style> tag.
 		 */
-		if ( function_exists( 'apply_filters' ) ) {
-			$styles = (string) apply_filters( 'lafka_consent_banner_styles', $styles );
-		}
+		$styles = (string) apply_filters( 'lafka_consent_banner_styles', $styles );
 
 		if ( '' !== trim( $styles ) ) {
-			echo '<style id="lafka-consent-banner-style">' . "\n" . $styles . "\n</style>\n";
+			// Printed through the styles API (inline-only handle) so WordPress
+			// owns the <style> output and strips any stray </style> markup.
+			wp_register_style( 'lafka-consent-banner', false, array(), lafka_plugin_asset_version( 'incl/analytics/lafka-analytics-emitter.php' ) );
+			wp_add_inline_style( 'lafka-consent-banner', $styles );
+			wp_print_styles( 'lafka-consent-banner' );
 		}
 
 		?>

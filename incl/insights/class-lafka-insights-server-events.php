@@ -57,7 +57,7 @@ if ( ! class_exists( 'Lafka_Insights_Server_Events' ) ) {
 			add_action( 'woocommerce_add_to_cart', array( __CLASS__, 'on_add_to_cart' ), 20, 6 );
 			add_action( 'woocommerce_cart_item_removed', array( __CLASS__, 'on_cart_item_removed' ), 20, 2 );
 			add_action( 'template_redirect', array( __CLASS__, 'on_template_redirect' ), 20 );
-			add_action( 'woocommerce_checkout_order_processed', array( __CLASS__, 'on_checkout_order_processed' ), 20, 3 );
+			add_action( 'woocommerce_checkout_order_processed', array( __CLASS__, 'on_checkout_order_processed' ), 20, 1 );
 			add_action( 'woocommerce_store_api_checkout_order_processed', array( __CLASS__, 'on_store_api_order_processed' ), 20, 1 );
 			add_action( 'woocommerce_order_status_changed', array( __CLASS__, 'on_order_status_changed' ), 20, 4 );
 			add_action( 'lafka_checkout_blocked', array( __CLASS__, 'on_checkout_blocked' ), 10, 2 );
@@ -137,12 +137,10 @@ if ( ! class_exists( 'Lafka_Insights_Server_Events' ) ) {
 		/**
 		 * Classic checkout: order created, payment about to be attempted.
 		 *
-		 * @param int   $order_id Order id.
-		 * @param array $posted   Posted data.
-		 * @param mixed $order    WC_Order.
+		 * @param int $order_id Order id.
 		 * @return void
 		 */
-		public static function on_checkout_order_processed( $order_id = 0, $posted = array(), $order = null ): void {
+		public static function on_checkout_order_processed( $order_id = 0 ): void {
 			self::payment_attempt( (int) $order_id );
 		}
 

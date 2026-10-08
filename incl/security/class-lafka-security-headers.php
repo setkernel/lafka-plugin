@@ -223,7 +223,7 @@ if ( ! class_exists( 'Lafka_Security_Headers' ) ) {
 			if ( is_user_logged_in() ) {
 				return;
 			}
-			if ( ! is_author() && ! isset( $_GET['author'] ) ) {
+			if ( ! is_author() && ! filter_has_var( INPUT_GET, 'author' ) ) {
 				return;
 			}
 			wp_safe_redirect( home_url( '/' ), 301 );

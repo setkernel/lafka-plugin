@@ -320,13 +320,12 @@ if ( ! function_exists( 'lafka_og_twitter_card' ) ) {
  *
  * Frontend only — admin keeps the WP core locale for back-office i18n.
  */
-add_filter( 'language_attributes', 'lafka_filter_language_attributes', 10, 2 );
+add_filter( 'language_attributes', 'lafka_filter_language_attributes', 10, 1 );
 if ( ! function_exists( 'lafka_filter_language_attributes' ) ) {
 	/**
 	 * @param string $output Existing attribute string e.g. `lang="en-US"`.
-	 * @param string $doctype Either 'html' or 'xhtml'.
 	 */
-	function lafka_filter_language_attributes( $output, $doctype = 'html' ) {
+	function lafka_filter_language_attributes( $output ) {
 		if ( is_admin() ) {
 			return $output;
 		}

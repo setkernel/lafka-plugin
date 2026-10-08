@@ -104,7 +104,7 @@ if ( ! class_exists( 'LAFKA_Review_Prompt_Email' ) ) {
 
 			if ( $this->is_enabled() && $this->get_recipient() ) {
 				$body = function_exists( 'lafka_review_email_render_body' )
-					? lafka_review_email_render_body( $order, $this )
+					? lafka_review_email_render_body( $order )
 					: '';
 
 				if ( '' !== $body ) {
@@ -155,12 +155,12 @@ if ( ! class_exists( 'LAFKA_Review_Prompt_Email' ) ) {
 		public function get_content_html(): string {
 			if ( is_object( $this->object ) ) {
 				return function_exists( 'lafka_review_email_render_body' )
-					? lafka_review_email_render_body( $this->object, $this )
+					? lafka_review_email_render_body( $this->object )
 					: '';
 			}
 			// Synthesise a preview when called outside trigger() context.
 			return function_exists( 'lafka_review_email_render_preview' )
-				? lafka_review_email_render_preview( $this )
+				? lafka_review_email_render_preview()
 				: '';
 		}
 

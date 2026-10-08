@@ -167,22 +167,21 @@ if ( ! function_exists( 'lafka_ac_get_session_id' ) ) {
 
 if ( ! function_exists( 'lafka_ac_capture_from_post' ) ) {
 	/**
-	 * Read the customer email from the checkout's update_order_review AJAX
-	 * request, which carries the serialised checkout form in
-	 * $_POST['post_data'] (the only caller is that hook's handler).
+	 * Read the customer email from the serialised checkout form that WC passes
+	 * to the woocommerce_checkout_update_order_review action. WC verifies the
+	 * update-order-review nonce before firing that action, so this helper
+	 * receives already-verified, already-unslashed data as a parameter and never
+	 * touches the request superglobals.
 	 *
+	 * @param mixed $post_data URL-encoded checkout form data from the action.
 	 * @return string Lowercased + sanitised email, or '' if none found / invalid.
 	 */
-	function lafka_ac_capture_from_post(): string {
-		// CSRF: this helper only fires from WC core's
-		// woocommerce_checkout_update_order_review hook, which verifies its own
-		// checkout nonce upstream before invoking the action chain. Suppress the Missing-nonce sniff for the whole
-		// function since it never runs outside that protected context.
+	function lafka_ac_capture_from_post( $post_data = '' ): string {
 		$email = '';
 
 		// AJAX update_order_review payload — flat string of url-encoded form data.
-		if ( isset( $_POST['post_data'] ) && is_string( $_POST['post_data'] ) ) {
-			parse_str( wp_unslash( $_POST['post_data'] ), $parsed );
+		if ( is_string( $post_data ) && '' !== $post_data ) {
+			parse_str( $post_data, $parsed );
 			if ( isset( $parsed['billing_email'] ) && is_string( $parsed['billing_email'] ) ) {
 				$email = $parsed['billing_email'];
 			}
@@ -206,13 +205,14 @@ if ( ! function_exists( 'lafka_ac_handle_update_order_review' ) ) {
 	/**
 	 * Hook handler: WC fires this on every email/address field edit on /checkout/.
 	 *
+	 * @param mixed $post_data URL-encoded checkout form data from the action.
 	 * @return void
 	 */
-	function lafka_ac_handle_update_order_review(): void {
+	function lafka_ac_handle_update_order_review( $post_data = '' ): void {
 		if ( ! lafka_ac_capture_is_enabled() ) {
 			return;
 		}
-		$email = lafka_ac_capture_from_post();
+		$email = lafka_ac_capture_from_post( $post_data );
 		if ( '' === $email ) {
 			return;
 		}
@@ -316,7 +316,7 @@ if ( ! function_exists( 'lafka_ac_handle_account_deleted' ) ) {
 }
 
 if ( function_exists( 'add_action' ) ) {
-	add_action( 'woocommerce_checkout_update_order_review', 'lafka_ac_handle_update_order_review', 20 );
+	add_action( 'woocommerce_checkout_update_order_review', 'lafka_ac_handle_update_order_review', 20, 1 );
 	add_action( 'woocommerce_checkout_order_processed', 'lafka_ac_handle_order_processed', 20, 1 );
 	add_action( 'woocommerce_account_delete_completed', 'lafka_ac_handle_account_deleted', 10, 1 );
 	add_action( 'delete_user', 'lafka_ac_handle_account_deleted', 10, 1 );

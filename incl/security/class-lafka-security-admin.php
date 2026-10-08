@@ -99,7 +99,7 @@ if ( ! class_exists( 'Lafka_Security_Admin' ) ) {
 			$active  = class_exists( 'Lafka_Security_Headers' )
 				&& Lafka_Security_Headers::instance()->is_active();
 
-			$updated = isset( $_GET['updated'] ) ? sanitize_text_field( wp_unslash( $_GET['updated'] ) ) : '';
+			$updated = sanitize_text_field( (string) filter_input( INPUT_GET, 'updated', FILTER_SANITIZE_FULL_SPECIAL_CHARS ) );
 			?>
 			<div class="wrap">
 				<h1><?php esc_html_e( 'Lafka Security', 'lafka-plugin' ); ?></h1>

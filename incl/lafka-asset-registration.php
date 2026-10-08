@@ -131,7 +131,7 @@ if ( ! function_exists( 'lafka_register_plugin_scripts' ) ) {
 		if ( '' !== $maps_url ) {
 			// `defer` via the WP strategy API: WordPress keeps the loader blocking
 			// whenever a dependent (e.g. a map config with an inline script) needs it.
-			wp_register_script( 'lafka-google-maps', $maps_url, array( 'jquery' ), null, lafka_google_maps_script_args() );
+			wp_register_script( 'lafka-google-maps', $maps_url, array( 'jquery' ), 'weekly', lafka_google_maps_script_args() );
 		}
 	}
 }
@@ -214,7 +214,7 @@ if ( ! function_exists( 'lafka_register_admin_plugin_scripts' ) ) {
 
 		$screen    = get_current_screen();
 		$screen_id = $screen ? $screen->id : '';
-		if ( strstr( $screen_id, 'lafka_foodmenu_category' ) && ! empty( $_GET['taxonomy'] ) && in_array( wp_unslash( $_GET['taxonomy'] ), array( 'lafka_foodmenu_category' ), true ) ) {
+		if ( strstr( $screen_id, 'lafka_foodmenu_category' ) && $screen && 'lafka_foodmenu_category' === $screen->taxonomy ) {
 			wp_register_script( 'lafka-plugin-term-ordering', plugins_url( 'assets/js/lafka-plugin-foodmenu-cat-ordering.js', LAFKA_PLUGIN_FILE ), array( 'jquery-ui-sortable' ), lafka_plugin_asset_version( 'assets/js/lafka-plugin-foodmenu-cat-ordering.js' ), false );
 			wp_enqueue_script( 'lafka-plugin-term-ordering' );
 			wp_localize_script(
@@ -230,7 +230,7 @@ if ( ! function_exists( 'lafka_register_admin_plugin_scripts' ) ) {
 		// Same fail-closed rule as the front end: no key, no handle.
 		$maps_url = lafka_google_maps_script_url( 'geometry' );
 		if ( '' !== $maps_url ) {
-			wp_register_script( 'lafka-google-maps', $maps_url, array( 'jquery' ), null, lafka_google_maps_script_args() );
+			wp_register_script( 'lafka-google-maps', $maps_url, array( 'jquery' ), 'weekly', lafka_google_maps_script_args() );
 		}
 	}
 }

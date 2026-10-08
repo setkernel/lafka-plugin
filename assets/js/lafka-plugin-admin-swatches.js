@@ -74,7 +74,7 @@ jQuery( document ).ready( function ( $ ) {
 		$modal.find( '.lafka-wcs-term-swatch' ).html( $( '#tmpl-lafka-wcs-input-' + data.type ).html() );
 		$modal.find( '.lafka-wcs-term-tax' ).html( taxInputTemplate( data ) );
 
-		if ( 'color' == data.type ) {
+		if ( 'color' === data.type ) {
 			$modal.find( 'input.lafka-wcs-input-color' ).wpColorPicker();
 		}
 
@@ -90,16 +90,14 @@ jQuery( document ).ready( function ( $ ) {
 	$body.on( 'click', '.lafka-wcs-new-attribute-submit', function ( e ) {
 		e.preventDefault();
 
-		var $button = $( this ),
-			type = $button.data( 'type' ),
-			error = false,
+		var error = false,
 			data = {};
 
 		// Validate
 		$modal.find( '.lafka-wcs-input' ).each( function () {
 			var $this = $( this );
 
-			if ( $this.attr( 'name' ) != 'slug' && !$this.val() ) {
+			if ( $this.attr( 'name' ) !== 'slug' && !$this.val() ) {
 				$this.addClass( 'error' );
 				error = true;
 			} else {

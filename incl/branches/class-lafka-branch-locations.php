@@ -714,7 +714,6 @@ class Lafka_Branch_Locations {
 	}
 
 	public static function get_user_branches( $user_id ): array {
-		// TODO: This may cause issues - can't see all orders when order is from branch where user is not manager... not sure
 		$args = array(
 			'taxonomy'   => 'lafka_branch_location',
 			'hide_empty' => false,

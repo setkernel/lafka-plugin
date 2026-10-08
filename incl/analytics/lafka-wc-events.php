@@ -530,10 +530,8 @@ if ( ! function_exists( 'lafka_dl_emit_add_to_cart' ) ) {
 	 * @param int    $product_id
 	 * @param int    $quantity
 	 * @param int    $variation_id
-	 * @param array  $variation
-	 * @param array  $cart_item_data
 	 */
-	function lafka_dl_emit_add_to_cart( $cart_item_key, $product_id = 0, $quantity = 1, $variation_id = 0, $variation = array(), $cart_item_data = array() ): void {
+	function lafka_dl_emit_add_to_cart( $cart_item_key, $product_id = 0, $quantity = 1, $variation_id = 0 ): void {
 		// Variation overrides parent when set.
 		$id = (int) ( $variation_id > 0 ? $variation_id : $product_id );
 		if ( $id <= 0 || ! function_exists( 'wc_get_product' ) ) {
@@ -588,9 +586,8 @@ if ( ! function_exists( 'lafka_dl_emit_remove_from_cart' ) ) {
 	 * remove action redirects, so we can't echo a <script> inline.
 	 *
 	 * @param string $cart_item_key
-	 * @param object $cart WC_Cart instance.
 	 */
-	function lafka_dl_emit_remove_from_cart( $cart_item_key, $cart = null ): void {
+	function lafka_dl_emit_remove_from_cart( $cart_item_key ): void {
 		// Try to get the removed line via WC()->cart->removed_cart_contents.
 		if ( ! function_exists( 'WC' ) ) {
 			return;
@@ -681,11 +678,12 @@ if ( ! function_exists( 'lafka_dl_inject_ajax_add_to_cart' ) ) {
 			$fragments = array();
 		}
 
-		// Resolve the product from POST['product_id'] when WC didn't pass it.
+		// Resolve the product from the add-to-cart POST when WC didn't pass it
+		// (read-only: it only shapes the analytics event, nothing is written).
 		if ( ! $product_id ) {
-			$product_id = isset( $_POST['product_id'] ) ? (int) $_POST['product_id'] : 0;
-			if ( ! $product_id && isset( $_POST['add-to-cart'] ) ) {
-				$product_id = (int) $_POST['add-to-cart'];
+			$product_id = (int) filter_input( INPUT_POST, 'product_id', FILTER_VALIDATE_INT );
+			if ( ! $product_id ) {
+				$product_id = (int) filter_input( INPUT_POST, 'add-to-cart', FILTER_VALIDATE_INT );
 			}
 		}
 		if ( $product_id <= 0 || ! function_exists( 'wc_get_product' ) ) {
@@ -695,7 +693,7 @@ if ( ! function_exists( 'lafka_dl_inject_ajax_add_to_cart' ) ) {
 		if ( ! $product ) {
 			return $fragments;
 		}
-		$qty  = isset( $_POST['quantity'] ) ? max( 1, (int) $_POST['quantity'] ) : 1;
+		$qty  = max( 1, (int) filter_input( INPUT_POST, 'quantity', FILTER_VALIDATE_INT ) );
 		$item = lafka_dl_item_payload( $product, $qty );
 
 		$payload = array(
@@ -775,8 +773,8 @@ if ( function_exists( 'add_action' ) ) {
 	add_action( 'woocommerce_thankyou', 'lafka_dl_emit_purchase', 10 );
 
 	// Interaction events — queue to session, flush on next page load.
-	add_action( 'woocommerce_add_to_cart', 'lafka_dl_emit_add_to_cart', 10, 6 );
-	add_action( 'woocommerce_cart_item_removed', 'lafka_dl_emit_remove_from_cart', 10, 2 );
+	add_action( 'woocommerce_add_to_cart', 'lafka_dl_emit_add_to_cart', 10, 4 );
+	add_action( 'woocommerce_cart_item_removed', 'lafka_dl_emit_remove_from_cart', 10, 1 );
 
 	// Session flush — fires near the top of wp_footer so the events land
 	// before any JS that might depend on them (e.g. GTM page-view).

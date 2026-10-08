@@ -9,12 +9,12 @@
 	var audio = null;
 	var activeAlerts = []; // hold references to prevent GC
 	var soundReady = false;
-	var pollTimer = null;
+
 	var etaOrderId = null;
 	var etaSelectedMinutes = null;
 	var failCount = 0;
 	var AUTO_RELOAD_MS = 60 * 60 * 1000; // 1 hour
-	var lastServerTime = 0;  // track server time for live elapsed/ETA ticks
+
 	var lastOrders = {};     // id → order data hash for diff-based rendering
 
 	// --- Helpers ---
@@ -251,8 +251,6 @@
 	}
 
 	function renderOrders(orders, serverTime) {
-		lastServerTime = serverTime;
-
 		var columns = {
 			processing: [],
 			accepted: [],
@@ -801,7 +799,7 @@
 		fetchOrders();
 
 		// Polling
-		pollTimer = setInterval(fetchOrders, config.pollInterval);
+		setInterval(fetchOrders, config.pollInterval);
 
 		// Proactive nonce refresh every 30 minutes to prevent expiry on long-running sessions
 		setInterval(refreshNonce, 30 * 60 * 1000);

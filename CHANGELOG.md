@@ -7,6 +7,26 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
 
 ## [Unreleased]
 
+### Changed
+- **Strict lint, no suppressions.** PHPCS now runs plain `WordPress-Extra` with no
+  excluded sniffs, warnings fail the run, and `PrefixAllGlobals` is enforced
+  (`lafka` / `Lafka` / `is_lafka`). Every inline `phpcs:ignore`/`disable` is gone;
+  ESLint is at zero warnings. Class files are `class-lafka-*.php`, the widgets are
+  `Lafka_*_Widget` classes registered from `widgets/lafka-widget-registration.php`
+  (`LafkaMobileGroupedWalker` stays as a `class_alias`), `Lafka_WCVS()` is now
+  `lafka_wcvs()` (PHP function names are case-insensitive, so old calls still work).
+- Plugin-owned hooks without a `lafka_` prefix were renamed (`get_product_addons`,
+  `product_addons_field_prefix`, the `wc_product_addon` start/end/options actions,
+  the `lafka-product-addons` and `lafka-wcs` hooks, ...). The old names still fire
+  through `apply_filters_deprecated()` / `do_action_deprecated()`.
+- Security fixes: nonce and capability checks on the product add-on, nutrition,
+  serves, swatch, WCML price and contact-form save paths; classic-checkout hooks
+  read the posted time slot, delivery pin and gateway only after the
+  `woocommerce-process_checkout` nonce verifies; read-only request parameters go
+  through `filter_input()`; SQL identifiers use `%i`; pre-built HTML is escaped or
+  passed through `wp_kses()` allowlists; the web-push sender uses the WordPress
+  HTTP API and sodium base64.
+
 ### Removed
 - **All automated tests and test tooling**: `tests/` (PHPUnit + node:test suites),
   `phpunit.xml.dist`, `composer test` / `npm test`, the `phpunit/phpunit`,

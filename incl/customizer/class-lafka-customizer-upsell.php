@@ -41,6 +41,7 @@ if ( ! class_exists( 'Lafka_Customizer_Upsell' ) ) {
 				$wp_customize->add_section(
 					$section_id,
 					array(
+						/* translators: %s: product category name */
 						'title'       => sprintf( __( 'Upsells: %s', 'lafka-plugin' ), $term->name ),
 						'description' => esc_html__( 'Pick 4 products to show as "Make it a meal" on PDPs in this category.', 'lafka-plugin' ),
 						'panel'       => 'lafka_upsell',
@@ -60,6 +61,7 @@ if ( ! class_exists( 'Lafka_Customizer_Upsell' ) ) {
 					$wp_customize->add_control(
 						$setting_id,
 						array(
+							/* translators: %d: upsell slot number */
 							'label'       => sprintf( __( 'Slot %d (product ID)', 'lafka-plugin' ), $i ),
 							'section'     => $section_id,
 							'type'        => 'number',

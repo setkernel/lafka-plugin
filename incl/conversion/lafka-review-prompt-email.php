@@ -397,8 +397,9 @@ if ( ! function_exists( 'lafka_review_email_unsubscribe_url' ) ) {
 
 if ( ! function_exists( 'lafka_review_email_handle_unsubscribe_request' ) ) {
 	/**
-	 * Inspect $_GET on every request — if the unsubscribe params are present and
-	 * the token matches the user_id's HMAC, flip the user's
+	 * Inspect the query string on every request — if the unsubscribe params are
+	 * present and the token matches the user_id's HMAC (the emailed credential;
+	 * a nonce cannot be used in an email), flip the user's
 	 * `_lafka_review_email_optout` meta to 1 and redirect to the home page with
 	 * `?lafka_review_unsubscribed=1` so the theme can render a confirmation.
 	 *
@@ -408,13 +409,13 @@ if ( ! function_exists( 'lafka_review_email_handle_unsubscribe_request' ) ) {
 	 * @return void
 	 */
 	function lafka_review_email_handle_unsubscribe_request(): void {
-		if ( ! isset( $_GET['lafka_unsubscribe_reviews'] ) || ! isset( $_GET['u'] ) ) {
+		$raw_token = filter_input( INPUT_GET, 'lafka_unsubscribe_reviews', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+		$raw_user  = filter_input( INPUT_GET, 'u', FILTER_VALIDATE_INT );
+		if ( null === $raw_token || null === $raw_user ) {
 			return;
 		}
-		$token   = function_exists( 'sanitize_text_field' ) && is_string( $_GET['lafka_unsubscribe_reviews'] )
-			? sanitize_text_field( wp_unslash( $_GET['lafka_unsubscribe_reviews'] ) )
-			: '';
-		$user_id = is_scalar( $_GET['u'] ) ? (int) $_GET['u'] : 0;
+		$token   = is_string( $raw_token ) ? sanitize_text_field( $raw_token ) : '';
+		$user_id = is_int( $raw_user ) ? $raw_user : 0;
 
 		if ( '' === $token || $user_id <= 0 ) {
 			return;
@@ -424,17 +425,12 @@ if ( ! function_exists( 'lafka_review_email_handle_unsubscribe_request' ) ) {
 			return;
 		}
 
-		if ( function_exists( 'update_user_meta' ) ) {
-			update_user_meta( $user_id, '_lafka_review_email_optout', '1' );
-		}
+		update_user_meta( $user_id, '_lafka_review_email_optout', '1' );
 
 		// Redirect to home with a confirmation param so the theme can render
 		// a small thank-you notice without us having to ship a dedicated page.
-		if ( function_exists( 'wp_safe_redirect' ) && function_exists( 'home_url' ) ) {
-			$target = (string) home_url( '/?lafka_review_unsubscribed=1' );
-			wp_safe_redirect( $target );
-			exit;
-		}
+		wp_safe_redirect( (string) home_url( '/?lafka_review_unsubscribed=1' ) );
+		exit;
 	}
 }
 
@@ -496,11 +492,10 @@ if ( ! function_exists( 'lafka_review_email_render_body' ) ) {
 	 * header + footer actions so the wrapper matches every other transactional
 	 * email from the store.
 	 *
-	 * @param object $order          WC_Order
-	 * @param object $email_instance The WC_Email child instance (for header/footer)
+	 * @param object $order WC_Order
 	 * @return string
 	 */
-	function lafka_review_email_render_body( $order, $email_instance = null ): string {
+	function lafka_review_email_render_body( $order ): string {
 		if ( ! is_object( $order ) ) {
 			return '';
 		}
@@ -618,10 +613,9 @@ if ( ! function_exists( 'lafka_review_email_render_preview' ) ) {
 	 * Preview pane in /wp-admin/admin.php?page=wc-settings&tab=email — synthesise
 	 * an order-shaped object so the body renders without needing a live order.
 	 *
-	 * @param object $email_instance
 	 * @return string
 	 */
-	function lafka_review_email_render_preview( $email_instance ): string {
+	function lafka_review_email_render_preview(): string {
 		$preview = new \stdClass();
 		// Minimal duck-typed object mimicking the WC_Order methods the renderer
 		// + class actually call. Stays inert in production paths because the
@@ -653,6 +647,6 @@ if ( ! function_exists( 'lafka_review_email_render_preview' ) ) {
 			}
 		};
 
-		return lafka_review_email_render_body( $preview_proxy, $email_instance );
+		return lafka_review_email_render_body( $preview_proxy );
 	}
 }

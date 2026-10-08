@@ -101,8 +101,8 @@ if ( ! function_exists( 'lafka_webp_enabled' ) ) {
  * Covers WP-native attachment helpers; also feeds wp_get_attachment_image_attributes.
  */
 if ( ! function_exists( 'lafka_webp_filter_attachment_src' ) ) {
-	add_filter( 'wp_get_attachment_image_src', 'lafka_webp_filter_attachment_src', 10, 4 );
-	function lafka_webp_filter_attachment_src( $image, $attachment_id = 0, $size = '', $icon = false ) {
+	add_filter( 'wp_get_attachment_image_src', 'lafka_webp_filter_attachment_src', 10, 1 );
+	function lafka_webp_filter_attachment_src( $image ) {
 		if ( ! lafka_webp_enabled() || ! is_array( $image ) || empty( $image[0] ) ) {
 			return $image;
 		}
@@ -118,8 +118,8 @@ if ( ! function_exists( 'lafka_webp_filter_attachment_src' ) ) {
  * Rewrite srcset URLs for responsive images.
  */
 if ( ! function_exists( 'lafka_webp_filter_srcset' ) ) {
-	add_filter( 'wp_calculate_image_srcset', 'lafka_webp_filter_srcset', 10, 5 );
-	function lafka_webp_filter_srcset( $sources, $size_array, $image_src, $image_meta, $attachment_id ) {
+	add_filter( 'wp_calculate_image_srcset', 'lafka_webp_filter_srcset', 10, 1 );
+	function lafka_webp_filter_srcset( $sources ) {
 		if ( ! lafka_webp_enabled() || ! is_array( $sources ) ) {
 			return $sources;
 		}

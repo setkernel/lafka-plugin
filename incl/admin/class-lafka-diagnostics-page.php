@@ -40,6 +40,16 @@ if ( ! class_exists( 'Lafka_Diagnostics_Page' ) ) {
 		const RUN_ACTION      = 'lafka_diag_run';
 		const PER_PAGE        = 25;
 
+		/** Markup allowed in the pre-escaped action-link lists (wp_kses allowlist). */
+		const LINK_KSES = array(
+			'a'    => array(
+				'href'  => array(),
+				'class' => array(),
+			),
+			'li'   => array(),
+			'span' => array( 'class' => array() ),
+		);
+
 		/** @var Lafka_Diagnostics_Page|null */
 		private static $instance = null;
 
@@ -194,6 +204,30 @@ if ( ! class_exists( 'Lafka_Diagnostics_Page' ) ) {
 			return wp_nonce_url( add_query_arg( array_merge( array( 'action' => $action ), $args ), admin_url( 'admin-post.php' ) ), $nonce );
 		}
 
+		/**
+		 * A read-only GET argument (tab, filter, notice flag) as a key string.
+		 * These only choose what to display; every write goes through an
+		 * admin-post action behind a nonce.
+		 *
+		 * @param string $name Query argument.
+		 * @return string sanitize_key()-ed value ('' when absent).
+		 */
+		private function query_key( string $name ): string {
+			$value = filter_input( INPUT_GET, $name, FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+			return is_string( $value ) ? sanitize_key( $value ) : '';
+		}
+
+		/**
+		 * A read-only GET argument as a non-negative integer (0 when absent).
+		 *
+		 * @param string $name Query argument.
+		 * @return int
+		 */
+		private function query_int( string $name ): int {
+			$value = filter_input( INPUT_GET, $name, FILTER_VALIDATE_INT );
+			return is_int( $value ) ? absint( $value ) : 0;
+		}
+
 		// ─── Rendering ──────────────────────────────────────────────────────
 
 		/**
@@ -209,7 +243,7 @@ if ( ! class_exists( 'Lafka_Diagnostics_Page' ) ) {
 				'health'    => __( 'Health', 'lafka-plugin' ),
 				'settings'  => __( 'Settings', 'lafka-plugin' ),
 			);
-			$tab  = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'incidents';
+			$tab  = $this->query_key( 'tab' );
 			$tab  = isset( $tabs[ $tab ] ) ? $tab : 'incidents';
 
 			echo '<div class="wrap lafka-diagnostics">';
@@ -258,7 +292,7 @@ if ( ! class_exists( 'Lafka_Diagnostics_Page' ) ) {
 		 * @return void
 		 */
 		private function render_notice() {
-			$flag = isset( $_GET['lafka_diag'] ) ? sanitize_key( wp_unslash( $_GET['lafka_diag'] ) ) : '';
+			$flag = $this->query_key( 'lafka_diag' );
 			if ( '' === $flag ) {
 				return;
 			}
@@ -271,8 +305,8 @@ if ( ! class_exists( 'Lafka_Diagnostics_Page' ) ) {
 				'test_sent'       => __( 'Test incident recorded. It appears below and in WooCommerce → Status → Logs (source lafka-core).', 'lafka-plugin' ),
 			);
 			if ( 'ran' === $flag ) {
-				$digest = isset( $_GET['digest'] ) ? absint( wp_unslash( $_GET['digest'] ) ) : 0;
-				$traces = isset( $_GET['traces'] ) ? absint( wp_unslash( $_GET['traces'] ) ) : 0;
+				$digest = $this->query_int( 'digest' );
+				$traces = $this->query_int( 'traces' );
 				$text   = sprintf(
 					/* translators: 1: incidents emailed, 2: checkout traces indexed */
 					__( 'Daily check done: %1$d incident(s) emailed, %2$d unfinished checkout attempt(s) indexed.', 'lafka-plugin' ),
@@ -294,8 +328,8 @@ if ( ! class_exists( 'Lafka_Diagnostics_Page' ) ) {
 		 * @return void
 		 */
 		private function render_incidents_tab() {
-			$status = isset( $_GET['status'] ) ? sanitize_key( wp_unslash( $_GET['status'] ) ) : 'open';
-			$paged  = isset( $_GET['paged'] ) ? max( 1, absint( wp_unslash( $_GET['paged'] ) ) ) : 1;
+			$status = $this->query_key( 'status' );
+			$paged  = max( 1, $this->query_int( 'paged' ) );
 			$status = in_array( $status, array_merge( Lafka_Incidents::STATUSES, array( 'all' ) ), true ) ? $status : 'open';
 			$counts = Lafka_Incidents::status_counts();
 
@@ -326,7 +360,7 @@ if ( ! class_exists( 'Lafka_Diagnostics_Page' ) ) {
 					(int) $n
 				);
 			}
-			echo implode( ' | ', $links );
+			echo wp_kses( implode( ' | ', $links ), self::LINK_KSES );
 			echo '</ul><div class="clear"></div>';
 
 			if ( ! Lafka_Incidents::is_installed() ) {
@@ -432,7 +466,7 @@ if ( ! class_exists( 'Lafka_Diagnostics_Page' ) ) {
 			echo '<td>' . esc_html( number_format_i18n( (int) $row->hit_count ) ) . '</td>';
 			echo '<td>' . esc_html( $this->local_time( (string) $row->first_seen ) ) . '</td>';
 			echo '<td>' . esc_html( $this->local_time( (string) $row->last_seen ) ) . '</td>';
-			echo '<td>' . implode( ' | ', $actions ) . '</td>';
+			echo '<td>' . wp_kses( implode( ' | ', $actions ), self::LINK_KSES ) . '</td>';
 			echo '</tr>';
 		}
 
@@ -540,7 +574,7 @@ if ( ! class_exists( 'Lafka_Diagnostics_Page' ) ) {
 		 * @return void
 		 */
 		private function render_traces() {
-			$show_finished = isset( $_GET['show_finished'] ) && '1' === sanitize_key( wp_unslash( $_GET['show_finished'] ) );
+			$show_finished = '1' === $this->query_key( 'show_finished' );
 
 			echo '<h2>' . esc_html__( 'Checkout attempts that never finished', 'lafka-plugin' ) . '</h2>';
 			echo '<p class="description">' . esc_html__( 'WooCommerce (9.9+) records every place-order attempt step by step. An attempt that stopped part-way (for example inside the payment gateway, or at form validation) is listed here with the last step it reached. Completed checkouts whose record WooCommerce has not cleared yet are hidden. The daily check keeps a copy of each unfinished attempt as an incident.', 'lafka-plugin' ) . '</p>';

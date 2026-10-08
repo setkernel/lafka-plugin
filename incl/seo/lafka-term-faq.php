@@ -82,6 +82,37 @@ if ( ! function_exists( 'lafka_seo_get_term_faqs' ) ) {
 	}
 }
 
+if ( ! function_exists( 'lafka_term_faq_allowed_html' ) ) {
+	/**
+	 * wp_kses allowlist for exactly the markup lafka_term_faq_rows_html() emits.
+	 *
+	 * @return array<string,array<string,bool>>
+	 */
+	function lafka_term_faq_allowed_html(): array {
+		return array(
+			'input'    => array(
+				'type'        => true,
+				'class'       => true,
+				'name'        => true,
+				'value'       => true,
+				'placeholder' => true,
+				'aria-label'  => true,
+			),
+			'textarea' => array(
+				'class'       => true,
+				'rows'        => true,
+				'name'        => true,
+				'placeholder' => true,
+				'aria-label'  => true,
+			),
+			'div'      => array(
+				'class' => true,
+				'style' => true,
+			),
+		);
+	}
+}
+
 if ( ! function_exists( 'lafka_term_faq_rows_html' ) ) {
 	/**
 	 * Input rows for the FAQ repeater: saved pairs + empty rows.
@@ -124,7 +155,7 @@ if ( ! function_exists( 'lafka_term_faq_add_field' ) ) {
 		?>
 		<div class="form-field">
 			<label><?php esc_html_e( 'Category FAQ (optional)', 'lafka-plugin' ); ?></label>
-			<?php echo lafka_term_faq_rows_html( array() ); ?>
+			<?php echo wp_kses( lafka_term_faq_rows_html( array() ), lafka_term_faq_allowed_html() ); ?>
 			<p class="description"><?php esc_html_e( 'Real questions customers ask about this category (e.g. "Is the donair sauce made in-house?"). Shown under the category grid and published as FAQ structured data. Leave empty to show nothing.', 'lafka-plugin' ); ?></p>
 		</div>
 		<?php
@@ -144,7 +175,7 @@ if ( ! function_exists( 'lafka_term_faq_edit_field' ) ) {
 		<tr class="form-field">
 			<th scope="row"><label><?php esc_html_e( 'Category FAQ (optional)', 'lafka-plugin' ); ?></label></th>
 			<td>
-				<?php echo lafka_term_faq_rows_html( $faqs, 2 ); ?>
+				<?php echo wp_kses( lafka_term_faq_rows_html( $faqs, 2 ), lafka_term_faq_allowed_html() ); ?>
 				<p class="description"><?php esc_html_e( 'Real questions customers ask about this category. Shown under the category grid and published as FAQ structured data. Clear both fields of a row to remove it.', 'lafka-plugin' ); ?></p>
 			</td>
 		</tr>

@@ -80,7 +80,7 @@ if ( ! class_exists( 'Lafka_Diag_Beacon' ) ) {
 				return;
 			}
 			$file = dirname( __DIR__, 2 ) . '/assets/js/lafka-diag.min.js';
-			$code = is_readable( $file ) ? (string) file_get_contents( $file ) : '';
+			$code = (string) lafka_read_local_file( $file );
 			if ( '' === $code ) {
 				return;
 			}
@@ -89,7 +89,8 @@ if ( ! class_exists( 'Lafka_Diag_Beacon' ) ) {
 				's' => self::sample_rate(),
 				't' => function_exists( 'lafka_analytics_page_type' ) ? lafka_analytics_page_type() : '',
 			);
-			echo '<script id="lafka-diag">window.lafkaDiagCfg=' . wp_json_encode( $config ) . ';' . $code . "</script>\n";
+			wp_print_inline_script_tag( 'window.lafkaDiagCfg=' . wp_json_encode( $config ) . ';' . $code, array( 'id' => 'lafka-diag' ) );
+			echo "\n";
 		}
 
 		/**

@@ -242,7 +242,7 @@ if ( ! class_exists( 'Lafka_Log_Scrubber' ) ) {
 			);
 
 			foreach ( $patterns as $regex => $replacement ) {
-				$result = @preg_replace( (string) $regex, (string) $replacement, $value );
+				$result = preg_replace( (string) $regex, (string) $replacement, $value );
 				if ( is_string( $result ) ) {
 					$value = $result;
 				}

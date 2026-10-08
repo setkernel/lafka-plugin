@@ -203,7 +203,7 @@ class Lafka_Block_Cart_Shim {
 		if ( ! is_array( $swapped ) || empty( $swapped ) ) {
 			return;
 		}
-		$pages   = esc_html( implode( ' & ', $swapped ) );
+		$pages   = implode( ' & ', $swapped );
 		$classic = self::configured_classic();
 
 		echo '<div class="notice notice-info is-dismissible">';
@@ -212,13 +212,13 @@ class Lafka_Block_Cart_Shim {
 			printf(
 				/* translators: %s: list of swapped page labels (e.g. "Cart & Checkout"). */
 				esc_html__( 'Updated %s page(s) to the classic WooCommerce shortcodes for the classic checkout experience.', 'lafka-plugin' ),
-				$pages
+				esc_html( $pages )
 			);
 		} else {
 			printf(
 				/* translators: %s: list of restored page labels (e.g. "Cart & Checkout"). */
 				esc_html__( 'Restored the block %s page(s) for the block checkout experience.', 'lafka-plugin' ),
-				$pages
+				esc_html( $pages )
 			);
 		}
 		echo '</p></div>';

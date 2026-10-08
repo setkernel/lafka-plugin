@@ -154,7 +154,7 @@
 		var parsed = null;
 		try {
 			parsed = new URL(trimmed, window.location.href);
-		} catch (err) { // eslint-disable-line no-unused-vars
+		} catch {
 			return '';
 		}
 		if (!parsed || !parsed.host) {

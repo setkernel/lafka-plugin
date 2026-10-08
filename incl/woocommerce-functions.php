@@ -82,6 +82,14 @@ if ( ! function_exists( 'lafka_save_variable_in_catalog_option' ) ) {
 	 * @param int $i            Loop index for the variation in the admin form.
 	 */
 	function lafka_save_variable_in_catalog_option( $variation_id, $i ) {
+		// WooCommerce fires this from the AJAX variation save ('save-variations'
+		// nonce in `security`) and from the product edit-form save
+		// ('woocommerce_save_data' nonce in `woocommerce_meta_nonce`).
+		$ajax_ok = isset( $_POST['security'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['security'] ) ), 'save-variations' );
+		$form_ok = isset( $_POST['woocommerce_meta_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['woocommerce_meta_nonce'] ) ), 'woocommerce_save_data' );
+		if ( ( ! $ajax_ok && ! $form_ok ) || ! current_user_can( 'edit_post', (int) $variation_id ) ) {
+			return;
+		}
 		if ( ! isset( $_POST['_lafka_variable_in_catalog_field'][ $i ] ) ) {
 			return;
 		}

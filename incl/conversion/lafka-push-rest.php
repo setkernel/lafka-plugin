@@ -125,26 +125,17 @@ if ( ! function_exists( 'lafka_push_rest_nonce_permission' ) ) {
 			return false;
 		}
 
-		// Resolve the nonce: prefer the WP_REST_Request header accessor, then the
-		// raw HTTP header, then a _wpnonce body/query param. Any one is fine — all
-		// must carry the same wp_create_nonce('wp_rest') token.
+		// Resolve the nonce: the X-WP-Nonce header first, then a _wpnonce body/query
+		// param. Either must carry the same wp_create_nonce('wp_rest') token.
 		$nonce = '';
 		if ( is_object( $request ) && method_exists( $request, 'get_header' ) ) {
 			$nonce = (string) $request->get_header( 'X-WP-Nonce' );
 		}
-		if ( '' === $nonce && isset( $_SERVER['HTTP_X_WP_NONCE'] ) ) {
-			$nonce = function_exists( 'wp_unslash' )
-				? (string) wp_unslash( $_SERVER['HTTP_X_WP_NONCE'] )
-				: (string) $_SERVER['HTTP_X_WP_NONCE'];
+		if ( '' === $nonce && is_object( $request ) && method_exists( $request, 'get_param' ) ) {
+			$param = $request->get_param( '_wpnonce' );
+			$nonce = is_string( $param ) ? $param : '';
 		}
-		if ( '' === $nonce && isset( $_REQUEST['_wpnonce'] ) ) {
-			$nonce = function_exists( 'wp_unslash' )
-				? (string) wp_unslash( $_REQUEST['_wpnonce'] )
-				: (string) $_REQUEST['_wpnonce'];
-		}
-		if ( function_exists( 'sanitize_text_field' ) ) {
-			$nonce = sanitize_text_field( $nonce );
-		}
+		$nonce = sanitize_text_field( $nonce );
 
 		// Enforce the nonce regardless of auth state (see method doc above).
 		$valid = ( '' !== $nonce ) && function_exists( 'wp_verify_nonce' ) && wp_verify_nonce( $nonce, 'wp_rest' );
@@ -490,8 +481,8 @@ if ( ! function_exists( 'lafka_push_rest_vapid_key' ) ) {
 
 if ( ! function_exists( 'lafka_push_rest_extract_body' ) ) {
 	/**
-	 * Pull the JSON body off a WP_REST_Request, falling back to raw
-	 * php://input when the test harness passes null (Brain Monkey).
+	 * Pull the JSON body (or, failing that, the request params) off a
+	 * WP_REST_Request.
 	 *
 	 * @param mixed $request
 	 * @return array
@@ -509,16 +500,7 @@ if ( ! function_exists( 'lafka_push_rest_extract_body' ) ) {
 				return $p;
 			}
 		}
-		// Raw fallback (unit tests, edge runtimes).
-		$raw = '';
-		if ( function_exists( 'file_get_contents' ) ) {
-			$raw = (string) @file_get_contents( 'php://input' );
-		}
-		if ( '' === $raw ) {
-			return array();
-		}
-		$decoded = json_decode( $raw, true );
-		return is_array( $decoded ) ? $decoded : array();
+		return array();
 	}
 }
 

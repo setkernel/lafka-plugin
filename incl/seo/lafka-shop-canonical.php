@@ -137,11 +137,10 @@ if ( ! function_exists( 'lafka_seo_filter_shop_canonical' ) ) {
 	 *     is currently skipped for archives but may be invoked by future plugins).
 	 *   - wpseo_canonical    (Yoast SEO — forward-compat if Yoast is ever installed).
 	 *
-	 * @param string       $url  Incoming canonical URL.
-	 * @param WP_Post|null $post Post object (may be null on archive context).
-	 * @return string             Filtered canonical URL.
+	 * @param string $url Incoming canonical URL.
+	 * @return string Filtered canonical URL.
 	 */
-	function lafka_seo_filter_shop_canonical( string $url, $post = null ): string {
+	function lafka_seo_filter_shop_canonical( string $url ): string {
 		if ( is_admin() ) {
 			return $url;
 		}
@@ -154,6 +153,6 @@ if ( ! function_exists( 'lafka_seo_filter_shop_canonical' ) ) {
 		return $url;
 	}
 
-	add_filter( 'get_canonical_url', 'lafka_seo_filter_shop_canonical', 99, 2 );
-	add_filter( 'wpseo_canonical', 'lafka_seo_filter_shop_canonical', 99, 2 );
+	add_filter( 'get_canonical_url', 'lafka_seo_filter_shop_canonical', 99, 1 );
+	add_filter( 'wpseo_canonical', 'lafka_seo_filter_shop_canonical', 99, 1 );
 }
