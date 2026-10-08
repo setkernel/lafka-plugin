@@ -1,18 +1,7 @@
 <?php
 /**
- * P6-PERF-4 (W3-T2, 2026-04-28): Asset pruning — dequeue heavy third-party
- * scripts/styles on pages that don't need them.
- *
- * Currently handles Revolution Slider (~150 KB CSS+JS). Revslider's plugin
- * unconditionally enqueues sr7.css + sr7.js + tptools.js on every page even
- * when no slider is present. This module hooks late into wp_enqueue_scripts
- * and dequeues those assets when the current page has no slider attached.
- *
- * Detection strategy (two-pass):
- *   1. Post meta `lafka_rev_slider` — set by Lafka's meta box when an editor
- *      attaches a slider. Empty or "none" means no slider.
- *   2. Shortcode scan — fallback for pages that embed sliders via [rev_slider]
- *      shortcode directly in the content body.
+ * P6-PERF-4 (W3-T2, 2026-04-28): Asset pruning — dequeue heavy assets on pages
+ * that don't need them (WP block-library CSS, Font Awesome, jQuery Migrate).
  *
  * @package LafkaPlugin
  * @since   8.9.0
@@ -21,70 +10,12 @@
 defined( 'ABSPATH' ) || exit;
 
 /**
- * P6-PERF-4: dequeue Revolution Slider on pages that don't use it.
- *
- * Revslider unconditionally enqueues sr7.css + sr7.js + tptools.js on every
- * page (~150 KB). Most pages have no slider.
- *
- * The check: see if the current queried object has a Revslider attached.
- * Lafka stores this in post meta `lafka_rev_slider`. If it's empty or 'none',
- * we don't need Revslider's assets.
- */
-add_action( 'wp_enqueue_scripts', 'lafka_perf_dequeue_unused_revslider', 99 );
-function lafka_perf_dequeue_unused_revslider() {
-	if ( is_admin() ) {
-		return;
-	}
-	$qid    = get_queried_object_id();
-	$slider = $qid ? get_post_meta( $qid, 'lafka_rev_slider', true ) : '';
-	$has_slider = $slider && 'none' !== $slider;
-
-	// Also keep Revslider available if a [rev_slider] shortcode is in the content.
-	if ( ! $has_slider && is_singular() ) {
-		$post = get_post( $qid );
-		if ( $post && false !== strpos( (string) $post->post_content, '[rev_slider' ) ) {
-			$has_slider = true;
-		}
-	}
-
-	if ( ! $has_slider ) {
-		// Revslider's standard handles — names may vary across versions; dequeue
-		// the family. Use wp_styles()->registered to find by URL pattern as a
-		// safety net.
-		$handles = array( 'rs-plugin-settings', 'rs-pro-settings', 'revmin', 'revbuilder', 'revslider-public', 'sr7' );
-		foreach ( $handles as $h ) {
-			wp_dequeue_style( $h );
-			wp_deregister_style( $h );
-			wp_dequeue_script( $h );
-			wp_deregister_script( $h );
-		}
-		// URL-based fallback for unknown handle names
-		if ( wp_styles() ) {
-			foreach ( wp_styles()->registered as $handle => $obj ) {
-				if ( false !== strpos( (string) $obj->src, '/revslider/' ) ) {
-					wp_dequeue_style( $handle );
-					wp_deregister_style( $handle );
-				}
-			}
-		}
-		if ( wp_scripts() ) {
-			foreach ( wp_scripts()->registered as $handle => $obj ) {
-				if ( false !== strpos( (string) $obj->src, '/revslider/' ) ) {
-					wp_dequeue_script( $handle );
-					wp_deregister_script( $handle );
-				}
-			}
-		}
-	}
-}
-
-/**
  * Dequeue WP block-library CSS on pages that don't use Gutenberg blocks.
  *
  * `wp-block-library` is ~17 KB of CSS that WP enqueues globally. Most Lafka
- * sites build with WPBakery (VC) shortcodes, not blocks, so this CSS is dead
- * weight on every page-load. Detection: scan post_content for the block
- * marker `<!-- wp:` — if absent, the post has no Gutenberg blocks.
+ * sites render with the theme's native templates and shortcodes, not blocks, so
+ * this CSS is dead weight on every page-load. Detection: scan post_content for
+ * the block marker `<!-- wp:` — if absent, the post has no Gutenberg blocks.
  *
  * Operator override: add_filter( 'lafka_keep_block_library_css', '__return_true' );
  */
@@ -114,65 +45,11 @@ if ( ! function_exists( 'lafka_perf_dequeue_unused_block_library' ) ) {
 }
 
 /**
- * Dequeue WPBakery (VC) front-end CSS on pages that don't use VC shortcodes.
- *
- * `js_composer_front` is ~48 KB and is enqueued unconditionally by WPBakery
- * whenever the plugin is active, but only ~5 KB of it applies on a typical
- * landing page that uses a handful of vc_row / vc_column shortcodes. Empty
- * landing pages (no VC content at all) waste the entire 48 KB.
- *
- * Detection: scan post_content for the `[vc_` shortcode prefix. If absent,
- * VC isn't being used on the post.
- *
- * Operator override: add_filter( 'lafka_keep_vc_css', '__return_true' );
- */
-if ( ! function_exists( 'lafka_perf_dequeue_unused_vc' ) ) {
-	add_action( 'wp_enqueue_scripts', 'lafka_perf_dequeue_unused_vc', 99 );
-	function lafka_perf_dequeue_unused_vc() {
-		if ( is_admin() ) {
-			return;
-		}
-		if ( apply_filters( 'lafka_keep_vc_css', false ) ) {
-			return;
-		}
-		if ( ! is_singular() ) {
-			return;
-		}
-		$post = get_post();
-		if ( ! $post ) {
-			return;
-		}
-		$content = (string) $post->post_content;
-		// Native-template pages (front-page.php, page-menu.php) never render this
-		// stored builder content, so a [vc_ marker is a false positive — WPBakery
-		// CSS is dead weight there. Force-drop VC on those pages.
-		$native_template = (bool) apply_filters( 'lafka_vc_native_template_page', ( is_front_page() || is_page( 'menu' ) ) );
-		// Cheap content marker: [vc_ shortcode is the canonical VC entry.
-		if ( ! $native_template && false !== strpos( $content, '[vc_' ) ) {
-			return;
-		}
-		// VC handles vary slightly by version; dequeue the family.
-		foreach ( array( 'js_composer_front', 'vc_animate-css', 'vc_settings', 'vc_lightbox', 'vc_carousel', 'vc_carousel_skin', 'vc_pretty-photo', 'vc_tta_style', 'vc_font_awesome_5_shims', 'vc_font_awesome_5_brands', 'vc_font_awesome_5_solid', 'vc_font_awesome_5' ) as $h ) {
-			wp_dequeue_style( $h );
-		}
-		// URL-based fallback (handle names vary by version) — CSS only, so
-		// WPBakery's bundled JS is left intact and nothing functional breaks.
-		if ( wp_styles() ) {
-			foreach ( wp_styles()->registered as $lafka_vc_handle => $lafka_vc_obj ) {
-				if ( false !== strpos( (string) $lafka_vc_obj->src, '/js_composer/' ) ) {
-					wp_dequeue_style( $lafka_vc_handle );
-				}
-			}
-		}
-	}
-}
-
-/**
  * Dequeue Font Awesome on pages that don't render any FA icons.
  *
  * Lafka registers `font_awesome_6` (~22 KB) as a frontend stylesheet. Many
- * pages don't use FA icons (esp. landing pages composed of WPBakery content
- * sliders + image grids). Detection: scan post_content for FA class markers
+ * pages don't use FA icons (esp. landing pages made of image grids).
+ * Detection: scan post_content for FA class markers
  * (`fa-`, `fas`, `far`, `fab`, `fal`) OR for any `[lafka_icon_` shortcode
  * (which renders an FA icon).
  *

@@ -9,7 +9,8 @@
  * WooCommerce shortcodes — all of which keep working on their own.
  *
  * When js_composer is NOT loaded, this strips orphaned `[vc_*]` wrapper tags
- * from rendered content (the_content, widget_text, term descriptions) while
+ * (and the retired `[lafka_content_slider]` wrapper, which only WPBakery could
+ * render) from rendered content (the_content, widget_text, term descriptions) while
  * preserving the inner content + nested shortcodes. VC-specific column styling
  * is lost (it degrades to a clean single-column flow), but no raw `[vc_row]`
  * text ever leaks to visitors and every real element still renders.
@@ -39,23 +40,24 @@ if ( ! function_exists( 'lafka_wpbakery_strip_orphans' ) ) {
 	 *
 	 * Runs at priority 9 on the content filters — BEFORE core's do_shortcode
 	 * (priority 11) — so the surviving first-party / WooCommerce shortcodes still
-	 * execute normally. Cheap-exits when there is no `[vc_` marker.
+	 * execute normally. Cheap-exits when there is no `[vc_` / `[lafka_content_slider` marker.
 	 *
 	 * @param string $content
 	 * @return string
 	 */
 	function lafka_wpbakery_strip_orphans( $content ) {
 		$content = (string) $content;
-		if ( '' === $content || false === strpos( $content, '[vc_' ) ) {
+		if ( '' === $content || ( false === strpos( $content, '[vc_' ) && false === strpos( $content, '[lafka_content_slider' ) ) ) {
 			return $content;
 		}
 		if ( lafka_wpbakery_is_active() ) {
 			return $content; // WPBakery present → leave its shortcodes alone.
 		}
 		// Remove opening tags (with any attributes) and closing tags for the whole
-		// vc_* family; keep everything between them. Attributes never contain a
-		// literal ']' so [^\]]* is a safe, fast match.
-		$stripped = preg_replace( '/\[\/?vc_[a-z0-9_]+(?:[^\]]*)\]/i', '', $content );
+		// vc_* family and the retired content slider; keep everything between
+		// them. Attributes never contain a literal ']' so [^\]]* is a safe, fast
+		// match.
+		$stripped = preg_replace( '/\[\/?(?:vc_[a-z0-9_]+|lafka_content_slider)(?:[^\]]*)\]/i', '', $content );
 
 		return ( null === $stripped ) ? $content : $stripped;
 	}

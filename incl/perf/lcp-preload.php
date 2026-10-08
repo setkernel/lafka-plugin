@@ -79,7 +79,7 @@ if ( ! function_exists( 'lafka_lcp_image_url' ) ) {
 		}
 
 		// Tier 2: auto-detect — the first <img> in the front page's content (a
-		// hero built in the block editor / WPBakery), cached for 12h and flushed
+		// hero built in the block editor), cached for 12h and flushed
 		// when the front page is saved. The preload lets the browser fetch it in
 		// parallel with CSS instead of after it.
 		$cache_key = 'lafka_lcp_auto_hero';

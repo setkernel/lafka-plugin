@@ -17,13 +17,6 @@ if ( ! function_exists( 'lafka_add_layout_metabox' ) ) {
 		if ( LAFKA_PLUGIN_IS_WOOCOMMERCE ) {
 			$posttypes[] = 'product';
 		}
-		if ( LAFKA_PLUGIN_IS_BBPRESS ) {
-			$posttypes[] = 'forum';
-			$posttypes[] = 'topic';
-		}
-		if ( post_type_exists( 'tribe_events' ) ) {
-			$posttypes[] = 'tribe_events';
-		}
 
 		foreach ( $posttypes as $pt ) {
 			add_meta_box(
@@ -109,9 +102,9 @@ if ( ! function_exists( 'lafka_layout_callback' ) ) {
 		$output .= '<input id="lafka_footer_style_hide" ' . checked( $values['lafka_footer_style'], 'lafka-reveal-footer', false ) . ' type="radio" value="lafka-reveal-footer" name="lafka_footer_style">';
 		$output .= '<label for="lafka_footer_style_hide">' . esc_html__( 'Reveal', 'lafka-plugin' ) . '</label>';
 
-		// Transparent header and Title with Image Background (only on posts, pages, forum, foodmenu and topic)
+		// Transparent header and Title with Image Background (posts, pages, foodmenu and products)
 		$screen = get_current_screen();
-		if ( $screen && in_array( $screen->post_type, array( 'post', 'page', 'forum', 'topic', 'lafka-foodmenu', 'tribe_events', 'product' ), true ) ) {
+		if ( $screen && in_array( $screen->post_type, array( 'post', 'page', 'lafka-foodmenu', 'product' ), true ) ) {
 
 			// Below is not for product
 			if ( $screen->post_type != 'product' ) {
@@ -250,15 +243,7 @@ if ( ! function_exists( 'lafka_add_page_options_metabox' ) ) {
 
 	function lafka_add_page_options_metabox() {
 
-		$posttypes = array( 'page', 'post', 'lafka-foodmenu', 'tribe_events' );
-
-		if ( LAFKA_PLUGIN_IS_BBPRESS ) {
-			$posttypes[] = 'forum';
-			$posttypes[] = 'topic';
-		}
-		if ( post_type_exists( 'tribe_events' ) ) {
-			$posttypes[] = 'tribe_events';
-		}
+		$posttypes = array( 'page', 'post', 'lafka-foodmenu' );
 
 		foreach ( $posttypes as $pt ) {
 			add_meta_box(
@@ -496,159 +481,6 @@ if ( ! function_exists( 'lafka_save_page_options_postdata' ) ) {
 
 }
 
-// If Revolution slider is active add the meta box
-if ( LAFKA_PLUGIN_IS_REVOLUTION ) {
-	add_action( 'add_meta_boxes', 'lafka_add_revolution_slider_metabox' );
-	add_action( 'save_post', 'lafka_save_revolution_slider_postdata' );
-}
-
-/* Adds a box to the side column on the Post, Page and Foodmenu edit screens */
-if ( ! function_exists( 'lafka_add_revolution_slider_metabox' ) ) {
-
-	function lafka_add_revolution_slider_metabox() {
-		add_meta_box(
-			'lafka_revolution_slider',
-			esc_html__( 'Revolution Slider', 'lafka-plugin' ),
-			'lafka_revolution_slider_callback',
-			'page',
-			'side'
-		);
-
-		add_meta_box(
-			'lafka_revolution_slider',
-			esc_html__( 'Revolution Slider', 'lafka-plugin' ),
-			'lafka_revolution_slider_callback',
-			'post',
-			'side'
-		);
-
-		add_meta_box(
-			'lafka_revolution_slider',
-			esc_html__( 'Revolution Slider', 'lafka-plugin' ),
-			'lafka_revolution_slider_callback',
-			'lafka-foodmenu',
-			'side'
-		);
-
-		add_meta_box(
-			'lafka_revolution_slider',
-			esc_html__( 'Revolution Slider', 'lafka-plugin' ),
-			'lafka_revolution_slider_callback',
-			'tribe_events',
-			'side'
-		);
-	}
-
-}
-
-/* Prints the box content */
-if ( ! function_exists( 'lafka_revolution_slider_callback' ) ) {
-
-	function lafka_revolution_slider_callback( $post ) {
-
-		// If current page is set as Blog page - don't show the options
-		if ( $post->ID == get_option( 'page_for_posts' ) ) {
-			echo esc_html__( 'Revolution slider is disabled for this page, because the page is set as Blog page from Settings->Reading.', 'lafka-plugin' );
-			return;
-		}
-
-		// If current page is set as Shop page - don't show the options
-		if ( LAFKA_PLUGIN_IS_WOOCOMMERCE && $post->ID == wc_get_page_id( 'shop' ) ) {
-			echo esc_html__( 'Revolution slider is disabled for this page, because the page is set as Shop page.', 'lafka-plugin' );
-			return;
-		}
-
-		// Use nonce for verification
-		wp_nonce_field( 'lafka_save_revolution_slider_postdata', 'lafka_revolution_slider' );
-
-		$custom = get_post_custom( $post->ID );
-
-		if ( isset( $custom['lafka_rev_slider'] ) ) {
-			$val = $custom['lafka_rev_slider'][0];
-		} else {
-			$val = 'none';
-		}
-
-		if ( isset( $custom['lafka_rev_slider_before_header'] ) && $custom['lafka_rev_slider_before_header'][0] != '' ) {
-			$val_before_header = esc_attr( $custom['lafka_rev_slider_before_header'][0] );
-		} else {
-			$val_before_header = 0;
-		}
-
-		// description
-		$output = '<p>' . esc_html__( 'You can choose a Revolution slider to be attached. It will show up on the top of this page/post.', 'lafka-plugin' ) . '</p>';
-
-		// select
-		$output .= '<p><label for="lafka_rev_slider"><b>' . esc_html__( 'Select slider', 'lafka-plugin' ) . '</b></label></p>';
-		$output .= "<select name='lafka_rev_slider'>";
-
-		// Add a default option
-		$output .= '<option';
-		if ( $val == 'none' ) {
-			$output .= " selected='selected'";
-		}
-		$output .= " value='none'>" . esc_html__( 'none', 'lafka-plugin' ) . '</option>';
-
-		// Get defined revolution slides
-		$slider     = new RevSlider();
-		$arrSliders = $slider->getArrSlidersShort();
-
-		// Fill the select element with all registered slides
-		foreach ( $arrSliders as $id => $title ) {
-			$output .= '<option';
-			if ( $id == $val ) {
-				$output .= " selected='selected'";
-			}
-			$output .= " value='" . esc_attr( $id ) . "'>" . esc_html( $title ) . '</option>';
-		}
-
-		$output .= '</select>';
-		$screen  = get_current_screen();
-		// only for pages
-		if ( $screen && in_array( $screen->post_type, array( 'page' ), true ) ) {
-			// place before header
-			$output .= '<p><label for="lafka_rev_slider_before_header">';
-			$output .= "<input type='checkbox' id='lafka_rev_slider_before_header' name='lafka_rev_slider_before_header' value='1' " . checked( esc_attr( $val_before_header ), 1, false ) . '><b>' . esc_html__( 'Place before header', 'lafka-plugin' ) . '</b></label></p>';
-		}
-		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $output built with esc_attr/esc_html/esc_html__ per dynamic value; static markup is literal.
-		echo $output;
-	}
-
-}
-
-/* When the post is saved, saves our custom data */
-if ( ! function_exists( 'lafka_save_revolution_slider_postdata' ) ) {
-
-	function lafka_save_revolution_slider_postdata( $post_id ) {
-		// verify if this is an auto save routine.
-		// If it is our form has not been submitted, so we dont want to do anything
-		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
-			return;
-		}
-
-		// verify this came from our screen and with proper authorization,
-		// because save_post can be triggered at other times
-		if ( ! isset( $_POST['lafka_revolution_slider'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['lafka_revolution_slider'] ) ), 'lafka_save_revolution_slider_postdata' ) ) {
-			return;
-		}
-
-		if ( ! current_user_can( 'edit_post', $post_id ) ) {
-			return;
-		}
-
-		if ( isset( $_POST['lafka_rev_slider'] ) ) {
-			update_post_meta( $post_id, 'lafka_rev_slider', sanitize_text_field( $_POST['lafka_rev_slider'] ) );
-		}
-
-		if ( isset( $_POST['lafka_rev_slider_before_header'] ) && $_POST['lafka_rev_slider_before_header'] ) {
-			update_post_meta( $post_id, 'lafka_rev_slider_before_header', 1 );
-		} else {
-			update_post_meta( $post_id, 'lafka_rev_slider_before_header', 0 );
-		}
-	}
-
-}
-
 /**
  * Register video background metaboxes
  */
@@ -660,13 +492,9 @@ if ( ! function_exists( 'lafka_add_video_bckgr_metabox' ) ) {
 
 	function lafka_add_video_bckgr_metabox() {
 
-		$posttypes = array( 'page', 'post', 'lafka-foodmenu', 'tribe_events' );
+		$posttypes = array( 'page', 'post', 'lafka-foodmenu' );
 		if ( LAFKA_PLUGIN_IS_WOOCOMMERCE ) {
 			$posttypes[] = 'product';
-		}
-		if ( LAFKA_PLUGIN_IS_BBPRESS ) {
-			$posttypes[] = 'forum';
-			$posttypes[] = 'topic';
 		}
 
 		foreach ( $posttypes as $pt ) {
@@ -946,7 +774,7 @@ add_action( 'save_post', 'lafka_save_additonal_featured_meta_postdata' );
 if ( ! function_exists( 'lafka_add_additonal_featured_meta' ) ) {
 
 	function lafka_add_additonal_featured_meta() {
-		$post_types_array = array( 'page', 'post', 'lafka-foodmenu', 'tribe_events' );
+		$post_types_array = array( 'page', 'post', 'lafka-foodmenu' );
 
 		for ( $i = 2; $i <= 6; $i++ ) {
 			foreach ( $post_types_array as $post_type ) {

@@ -3,62 +3,6 @@ defined( 'ABSPATH' ) || exit;
 
 require_once __DIR__ . '/../incl/lafka-asset-helpers.php';
 
-// Include shortcodes classes
-// If WCMp is active
-if ( defined( 'LAFKA_PLUGIN_IS_WC_MARKETPLACE' ) && LAFKA_PLUGIN_IS_WC_MARKETPLACE ) {
-	require_once plugin_dir_path( __FILE__ ) . 'incl/LafkaShortcodeVendorList.php';
-	add_shortcode( 'lafka_wcmp_vendorslist', array( 'LafkaShortcodeVendorList', 'output' ) );
-}
-
-if ( defined( 'WPB_VC_VERSION' ) ) {
-	VcShortcodeAutoloader::getInstance()->includeClass( 'WPBakeryShortCode_VC_Tta_Tabs' );
-
-	class WPBakeryShortCode_Lafka_Content_Slider extends WPBakeryShortCode_VC_Tta_Tabs {
-
-		public $layout = 'tabs';
-
-		public function getTtaContainerClasses() {
-			$classes = parent::getTtaContainerClasses();
-
-			$classes .= ' vc_tta-o-non-responsive';
-
-			return $classes;
-		}
-
-		public function getTtaGeneralClasses() {
-			$classes = parent::getTtaGeneralClasses();
-
-			$classes .= ' vc_tta-pageable';
-
-			// tabs have pagination on opposite side of tabs. pageable should behave normally
-			if ( false !== strpos( $classes, 'vc_tta-tabs-position-top' ) ) {
-				$classes = str_replace( 'vc_tta-tabs-position-top', 'vc_tta-tabs-position-bottom', $classes );
-			} else {
-				$classes = str_replace( 'vc_tta-tabs-position-bottom', 'vc_tta-tabs-position-top', $classes );
-			}
-
-			return $classes;
-		}
-
-		/**
-		 * Disable all tabs
-		 *
-		 * @param $atts
-		 * @param $content
-		 *
-		 * @return string
-		 */
-		public function getParamTabsList( $atts, $content ) {
-			return '';
-		}
-
-		public function getFileName() {
-			return 'vc_lafka_content_slider';
-		}
-	}
-
-}
-
 /**
  * PERF-H25: Shared Owl Carousel inline JS initializer.
  * Replaces 7 near-identical copies of carousel initialization code across shortcodes.
@@ -91,6 +35,22 @@ if ( ! function_exists( 'lafka_add_owl_carousel_inline_js' ) ) {
 
 
 /**
+ * Enqueue the stylesheet an icon shortcode needs for its icon `type`.
+ *
+ * Font Awesome is registered in incl/lafka-asset-registration.php; the Elegant
+ * Line and Flaticon fonts are loaded by the theme.
+ *
+ * @param string $font Icon type: fontawesome, etline or flaticon.
+ */
+if ( ! function_exists( 'lafka_icon_element_fonts_enqueue' ) ) {
+	function lafka_icon_element_fonts_enqueue( $font ) {
+		if ( 'fontawesome' === $font ) {
+			wp_enqueue_style( 'font_awesome_6' );
+		}
+	}
+}
+
+/**
  * Define lafka_counter shortcode
  */
 if ( ! function_exists( 'lafka_counter_shortcode' ) ) {
@@ -110,12 +70,6 @@ if ( ! function_exists( 'lafka_counter_shortcode' ) ) {
 					'text_color'         => '',
 					'i_type'             => 'fontawesome',
 					'i_icon_fontawesome' => 'fas fa-adjust',
-					'i_icon_openiconic'  => 'vc-oi vc-oi-dial',
-					'i_icon_typicons'    => 'typcn typcn-adjust-brightness',
-					'i_icon_entypo'      => 'entypo-icon entypo-icon-note',
-					'i_icon_linecons'    => 'vc_li vc_li-heart',
-					'i_icon_monosocial'  => 'vc-mono vc-mono-fivehundredpx',
-					'i_icon_material'    => 'vc-material vc-material-cake',
 					'i_icon_etline'      => 'icon-mobile',
 					'i_icon_flaticon'    => 'flaticon-001-popcorn',
 					'i_custom_color'     => '',
@@ -131,7 +85,7 @@ if ( ! function_exists( 'lafka_counter_shortcode' ) ) {
 			if ( isset( ${'i_icon_' . $i_type} ) ) {
 				$iconClass = ${'i_icon_' . $i_type};
 			}
-			vc_icon_element_fonts_enqueue( $i_type );
+			lafka_icon_element_fonts_enqueue( $i_type );
 		}
 
 		$icon_color = '';
@@ -187,8 +141,6 @@ if ( ! function_exists( 'lafka_typed_shortcode' ) ) {
 					'static_text_color' => '',
 					'typed_text_color'  => '',
 					'loop'              => 'yes',
-					'el_class'          => '',
-					'css'               => '',
 				),
 				$atts
 			),
@@ -197,17 +149,11 @@ if ( ! function_exists( 'lafka_typed_shortcode' ) ) {
 
 		$unique_id = uniqid( 'lafka_typed' );
 
-		// css from Design options
-		$css_design_class = '';
-		if ( defined( 'VC_SHORTCODE_CUSTOM_CSS_FILTER_TAG' ) ) {
-			$css_design_class = apply_filters( VC_SHORTCODE_CUSTOM_CSS_FILTER_TAG, vc_shortcode_custom_css_class( $css, ' ' ), 'lafka_typed', $atts );
-		}
-
 		$rotating_strings_arr = explode( ',', $rotating_strings );
 		ob_start();
 		?>
 		<div class="lafka-typed-shortcode">
-		<div class="lafka-typed-content lafka-typed-<?php echo esc_attr( $typed_style ); ?> <?php echo sanitize_html_class( $typed_alignment ); ?><?php echo ( $css_design_class ? ' ' . esc_attr( $css_design_class ) : '' ); ?>" 
+		<div class="lafka-typed-content lafka-typed-<?php echo esc_attr( $typed_style ); ?> <?php echo sanitize_html_class( $typed_alignment ); ?>" 
 		<?php
 		if ( $static_text_color ) :
 			?>
@@ -407,18 +353,11 @@ if ( ! function_exists( 'lafka_foodmenu_shortcode' ) ) {
 					'limit'                => '',
 					'offset'               => '',
 					'date_sort'            => 'DESC',
-					'css'                  => '',
 				),
 				$atts
 			),
 			EXTR_SKIP
 		);
-
-		// css from Design options
-		$css_design_class = '';
-		if ( defined( 'VC_SHORTCODE_CUSTOM_CSS_FILTER_TAG' ) ) {
-			$css_design_class = apply_filters( VC_SHORTCODE_CUSTOM_CSS_FILTER_TAG, vc_shortcode_custom_css_class( $css, ' ' ), 'lafka_foodmenu', $atts );
-		}
 
 		$get_foodmenu_args = array(
 			'post_type'   => 'lafka-foodmenu',
@@ -509,12 +448,7 @@ if ( ! function_exists( 'lafka_foodmenu_shortcode' ) ) {
 
 		<?php if ( $projects->have_posts() ) : ?>
 			<?php
-				$classes = array( 'lafka-foodmenu-shortcode' );
-
-			if ( $css_design_class ) {
-				$classes[] = $css_design_class;
-			}
-				$classes[] = $color_scheme;
+				$classes = array( 'lafka-foodmenu-shortcode', $color_scheme );
 			?>
 			<div id="<?php echo esc_attr( $unique_id ); ?>" class="<?php echo esc_attr( implode( ' ', $classes ) ); ?>">
 				<?php
@@ -674,19 +608,12 @@ if ( ! function_exists( 'lafka_latest_posts_shortcode' ) ) {
 					'number_of_posts' => '4',
 					'offset'          => '',
 					'date_sort'       => 'default',
-					'css'             => '',
 				),
 				$atts
 			),
 			EXTR_PREFIX_ALL,
 			'lafka_blogposts_param'
 		);
-
-		// css from Design options
-		$css_design_class = '';
-		if ( defined( 'VC_SHORTCODE_CUSTOM_CSS_FILTER_TAG' ) ) {
-			$css_design_class = apply_filters( VC_SHORTCODE_CUSTOM_CSS_FILTER_TAG, vc_shortcode_custom_css_class( $lafka_blogposts_param_css, ' ' ), 'lafka_latest_posts', $atts );
-		}
 
 		$query_args = array(
 			'post_type'           => 'post',
@@ -742,7 +669,7 @@ if ( ! function_exists( 'lafka_latest_posts_shortcode' ) ) {
 		}
 
 		// Classes
-		$shortcode_classes = array( 'lafka_shortcode_latest_posts', 'lafka_blog_masonry', 'lafka-latest-blog-col-' . $lafka_blogposts_param_columns, $layout_class, $css_design_class );
+		$shortcode_classes = array( 'lafka_shortcode_latest_posts', 'lafka_blog_masonry', 'lafka-latest-blog-col-' . $lafka_blogposts_param_columns, $layout_class );
 
 		$output = '<div id="' . esc_attr( $unique_id ) . '" class="' . esc_attr( implode( ' ', $shortcode_classes ) ) . '">';
 
@@ -781,10 +708,6 @@ if ( ! function_exists( 'lafka_banner_shortcode' ) ) {
 				array(
 					'type'                       => 'fontawesome',
 					'icon_fontawesome'           => '',
-					'icon_openiconic'            => '',
-					'icon_typicons'              => '',
-					'icon_linecons'              => '',
-					'icon_entypo'                => '',
 					'icon_etline'                => '',
 					'icon_flaticon'              => '',
 					'alignment'                  => 'banner-center-center',
@@ -799,18 +722,11 @@ if ( ! function_exists( 'lafka_banner_shortcode' ) ) {
 					'button_text'                => '',
 					'color_scheme'               => '',
 					'appear_animation'           => '',
-					'css'                        => '',
 				),
 				$atts
 			),
 			EXTR_SKIP
 		);
-
-		// css from Design options
-		$css_design_class = '';
-		if ( defined( 'VC_SHORTCODE_CUSTOM_CSS_FILTER_TAG' ) ) {
-			$css_design_class = apply_filters( VC_SHORTCODE_CUSTOM_CSS_FILTER_TAG, vc_shortcode_custom_css_class( $css, ' ' ), 'lafka_banner', $atts );
-		}
 
 		// Enqueue needed icon font.
 		lafka_icon_element_fonts_enqueue( $type );
@@ -819,7 +735,7 @@ if ( ! function_exists( 'lafka_banner_shortcode' ) ) {
 
 		ob_start();
 		?>
-		<div class="wpb_lafka_banner wpb_content_element <?php echo esc_attr( $alignment ); ?> <?php echo esc_attr( $title_size ); ?>
+		<div class="wpb_lafka_banner <?php echo esc_attr( $alignment ); ?> <?php echo esc_attr( $title_size ); ?>
 		<?php
 		if ( $appear_animation !== '' ) {
 			echo ' ' . sanitize_html_class( $appear_animation );}
@@ -828,52 +744,50 @@ if ( ! function_exists( 'lafka_banner_shortcode' ) ) {
 			if ( $color_scheme !== '' ) {
 				echo ' ' . sanitize_html_class( $color_scheme );}
 			?>
-			<?php echo ( $css_design_class ? ' ' . esc_attr( $css_design_class ) : '' ); ?>">
-			<div class="wpb_wrapper">
-				<div class="lafka_whole_banner_wrapper">
-					<a href="<?php echo esc_url( $link ) ? esc_url( $link ) : '#'; ?>" target="<?php echo esc_attr( $link_target ); ?>" <?php echo esc_attr( $title ) ? 'title="' . esc_attr( $title ) . '"' : ''; ?>>
-						<?php if ( $image_id ) : ?>
-							<div class="lafka_banner_image">
-								<?php
-								echo wp_get_attachment_image(
-									$image_id,
-									'full',
-									false,
-									array(
-										'class' => 'lafka_banner_bg',
-										'alt'   => ( $title ? esc_attr( $title ) : 'banner' ),
-									)
-								);
-								?>
-							</div>
-						<?php endif; ?>
-						<div class="lafka_banner_text">
-							<div class="lafka_banner_centering">
-								<div class="lafka_banner_centered">
-									<?php if ( $iconClass ) : ?>
-										<span class="lafka_banner-icon <?php echo esc_attr( $iconClass ); ?>" ></span>
-									<?php endif; ?>
-									<?php if ( $pre_title ) : ?>
-										<h5 
-										<?php
-										if ( $pre_title_use_special_font ) :
-											?>
-											class="lafka-special-pre-title"<?php endif; ?> ><?php echo esc_html( $pre_title ); ?></h5>
-									<?php endif; ?>
-									<?php if ( $title ) : ?>
-										<h4><span><?php echo esc_html( $title ); ?></span></h4>
-									<?php endif; ?>
-									<?php if ( $subtitle ) : ?>
-										<h6><?php echo esc_html( $subtitle ); ?></h6>
-									<?php endif; ?>
-									<?php if ( $button_text ) : ?>
-										<span class="lafka_banner_buton"><?php echo esc_html( $button_text ); ?></span>
-									<?php endif; ?>
-								</div>
+			">
+			<div class="lafka_whole_banner_wrapper">
+				<a href="<?php echo esc_url( $link ) ? esc_url( $link ) : '#'; ?>" target="<?php echo esc_attr( $link_target ); ?>" <?php echo esc_attr( $title ) ? 'title="' . esc_attr( $title ) . '"' : ''; ?>>
+					<?php if ( $image_id ) : ?>
+						<div class="lafka_banner_image">
+							<?php
+							echo wp_get_attachment_image(
+								$image_id,
+								'full',
+								false,
+								array(
+									'class' => 'lafka_banner_bg',
+									'alt'   => ( $title ? esc_attr( $title ) : 'banner' ),
+								)
+							);
+							?>
+						</div>
+					<?php endif; ?>
+					<div class="lafka_banner_text">
+						<div class="lafka_banner_centering">
+							<div class="lafka_banner_centered">
+								<?php if ( $iconClass ) : ?>
+									<span class="lafka_banner-icon <?php echo esc_attr( $iconClass ); ?>" ></span>
+								<?php endif; ?>
+								<?php if ( $pre_title ) : ?>
+									<h5 
+									<?php
+									if ( $pre_title_use_special_font ) :
+										?>
+										class="lafka-special-pre-title"<?php endif; ?> ><?php echo esc_html( $pre_title ); ?></h5>
+								<?php endif; ?>
+								<?php if ( $title ) : ?>
+									<h4><span><?php echo esc_html( $title ); ?></span></h4>
+								<?php endif; ?>
+								<?php if ( $subtitle ) : ?>
+									<h6><?php echo esc_html( $subtitle ); ?></h6>
+								<?php endif; ?>
+								<?php if ( $button_text ) : ?>
+									<span class="lafka_banner_buton"><?php echo esc_html( $button_text ); ?></span>
+								<?php endif; ?>
 							</div>
 						</div>
-					</a>
-				</div>
+					</div>
+				</a>
 			</div>
 		</div>
 		<?php
@@ -910,34 +824,32 @@ if ( ! function_exists( 'lafka_cloudzoom_gallery_shortcode' ) ) {
 			if ( is_array( $images ) && ! empty( $images ) ) {
 				ob_start();
 				?>
-				<div class="lafka-cloudzoom-gallery wpb_content_element">
-					<div class="wpb_wrapper">
-						<?php
-						$first_image_attach_id  = $images[0];
-						$first_image            = wp_get_attachment_image( $first_image_attach_id, $img_size );
-						$first_image_attach_url = wp_get_attachment_url( $first_image_attach_id );
-						// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- %s argument $first_image is wp_get_attachment_image() output (trusted WP-core HTML with attributes pre-escaped).
-						printf( '<a id="%s" href="%s" itemprop="image" class="cloud-zoom" rel="position: \'inside\' , showTitle: false, adjustX:-4, adjustY:-4">%s</a>', esc_attr( $unique_id ), esc_url( $first_image_attach_url ), $first_image );
-						?>
+				<div class="lafka-cloudzoom-gallery">
+					<?php
+					$first_image_attach_id  = $images[0];
+					$first_image            = wp_get_attachment_image( $first_image_attach_id, $img_size );
+					$first_image_attach_url = wp_get_attachment_url( $first_image_attach_id );
+					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- %s argument $first_image is wp_get_attachment_image() output (trusted WP-core HTML with attributes pre-escaped).
+					printf( '<a id="%s" href="%s" itemprop="image" class="cloud-zoom" rel="position: \'inside\' , showTitle: false, adjustX:-4, adjustY:-4">%s</a>', esc_attr( $unique_id ), esc_url( $first_image_attach_url ), $first_image );
+					?>
 
-						<ul class="additional-images">
-							<?php foreach ( $images as $attach_id ) : ?>
+					<ul class="additional-images">
+						<?php foreach ( $images as $attach_id ) : ?>
+							<?php
+							$thumb_image        = wp_get_attachment_image( $attach_id, 'lafka-widgets-thumb' );
+							$small_image_params = wp_get_attachment_image_src( $attach_id, $img_size );
+
+							$image_attach_url = wp_get_attachment_url( $attach_id );
+							?>
+							<li>
 								<?php
-								$thumb_image        = wp_get_attachment_image( $attach_id, 'lafka-widgets-thumb' );
-								$small_image_params = wp_get_attachment_image_src( $attach_id, $img_size );
-
-								$image_attach_url = wp_get_attachment_url( $attach_id );
+								// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- %s argument $thumb_image is wp_get_attachment_image() output (trusted WP-core HTML with attributes pre-escaped).
+								printf( '<a rel="useZoom: \'%s\', smallImage: \'%s\'" class="cloud-zoom-gallery" href="%s">%s</a>', esc_attr( $unique_id ), esc_url( $small_image_params[0] ), esc_url( $image_attach_url ), $thumb_image );
 								?>
-								<li>
-									<?php
-									// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- %s argument $thumb_image is wp_get_attachment_image() output (trusted WP-core HTML with attributes pre-escaped).
-									printf( '<a rel="useZoom: \'%s\', smallImage: \'%s\'" class="cloud-zoom-gallery" href="%s">%s</a>', esc_attr( $unique_id ), esc_url( $small_image_params[0] ), esc_url( $image_attach_url ), $thumb_image );
-									?>
-								</li>
-							<?php endforeach; ?>
-						</ul>
+							</li>
+						<?php endforeach; ?>
+					</ul>
 
-					</div>
 				</div>
 				<script>
 					//<![CDATA[
@@ -997,7 +909,7 @@ if ( ! function_exists( 'lafka_icon_teaser_shortcode' ) ) {
 
 		ob_start();
 		?>
-		<div class="lafka_icon_teaser wpb_content_element
+		<div class="lafka_icon_teaser
 		<?php
 		if ( $appear_animation !== '' ) {
 			echo ' ' . sanitize_html_class( $appear_animation );}
@@ -1109,12 +1021,7 @@ if ( ! function_exists( 'lafka_icon_box_shortcode' ) ) {
 
 		ob_start();
 		?>
-		<div class="wpb_content_element
-		<?php
-		if ( $appear_animation !== '' ) {
-			echo ' ' . sanitize_html_class( $appear_animation );}
-		?>
-			">
+		<div<?php echo '' !== $appear_animation ? ' class="' . esc_attr( sanitize_html_class( $appear_animation ) ) . '"' : ''; ?>>
 			<div class="<?php echo esc_attr( implode( ' ', $iconbox_styling_classes ) ); ?>">
 				<div class="icon_wrapper">
 					<span class="icon_inner"<?php echo( $color ? ' style="' . esc_attr( $icon_style_inline ) . ':' . esc_attr( $color ) . ';"' : '' ); ?>>

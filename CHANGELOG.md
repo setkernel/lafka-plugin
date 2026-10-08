@@ -15,6 +15,34 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
 - **wp-env**: `.wp-env.json` is retired in favour of the `../local-env` Docker stack.
 - The pre-push hook no longer runs or skips tests; it fails with the install command
   when `node_modules` / `vendor` is missing, and no longer advertises `--no-verify`.
+- **Legacy third-party integrations** (breaking for sites that still ran them):
+  - WPBakery / Visual Composer: all 24 `vc_map` element mappings
+    (`shortcodes/shortcodes_to_vc_mapping.php`), the shipping-areas VC map and its
+    autocomplete callbacks, the VC icon-picker lists and category-search helpers,
+    `lafka-vc-edit-form.js`, the VC logo, the `WPBakeryShortCode` content-slider
+    class, the `css` design-options attribute on `[lafka_typed]`, `[lafka_foodmenu]`,
+    `[lafka_latest_posts]`, `[lafka_banner]` and `[lafka_shipping_areas]`, the
+    VC-only icon types (openiconic, typicons, linecons, entypo, monosocial,
+    material) and the inert `wpb_content_element` / `wpb_wrapper` markup classes.
+    `[lafka_content_slider]` (a WPBakery-only element) is gone; its stray tags are
+    stripped from stored content. `lafka_perf_dequeue_unused_vc` and the
+    `lafka_keep_vc_css` / `lafka_vc_native_template_page` filters are removed.
+  - Slider Revolution: `LAFKA_PLUGIN_IS_REVOLUTION`, the "Revolution Slider" meta box
+    (`lafka_rev_slider`, `lafka_rev_slider_before_header`), the revslider asset
+    pruning and the WPML config keys.
+  - bbPress: `LAFKA_PLUGIN_IS_BBPRESS` / `LAFKA_IS_BBPRESS`, the
+    `bbp_setup_current_user` glue, and `forum` / `topic` meta boxes.
+  - The Events Calendar (`tribe_events`) meta boxes.
+  - WC Marketplace (WCMp): `[lafka_wcmp_vendorslist]`, `LafkaShortcodeVendorList`,
+    `LAFKA_PLUGIN_IS_WC_MARKETPLACE`.
+  - The WordPress Importer ↔ WC attributes bridge (demo content is `wp lafka seed-demo`).
+  - `incl/compat/lafka-wpbakery-fallback.php` stays: it is content safety (orphaned
+    `[vc_*]` / `[rev_slider]` tags in old pages), not an integration.
+
+### Fixed
+- `[lafka_counter]` no longer fatals on `add_icon="true"` when WPBakery is not
+  installed (it called a WPBakery function); icon fonts are enqueued by
+  `lafka_icon_element_fonts_enqueue()`, now defined in `shortcodes/shortcodes.php`.
 
 ## [10.3.0] — 2026-09-25
 

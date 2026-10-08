@@ -138,7 +138,7 @@ if ( ! function_exists( 'lafka_webp_filter_srcset' ) ) {
 
 /**
  * Rewrite raw `<img src=...>` URLs in the_content / post_thumbnail_html / widget_text.
- * Catches images that come from WPBakery / hardcoded HTML rather than through
+ * Catches images that come from hardcoded HTML rather than through
  * the WP attachment helpers above.
  */
 if ( ! function_exists( 'lafka_webp_filter_content_imgs' ) ) {

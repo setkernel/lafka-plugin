@@ -15,7 +15,6 @@ function lafka_shipping_areas_shortcode( $atts = [], $content = null, $tag = '' 
 			'title'              => '',
 			'areas'              => '',
 			'map_height'         => '400',
-			'css'                => '',
 			'circle_area'        => 'no',
 			'circle_radius'      => '',
 			'circle_radius_unit' => 'metric',
@@ -25,13 +24,6 @@ function lafka_shipping_areas_shortcode( $atts = [], $content = null, $tag = '' 
 		$atts,
 		$tag
 	);
-
-	// The `css` attribute is WPBakery design-options output; only resolve it
-	// when WPBakery is present (the shortcode must work without it).
-	$css_class = '';
-	if ( defined( 'VC_SHORTCODE_CUSTOM_CSS_FILTER_TAG' ) && function_exists( 'vc_shortcode_custom_css_class' ) ) {
-		$css_class = apply_filters( VC_SHORTCODE_CUSTOM_CSS_FILTER_TAG, vc_shortcode_custom_css_class( $shortcode_atts['css'], ' ' ), 'lafka_shipping_areas', $shortcode_atts );
-	}
 
 	$area_params = json_decode( urldecode( $shortcode_atts['areas'] ), true );
 
@@ -89,7 +81,7 @@ function lafka_shipping_areas_shortcode( $atts = [], $content = null, $tag = '' 
 
 	ob_start();
 	?>
-	<div id="<?php echo esc_attr( $shortcode_id ); ?>" class="lafka-shipping-areas-shortcode <?php echo esc_attr( $css_class ); ?>">
+	<div id="<?php echo esc_attr( $shortcode_id ); ?>" class="lafka-shipping-areas-shortcode">
 		<h2><?php echo esc_html( $shortcode_atts['title'] ); ?> </h2>
 		<div id="<?php echo esc_attr( $shortcode_id ) . '_map'; ?>" class="lafka-shipping-areas-shortcode-map" style="height: <?php echo esc_attr( $shortcode_atts['map_height'] ); ?>px;"></div>
 	</div>

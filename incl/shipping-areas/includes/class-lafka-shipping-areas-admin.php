@@ -22,10 +22,6 @@ class Lafka_Shipping_Areas_Admin {
 		// Save Google Maps api key on both places
 		add_action( 'update_option_lafka_shipping_areas_general', array( __CLASS__, 'override_theme_options_api_key' ), 10, 3 );
 		add_action( 'update_option_lafka', array( __CLASS__, 'override_shipping_areas_options_api_key' ), 10, 3 );
-
-		// 'lafka_shipping_areas' shortcode WPBakery Page Builder integration
-		add_filter( 'vc_autocomplete_lafka_shipping_areas_areas_area_id_callback', array( __CLASS__, 'lafka_shipping_areas_shortcode_area_id_search' ), 10, 1 );
-		add_filter( 'vc_autocomplete_lafka_shipping_areas_areas_area_id_render', array( __CLASS__, 'lafka_shipping_areas_shortcode_area_id_render' ), 10, 1 );
 	}
 
 	public static function admin_init() {
@@ -672,41 +668,6 @@ class Lafka_Shipping_Areas_Admin {
 
 			update_post_meta( $post_id, '_lafka_shipping_area_polygon_coordinates', sanitize_text_field( $_POST['lafka_shipping_area_polygon_coordinates'] ) );
 		}
-	}
-
-	public static function lafka_shipping_areas_shortcode_area_id_search( $search_string ): array {
-		$query                           = $search_string;
-		$data                            = array();
-		$args                            = array(
-			's'         => $query,
-			'post_type' => 'lafka_shipping_areas',
-		);
-		$args['vc_search_by_title_only'] = true;
-		$args['numberposts']             = - 1;
-		if ( 0 === strlen( $args['s'] ) ) {
-			unset( $args['s'] );
-		}
-		add_filter( 'posts_search', 'vc_search_by_title_only', 500, 2 );
-		$posts = get_posts( $args );
-		if ( is_array( $posts ) && ! empty( $posts ) ) {
-			foreach ( $posts as $post ) {
-				$data[] = array(
-					'value' => $post->ID,
-					'label' => $post->post_title,
-				);
-			}
-		}
-
-		return $data;
-	}
-
-	public static function lafka_shipping_areas_shortcode_area_id_render( $value ) {
-		$post = get_post( $value['value'] );
-
-		return is_null( $post ) ? false : array(
-			'label' => $post->post_title,
-			'value' => $post->ID,
-		);
 	}
 
 	/**

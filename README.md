@@ -53,8 +53,8 @@ The plugin ships with **zero hardcoded restaurant data** — every public NAP / 
 
 For bundled / composite products, install the official **[WooCommerce Product Bundles](https://woocommerce.com/products/product-bundles/)** plugin. Lafka's addons engine bridges into it via `incl/addons/engine/compat/class-bundles-addons-compatibility.php`.
 
-### Shortcodes (26)
-Most shortcodes are also mapped as WPBakery elements; WPBakery itself is optional (see `incl/compat/lafka-wpbakery-fallback.php`).
+### Shortcodes (24)
+Old pages built with WPBakery or Slider Revolution still render cleanly: `incl/compat/lafka-wpbakery-fallback.php` strips their orphaned `[vc_*]` / `[rev_slider]` tags from stored content. Neither plugin is supported or required.
 
 | Shortcode | Description |
 |---|---|
@@ -70,10 +70,8 @@ Most shortcodes are also mapped as WPBakery elements; WPBakery itself is optiona
 | `[lafka_latest_posts]` / `[lafkablogposts]` | Blog grids/carousels |
 | `[lafka_woo_*]` | 9 WooCommerce product carousels / sliders (top-rated, recent, featured, sale, best-selling, category, categories, recently viewed, products slider) |
 | `[lafka_cloudzoom_gallery]` | Product image gallery |
-| `[lafka_content_slider]` | Tabbed content slider — WPBakery only (registered by WPBakery's Tabs class) |
 | `[lafka_nap]` | Canonical name / address / phone block with Restaurant schema |
 | `[lafka_shipping_areas]` | Delivery-area map (Delivery areas module) |
-| `[lafka_wcmp_vendorslist]` | Vendor list — only when WC Marketplace (WCMp) is active |
 
 ### Widgets
 - About, Contacts, Latest Menu Entries, Payment Options, Popular Posts, Product Filter
@@ -94,7 +92,7 @@ Gated features are declared in `Lafka_Module_Registry` (`incl/class-lafka-module
 - **Variation Swatches** — Color and image swatches per attribute term
 - **Schema / JSON-LD** — Restaurant / LocalBusiness / Menu / MenuItem / Product / BreadcrumbList graph
 - **Security Headers** — X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Permissions-Policy + REST user-enum blocking
-- **Performance** — Image-dimension auto-injection (CLS), LCP preload, Revslider auto-dequeue
+- **Performance** — Image-dimension auto-injection (CLS), LCP preload, unused-asset pruning
 - **Analytics** (`incl/analytics/`) — GA4 / GTM with Consent Mode v2 defaults, `dataLayer` WooCommerce ecommerce events, and custom event hooks
 - **Conversion** (`incl/conversion/`) — Abandoned-cart capture / cron / DB / email / resume, web-push (db / REST / sender / re-order cron), and review-prompt banner + email
 
@@ -110,7 +108,7 @@ lafka-plugin/
 │   ├── checkout/        # Block checkout: mode migration, additional fields, blocks integration (v10.0.0)
 │   ├── cli/             # WP-CLI: `wp lafka config`, `seed-demo`, image-alt backfill, WebP convert, reviews
 │   ├── customizer/      # Restaurant Info / PDP / Upsell / Abandoned-Cart / Analytics / Push / Reviews panels
-│   ├── compat/          # Block-cart shim, WPBakery/Revslider fallbacks, address-autocomplete compat, WP Importer ↔ WC attrs bridge
+│   ├── compat/          # Block-cart shim, orphaned-shortcode fallback, address-autocomplete compat
 │   ├── conversion/      # Abandoned-cart + web-push + review prompts
 │   ├── insights/        # First-party funnel sessions, nightly rollups, weekly insights email
 │   ├── kitchen-display/ # KDS state machine + AJAX + emails

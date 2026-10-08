@@ -77,9 +77,6 @@ class Lafka_Shipping_Areas {
 		if ( is_admin() ) {
 			require_once __DIR__ . '/includes/class-lafka-shipping-areas-admin.php';
 			require_once __DIR__ . '/../branches/class-lafka-branch-locations-admin.php';
-			if ( function_exists( 'vc_lean_map' ) ) {
-				vc_lean_map( 'lafka_shipping_areas', null, __DIR__ . '/../map-shortcode/shortcode-lafka-shipping-areas-to-vc.php' );
-			}
 		}
 	}
 

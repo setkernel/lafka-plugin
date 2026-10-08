@@ -12,8 +12,9 @@ headers.
   is preloaded too (Fraunces by default, or the active preset's display face).
 - **CSS**: page-specific stylesheets load only where needed (e.g. PDP CSS only on
   products); non-critical CSS is deferred (`media=print` → `onload`).
-- **JS**: WPBakery front JS is dequeued off the front page; WooCommerce
-  add-to-cart script loads where the drawer/upsell can appear.
+- **Assets**: block-library CSS, Font Awesome, Contact Form 7 and payment-gateway
+  assets are dequeued where a page doesn't use them; WooCommerce add-to-cart
+  script loads where the drawer/upsell can appear.
 - **Schema/markup**: single `@graph` block, no duplicate SEO-plugin output.
 
 ## Cloudflare (if your site sits behind it — do these in the dashboard)

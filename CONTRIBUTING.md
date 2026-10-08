@@ -42,7 +42,7 @@ The plugin currently ships no automated test suite.
   - `conversion/` — abandoned-cart capture/cron/email/resume, web-push, review prompts
   - `schema/` — JSON-LD + `lafka_get_restaurant_info()` resolver
   - `wpml/` — WPML/WCML translation glue
-- `shortcodes/` — shortcode definitions + WPBakery/VC mappings (`[lafka_nap]` and `[lafka_shipping_areas]` are registered elsewhere).
+- `shortcodes/` — shortcode definitions (`[lafka_nap]` and `[lafka_shipping_areas]` are registered elsewhere).
 - `widgets/` — 6 widgets (5 standalone + 1 WC-dependent).
 
 ## Where new code goes
@@ -50,7 +50,7 @@ The plugin currently ships no automated test suite.
 | If you're adding... | Put it in... |
 |---------------------|--------------|
 | A new CPT or taxonomy | `lafka-plugin.php` (registration) + a new `incl/<feature>/` module if it has logic |
-| A new shortcode | `shortcodes/` + add VC mapping in `shortcodes_to_vc_mapping.php` |
+| A new shortcode | `shortcodes/shortcodes.php` |
 | A WC product behavior | `incl/addons/` (engine in `addons/engine/`) if related; otherwise a new module |
 | A new module entirely | New folder under `incl/`; register a descriptor in `Lafka_Module_Registry` (built-ins in `register_builtin_modules()`, third parties via the `lafka_register_modules` action) so it appears on Lafka → Modules; gate on that state and load conditionally from `lafka-plugin.php` |
 | Site-specific business logic | NOT here — put it in `lafka-child` |

@@ -1,6 +1,5 @@
 <wpml-config>
     <custom-fields>
-        <custom-field action="copy">lafka_rev_slider_before_header</custom-field>
         <custom-field action="copy">lafka_prtfl_custom_content</custom-field>
         <custom-field action="copy">lafka_transparent_header</custom-field>
         <custom-field action="copy">lafka_layout</custom-field>
@@ -9,7 +8,6 @@
         <custom-field action="copy">lafka_show_breadcrumb</custom-field>
         <custom-field action="copy">lafka_show_sidebar</custom-field>
         <custom-field action="copy">lafka_custom_sidebar</custom-field>
-        <custom-field action="translate">lafka_rev_slider</custom-field>
         <custom-field action="copy">lafka_video_bckgr_url</custom-field>
         <custom-field action="translate">lafka_ingredients</custom-field>
         <custom-field action="translate">lafka_allergens</custom-field>
@@ -83,7 +81,7 @@
             <attributes>
                 <attribute>title</attribute>
                 <attribute>subtitle</attribute>
-                <attribute type="link" encoding="vc_link">link</attribute>
+                <attribute type="link">link</attribute>
                 <attribute>button_text</attribute>
             </attributes>
         </shortcode>
@@ -113,7 +111,7 @@
                 <attribute>title</attribute>
                 <attribute>subtitle</attribute>
                 <attribute>button_text</attribute>
-                <attribute type="link" encoding="vc_link">link</attribute>
+                <attribute type="link">link</attribute>
             </attributes>
         </shortcode>
         <shortcode>

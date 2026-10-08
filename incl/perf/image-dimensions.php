@@ -10,7 +10,7 @@
  * dimensions from disk with a transient cache. Never fetches remote images.
  *
  * WP core's wp_filter_content_tags() does this for WP-managed images, but
- * skips images that aren't WP-managed (e.g. WPBakery output, hardcoded
+ * skips images that aren't WP-managed (e.g. hardcoded
  * URLs in custom templates). This module catches the stragglers.
  *
  * @package LafkaPlugin
@@ -109,7 +109,7 @@ if ( ! function_exists( 'lafka_attachment_url_to_postid_cached' ) ) {
 	 *
 	 * Each call to attachment_url_to_postid() is a `posts` table query joined
 	 * against `postmeta`. Without memoization, a page with N <img> tags from
-	 * non-WP-managed URLs (WPBakery output, hardcoded src) hits the DB N times
+	 * non-WP-managed URLs (hardcoded src) hits the DB N times
 	 * per content-filter invocation, and the_content/post_thumbnail_html/widget_text
 	 * each fire the filter independently.
 	 *

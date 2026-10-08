@@ -58,8 +58,7 @@ drops into any WooCommerce site without fighting your design.
 * **Local SEO** — Restaurant / Menu / Breadcrumb JSON-LD schema wired to your
   operator configuration.
 * **Timeslots** for scheduled pickup and delivery.
-* **25+ shortcodes** (most also exposed as WPBakery elements; WPBakery is
-  optional) for menus, contact blocks, maps, teasers and more.
+* **25+ shortcodes** for menus, contact blocks, maps, teasers and more.
 * **HPOS-ready** WooCommerce integration and a **Site Health** panel that
   surfaces misconfiguration before customers hit it.
 

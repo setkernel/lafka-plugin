@@ -136,30 +136,6 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
 	define( 'LAFKA_PLUGIN_IS_WOOCOMMERCE', false );
 }
 
-// Check if bbPress is active
-if ( class_exists( 'bbPress' ) ) {
-	define( 'LAFKA_PLUGIN_IS_BBPRESS', true );
-} else {
-	define( 'LAFKA_PLUGIN_IS_BBPRESS', false );
-}
-
-if ( in_array( 'revslider/revslider.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ), true )
-	|| ( is_multisite() && array_key_exists( 'revslider/revslider.php', get_site_option( 'active_sitewide_plugins', array() ) ) )
-	|| class_exists( 'RevSliderBase' ) ) {
-	define( 'LAFKA_PLUGIN_IS_REVOLUTION', true );
-} else {
-	define( 'LAFKA_PLUGIN_IS_REVOLUTION', false );
-}
-
-// Check if WC Marketplace is active
-if ( in_array( 'dc-woocommerce-multi-vendor/dc_product_vendor.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ), true )
-	|| ( is_multisite() && array_key_exists( 'dc-woocommerce-multi-vendor/dc_product_vendor.php', get_site_option( 'active_sitewide_plugins', array() ) ) )
-	|| class_exists( 'WCMp' ) ) {
-	define( 'LAFKA_PLUGIN_IS_WC_MARKETPLACE', true );
-} else {
-	define( 'LAFKA_PLUGIN_IS_WC_MARKETPLACE', false );
-}
-
 /*
  * Shared LAFKA_IS_* constants — canonical detection flags consumed by both
  * plugin and theme. The plugin loads first (plugins_loaded), so it sets these
@@ -167,9 +143,6 @@ if ( in_array( 'dc-woocommerce-multi-vendor/dc_product_vendor.php', apply_filter
  */
 if ( ! defined( 'LAFKA_IS_WOOCOMMERCE' ) ) {
 	define( 'LAFKA_IS_WOOCOMMERCE', LAFKA_PLUGIN_IS_WOOCOMMERCE );
-}
-if ( ! defined( 'LAFKA_IS_BBPRESS' ) ) {
-	define( 'LAFKA_IS_BBPRESS', LAFKA_PLUGIN_IS_BBPRESS );
 }
 
 // Feature-flag checks — accept legacy $lafka_options array for backward compat,
@@ -270,17 +243,10 @@ if ( is_admin() ) {
 require_once plugin_dir_path( __FILE__ ) . 'incl/compat/lafka-address-autocomplete-compat.php';
 
 /**
- * Bridge for upstream wordpressdotorg/wordpress-importer (replaces v9.7.17
- * deleted Lafka fork). Auto-creates missing WC product-attribute taxonomies
- * during WXR imports so products land with their attribute terms intact.
- */
-require_once plugin_dir_path( __FILE__ ) . 'incl/compat/wp-importer-wc-attrs-bridge.php';
-
-/**
- * WPBakery (js_composer) graceful-fallback shim — strips orphaned [vc_*] wrapper
- * tags when the heavy WPBakery plugin is deactivated, so VC-built pages still
- * render (content + first-party/WC shortcodes preserved). Makes WPBakery a
- * non-dependency. No-ops when WPBakery is active.
+ * Content-safety shim — strips orphaned [vc_*] wrapper tags (and stray
+ * [rev_slider]) left in stored content by builders that are no longer installed,
+ * so old pages render cleanly (inner content + first-party/WC shortcodes
+ * preserved). Not an integration: nothing here depends on those plugins.
  */
 require_once plugin_dir_path( __FILE__ ) . 'incl/compat/lafka-wpbakery-fallback.php';
 
@@ -731,7 +697,7 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/cli/class-lafka-cli-seed-demo.p
 
 /**
  * P6-PERF-4 (W3-T2, 2026-04-28): Asset pruning — dequeue heavy third-party assets
- * on pages that don't use them. Currently handles Revolution Slider (~150 KB CSS+JS).
+ * on pages that don't use them (Contact Form 7 and Font Awesome).
  * Self-gates via is_admin() inside the module; safe to load unconditionally.
  */
 require_once plugin_dir_path( __FILE__ ) . 'incl/perf/lafka-asset-pruning.php';
@@ -955,24 +921,6 @@ function lafka_plugin_after_plugins_loaded() {
 	/* shortcodes */
 	require_once plugin_dir_path( __FILE__ ) . 'shortcodes/shortcodes.php';
 
-	/*
-	 * Map all Lafka shortcodes to WPBakery's Visual Composer.
-	 *
-	 * Must run on the frontend too, not just admin: `vc_map()` registers the
-	 * editor metadata AND triggers WPBakery's `Vc_Mapper` to instantiate the
-	 * matching `WPBakeryShortCode_*` class for class-based custom shortcodes
-	 * (`as_parent`/`as_child` elements like `lafka_content_slider`). The
-	 * class's parent constructor calls `add_shortcode()`, which is what makes
-	 * the shortcode actually render content on the frontend.
-	 *
-	 * Was previously gated to `is_admin()` under PERF-H09 (Session 2). That
-	 * skipped the admin metadata too — but it ALSO skipped the frontend
-	 * shortcode registration, which broke `[lafka_content_slider]` and any
-	 * other class-based VC element on every public page that used them.
-	 */
-	add_action( 'vc_before_init', 'lafka_integrateWithVC' );
-	require_once plugin_dir_path( __FILE__ ) . 'shortcodes/shortcodes_to_vc_mapping.php';
-
 	/* Load variation product swatches */
 	require_once plugin_dir_path( __FILE__ ) . 'incl/swatches/variation-swatches.php';
 
@@ -1121,20 +1069,6 @@ if ( ! function_exists( 'lafka_load_plugin_text_domain' ) ) {
 	function lafka_load_plugin_text_domain() {
 		load_plugin_textdomain( 'lafka-plugin', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
 	}
-}
-
-// Fix bbpress  Notice: bp_setup_current_user was called incorrectly
-if ( class_exists( 'bbPress' ) ) {
-	remove_action( 'set_current_user', 'bbp_setup_current_user', 10 );
-	add_action( 'set_current_user', 'lafka_bbp_setup_current_user', 10 );
-}
-
-if ( ! function_exists( 'lafka_bbp_setup_current_user' ) ) {
-
-	function lafka_bbp_setup_current_user() {
-		do_action( 'bbp_setup_current_user' );
-	}
-
 }
 
 // PERF-H10: Only load wp-admin/includes/plugin.php in admin context.
@@ -1325,265 +1259,6 @@ if ( ! function_exists( 'lafka_optionsframework_adminbar' ) ) {
 
 // Script/style handle registration (front end + admin).
 require_once plugin_dir_path( __FILE__ ) . 'incl/lafka-asset-registration.php';
-
-// Enqueue the script for proper positioning the custom added font in vc edit form
-add_filter( 'vc_edit_form_enqueue_script', 'lafka_enqueue_edit_form_scripts' );
-if ( ! function_exists( 'lafka_enqueue_edit_form_scripts' ) ) {
-
-	function lafka_enqueue_edit_form_scripts( $scripts ) {
-		$scripts[] = plugin_dir_url( __FILE__ ) . 'assets/js/lafka-vc-edit-form.js';
-		return $scripts;
-	}
-
-}
-
-add_filter( 'vc_iconpicker-type-etline', 'lafka_vc_iconpicker_type_etline' );
-
-/**
- * Elegant Icons Font icons
- *
- * @param $icons - taken from filter - vc_map param field settings['source'] provided icons (default empty array).
- * If array categorized it will auto-enable category dropdown
- *
- * @since 4.4
- * @return array - of icons for iconpicker, can be categorized, or not.
- */
-if ( ! function_exists( 'lafka_vc_iconpicker_type_etline' ) ) {
-
-	function lafka_vc_iconpicker_type_etline( $icons ) {
-		// Categorized icons ( you can also output simple array ( key=> value ), where key = icon class, value = icon readable name ).
-		$etline_icons = array(
-			array( 'icon-mobile' => 'Mobile' ),
-			array( 'icon-laptop' => 'Laptop' ),
-			array( 'icon-desktop' => 'Desktop' ),
-			array( 'icon-tablet' => 'Tablet' ),
-			array( 'icon-phone' => 'Phone' ),
-			array( 'icon-document' => 'Document' ),
-			array( 'icon-documents' => 'Documents' ),
-			array( 'icon-search' => 'Search' ),
-			array( 'icon-clipboard' => 'Clipboard' ),
-			array( 'icon-newspaper' => 'Newspaper' ),
-			array( 'icon-notebook' => 'Notebook' ),
-			array( 'icon-book-open' => 'Open' ),
-			array( 'icon-browser' => 'Browser' ),
-			array( 'icon-calendar' => 'Calendar' ),
-			array( 'icon-presentation' => 'Presentation' ),
-			array( 'icon-picture' => 'Picture' ),
-			array( 'icon-pictures' => 'Pictures' ),
-			array( 'icon-video' => 'Video' ),
-			array( 'icon-camera' => 'Camera' ),
-			array( 'icon-printer' => 'Printer' ),
-			array( 'icon-toolbox' => 'Toolbox' ),
-			array( 'icon-briefcase' => 'Briefcase' ),
-			array( 'icon-wallet' => 'Wallet' ),
-			array( 'icon-gift' => 'Gift' ),
-			array( 'icon-bargraph' => 'Bargraph' ),
-			array( 'icon-grid' => 'Grid' ),
-			array( 'icon-expand' => 'Expand' ),
-			array( 'icon-focus' => 'Focus' ),
-			array( 'icon-edit' => 'Edit' ),
-			array( 'icon-adjustments' => 'Adjustments' ),
-			array( 'icon-ribbon' => 'Ribbon' ),
-			array( 'icon-hourglass' => 'Hourglass' ),
-			array( 'icon-lock' => 'Lock' ),
-			array( 'icon-megaphone' => 'Megaphone' ),
-			array( 'icon-shield' => 'Shield' ),
-			array( 'icon-trophy' => 'Trophy' ),
-			array( 'icon-flag' => 'Flag' ),
-			array( 'icon-map' => 'Map' ),
-			array( 'icon-puzzle' => 'Puzzle' ),
-			array( 'icon-basket' => 'Basket' ),
-			array( 'icon-envelope' => 'Envelope' ),
-			array( 'icon-streetsign' => 'Streetsign' ),
-			array( 'icon-telescope' => 'Telescope' ),
-			array( 'icon-gears' => 'Gears' ),
-			array( 'icon-key' => 'Key' ),
-			array( 'icon-paperclip' => 'Paperclip' ),
-			array( 'icon-attachment' => 'Attachment' ),
-			array( 'icon-pricetags' => 'Pricetags' ),
-			array( 'icon-lightbulb' => 'Lightbulb' ),
-			array( 'icon-layers' => 'Layers' ),
-			array( 'icon-pencil' => 'Pencil' ),
-			array( 'icon-tools' => 'Tools' ),
-			array( 'icon-tools-2' => '2' ),
-			array( 'icon-scissors' => 'Scissors' ),
-			array( 'icon-paintbrush' => 'Paintbrush' ),
-			array( 'icon-magnifying-glass' => 'Glass' ),
-			array( 'icon-circle-compass' => 'Compass' ),
-			array( 'icon-linegraph' => 'Linegraph' ),
-			array( 'icon-mic' => 'Mic' ),
-			array( 'icon-strategy' => 'Strategy' ),
-			array( 'icon-beaker' => 'Beaker' ),
-			array( 'icon-caution' => 'Caution' ),
-			array( 'icon-recycle' => 'Recycle' ),
-			array( 'icon-anchor' => 'Anchor' ),
-			array( 'icon-profile-male' => 'Male' ),
-			array( 'icon-profile-female' => 'Female' ),
-			array( 'icon-bike' => 'Bike' ),
-			array( 'icon-wine' => 'Wine' ),
-			array( 'icon-hotairballoon' => 'Hotairballoon' ),
-			array( 'icon-globe' => 'Globe' ),
-			array( 'icon-genius' => 'Genius' ),
-			array( 'icon-map-pin' => 'Pin' ),
-			array( 'icon-dial' => 'Dial' ),
-			array( 'icon-chat' => 'Chat' ),
-			array( 'icon-heart' => 'Heart' ),
-			array( 'icon-cloud' => 'Cloud' ),
-			array( 'icon-upload' => 'Upload' ),
-			array( 'icon-download' => 'Download' ),
-			array( 'icon-target' => 'Target' ),
-			array( 'icon-hazardous' => 'Hazardous' ),
-			array( 'icon-piechart' => 'Piechart' ),
-			array( 'icon-speedometer' => 'Speedometer' ),
-			array( 'icon-global' => 'Global' ),
-			array( 'icon-compass' => 'Compass' ),
-			array( 'icon-lifesaver' => 'Lifesaver' ),
-			array( 'icon-clock' => 'Clock' ),
-			array( 'icon-aperture' => 'Aperture' ),
-			array( 'icon-quote' => 'Quote' ),
-			array( 'icon-scope' => 'Scope' ),
-			array( 'icon-alarmclock' => 'Alarmclock' ),
-			array( 'icon-refresh' => 'Refresh' ),
-			array( 'icon-happy' => 'Happy' ),
-			array( 'icon-sad' => 'Sad' ),
-			array( 'icon-facebook' => 'Facebook' ),
-			array( 'icon-twitter' => 'Twitter' ),
-			array( 'icon-googleplus' => 'Googleplus' ),
-			array( 'icon-rss' => 'Rss' ),
-			array( 'icon-tumblr' => 'Tumblr' ),
-			array( 'icon-linkedin' => 'Linkedin' ),
-			array( 'icon-dribbble' => 'Dribbble' ),
-		);
-
-		return array_merge( $icons, $etline_icons );
-	}
-
-}
-
-add_filter( 'vc_iconpicker-type-flaticon', 'lafka_vc_iconpicker_type_flaticon' );
-
-/**
- * Flaticon Icons Font icons
- *
- * @param $icons - taken from filter - vc_map param field settings['source'] provided icons (default empty array).
- * If array categorized it will auto-enable category dropdown
- *
- * @since 4.4
- * @return array - of icons for iconpicker, can be categorized, or not.
- */
-if ( ! function_exists( 'lafka_vc_iconpicker_type_flaticon' ) ) {
-
-	function lafka_vc_iconpicker_type_flaticon( $icons ) {
-		// Categorized icons ( you can also output simple array ( key=> value ), where key = icon class, value = icon readable name ).
-		$flaticon_icons = array(
-			array( 'flaticon-001-popcorn' => 'popcorn' ),
-			array( 'flaticon-002-tea' => 'tea' ),
-			array( 'flaticon-003-chinese-food' => 'chinese food' ),
-			array( 'flaticon-004-tomato-sauce' => 'tomato sauce' ),
-			array( 'flaticon-005-cola-1' => 'cola 1' ),
-			array( 'flaticon-006-burger-2' => 'burger 2' ),
-			array( 'flaticon-007-burger-1' => 'burger 1' ),
-			array( 'flaticon-008-fried-potatoes' => 'fried potatoes' ),
-			array( 'flaticon-009-coffee' => 'coffee' ),
-			array( 'flaticon-010-burger' => 'burger' ),
-			array( 'flaticon-011-ice-cream-1' => 'ice cream 1' ),
-			array( 'flaticon-012-cola' => 'cola' ),
-			array( 'flaticon-013-milkshake' => 'milkshake' ),
-			array( 'flaticon-014-sauces' => 'sauces' ),
-			array( 'flaticon-015-hot-dog-1' => 'hotdog 1' ),
-			array( 'flaticon-016-chicken-leg-1' => 'chicken leg 1' ),
-			array( 'flaticon-017-croissant' => 'croissant' ),
-			array( 'flaticon-018-cheese' => 'cheese' ),
-			array( 'flaticon-019-sausage' => 'sausage' ),
-			array( 'flaticon-020-fried-egg' => 'fried egg' ),
-			array( 'flaticon-021-fried-chicken' => 'fried-chicken' ),
-			array( 'flaticon-022-serving-dish' => 'serving dish' ),
-			array( 'flaticon-023-pizza-slice' => 'pizza slice' ),
-			array( 'flaticon-024-chef-hat' => 'chef hat' ),
-			array( 'flaticon-025-meat' => 'meat' ),
-			array( 'flaticon-026-ice-cream' => 'ice cream' ),
-			array( 'flaticon-027-donut' => 'donut' ),
-			array( 'flaticon-028-rice' => 'rice' ),
-			array( 'flaticon-029-package' => 'package' ),
-			array( 'flaticon-030-kebab' => 'kebab' ),
-			array( 'flaticon-031-delivery' => 'delivery' ),
-			array( 'flaticon-032-food-truck' => 'food truck' ),
-			array( 'flaticon-033-waiter-1' => 'waiter 1' ),
-			array( 'flaticon-034-waiter' => 'waiter' ),
-			array( 'flaticon-035-taco' => 'taco' ),
-			array( 'flaticon-036-chips' => 'chips' ),
-			array( 'flaticon-037-soda' => 'soda' ),
-			array( 'flaticon-038-take-away' => 'take away' ),
-			array( 'flaticon-039-fork' => 'fork' ),
-			array( 'flaticon-040-coffee-cup' => 'coffee cup' ),
-			array( 'flaticon-041-waffle' => 'waffle' ),
-			array( 'flaticon-042-beer' => 'beer' ),
-			array( 'flaticon-043-chicken-leg' => 'chicken leg' ),
-			array( 'flaticon-044-pitcher' => 'pitcher' ),
-			array( 'flaticon-045-coffee-machine' => 'coffee machine' ),
-			array( 'flaticon-046-noodles' => 'noodles' ),
-			array( 'flaticon-047-menu' => 'menu' ),
-			array( 'flaticon-048-hot-dog' => 'hot-dog' ),
-			array( 'flaticon-049-breakfast' => 'breakfast' ),
-			array( 'flaticon-050-french-fries' => 'french fries' ),
-		);
-
-		return array_merge( $icons, $flaticon_icons );
-	}
-
-}
-
-if ( ! function_exists( 'lafka_foodmenu_category_field_search' ) ) {
-
-	function lafka_foodmenu_category_field_search( $search_string ) {
-		$data = array();
-
-		$vc_taxonomies_types = array( 'lafka_foodmenu_category' );
-		$vc_taxonomies       = get_terms(
-			$vc_taxonomies_types,
-			array(
-				'hide_empty' => false,
-				'search'     => $search_string,
-			)
-		);
-		if ( is_array( $vc_taxonomies ) && ! empty( $vc_taxonomies ) ) {
-			foreach ( $vc_taxonomies as $t ) {
-				if ( is_object( $t ) ) {
-					$data[] = vc_get_term_object( $t );
-				}
-			}
-		}
-
-		return $data;
-	}
-
-}
-
-if ( ! function_exists( 'lafka_latest_posts_category_field_search' ) ) {
-
-	function lafka_latest_posts_category_field_search( $search_string ) {
-		$data = array();
-
-		$vc_taxonomies_types = array( 'category' );
-		$vc_taxonomies       = get_terms(
-			$vc_taxonomies_types,
-			array(
-				'hide_empty' => false,
-				'search'     => $search_string,
-			)
-		);
-		if ( is_array( $vc_taxonomies ) && ! empty( $vc_taxonomies ) ) {
-			foreach ( $vc_taxonomies as $t ) {
-				if ( is_object( $t ) ) {
-					$data[] = vc_get_term_object( $t );
-				}
-			}
-		}
-
-		return $data;
-	}
-
-}
 
 // Contact form ajax actions
 if ( ! function_exists( 'lafka_submit_contact' ) ) {
