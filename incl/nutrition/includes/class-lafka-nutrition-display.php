@@ -56,7 +56,7 @@ class Lafka_Nutrition_Display {
 	public function display_weight() {
 		global /** @var WC_Product $product */
 		$product;
-		$is_quickview = isset( $_REQUEST['action'] ) && $_REQUEST['action'] === 'lafka_quickview';
+		$is_quickview = isset( $_REQUEST['action'] ) && 'lafka_quickview' === $_REQUEST['action'];
 
 		if ( is_object( $product ) && ( is_product() || $is_quickview ) ) {
 			$available_variation_ids = false;

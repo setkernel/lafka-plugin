@@ -71,7 +71,7 @@ class Lafka_Image_Alt_Backfill_Command {
 			}
 
 			$new_alt = $this->derive_alt( $att_id, $current_alt, $parent_id );
-			if ( $new_alt === null ) {
+			if ( null === $new_alt ) {
 				continue; // skip — current alt is fine
 			}
 			if ( $new_alt === $current_alt ) {
@@ -106,7 +106,7 @@ class Lafka_Image_Alt_Backfill_Command {
 				update_post_meta( $c['id'], '_wp_attachment_image_alt', $c['after'] );
 				++$applied;
 			}
-			WP_CLI::success( sprintf( 'Updated %d attachment alt%s.', $applied, $applied === 1 ? '' : 's' ) );
+			WP_CLI::success( sprintf( 'Updated %d attachment alt%s.', $applied, 1 === $applied ? '' : 's' ) );
 		} else {
 			WP_CLI::log( '' );
 			WP_CLI::log( 'Run again with `apply` to update these attachments.' );
@@ -122,7 +122,7 @@ class Lafka_Image_Alt_Backfill_Command {
 			$parent_type = get_post_type( $parent_id );
 			if ( 'product' === $parent_type ) {
 				$product_name = (string) get_the_title( $parent_id );
-				if ( $product_name !== '' ) {
+				if ( '' !== $product_name ) {
 					return $product_name;
 				}
 			}
@@ -136,7 +136,7 @@ class Lafka_Image_Alt_Backfill_Command {
 		// 3. If parent is a non-product post with a title → use the title
 		if ( $parent_id ) {
 			$parent_title = (string) get_the_title( $parent_id );
-			if ( $parent_title !== '' && $parent_title !== '(no title)' ) {
+			if ( '' !== $parent_title && '(no title)' !== $parent_title ) {
 				return $parent_title;
 			}
 		}
@@ -147,7 +147,7 @@ class Lafka_Image_Alt_Backfill_Command {
 
 	private function is_meaningful_alt( string $alt ): bool {
 		$alt = trim( $alt );
-		if ( $alt === '' ) {
+		if ( '' === $alt ) {
 			return false;
 		}
 		// Filename patterns (treat as not-meaningful)
@@ -173,10 +173,10 @@ class Lafka_Image_Alt_Backfill_Command {
 	}
 
 	private function reason( string $before, string $after ): string {
-		if ( $before === '' && $after !== '' ) {
+		if ( '' === $before && '' !== $after ) {
 			return 'set';
 		}
-		if ( $before !== '' && $after === '' ) {
+		if ( '' !== $before && '' === $after ) {
 			return 'cleared garbage';
 		}
 		return 'replaced';

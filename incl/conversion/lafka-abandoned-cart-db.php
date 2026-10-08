@@ -145,7 +145,7 @@ if ( ! function_exists( 'lafka_ac_maybe_install_table' ) ) {
 			return; // Default-OFF module: don't create the table until the operator opts in.
 		}
 		$installed = (string) get_option( 'lafka_abandoned_cart_db_version', '' );
-		if ( $installed === LAFKA_ABANDONED_CART_DB_VERSION ) {
+		if ( LAFKA_ABANDONED_CART_DB_VERSION === $installed ) {
 			return;
 		}
 		lafka_ac_install_table();

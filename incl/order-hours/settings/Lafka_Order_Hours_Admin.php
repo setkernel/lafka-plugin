@@ -16,7 +16,7 @@ class Lafka_Order_Hours_Admin {
 	public function styles() {
 		$screen = get_current_screen();
 
-		if ( is_a( $screen, 'WP_Screen' ) && $screen->id === 'woocommerce_page_lafka_order_hours' ) {
+		if ( is_a( $screen, 'WP_Screen' ) && 'woocommerce_page_lafka_order_hours' === $screen->id ) {
 			// dequeue jquery ui dialog css as it causes conflicts with the jquery-scheduler
 			wp_dequeue_style( 'wp-jquery-ui-dialog' );
 

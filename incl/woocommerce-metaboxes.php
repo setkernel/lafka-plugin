@@ -233,7 +233,7 @@ if ( ! function_exists( 'lafka_woocommerce_custom_cat_fields_edit' ) ) {
 				<div class="form-field lafka-term-header-style-wrap">
 					<select id="lafka_term_header_style" name="lafka_term_header_style">
 						<?php foreach ( $header_style_values as $key => $value ) : ?>
-							<option value="<?php echo esc_attr( $key ); ?>" <?php echo( $key == $header_style ? 'selected="selected"' : '' ); ?> ><?php echo esc_html( $value ); ?></option>
+							<option value="<?php echo esc_attr( $key ); ?>" <?php echo( (string) $key === (string) $header_style ? 'selected="selected"' : '' ); ?> ><?php echo esc_html( $value ); ?></option>
 						<?php endforeach; ?>
 					</select>
 				</div>
@@ -262,7 +262,7 @@ if ( ! function_exists( 'lafka_woocommerce_custom_cat_fields_edit' ) ) {
 				<div class="form-field lafka-term-header-alignment-wrap">
 					<select name="lafka_term_header_alignment">
 						<?php foreach ( $header_alignment_values as $key => $value ) : ?>
-							<option value="<?php echo esc_attr( $key ); ?>" <?php echo( $key == $header_alignment ? 'selected="selected"' : '' ); ?> ><?php echo esc_html( $value ); ?></option>
+							<option value="<?php echo esc_attr( $key ); ?>" <?php echo( (string) $key === (string) $header_alignment ? 'selected="selected"' : '' ); ?> ><?php echo esc_html( $value ); ?></option>
 						<?php endforeach; ?>
 					</select>
 				</div>

@@ -423,7 +423,7 @@ if ( ! class_exists( 'Lafka_Insights_Collector' ) ) {
 			}
 			$url  = lafka_get_menu_url();
 			$host = Lafka_Beacon_Guard::host_of( $url );
-			if ( '' === $url || $host !== Lafka_Beacon_Guard::site_host() ) {
+			if ( '' === $url || Lafka_Beacon_Guard::site_host() !== $host ) {
 				return '';
 			}
 			$path = (string) parse_url( $url, PHP_URL_PATH );

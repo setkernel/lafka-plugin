@@ -105,7 +105,7 @@ if ( ! function_exists( 'lafka_counter_shortcode' ) ) {
 				<?php if ( $iconClass ) : ?>
 					<i class="<?php echo esc_attr( $iconClass ); ?>" 
 					<?php
-					if ( $icon_color && $icon_color !== 'custom' ) :
+					if ( $icon_color && 'custom' !== $icon_color ) :
 						?>
 						style="color:<?php echo esc_attr( $icon_color ); ?>" <?php endif; ?>></i>
 				<?php endif; ?>
@@ -168,7 +168,7 @@ if ( ! function_exists( 'lafka_typed_shortcode' ) ) {
 		</div>
 
 		</div>
-		<?php if ( is_array( $rotating_strings_arr ) && count( $rotating_strings_arr ) > 1 && $rotating_strings_arr[0] != '' ) : ?>
+		<?php if ( is_array( $rotating_strings_arr ) && count( $rotating_strings_arr ) > 1 && '' !== (string) $rotating_strings_arr[0] ) : ?>
 			<script>
 				//<![CDATA[
 				(function () {
@@ -190,7 +190,7 @@ if ( ! function_exists( 'lafka_typed_shortcode' ) ) {
 							// delay before deleting last string
 							backDelay: 1800,
 							// MUST BE OPTIONAL TRUE/FALSE
-							loop: <?php echo esc_js( $loop == 'yes' ? 'true' : 'false' ); ?>,
+							loop: <?php echo esc_js( 'yes' === (string) $loop ? 'true' : 'false' ); ?>,
 							showCursor: true
 						});
 					});
@@ -239,15 +239,15 @@ if ( ! function_exists( 'lafka_blogposts_shortcode' ) ) {
 		);
 
 		// If defined sort order
-		if ( $lafka_blogposts_param_date_sort != 'default' ) {
+		if ( 'default' !== (string) $lafka_blogposts_param_date_sort ) {
 			$query_args['order'] = $lafka_blogposts_param_date_sort;
 		}
 		// Posts per page
-		if ( $lafka_blogposts_param_number_of_posts != '' ) {
+		if ( '' !== (string) $lafka_blogposts_param_number_of_posts ) {
 			$query_args['posts_per_page'] = $lafka_blogposts_param_number_of_posts;
 		}
 		// Offset
-		if ( $lafka_blogposts_param_offset != '' ) {
+		if ( '' !== (string) $lafka_blogposts_param_offset ) {
 			$query_args['offset'] = $lafka_blogposts_param_offset;
 		}
 
@@ -377,7 +377,7 @@ if ( ! function_exists( 'lafka_foodmenu_shortcode' ) ) {
 		}
 
 		// If defined sort order
-		if ( $date_sort != 'DESC' ) {
+		if ( 'DESC' !== (string) $date_sort ) {
 			$get_foodmenu_args['order'] = $date_sort;
 		}
 
@@ -407,7 +407,7 @@ if ( ! function_exists( 'lafka_foodmenu_shortcode' ) ) {
 				$(document).ready(function () {
 					var $container = $('#<?php echo esc_attr( $unique_id ); ?> div.lafka-foodmenu-shortcode-container');
 
-					<?php if ( $enable_sortable == 'yes' ) : ?>
+					<?php if ( 'yes' === (string) $enable_sortable ) : ?>
 						var $isotopedGrid = $container.isotope({
 							itemSelector: 'div.foodmenu-unit',
 							layoutMode: 'masonry',
@@ -451,7 +451,7 @@ if ( ! function_exists( 'lafka_foodmenu_shortcode' ) ) {
 			?>
 			<div id="<?php echo esc_attr( $unique_id ); ?>" class="<?php echo esc_attr( implode( ' ', $classes ) ); ?>">
 				<?php
-				if ( $enable_sortable == 'yes' ) :
+				if ( 'yes' === (string) $enable_sortable ) :
 					$foodmenu_categories = array();
 					if ( $taxonomies ) {
 						$taxonomies_arr = explode( ',', $taxonomies );
@@ -504,13 +504,13 @@ if ( ! function_exists( 'lafka_foodmenu_shortcode' ) ) {
 					?>
 					<div class="foodmenu-unit lafka-none-overlay <?php echo esc_attr( implode( ' ', $current_terms_as_classes ) ); ?>">
 						<div class="foodmenu-unit-holder">
-							<?php if ( $hide_foodmenu_images !== 'yes' ) : ?>
+							<?php if ( 'yes' !== $hide_foodmenu_images ) : ?>
 								<?php if ( has_post_thumbnail() ) : ?>
-									<?php if ( $foodmenu_simple_menu !== 'yes' ) : ?>
+									<?php if ( 'yes' !== $foodmenu_simple_menu ) : ?>
 										<a title="<?php esc_html_e( 'View more', 'lafka-plugin' ); ?>" href="<?php the_permalink(); ?>" class="lafka-foodmenu-image-link">
 									<?php endif; ?>
 									<?php the_post_thumbnail( $thumb_size ); ?>
-									<?php if ( $foodmenu_simple_menu !== 'yes' ) : ?>
+									<?php if ( 'yes' !== $foodmenu_simple_menu ) : ?>
 										</a>
 									<?php endif; ?>
 								<?php else : ?>
@@ -521,10 +521,10 @@ if ( ! function_exists( 'lafka_foodmenu_shortcode' ) ) {
 							<div class="foodmenu-unit-info">
 								<a 
 								<?php
-								if ( $foodmenu_simple_menu !== 'yes' ) :
+								if ( 'yes' !== $foodmenu_simple_menu ) :
 									?>
 									title="<?php esc_html_e( 'View more', 'lafka-plugin' ); ?>" <?php endif; ?>
-									<?php if ( $foodmenu_simple_menu !== 'yes' ) : ?>
+									<?php if ( 'yes' !== $foodmenu_simple_menu ) : ?>
 										href="<?php the_permalink(); ?>"
 									<?php else : ?>
 										href="#"
@@ -564,7 +564,7 @@ if ( ! function_exists( 'lafka_foodmenu_shortcode' ) ) {
 										</ul>
 									<?php endif; ?>
 								</a>
-								<?php if ( $hide_foodmenu_images !== 'yes' && $featured_image_src && $show_lightbox === 'yes' ) : ?>
+								<?php if ( 'yes' !== $hide_foodmenu_images && $featured_image_src && 'yes' === $show_lightbox ) : ?>
 									<a class="foodmenu-lightbox-link" href="<?php echo esc_url( $featured_image_src ); ?>"><span></span></a>
 								<?php endif; ?>
 							</div>
@@ -631,15 +631,15 @@ if ( ! function_exists( 'lafka_latest_posts_shortcode' ) ) {
 		}
 
 		// If defined sort order
-		if ( $lafka_blogposts_param_date_sort != 'default' ) {
+		if ( 'default' !== (string) $lafka_blogposts_param_date_sort ) {
 			$query_args['order'] = $lafka_blogposts_param_date_sort;
 		}
 		// Posts per page
-		if ( $lafka_blogposts_param_number_of_posts != '' ) {
+		if ( '' !== (string) $lafka_blogposts_param_number_of_posts ) {
 			$query_args['posts_per_page'] = $lafka_blogposts_param_number_of_posts;
 		}
 		// Offset
-		if ( $lafka_blogposts_param_offset != '' ) {
+		if ( '' !== (string) $lafka_blogposts_param_offset ) {
 			$query_args['offset'] = $lafka_blogposts_param_offset;
 		}
 
@@ -662,7 +662,7 @@ if ( ! function_exists( 'lafka_latest_posts_shortcode' ) ) {
 				break;
 		}
 
-		if ( $lafka_blogposts_param_layout === 'carousel' ) {
+		if ( 'carousel' === $lafka_blogposts_param_layout ) {
 			// PERF-H25: Use shared carousel initializer
 			lafka_add_owl_carousel_inline_js( '#' . $unique_id, $lafka_blogposts_param_columns );
 		}
@@ -736,11 +736,11 @@ if ( ! function_exists( 'lafka_banner_shortcode' ) ) {
 		?>
 		<div class="wpb_lafka_banner <?php echo esc_attr( $alignment ); ?> <?php echo esc_attr( $title_size ); ?>
 		<?php
-		if ( $appear_animation !== '' ) {
+		if ( '' !== $appear_animation ) {
 			echo ' ' . sanitize_html_class( $appear_animation );}
 		?>
 			<?php
-			if ( $color_scheme !== '' ) {
+			if ( '' !== $color_scheme ) {
 				echo ' ' . sanitize_html_class( $color_scheme );}
 			?>
 			">
@@ -900,7 +900,7 @@ if ( ! function_exists( 'lafka_icon_teaser_shortcode' ) ) {
 		$unique_id = uniqid( 'lafka_icon_teaser_' );
 
 		$classes = array( 'icon_link_item', $align );
-		if ( $type === 'custom_image' ) {
+		if ( 'custom_image' === $type ) {
 			$classes[] = 'lafka-image-icon';
 		}
 
@@ -908,20 +908,20 @@ if ( ! function_exists( 'lafka_icon_teaser_shortcode' ) ) {
 		?>
 		<div class="lafka_icon_teaser
 		<?php
-		if ( $appear_animation !== '' ) {
+		if ( '' !== $appear_animation ) {
 			echo ' ' . sanitize_html_class( $appear_animation );}
 		?>
 			">
 			<div class="<?php echo esc_attr( implode( ' ', $classes ) ); ?>">
 				<a href="#<?php echo esc_attr( $unique_id ); ?>" class="lafka-icon-teaser-popup-link">
 					<div  class="icon_holder">
-						<?php if ( $type === 'fontawesome' ) : ?>
+						<?php if ( 'fontawesome' === $type ) : ?>
 							<i <?php echo( $color ? ' style="color:' . esc_attr( $color ) . ';"' : '' ); ?> class="<?php echo esc_attr( $icon_fontawesome ); ?>"></i>
-						<?php elseif ( $type === 'etline' ) : ?>
+						<?php elseif ( 'etline' === $type ) : ?>
 							<i <?php echo( $color ? ' style="color:' . esc_attr( $color ) . ';"' : '' ); ?> class="<?php echo esc_attr( $icon_etline ); ?>"></i>
-						<?php elseif ( $type === 'flaticon' ) : ?>
+						<?php elseif ( 'flaticon' === $type ) : ?>
 							<i <?php echo( $color ? ' style="color:' . esc_attr( $color ) . ';"' : '' ); ?> class="<?php echo esc_attr( $icon_flaticon ); ?>"></i>
-						<?php elseif ( $type === 'custom_image' ) : ?>
+						<?php elseif ( 'custom_image' === $type ) : ?>
 							<?php echo wp_get_attachment_image( $icon_image_id, 'lafka-widgets-thumb', false, array( 'alt' => $title ) ); ?>
 						<?php endif; ?>
 					</div>
@@ -1007,12 +1007,12 @@ if ( ! function_exists( 'lafka_icon_box_shortcode' ) ) {
 		wp_enqueue_style( 'font_awesome_6' );
 
 		$iconbox_styling_classes = array( 'lafka-iconbox', $alignment, $icon_style );
-		if ( $type === 'custom_image' ) {
+		if ( 'custom_image' === $type ) {
 			$iconbox_styling_classes[] = 'lafka-image-icon';
 		}
 
 		$icon_style_inline = 'background-color';
-		if ( $icon_style == 'lafka-clean-icon' ) {
+		if ( 'lafka-clean-icon' === (string) $icon_style ) {
 			$icon_style_inline = 'color';
 		}
 
@@ -1022,13 +1022,13 @@ if ( ! function_exists( 'lafka_icon_box_shortcode' ) ) {
 			<div class="<?php echo esc_attr( implode( ' ', $iconbox_styling_classes ) ); ?>">
 				<div class="icon_wrapper">
 					<span class="icon_inner"<?php echo( $color ? ' style="' . esc_attr( $icon_style_inline ) . ':' . esc_attr( $color ) . ';"' : '' ); ?>>
-						<?php if ( $type === 'fontawesome' ) : ?>
+						<?php if ( 'fontawesome' === $type ) : ?>
 							<i class="<?php echo esc_attr( $icon_fontawesome ); ?>"></i>
-						<?php elseif ( $type === 'etline' ) : ?>
+						<?php elseif ( 'etline' === $type ) : ?>
 							<i class="<?php echo esc_attr( $icon_etline ); ?>"></i>
-						<?php elseif ( $type === 'flaticon' ) : ?>
+						<?php elseif ( 'flaticon' === $type ) : ?>
 							<i class="<?php echo esc_attr( $icon_flaticon ); ?>"></i>
-						<?php elseif ( $type === 'custom_image' ) : ?>
+						<?php elseif ( 'custom_image' === $type ) : ?>
 							<?php echo wp_get_attachment_image( $icon_image_id, 'lafka-widgets-thumb', false, array( 'alt' => $title ) ); ?>
 						<?php endif; ?>
 					</span>
@@ -1085,7 +1085,7 @@ if ( ! function_exists( 'lafka_countdown_shortcode' ) ) {
 			?>
 			<div id="<?php echo esc_attr( $unique_id ); ?>" class="lafka_shortcode_count_holder
 			<?php
-			if ( $counter_size !== '' ) {
+			if ( '' !== $counter_size ) {
 				echo ' ' . sanitize_html_class( $counter_size );}
 			?>
 				" 
@@ -1231,9 +1231,9 @@ if ( ! function_exists( 'lafka_pricing_table_shortcode' ) ) {
 		ob_start();
 		?>
 
-		<div class="lafka-pricing-table-shortcode<?php echo ( $styled_for_dark === 'yes' ? ' pricing-table-light-titles' : '' ); ?><?php echo ( $featured === 'yes' ? ' lafka-pricing-is-featured' : '' ); ?>
+		<div class="lafka-pricing-table-shortcode<?php echo ( 'yes' === $styled_for_dark ? ' pricing-table-light-titles' : '' ); ?><?php echo ( 'yes' === $featured ? ' lafka-pricing-is-featured' : '' ); ?>
 		<?php
-		if ( $appear_animation !== '' ) {
+		if ( '' !== $appear_animation ) {
 			echo ' ' . sanitize_html_class( $appear_animation );}
 		?>
 			">
@@ -1631,7 +1631,7 @@ if ( ! function_exists( 'lafka_woo_recent_viewed_products_shortcode' ) ) {
 
 		$js_config_output = '';
 		$carousel_class   = '';
-		if ( $atts['layout'] === 'carousel' ) {
+		if ( 'carousel' === $atts['layout'] ) {
 			$carousel_class = 'owl-carousel ';
 			ob_start();
 			?>
@@ -1679,7 +1679,7 @@ if ( ! function_exists( 'lafka_woo_recent_viewed_products_shortcode' ) ) {
 
 		?>
 			<div id="<?php echo esc_attr( $unique_id ); ?>" class="lafka_woo_recent_viewed">
-				<?php if ( $atts['title'] !== '' ) : ?>
+				<?php if ( '' !== $atts['title'] ) : ?>
 					<h4><?php echo esc_html( $atts['title'] ); ?></h4>
 				<?php endif; ?>
 				<div class="<?php echo esc_attr( $carousel_class ); ?>woocommerce columns-<?php echo esc_attr( $atts['columns'] ); ?>">
@@ -1736,7 +1736,7 @@ if ( ! function_exists( 'lafka_woo_product_categories_carousel_shortcode' ) ) {
 			$ids = array();
 		}
 
-		$hide_empty = ( $atts['hide_empty'] == true || $atts['hide_empty'] == 1 ) ? 1 : 0;
+		$hide_empty = ( (bool) $atts['hide_empty'] || 1 === (int) $atts['hide_empty'] ) ? 1 : 0;
 
 		// get terms and workaround WP bug with parents/pad counts
 		$args = array(
@@ -1757,7 +1757,7 @@ if ( ! function_exists( 'lafka_woo_product_categories_carousel_shortcode' ) ) {
 
 		if ( $hide_empty ) {
 			foreach ( $product_categories as $key => $category ) {
-				if ( $category->count == 0 ) {
+				if ( 0 === (int) $category->count ) {
 					unset( $product_categories[ $key ] );
 				}
 			}

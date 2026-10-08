@@ -401,7 +401,7 @@ class Lafka_Timeslots {
 	public static function add_datetime_content_to_orders_list( $column, $order ) {
 		$order = wc_get_order( $order );
 
-		if ( $column === 'lafka_datetime_complete' ) {
+		if ( 'lafka_datetime_complete' === $column ) {
 			$date     = Lafka_Shipping_Areas::get_order_meta_backward_compatible( $order->get_id(), 'lafka_checkout_date' );
 			$timeslot = Lafka_Shipping_Areas::get_order_meta_backward_compatible( $order->get_id(), 'lafka_checkout_timeslot' );
 
@@ -478,7 +478,7 @@ class Lafka_Timeslots {
 					}
 				);
 				foreach ( $day_periods as $period ) {
-					if ( $period->end === '00:00' ) {
+					if ( '00:00' === $period->end ) {
 						$period->end = '24:00';
 					}
 
@@ -548,7 +548,7 @@ class Lafka_Timeslots {
 
 	private static function get_max_orders_per_slot( $branch_id ) {
 		$datetime_options = get_option( 'lafka_shipping_areas_datetime' );
-		if ( $branch_id !== null ) {
+		if ( null !== $branch_id ) {
 			$branch_override_global_datetime = get_term_meta( $branch_id, 'lafka_branch_override_datetime_global', true );
 			$branch_max_orders_per_timeslot  = get_term_meta( $branch_id, 'lafka_branch_datetime_orders_per_timeslot', true );
 			if ( ! empty( $branch_override_global_datetime ) ) {
@@ -582,7 +582,7 @@ class Lafka_Timeslots {
 					}
 				);
 				foreach ( $day_periods as $period ) {
-					if ( $period->end === '00:00' ) {
+					if ( '00:00' === $period->end ) {
 						$period->end = '24:00';
 					}
 					$hours_minutes_array_end = explode( ':', $period->end );
@@ -604,7 +604,7 @@ class Lafka_Timeslots {
 			$branch_location_session = WC()->session->get( 'lafka_branch_location' );
 			if ( ! empty( $branch_location_session ) ) {
 				$order_type = $branch_location_session['order_type'];
-				if ( $order_type === 'pickup' ) {
+				if ( 'pickup' === $order_type ) {
 					$order_type_label = esc_html__( 'Pickup', 'lafka-plugin' );
 				}
 			}

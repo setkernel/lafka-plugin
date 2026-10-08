@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 				<?php foreach ( $lafka_nutrition_list as $nutrition_name => $nutrition_value ) : ?>
 					<li 
 					<?php
-					if ( $nutrition_name === 'lafka_nutrition_energy' ) :
+					if ( 'lafka_nutrition_energy' === $nutrition_name ) :
 						?>
 						class="lafka-nutrition-energy" <?php endif; ?> >
 						<span class="lafka-nutrition-list-label"><?php echo esc_html( Lafka_Nutrition_Config::$nutrition_meta_fields[ $nutrition_name ]['frontend_label'] ); ?></span>

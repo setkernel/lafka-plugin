@@ -230,7 +230,7 @@ if ( ! class_exists( 'Lafka_Checkout_Mode' ) ) {
 		public static function has_mismatch(): bool {
 			$page = self::page_mode();
 
-			return '' !== $page && $page !== self::get_mode();
+			return '' !== $page && self::get_mode() !== $page;
 		}
 
 		/**

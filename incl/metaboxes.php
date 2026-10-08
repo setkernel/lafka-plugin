@@ -36,13 +36,13 @@ if ( ! function_exists( 'lafka_layout_callback' ) ) {
 
 	function lafka_layout_callback( $post ) {
 		// If current page is set as Blog page - don't show the options
-		if ( $post->ID == get_option( 'page_for_posts' ) ) {
+		if ( (int) get_option( 'page_for_posts' ) === (int) $post->ID ) {
 			echo esc_html__( 'Page Layout Options is disabled for this page, because the page is set as Blog page from Settings->Reading.', 'lafka-plugin' );
 			return;
 		}
 
 		// If current page is set as Shop page - don't show the options
-		if ( LAFKA_PLUGIN_IS_WOOCOMMERCE && $post->ID == wc_get_page_id( 'shop' ) ) {
+		if ( LAFKA_PLUGIN_IS_WOOCOMMERCE && (int) wc_get_page_id( 'shop' ) === (int) $post->ID ) {
 			echo esc_html__( 'Page Layout Options is disabled for this page, because the page is set as Shop page.', 'lafka-plugin' );
 			return;
 		}
@@ -62,22 +62,22 @@ if ( ! function_exists( 'lafka_layout_callback' ) ) {
 			'lafka_title_alignment'        => 'left_title',
 		);
 
-		if ( isset( $custom['lafka_layout'] ) && $custom['lafka_layout'][0] != '' ) {
+		if ( isset( $custom['lafka_layout'] ) && '' !== (string) $custom['lafka_layout'][0] ) {
 			$values['lafka_layout'] = esc_attr( $custom['lafka_layout'][0] );
 		}
-		if ( isset( $custom['lafka_footer_style'] ) && $custom['lafka_footer_style'][0] != '' ) {
+		if ( isset( $custom['lafka_footer_style'] ) && '' !== (string) $custom['lafka_footer_style'][0] ) {
 			$values['lafka_footer_style'] = esc_attr( $custom['lafka_footer_style'][0] );
 		}
-		if ( isset( $custom['lafka_header_syle'] ) && $custom['lafka_header_syle'][0] != '' ) {
+		if ( isset( $custom['lafka_header_syle'] ) && '' !== (string) $custom['lafka_header_syle'][0] ) {
 			$values['lafka_header_syle'] = esc_attr( $custom['lafka_header_syle'][0] );
 		}
-		if ( isset( $custom['lafka_page_subtitle'] ) && $custom['lafka_page_subtitle'][0] != '' ) {
+		if ( isset( $custom['lafka_page_subtitle'] ) && '' !== (string) $custom['lafka_page_subtitle'][0] ) {
 			$values['lafka_page_subtitle'] = esc_attr( $custom['lafka_page_subtitle'][0] );
 		}
-		if ( isset( $custom['lafka_title_background_imgid'] ) && $custom['lafka_title_background_imgid'][0] != '' ) {
+		if ( isset( $custom['lafka_title_background_imgid'] ) && '' !== (string) $custom['lafka_title_background_imgid'][0] ) {
 			$values['lafka_title_background_imgid'] = esc_attr( $custom['lafka_title_background_imgid'][0] );
 		}
-		if ( isset( $custom['lafka_title_alignment'] ) && $custom['lafka_title_alignment'][0] != '' ) {
+		if ( isset( $custom['lafka_title_alignment'] ) && '' !== (string) $custom['lafka_title_alignment'][0] ) {
 			$values['lafka_title_alignment'] = esc_attr( $custom['lafka_title_alignment'][0] );
 		}
 
@@ -107,7 +107,7 @@ if ( ! function_exists( 'lafka_layout_callback' ) ) {
 		if ( $screen && in_array( $screen->post_type, array( 'post', 'page', 'lafka-foodmenu', 'product' ), true ) ) {
 
 			// Below is not for product
-			if ( $screen->post_type != 'product' ) {
+			if ( 'product' !== (string) $screen->post_type ) {
 				// Header style header
 				$output .= '<p><b>' . esc_html__( 'Header Style', 'lafka-plugin' ) . '</b></p>';
 				$output .= '<p><label for="lafka_header_syle">';
@@ -115,7 +115,7 @@ if ( ! function_exists( 'lafka_layout_callback' ) ) {
 				$output .= "<select name='lafka_header_syle'>";
 				// Add a default option
 				$output .= '<option';
-				if ( $values['lafka_header_syle'] === '' ) {
+				if ( '' === $values['lafka_header_syle'] ) {
 					$output .= " selected='selected'";
 				}
 				$output .= " value=''>" . esc_html__( 'Normal', 'lafka-plugin' ) . '</option>';
@@ -167,8 +167,8 @@ if ( ! function_exists( 'lafka_layout_callback' ) ) {
 				$output .= '<input type="text" id="lafka_page_subtitle" name="lafka_page_subtitle" value="' . esc_attr( $values['lafka_page_subtitle'] ) . '" class="large-text" />';
 				$output .= '<p><label for="lafka_title_alignment">' . esc_html__( 'Title alignment', 'lafka-plugin' ) . '</label></p>';
 				$output .= '<select name="lafka_title_alignment">';
-				$output .= '<option ' . ( $values['lafka_title_alignment'] == 'left_title' ? 'selected="selected"' : '' ) . ' value="left_title">Left</option>';
-				$output .= '<option ' . ( $values['lafka_title_alignment'] == 'centered_title' ? 'selected="selected"' : '' ) . ' value="centered_title">Center</option>';
+				$output .= '<option ' . ( 'left_title' === (string) $values['lafka_title_alignment'] ? 'selected="selected"' : '' ) . ' value="left_title">Left</option>';
+				$output .= '<option ' . ( 'centered_title' === (string) $values['lafka_title_alignment'] ? 'selected="selected"' : '' ) . ' value="centered_title">Center</option>';
 				$output .= '</select>';
 			}
 		}
@@ -200,7 +200,7 @@ if ( ! function_exists( 'lafka_save_layout_postdata' ) ) {
 			return;
 		}
 
-		if ( 'post-new.php' == $pagenow ) {
+		if ( 'post-new.php' === (string) $pagenow ) {
 			return;
 		}
 
@@ -262,12 +262,12 @@ if ( ! function_exists( 'lafka_page_options_callback' ) ) {
 
 	function lafka_page_options_callback( $post ) {
 		// If current page is set as Blog page - don't show the options
-		if ( $post->ID == get_option( 'page_for_posts' ) ) {
+		if ( (int) get_option( 'page_for_posts' ) === (int) $post->ID ) {
 			echo esc_html__( 'Page Structure Options are disabled for this page, because the page is set as Blog page from Settings->Reading.', 'lafka-plugin' );
 			return;
 		}
 		// If current page is set as Shop page - don't show the options
-		if ( LAFKA_PLUGIN_IS_WOOCOMMERCE && $post->ID == wc_get_page_id( 'shop' ) ) {
+		if ( LAFKA_PLUGIN_IS_WOOCOMMERCE && (int) wc_get_page_id( 'shop' ) === (int) $post->ID ) {
 			echo esc_html__( 'Page Structure Options are disabled for this page, because the page is set as Shop page.', 'lafka-plugin' );
 			return;
 		}
@@ -291,31 +291,31 @@ if ( ! function_exists( 'lafka_page_options_callback' ) ) {
 			'lafka_custom_offcanvas_sidebar' => 'default',
 		);
 
-		if ( isset( $custom['lafka_top_menu'] ) && $custom['lafka_top_menu'][0] != '' ) {
+		if ( isset( $custom['lafka_top_menu'] ) && '' !== (string) $custom['lafka_top_menu'][0] ) {
 			$values['lafka_top_menu'] = $custom['lafka_top_menu'][0];
 		}
-		if ( isset( $custom['lafka_show_title_page'] ) && $custom['lafka_show_title_page'][0] != '' ) {
+		if ( isset( $custom['lafka_show_title_page'] ) && '' !== (string) $custom['lafka_show_title_page'][0] ) {
 			$values['lafka_show_title_page'] = $custom['lafka_show_title_page'][0];
 		}
-		if ( isset( $custom['lafka_show_breadcrumb'] ) && $custom['lafka_show_breadcrumb'][0] != '' ) {
+		if ( isset( $custom['lafka_show_breadcrumb'] ) && '' !== (string) $custom['lafka_show_breadcrumb'][0] ) {
 			$values['lafka_show_breadcrumb'] = $custom['lafka_show_breadcrumb'][0];
 		}
-		if ( isset( $custom['lafka_show_feat_image_in_post'] ) && $custom['lafka_show_feat_image_in_post'][0] != '' ) {
+		if ( isset( $custom['lafka_show_feat_image_in_post'] ) && '' !== (string) $custom['lafka_show_feat_image_in_post'][0] ) {
 			$values['lafka_show_feat_image_in_post'] = $custom['lafka_show_feat_image_in_post'][0];
 		}
-		if ( isset( $custom['lafka_show_sidebar'] ) && $custom['lafka_show_sidebar'][0] != '' ) {
+		if ( isset( $custom['lafka_show_sidebar'] ) && '' !== (string) $custom['lafka_show_sidebar'][0] ) {
 			$values['lafka_show_sidebar'] = $custom['lafka_show_sidebar'][0];
 		}
-		if ( isset( $custom['lafka_sidebar_position'] ) && $custom['lafka_sidebar_position'][0] != '' ) {
+		if ( isset( $custom['lafka_sidebar_position'] ) && '' !== (string) $custom['lafka_sidebar_position'][0] ) {
 			$values['lafka_sidebar_position'] = $custom['lafka_sidebar_position'][0];
 		}
-		if ( isset( $custom['lafka_show_offcanvas_sidebar'] ) && $custom['lafka_show_offcanvas_sidebar'][0] != '' ) {
+		if ( isset( $custom['lafka_show_offcanvas_sidebar'] ) && '' !== (string) $custom['lafka_show_offcanvas_sidebar'][0] ) {
 			$values['lafka_show_offcanvas_sidebar'] = $custom['lafka_show_offcanvas_sidebar'][0];
 		}
-		if ( isset( $custom['lafka_custom_sidebar'] ) && $custom['lafka_custom_sidebar'][0] != '' ) {
+		if ( isset( $custom['lafka_custom_sidebar'] ) && '' !== (string) $custom['lafka_custom_sidebar'][0] ) {
 			$values['lafka_custom_sidebar'] = $custom['lafka_custom_sidebar'][0];
 		}
-		if ( isset( $custom['lafka_custom_offcanvas_sidebar'] ) && $custom['lafka_custom_offcanvas_sidebar'][0] != '' ) {
+		if ( isset( $custom['lafka_custom_offcanvas_sidebar'] ) && '' !== (string) $custom['lafka_custom_offcanvas_sidebar'][0] ) {
 			$values['lafka_custom_offcanvas_sidebar'] = $custom['lafka_custom_offcanvas_sidebar'][0];
 		}
 
@@ -367,16 +367,16 @@ if ( ! function_exists( 'lafka_page_options_callback' ) ) {
 		$output .= "<select name='lafka_custom_sidebar'>";
 		// Add a default option
 		$output .= '<option';
-		if ( $values['lafka_custom_sidebar'] == 'default' ) {
+		if ( 'default' === (string) $values['lafka_custom_sidebar'] ) {
 			$output .= " selected='selected'";
 		}
 		$output .= " value='default'>" . esc_html__( 'default', 'lafka-plugin' ) . '</option>';
 
 		// Fill the select element with all registered sidebars
 		foreach ( $wp_registered_sidebars as $sidebar_id => $sidebar ) {
-			if ( $sidebar_id != 'bottom_footer_sidebar' && $sidebar_id != 'pre_header_sidebar' ) {
+			if ( 'bottom_footer_sidebar' !== (string) $sidebar_id && 'pre_header_sidebar' !== (string) $sidebar_id ) {
 				$output .= '<option';
-				if ( $sidebar_id == $values['lafka_custom_sidebar'] ) {
+				if ( (string) $sidebar_id === (string) $values['lafka_custom_sidebar'] ) {
 					$output .= " selected='selected'";
 				}
 				$output .= " value='" . esc_attr( $sidebar_id ) . "'>" . esc_html( $sidebar['name'] ) . '</option>';
@@ -405,16 +405,16 @@ if ( ! function_exists( 'lafka_page_options_callback' ) ) {
 
 		// Add a default option
 		$output .= '<option';
-		if ( $values['lafka_custom_offcanvas_sidebar'] == 'default' ) {
+		if ( 'default' === (string) $values['lafka_custom_offcanvas_sidebar'] ) {
 			$output .= " selected='selected'";
 		}
 		$output .= " value='default'>" . esc_html__( 'default', 'lafka-plugin' ) . '</option>';
 
 		// Fill the select element with all registered sidebars
 		foreach ( $wp_registered_sidebars as $sidebar_id => $sidebar ) {
-			if ( $sidebar_id != 'pre_header_sidebar' ) {
+			if ( 'pre_header_sidebar' !== (string) $sidebar_id ) {
 				$output .= '<option';
-				if ( $sidebar_id == $values['lafka_custom_offcanvas_sidebar'] ) {
+				if ( (string) $sidebar_id === (string) $values['lafka_custom_offcanvas_sidebar'] ) {
 					$output .= " selected='selected'";
 				}
 				$output .= " value='" . esc_attr( $sidebar_id ) . "'>" . esc_html( $sidebar['name'] ) . '</option>';
@@ -513,13 +513,13 @@ if ( ! function_exists( 'lafka_video_bckgr_callback' ) ) {
 
 	function lafka_video_bckgr_callback( $post ) {
 		// If current page is set as Blog page - don't show the options
-		if ( $post->ID == get_option( 'page_for_posts' ) ) {
+		if ( (int) get_option( 'page_for_posts' ) === (int) $post->ID ) {
 			echo esc_html__( 'Video Background options are disabled for this page, because the page is set as Blog page from Settings->Reading.', 'lafka-plugin' );
 			return;
 		}
 
 		// If current page is set as Shop page - don't show the options
-		if ( LAFKA_PLUGIN_IS_WOOCOMMERCE && $post->ID == wc_get_page_id( 'shop' ) ) {
+		if ( LAFKA_PLUGIN_IS_WOOCOMMERCE && (int) wc_get_page_id( 'shop' ) === (int) $post->ID ) {
 			echo esc_html__( 'Video Background options are disabled for this page, because the page is set as Shop page.', 'lafka-plugin' );
 			return;
 		}
@@ -534,7 +534,7 @@ if ( ! function_exists( 'lafka_video_bckgr_callback' ) ) {
 			'lafka_video_bckgr_url' => '',
 		);
 
-		if ( isset( $custom['lafka_video_bckgr_url'] ) && $custom['lafka_video_bckgr_url'][0] != '' ) {
+		if ( isset( $custom['lafka_video_bckgr_url'] ) && '' !== (string) $custom['lafka_video_bckgr_url'][0] ) {
 			$values['lafka_video_bckgr_url'] = esc_attr( $custom['lafka_video_bckgr_url'][0] );
 		}
 
@@ -573,7 +573,7 @@ if ( ! function_exists( 'lafka_save_video_bckgr_postdata' ) ) {
 			return;
 		}
 
-		if ( 'post-new.php' == $pagenow ) {
+		if ( 'post-new.php' === (string) $pagenow ) {
 			return;
 		}
 
@@ -1003,7 +1003,7 @@ if ( ! function_exists( 'lafka_product_video_callback' ) ) {
 			'lafka_product_video_url' => '',
 		);
 
-		if ( isset( $custom['lafka_product_video_url'] ) && $custom['lafka_product_video_url'][0] != '' ) {
+		if ( isset( $custom['lafka_product_video_url'] ) && '' !== (string) $custom['lafka_product_video_url'][0] ) {
 			$values['lafka_product_video_url'] = esc_attr( $custom['lafka_product_video_url'][0] );
 		}
 
@@ -1042,7 +1042,7 @@ if ( ! function_exists( 'lafka_save_product_video_postdata' ) ) {
 			return;
 		}
 
-		if ( 'post-new.php' == $pagenow ) {
+		if ( 'post-new.php' === (string) $pagenow ) {
 			return;
 		}
 
@@ -1087,7 +1087,7 @@ if ( ! function_exists( 'lafka_product_gallery_type_callback' ) ) {
 		// Set default values
 		$value = 'default';
 
-		if ( isset( $saved_value ) && $saved_value != '' ) {
+		if ( isset( $saved_value ) && '' !== (string) $saved_value ) {
 			$value = $saved_value;
 		}
 

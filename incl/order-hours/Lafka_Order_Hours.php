@@ -32,7 +32,7 @@ class Lafka_Order_Hours {
 				$override_global_order_hours = get_term_meta( $lafka_branch_location_id_in_session, 'lafka_branch_override_order_hours_global', true );
 				if ( ! empty( $override_global_order_hours ) ) {
 					$branch_timezone                               = get_term_meta( $lafka_branch_location_id_in_session, 'lafka_branch_timezone', true );
-					self::$timezone                                = $branch_timezone === 'default' ? '' : $branch_timezone;
+					self::$timezone                                = 'default' === $branch_timezone ? '' : $branch_timezone;
 					$branch_schedule                               = htmlspecialchars_decode( get_term_meta( $lafka_branch_location_id_in_session, 'lafka_branch_order_hours_schedule', true ) );
 					self::$lafka_order_hours_schedule              = empty( $branch_schedule ) ? '' : $branch_schedule;
 					self::$lafka_order_hours_force_override_check  = get_term_meta( $lafka_branch_location_id_in_session, 'lafka_branch_order_hours_force_override_check', true );
@@ -161,7 +161,7 @@ class Lafka_Order_Hours {
 		foreach ( $schedule_current_day_of_week->periods as $period ) {
 			$open_time = DateTime::createFromFormat( 'H:i', $period->start, $current_time->getTimezone() );
 
-			if ( $period->end === '00:00' ) {
+			if ( '00:00' === $period->end ) {
 				$period->end = '24:00';
 			}
 			$close_time = DateTime::createFromFormat( 'H:i', $period->end, $current_time->getTimezone() );

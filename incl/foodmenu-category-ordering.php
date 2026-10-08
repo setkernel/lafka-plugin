@@ -13,7 +13,7 @@ if ( ! function_exists( 'lafka_create_foodmenu_category' ) ) {
 	 * @param string $taxonomy
 	 */
 	function lafka_create_foodmenu_category( $term_id, $tt_id = '', $taxonomy = '' ) {
-		if ( 'lafka_foodmenu_category' != $taxonomy ) {
+		if ( 'lafka_foodmenu_category' !== (string) $taxonomy ) {
 			return;
 		}
 
@@ -178,7 +178,7 @@ if ( ! function_exists( 'lafka_terms_clauses' ) ) {
 		require_wp_db();
 
 		foreach ( (array) $taxonomies as $taxonomy ) {
-			if ( $taxonomy !== 'lafka_foodmenu_category' ) {
+			if ( 'lafka_foodmenu_category' !== $taxonomy ) {
 				return $clauses;
 			}
 		}
@@ -239,7 +239,7 @@ if ( ! function_exists( 'lafka_order_foodmenu_by_tax' ) ) {
 	function lafka_order_foodmenu_by_tax( $clauses, $wp_query ) {
 		global $wpdb;
 
-		if ( isset( $wp_query->query['post_type'] ) && $wp_query->query['post_type'] == 'lafka-foodmenu' && ! isset( $wp_query->query['orderby'] ) ) {
+		if ( isset( $wp_query->query['post_type'] ) && 'lafka-foodmenu' === (string) $wp_query->query['post_type'] && ! isset( $wp_query->query['orderby'] ) ) {
 			$clauses['join']   .= " LEFT JOIN (
 			SELECT object_id, GROUP_CONCAT(meta_value ORDER BY meta_value ASC) AS lafka_foodmenu_category
 			FROM $wpdb->term_relationships

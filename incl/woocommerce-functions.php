@@ -108,9 +108,9 @@ add_action( 'woocommerce_bulk_edit_variations_default', 'lafka_save_bulk_update_
 if ( ! function_exists( 'lafka_save_bulk_update_variable_in_catalog_option' ) ) {
 	function lafka_save_bulk_update_variable_in_catalog_option( $bulk_action, $data, $product_id, $variations ) {
 		foreach ( $variations as $variation_id ) {
-			if ( $bulk_action === 'lafka_variable_in_catalog_show' ) {
+			if ( 'lafka_variable_in_catalog_show' === $bulk_action ) {
 				update_post_meta( $variation_id, lafka_meta_variable_in_catalog(), true );
-			} elseif ( $bulk_action === 'lafka_variable_in_catalog_hide' ) {
+			} elseif ( 'lafka_variable_in_catalog_hide' === $bulk_action ) {
 				update_post_meta( $variation_id, lafka_meta_variable_in_catalog(), false );
 			}
 		}

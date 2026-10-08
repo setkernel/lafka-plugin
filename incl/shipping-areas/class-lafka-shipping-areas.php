@@ -342,7 +342,7 @@ class Lafka_Shipping_Areas {
 			$decoded      = json_decode( $raw_geocoded );
 
 			// Validate JSON structure contains valid lat/lng
-			if ( $decoded !== null && isset( $decoded->lat, $decoded->lng ) ) {
+			if ( null !== $decoded && isset( $decoded->lat, $decoded->lng ) ) {
 				$lat = floatval( $decoded->lat );
 				$lng = floatval( $decoded->lng );
 				if ( $lat >= -90 && $lat <= 90 && $lng >= -180 && $lng <= 180 ) {
@@ -391,7 +391,7 @@ class Lafka_Shipping_Areas {
 
 		$order_type_label = esc_html__( 'Delivery', 'lafka-plugin' );
 		if ( ! empty( $order_type ) ) {
-			if ( $order_type === 'pickup' ) {
+			if ( 'pickup' === $order_type ) {
 				$order_type_label = esc_html__( 'Pickup', 'lafka-plugin' );
 			}
 			$total_rows['lafka_order_type'] = array(
@@ -422,7 +422,7 @@ class Lafka_Shipping_Areas {
 		}
 		if ( ! empty( $lafka_picked_delivery_geocoded ) && is_string( $lafka_picked_delivery_geocoded ) ) {
 			$location = json_decode( $lafka_picked_delivery_geocoded );
-			if ( $location !== null && isset( $location->lat ) ) {
+			if ( null !== $location && isset( $location->lat ) ) {
 				$total_rows['lafka_picked_delivery_geocoded'] = array(
 					'label' => esc_html__( 'Picked Delivery Location:', 'lafka-plugin' ),
 					'value' => self::get_delivery_location_link( $location ),
@@ -444,7 +444,7 @@ class Lafka_Shipping_Areas {
 
 		$order_type_label = esc_html__( 'Delivery', 'lafka-plugin' );
 		if ( ! empty( $order_type ) ) {
-			if ( $order_type === 'pickup' ) {
+			if ( 'pickup' === $order_type ) {
 				$order_type_label = esc_html__( 'Pickup', 'lafka-plugin' );
 			}
 			?>
@@ -483,7 +483,7 @@ class Lafka_Shipping_Areas {
 		}
 		if ( ! empty( $lafka_picked_delivery_geocoded ) && is_string( $lafka_picked_delivery_geocoded ) ) {
 			$location = json_decode( $lafka_picked_delivery_geocoded );
-			if ( $location !== null && isset( $location->lat ) ) {
+			if ( null !== $location && isset( $location->lat ) ) {
 				?>
 				<p>
 					<strong><?php esc_html_e( 'Picked Delivery Location', 'lafka-plugin' ); ?>:</strong>
@@ -837,7 +837,7 @@ class Lafka_Shipping_Areas {
 	public function disable_address_fields( $fields ): array {
 		if ( isset( WC()->session ) ) {
 			$branch_location_session = WC()->session->get( 'lafka_branch_location' );
-			if ( ! empty( $branch_location_session ) && $branch_location_session['order_type'] === 'pickup' ) {
+			if ( ! empty( $branch_location_session ) && 'pickup' === $branch_location_session['order_type'] ) {
 				unset( $fields['billing']['billing_state'] );
 				unset( $fields['shipping']['shipping_state'] );
 				unset( $fields['billing']['billing_address_1'] );

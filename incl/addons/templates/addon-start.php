@@ -15,7 +15,7 @@ $toggle  = ! empty( $toggle ) && $name && ! empty( $body_id );
 $body_id = $toggle ? (string) $body_id : '';
 
 $classes = array( 'product-addon', sanitize_html_class( 'product-addon-' . $name ) );
-if ( 1 == $required ) {
+if ( 1 === (int) $required ) {
 	$classes[] = 'required-product-addon';
 }
 if ( isset( $addon['type'] ) ) {
@@ -39,7 +39,7 @@ if ( $has_options_with_images ) {
 	<?php if ( $toggle ) : ?>
 		<h3 class="addon-name"><button type="button" class="lafka-addon-toggle" aria-expanded="true" aria-controls="<?php echo esc_attr( $body_id ); ?>"><?php echo esc_html( wptexturize( $name ) ); ?>
 		<?php
-		if ( 1 == $required ) {
+		if ( 1 === (int) $required ) {
 			echo '<abbr class="required" title="' . esc_html__( 'Required field', 'lafka-plugin' ) . '">*</abbr>';}
 		?>
 		</button></h3>
@@ -47,7 +47,7 @@ if ( $has_options_with_images ) {
 	<?php elseif ( $name ) : ?>
 		<h3 class="addon-name"><?php echo esc_html( wptexturize( $name ) ); ?>
 		<?php
-		if ( 1 == $required ) {
+		if ( 1 === (int) $required ) {
 			echo '<abbr class="required" title="' . esc_html__( 'Required field', 'lafka-plugin' ) . '">*</abbr>';}
 		?>
 		</h3>

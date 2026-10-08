@@ -64,10 +64,10 @@ class Lafka_Shipping_Areas_Admin {
 			<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
 			<?php
 			$active_tab      = isset( $_GET['tab'] ) ? sanitize_text_field( wp_unslash( $_GET['tab'] ) ) : 'general';
-			$active_general  = ( $active_tab == 'general' ? 'nav-tab-active' : '' );
-			$active_advanced = ( $active_tab == 'advanced' ? 'nav-tab-active' : '' );
-			$active_datetime = ( $active_tab == 'datetime' ? 'nav-tab-active' : '' );
-			$active_branches = ( $active_tab == 'branches' ? 'nav-tab-active' : '' );
+			$active_general  = ( 'general' === (string) $active_tab ? 'nav-tab-active' : '' );
+			$active_advanced = ( 'advanced' === (string) $active_tab ? 'nav-tab-active' : '' );
+			$active_datetime = ( 'datetime' === (string) $active_tab ? 'nav-tab-active' : '' );
+			$active_branches = ( 'branches' === (string) $active_tab ? 'nav-tab-active' : '' );
 			?>
 			<h2 class="nav-tab-wrapper">
 				<a href="?page=lafka_shipping_areas_admin&tab=general" class="nav-tab <?php echo sanitize_html_class( $active_general ); ?>"><?php esc_html_e( 'General', 'lafka-plugin' ); ?></a>
@@ -79,16 +79,16 @@ class Lafka_Shipping_Areas_Admin {
 			</h2>
 			<form id="lafka-plugin-shipping-areas-form" action="options.php" method="post">
 				<?php
-				if ( $active_tab === 'general' ) {
+				if ( 'general' === $active_tab ) {
 					settings_fields( 'lafka_shipping_areas_general' );
 					do_settings_sections( 'lafka_shipping_areas_general' );
-				} elseif ( $active_tab === 'advanced' ) {
+				} elseif ( 'advanced' === $active_tab ) {
 					settings_fields( 'lafka_shipping_areas_advanced' );
 					do_settings_sections( 'lafka_shipping_areas_advanced' );
-				} elseif ( $active_tab === 'datetime' ) {
+				} elseif ( 'datetime' === $active_tab ) {
 					settings_fields( 'lafka_shipping_areas_datetime' );
 					do_settings_sections( 'lafka_shipping_areas_datetime' );
-				} elseif ( $active_tab === 'branches' ) {
+				} elseif ( 'branches' === $active_tab ) {
 					settings_fields( 'lafka_shipping_areas_branches' );
 					do_settings_sections( 'lafka_shipping_areas_branches' );
 				}
@@ -134,9 +134,9 @@ class Lafka_Shipping_Areas_Admin {
 		if ( wp_script_is( 'lafka-google-maps', 'registered' ) ) {
 			// These two map-pick UIs require Google Maps. Skip when no key
 			// is set — the rest of the shipping-areas admin still works.
-			if ( $screen->id === 'woocommerce_page_lafka_shipping_areas_admin' ) {
+			if ( 'woocommerce_page_lafka_shipping_areas_admin' === $screen->id ) {
 				wp_enqueue_script( 'lafka-shipping-areas-admin-store-map', plugins_url( lafka_plugin_script_path( 'incl/shipping-areas/assets/js/backend/lafka-shipping-areas-pick-address-map.min.js' ), LAFKA_PLUGIN_FILE ), array( 'lafka-google-maps' ), lafka_plugin_asset_version( lafka_plugin_script_path( 'incl/shipping-areas/assets/js/backend/lafka-shipping-areas-pick-address-map.min.js' ) ), true );
-			} elseif ( $screen->id === 'lafka_shipping_areas' ) {
+			} elseif ( 'lafka_shipping_areas' === $screen->id ) {
 				wp_enqueue_script( 'lafka-shipping-areas-admin-define-area', plugins_url( lafka_plugin_script_path( 'incl/shipping-areas/assets/js/backend/lafka-shipping-areas-define-area.min.js' ), LAFKA_PLUGIN_FILE ), array( 'lafka-google-maps' ), lafka_plugin_asset_version( lafka_plugin_script_path( 'incl/shipping-areas/assets/js/backend/lafka-shipping-areas-define-area.min.js' ) ), true );
 			}
 		}

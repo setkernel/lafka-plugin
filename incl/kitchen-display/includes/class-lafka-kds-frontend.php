@@ -92,7 +92,7 @@ class Lafka_KDS_Frontend {
 			'nonce'         => $nonce,
 			'token'         => $token,
 			'pollInterval'  => (int) $options['poll_interval'] * 1000,
-			'soundEnabled'  => $options['sound_enabled'] === '1',
+			'soundEnabled'  => '1' === $options['sound_enabled'],
 			'soundUrl'      => $sound_url,
 			'pickupTimes'   => $pickup_times,
 			'deliveryTimes' => $delivery_times,

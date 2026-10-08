@@ -537,7 +537,7 @@ class Lafka_Branch_Locations_Admin {
 				<td>
 					<select class="select" name="lafka_branch_order_hours_force_override_status" id="lafka_branch_order_hours_force_override_status" style="">
 						<option value=""<?php echo empty( $order_hours_force_override_status ) ? ' selected' : ''; ?>><?php esc_html_e( 'Disabled', 'lafka-plugin' ); ?></option>
-						<option value="1"<?php echo ( (int) $order_hours_force_override_status === 1 ) ? ' selected' : ''; ?>><?php esc_html_e( 'Enabled', 'lafka-plugin' ); ?></option>
+						<option value="1"<?php echo ( 1 === (int) $order_hours_force_override_status ) ? ' selected' : ''; ?>><?php esc_html_e( 'Enabled', 'lafka-plugin' ); ?></option>
 					</select>
 				</td>
 			</tr>
@@ -612,7 +612,7 @@ class Lafka_Branch_Locations_Admin {
 		if ( isset( $_POST['lafka_branch_address_geocoded'] ) ) {
 			$raw_geocoded = wp_unslash( $_POST['lafka_branch_address_geocoded'] );
 			$decoded      = json_decode( $raw_geocoded );
-			if ( $decoded !== null && isset( $decoded->lat, $decoded->lng ) ) {
+			if ( null !== $decoded && isset( $decoded->lat, $decoded->lng ) ) {
 				$safe_value = wp_json_encode(
 					array(
 						'lat' => floatval( $decoded->lat ),
@@ -671,7 +671,7 @@ class Lafka_Branch_Locations_Admin {
 		if ( isset( $_POST['lafka_branch_order_hours_schedule'] ) ) {
 			$raw_schedule     = wp_unslash( $_POST['lafka_branch_order_hours_schedule'] );
 			$decoded_schedule = json_decode( $raw_schedule );
-			if ( $decoded_schedule !== null ) {
+			if ( null !== $decoded_schedule ) {
 				update_term_meta( $term_id, 'lafka_branch_order_hours_schedule', wp_json_encode( $decoded_schedule ) );
 			}
 		}
@@ -703,17 +703,17 @@ class Lafka_Branch_Locations_Admin {
 	}
 
 	public static function manage_column_content_on_location_branches( $columns, $column, $id ) {
-		if ( $column === 'lafka_branch_address' ) {
+		if ( 'lafka_branch_address' === $column ) {
 			$address = get_term_meta( $id, 'lafka_branch_address', true );
 			if ( $address ) {
 				echo esc_html( $address );
 			}
-		} elseif ( $column === 'lafka_branch_user' ) {
+		} elseif ( 'lafka_branch_user' === $column ) {
 			$user = get_userdata( get_term_meta( $id, 'lafka_branch_user', true ) );
 			if ( ! empty( $user ) ) {
 				echo esc_html( $user->user_nicename );
 			}
-		} elseif ( $column === 'lafka_branch_order_type' ) {
+		} elseif ( 'lafka_branch_order_type' === $column ) {
 			$values                    = array(
 				'delivery_pickup' => esc_html__( 'Delivery and Pickup', 'lafka-plugin' ),
 				'delivery'        => esc_html__( 'Only Delivery', 'lafka-plugin' ),
@@ -723,7 +723,7 @@ class Lafka_Branch_Locations_Admin {
 			$branch_order_type         = empty( $current_branch_order_type ) ? 'delivery_pickup' : $current_branch_order_type;
 
 			echo esc_html( $values[ $branch_order_type ] );
-		} elseif ( $column === 'lafka_branch_status' ) {
+		} elseif ( 'lafka_branch_status' === $column ) {
 			if ( is_lafka_order_hours( get_option( 'lafka' ) ) && class_exists( 'Lafka_Order_Hours' ) ) {
 				$branch_status = Lafka_Order_Hours::get_branch_working_status( $id );
 				?>
@@ -745,17 +745,17 @@ class Lafka_Branch_Locations_Admin {
 	public static function add_columns_content_to_orders_list( $column, $order ) {
 		$order = wc_get_order( $order );
 
-		if ( $column === 'lafka_selected_branch' ) {
+		if ( 'lafka_selected_branch' === $column ) {
 			$branch_id = Lafka_Shipping_Areas::get_order_meta_backward_compatible( $order->get_id(), 'lafka_selected_branch_id' );
 			$branch    = get_term( $branch_id );
 			if ( ! empty( $branch->name ) ) {
 				echo '<span>' . esc_html( $branch->name ) . '</span>';
 			}
-		} elseif ( $column === 'lafka_order_type' ) {
+		} elseif ( 'lafka_order_type' === $column ) {
 			$order_type = Lafka_Shipping_Areas::get_order_meta_backward_compatible( $order->get_id(), 'lafka_order_type' );
-			if ( $order_type === 'delivery' ) {
+			if ( 'delivery' === $order_type ) {
 				echo '<span class="lafka-order-type-delivery">' . esc_html__( 'Delivery', 'lafka-plugin' ) . '</span>';
-			} elseif ( $order_type === 'pickup' ) {
+			} elseif ( 'pickup' === $order_type ) {
 				echo '<span class="lafka-order-type-pickup">' . esc_html__( 'Pickup', 'lafka-plugin' ) . '</span>';
 			}
 		}
@@ -771,7 +771,7 @@ class Lafka_Branch_Locations_Admin {
 	public static function orders_list_define_sort_and_search_queries_for_custom_fields( $query ) {
 		if ( function_exists( 'get_current_screen' ) ) {
 			$current_screen = get_current_screen();
-			if ( is_admin() && ! empty( $current_screen ) && $current_screen->id === 'edit-shop_order' ) {
+			if ( is_admin() && ! empty( $current_screen ) && 'edit-shop_order' === $current_screen->id ) {
 				$meta_query_args = array();
 				$branch_id       = $_GET['branch_location_filter'] ?? '';
 				if ( is_numeric( $branch_id ) ) {
@@ -799,7 +799,7 @@ class Lafka_Branch_Locations_Admin {
 				}
 
 				$order_by = $query->get( 'orderby' );
-				if ( $order_by === 'lafka_checkout_date' ) {
+				if ( 'lafka_checkout_date' === $order_by ) {
 					$meta_query_args[] = array(
 						'relation' => 'OR',
 						array(
@@ -842,7 +842,7 @@ class Lafka_Branch_Locations_Admin {
 	public static function orders_list_define_sort_and_search_queries_for_custom_fields_hpos( $args ): array {
 		$current_page = sanitize_text_field( $_GET['page'] ?? '' );
 
-		if ( $current_page === 'wc-orders' ) {
+		if ( 'wc-orders' === $current_page ) {
 			$branch_id = $_GET['branch_location_filter'] ?? '';
 			if ( is_numeric( $branch_id ) ) {
 				$args['meta_query'][] = array(
@@ -941,7 +941,7 @@ class Lafka_Branch_Locations_Admin {
 	}
 
 	public static function add_fields_to_orders_list_filter( $post_type, $which ) {
-		if ( $post_type == 'shop_order' ) {
+		if ( 'shop_order' === (string) $post_type ) {
 			$branches_for_select = array();
 			if ( class_exists( 'Lafka_Branch_Locations' ) ) {
 				$branches_of_current_user = Lafka_Branch_Locations::get_user_branches( get_current_user_id() );

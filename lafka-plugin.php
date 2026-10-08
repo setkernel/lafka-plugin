@@ -1323,7 +1323,7 @@ if ( ! function_exists( 'lafka_contact_form_generate_response' ) ) {
 
 		$lafka_contactform_response = '';
 
-		if ( $type == 'success' ) {
+		if ( 'success' === (string) $type ) {
 			$lafka_contactform_response = "<div class='success-message'>" . esc_html( $message ) . '</div>';
 		} else {
 			$lafka_contactform_response .= "<div class='error-message'>" . esc_html( $message ) . '</div>';
@@ -1445,7 +1445,7 @@ add_action(
 if ( ! function_exists( 'lafka_output_info_tooltips' ) ) {
 	function lafka_output_info_tooltips( $position, $show_in_listing = false ) {
 		for ( $i = 1; $i <= 3; $i++ ) {
-			if ( function_exists( 'lafka_get_option' ) && lafka_get_option( 'promo_tooltip_' . $i . '_trigger_text' ) && ( $position === lafka_promo_tooltip_position( $i ) || $show_in_listing && lafka_get_option( 'promo_tooltip_' . $i . '_show_in_listing' ) ) ) {
+			if ( function_exists( 'lafka_get_option' ) && lafka_get_option( 'promo_tooltip_' . $i . '_trigger_text' ) && ( lafka_promo_tooltip_position( $i ) === $position || $show_in_listing && lafka_get_option( 'promo_tooltip_' . $i . '_show_in_listing' ) ) ) {
 				?>
 				<div class="lafka-promo-wrapper
 				<?php

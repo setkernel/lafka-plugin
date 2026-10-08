@@ -150,16 +150,16 @@ class Lafka_Branch_Locations {
 					$main_store_force_override_status = $lafka_order_hours_options['lafka_order_hours_force_override_status'] ?? '';
 					$main_shop_status                 = Lafka_Order_Hours::get_shop_status( $main_store_timezone, $main_store_schedule, $main_store_force_override_check, $main_store_force_override_status );
 
-					if ( $main_shop_status->code === 'closed' ) {
+					if ( 'closed' === $main_shop_status->code ) {
 						$all_branches_closed        = true;
 						$all_legit_branch_locations = Lafka_Shipping_Areas::get_all_legit_branch_locations();
 						foreach ( $all_legit_branch_locations as $branch_id => $branch_name ) {
 							$branch_status = Lafka_Order_Hours::get_branch_working_status( $branch_id );
-							if ( $branch_status->code === 'open' ) {
+							if ( 'open' === $branch_status->code ) {
 								$all_branches_closed = false;
 							}
 						}
-						if ( $all_branches_closed === true ) {
+						if ( true === $all_branches_closed ) {
 							$show_all_closed_message = true;
 						}
 					}
@@ -226,7 +226,7 @@ class Lafka_Branch_Locations {
 					$branch_selection_type = empty( $options_branches['branch_selection_type'] ) ? 'images' : $options_branches['branch_selection_type']
 					?>
 					<div class="lafka-branch-selection">
-						<?php if ( $branch_selection_type === 'images' ) : ?>
+						<?php if ( 'images' === $branch_selection_type ) : ?>
 							<div class="lafka-branch-select-images">
 								<?php if ( empty( $branches ) ) : ?>
 									<span class="lafka-branch-select-tip"><?php esc_html_e( 'Sorry, no location available to order for this address.', 'lafka-plugin' ); ?></span>
@@ -251,7 +251,7 @@ class Lafka_Branch_Locations {
 								<?php endif; ?>
 								<input type="hidden" name="lafka_selected_branch_id" id="lafka_selected_branch_id"/>
 							</div>
-						<?php elseif ( $branch_selection_type === 'select' ) : ?>
+						<?php elseif ( 'select' === $branch_selection_type ) : ?>
 							<div class="lafka-branch-select-dropdown">
 								<label class="lafka_branch_select_label" for="lafka_branch_select"></label>
 								<select id="lafka_branch_select" name="lafka_branch_select">
@@ -309,7 +309,7 @@ class Lafka_Branch_Locations {
 			wp_send_json_error( new WP_Error( 'empty_request', esc_html__( 'Please select order type.', 'lafka-plugin' ) ) );
 		}
 
-		if ( $fields['lafka_branch_order_type'] === 'delivery' && ( empty( $fields['lafka_branch_select_user_address'] ) || empty( $fields['lafka_user_country'] ) ) ) {
+		if ( 'delivery' === $fields['lafka_branch_order_type'] && ( empty( $fields['lafka_branch_select_user_address'] ) || empty( $fields['lafka_user_country'] ) ) ) {
 			wp_send_json_error( new WP_Error( 'empty_request', esc_html__( 'Please type your address and select suggested address or click on "Use current location".', 'lafka-plugin' ) ) );
 		}
 
@@ -321,7 +321,7 @@ class Lafka_Branch_Locations {
 		// is not in the given taxonomy, which the empty() check below rejects.
 		$branch_location = get_term( $selected_branch_id, 'lafka_branch_location' );
 
-		if ( empty( $branch_location ) || is_wp_error( $branch_location ) || ! is_object( $branch_location ) || $branch_location->taxonomy !== 'lafka_branch_location' ) {
+		if ( empty( $branch_location ) || is_wp_error( $branch_location ) || ! is_object( $branch_location ) || 'lafka_branch_location' !== $branch_location->taxonomy ) {
 			wp_send_json_error( new WP_Error( 'no_branch', esc_html__( 'Something is wrong. No such branch location.', 'lafka-plugin' ) ) );
 		}
 
@@ -408,7 +408,7 @@ class Lafka_Branch_Locations {
 			$delivery_time   = get_term_meta( $branch_location_session['branch_id'], 'lafka_branch_delivery_time', true );
 			$order_type_text = esc_html__( 'Delivery', 'lafka-plugin' );
 			$class           = 'lafka-delivery-info';
-			if ( $branch_location_session['order_type'] === 'pickup' ) {
+			if ( 'pickup' === $branch_location_session['order_type'] ) {
 				$order_type_text = esc_html__( 'Pickup', 'lafka-plugin' );
 				$class           = 'lafka-pickup-info';
 			}
@@ -419,7 +419,7 @@ class Lafka_Branch_Locations {
 				<?php endif; ?>
 				<span><strong><?php echo esc_html( $order_type_text ); ?> <?php esc_html_e( 'from', 'lafka-plugin' ); ?>:</strong> <?php echo esc_html( $branch_name ); ?></span>
 				<span>
-					<?php if ( $branch_location_session['order_type'] === 'delivery' ) : ?>
+					<?php if ( 'delivery' === $branch_location_session['order_type'] ) : ?>
 						<strong><?php esc_html_e( 'To', 'lafka-plugin' ); ?>:</strong>
 						<span class="lafka-change-branch-full-address"><?php echo esc_html( $branch_location_session['full_address'] ); ?></span>
 					<?php endif; ?>
@@ -454,7 +454,7 @@ class Lafka_Branch_Locations {
 		$state        = $session_data['state'] ?? '';
 		$order_type   = $session_data['order_type'] ?? '';
 		// Return the state only when we have delivery. When pickup keep defaults
-		if ( $order_type === 'delivery' ) {
+		if ( 'delivery' === $order_type ) {
 			return sanitize_text_field( $state );
 		}
 
@@ -593,7 +593,7 @@ class Lafka_Branch_Locations {
 	public static function enable_shipping_only_for_delivery(): bool {
 		if ( isset( WC()->session ) ) {
 			$branch_location_session = WC()->session->get( 'lafka_branch_location' );
-			if ( ! empty( $branch_location_session['order_type'] ) && $branch_location_session['order_type'] === 'pickup' ) {
+			if ( ! empty( $branch_location_session['order_type'] ) && 'pickup' === $branch_location_session['order_type'] ) {
 				return false;
 			}
 		}

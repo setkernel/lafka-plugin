@@ -124,11 +124,11 @@ if ( ! function_exists( 'lafka_has_to_show_share' ) ) {
 
 			$has_to_show_share = false;
 
-			if ( $target === 'single' && $single_meta === 'yes' ) {
+			if ( 'single' === $target && 'yes' === $single_meta ) {
 				$has_to_show_share = true;
-			} elseif ( $target === 'single' && $general_option && $single_meta !== 'no' ) {
+			} elseif ( 'single' === $target && $general_option && 'no' !== $single_meta ) {
 				$has_to_show_share = true;
-			} elseif ( $target === 'product' && $general_option_product ) {
+			} elseif ( 'product' === $target && $general_option_product ) {
 				$has_to_show_share = true;
 			}
 
