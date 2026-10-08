@@ -450,9 +450,8 @@ if ( ! class_exists( 'Lafka_Store_Api' ) ) {
 				: 0.0;
 			$free_remaining = $free_threshold > 0 ? max( 0.0, $free_threshold - $contents ) : 0.0;
 
-			$delivery_minimum   = class_exists( 'Lafka_Promotions' )
-				? (float) Lafka_Promotions::knob( 'delivery_min' )
-				: 0.0;
+			// The one accessor: honours the Promotions switch and its filter.
+			$delivery_minimum   = function_exists( 'lafka_delivery_minimum' ) ? lafka_delivery_minimum() : 0.0;
 			$delivery_remaining = $delivery_minimum > 0 ? max( 0.0, $delivery_minimum - $contents ) : 0.0;
 
 			// Delivery quote guard: rates that need an address are withheld until

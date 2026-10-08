@@ -19,6 +19,10 @@ defined( 'ABSPATH' ) || exit;
 if ( ! defined( 'LAFKA_PLUGIN_FILE' ) ) {
 	define( 'LAFKA_PLUGIN_FILE', __FILE__ );
 }
+if ( ! defined( 'LAFKA_PLUGIN_VERSION' ) ) {
+	// From the header above, which `npm version` keeps equal to package.json.
+	define( 'LAFKA_PLUGIN_VERSION', (string) get_file_data( __FILE__, array( 'Version' => 'Version' ) )['Version'] );
+}
 
 /**
  * Return filemtime-based version string for a plugin asset.

@@ -80,6 +80,9 @@ if ( ! function_exists( 'lafka_analytics_has_datalayer_destination' ) ) {
 		if ( function_exists( 'lafka_analytics_meta_pixel_id' ) && '' !== lafka_analytics_meta_pixel_id() ) {
 			return true;
 		}
+		if ( function_exists( 'lafka_analytics_google_ads_id' ) && '' !== lafka_analytics_google_ads_id() ) {
+			return true;
+		}
 		if ( function_exists( 'lafka_insights_is_collecting' ) && lafka_insights_is_collecting() ) {
 			return true;
 		}
@@ -815,7 +818,7 @@ if ( ! function_exists( 'lafka_dl_enqueue_client' ) ) {
 
 		$src     = plugins_url( 'assets/js/lafka-dl-client.js', LAFKA_PLUGIN_FILE );
 		$rel     = 'assets/js/lafka-dl-client.js';
-		$version = function_exists( 'lafka_plugin_asset_version' ) ? lafka_plugin_asset_version( $rel ) : '9.24.0';
+		$version = lafka_plugin_asset_version( $rel );
 
 		wp_enqueue_script(
 			'lafka-dl-client',

@@ -26,38 +26,8 @@
 
 defined( 'ABSPATH' ) || exit;
 
-if ( ! function_exists( 'lafka_analytics_has_datalayer_destination' ) ) {
-	/**
-	 * True when at least one dataLayer-consuming destination is configured:
-	 * GTM, GA4, Microsoft Clarity, or the Meta Pixel.
-	 *
-	 * Canonical copy lives in lafka-wc-events.php (the earliest-loaded analytics
-	 * module); this guarded re-declaration keeps the gate available when this
-	 * module is loaded on its own (e.g. isolated unit tests). The body MUST stay
-	 * byte-identical to the wc-events copy — adding a destination means editing
-	 * the shared gate, not forking it.
-	 *
-	 * @return bool
-	 */
-	function lafka_analytics_has_datalayer_destination(): bool {
-		if ( function_exists( 'lafka_analytics_gtm_id' ) && '' !== lafka_analytics_gtm_id() ) {
-			return true;
-		}
-		if ( function_exists( 'lafka_analytics_ga4_id' ) && '' !== lafka_analytics_ga4_id() ) {
-			return true;
-		}
-		if ( function_exists( 'lafka_analytics_clarity_id' ) && '' !== lafka_analytics_clarity_id() ) {
-			return true;
-		}
-		if ( function_exists( 'lafka_analytics_meta_pixel_id' ) && '' !== lafka_analytics_meta_pixel_id() ) {
-			return true;
-		}
-		if ( function_exists( 'lafka_insights_is_collecting' ) && lafka_insights_is_collecting() ) {
-			return true;
-		}
-		return false;
-	}
-}
+// lafka_analytics_has_datalayer_destination() lives in lafka-wc-events.php,
+// which loads first.
 
 if ( ! function_exists( 'lafka_custom_events_has_analytics_id' ) ) {
 	/**

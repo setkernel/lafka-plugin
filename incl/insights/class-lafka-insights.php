@@ -246,7 +246,7 @@ if ( ! class_exists( 'Lafka_Insights' ) ) {
 				return;
 			}
 			$rel     = function_exists( 'lafka_plugin_script_path' ) ? lafka_plugin_script_path( 'assets/js/lafka-insights.min.js' ) : 'assets/js/lafka-insights.min.js';
-			$version = function_exists( 'lafka_plugin_asset_version' ) ? lafka_plugin_asset_version( $rel ) : '10.2.0';
+			$version = lafka_plugin_asset_version( $rel );
 			wp_enqueue_script(
 				'lafka-insights',
 				plugins_url( $rel, LAFKA_PLUGIN_FILE ),
