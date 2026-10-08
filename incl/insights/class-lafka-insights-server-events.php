@@ -268,7 +268,7 @@ if ( ! class_exists( 'Lafka_Insights_Server_Events' ) ) {
 				return;
 			}
 			self::$failed_orders[ $order_id ] = true;
-			$gateway_class                            = in_array( $gateway_class, array( 'declined', 'avs', 'cvv', 'gateway_error' ), true ) ? $gateway_class : 'other';
+			$gateway_class                    = in_array( $gateway_class, array( 'declined', 'avs', 'cvv', 'gateway_error' ), true ) ? $gateway_class : 'other';
 			$reason                           = 'payment_' . $gateway_class;
 			self::record_for_order(
 				$order_id,

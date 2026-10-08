@@ -37,7 +37,7 @@ class LafkaLatestMenuEntriesWidget extends WP_Widget {
 
 		ob_start();
 
-		$title = apply_filters( 'widget_title', empty( $instance['title'] ) ? esc_html__( 'Latest Menu Entries', 'lafka-plugin' ) : $instance['title'], $instance, $this->id_base );
+		$title  = apply_filters( 'widget_title', empty( $instance['title'] ) ? esc_html__( 'Latest Menu Entries', 'lafka-plugin' ) : $instance['title'], $instance, $this->id_base );
 		$number = empty( $instance['number'] ) ? 0 : absint( $instance['number'] );
 		if ( ! $number ) {
 			$number = 10;

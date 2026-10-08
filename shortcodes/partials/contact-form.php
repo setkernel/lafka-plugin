@@ -105,7 +105,7 @@ if ( isset( $lafka_contact_form_fields ) ) {
 	}
 }
 
-$lafka_has_error  = false;
+$lafka_has_error     = false;
 $lafka_name_error    = false;
 $lafka_email_error   = false;
 $lafka_phone_error   = false;

@@ -318,7 +318,7 @@ if ( ! class_exists( 'Lafka_Push_Admin' ) ) {
 		private static function resolve_audience_from_post( array $post ) {
 			$audience = isset( $post['audience'] ) ? sanitize_text_field( wp_unslash( $post['audience'] ) ) : 'all';
 			if ( 'user_ids' === $audience ) {
-				$raw = isset( $post['user_ids'] ) ? sanitize_text_field( wp_unslash( $post['user_ids'] ) ) : '';
+				$raw   = isset( $post['user_ids'] ) ? sanitize_text_field( wp_unslash( $post['user_ids'] ) ) : '';
 				$parts = preg_split( '/[\s,]+/', $raw );
 				$ids   = array_filter(
 					array_map( 'intval', false === $parts ? array() : $parts ),

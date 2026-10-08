@@ -58,26 +58,35 @@ if ( ! function_exists( 'lafka_counter_shortcode' ) ) {
 	function lafka_counter_shortcode( $atts ) {
 
 		// Attributes
-		extract(
-			shortcode_atts(
-				array(
-					'txt_before_counter' => '',
-					'count_number'       => '10',
-					'txt_after_counter'  => '',
-					'add_icon'           => 'false',
-					'counter_style'      => 'h4',
-					'counter_alignment'  => 'lafka-counter-left',
-					'text_color'         => '',
-					'i_type'             => 'fontawesome',
-					'i_icon_fontawesome' => 'fas fa-adjust',
-					'i_icon_etline'      => 'icon-mobile',
-					'i_icon_flaticon'    => 'flaticon-001-popcorn',
-					'i_custom_color'     => '',
-				),
-				$atts
+		$lafka_sc_atts      = shortcode_atts(
+			array(
+				'txt_before_counter' => '',
+				'count_number'       => '10',
+				'txt_after_counter'  => '',
+				'add_icon'           => 'false',
+				'counter_style'      => 'h4',
+				'counter_alignment'  => 'lafka-counter-left',
+				'text_color'         => '',
+				'i_type'             => 'fontawesome',
+				'i_icon_fontawesome' => 'fas fa-adjust',
+				'i_icon_etline'      => 'icon-mobile',
+				'i_icon_flaticon'    => 'flaticon-001-popcorn',
+				'i_custom_color'     => '',
 			),
-			EXTR_SKIP
+			$atts
 		);
+		$txt_before_counter = $lafka_sc_atts['txt_before_counter'];
+		$count_number       = $lafka_sc_atts['count_number'];
+		$txt_after_counter  = $lafka_sc_atts['txt_after_counter'];
+		$add_icon           = $lafka_sc_atts['add_icon'];
+		$counter_style      = $lafka_sc_atts['counter_style'];
+		$counter_alignment  = $lafka_sc_atts['counter_alignment'];
+		$text_color         = $lafka_sc_atts['text_color'];
+		$i_type             = $lafka_sc_atts['i_type'];
+		$i_icon_fontawesome = $lafka_sc_atts['i_icon_fontawesome'];
+		$i_icon_etline      = $lafka_sc_atts['i_icon_etline'];
+		$i_icon_flaticon    = $lafka_sc_atts['i_icon_flaticon'];
+		$i_custom_color     = $lafka_sc_atts['i_custom_color'];
 
 		$iconClass = '';
 
@@ -130,22 +139,27 @@ if ( ! function_exists( 'lafka_typed_shortcode' ) ) {
 	function lafka_typed_shortcode( $atts ) {
 
 		// Attributes
-		extract(
-			shortcode_atts(
-				array(
-					'txt_before_typed'  => '',
-					'rotating_strings'  => 'One,Two,Tree',
-					'txt_after_typed'   => '',
-					'typed_style'       => 'h4',
-					'typed_alignment'   => 'lafka-typed-left',
-					'static_text_color' => '',
-					'typed_text_color'  => '',
-					'loop'              => 'yes',
-				),
-				$atts
+		$lafka_sc_atts     = shortcode_atts(
+			array(
+				'txt_before_typed'  => '',
+				'rotating_strings'  => 'One,Two,Tree',
+				'txt_after_typed'   => '',
+				'typed_style'       => 'h4',
+				'typed_alignment'   => 'lafka-typed-left',
+				'static_text_color' => '',
+				'typed_text_color'  => '',
+				'loop'              => 'yes',
 			),
-			EXTR_SKIP
+			$atts
 		);
+		$txt_before_typed  = $lafka_sc_atts['txt_before_typed'];
+		$rotating_strings  = $lafka_sc_atts['rotating_strings'];
+		$txt_after_typed   = $lafka_sc_atts['txt_after_typed'];
+		$typed_style       = $lafka_sc_atts['typed_style'];
+		$typed_alignment   = $lafka_sc_atts['typed_alignment'];
+		$static_text_color = $lafka_sc_atts['static_text_color'];
+		$typed_text_color  = $lafka_sc_atts['typed_text_color'];
+		$loop              = $lafka_sc_atts['loop'];
 
 		$unique_id = uniqid( 'lafka_typed' );
 
@@ -214,19 +228,19 @@ if ( ! function_exists( 'lafka_blogposts_shortcode' ) ) {
 	function lafka_blogposts_shortcode( $atts ) {
 
 		// Attributes
-		extract(
-			shortcode_atts(
-				array(
-					'blog_style'      => '',
-					'date_sort'       => 'default',
-					'number_of_posts' => '',
-					'offset'          => '',
-				),
-				$atts
+		$lafka_sc_atts                         = shortcode_atts(
+			array(
+				'blog_style'      => '',
+				'date_sort'       => 'default',
+				'number_of_posts' => '',
+				'offset'          => '',
 			),
-			EXTR_PREFIX_ALL,
-			'lafka_blogposts_param'
+			$atts
 		);
+		$lafka_blogposts_param_blog_style      = $lafka_sc_atts['blog_style'];
+		$lafka_blogposts_param_date_sort       = $lafka_sc_atts['date_sort'];
+		$lafka_blogposts_param_number_of_posts = $lafka_sc_atts['number_of_posts'];
+		$lafka_blogposts_param_offset          = $lafka_sc_atts['offset'];
 
 		if ( is_front_page() ) {
 			$paged = ( get_query_var( 'page' ) ) ? get_query_var( 'page' ) : 1;
@@ -340,23 +354,29 @@ if ( ! function_exists( 'lafka_foodmenu_shortcode' ) ) {
 	function lafka_foodmenu_shortcode( $atts ) {
 		global $wp;
 		// Attributes
-		extract(
-			shortcode_atts(
-				array(
-					'color_scheme'         => 'lafka-foodmenu-dark',
-					'taxonomies'           => '',
-					'show_lightbox'        => 'no',
-					'hide_foodmenu_images' => 'no',
-					'foodmenu_simple_menu' => 'no',
-					'enable_sortable'      => 'no',
-					'limit'                => '',
-					'offset'               => '',
-					'date_sort'            => 'DESC',
-				),
-				$atts
+		$lafka_sc_atts        = shortcode_atts(
+			array(
+				'color_scheme'         => 'lafka-foodmenu-dark',
+				'taxonomies'           => '',
+				'show_lightbox'        => 'no',
+				'hide_foodmenu_images' => 'no',
+				'foodmenu_simple_menu' => 'no',
+				'enable_sortable'      => 'no',
+				'limit'                => '',
+				'offset'               => '',
+				'date_sort'            => 'DESC',
 			),
-			EXTR_SKIP
+			$atts
 		);
+		$color_scheme         = $lafka_sc_atts['color_scheme'];
+		$taxonomies           = $lafka_sc_atts['taxonomies'];
+		$show_lightbox        = $lafka_sc_atts['show_lightbox'];
+		$hide_foodmenu_images = $lafka_sc_atts['hide_foodmenu_images'];
+		$foodmenu_simple_menu = $lafka_sc_atts['foodmenu_simple_menu'];
+		$enable_sortable      = $lafka_sc_atts['enable_sortable'];
+		$limit                = $lafka_sc_atts['limit'];
+		$offset               = $lafka_sc_atts['offset'];
+		$date_sort            = $lafka_sc_atts['date_sort'];
 
 		$get_foodmenu_args = array(
 			'post_type'   => 'lafka-foodmenu',
@@ -598,21 +618,23 @@ if ( ! function_exists( 'lafka_latest_posts_shortcode' ) ) {
 	function lafka_latest_posts_shortcode( $atts ) {
 
 		// Attributes
-		extract(
-			shortcode_atts(
-				array(
-					'columns'         => '4',
-					'taxonomies'      => '',
-					'layout'          => 'grid',
-					'number_of_posts' => '4',
-					'offset'          => '',
-					'date_sort'       => 'default',
-				),
-				$atts
+		$lafka_sc_atts                         = shortcode_atts(
+			array(
+				'columns'         => '4',
+				'taxonomies'      => '',
+				'layout'          => 'grid',
+				'number_of_posts' => '4',
+				'offset'          => '',
+				'date_sort'       => 'default',
 			),
-			EXTR_PREFIX_ALL,
-			'lafka_blogposts_param'
+			$atts
 		);
+		$lafka_blogposts_param_columns         = $lafka_sc_atts['columns'];
+		$lafka_blogposts_param_taxonomies      = $lafka_sc_atts['taxonomies'];
+		$lafka_blogposts_param_layout          = $lafka_sc_atts['layout'];
+		$lafka_blogposts_param_number_of_posts = $lafka_sc_atts['number_of_posts'];
+		$lafka_blogposts_param_offset          = $lafka_sc_atts['offset'];
+		$lafka_blogposts_param_date_sort       = $lafka_sc_atts['date_sort'];
 
 		$query_args = array(
 			'post_type'           => 'post',
@@ -702,30 +724,43 @@ if ( ! function_exists( 'lafka_banner_shortcode' ) ) {
 	function lafka_banner_shortcode( $atts ) {
 
 		// Attributes
-		extract(
-			shortcode_atts(
-				array(
-					'type'                       => 'fontawesome',
-					'icon_fontawesome'           => '',
-					'icon_etline'                => '',
-					'icon_flaticon'              => '',
-					'alignment'                  => 'banner-center-center',
-					'image_id'                   => '',
-					'pre_title'                  => '',
-					'pre_title_use_special_font' => '',
-					'title'                      => '',
-					'title_size'                 => '',
-					'subtitle'                   => '',
-					'link'                       => '',
-					'link_target'                => '_blank',
-					'button_text'                => '',
-					'color_scheme'               => '',
-					'appear_animation'           => '',
-				),
-				$atts
+		$lafka_sc_atts              = shortcode_atts(
+			array(
+				'type'                       => 'fontawesome',
+				'icon_fontawesome'           => '',
+				'icon_etline'                => '',
+				'icon_flaticon'              => '',
+				'alignment'                  => 'banner-center-center',
+				'image_id'                   => '',
+				'pre_title'                  => '',
+				'pre_title_use_special_font' => '',
+				'title'                      => '',
+				'title_size'                 => '',
+				'subtitle'                   => '',
+				'link'                       => '',
+				'link_target'                => '_blank',
+				'button_text'                => '',
+				'color_scheme'               => '',
+				'appear_animation'           => '',
 			),
-			EXTR_SKIP
+			$atts
 		);
+		$type                       = $lafka_sc_atts['type'];
+		$icon_fontawesome           = $lafka_sc_atts['icon_fontawesome'];
+		$icon_etline                = $lafka_sc_atts['icon_etline'];
+		$icon_flaticon              = $lafka_sc_atts['icon_flaticon'];
+		$alignment                  = $lafka_sc_atts['alignment'];
+		$image_id                   = $lafka_sc_atts['image_id'];
+		$pre_title                  = $lafka_sc_atts['pre_title'];
+		$pre_title_use_special_font = $lafka_sc_atts['pre_title_use_special_font'];
+		$title                      = $lafka_sc_atts['title'];
+		$title_size                 = $lafka_sc_atts['title_size'];
+		$subtitle                   = $lafka_sc_atts['subtitle'];
+		$link                       = $lafka_sc_atts['link'];
+		$link_target                = $lafka_sc_atts['link_target'];
+		$button_text                = $lafka_sc_atts['button_text'];
+		$color_scheme               = $lafka_sc_atts['color_scheme'];
+		$appear_animation           = $lafka_sc_atts['appear_animation'];
 
 		// Enqueue needed icon font.
 		lafka_icon_element_fonts_enqueue( $type );
@@ -804,15 +839,13 @@ if ( ! function_exists( 'lafka_cloudzoom_gallery_shortcode' ) ) {
 	function lafka_cloudzoom_gallery_shortcode( $atts ) {
 
 		// Attributes
-		extract(
-			shortcode_atts(
-				array(
-					'images' => '',
-				),
-				$atts
+		$lafka_sc_atts = shortcode_atts(
+			array(
+				'images' => '',
 			),
-			EXTR_SKIP
+			$atts
 		);
+		$images        = $lafka_sc_atts['images'];
 
 		$img_size = 'lafka-640x640';
 
@@ -874,25 +907,33 @@ if ( ! function_exists( 'lafka_icon_teaser_shortcode' ) ) {
 
 	function lafka_icon_teaser_shortcode( $atts, $content = '' ) {
 		// Attributes
-		extract(
-			shortcode_atts(
-				array(
-					'title'            => '',
-					'subtitle'         => '',
-					'type'             => 'fontawesome',
-					'icon_fontawesome' => 'fas fa-adjust',
-					'icon_etline'      => 'icon-mobile',
-					'icon_flaticon'    => 'flaticon-001-popcorn',
-					'icon_image_id'    => '',
-					'color'            => '',
-					'align'            => 'teaser-left',
-					'appear_animation' => '',
-					'titles_color'     => '',
-				),
-				$atts
+		$lafka_sc_atts    = shortcode_atts(
+			array(
+				'title'            => '',
+				'subtitle'         => '',
+				'type'             => 'fontawesome',
+				'icon_fontawesome' => 'fas fa-adjust',
+				'icon_etline'      => 'icon-mobile',
+				'icon_flaticon'    => 'flaticon-001-popcorn',
+				'icon_image_id'    => '',
+				'color'            => '',
+				'align'            => 'teaser-left',
+				'appear_animation' => '',
+				'titles_color'     => '',
 			),
-			EXTR_SKIP
+			$atts
 		);
+		$title            = $lafka_sc_atts['title'];
+		$subtitle         = $lafka_sc_atts['subtitle'];
+		$type             = $lafka_sc_atts['type'];
+		$icon_fontawesome = $lafka_sc_atts['icon_fontawesome'];
+		$icon_etline      = $lafka_sc_atts['icon_etline'];
+		$icon_flaticon    = $lafka_sc_atts['icon_flaticon'];
+		$icon_image_id    = $lafka_sc_atts['icon_image_id'];
+		$color            = $lafka_sc_atts['color'];
+		$align            = $lafka_sc_atts['align'];
+		$appear_animation = $lafka_sc_atts['appear_animation'];
+		$titles_color     = $lafka_sc_atts['titles_color'];
 
 		// Enqueue font-awesome.
 		wp_enqueue_style( 'font_awesome_6' );
@@ -982,26 +1023,35 @@ if ( ! function_exists( 'lafka_icon_box_shortcode' ) ) {
 
 	function lafka_icon_box_shortcode( $atts, $content = '' ) {
 		// Attributes
-		extract(
-			shortcode_atts(
-				array(
-					'title'            => '',
-					'subtitle'         => '',
-					'type'             => 'fontawesome',
-					'icon_fontawesome' => 'fas fa-adjust',
-					'icon_etline'      => 'icon-mobile',
-					'icon_flaticon'    => 'flaticon-001-popcorn',
-					'icon_image_id'    => '',
-					'color'            => '',
-					'alignment'        => '',
-					'icon_style'       => '',
-					'appear_animation' => '',
-					'titles_color'     => '',
-				),
-				$atts
+		$lafka_sc_atts    = shortcode_atts(
+			array(
+				'title'            => '',
+				'subtitle'         => '',
+				'type'             => 'fontawesome',
+				'icon_fontawesome' => 'fas fa-adjust',
+				'icon_etline'      => 'icon-mobile',
+				'icon_flaticon'    => 'flaticon-001-popcorn',
+				'icon_image_id'    => '',
+				'color'            => '',
+				'alignment'        => '',
+				'icon_style'       => '',
+				'appear_animation' => '',
+				'titles_color'     => '',
 			),
-			EXTR_SKIP
+			$atts
 		);
+		$title            = $lafka_sc_atts['title'];
+		$subtitle         = $lafka_sc_atts['subtitle'];
+		$type             = $lafka_sc_atts['type'];
+		$icon_fontawesome = $lafka_sc_atts['icon_fontawesome'];
+		$icon_etline      = $lafka_sc_atts['icon_etline'];
+		$icon_flaticon    = $lafka_sc_atts['icon_flaticon'];
+		$icon_image_id    = $lafka_sc_atts['icon_image_id'];
+		$color            = $lafka_sc_atts['color'];
+		$alignment        = $lafka_sc_atts['alignment'];
+		$icon_style       = $lafka_sc_atts['icon_style'];
+		$appear_animation = $lafka_sc_atts['appear_animation'];
+		$titles_color     = $lafka_sc_atts['titles_color'];
 
 		// Enqueue font-awesome.
 		wp_enqueue_style( 'font_awesome_6' );
@@ -1064,17 +1114,17 @@ if ( ! function_exists( 'lafka_countdown_shortcode' ) ) {
 	function lafka_countdown_shortcode( $atts ) {
 
 		// Attributes
-		extract(
-			shortcode_atts(
-				array(
-					'date'         => '',
-					'counter_size' => '',
-					'color'        => '',
-				),
-				$atts
+		$lafka_sc_atts = shortcode_atts(
+			array(
+				'date'         => '',
+				'counter_size' => '',
+				'color'        => '',
 			),
-			EXTR_SKIP
+			$atts
 		);
+		$date          = $lafka_sc_atts['date'];
+		$counter_size  = $lafka_sc_atts['counter_size'];
+		$color         = $lafka_sc_atts['color'];
 
 		$output = '';
 
@@ -1119,18 +1169,19 @@ if ( ! function_exists( 'lafka_map_shortcode' ) ) {
 
 	function lafka_map_shortcode( $atts ) {
 		// Attributes
-		extract(
-			shortcode_atts(
-				array(
-					'location_title' => '',
-					'map_latitude'   => '',
-					'map_longitude'  => '',
-					'height'         => '400',
-				),
-				$atts
+		$lafka_sc_atts  = shortcode_atts(
+			array(
+				'location_title' => '',
+				'map_latitude'   => '',
+				'map_longitude'  => '',
+				'height'         => '400',
 			),
-			EXTR_SKIP
+			$atts
 		);
+		$location_title = $lafka_sc_atts['location_title'];
+		$map_latitude   = $lafka_sc_atts['map_latitude'];
+		$map_longitude  = $lafka_sc_atts['map_longitude'];
+		$height         = $lafka_sc_atts['height'];
 
 		$output = '';
 
@@ -1207,26 +1258,35 @@ if ( ! function_exists( 'lafka_pricing_table_shortcode' ) ) {
 	function lafka_pricing_table_shortcode( $atts, $content = '' ) {
 
 		// Attributes
-		extract(
-			shortcode_atts(
-				array(
-					'title'            => '',
-					'subtitle'         => '',
-					'styled_for_dark'  => '',
-					'price'            => '',
-					'price_coins'      => '',
-					'currency_symbol'  => '',
-					'period'           => '',
-					'appear_animation' => '',
-					'button_text'      => '',
-					'link'             => '',
-					'accent_color'     => '',
-					'featured'         => 'no',
-				),
-				$atts
+		$lafka_sc_atts    = shortcode_atts(
+			array(
+				'title'            => '',
+				'subtitle'         => '',
+				'styled_for_dark'  => '',
+				'price'            => '',
+				'price_coins'      => '',
+				'currency_symbol'  => '',
+				'period'           => '',
+				'appear_animation' => '',
+				'button_text'      => '',
+				'link'             => '',
+				'accent_color'     => '',
+				'featured'         => 'no',
 			),
-			EXTR_SKIP
+			$atts
 		);
+		$title            = $lafka_sc_atts['title'];
+		$subtitle         = $lafka_sc_atts['subtitle'];
+		$styled_for_dark  = $lafka_sc_atts['styled_for_dark'];
+		$price            = $lafka_sc_atts['price'];
+		$price_coins      = $lafka_sc_atts['price_coins'];
+		$currency_symbol  = $lafka_sc_atts['currency_symbol'];
+		$period           = $lafka_sc_atts['period'];
+		$appear_animation = $lafka_sc_atts['appear_animation'];
+		$button_text      = $lafka_sc_atts['button_text'];
+		$link             = $lafka_sc_atts['link'];
+		$accent_color     = $lafka_sc_atts['accent_color'];
+		$featured         = $lafka_sc_atts['featured'];
 
 		ob_start();
 		?>
@@ -1314,7 +1374,10 @@ if ( ! function_exists( 'lafka_contact_form_shortcode' ) ) {
 			$combined_atts[ 'lafka_' . $key ] = $val;
 			unset( $combined_atts[ $key ] );
 		}
-		extract( $combined_atts );
+		$lafka_title               = $combined_atts['lafka_title'];
+		$lafka_contact_mail_to     = $combined_atts['lafka_contact_mail_to'];
+		$lafka_simple_captcha      = $combined_atts['lafka_simple_captcha'];
+		$lafka_contact_form_fields = $combined_atts['lafka_contact_form_fields'];
 
 		$unique_id = uniqid( 'lafka_contactform' );
 		$nonce     = wp_create_nonce( 'lafka_contactform' );
