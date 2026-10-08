@@ -74,7 +74,7 @@ if ( ! class_exists( 'Lafka_Deals_Builder' ) ) {
 			}
 			$slots = Lafka_Deals::get_slots( $product );
 			if ( array() === $slots || ! $product->is_purchasable() ) {
-				echo '<p class="lafka-deal__unavailable">' . esc_html__( 'This deal is not available right now.', 'lafka-plugin' ) . '</p>';
+				echo '<p class="lafka-deal-builder__unavailable">' . esc_html__( 'This deal is not available right now.', 'lafka-plugin' ) . '</p>';
 				return;
 			}
 			if ( class_exists( 'Lafka_Order_Hours' ) && Lafka_Order_Hours::is_add_to_cart_blocked() ) {
@@ -108,8 +108,8 @@ if ( ! class_exists( 'Lafka_Deals_Builder' ) ) {
 			);
 			$saving = Lafka_Deals::max_saving( $product );
 			?>
-			<div class="lafka-deal" data-lafka-deal="<?php echo esc_attr( (string) wp_json_encode( $config ) ); ?>">
-				<p class="lafka-deal__intro">
+			<div class="lafka-deal-builder" data-lafka-deal="<?php echo esc_attr( (string) wp_json_encode( $config ) ); ?>">
+				<p class="lafka-deal-builder__intro">
 					<?php
 					echo esc_html(
 						sprintf(
@@ -125,18 +125,18 @@ if ( ! class_exists( 'Lafka_Deals_Builder' ) ) {
 					}
 					?>
 				</p>
-				<ol class="lafka-deal__slots">
+				<ol class="lafka-deal-builder__slots">
 					<?php foreach ( $slots as $index => $slot ) : ?>
 						<?php self::render_slot( $product, (int) $index, $slot ); ?>
 					<?php endforeach; ?>
 				</ol>
-				<p class="lafka-deal__error" role="alert" data-lafka-deal-error hidden></p>
-				<div class="lafka-deal__bar">
-					<div class="lafka-deal__total" aria-live="polite">
-						<span class="lafka-deal__price" data-lafka-deal-total><?php echo wp_kses_post( wc_price( (float) $product->get_price() ) ); ?></span>
-						<span class="lafka-deal__note" data-lafka-deal-note></span>
+				<p class="lafka-deal-builder__error" role="alert" data-lafka-deal-error hidden></p>
+				<div class="lafka-deal-builder__bar">
+					<div class="lafka-deal-builder__total" aria-live="polite">
+						<span class="lafka-deal-builder__price" data-lafka-deal-total><?php echo wp_kses_post( wc_price( (float) $product->get_price() ) ); ?></span>
+						<span class="lafka-deal-builder__note" data-lafka-deal-note></span>
 					</div>
-					<button type="button" class="lafka-deal__add button alt" data-lafka-deal-add disabled>
+					<button type="button" class="lafka-deal-builder__add button alt" data-lafka-deal-add disabled>
 						<?php
 						/* translators: %s: slot label, e.g. "Pizza 1". */
 						echo esc_html( sprintf( __( 'Choose %s', 'lafka-plugin' ), $labels[0] ) );

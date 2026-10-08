@@ -4,25 +4,25 @@
  * neutral fallbacks for any other theme.
  */
 
-.lafka-deal {
-	--lafka-deal-accent: var(--lafka-color-accent-500, #b0271d);
-	--lafka-deal-on-accent: var(--lafka-color-accent-contrast, #fff);
-	--lafka-deal-border: var(--lafka-color-border-default, #d9d4cc);
-	--lafka-deal-surface: var(--lafka-color-surface-raised, #fff);
-	--lafka-deal-muted: var(--lafka-color-text-secondary, #5c564f);
-	--lafka-deal-radius: var(--lafka-radius-md, 12px);
+.lafka-deal-builder {
+	--lafka-deal-builder-accent: var(--lafka-color-accent-500, #b0271d);
+	--lafka-deal-builder-on-accent: var(--lafka-color-accent-contrast, #fff);
+	--lafka-deal-builder-border: var(--lafka-color-border-default, #d9d4cc);
+	--lafka-deal-builder-surface: var(--lafka-color-surface-raised, #fff);
+	--lafka-deal-builder-muted: var(--lafka-color-text-secondary, #5c564f);
+	--lafka-deal-builder-radius: var(--lafka-radius-md, 12px);
 
 	display: grid;
 	gap: var(--lafka-space-3, 12px);
 	margin: var(--lafka-space-4, 16px) 0;
 }
 
-.lafka-deal__intro {
+.lafka-deal-builder__intro {
 	margin: 0;
-	color: var(--lafka-deal-muted);
+	color: var(--lafka-deal-builder-muted);
 }
 
-.lafka-deal__slots {
+.lafka-deal-builder__slots {
 	display: grid;
 	gap: var(--lafka-space-2, 8px);
 	margin: 0;
@@ -31,13 +31,13 @@
 }
 
 .lafka-deal-slot {
-	border: 1px solid var(--lafka-deal-border);
-	border-radius: var(--lafka-deal-radius);
-	background: var(--lafka-deal-surface);
+	border: 1px solid var(--lafka-deal-builder-border);
+	border-radius: var(--lafka-deal-builder-radius);
+	background: var(--lafka-deal-builder-surface);
 }
 
 .lafka-deal-slot.is-chosen {
-	border-color: var(--lafka-deal-accent);
+	border-color: var(--lafka-deal-builder-accent);
 }
 
 .lafka-deal-slot__head {
@@ -68,8 +68,8 @@
 }
 
 .lafka-deal-slot.is-chosen .lafka-deal-slot__num {
-	background: var(--lafka-deal-accent);
-	color: var(--lafka-deal-on-accent);
+	background: var(--lafka-deal-builder-accent);
+	color: var(--lafka-deal-builder-on-accent);
 }
 
 .lafka-deal-slot__label {
@@ -78,7 +78,7 @@
 
 .lafka-deal-slot__optional,
 .lafka-deal-slot__choice {
-	color: var(--lafka-deal-muted);
+	color: var(--lafka-deal-builder-muted);
 	font-weight: 400;
 }
 
@@ -117,7 +117,7 @@
 	align-items: center;
 	min-height: 48px;
 	padding: var(--lafka-space-2, 8px) var(--lafka-space-3, 12px);
-	border: 1px solid var(--lafka-deal-border);
+	border: 1px solid var(--lafka-deal-builder-border);
 	border-radius: var(--lafka-radius-sm, 8px);
 	cursor: pointer;
 }
@@ -128,12 +128,12 @@
 }
 
 .lafka-deal-option:has(input:checked) {
-	border-color: var(--lafka-deal-accent);
-	box-shadow: 0 0 0 1px var(--lafka-deal-accent);
+	border-color: var(--lafka-deal-builder-accent);
+	box-shadow: 0 0 0 1px var(--lafka-deal-builder-accent);
 }
 
 .lafka-deal-option input {
-	accent-color: var(--lafka-deal-accent);
+	accent-color: var(--lafka-deal-builder-accent);
 }
 
 .lafka-deal-option__img {
@@ -162,14 +162,14 @@
 .lafka-deal-option__desc {
 	font-family: var(--lafka-font-family-body, inherit);
 	overflow: hidden;
-	color: var(--lafka-deal-muted);
+	color: var(--lafka-deal-builder-muted);
 	font-size: var(--lafka-font-size-sm, 0.875rem);
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
 
 .lafka-deal-option__premium {
-	color: var(--lafka-deal-muted);
+	color: var(--lafka-deal-builder-muted);
 	font-size: var(--lafka-font-size-sm, 0.875rem);
 	white-space: nowrap;
 }
@@ -179,7 +179,7 @@
 	gap: var(--lafka-space-3, 12px);
 	margin-top: var(--lafka-space-4, 16px);
 	padding-top: var(--lafka-space-4, 16px);
-	border-top: 1px solid var(--lafka-deal-border);
+	border-top: 1px solid var(--lafka-deal-builder-border);
 }
 
 .lafka-deal-slot__options[aria-busy="true"] {
@@ -202,7 +202,7 @@
 	min-height: 44px;
 }
 
-.lafka-deal__error {
+.lafka-deal-builder__error {
 	margin: 0;
 	padding: var(--lafka-space-2, 8px) var(--lafka-space-3, 12px);
 	border-radius: var(--lafka-radius-sm, 8px);
@@ -211,7 +211,7 @@
 }
 
 /* The total and the button stay in reach while the customer scrolls the list. */
-.lafka-deal__bar {
+.lafka-deal-builder__bar {
 	display: flex;
 	position: sticky;
 	bottom: 0;
@@ -220,38 +220,38 @@
 	align-items: center;
 	padding: var(--lafka-space-3, 12px) 0;
 	background: var(--lafka-color-surface-page, #fff);
-	box-shadow: 0 -1px 0 var(--lafka-deal-border);
+	box-shadow: 0 -1px 0 var(--lafka-deal-builder-border);
 }
 
-.lafka-deal__total {
+.lafka-deal-builder__total {
 	display: grid;
 	flex: 0 0 auto;
 }
 
-.lafka-deal__price {
+.lafka-deal-builder__price {
 	font-size: var(--lafka-font-size-lg, 1.25rem);
 	font-weight: 700;
 }
 
-.lafka-deal__note {
-	color: var(--lafka-deal-muted);
+.lafka-deal-builder__note {
+	color: var(--lafka-deal-builder-muted);
 	font-size: var(--lafka-font-size-sm, 0.875rem);
 }
 
-.lafka-deal__add {
+.lafka-deal-builder__add {
 	flex: 1;
 	min-height: 48px;
 	padding: 12px 24px;
 	border: 0;
 	border-radius: var(--lafka-radius-button, 999px);
-	background: var(--lafka-deal-accent);
-	color: var(--lafka-deal-on-accent);
+	background: var(--lafka-deal-builder-accent);
+	color: var(--lafka-deal-builder-on-accent);
 	font: inherit;
 	font-weight: 700;
 	cursor: pointer;
 }
 
-.lafka-deal__add:disabled {
+.lafka-deal-builder__add:disabled {
 	background: var(--lafka-disabled-bg, #e7e2da);
 	color: var(--lafka-disabled-text, #6b655d);
 	cursor: not-allowed;
