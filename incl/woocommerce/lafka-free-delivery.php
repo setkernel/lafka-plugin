@@ -85,11 +85,17 @@ if ( ! function_exists( 'lafka_free_delivery_zone_min_amount' ) ) {
 
 		$amount = 0.0;
 		$zone   = WC_Shipping_Zones::get_zone_matching_package( array( 'destination' => $destination ) );
-		foreach ( $zone->get_shipping_methods( true ) as $method ) {
-			if ( 'free_shipping' !== $method->id || ! in_array( $method->get_option( 'requires' ), array( 'min_amount', 'either', 'both' ), true ) ) {
+		// Read the stored rows and settings; never build the method objects (a
+		// method's constructor may itself ask for the threshold).
+		foreach ( (array) $zone->get_data_store()->get_methods( $zone->get_id(), true ) as $row ) {
+			if ( 'free_shipping' !== $row->method_id ) {
 				continue;
 			}
-			$amount = (float) $method->get_option( 'min_amount', 0 );
+			$settings = (array) get_option( 'woocommerce_free_shipping_' . (int) $row->instance_id . '_settings', array() );
+			if ( ! in_array( $settings['requires'] ?? '', array( 'min_amount', 'either', 'both' ), true ) ) {
+				continue;
+			}
+			$amount = (float) ( $settings['min_amount'] ?? 0 );
 			break;
 		}
 		$cache[ $key ] = max( 0.0, $amount );
