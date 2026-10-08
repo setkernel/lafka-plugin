@@ -44,6 +44,8 @@ if ( ! function_exists( 'lafka_tracking_keys' ) ) {
 			'lafka_clarity_project_id',
 			'lafka_cf_beacon_token',
 			'lafka_meta_pixel_id',
+			'lafka_meta_capi_token',
+			'lafka_ga4_api_secret',
 			'lafka_google_ads_id',
 			'lafka_google_ads_purchase_label',
 			'lafka_gsc_verification',
@@ -216,16 +218,18 @@ if ( ! function_exists( 'lafka_analytics_insights_needs_consent' ) ) {
 
 if ( ! function_exists( 'lafka_emit_consent_mirror' ) ) {
 	/**
-	 * Mirror every consent decision for Lafka Insights' consent_required mode:
-	 * inlines assets/js/lafka-consent-mirror.min.js first in <head>
-	 * (priority 0). It watches the dataLayer for the `consent_update` pushes
-	 * the head replay and the banner already make and mirrors the analytics
-	 * choice into the first-party `lafka_consent` cookie (read by the
-	 * server-side Insights events) and WooCommerce Order Attribution.
-	 * Nothing is printed unless Insights needs consent and the banner is on.
+	 * Mirror every consent decision for the server: inlines
+	 * assets/js/lafka-consent-mirror.min.js first in <head> (priority 0). It
+	 * watches the dataLayer for the `consent_update` pushes the head replay
+	 * and the banner already make, and mirrors them into the first-party
+	 * `lafka_consent` (analytics) and `lafka_consent_ads` (ads) cookies, read
+	 * by the server-side Insights events and conversions, and into
+	 * WooCommerce Order Attribution. Printed only when the banner is on and
+	 * Insights needs consent or a server-side destination is configured.
 	 */
 	function lafka_emit_consent_mirror(): void {
-		if ( ! lafka_analytics_banner_enabled() || ! lafka_analytics_insights_needs_consent() ) {
+		$server_side = function_exists( 'lafka_server_events_any_ready' ) && lafka_server_events_any_ready();
+		if ( ! lafka_analytics_banner_enabled() || ! ( lafka_analytics_insights_needs_consent() || $server_side ) ) {
 			return;
 		}
 		$file = dirname( __DIR__, 2 ) . '/assets/js/lafka-consent-mirror.min.js';

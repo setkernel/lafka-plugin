@@ -356,6 +356,8 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/analytics/lafka-analytics-emitt
  *   is set after the first emit; refreshing /order-received/ won't re-fire.
  */
 require_once plugin_dir_path( __FILE__ ) . 'incl/analytics/lafka-wc-events.php';
+// Server-side conversions (Meta Conversions API, GA4 Measurement Protocol).
+require_once plugin_dir_path( __FILE__ ) . 'incl/analytics/lafka-server-events.php';
 
 /**
  * v9.25.0 (Phase 1C — Analytics + SEO + Conversion plan):

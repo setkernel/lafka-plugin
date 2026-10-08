@@ -458,6 +458,39 @@ if ( ! function_exists( 'lafka_dl_emit_begin_checkout' ) ) {
 	}
 }
 
+if ( ! function_exists( 'lafka_dl_order_items' ) ) {
+	/**
+	 * GA4 items for a placed order, priced at what was paid: the unit price
+	 * after discounts, add-ons included, plus the per-unit discount. Shared
+	 * by the browser purchase event and the server-side conversions.
+	 *
+	 * @param WC_Order $order Order.
+	 * @return array<int, array<string, mixed>>
+	 */
+	function lafka_dl_order_items( $order ): array {
+		$items = array();
+		$lines = method_exists( $order, 'get_items' ) ? $order->get_items() : array();
+		foreach ( (array) $lines as $line ) {
+			$product = method_exists( $line, 'get_product' ) ? $line->get_product() : null;
+			if ( ! $product ) {
+				continue;
+			}
+			$qty  = method_exists( $line, 'get_quantity' ) ? (int) $line->get_quantity() : 1;
+			$item = lafka_dl_item_payload( $product, $qty );
+			if ( method_exists( $order, 'get_item_total' ) && method_exists( $order, 'get_item_subtotal' ) ) {
+				$paid          = (float) $order->get_item_total( $line, false, true );
+				$before        = (float) $order->get_item_subtotal( $line, false, true );
+				$item['price'] = round( $paid, 2 );
+				if ( $before - $paid >= 0.01 ) {
+					$item['discount'] = round( $before - $paid, 2 );
+				}
+			}
+			$items[] = $item;
+		}
+		return $items;
+	}
+}
+
 if ( ! function_exists( 'lafka_dl_emit_user_data' ) ) {
 	/**
 	 * Expose the buyer's email and phone (E.164) as `window.lafkaUserData` on
@@ -527,28 +560,7 @@ if ( ! function_exists( 'lafka_dl_emit_purchase' ) ) {
 			}
 		}
 
-		$items    = array();
-		$line_get = method_exists( $order, 'get_items' ) ? $order->get_items() : array();
-		if ( is_array( $line_get ) ) {
-			foreach ( $line_get as $line ) {
-				$product = method_exists( $line, 'get_product' ) ? $line->get_product() : null;
-				$qty     = method_exists( $line, 'get_quantity' ) ? (int) $line->get_quantity() : 1;
-				if ( $product ) {
-					$item = lafka_dl_item_payload( $product, $qty );
-					// What was paid, not today's catalogue price: the unit price
-					// after discounts, add-ons included, and the per-unit discount.
-					if ( method_exists( $order, 'get_item_total' ) && method_exists( $order, 'get_item_subtotal' ) ) {
-						$paid          = (float) $order->get_item_total( $line, false, true );
-						$before        = (float) $order->get_item_subtotal( $line, false, true );
-						$item['price'] = round( $paid, 2 );
-						if ( $before - $paid >= 0.01 ) {
-							$item['discount'] = round( $before - $paid, 2 );
-						}
-					}
-					$items[] = $item;
-				}
-			}
-		}
+		$items = lafka_dl_order_items( $order );
 
 		$currency = method_exists( $order, 'get_currency' ) ? (string) $order->get_currency() : lafka_dl_currency();
 		$total    = method_exists( $order, 'get_total' ) ? (float) $order->get_total() : 0.0;

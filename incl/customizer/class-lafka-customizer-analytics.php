@@ -171,6 +171,18 @@ if ( ! class_exists( 'Lafka_Customizer_Analytics' ) ) {
 		 * @return string
 		 */
 		/**
+		 * Server-side secret (Conversions API token, Measurement Protocol API
+		 * secret): URL-safe characters only, else empty.
+		 *
+		 * @param mixed $value Raw value.
+		 * @return string
+		 */
+		public static function sanitize_server_secret( $value ): string {
+			$value = is_scalar( $value ) ? trim( (string) $value ) : '';
+			return preg_match( '/^[A-Za-z0-9_-]{10,400}$/', $value ) ? $value : '';
+		}
+
+		/**
 		 * Google Ads conversion ID: AW- followed by digits, else empty.
 		 *
 		 * @param mixed $value Raw value.
@@ -394,6 +406,44 @@ if ( ! class_exists( 'Lafka_Customizer_Analytics' ) ) {
 					'description' => esc_html__( '15-16 digit numeric ID from business.facebook.com → Events Manager → Data Sources. Only needed when running paid Facebook / Instagram ads. Only used when GTM is empty.', 'lafka-plugin' ),
 					'section'     => 'lafka_analytics_direct',
 					'type'        => 'text',
+				)
+			);
+
+			$wp_customize->add_setting(
+				self::setting_id( 'lafka_meta_capi_token' ),
+				array(
+					'type'              => 'option',
+					'default'           => '',
+					'transport'         => 'refresh',
+					'sanitize_callback' => array( __CLASS__, 'sanitize_server_secret' ),
+				)
+			);
+			$wp_customize->add_control(
+				self::setting_id( 'lafka_meta_capi_token' ),
+				array(
+					'label'       => esc_html__( 'Meta Conversions API access token', 'lafka-plugin' ),
+					'description' => esc_html__( 'Events Manager → your Pixel → Settings → Conversions API → Generate access token. With it, every paid order is also sent from the server (deduplicated with the Pixel), so ad blockers and payment redirects no longer hide sales. Needs ad consent. Left alone when the official Meta for WooCommerce plugin is active.', 'lafka-plugin' ),
+					'section'     => 'lafka_analytics_direct',
+					'type'        => 'password',
+				)
+			);
+
+			$wp_customize->add_setting(
+				self::setting_id( 'lafka_ga4_api_secret' ),
+				array(
+					'type'              => 'option',
+					'default'           => '',
+					'transport'         => 'refresh',
+					'sanitize_callback' => array( __CLASS__, 'sanitize_server_secret' ),
+				)
+			);
+			$wp_customize->add_control(
+				self::setting_id( 'lafka_ga4_api_secret' ),
+				array(
+					'label'       => esc_html__( 'GA4 Measurement Protocol API secret', 'lafka-plugin' ),
+					'description' => esc_html__( 'GA4 Admin → Data streams → your web stream → Measurement Protocol API secrets → Create. With it, a paid order whose thank-you page never loaded (closed tab, payment redirect) is still recorded in GA4. Needs analytics consent.', 'lafka-plugin' ),
+					'section'     => 'lafka_analytics_direct',
+					'type'        => 'password',
 				)
 			);
 
