@@ -783,6 +783,8 @@ if ( LAFKA_PLUGIN_IS_WOOCOMMERCE ) {
 	require_once plugin_dir_path( __FILE__ ) . 'incl/customizer/class-lafka-customizer-checkout.php';
 	require_once plugin_dir_path( __FILE__ ) . 'incl/checkout/class-lafka-delivery-quote-guard.php';
 	Lafka_Delivery_Quote_Guard::init();
+	// Distance-priced delivery (the `lafka_distance` shipping method; add it to a zone).
+	require_once plugin_dir_path( __FILE__ ) . 'incl/shipping-distance/class-lafka-distance-shipping.php';
 	require_once plugin_dir_path( __FILE__ ) . 'incl/checkout/class-lafka-pickup-checkout.php';
 	Lafka_Pickup_Checkout::init();
 	require_once plugin_dir_path( __FILE__ ) . 'incl/checkout/class-lafka-payment-labels.php';

@@ -243,9 +243,11 @@ class Lafka_Shipping_Areas {
 				'lafka-shipping-areas-handle-shipping',
 				'lafkaCheckoutMap',
 				array(
-					'orderType' => is_array( $branch_location_session ) && ! empty( $branch_location_session['order_type'] ) ? (string) $branch_location_session['order_type'] : '',
-					'mode'      => empty( $options['pick_delivery_address'] ) ? '' : (string) $options['pick_delivery_address'],
-					'i18n'      => array(
+					'orderType'    => is_array( $branch_location_session ) && ! empty( $branch_location_session['order_type'] ) ? (string) $branch_location_session['order_type'] : '',
+					'mode'         => empty( $options['pick_delivery_address'] ) ? '' : (string) $options['pick_delivery_address'],
+					// Distance-priced delivery follows the pin, so a new pin reprices.
+					'repriceOnPin' => class_exists( 'Lafka_Distance_Shipping' ) && Lafka_Distance_Shipping::in_use(),
+					'i18n'         => array(
 						'locating' => __( 'Finding your location…', 'lafka-plugin' ),
 					),
 				)

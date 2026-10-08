@@ -44,7 +44,7 @@ class Lafka_KDS_Order_Formatter {
 			'accepted_at'          => $this->get_meta_int_or_null( $order, '_lafka_kds_accepted_at' ),
 			'total'                => $order->get_total(),
 			'currency_symbol'      => $this->get_currency_symbol( $order ),
-			'delivery_address'     => 'delivery' === $order_type ? $this->get_delivery_address( $order ) : '',
+			'delivery_address'     => 'delivery' === $order_type ? $this->get_delivery_address( $order ) . $this->get_delivery_distance_suffix( $order ) : '',
 			'special_instructions' => (string) $order->get_meta( '_lafka_special_instructions' ),
 			'allergen_info'        => (string) $order->get_meta( '_lafka_allergen_info' ),
 		);
@@ -155,6 +155,16 @@ class Lafka_KDS_Order_Formatter {
 			)
 		);
 		return trim( implode( ', ', $parts ) );
+	}
+
+	/**
+	 * " · 4.2 km" when the delivery was priced by distance, else ''.
+	 *
+	 * @param WC_Order $order Order.
+	 */
+	public function get_delivery_distance_suffix( $order ): string {
+		$distance = class_exists( 'Lafka_Distance_Shipping' ) ? Lafka_Distance_Shipping::order_distance( $order ) : '';
+		return '' === $distance ? '' : ' · ' . $distance;
 	}
 
 	/**

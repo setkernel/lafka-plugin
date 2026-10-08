@@ -14,6 +14,10 @@
  *     delivery zones (Lafka_Shipping_Areas::validate_checkout_field_process()).
  *     A pin the customer placed is kept until they edit the address.
  *
+ * With distance-priced delivery (`lafka_distance`) the pin decides the price,
+ * so a pin that differs from the one the last rates were priced with asks
+ * WooCommerce for fresh rates (`settings.repriceOnPin`).
+ *
  * (The client-side rate filtering for the retired Lafka shipping method —
  * `lafka_shipping_areas_method` rates, per-instance zone/radius/minimum
  * checks and the "lowest cost only" option — was removed: WooCommerce
@@ -27,7 +31,7 @@
 
 	const settings = window.lafkaCheckoutMap || {};
 	const i18n = settings.i18n || {};
-	const state = { map: null, marker: null, request: 0 };
+	const state = { map: null, marker: null, request: 0, priced: '' };
 
 	const pinField = () => document.getElementById( 'lafka_picked_delivery_geocoded' );
 	const placedField = () => document.getElementById( 'lafka_is_location_clicked' );
@@ -137,12 +141,17 @@
 				state.marker = state.map.marker( point, { draggable: true, onMove: ( moved ) => placePin( moved, true ) } );
 			}
 		}
-		pinField().value = JSON.stringify( { lat: point.lat, lng: point.lng } );
+		const value = JSON.stringify( { lat: point.lat, lng: point.lng } );
+		pinField().value = value;
 		if ( customer ) {
 			placedField().value = 'clicked';
 		}
 		headings( true );
 		say( '' );
+		if ( settings.repriceOnPin && value !== state.priced ) {
+			state.priced = value;
+			$( document.body ).trigger( 'update_checkout' );
+		}
 	}
 
 	/** Remove the pin from the map and the form. */
@@ -282,7 +291,11 @@
 		$( '#lafka_pick_delivery_address_field, .lafka-change-branch' ).unblock();
 	} );
 
-	$( document.body ).on( 'updated_checkout', ( event, data ) => refresh( data && data.fragments ? data.fragments : null ) );
+	$( document.body ).on( 'updated_checkout', ( event, data ) => {
+		// The rates just arrived priced with whatever pin the form holds.
+		state.priced = pinField() ? pinField().value : '';
+		refresh( data && data.fragments ? data.fragments : null );
+	} );
 	$( document.body ).on( 'click', '.lafka-map-locate', ( event ) => {
 		event.preventDefault();
 		useMyLocation();
