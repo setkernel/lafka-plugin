@@ -48,6 +48,13 @@ if ( ! class_exists( 'Lafka_Deals' ) ) {
 		/** Most items a slot pool lists. */
 		const POOL_LIMIT = 100;
 
+		/** Product meta: weekdays the deal runs (0 = Sunday … 6; empty = every day). */
+		const DAYS_META = '_lafka_deal_days';
+
+		/** Product meta: first and last day the deal runs (Y-m-d, optional). */
+		const FROM_META  = '_lafka_deal_from';
+		const UNTIL_META = '_lafka_deal_until';
+
 		/**
 		 * Hook the product type in.
 		 *
@@ -334,6 +341,71 @@ if ( ! class_exists( 'Lafka_Deals' ) ) {
 				}
 			}
 			return max( 0.0, round( $total - (float) $deal->get_price() - $extra, 2 ) );
+		}
+
+		/**
+		 * When the deal runs.
+		 *
+		 * @param int|WC_Product $deal Deal.
+		 * @return array{days: list<int>, from: string, until: string}
+		 */
+		public static function availability( $deal ): array {
+			$id   = is_object( $deal ) ? (int) $deal->get_id() : (int) $deal;
+			$days = get_post_meta( $id, self::DAYS_META, true );
+			$days = array_values( array_unique( array_filter( array_map( 'intval', is_array( $days ) ? $days : array() ), static fn( $d ) => $d >= 0 && $d <= 6 ) ) );
+			sort( $days );
+			$date = static function ( $value ): string {
+				$value = (string) $value;
+				return preg_match( '/^\d{4}-\d{2}-\d{2}$/', $value ) ? $value : '';
+			};
+			return array(
+				'days'  => $days,
+				'from'  => $date( get_post_meta( $id, self::FROM_META, true ) ),
+				'until' => $date( get_post_meta( $id, self::UNTIL_META, true ) ),
+			);
+		}
+
+		/**
+		 * Whether the deal runs today (site timezone).
+		 *
+		 * @param int|WC_Product $deal Deal.
+		 * @return bool
+		 */
+		public static function is_available_today( $deal ): bool {
+			$when  = self::availability( $deal );
+			$today = wp_date( 'Y-m-d' );
+			if ( ( '' !== $when['from'] && $today < $when['from'] ) || ( '' !== $when['until'] && $today > $when['until'] ) ) {
+				return false;
+			}
+			return array() === $when['days'] || in_array( (int) wp_date( 'w' ), $when['days'], true );
+		}
+
+		/**
+		 * "every Tuesday and Thursday · until October 31", or '' when the deal
+		 * runs every day with no dates.
+		 *
+		 * @param int|WC_Product $deal Deal.
+		 * @return string
+		 */
+		public static function availability_text( $deal ): string {
+			global $wp_locale;
+			$when  = self::availability( $deal );
+			$parts = array();
+			if ( array() !== $when['days'] && count( $when['days'] ) < 7 && $wp_locale instanceof WP_Locale ) {
+				$names = array_map( static fn( $d ) => $wp_locale->get_weekday( $d ), $when['days'] );
+				/* translators: %s: weekdays, e.g. "Tuesday and Thursday". */
+				$parts[] = sprintf( __( 'every %s', 'lafka-plugin' ), wp_sprintf( '%l', $names ) );
+			}
+			$format = (string) get_option( 'date_format', 'F j' );
+			if ( '' !== $when['from'] && wp_date( 'Y-m-d' ) < $when['from'] ) {
+				/* translators: %s: date. */
+				$parts[] = sprintf( __( 'from %s', 'lafka-plugin' ), wp_date( $format, strtotime( $when['from'] . ' 12:00' ) ) );
+			}
+			if ( '' !== $when['until'] ) {
+				/* translators: %s: date. */
+				$parts[] = sprintf( __( 'until %s', 'lafka-plugin' ), wp_date( $format, strtotime( $when['until'] . ' 12:00' ) ) );
+			}
+			return implode( ' · ', $parts );
 		}
 	}
 }

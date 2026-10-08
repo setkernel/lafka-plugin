@@ -174,6 +174,7 @@ if ( ! class_exists( 'Lafka_Deals_Admin' ) ) {
 				<p class="form-field"><span class="description">
 					<?php esc_html_e( 'The deal price is this product\'s Regular / Sale price (General tab). Each slot is one item the customer chooses; each chosen item becomes its own cart line with its own options, and the deal price is split across them. Extra toppings and other add-ons are charged on top.', 'lafka-plugin' ); ?>
 				</span></p>
+				<?php self::availability_fields( $product_object ); ?>
 				<div data-lafka-deal-slots data-next-index="<?php echo esc_attr( (string) max( 2, count( $slots ) ) ); ?>">
 					<?php
 					$rows = array() === $slots ? array( array( 'label' => __( 'Item 1', 'lafka-plugin' ) ), array( 'label' => __( 'Item 2', 'lafka-plugin' ) ) ) : $slots;
@@ -189,6 +190,45 @@ if ( ! class_exists( 'Lafka_Deals_Admin' ) ) {
 				<?php wp_nonce_field( 'lafka_deal_slots', 'lafka_deal_slots_nonce' ); ?>
 			</div>
 			<?php
+		}
+
+		/**
+		 * When the deal runs: weekdays and an optional date range.
+		 *
+		 * @param WC_Product|null $product Product being edited.
+		 * @return void
+		 */
+		private static function availability_fields( $product ): void {
+			global $wp_locale;
+			$when  = $product instanceof WC_Product ? Lafka_Deals::availability( $product ) : array(
+				'days'  => array(),
+				'from'  => '',
+				'until' => '',
+			);
+			$start = (int) get_option( 'start_of_week', 1 );
+			?>
+			<p class="form-field lafka-deal-days">
+				<label><?php esc_html_e( 'Runs on', 'lafka-plugin' ); ?></label>
+				<?php
+				for ( $i = 0; $i < 7; $i++ ) :
+					$day = ( $start + $i ) % 7;
+					?>
+					<label style="float:none;width:auto;margin:0 1em 0 0;"><input type="checkbox" name="lafka_deal_days[]" value="<?php echo esc_attr( (string) $day ); ?>" <?php checked( in_array( $day, $when['days'], true ) ); ?> /> <?php echo esc_html( $wp_locale->get_weekday_abbrev( $wp_locale->get_weekday( $day ) ) ); ?></label>
+				<?php endfor; ?>
+				<span class="description" style="display:block;"><?php esc_html_e( 'Leave every day unticked to run it every day. Outside its days and dates the deal page says when it runs, and a deal left in a cart is removed.', 'lafka-plugin' ); ?></span>
+			</p>
+			<?php
+			foreach ( array(
+				'from'  => __( 'First day (optional)', 'lafka-plugin' ),
+				'until' => __( 'Last day (optional)', 'lafka-plugin' ),
+			) as $key => $label ) :
+				?>
+				<p class="form-field">
+					<label for="lafka_deal_<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $label ); ?></label>
+					<input type="date" id="lafka_deal_<?php echo esc_attr( $key ); ?>" name="lafka_deal_<?php echo esc_attr( $key ); ?>" value="<?php echo esc_attr( $when[ $key ] ); ?>" />
+				</p>
+				<?php
+			endforeach;
 		}
 
 		/**
@@ -218,6 +258,17 @@ if ( ! class_exists( 'Lafka_Deals_Admin' ) ) {
 				$rows[ $i ]['required']   = ! empty( $row['required'] );
 			}
 			$product->update_meta_data( Lafka_Deals::SLOTS_META, Lafka_Deals::normalize_slots( array_values( $rows ) ) );
+
+			$days = isset( $_POST['lafka_deal_days'] ) && is_array( $_POST['lafka_deal_days'] ) ? array_map( 'absint', wp_unslash( $_POST['lafka_deal_days'] ) ) : array();
+			$days = array_values( array_unique( array_filter( $days, static fn( $d ) => $d <= 6 ) ) );
+			$product->update_meta_data( Lafka_Deals::DAYS_META, 7 === count( $days ) ? array() : $days );
+			foreach ( array(
+				'lafka_deal_from'  => Lafka_Deals::FROM_META,
+				'lafka_deal_until' => Lafka_Deals::UNTIL_META,
+			) as $field => $meta ) {
+				$value = isset( $_POST[ $field ] ) ? sanitize_text_field( wp_unslash( $_POST[ $field ] ) ) : '';
+				$product->update_meta_data( $meta, preg_match( '/^\d{4}-\d{2}-\d{2}$/', $value ) ? $value : '' );
+			}
 		}
 
 		/**

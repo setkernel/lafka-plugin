@@ -22,6 +22,15 @@
 	color: var(--lafka-deal-builder-muted);
 }
 
+/* When the deal runs; printed before the builder, so outside its scope. */
+.lafka-deal-builder__when,
+.lafka-deal-builder__unavailable {
+	margin: var(--lafka-space-2, 8px) 0;
+	color: var(--lafka-color-text-secondary, #5c564f);
+	font-weight: 600;
+	hyphens: manual;
+}
+
 .lafka-deal-builder__slots {
 	display: grid;
 	gap: var(--lafka-space-2, 8px);

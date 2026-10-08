@@ -26,12 +26,12 @@ if ( ! class_exists( 'WC_Product_Lafka_Deal' ) && class_exists( 'WC_Product' ) )
 		}
 
 		/**
-		 * Purchasable when it has a price and at least one slot.
+		 * Purchasable when it has a price, at least one slot, and runs today.
 		 *
 		 * @return bool
 		 */
 		public function is_purchasable() {
-			$purchasable = $this->exists() && 'publish' === $this->get_status() && '' !== (string) $this->get_price() && array() !== Lafka_Deals::get_slots( $this );
+			$purchasable = $this->exists() && 'publish' === $this->get_status() && '' !== (string) $this->get_price() && array() !== Lafka_Deals::get_slots( $this ) && Lafka_Deals::is_available_today( $this );
 			return (bool) apply_filters( 'woocommerce_is_purchasable', $purchasable, $this );
 		}
 

@@ -73,9 +73,19 @@ if ( ! class_exists( 'Lafka_Deals_Builder' ) ) {
 				return;
 			}
 			$slots = Lafka_Deals::get_slots( $product );
+			$when  = Lafka_Deals::availability_text( $product );
 			if ( array() === $slots || ! $product->is_purchasable() ) {
-				echo '<p class="lafka-deal-builder__unavailable">' . esc_html__( 'This deal is not available right now.', 'lafka-plugin' ) . '</p>';
+				echo '<p class="lafka-deal-builder__unavailable">' . esc_html__( 'This deal is not available right now.', 'lafka-plugin' );
+				if ( '' !== $when ) {
+					/* translators: %s: when the deal runs, e.g. "every Tuesday · until October 31". */
+					echo ' ' . esc_html( sprintf( __( 'It runs %s.', 'lafka-plugin' ), $when ) );
+				}
+				echo '</p>';
 				return;
+			}
+			if ( '' !== $when ) {
+				/* translators: %s: when the deal runs. */
+				echo '<p class="lafka-deal-builder__when">' . esc_html( sprintf( __( 'Runs %s.', 'lafka-plugin' ), $when ) ) . '</p>';
 			}
 			if ( class_exists( 'Lafka_Order_Hours' ) && Lafka_Order_Hours::is_add_to_cart_blocked() ) {
 				Lafka_Order_Hours::echo_closed_store_message();
