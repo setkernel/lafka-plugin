@@ -158,7 +158,7 @@ if ( ! class_exists( 'Lafka_Module_Registry' ) ) {
 						'description'     => esc_html__( 'Let customers customise items with extra options, sizes and toppings, priced per selection.', 'lafka-plugin' ),
 						'category'        => 'ordering',
 						'storage'         => 'lafka_option',
-						'default_enabled' => true,
+						'default_enabled' => Lafka_Options::flag_default_on( 'product_addons' ),
 						'get_enabled'     => self::flag_getter( 'product_addons' ),
 						'set_enabled'     => self::flag_setter( 'product_addons' ),
 						'settings_path'   => 'edit.php?post_type=product&page=lafka_addons',
@@ -239,6 +239,24 @@ if ( ! class_exists( 'Lafka_Module_Registry' ) ) {
 						'set_enabled'     => self::flag_setter( 'promotions' ),
 						'settings_path'   => 'admin.php?page=lafka-promotions',
 						'docs_slug'       => 'promotions',
+					)
+				)
+			);
+
+			// ---- Deals (default ON: a deal only exists once an operator creates one) ----
+			self::register(
+				new Lafka_Module(
+					array(
+						'id'              => 'deals',
+						'label'           => esc_html__( 'Deals', 'lafka-plugin' ),
+						'description'     => esc_html__( 'Deal products where the customer picks each item, e.g. any 2 pizzas for $20, each with its own options.', 'lafka-plugin' ),
+						'category'        => 'ordering',
+						'storage'         => 'lafka_option',
+						'default_enabled' => Lafka_Options::flag_default_on( 'deals' ),
+						'get_enabled'     => self::flag_getter( 'deals' ),
+						'set_enabled'     => self::flag_setter( 'deals' ),
+						'settings_path'   => 'post-new.php?post_type=product',
+						'docs_slug'       => 'deals',
 					)
 				)
 			);

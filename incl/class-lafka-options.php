@@ -23,6 +23,17 @@ class Lafka_Options {
 	private static $options = null;
 
 	/**
+	 * Feature flags that are on until an operator switches them off. The
+	 * single source for "default on": is_enabled() falls back to it for a
+	 * flag that was never saved (a fresh install, a site that never opened
+	 * the Modules page), and the module registry reads its defaults here.
+	 */
+	const FLAG_DEFAULTS = array(
+		'product_addons' => 'enabled',
+		'deals'          => 'enabled',
+	);
+
+	/**
 	 * Registered defaults (populated by the theme's options framework).
 	 *
 	 * @var array
@@ -105,12 +116,24 @@ class Lafka_Options {
 		// checks short-circuit before reaching the framework-defaults layer, which
 		// calls translators / esc_html_x in lafka-options.php and would fire the
 		// "_load_textdomain_just_in_time" notice on pre-init paths (e.g. the
-		// include-time loader gate in lafka-plugin.php). Default-ON features are
-		// loaded on a fresh install by seeding the 'lafka' option on activation
-		// (see register_activation_hook in lafka-plugin.php), so the pre-init gate
-		// reads the persisted 'enabled' value rather than relying on the
-		// not-yet-available registered defaults.
-		return 'enabled' === ( did_action( 'init' ) ? self::get( $name ) : self::get( $name, '' ) );
+		// include-time loader gate in lafka-plugin.php). A flag that was never
+		// saved then falls back to FLAG_DEFAULTS, so default-on features load on
+		// a fresh install too (nothing seeds the option on activation).
+		$value = did_action( 'init' ) ? self::get( $name ) : self::get( $name, '' );
+		if ( '' === $value || false === $value || null === $value ) {
+			$value = self::FLAG_DEFAULTS[ $name ] ?? '';
+		}
+		return 'enabled' === $value;
+	}
+
+	/**
+	 * Whether a feature flag is on by default.
+	 *
+	 * @param string $name Flag key.
+	 * @return bool
+	 */
+	public static function flag_default_on( string $name ): bool {
+		return 'enabled' === ( self::FLAG_DEFAULTS[ $name ] ?? '' );
 	}
 
 	/**
