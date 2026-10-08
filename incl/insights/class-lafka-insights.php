@@ -35,7 +35,7 @@ if ( ! class_exists( 'Lafka_Insights' ) ) {
 		/** Registry id + key in the 'lafka' option array. */
 		const MODULE = 'insights';
 
-		/** Consent modes (theme_mod `lafka_insights_consent_mode`). */
+		/** Consent modes (`lafka_tracking[lafka_insights_consent_mode]`). */
 		const MODE_AGGREGATE = 'aggregate';
 		const MODE_CONSENT   = 'consent_required';
 		const MODE_OFF       = 'off';
@@ -87,7 +87,7 @@ if ( ! class_exists( 'Lafka_Insights' ) ) {
 		 * @return string
 		 */
 		public static function consent_mode(): string {
-			$mode = function_exists( 'get_theme_mod' ) ? get_theme_mod( 'lafka_insights_consent_mode', self::MODE_AGGREGATE ) : self::MODE_AGGREGATE;
+			$mode = function_exists( 'lafka_analytics_get_setting' ) ? lafka_analytics_get_setting( 'lafka_insights_consent_mode', self::MODE_AGGREGATE ) : self::MODE_AGGREGATE;
 			if ( function_exists( 'apply_filters' ) ) {
 				$mode = apply_filters( 'lafka_insights_consent_mode', $mode );
 			}

@@ -134,7 +134,7 @@ if ( ! class_exists( 'Lafka_Insights_Session' ) ) {
 		 * @return bool
 		 */
 		public static function behind_cloudflare(): bool {
-			$on = function_exists( 'get_theme_mod' ) && '1' === (string) get_theme_mod( 'lafka_insights_behind_cloudflare', '0' );
+			$on = function_exists( 'lafka_analytics_get_setting' ) && '1' === lafka_analytics_get_setting( 'lafka_insights_behind_cloudflare', '0' );
 			if ( function_exists( 'apply_filters' ) ) {
 				$on = (bool) apply_filters( 'lafka_insights_behind_cloudflare', $on );
 			}

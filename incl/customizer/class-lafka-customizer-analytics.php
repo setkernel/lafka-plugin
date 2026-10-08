@@ -31,6 +31,22 @@ if ( ! class_exists( 'Lafka_Customizer_Analytics' ) ) {
 		/**
 		 * Hook into customize_register at default priority.
 		 */
+		/**
+		 * The option that stores every tracking setting (one array, owned by
+		 * the plugin, so the IDs survive a theme switch).
+		 */
+		const OPTION = 'lafka_tracking';
+
+		/**
+		 * Customizer id of one key inside the option.
+		 *
+		 * @param string $key Setting key, e.g. 'lafka_ga4_measurement_id'.
+		 * @return string
+		 */
+		public static function setting_id( string $key ): string {
+			return self::OPTION . '[' . $key . ']';
+		}
+
 		public static function init(): void {
 			add_action( 'customize_register', array( __CLASS__, 'register' ) );
 		}
@@ -240,15 +256,16 @@ if ( ! class_exists( 'Lafka_Customizer_Analytics' ) ) {
 			);
 
 			$wp_customize->add_setting(
-				'lafka_gtm_container_id',
+				self::setting_id( 'lafka_gtm_container_id' ),
 				array(
+					'type'              => 'option',
 					'default'           => '',
 					'transport'         => 'refresh',
 					'sanitize_callback' => array( __CLASS__, 'sanitize_gtm_container_id' ),
 				)
 			);
 			$wp_customize->add_control(
-				'lafka_gtm_container_id',
+				self::setting_id( 'lafka_gtm_container_id' ),
 				array(
 					'label'       => esc_html__( 'GTM Container ID', 'lafka-plugin' ),
 					'description' => esc_html__( 'Format: GTM-XXXXXXX. Find it at tagmanager.google.com → your container → top-right. When set, the plugin emits the GTM head snippet + body noscript iframe per Google\'s install spec. Leave blank to use direct-platform IDs below.', 'lafka-plugin' ),
@@ -277,15 +294,16 @@ if ( ! class_exists( 'Lafka_Customizer_Analytics' ) ) {
 			);
 
 			$wp_customize->add_setting(
-				'lafka_ga4_measurement_id',
+				self::setting_id( 'lafka_ga4_measurement_id' ),
 				array(
+					'type'              => 'option',
 					'default'           => '',
 					'transport'         => 'refresh',
 					'sanitize_callback' => array( __CLASS__, 'sanitize_ga4_measurement_id' ),
 				)
 			);
 			$wp_customize->add_control(
-				'lafka_ga4_measurement_id',
+				self::setting_id( 'lafka_ga4_measurement_id' ),
 				array(
 					'label'       => esc_html__( 'GA4 Measurement ID', 'lafka-plugin' ),
 					'description' => esc_html__( 'Format: G-XXXXXXXXXX. Find it at analytics.google.com → Admin → Data Streams → Web → Measurement ID. Only used when GTM is empty.', 'lafka-plugin' ),
@@ -298,15 +316,16 @@ if ( ! class_exists( 'Lafka_Customizer_Analytics' ) ) {
 			);
 
 			$wp_customize->add_setting(
-				'lafka_clarity_project_id',
+				self::setting_id( 'lafka_clarity_project_id' ),
 				array(
+					'type'              => 'option',
 					'default'           => '',
 					'transport'         => 'refresh',
 					'sanitize_callback' => array( __CLASS__, 'sanitize_clarity_project_id' ),
 				)
 			);
 			$wp_customize->add_control(
-				'lafka_clarity_project_id',
+				self::setting_id( 'lafka_clarity_project_id' ),
 				array(
 					'label'       => esc_html__( 'Microsoft Clarity Project ID', 'lafka-plugin' ),
 					'description' => esc_html__( 'Alphanumeric project ID from clarity.microsoft.com. Free, unlimited heatmaps + session replay — complements GA4. Only used when GTM is empty.', 'lafka-plugin' ),
@@ -316,15 +335,16 @@ if ( ! class_exists( 'Lafka_Customizer_Analytics' ) ) {
 			);
 
 			$wp_customize->add_setting(
-				'lafka_cf_beacon_token',
+				self::setting_id( 'lafka_cf_beacon_token' ),
 				array(
+					'type'              => 'option',
 					'default'           => '',
 					'transport'         => 'refresh',
 					'sanitize_callback' => array( __CLASS__, 'sanitize_cf_beacon_token' ),
 				)
 			);
 			$wp_customize->add_control(
-				'lafka_cf_beacon_token',
+				self::setting_id( 'lafka_cf_beacon_token' ),
 				array(
 					'label'       => esc_html__( 'Cloudflare Web Analytics token', 'lafka-plugin' ),
 					'description' => esc_html__( '32-character token from the Cloudflare dashboard → Analytics & Logs → Web Analytics → your site → "JS snippet" (the data-cf-beacon token). Cookieless + privacy-first, so it emits independently of GTM and consent.', 'lafka-plugin' ),
@@ -337,15 +357,16 @@ if ( ! class_exists( 'Lafka_Customizer_Analytics' ) ) {
 			);
 
 			$wp_customize->add_setting(
-				'lafka_meta_pixel_id',
+				self::setting_id( 'lafka_meta_pixel_id' ),
 				array(
+					'type'              => 'option',
 					'default'           => '',
 					'transport'         => 'refresh',
 					'sanitize_callback' => array( __CLASS__, 'sanitize_meta_pixel_id' ),
 				)
 			);
 			$wp_customize->add_control(
-				'lafka_meta_pixel_id',
+				self::setting_id( 'lafka_meta_pixel_id' ),
 				array(
 					'label'       => esc_html__( 'Meta Pixel ID', 'lafka-plugin' ),
 					'description' => esc_html__( '15-16 digit numeric ID from business.facebook.com → Events Manager → Data Sources. Only needed when running paid Facebook / Instagram ads. Only used when GTM is empty.', 'lafka-plugin' ),
@@ -355,15 +376,16 @@ if ( ! class_exists( 'Lafka_Customizer_Analytics' ) ) {
 			);
 
 			$wp_customize->add_setting(
-				'lafka_gsc_verification',
+				self::setting_id( 'lafka_gsc_verification' ),
 				array(
+					'type'              => 'option',
 					'default'           => '',
 					'transport'         => 'refresh',
 					'sanitize_callback' => array( __CLASS__, 'sanitize_gsc_verification' ),
 				)
 			);
 			$wp_customize->add_control(
-				'lafka_gsc_verification',
+				self::setting_id( 'lafka_gsc_verification' ),
 				array(
 					'label'       => esc_html__( 'Google Search Console verification token', 'lafka-plugin' ),
 					'description' => esc_html__( 'Paste only the content="..." value from the HTML verification snippet Google gave you (not the full meta tag). Required once to claim the property in search.google.com/search-console — after verification you can leave it set or remove it.', 'lafka-plugin' ),
@@ -389,15 +411,16 @@ if ( ! class_exists( 'Lafka_Customizer_Analytics' ) ) {
 			);
 
 			$wp_customize->add_setting(
-				'lafka_consent_banner_enabled',
+				self::setting_id( 'lafka_consent_banner_enabled' ),
 				array(
+					'type'              => 'option',
 					'default'           => '1',
 					'transport'         => 'refresh',
 					'sanitize_callback' => array( __CLASS__, 'sanitize_checkbox' ),
 				)
 			);
 			$wp_customize->add_control(
-				'lafka_consent_banner_enabled',
+				self::setting_id( 'lafka_consent_banner_enabled' ),
 				array(
 					'label'       => esc_html__( 'Show consent banner', 'lafka-plugin' ),
 					'description' => esc_html__( 'When ON, the banner appears for every new visitor until they decide. When OFF, the plugin still emits the Consent Mode v2 default state (still safer than no consent at all) but never asks for an explicit decision.', 'lafka-plugin' ),
@@ -432,15 +455,16 @@ if ( ! class_exists( 'Lafka_Customizer_Analytics' ) ) {
 
 			foreach ( $consent_categories as $setting_id => $meta ) {
 				$wp_customize->add_setting(
-					$setting_id,
+					self::setting_id( $setting_id ),
 					array(
+						'type'              => 'option',
 						'default'           => 'denied',
 						'transport'         => 'refresh',
 						'sanitize_callback' => array( __CLASS__, 'sanitize_consent_state' ),
 					)
 				);
 				$wp_customize->add_control(
-					$setting_id,
+					self::setting_id( $setting_id ),
 					array(
 						'label'       => $meta['label'],
 						'description' => $meta['description'],
@@ -452,15 +476,16 @@ if ( ! class_exists( 'Lafka_Customizer_Analytics' ) ) {
 			}
 
 			$wp_customize->add_setting(
-				'lafka_consent_banner_text',
+				self::setting_id( 'lafka_consent_banner_text' ),
 				array(
+					'type'              => 'option',
 					'default'           => 'We use cookies to analyze site traffic and personalize content. By accepting, you consent to our use of cookies.',
 					'transport'         => 'refresh',
 					'sanitize_callback' => 'wp_kses_post',
 				)
 			);
 			$wp_customize->add_control(
-				'lafka_consent_banner_text',
+				self::setting_id( 'lafka_consent_banner_text' ),
 				array(
 					'label'       => esc_html__( 'Banner body text', 'lafka-plugin' ),
 					'description' => esc_html__( 'Shown above the Accept / Reject / Settings buttons. Inline markup (a, strong, em) is allowed; everything else is stripped.', 'lafka-plugin' ),
@@ -489,15 +514,16 @@ if ( ! class_exists( 'Lafka_Customizer_Analytics' ) ) {
 
 			foreach ( $button_labels as $setting_id => $meta ) {
 				$wp_customize->add_setting(
-					$setting_id,
+					self::setting_id( $setting_id ),
 					array(
+						'type'              => 'option',
 						'default'           => $meta['default'],
 						'transport'         => 'refresh',
 						'sanitize_callback' => 'sanitize_text_field',
 					)
 				);
 				$wp_customize->add_control(
-					$setting_id,
+					self::setting_id( $setting_id ),
 					array(
 						'label'       => $meta['label'],
 						'description' => $meta['description'],
@@ -524,15 +550,16 @@ if ( ! class_exists( 'Lafka_Customizer_Analytics' ) ) {
 			);
 
 			$wp_customize->add_setting(
-				'lafka_insights_consent_mode',
+				self::setting_id( 'lafka_insights_consent_mode' ),
 				array(
+					'type'              => 'option',
 					'default'           => 'aggregate',
 					'transport'         => 'refresh',
 					'sanitize_callback' => array( __CLASS__, 'sanitize_insights_consent_mode' ),
 				)
 			);
 			$wp_customize->add_control(
-				'lafka_insights_consent_mode',
+				self::setting_id( 'lafka_insights_consent_mode' ),
 				array(
 					'label'       => esc_html__( 'Consent mode', 'lafka-plugin' ),
 					'description' => esc_html__( 'Aggregate (default): cookieless and anonymous — visits are told apart with a daily-rotating, never-stored hash; browsers sending Global Privacy Control or Do Not Track are skipped; no cookie banner is needed for it. Consent required: nothing is measured until the visitor allows analytics in the consent banner (keep the banner on), and WooCommerce order attribution waits for consent too. Off: nothing is collected; existing reports stay readable.', 'lafka-plugin' ),
@@ -547,15 +574,16 @@ if ( ! class_exists( 'Lafka_Customizer_Analytics' ) ) {
 			);
 
 			$wp_customize->add_setting(
-				'lafka_insights_behind_cloudflare',
+				self::setting_id( 'lafka_insights_behind_cloudflare' ),
 				array(
+					'type'              => 'option',
 					'default'           => '0',
 					'transport'         => 'refresh',
 					'sanitize_callback' => array( __CLASS__, 'sanitize_checkbox' ),
 				)
 			);
 			$wp_customize->add_control(
-				'lafka_insights_behind_cloudflare',
+				self::setting_id( 'lafka_insights_behind_cloudflare' ),
 				array(
 					'label'       => esc_html__( 'This site is behind Cloudflare', 'lafka-plugin' ),
 					'description' => esc_html__( 'Tick only when all traffic reaches the site through the Cloudflare proxy (orange cloud). Insights then reads the real visitor IP from the CF-Connecting-IP header to tell visits apart; the IP is never stored. Leave unticked otherwise — the header could be forged.', 'lafka-plugin' ),

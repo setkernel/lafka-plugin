@@ -190,6 +190,7 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 				'lafka_incidents_',      // incident table schema version
 				'lafka_seo_',            // Search & AI settings, IndexNow key/queue (GX3)
 				'lafka_insights_',       // Insights db version, daily secret, rollup cursor
+				'lafka_tracking',        // tracking IDs and consent settings (Customizer → Analytics)
 			);
 		}
 

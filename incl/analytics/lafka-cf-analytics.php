@@ -23,7 +23,7 @@ if ( ! function_exists( 'lafka_analytics_cf_beacon_token' ) ) {
 	 * @return string Sanitised token, or '' when unset/invalid.
 	 */
 	function lafka_analytics_cf_beacon_token(): string {
-		$token = (string) get_theme_mod( 'lafka_cf_beacon_token', '' );
+		$token = lafka_analytics_get_setting( 'lafka_cf_beacon_token', '' );
 		$token = strtolower( trim( $token ) );
 		return preg_match( '/^[a-f0-9]{32}$/', $token ) ? $token : '';
 	}

@@ -348,10 +348,16 @@ if ( ! function_exists( 'lafka_dl_emit_view_item_list' ) ) {
 	 * size budget on category archives with thousands of products.
 	 */
 	function lafka_dl_emit_view_item_list(): void {
+		// Emitted from woocommerce_before_main_content where the template fires
+		// it, else from wp_footer (the menu page template does not): once.
+		static $emitted = false;
+		if ( $emitted ) {
+			return;
+		}
 		if ( function_exists( 'is_product' ) && is_product() ) {
 			return; // PDP handles view_item.
 		}
-		$is_menu     = function_exists( 'is_page' ) && is_page( 'menu' );
+		$is_menu     = function_exists( 'lafka_schema_is_menu_page' ) && lafka_schema_is_menu_page();
 		$is_category = function_exists( 'is_product_category' ) && is_product_category();
 		$is_tag      = function_exists( 'is_product_tag' ) && is_product_tag();
 		$is_shop     = function_exists( 'is_shop' ) && is_shop();
@@ -387,6 +393,7 @@ if ( ! function_exists( 'lafka_dl_emit_view_item_list' ) ) {
 			'item_list_name' => $list_name,
 			'items'          => $items,
 		);
+		$emitted = true;
 		lafka_dl_emit_push( 'view_item_list', $payload );
 	}
 }
@@ -768,6 +775,7 @@ if ( function_exists( 'add_action' ) ) {
 	// View events — server-rendered <script> emit.
 	add_action( 'woocommerce_before_single_product_summary', 'lafka_dl_emit_view_item', 5 );
 	add_action( 'woocommerce_before_main_content', 'lafka_dl_emit_view_item_list', 5 );
+	add_action( 'wp_footer', 'lafka_dl_emit_view_item_list', 5 );
 	add_action( 'woocommerce_before_cart', 'lafka_dl_emit_view_cart', 5 );
 	add_action( 'woocommerce_before_checkout_form', 'lafka_dl_emit_begin_checkout', 5 );
 	add_action( 'woocommerce_thankyou', 'lafka_dl_emit_purchase', 10 );

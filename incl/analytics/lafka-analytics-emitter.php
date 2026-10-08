@@ -29,20 +29,75 @@ defined( 'ABSPATH' ) || exit;
 // Customizer accessors — single source of truth for option reads.
 // ============================================================================
 
+if ( ! function_exists( 'lafka_tracking_keys' ) ) {
+	/**
+	 * Every key stored in the `lafka_tracking` option (Customizer → Lafka —
+	 * Analytics). Before 10.4.0 they were theme_mods, which a theme switch
+	 * silently dropped; lafka_tracking_maybe_migrate() copies them once.
+	 *
+	 * @return string[]
+	 */
+	function lafka_tracking_keys(): array {
+		return array(
+			'lafka_gtm_container_id',
+			'lafka_ga4_measurement_id',
+			'lafka_clarity_project_id',
+			'lafka_cf_beacon_token',
+			'lafka_meta_pixel_id',
+			'lafka_gsc_verification',
+			'lafka_consent_banner_enabled',
+			'lafka_consent_banner_text',
+			'lafka_consent_banner_accept_label',
+			'lafka_consent_banner_reject_label',
+			'lafka_consent_banner_settings_label',
+			'lafka_consent_default_analytics',
+			'lafka_consent_default_ad_storage',
+			'lafka_consent_default_ad_user_data',
+			'lafka_consent_default_ad_personalization',
+			'lafka_insights_consent_mode',
+			'lafka_insights_behind_cloudflare',
+		);
+	}
+}
+
 if ( ! function_exists( 'lafka_analytics_get_setting' ) ) {
 	/**
-	 * Read a Customizer theme_mod with a default fallback.
+	 * Read one tracking setting from the `lafka_tracking` option.
 	 *
-	 * Wraps get_theme_mod() so tests can stub a single function and emit
-	 * code can stay readable.
-	 *
-	 * @param string $key
-	 * @param string $default
+	 * @param string $key           Setting key, e.g. 'lafka_ga4_measurement_id'.
+	 * @param string $default_value Returned when the key is unset.
 	 * @return string
 	 */
 	function lafka_analytics_get_setting( string $key, string $default_value = '' ): string {
-		$value = function_exists( 'get_theme_mod' ) ? get_theme_mod( $key, $default_value ) : $default_value;
+		$settings = function_exists( 'get_option' ) ? get_option( 'lafka_tracking', array() ) : array();
+		$value    = is_array( $settings ) && array_key_exists( $key, $settings ) ? $settings[ $key ] : $default_value;
 		return is_scalar( $value ) ? (string) $value : $default_value;
+	}
+}
+
+if ( ! function_exists( 'lafka_tracking_maybe_migrate' ) ) {
+	/**
+	 * One-time move of the tracking theme_mods into the `lafka_tracking`
+	 * option. Runs until the option exists; the theme_mods are removed after
+	 * the copy so there is one store.
+	 *
+	 * @return void
+	 */
+	function lafka_tracking_maybe_migrate(): void {
+		if ( false !== get_option( 'lafka_tracking', false ) ) {
+			return;
+		}
+		$settings = array();
+		foreach ( lafka_tracking_keys() as $key ) {
+			$value = get_theme_mod( $key, null );
+			if ( null !== $value && is_scalar( $value ) ) {
+				$settings[ $key ] = (string) $value;
+			}
+		}
+		add_option( 'lafka_tracking', $settings );
+		foreach ( array_keys( $settings ) as $key ) {
+			remove_theme_mod( $key );
+		}
 	}
 }
 
@@ -204,10 +259,27 @@ if ( ! function_exists( 'lafka_emit_consent_mode_defaults' ) ) {
 		 */
 		$payload = (array) apply_filters( 'lafka_consent_defaults', $payload );
 
+		$banner = lafka_analytics_banner_enabled();
+
 		echo "<script>\n";
 		echo "window.dataLayer = window.dataLayer || [];\n";
 		echo "function gtag(){dataLayer.push(arguments);}\n";
 		echo "gtag('consent','default'," . wp_json_encode( $payload ) . ");\n";
+		// Effective consent for tags that ignore Consent Mode (Clarity, Meta):
+		// the visitor's stored banner decision when there is one, otherwise the
+		// operator's default. Without a banner the defaults are the decision.
+		echo 'window.lafkaConsentGranted = function(c){var d=' . wp_json_encode( $payload ) . ';';
+		if ( $banner ) {
+			echo "try{var s=JSON.parse(window.localStorage.getItem('lafka_consent_v1')||'null');if(s&&typeof s[c]!=='undefined'){return !!s[c];}}catch(e){}";
+		}
+		echo "return d[c]==='granted';};\n";
+		// One subscription point over dataLayer pushes, so every direct
+		// destination (GA4, Meta) sees the same events, including those pushed
+		// before it was set up.
+		echo 'window.lafkaDL=window.lafkaDL||(function(){var dl=window.dataLayer,op=dl.push,subs=[];';
+		echo 'function each(fn,o){if(o&&typeof o==="object"&&o.event&&String(o.event).indexOf("gtm.")!==0){try{fn(o);}catch(e){}}}';
+		echo 'dl.push=function(){var r=op.apply(dl,arguments);for(var i=0;i<arguments.length;i++){for(var j=0;j<subs.length;j++){each(subs[j],arguments[i]);}}return r;};';
+		echo "return {on:function(fn){subs.push(fn);for(var i=0;i<dl.length;i++){each(fn,dl[i]);}}};})();\n";
 		echo "</script>\n";
 	}
 }
@@ -387,20 +459,16 @@ if ( ! function_exists( 'lafka_emit_direct_ga4' ) ) {
 		echo "function gtag(){dataLayer.push(arguments);}\n";
 		echo "gtag('js', new Date());\n";
 		echo "gtag('config','" . esc_js( $ga4_id ) . "');\n";
-		// dataLayer -> gtag forwarder for GTM-format ecommerce pushes. gtag()
-		// itself pushes an array-like `arguments` object (no `.event` own key),
-		// so mirrored events never re-enter this branch — no recursion.
-		echo "(function(){\n";
-		echo "\tvar dl = window.dataLayer;\n";
-		echo "\tvar op = dl.push.bind(dl);\n";
-		echo "\tdl.push = function(o){\n";
-		echo "\t\tvar r = op(o);\n";
-		echo "\t\tif (o && typeof o === 'object' && o.event && o.ecommerce && typeof gtag === 'function') {\n";
-		echo "\t\t\tgtag('event', o.event, Object.assign({ send_to: '" . esc_js( $ga4_id ) . "' }, o.ecommerce));\n";
-		echo "\t\t}\n";
-		echo "\t\treturn r;\n";
-		echo "\t};\n";
-		echo "})();\n";
+		// GTM-format pushes ({event: …}) reach GA4 only through a container, so
+		// in direct mode forward every event, ecommerce or not, with its
+		// parameters. gtag() pushes an `arguments` object (no `.event`), so
+		// forwarded events never come back through here.
+		echo "window.lafkaDL.on(function(o){\n";
+		echo "\tvar p = { send_to: '" . esc_js( $ga4_id ) . "' };\n";
+		echo "\tfor (var k in o) { if (Object.prototype.hasOwnProperty.call(o, k) && k !== 'event' && k !== 'ecommerce' && k.indexOf('gtm.') !== 0) { p[k] = o[k]; } }\n";
+		echo "\tif (o.ecommerce && typeof o.ecommerce === 'object') { Object.assign(p, o.ecommerce); }\n";
+		echo "\tgtag('event', o.event, p);\n";
+		echo "});\n";
 		echo "</script>\n";
 	}
 }
@@ -436,11 +504,10 @@ if ( ! function_exists( 'lafka_emit_direct_clarity' ) ) {
 		echo "\t\t\tt=l.createElement(r);t.async=1;t.src=\"https://www.clarity.ms/tag/\"+i;\n";
 		echo "\t\t\ty=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);\n";
 		echo "\t\t})(window, document, \"clarity\", \"script\", \"" . esc_js( $clarity_id ) . "\");\n";
+		// Clarity's own consent signal (required for EEA/UK/CH since 2025-10-31).
+		echo "\t\twindow.clarity('consentv2', { analytics_Storage: 'granted', ad_Storage: window.lafkaConsentGranted('ad_storage') ? 'granted' : 'denied' });\n";
 		echo "\t};\n";
-		echo "\ttry {\n";
-		echo "\t\tvar d = JSON.parse(window.localStorage.getItem('lafka_consent_v1') || 'null');\n";
-		echo "\t\tif (d && d.analytics_storage) { window.lafkaLoadClarity(); }\n";
-		echo "\t} catch(e){ /* private mode / parse error — stay unloaded until consent */ }\n";
+		echo "\tif (window.lafkaConsentGranted('analytics_storage')) { window.lafkaLoadClarity(); }\n";
 		echo "})();\n";
 		echo "</script>\n";
 	}
@@ -472,16 +539,24 @@ if ( ! function_exists( 'lafka_emit_direct_meta_pixel' ) ) {
 		// fires the deferred PageView on an explicit accept (deduped via the flag).
 		echo "fbq('consent', 'revoke');\n";
 		echo "fbq('init', '" . esc_js( $pixel_id ) . "');\n";
-		echo "(function(){\n";
-		echo "\ttry {\n";
-		echo "\t\tvar d = JSON.parse(window.localStorage.getItem('lafka_consent_v1') || 'null');\n";
-		echo "\t\tif (d && d.ad_storage) {\n";
-		echo "\t\t\tfbq('consent', 'grant');\n";
-		echo "\t\t\tfbq('track', 'PageView');\n";
-		echo "\t\t\twindow._lafkaFbPageView = true;\n";
-		echo "\t\t}\n";
-		echo "\t} catch(e){ /* private mode / parse error — stay revoked until consent */ }\n";
-		echo "})();\n";
+		echo "if (window.lafkaConsentGranted('ad_storage')) {\n";
+		echo "\tfbq('consent', 'grant');\n";
+		echo "\tfbq('track', 'PageView');\n";
+		echo "\twindow._lafkaFbPageView = true;\n";
+		echo "}\n";
+		// Standard events from the same dataLayer events GA4 receives. The
+		// purchase eventID lets a server-side Conversions API send dedupe.
+		echo "window.lafkaDL.on(function(o){\n";
+		echo "\tvar names = { view_item: 'ViewContent', add_to_cart: 'AddToCart', begin_checkout: 'InitiateCheckout', add_payment_info: 'AddPaymentInfo', purchase: 'Purchase', search: 'Search' };\n";
+		echo "\tvar name = names[o.event];\n";
+		echo "\tif (!name || !window.lafkaConsentGranted('ad_storage')) { return; }\n";
+		echo "\tvar e = o.ecommerce || {}, items = e.items || [], d = {};\n";
+		echo "\tif (items.length) { d.content_type = 'product'; d.content_ids = items.map(function(i){ return String(i.item_id); }); d.contents = items.map(function(i){ return { id: String(i.item_id), quantity: i.quantity || 1 }; }); }\n";
+		echo "\tif (typeof e.value !== 'undefined') { d.value = e.value; }\n";
+		echo "\tif (e.currency) { d.currency = e.currency; }\n";
+		echo "\tif (o.search_term) { d.search_string = o.search_term; }\n";
+		echo "\tfbq('track', name, d, e.transaction_id ? { eventID: 'purchase-' + e.transaction_id } : undefined);\n";
+		echo "});\n";
 		echo "</script>\n";
 		echo '<noscript><img height="1" width="1" style="display:none" alt="" ';
 		echo 'src="https://www.facebook.com/tr?id=' . esc_attr( $pixel_id ) . '&ev=PageView&noscript=1" /></noscript>' . "\n";
@@ -647,6 +722,9 @@ CSS;
 		if (state.analytics_storage && typeof window.lafkaLoadClarity === 'function'){
 			window.lafkaLoadClarity();
 		}
+		if (typeof window.clarity === 'function'){
+			window.clarity('consentv2', { analytics_Storage: state.analytics_storage ? 'granted' : 'denied', ad_Storage: state.ad_storage ? 'granted' : 'denied' });
+		}
 	}
 
 	// Fixed-bottom UI (the theme's sticky add-to-cart / cart bars) sits above
@@ -766,6 +844,7 @@ if ( function_exists( 'add_action' ) ) {
 	// then immediately replay any stored decision so returning visitors are
 	// restored to their granted/denied state inside the wait_for_update window
 	// (registered right after defaults so it fires after gtag is defined).
+	add_action( 'after_setup_theme', 'lafka_tracking_maybe_migrate', 20 );
 	add_action( 'wp_head', 'lafka_emit_consent_mirror', 0 );
 	add_action( 'wp_head', 'lafka_emit_consent_mode_defaults', 1 );
 	add_action( 'wp_head', 'lafka_emit_consent_replay', 1 );
