@@ -129,25 +129,76 @@ if ( ! class_exists( 'Lafka_Distance_Resolver' ) ) {
 		}
 
 		/**
-		 * Where the package goes.
+		 * How far a delivery pin may sit from the geocoded address and still be
+		 * trusted, in kilometres (default 1).
+		 *
+		 * @return float
+		 */
+		public static function pin_tolerance_km(): float {
+			/**
+			 * Filter how far (km) the customer's checkout pin may be from the
+			 * server-side geocode of the typed address before the geocode prices
+			 * the delivery instead. Stops a far address with a pin dropped beside
+			 * the store from getting the cheapest band.
+			 *
+			 * @since 10.4.0
+			 * @param float $km Default 1.0.
+			 */
+			return max( 0.0, (float) apply_filters( 'lafka_distance_pin_tolerance_km', 1.0 ) );
+		}
+
+		/**
+		 * Where the package goes. The customer's pin is only a refinement: it is
+		 * used when it lies within pin_tolerance_km() of the geocoded address;
+		 * further away, the geocode prices the delivery. When the address cannot
+		 * be geocoded the pin alone is used and the source says so ('pin_only'),
+		 * so staff can see the address was not verified.
 		 *
 		 * @param array $package WooCommerce shipping package.
-		 * @return array{point:array{lat:float,lng:float},source:string}|WP_Error 'pin' or 'geocode'.
+		 * @return array{point:array{lat:float,lng:float},source:string}|WP_Error Source 'pin', 'pin_only' or 'geocode'.
 		 */
 		public static function destination( array $package ) {
 			$destination = (array) ( $package['destination'] ?? array() );
+			$geocoded    = self::geocode( $destination );
 
-			$pin = $package[ self::PACKAGE_PIN ] ?? null;
+			$pin   = $package[ self::PACKAGE_PIN ] ?? null;
+			$point = null;
 			if ( is_array( $pin ) && isset( $pin['fp'] ) && self::fingerprint( $destination ) === $pin['fp'] ) {
 				$point = lafka_geo_point( $pin['lat'] ?? null, $pin['lng'] ?? null );
-				if ( null !== $point ) {
+			}
+
+			if ( null !== $point ) {
+				if ( is_wp_error( $geocoded ) ) {
+					return array(
+						'point'  => $point,
+						'source' => 'pin_only',
+					);
+				}
+				if ( self::straight_km( $point, $geocoded ) <= self::pin_tolerance_km() ) {
 					return array(
 						'point'  => $point,
 						'source' => 'pin',
 					);
 				}
 			}
+			if ( is_wp_error( $geocoded ) ) {
+				return $geocoded;
+			}
 
+			return array(
+				'point'  => $geocoded,
+				'source' => 'geocode',
+			);
+		}
+
+		/**
+		 * The street-level point of a package destination, from the cached
+		 * server-side geocode.
+		 *
+		 * @param array $destination WooCommerce package destination.
+		 * @return array{lat:float,lng:float}|WP_Error
+		 */
+		private static function geocode( array $destination ) {
 			$line = self::address_line( $destination );
 			if ( '' === trim( (string) ( $destination['address_1'] ?? $destination['address'] ?? '' ) ) ) {
 				return new WP_Error( 'no_street', 'The delivery address has no street line.' );
@@ -180,10 +231,7 @@ if ( ! class_exists( 'Lafka_Distance_Resolver' ) ) {
 				return new WP_Error( 'geocode_no_match', 'The geocoder answered without a valid point.' );
 			}
 
-			return array(
-				'point'  => $point,
-				'source' => 'geocode',
-			);
+			return $point;
 		}
 
 		/**

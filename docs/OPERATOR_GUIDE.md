@@ -236,6 +236,12 @@ is one (and it was placed for the address now typed); else the address is looked
 (Nominatim, cached 30 days). If the address is not found to street level, the lookup fails
 or the country differs, no delivery rate is offered and a line is written to WooCommerce →
 Status → Logs (`lafka-shipping`) so you can see why. It never guesses a price.
+The pin is only trusted within about 1 km of where the typed address is found (filter
+`lafka_distance_pin_tolerance_km`); a pin dropped further away is ignored and the address
+prices the delivery, so a far address cannot be made cheap by pinning beside the store. If
+the address cannot be found at all, the pin alone prices the order and the order's delivery
+line shows "Distance check: Customer pin only, address not verified" (and the kitchen
+display adds "pin only") so staff can confirm the address.
 
 **Keyless or driving distance?**
 

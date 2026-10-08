@@ -379,6 +379,10 @@ if ( ! class_exists( 'Lafka_Shipping_Method_Distance' ) && class_exists( 'WC_Shi
 			if ( 'yes' === $this->get_option( 'show_distance', 'yes' ) ) {
 				$meta['Distance'] = $label;
 			}
+			if ( 'pin_only' === $target['source'] ) {
+				// Staff see on the order that only the customer's pin priced this delivery.
+				$meta['Distance check'] = __( 'Customer pin only, address not verified', 'lafka-plugin' );
+			}
 			if ( $free ) {
 				$meta['lafka_free_delivery'] = 'yes';
 			}

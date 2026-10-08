@@ -378,7 +378,10 @@ if ( ! class_exists( 'Lafka_Distance_Shipping' ) ) {
 			}
 			foreach ( $order->get_shipping_methods() as $item ) {
 				if ( 'lafka_distance' === $item->get_method_id() ) {
-					return (string) $item->get_meta( 'Distance' );
+					$distance = (string) $item->get_meta( 'Distance' );
+
+					// Flag a distance only the customer's pin vouched for.
+					return '' !== (string) $item->get_meta( 'Distance check' ) ? $distance . ' ' . __( '(pin only, address not verified)', 'lafka-plugin' ) : $distance;
 				}
 			}
 
