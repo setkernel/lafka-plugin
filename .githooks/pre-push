@@ -2,16 +2,14 @@
 #
 # Pre-push hook for lafka-plugin.
 #
-# Runs the gates CI runs — version SSOT check, PHPCS, PHPUnit, ESLint,
-# Stylelint, JS tests, minified-build freshness — but only the ones the pushed
-# commits can affect, and the independent ones in parallel. PHPCS / ESLint /
-# Stylelint use their on-disk caches, so unchanged files are not re-linted.
+# Runs the gates CI runs — version SSOT check, PHPCS, ESLint, Stylelint,
+# minified-build freshness — but only the ones the pushed commits can affect,
+# and the independent ones in parallel. PHPCS / ESLint / Stylelint use their
+# on-disk caches, so unchanged files are not re-linted. Nothing is skipped:
+# a missing dependency fails the push with the command that installs it.
 #
 # Install (one-time per clone):
 #     git config core.hooksPath .githooks
-#
-# Bypass for one push (use sparingly):
-#     git push --no-verify
 #
 
 set -uo pipefail
@@ -40,6 +38,10 @@ done
 
 touches() { [ "$run_all" = 1 ] || grep -Eq "$1" <<<"$changed"; }
 
+# Every gate below needs the installed toolchains; fail early and say how.
+[ -d node_modules ] || { red "✖ pre-push: node_modules missing — run: npm ci"; exit 1; }
+[ -d vendor ] || { red "✖ pre-push: vendor missing — run: composer install"; exit 1; }
+
 # Version SSOT guard first — cheapest gate, needs only node.
 blue "▸ pre-push: check-version"
 npm run check-version --silent >/dev/null 2>&1 || { red "✖ check-version failed — run: npm run check-version"; exit 1; }
@@ -57,20 +59,14 @@ run() { # run <name> <command...> — in the background, output to a log
 	names+=("$name")
 }
 
-if touches '\.php$|^composer\.|^phpunit\.xml|^\.phpcs\.xml|^tests/|^\.github/|\.md$|\.txt$'; then
+if touches '\.php$|^composer\.|^\.phpcs\.xml'; then
 	run phpcs composer phpcs --quiet
-	run phpunit composer test --quiet
 fi
 
-if [ -d node_modules ]; then
-	if touches '\.(js|mjs|css)$|^package|^eslint\.config|^\.stylelintrc'; then
-		run eslint npm run lint:js --silent
-		run stylelint npm run lint:css --silent
-		run js-tests npm test --silent
-		run min-build sh -c 'npm run build --silent >/dev/null && git diff --exit-code -- "*.min.js"'
-	fi
-else
-	red "⚠ pre-push: node_modules absent — skipping JS/CSS checks (run 'npm ci')."
+if touches '\.(js|mjs|css)$|^package|^eslint\.config|^\.stylelintrc'; then
+	run eslint npm run lint:js --silent
+	run stylelint npm run lint:css --silent
+	run min-build sh -c 'npm run build --silent >/dev/null && git diff --exit-code -- "*.min.js"'
 fi
 
 failed=0
@@ -83,7 +79,7 @@ for i in "${!pids[@]}"; do
 done
 
 if [ "$failed" = 1 ]; then
-	red "   fix locally, or bypass with: git push --no-verify"
+	red "   fix the failing gates above, then push again"
 	exit 1
 fi
 

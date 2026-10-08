@@ -4,8 +4,7 @@
  *
  * uninstall.php is a thin WP_UNINSTALL_PLUGIN-guarded bootstrap that requires
  * this file and calls Lafka_Uninstall::run(). All of the real logic lives here
- * as static, side-effect-free methods so it can be unit-tested without booting
- * WordPress (uninstall.php itself is impossible to execute under PHPUnit).
+ * as static, side-effect-free methods.
  *
  * Two behaviours, selected by the opt-in `lafka_delete_data_on_uninstall`
  * option (a checkbox on Lafka → Modules, default OFF):
@@ -163,10 +162,8 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 		/**
 		 * Option-name prefixes deleted with prepared LIKE statements.
 		 *
-		 * Enumerated from a codebase grep so the completeness test can lock the
-		 * list against the known option inventory. Add a prefix here whenever a
-		 * new option family is introduced; UninstallCleanupTest fails until the
-		 * inventory is covered.
+		 * Enumerated from a codebase grep of the option inventory. Add a prefix
+		 * here whenever a new option family is introduced.
 		 *
 		 * @return array<int,string>
 		 */
@@ -199,7 +196,7 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 		/**
 		 * Whether an option name would be removed by full_cleanup().
 		 *
-		 * The completeness test drives every known option name through this.
+		 * Use it to check any option name against the cleanup inventory.
 		 *
 		 * @param string $name Option name.
 		 * @return bool

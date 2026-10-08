@@ -7,6 +7,15 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
 
 ## [Unreleased]
 
+### Removed
+- **All automated tests and test tooling**: `tests/` (PHPUnit + node:test suites),
+  `phpunit.xml.dist`, `composer test` / `npm test`, the `phpunit/phpunit`,
+  `brain/monkey` and `linkedom` dev dependencies, and the test-only seams
+  (`LAFKA_TESTING`, no-WP fallbacks). A fresh suite will be added later.
+- **wp-env**: `.wp-env.json` is retired in favour of the `../local-env` Docker stack.
+- The pre-push hook no longer runs or skips tests; it fails with the install command
+  when `node_modules` / `vendor` is missing, and no longer advertises `--no-verify`.
+
 ## [10.3.0] — 2026-09-25
 
 Live-site QA sharpening (2026-09-25): 153 findings from four anonymous QA

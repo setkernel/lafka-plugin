@@ -232,11 +232,5 @@ if ( ! class_exists( 'Lafka_Security_Headers' ) ) {
 		}
 	}
 
-	// Gate auto-instantiation on a WP-runtime function the unit-test
-	// bootstrap doesn't stub. Mirrors the pattern in promotions/ —
-	// lets PHPUnit require this file standalone for static-method
-	// assertions without triggering get_option() at file load.
-	if ( function_exists( 'wp_safe_redirect' ) ) {
-		Lafka_Security_Headers::instance();
-	}
+	Lafka_Security_Headers::instance();
 }

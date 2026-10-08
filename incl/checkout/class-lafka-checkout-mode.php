@@ -24,7 +24,7 @@
  *     install that upgraded in place before the migration ran).
  *
  * The single pure decision (decide_mode) drives both the activation hook and the
- * on-load migration and is exhaustively unit-tested (CheckoutModeDecisionTest).
+ * on-load migration.
  *
  * CONFIGURED vs EFFECTIVE mode: the option is the operator's INTENT; the
  * block-cart shim applies it only to unedited default pages, so an edited

@@ -53,8 +53,7 @@ if ( ! function_exists( 'lafka_push_schema_sql' ) ) {
 	/**
 	 * CREATE TABLE statement for the push-subscriptions table.
 	 *
-	 * Kept as a separate function so source-grep tests can lock the column list
-	 * without booting WordPress. Charset/collate comes from $wpdb when available
+	 * Charset/collate comes from $wpdb when available
 	 * so the table matches site conventions; falls back to utf8mb4 otherwise.
 	 *
 	 * Columns:

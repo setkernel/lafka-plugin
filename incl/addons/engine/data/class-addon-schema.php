@@ -5,7 +5,7 @@
  * Single source of truth for what an addon group / option SHOULD look like
  * after migration v8.13.0. The repository validates against these defaults
  * when reading old data; the admin form uses them when constructing new
- * groups; tests use them as the canonical contract.
+ * groups.
  *
  * @package Lafka_Addons_Engine
  * @since   8.13.0
@@ -105,25 +105,11 @@ class Lafka_Addon_Schema {
 	}
 
 	/**
-	 * Generate a stable UUID-like ID for a new option. Falls back to a
-	 * deterministic hash if WP's wp_generate_uuid4() is unavailable (test
-	 * harness without WP loaded).
+	 * Generate a UUID for a new option.
 	 *
 	 * @return string
 	 */
 	private static function generate_id(): string {
-		if ( function_exists( 'wp_generate_uuid4' ) ) {
-			return wp_generate_uuid4();
-		}
-		// phpcs:disable WordPress.WP.AlternativeFunctions.rand_mt_rand -- wp_rand() unavailable when WP isn't loaded (test harness fallback only).
-		return sprintf(
-			'%08x-%04x-%04x-%04x-%012x',
-			mt_rand( 0, 0xffffffff ),
-			mt_rand( 0, 0xffff ),
-			mt_rand( 0x4000, 0x4fff ),
-			mt_rand( 0x8000, 0xbfff ),
-			mt_rand( 0, 0xffffffffffff )
-		);
-		// phpcs:enable WordPress.WP.AlternativeFunctions.rand_mt_rand
+		return wp_generate_uuid4();
 	}
 }

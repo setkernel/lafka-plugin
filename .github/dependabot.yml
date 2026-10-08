@@ -13,7 +13,7 @@
 
 version: 2
 updates:
-  # Composer (PHPCS / WPCS / PHPCompatibility / PHPUnit / Brain Monkey).
+  # Composer (PHPCS / WPCS / PHPCompatibility).
   - package-ecosystem: composer
     directory: /
     schedule:

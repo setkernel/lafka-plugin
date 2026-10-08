@@ -266,7 +266,7 @@ if ( ! function_exists( 'lafka_ac_render_email_body' ) ) {
 }
 
 // Eagerly load the WC_Email child class file when WC is available — keeps the
-// class definition in its own file so the autoloader/source-grep tests stay clean.
+// class definition in its own file.
 if ( ! class_exists( 'LAFKA_Abandoned_Cart_Email' ) && class_exists( 'WC_Email' ) ) {
 	require_once __DIR__ . '/class-lafka-abandoned-cart-email-class.php';
 }

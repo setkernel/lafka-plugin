@@ -105,8 +105,7 @@
 	<rule ref="PHPCompatibilityWP"/>
 
 	<!-- WordPress text domain. Every string uses 'lafka-plugin' — the
-	     WordPress.WP.I18n.TextDomainMismatch sniff is enforced, and
-	     GettextDomainConsistencyTest guards it in PHPUnit too. -->
+	     WordPress.WP.I18n.TextDomainMismatch sniff is enforced. -->
 	<config name="text_domain" value="lafka-plugin"/>
 
 	<!-- Minimum supported WordPress version (WP 6.6 = mid-2024 baseline) -->
@@ -115,6 +114,4 @@
 	<!-- Exclude third-party / vendor directories -->
 	<exclude-pattern>/vendor/*</exclude-pattern>
 	<exclude-pattern>/node_modules/*</exclude-pattern>
-	<!-- PHPUnit tests use their own PascalCase naming convention, not WP kebab-case. -->
-	<exclude-pattern>/tests/*</exclude-pattern>
 </ruleset>

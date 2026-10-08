@@ -31,8 +31,7 @@
  * created, tracked by id in the `lafka_seed_demo_manifest` option.
  *
  * The pure helpers (fixtures / manifest / decision / polygon encoding) carry no
- * WordPress dependency so they are unit-testable via Brain Monkey without booting
- * WP (see tests/Unit/SeedDemoFixtureTest.php). Only the provisioning methods,
+ * WordPress dependency. Only the provisioning methods,
  * invoked exclusively under WP-CLI, touch a live install. The class is always
  * defined; only the command registration self-gates on WP_CLI.
  *

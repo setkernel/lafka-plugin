@@ -721,8 +721,8 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/cli/lafka-products-cli.php';
 
 /**
  * WP-CLI: provision a deterministic demo restaurant for e2e/CI + preset QA (NX1-09a).
- * The class is always defined (pure helpers are unit-tested); only the command
- * registration self-gates on WP_CLI.
+ * The class is always defined; only the command registration self-gates on
+ * WP_CLI.
  *
  *   wp lafka seed-demo
  *   wp lafka seed-demo --reset

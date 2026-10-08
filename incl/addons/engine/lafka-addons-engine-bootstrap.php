@@ -103,7 +103,7 @@ if ( function_exists( 'add_action' ) ) {
 
 // REST controller is loaded lazily on rest_api_init because it extends
 // WP_REST_Controller, which is only defined when WP's REST stack is loaded.
-// Loading the file at bootstrap time would fatal under unit tests + CLI.
+// Loading the file at bootstrap time would fatal under CLI.
 if ( function_exists( 'add_action' ) ) {
 	add_action(
 		'rest_api_init',

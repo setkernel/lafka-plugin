@@ -16,12 +16,10 @@ Supported versions of the Lafka plugin's dependencies, and how each is checked.
 | **Node.js** (build only) | 20 | 24 | 24         |
 | **Apache** (recommended for security headers) | 2.4 | 2.4.66+ | 2.4.66 |
 
-`.wp-env.json` pins the local integration stack at WP 7.1.2 / WC 11.1.2 /
-PHP 8.4; CI's PHP job runs PHPUnit + PHPCS on the runner's single
-pre-installed PHP (currently 8.3, matching prod), not on wp-env. End-to-end
-coverage is the theme repo's Playwright smoke suite (`e2e.yml` in
-lafka-theme), which boots wp-env with the theme + this plugin + WooCommerce and
-seeds it with `wp lafka seed-demo`.
+Local development runs in the Docker stack under `../local-env` (repos are
+bind-mounted live). End-to-end coverage is the theme repo's Playwright smoke
+suite (`e2e.yml` in lafka-theme), which boots the theme + this plugin +
+WooCommerce and seeds it with `wp lafka seed-demo`.
 
 ## Package versions
 
@@ -43,40 +41,32 @@ Each repo is tagged and released independently on its own cadence — the plugin
 and theme advance faster than the thin child, so their versions are not expected
 to move in lock-step.
 
-## CI (single-runner PHPUnit; PHP 8.1 floor checked statically)
+## CI (static gates; PHP floor checked statically)
 
-CI does **not** run a multi-PHP test matrix. Under the first-party-actions-only
+CI does **not** run a multi-PHP matrix. Under the first-party-actions-only
 policy (see the header comment in `.github/workflows/ci.yml`), the PHP job runs
-PHPUnit + PHPCS on the runner's **single** pre-installed PHP (currently 8.3,
-matching prod).
+on the runner's **single** pre-installed PHP.
 
-The **PHP 8.1 floor is checked by PHPCS**: `.phpcs.xml.dist` runs
-`PHPCompatibilityWP` with `testVersion 8.1-` on PHPCompatibility **10**
-(`10.0.0-alpha2`, via `phpcompatibility-wp 3.0.0-alpha2` — the 9.x line has
-no PHP 8.x sniffs). A PHP 8.2+-only construct (readonly classes, DNF types,
-`json_validate()`, …) fails CI. The check is static: it catches syntax and
-known new functions/constants, not every behavioural difference between PHP
-versions, and the unit tests themselves run on the runner PHP only. The
-`Requires PHP: 8.1` plugin header still blocks activation on older PHP.
+The **PHP floor is checked by PHPCS**: `.phpcs.xml.dist` runs
+`PHPCompatibilityWP` with a `testVersion` equal to the floor above, on
+PHPCompatibility **10** (`10.0.0-alpha2`, via `phpcompatibility-wp
+3.0.0-alpha2` — the 9.x line has no PHP 8.x sniffs). A construct newer than the
+floor fails CI. The check is static: it catches syntax and known new
+functions/constants, not every behavioural difference between PHP versions. The
+`Requires PHP` plugin header still blocks activation on older PHP.
 
 CI checks: PHPCS (WordPress-Extra ruleset + PHPCompatibility; exclusions
-documented in `.phpcs.xml.dist`) + PHPUnit (Brain Monkey), both on the runner
-PHP, plus `npm run check-version`. JS is linted (ESLint), CSS linted
-(Stylelint), front-end JS behaviour-tested (`npm test`, node:test) and the
-committed `.min.js` builds are checked against their sources (`npm run build`)
-on Node 24.
+documented in `.phpcs.xml.dist`), `npm run check-version`, ESLint, Stylelint,
+and the committed `.min.js` builds against their sources (`npm run build`).
+The plugin ships no automated test suite at present.
 
 The official WordPress.org **Plugin Check** runs in `.github/workflows/plugin-check.yml`
-(non-blocking for now, outside `ci-passed`) against exactly the tree release.yml
-zips, on a wp-env stack (WP 7.1.2 + WC 11.1.2) started from npm — no community
-actions; errors fail that job, the CSV report is uploaded as an artifact.
+against exactly the tree release.yml zips; errors fail that job.
 
 The security sniff families — `WordPress.Security.EscapeOutput.*`,
 `WordPress.Security.NonceVerification.*`, `WordPress.DB.PreparedSQL.*` —
 are **enforced as errors** (re-enabled in the 2026-05-14 P5-Sec pass). Only
 the narrow `WordPress.Security.EscapeOutput.ExceptionNotEscaped` is excluded.
-
-There is no WP × WC integration-test matrix yet.
 
 ## Server-level configuration recommendations
 
@@ -231,26 +221,19 @@ admin request.
 Modern evergreen browsers; IE11 is not tested. WP itself dropped IE
 support in core 5.8. Mobile Safari ≥ 14, Chrome/Firefox/Edge ≥ 100.
 
-## What's tested where
+## What's verified where
 
-- **Unit tests** (`tests/Unit/`) — pure-helper math, options precedence,
-  feature-flag wiring, plugin header / version SSOT. No WP runtime; Brain
-  Monkey mocks WP/WC functions.
-- **Analytics / conversion / web-push** (`tests/Unit/`) — GA4 `dataLayer`
-  emitter + Consent Mode v2 defaults (`AnalyticsEmitterTest`,
-  `AnalyticsWcEventsTest`, `AnalyticsCustomEventsTest`); abandoned-cart
-  capture/cron/email (`AbandonedCartTest`); review-prompt scheduling
-  (`ReviewPromptTest`); web-push subscribe/send (`PushNotificationsTest`).
-  Browser push *delivery* (VAPID round-trip to a live service worker) is
-  smoke-checked manually, not yet in the e2e suite.
-- **Integration tests** — not yet present.
+- **Static gates** — PHPCS, ESLint, Stylelint, the version SSOT check and
+  min-build freshness (see *CI* above).
 - **Manual smoke** — enabling Lafka → Modules → Promotions for the BOGO
   module; KDS standalone-page rendering; cart with mixed-price items;
   delivery-minimum boundary at the configured minimum.
 - **End-to-end** — the theme repo's Playwright smoke suite (`e2e.yml` in
-  lafka-theme) boots wp-env with theme + plugin + WooCommerce, seeds it with
+  lafka-theme) boots theme + plugin + WooCommerce, seeds it with
   `wp lafka seed-demo`, and walks the ordering funnel. It is non-blocking
   for now.
+- **Browser push delivery** (VAPID round-trip to a live service worker) is
+  smoke-checked manually.
 
 ## Updating this document
 
@@ -264,8 +247,8 @@ npm version <patch|minor|major>   # or an explicit x.y.z
 (`scripts/sync-version.mjs`) writes the plugin header (`lafka-plugin.php`) and
 the `readme.txt` Stable tag, npm syncs `package-lock.json`, and a
 `vX.Y.Z` git tag + release commit are created — then `git push --follow-tags`.
-**Never hand-edit a version.** `npm run check-version` is a CI gate (and a
-PHPUnit guard, `VersionConsistencyTest`) that fails the build on any drift.
+**Never hand-edit a version.** `npm run check-version` is a CI gate that fails
+the build on any drift.
 
 Only the compatibility **floors** in the matrix above are hand-maintained —
 update them when a real minimum-version requirement changes.

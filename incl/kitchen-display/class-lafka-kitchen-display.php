@@ -199,9 +199,4 @@ class Lafka_Kitchen_Display {
 	}
 }
 
-// Guarded so unit tests can load the class for its static token helpers without
-// booting the full subsystem (which calls is_admin() etc.). Matches the repo's
-// LAFKA_TESTING auto-init convention.
-if ( ! defined( 'LAFKA_TESTING' ) ) {
-	Lafka_Kitchen_Display::instance();
-}
+Lafka_Kitchen_Display::instance();

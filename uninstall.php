@@ -4,8 +4,7 @@
  *
  * Thin bootstrap only. WordPress includes this file when the operator deletes
  * the plugin. All cleanup logic lives in Lafka_Uninstall
- * (incl/tools/class-lafka-uninstall.php) so it is unit-testable without booting
- * WordPress. Behaviour:
+ * (incl/tools/class-lafka-uninstall.php). Behaviour:
  *
  *   - Toggle OFF (default): minimal cleanup — revert custom product-attribute
  *     types to 'select', DROP the abandoned-cart, push-subscription and incident tables, and

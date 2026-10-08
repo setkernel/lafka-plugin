@@ -8,46 +8,24 @@ This is the companion plugin for the Lafka theme. It owns business logic (CPTs, 
 npm ci
 composer install
 
-# Boot a full WP + WC + this plugin
-npx @wordpress/env start
-# WP runs at http://localhost:8883
-# Tests-WP runs at http://localhost:8884
-
-# Seed a deterministic demo restaurant (products, addons, branch, zone, hours)
-npx @wordpress/env run cli wp lafka seed-demo          # add --reset to rebuild
+# Boot a full WP + WC + Lafka stack: the Docker environment in ../local-env
+# (this repo is bind-mounted live; see its README). Then seed a deterministic
+# demo restaurant (products, addons, branch, zone, hours):
+../local-env/wp.sh lafka seed-demo          # add --reset to rebuild
 ```
 
 ## Before opening a PR
 
 ```bash
 npm run lint           # ESLint + Stylelint
-npm test               # front-end JS behaviour tests (node:test)
 npm run build          # regenerate .min.js from sources — commit both
 npm run check-version  # version SSOT drift guard
 composer phpcs         # (composer phpcbf auto-fixes what it can)
-composer test          # PHPUnit (Brain Monkey)
 ```
 
-The `.githooks/pre-push` hook runs the affected gates in parallel (`git config core.hooksPath .githooks`).
+The `.githooks/pre-push` hook runs the affected gates in parallel and never skips one (`git config core.hooksPath .githooks`; it fails with the install command when `node_modules` or `vendor` is missing).
 
-Tests assert behaviour: execute the code (Brain Monkey stubs for WordPress,
-`require_once` the module inside `setUp()`, never define WP functions as plain
-globals) and check what it returns, renders or writes. Don't grep source for
-implementation strings, comments or "function exists"; a source scan is only
-for a genuine repo-wide invariant (text domain, operator literals, versioned
-asset paths, uninstall inventory, release packaging).
-
-Tests must pass in any order and at any wall-clock time; CI also runs the
-suite with `--order-by=reverse` and `--order-by=random` (the seed is printed —
-reproduce with `vendor/bin/phpunit --order-by=random --random-order-seed=<seed>`).
-Every function a test stubs is defined before the first test
-(`tests/Unit/Support/LeftoverStubsExtension.php`), so code behind
-`function_exists()` needs that function stubbed in the test itself. To stub a
-plugin function, `require_once` its file first, or its `function_exists()`
-guard skips the real code for every later test. Reset any
-static or global a test changes in both `setUp()` and `tearDown()`, and pin
-clock-derived expectations with `Support\StableClock::run()` (or pass an
-explicit time) instead of reading the clock twice.
+The plugin currently ships no automated test suite.
 
 ## Architecture (short version)
 
@@ -95,11 +73,11 @@ The plugin declares both HPOS and `cart_checkout_blocks` compatibility in `lafka
 `package.json` is the single source of truth for the version.
 
 0. When translatable strings changed, regenerate the POT:
-   `npx @wordpress/env run cli wp i18n make-pot /var/www/html/wp-content/plugins/lafka-plugin /var/www/html/wp-content/plugins/lafka-plugin/languages/lafka-plugin.pot --domain=lafka-plugin --exclude=tests,scripts,node_modules,vendor,assets/vendor,.wp-env-uploads --skip-audit`
+   `../local-env/wp.sh i18n make-pot wp-content/plugins/lafka-plugin wp-content/plugins/lafka-plugin/languages/lafka-plugin.pot --domain=lafka-plugin --exclude=scripts,node_modules,vendor,assets/vendor --skip-audit`
 
 1. `npm version <major|minor|patch>` — bumps `package.json`, rewrites the derived copies (`lafka-plugin.php` header, `readme.txt` Stable tag, `languages/lafka-plugin.pot`) via `scripts/sync-version.mjs`, commits and creates the `vX.Y.Z` tag. `npm run check-version` (CI + `VersionConsistencyTest`) catches drift.
 2. `git push --follow-tags` — pushing the tag triggers `.github/workflows/release.yml`.
-3. `release.yml` runs `npm run build`, then builds the zip (dev-only files — `.git`, `node_modules`, `vendor`, `tests`, `scripts`, lint configs and caches, `README.md`, `CONTRIBUTING.md` — are excluded; `ReleasePackagingTest` dry-runs the same rsync), then creates/updates the GitHub Release with the zip + SHA256.
+3. `release.yml` runs `npm run build`, then builds the zip (dev-only files — `.git`, `node_modules`, `vendor`, `scripts`, lint configs and caches, `README.md`, `CONTRIBUTING.md` — are excluded), then creates/updates the GitHub Release with the zip + SHA256.
 
 ## Security
 

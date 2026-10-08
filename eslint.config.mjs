@@ -83,9 +83,9 @@ export default [
 			"no-empty": "off",
 		},
 	},
-	// Node.js build scripts + node:test suites (ES modules).
+	// Node.js build scripts (ES modules).
 	{
-		files: ["scripts/**/*.mjs", "tests/js/**/*.mjs"],
+		files: ["scripts/**/*.mjs"],
 		languageOptions: {
 			sourceType: "module",
 			globals: {

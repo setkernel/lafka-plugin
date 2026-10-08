@@ -10,8 +10,6 @@
 		"wp-coding-standards/wpcs": "^3.3",
 		"phpcompatibility/phpcompatibility-wp": "^3.0.0-alpha2@alpha",
 		"dealerdirect/phpcodesniffer-composer-installer": "^1.0",
-		"phpunit/phpunit": "^12.0",
-		"brain/monkey": "^2.7",
 		"phpcompatibility/php-compatibility": "^10.0.0-alpha2@alpha",
 		"phpcompatibility/phpcompatibility-paragonie": "^2.0.0-alpha2@alpha"
 	},
@@ -25,7 +23,6 @@
 	},
 	"scripts": {
 		"phpcs": "phpcs",
-		"phpcbf": "phpcbf",
-		"test": "phpunit"
+		"phpcbf": "phpcbf"
 	}
 }

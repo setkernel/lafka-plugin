@@ -7,7 +7,7 @@
  * seeder (incl/cli/class-lafka-cli-seed-demo.php) is the only consumer; it
  * turns this array into a browsable, orderable minimal restaurant.
  *
- * Hard rules baked into this data (see SeedDemoFixtureTest):
+ * Hard rules baked into this data:
  *   - NEUTRAL, generic content only: no operator brand, city, vanity domain,
  *     phone or signature dish. This store ships inside a public, sellable
  *     plugin and must read as "any restaurant".
@@ -40,9 +40,7 @@ for ( $lafka_seed_demo_day = 0; $lafka_seed_demo_day < 7; $lafka_seed_demo_day++
 		),
 	);
 }
-$lafka_seed_demo_open_schedule_json = function_exists( 'wp_json_encode' )
-	? wp_json_encode( $lafka_seed_demo_open_schedule )
-	: json_encode( $lafka_seed_demo_open_schedule ); // phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode -- pure fixture data; WP unavailable in unit tests.
+$lafka_seed_demo_open_schedule_json = wp_json_encode( $lafka_seed_demo_open_schedule );
 
 return array(
 

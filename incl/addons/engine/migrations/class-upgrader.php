@@ -2,7 +2,7 @@
 /**
  * Discovers and runs registered migrations against `_product_addons` meta.
  *
- * In Phase 1 the upgrader is invoked manually (or in tests). Phase 2 wires
+ * In Phase 1 the upgrader is invoked manually. Phase 2 wires
  * it to the plugin activation hook and a "Run migrations" admin action.
  *
  * @package Lafka_Addons_Engine

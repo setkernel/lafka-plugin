@@ -7,7 +7,7 @@
  *
  * On write: serializes back to canonical array shape, calls update_post_meta.
  *
- * Phase 1: standalone — used by tests + the new engine. Phase 2 wires the
+ * Phase 1: standalone — used by the new engine. Phase 2 wires the
  * existing admin save handler to use this. Phase 3 wires the cart layer.
  *
  * @package Lafka_Addons_Engine

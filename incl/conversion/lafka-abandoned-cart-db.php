@@ -51,8 +51,7 @@ if ( ! function_exists( 'lafka_ac_schema_sql' ) ) {
 	/**
 	 * CREATE TABLE statement for the abandoned-cart table.
 	 *
-	 * Kept as a separate function so source-grep tests can lock the column list
-	 * without booting WordPress. Charset/collate comes from $wpdb when available
+	 * Charset/collate comes from $wpdb when available
 	 * so the table matches site conventions; falls back to utf8mb4 otherwise.
 	 *
 	 * Columns:
@@ -163,13 +162,7 @@ if ( ! function_exists( 'lafka_ac_generate_resume_token' ) ) {
 	 * @return string
 	 */
 	function lafka_ac_generate_resume_token(): string {
-		if ( function_exists( 'wp_generate_password' ) ) {
-			return (string) wp_generate_password( 32, false, false );
-		}
-		// Fallback for environments where wp_generate_password isn't loaded
-		// (notably the unit-test harness). bin2hex(random_bytes(16)) is also
-		// 32 chars / ~128 bits of entropy.
-		return bin2hex( random_bytes( 16 ) );
+		return (string) wp_generate_password( 32, false, false );
 	}
 }
 

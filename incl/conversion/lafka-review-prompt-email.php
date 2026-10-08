@@ -158,7 +158,7 @@ if ( function_exists( 'add_filter' ) ) {
 }
 
 // Eagerly load the subclass file when WC is available — keeps the class
-// definition in its own file so the autoloader/source-grep tests stay clean.
+// definition in its own file.
 if ( ! class_exists( 'LAFKA_Review_Prompt_Email' ) && class_exists( 'WC_Email' ) ) {
 	require_once __DIR__ . '/class-lafka-review-prompt-email-class.php';
 }
@@ -435,9 +435,7 @@ if ( ! function_exists( 'lafka_review_email_handle_unsubscribe_request' ) ) {
 		if ( function_exists( 'wp_safe_redirect' ) && function_exists( 'home_url' ) ) {
 			$target = (string) home_url( '/?lafka_review_unsubscribed=1' );
 			wp_safe_redirect( $target );
-			if ( ! ( defined( 'LAFKA_TESTING' ) && LAFKA_TESTING ) ) {
-				exit;
-			}
+			exit;
 		}
 	}
 }

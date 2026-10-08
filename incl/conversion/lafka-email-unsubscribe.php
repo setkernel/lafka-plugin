@@ -229,9 +229,7 @@ if ( ! function_exists( 'lafka_unsub_handle_request' ) ) {
 
 		if ( function_exists( 'wp_safe_redirect' ) && function_exists( 'home_url' ) ) {
 			wp_safe_redirect( (string) home_url( '/?lafka_email_unsubscribed=1' ) );
-			if ( ! ( defined( 'LAFKA_TESTING' ) && LAFKA_TESTING ) ) {
-				exit;
-			}
+			exit;
 		}
 	}
 }

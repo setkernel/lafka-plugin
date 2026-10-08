@@ -51,8 +51,8 @@ jobs:
         run: |
           mkdir lafka-plugin
           # NX1-10d: dev-only files must never ship in the installable zip.
-          # Excluded: VCS/CI metadata, dependencies, package manifests, lint +
-          # phpunit + wp-env tooling, the test suite, and ops/build scripts.
+          # Excluded: VCS/CI metadata, dependencies, package manifests, lint
+          # tooling, and ops/build scripts.
           # Runtime files STAY — readme.txt,
           # COMPATIBILITY.md, the operator guides under docs/, languages/,
           # and LICENSE (GPLv2 requires shipping the licence text).
@@ -61,8 +61,6 @@ jobs:
                    --exclude='.gitignore' \
                    --exclude='.githooks' \
                    --exclude='.npmrc' \
-                   --exclude='.wp-env*.json' \
-                   --exclude='.wp-env-uploads' \
                    --exclude='.phpcs.cache' \
                    --exclude='.eslintcache' \
                    --exclude='.stylelintcache' \
@@ -76,10 +74,6 @@ jobs:
                    --exclude='.phpcs.xml.dist' \
                    --exclude='.stylelintrc.json' \
                    --exclude='eslint.config.mjs' \
-                   --exclude='phpunit.xml.dist' \
-                   --exclude='.phpunit.result.cache' \
-                   --exclude='.phpunit.cache' \
-                   --exclude='tests' \
                    --exclude='scripts' \
                    --exclude='CONTRIBUTING.md' \
                    --exclude='README.md' \
