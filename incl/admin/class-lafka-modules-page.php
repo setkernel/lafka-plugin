@@ -151,8 +151,8 @@ if ( ! class_exists( 'Lafka_Modules_Page' ) ) {
 
 		/**
 		 * admin-post handler: persist the chosen checkout experience (NX1-04b).
-		 * Clears the block-cart shim's done-flag so the cart/checkout pages are
-		 * re-reconciled for the new mode on the next admin request.
+		 * Saving the choice does not touch the Cart/Checkout pages: switching them is
+		 * its own explicit button below (Lafka_Block_Cart_Shim), with undo.
 		 */
 		public function handle_checkout_mode_save() {
 			if ( ! current_user_can( self::CAPABILITY ) ) {
@@ -167,10 +167,6 @@ if ( ! class_exists( 'Lafka_Modules_Page' ) ) {
 			$saved = false;
 			if ( class_exists( 'Lafka_Checkout_Mode' ) && Lafka_Checkout_Mode::set_mode( $requested ) ) {
 				$saved = true;
-				if ( class_exists( 'Lafka_Block_Cart_Shim' ) ) {
-					// Re-reconcile the cart/checkout pages against the new mode.
-					Lafka_Block_Cart_Shim::reset();
-				}
 			}
 
 			wp_safe_redirect(
@@ -260,7 +256,66 @@ if ( ! class_exists( 'Lafka_Modules_Page' ) ) {
 
 			echo '<p><button type="submit" class="button button-primary">' . esc_html__( 'Save checkout experience', 'lafka-plugin' ) . '</button></p>';
 			echo '</form>';
+			$this->render_checkout_pages_panel( $current );
 			echo '</div>';
+		}
+
+		/**
+		 * The explicit Cart & Checkout page switch (with undo): shown after the mode
+		 * is saved, never run automatically.
+		 *
+		 * @param string $mode The configured checkout mode.
+		 */
+		private function render_checkout_pages_panel( $mode ) {
+			if ( ! class_exists( 'Lafka_Block_Cart_Shim' ) ) {
+				return;
+			}
+			$status = Lafka_Block_Cart_Shim::status( $mode );
+
+			echo '<div class="lafka-checkout-mode__pages">';
+			echo '<h3>' . esc_html__( 'Cart & Checkout pages', 'lafka-plugin' ) . '</h3>';
+			if ( array() !== $status['pending'] ) {
+				printf(
+					'<p>%s</p>',
+					esc_html(
+						sprintf(
+							/* translators: 1: page names, 2: the chosen mode. */
+							__( 'Your %1$s page(s) still use the other checkout. Saving the choice above does not change your pages; switch them to the %2$s checkout here when you are ready. Only pages you have not edited are switched, and you can undo it.', 'lafka-plugin' ),
+							implode( ' & ', $status['pending'] ),
+							'blocks' === $mode ? __( 'block', 'lafka-plugin' ) : __( 'classic', 'lafka-plugin' )
+						)
+					)
+				);
+				$this->render_checkout_pages_button( Lafka_Block_Cart_Shim::APPLY_ACTION, __( 'Switch the pages now', 'lafka-plugin' ), 'button-primary' );
+			} else {
+				echo '<p>' . esc_html__( 'Your Cart & Checkout pages already match this choice (or have been edited, so Lafka leaves them alone).', 'lafka-plugin' ) . '</p>';
+			}
+			if ( array() !== $status['undo'] ) {
+				echo '<p>' . esc_html(
+					sprintf(
+						/* translators: %s: page names. */
+						__( 'You can undo the last switch of your %s page(s).', 'lafka-plugin' ),
+						implode( ' & ', $status['undo'] )
+					)
+				) . '</p>';
+				$this->render_checkout_pages_button( Lafka_Block_Cart_Shim::UNDO_ACTION, __( 'Undo the last switch', 'lafka-plugin' ), 'button-secondary' );
+			}
+			echo '</div>';
+		}
+
+		/**
+		 * One admin-post button of the page switch.
+		 *
+		 * @param string $action Handler action (also the nonce action).
+		 * @param string $label  Button label.
+		 * @param string $style  Button style class.
+		 */
+		private function render_checkout_pages_button( $action, $label, $style ) {
+			echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" style="display:inline-block;margin-right:8px">';
+			echo '<input type="hidden" name="action" value="' . esc_attr( $action ) . '">';
+			wp_nonce_field( $action );
+			echo '<button type="submit" class="button ' . esc_attr( $style ) . '">' . esc_html( $label ) . '</button>';
+			echo '</form>';
 		}
 
 		/**
@@ -284,6 +339,15 @@ if ( ! class_exists( 'Lafka_Modules_Page' ) ) {
 		 * Success/failure notice after saving the checkout mode.
 		 */
 		private function render_checkout_mode_notice() {
+			$pages = sanitize_key( (string) filter_input( INPUT_GET, 'lafka_checkout_pages', FILTER_SANITIZE_FULL_SPECIAL_CHARS ) );
+			if ( 'switched' === $pages ) {
+				echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Cart & Checkout pages switched. Place a test order to confirm; you can undo it below.', 'lafka-plugin' ) . '</p></div>';
+			} elseif ( 'undone' === $pages ) {
+				echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Cart & Checkout pages restored to what they were.', 'lafka-plugin' ) . '</p></div>';
+			} elseif ( 'nothing' === $pages ) {
+				echo '<div class="notice notice-info is-dismissible"><p>' . esc_html__( 'Nothing to change: the pages already match, or they have been edited.', 'lafka-plugin' ) . '</p></div>';
+			}
+
 			$mode = sanitize_key( (string) filter_input( INPUT_GET, 'lafka_checkout_mode', FILTER_SANITIZE_FULL_SPECIAL_CHARS ) );
 			if ( '' === $mode ) {
 				return;

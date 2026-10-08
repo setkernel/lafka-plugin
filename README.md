@@ -38,10 +38,11 @@ older PHP and WordPress.
   through the Store API (`incl/store-api/`). Add-on selections reach cart lines,
   totals and order-item meta the same way as on classic. Order type and branch are
   block checkout additional fields, and a time-slot picker and free-delivery
-  progress bar are build-free scripts in `incl/checkout/`. In classic mode,
-  `incl/compat/class-lafka-block-cart-shim.php` rewrites unedited default block
-  Cart and Checkout pages to the shortcodes and keeps the original markup so the
-  switch is reversible. It never touches pages an operator edited.
+  progress bar are build-free scripts in `incl/checkout/`. Switching the Cart and
+  Checkout pages between blocks and the classic shortcodes is an explicit button on
+  the Modules screen (`incl/compat/class-lafka-block-cart-shim.php`): it rewrites
+  only unedited default pages, once, keeps the previous content and offers undo. The
+  plugin never edits those pages by itself.
 - **Maps:** `incl/geo/` is the one source: `lafka_get_store_point()` (the business
   geo), `lafka_get_map_default_view()`, `lafka_maps_provider()` ('google' with a key
   in `lafka[google_maps_api_key]`, else 'osm') and the Nominatim proxy

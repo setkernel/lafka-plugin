@@ -27,7 +27,9 @@
  * on-load migration.
  *
  * CONFIGURED vs EFFECTIVE mode: the option is the operator's INTENT; the
- * block-cart shim applies it only to unedited default pages, so an edited
+ * Modules-screen page switch (Lafka_Block_Cart_Shim) applies it only to
+ * unedited default pages, and only when the operator presses it, so an edited
+ * or not-yet-switched
  * Checkout page can render the classic [woocommerce_checkout] shortcode while
  * the option says 'blocks' (the live store did exactly that). Runtime consumers
  * must follow what customers actually get, so is_blocks()/is_classic() read the

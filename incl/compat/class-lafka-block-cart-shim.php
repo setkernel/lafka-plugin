@@ -1,56 +1,48 @@
 <?php
 /**
- * Block Cart/Checkout mode shim.
+ * Cart/Checkout page switch (blocks <-> classic shortcodes).
  *
- * Lafka now fully supports the WooCommerce block Cart & Checkout (NX1-04b:
- * order_type/branch fields, timeslot picker, free-delivery progress, addon line
- * items and every ordering gate on the Store API path). The checkout experience
- * is governed by Lafka_Checkout_Mode (`lafka_checkout_mode` = 'blocks'|'classic'):
+ * Lafka fully supports both the WooCommerce block Cart & Checkout and the classic
+ * shortcode ones (order_type/branch fields, timeslot picker, free-delivery
+ * progress, addon line items and every ordering gate on the Store API path). The
+ * operator's choice is Lafka_Checkout_Mode (`lafka_checkout_mode` =
+ * 'blocks'|'classic').
  *
- *   · BLOCKS mode (fresh-install default) — this shim LEAVES the block Cart/Checkout
- *     pages ALONE. Lafka's block components render on top of them.
- *   · CLASSIC mode (existing installs, migrated for byte-identical behaviour, and
- *     anyone who opts back to classic) — this shim rewrites the default, unedited
- *     block Cart/Checkout pages to the classic shortcodes Lafka has always
- *     supported, exactly as it did before NX1-04b.
+ * The pages are the merchant's: nothing here ever edits them on its own. Changing
+ * their content is an explicit operator action on the Lafka Modules screen:
  *
- * Reversible: before rewriting a page to the shortcode, the shim saves the page's
- * original block content in post meta, so switching back to blocks restores the
- * exact original markup. Only the shim's OWN shortcode output is ever restored —
- * any operator customisation is left untouched (matches must be exact).
+ *   - "Switch the pages" (apply): rewrites the Cart/Checkout pages whose content
+ *     is the unedited default for the OTHER mode — block markup to the classic
+ *     shortcodes, or the shim's own shortcode back to the block markup it saved —
+ *     once, and keeps the previous content in post meta.
+ *   - "Undo" restores exactly that previous content.
  *
- * Self-limiting: only rewrites pages whose content is the unedited default block
- * markup produced by WC's install_pages (classic direction) or exactly the shim's
- * own shortcode (blocks direction). Runs on admin_init; the mode-toggle handler on
- * the Modules screen clears the done-flag so a mode change re-evaluates the pages.
+ * Pages the merchant edited are never touched (matches must be exact), and
+ * runtime code reads the EFFECTIVE mode from the page content
+ * (Lafka_Checkout_Mode), so an un-switched page simply keeps working as it is.
  *
  * @package Lafka\Plugin\Compat
  * @since   8.7.2
+ * @since   10.4.0 Explicit operator action with undo; no automatic page edits.
  */
 
 defined( 'ABSPATH' ) || exit;
 
 class Lafka_Block_Cart_Shim {
 
-	private const STATUS_OPTION = 'lafka_block_cart_shim_done';
 	private const ORIGINAL_META = '_lafka_shim_original_content';
+	private const UNDO_META     = '_lafka_shim_undo_content';
+
+	public const APPLY_ACTION = 'lafka_checkout_pages_apply';
+	public const UNDO_ACTION  = 'lafka_checkout_pages_undo';
+	public const CAPABILITY   = 'manage_woocommerce';
 
 	/**
-	 * Install the shim on `admin_init` so it runs once per admin request, before
-	 * the merchant lands on the cart/checkout.
+	 * Register the two admin-post handlers behind the Modules screen buttons.
 	 */
 	public static function init(): void {
-		add_action( 'admin_init', array( __CLASS__, 'maybe_swap_pages' ) );
-		add_action( 'admin_notices', array( __CLASS__, 'maybe_render_notice' ) );
-	}
-
-	/**
-	 * Whether the operator's configured checkout mode is classic.
-	 *
-	 * @return bool
-	 */
-	private static function configured_classic(): bool {
-		return ! class_exists( 'Lafka_Checkout_Mode' ) || Lafka_Checkout_Mode::MODE_CLASSIC === Lafka_Checkout_Mode::get_mode();
+		add_action( 'admin_post_' . self::APPLY_ACTION, array( __CLASS__, 'handle_apply' ) );
+		add_action( 'admin_post_' . self::UNDO_ACTION, array( __CLASS__, 'handle_undo' ) );
 	}
 
 	/**
@@ -76,99 +68,171 @@ class Lafka_Block_Cart_Shim {
 	}
 
 	/**
-	 * Reconcile the cart/checkout pages with the active checkout mode.
-	 */
-	public static function maybe_swap_pages(): void {
-		if ( ! current_user_can( 'manage_options' ) ) {
-			return;
-		}
-		if ( get_option( self::STATUS_OPTION ) ) {
-			return;
-		}
-
-		// The shim APPLIES the configured intent to the pages, so it reads the
-		// option (get_mode), never the page-derived effective mode.
-		$classic = self::configured_classic();
-
-		$swapped = $classic ? self::apply_classic() : self::apply_blocks();
-
-		// Flag complete even if nothing was swapped — don't re-check every admin
-		// page-load. The Modules mode-toggle clears this flag on a mode change.
-		update_option( self::STATUS_OPTION, time() );
-
-		if ( ! empty( $swapped ) ) {
-			set_transient( 'lafka_block_cart_shim_notice', $swapped, DAY_IN_SECONDS );
-		}
-	}
-
-	/**
-	 * Classic mode: rewrite unedited default block pages to the classic shortcodes,
-	 * preserving the original block content for a later switch back to blocks.
+	 * Which pages a switch to $mode would change, and which can be undone.
 	 *
-	 * @return string[] Labels of pages swapped.
+	 * @param string $mode 'blocks' or 'classic'.
+	 * @return array{pending:string[],undo:string[]} Page labels.
 	 */
-	private static function apply_classic(): array {
-		$swapped = array();
-
+	public static function status( string $mode ): array {
+		$pending = array();
+		$undo    = array();
 		foreach ( self::page_pairs() as $pair ) {
 			$page = self::get_page( $pair['option'] );
 			if ( ! $page ) {
 				continue;
 			}
-			// Only swap unedited default block content (leading whitespace tolerated).
-			if ( false === strpos( ltrim( $page->post_content ), '<!-- ' . $pair['block'] ) ) {
-				continue;
+			if ( self::can_switch( $page, $pair, $mode ) ) {
+				$pending[] = $pair['label'];
 			}
-
-			update_post_meta( $page->ID, self::ORIGINAL_META, $page->post_content );
-			wp_update_post(
-				array(
-					'ID'           => $page->ID,
-					'post_content' => $pair['shortcode'],
-				)
-			);
-			$swapped[] = $pair['label'];
+			if ( '' !== (string) get_post_meta( $page->ID, self::UNDO_META, true ) ) {
+				$undo[] = $pair['label'];
+			}
 		}
 
-		return $swapped;
+		return array(
+			'pending' => $pending,
+			'undo'    => $undo,
+		);
 	}
 
 	/**
-	 * Blocks mode: leave native block pages alone, but if a page carries exactly the
-	 * shim's own shortcode (a prior classic rewrite), restore its saved original
-	 * block content so the block Cart/Checkout renders again.
+	 * Whether a page is in the exact shape that a switch to $mode replaces.
 	 *
-	 * @return string[] Labels of pages restored.
+	 * @param \WP_Post             $page Page.
+	 * @param array<string,string> $pair Page pair.
+	 * @param string               $mode Target mode.
+	 * @return bool
 	 */
-	private static function apply_blocks(): array {
+	private static function can_switch( \WP_Post $page, array $pair, string $mode ): bool {
+		if ( 'classic' === $mode ) {
+			// Only unedited default block content (leading whitespace tolerated).
+			return 0 === strpos( ltrim( $page->post_content ), '<!-- ' . $pair['block'] );
+		}
+		// Blocks: only a page that carries exactly our shortcode AND a saved original.
+		$original = get_post_meta( $page->ID, self::ORIGINAL_META, true );
+
+		return trim( $page->post_content ) === $pair['shortcode'] && is_string( $original ) && '' !== $original;
+	}
+
+	/**
+	 * Switch the pages to $mode. Keeps each page's previous content for undo().
+	 *
+	 * @param string $mode 'blocks' or 'classic'.
+	 * @return string[] Labels of the pages switched.
+	 */
+	public static function apply( string $mode ): array {
+		$switched = array();
+		foreach ( self::page_pairs() as $pair ) {
+			$page = self::get_page( $pair['option'] );
+			if ( ! $page || ! self::can_switch( $page, $pair, $mode ) ) {
+				continue;
+			}
+
+			update_post_meta( $page->ID, self::UNDO_META, $page->post_content );
+			if ( 'classic' === $mode ) {
+				update_post_meta( $page->ID, self::ORIGINAL_META, $page->post_content );
+				$new = $pair['shortcode'];
+			} else {
+				$new = (string) get_post_meta( $page->ID, self::ORIGINAL_META, true );
+				delete_post_meta( $page->ID, self::ORIGINAL_META );
+			}
+			wp_update_post(
+				array(
+					'ID'           => $page->ID,
+					'post_content' => wp_slash( $new ),
+				)
+			);
+			$switched[] = $pair['label'];
+		}
+
+		return $switched;
+	}
+
+	/**
+	 * Put back what each page held before its last switch.
+	 *
+	 * @return string[] Labels of the pages restored.
+	 */
+	public static function undo(): array {
 		$restored = array();
-
 		foreach ( self::page_pairs() as $pair ) {
 			$page = self::get_page( $pair['option'] );
 			if ( ! $page ) {
 				continue;
 			}
-			// Only restore a page we previously shimmed: content must be exactly our
-			// shortcode AND a saved original must exist.
-			if ( trim( $page->post_content ) !== $pair['shortcode'] ) {
+			$previous = get_post_meta( $page->ID, self::UNDO_META, true );
+			if ( ! is_string( $previous ) || '' === $previous ) {
 				continue;
 			}
-			$original = get_post_meta( $page->ID, self::ORIGINAL_META, true );
-			if ( ! is_string( $original ) || '' === $original ) {
-				continue;
-			}
-
+			$current_is_shortcode = trim( $page->post_content ) === $pair['shortcode'];
 			wp_update_post(
 				array(
 					'ID'           => $page->ID,
-					'post_content' => $original,
+					'post_content' => wp_slash( $previous ),
 				)
 			);
-			delete_post_meta( $page->ID, self::ORIGINAL_META );
+			delete_post_meta( $page->ID, self::UNDO_META );
+			// Keep the saved block original in step with the page: gone when the page
+			// is blocks again (undoing a switch to classic), saved when it is the
+			// shortcode again (undoing a switch to blocks).
+			if ( $current_is_shortcode ) {
+				delete_post_meta( $page->ID, self::ORIGINAL_META );
+			} elseif ( trim( $previous ) === $pair['shortcode'] ) {
+				update_post_meta( $page->ID, self::ORIGINAL_META, $page->post_content );
+			}
 			$restored[] = $pair['label'];
 		}
 
 		return $restored;
+	}
+
+	/**
+	 * admin-post handler: switch the pages to the configured checkout mode.
+	 */
+	public static function handle_apply(): void {
+		self::guard( self::APPLY_ACTION );
+		$mode     = class_exists( 'Lafka_Checkout_Mode' ) ? Lafka_Checkout_Mode::get_mode() : 'classic';
+		$switched = self::apply( $mode );
+		self::redirect( $switched ? 'switched' : 'nothing' );
+	}
+
+	/**
+	 * admin-post handler: restore the pages' previous content.
+	 */
+	public static function handle_undo(): void {
+		self::guard( self::UNDO_ACTION );
+		$restored = self::undo();
+		self::redirect( $restored ? 'undone' : 'nothing' );
+	}
+
+	/**
+	 * Capability + nonce gate for the two handlers.
+	 *
+	 * @param string $action Nonce action.
+	 */
+	private static function guard( string $action ): void {
+		if ( ! current_user_can( self::CAPABILITY ) ) {
+			wp_die( esc_html__( 'You do not have permission to change the Cart and Checkout pages.', 'lafka-plugin' ), 403 );
+		}
+		check_admin_referer( $action );
+	}
+
+	/**
+	 * Back to the Modules screen with the outcome in the URL.
+	 *
+	 * @param string $result 'switched', 'undone' or 'nothing'.
+	 */
+	private static function redirect( string $result ): void {
+		wp_safe_redirect(
+			add_query_arg(
+				array(
+					'page'                 => 'lafka-modules',
+					'lafka_checkout_pages' => $result,
+				),
+				admin_url( 'admin.php' )
+			)
+		);
+		exit;
 	}
 
 	/**
@@ -185,44 +249,6 @@ class Lafka_Block_Cart_Shim {
 		$page = get_post( $page_id );
 
 		return ( $page && 'page' === $page->post_type ) ? $page : null;
-	}
-
-	/**
-	 * Clear the done-flag so the next admin_init re-reconciles the pages. Called by
-	 * the Modules mode-toggle handler after the mode changes.
-	 */
-	public static function reset(): void {
-		delete_option( self::STATUS_OPTION );
-	}
-
-	public static function maybe_render_notice(): void {
-		if ( ! current_user_can( 'manage_options' ) ) {
-			return;
-		}
-		$swapped = get_transient( 'lafka_block_cart_shim_notice' );
-		if ( ! is_array( $swapped ) || empty( $swapped ) ) {
-			return;
-		}
-		$pages   = implode( ' & ', $swapped );
-		$classic = self::configured_classic();
-
-		echo '<div class="notice notice-info is-dismissible">';
-		echo '<p><strong>Lafka:</strong> ';
-		if ( $classic ) {
-			printf(
-				/* translators: %s: list of swapped page labels (e.g. "Cart & Checkout"). */
-				esc_html__( 'Updated %s page(s) to the classic WooCommerce shortcodes for the classic checkout experience.', 'lafka-plugin' ),
-				esc_html( $pages )
-			);
-		} else {
-			printf(
-				/* translators: %s: list of restored page labels (e.g. "Cart & Checkout"). */
-				esc_html__( 'Restored the block %s page(s) for the block checkout experience.', 'lafka-plugin' ),
-				esc_html( $pages )
-			);
-		}
-		echo '</p></div>';
-		delete_transient( 'lafka_block_cart_shim_notice' );
 	}
 }
 
