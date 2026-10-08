@@ -11,26 +11,16 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 if ( ! function_exists( 'lafka_schema_yields_to_seo_plugin' ) ) {
 	/**
-	 * Whether Lafka stays out of structured data because a dedicated SEO
-	 * plugin (Yoast, Rank Math, SEOPress, AIOSEO) owns it. Operators can force
-	 * Lafka's graph regardless with the `lafka_schema_force_emit` filter.
+	 * Whether a dedicated SEO plugin (Yoast, Rank Math, SEOPress, AIOSEO) owns
+	 * the WebSite, breadcrumb and product structured data; Lafka then emits
+	 * only its restaurant, menu and FAQ nodes. Operators can force Lafka's
+	 * full graph with the `lafka_schema_force_emit` filter.
 	 *
 	 * @return bool
 	 */
 	function lafka_schema_yields_to_seo_plugin() {
-		// Detection lives in lafka_seo_plugin_active() (incl/seo/lafka-seo-plugin-detect.php), shared
-		// with the OpenGraph and meta-description emitters; the inline fallback
-		// keeps this module usable when loaded without the main plugin file.
-		$seo_plugin_active = function_exists( 'lafka_seo_plugin_active' )
-			? lafka_seo_plugin_active()
-			: (
-				defined( 'WPSEO_VERSION' )                      // Yoast SEO.
-				|| class_exists( 'RankMath' )                   // Rank Math.
-				|| defined( 'SEOPRESS_VERSION' )                // SEOPress.
-				|| class_exists( '\\AIOSEO\\Plugin\\AIOSEO' )   // All in One SEO.
-			);
-
-		return $seo_plugin_active && ! (bool) apply_filters( 'lafka_schema_force_emit', false );
+		// One detector, shared with the OpenGraph and meta-description emitters.
+		return lafka_seo_plugin_active() && ! (bool) apply_filters( 'lafka_schema_force_emit', false );
 	}
 }
 

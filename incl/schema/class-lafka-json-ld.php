@@ -66,12 +66,10 @@ if ( ! class_exists( 'Lafka_JSON_LD' ) ) {
 				return;
 			}
 
-			// Defer to SEO ecosystem plugins when active: they emit their own
-			// Organization/LocalBusiness graph, and two top-level entities draw
-			// Search Console warnings.
-			if ( lafka_schema_yields_to_seo_plugin() ) {
-				return;
-			}
+			// With an SEO plugin (Yoast, Rank Math, SEOPress, AIOSEO) active, it
+			// owns the WebSite, breadcrumb and product nodes; Lafka still adds what
+			// those plugins do not know: the restaurant, its menu and its FAQs.
+			$seo_plugin = lafka_schema_yields_to_seo_plugin();
 
 			$graph = array();
 
@@ -81,7 +79,9 @@ if ( ! class_exists( 'Lafka_JSON_LD' ) ) {
 			// are missing, otherwise an unconfigured install would advertise empty
 			// strings to Google and degrade the knowledge-panel signal.
 			// WebSite entity (site-wide) — canonical site name + sitelinks search.
-			$graph[] = lafka_schema_website();
+			if ( ! $seo_plugin ) {
+				$graph[] = lafka_schema_website();
+			}
 
 			// Shared predicate (defined in lafka-schema-website.php) — also gates
 			// WebSite.publisher's link to #restaurant, so the publisher reference
@@ -92,7 +92,7 @@ if ( ! class_exists( 'Lafka_JSON_LD' ) ) {
 			}
 
 			// Single product page.
-			if ( function_exists( 'is_product' ) && is_product() ) {
+			if ( ! $seo_plugin && function_exists( 'is_product' ) && is_product() ) {
 				$graph[] = lafka_schema_product();
 			}
 
@@ -102,7 +102,7 @@ if ( ! class_exists( 'Lafka_JSON_LD' ) ) {
 			}
 
 			// BreadcrumbList — every page except the homepage.
-			if ( ! is_front_page() ) {
+			if ( ! $seo_plugin && ! is_front_page() ) {
 				$graph[] = lafka_schema_breadcrumb();
 			}
 

@@ -83,6 +83,33 @@ function lafka_schema_restaurant(): ?array {
 
 	$schema['acceptsReservations'] = false;
 
+	// How to order online: the menu, for each way the store hands food over.
+	// Search engines and AI assistants read this as "order here"; Google no
+	// longer runs ordering inside Search, so the link out is the real path.
+	if ( ! empty( $info['menu_url'] ) ) {
+		$methods = array();
+		$modes   = class_exists( 'Lafka_Fulfilment' ) ? (array) Lafka_Fulfilment::modes() : array( 'pickup', 'delivery' );
+		if ( in_array( 'pickup', $modes, true ) ) {
+			$methods[] = 'http://purl.org/goodrelations/v1#DeliveryModePickUp';
+		}
+		if ( in_array( 'delivery', $modes, true ) ) {
+			$methods[] = 'http://purl.org/goodrelations/v1#DeliveryModeOwnFleet';
+		}
+		$schema['potentialAction'] = array(
+			'@type'          => 'OrderAction',
+			'target'         => array(
+				'@type'          => 'EntryPoint',
+				'urlTemplate'    => (string) $info['menu_url'],
+				'inLanguage'     => get_bloginfo( 'language' ),
+				'actionPlatform' => array(
+					'http://schema.org/DesktopWebPlatform',
+					'http://schema.org/MobileWebPlatform',
+				),
+			),
+			'deliveryMethod' => $methods,
+		);
+	}
+
 	// Menu — a Menu reference with the same @id the full Menu node carries
 	// (lafka-schema-menu.php), so on the menu page / category pages the two
 	// nodes join into one graph and elsewhere the reference still names the
