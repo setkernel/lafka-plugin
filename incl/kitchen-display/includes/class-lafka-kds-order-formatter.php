@@ -98,8 +98,10 @@ class Lafka_KDS_Order_Formatter {
 		$meta = $item->get_formatted_meta_data( '_', true );
 		foreach ( $meta as $entry ) {
 			$out[] = array(
-				'key'   => wp_strip_all_tags( $entry->display_key ),
-				'value' => wp_strip_all_tags( $entry->display_value ),
+				// Plain text for the screen (it inserts text, not HTML), so
+				// entities such as &#036; are decoded rather than shown literally.
+				'key'   => html_entity_decode( wp_strip_all_tags( $entry->display_key ), ENT_QUOTES | ENT_HTML5, 'UTF-8' ),
+				'value' => html_entity_decode( wp_strip_all_tags( $entry->display_value ), ENT_QUOTES | ENT_HTML5, 'UTF-8' ),
 			);
 		}
 		return $out;
