@@ -47,18 +47,21 @@ $lafka_seed_demo_open_schedule_json = wp_json_encode( $lafka_seed_demo_open_sche
 return array(
 
 	// ── Business info (fake but schema-valid), written to lafka_business_* ──
+	// The demo sits in Halifax, Nova Scotia (a fake street, a real city), so
+	// its address, coordinates, delivery zone, WooCommerce base region and the
+	// maps' default view (Canada) all agree.
 	'business'     => array(
 		'lafka_business_name'            => 'Demo Restaurant',
 		'lafka_business_street'          => '123 Example St',
-		'lafka_business_city'            => 'Example City',
-		'lafka_business_region'          => 'CA',
-		'lafka_business_postal'          => '12345',
-		'lafka_business_country'         => 'US',
+		'lafka_business_city'            => 'Halifax',
+		'lafka_business_region'          => 'NS',
+		'lafka_business_postal'          => 'B3H 0A1',
+		'lafka_business_country'         => 'CA',
 		'lafka_business_phone_e164'      => '+15555550100',
 		'lafka_business_phone_display'   => '+1 (555) 555-0100',
 		'lafka_business_email'           => 'demo@example.com',
-		'lafka_business_geo_lat'         => '44.65',
-		'lafka_business_geo_lng'         => '-63.57',
+		'lafka_business_geo_lat'         => '44.6470',
+		'lafka_business_geo_lng'         => '-63.5755',
 		'lafka_business_price_range'     => '$$',
 		'lafka_business_business_type'   => 'Restaurant, LocalBusiness, FoodEstablishment',
 		'lafka_business_cuisines'        => 'Pizza, Salads, Fast Food',
@@ -87,9 +90,18 @@ return array(
 		'shipping_areas' => 'enabled',
 	),
 
-	// ── Plain WooCommerce-style options the demo switches on ──
+	// ── Plain WooCommerce-style options the demo switches on: tips, and the
+	//    WooCommerce store address + base region + currency matching the
+	//    business info (checkout defaults the customer to Nova Scotia, where
+	//    the delivery zone is). ──
 	'options'      => array(
-		'lafka_tips_enabled' => 'yes',
+		'lafka_tips_enabled'          => 'yes',
+		'woocommerce_store_address'   => '123 Example St',
+		'woocommerce_store_address_2' => '',
+		'woocommerce_store_city'      => 'Halifax',
+		'woocommerce_store_postcode'  => 'B3H 0A1',
+		'woocommerce_default_country' => 'CA:NS',
+		'woocommerce_currency'        => 'CAD',
 	),
 
 	// ── Product categories (neutral names). `order` is WooCommerce's category
@@ -466,10 +478,10 @@ return array(
 		'name' => 'Main Branch',
 		'meta' => array(
 			'lafka_branch_order_type'       => 'delivery',
-			'lafka_branch_address'          => '123 Example St, Example City',
+			'lafka_branch_address'          => '123 Example St, Halifax, NS',
 			// Geocoded at the delivery area's centre: only geocoded branches are
 			// selectable (Lafka_Shipping_Areas::get_all_legit_branch_locations).
-			'lafka_branch_address_geocoded' => '{"lat":44.65,"lng":-63.57}',
+			'lafka_branch_address_geocoded' => '{"lat":44.647,"lng":-63.5755}',
 			'lafka_branch_timezone'         => 'default',
 		),
 	),
@@ -515,7 +527,7 @@ return array(
 		'zone_name' => 'Demo delivery area',
 		'locations' => array(
 			array(
-				'code' => 'US:CA',
+				'code' => 'CA:NS',
 				'type' => 'state',
 			),
 		),
@@ -529,12 +541,13 @@ return array(
 		),
 	),
 
-	// ── One shipping-area CPT with a square polygon around the fake centre ──
+	// ── One shipping-area CPT: a square polygon around the demo restaurant
+	//    (central Halifax, about 11 km across) ──
 	'area'         => array(
 		'slug'       => 'demo-delivery-zone',
 		'title'      => 'Demo Delivery Zone',
-		'lat'        => '44.65',
-		'lng'        => '-63.57',
+		'lat'        => '44.6470',
+		'lng'        => '-63.5755',
 		'half_delta' => '0.05',
 	),
 

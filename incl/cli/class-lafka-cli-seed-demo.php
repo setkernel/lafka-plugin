@@ -22,7 +22,9 @@
  *   - fake-but-schema-valid business info written through the same lafka_business_*
  *     options the WooCommerce → Restaurant tab writes,
  *   - an always-open 7-day order-hours schedule,
- *   - one branch term + one shipping-area polygon around the fake centre,
+ *   - one branch term + one shipping-area polygon around the demo restaurant
+ *     (Halifax, Nova Scotia — address, coordinates, zone and WooCommerce base
+ *     region agree),
  *   - WC pages (shop/cart/checkout/my-account) + a /menu/ page,
  *   - order_hours + shipping_areas feature flags enabled so the gates fire.
  *
@@ -364,9 +366,7 @@ if ( ! class_exists( 'Lafka_CLI_Seed_Demo' ) ) {
 			if ( ! $zone ) {
 				$zone = new WC_Shipping_Zone();
 				$zone->set_zone_name( $shipping['zone_name'] );
-				foreach ( $shipping['locations'] as $location ) {
-					$zone->add_location( $location['code'], $location['type'] );
-				}
+				self::set_zone_locations( $zone, $shipping['locations'] );
 				$zone->save();
 
 				$instance_id = $zone->add_shipping_method( 'flat_rate' );
@@ -382,6 +382,10 @@ if ( ! class_exists( 'Lafka_CLI_Seed_Demo' ) ) {
 					);
 				}
 				$manifest = self::record( $manifest, 'shipping_zones', 'demo', (int) $zone->get_id() );
+			} else {
+				// A re-seed moves an existing demo zone to the fixture's region.
+				self::set_zone_locations( $zone, $shipping['locations'] );
+				$zone->save();
 			}
 
 			$business = $fixtures['business'];
@@ -412,6 +416,20 @@ if ( ! class_exists( 'Lafka_CLI_Seed_Demo' ) ) {
 				)
 			);
 			WP_CLI::log( 'Seeded shipping: Delivery (flat rate) in the demo region and block-checkout Pickup.' );
+		}
+
+		/**
+		 * Replace a zone's locations with the fixture's.
+		 *
+		 * @param WC_Shipping_Zone                              $zone      Zone.
+		 * @param array<int, array{code: string, type: string}> $locations Locations.
+		 * @return void
+		 */
+		private static function set_zone_locations( $zone, array $locations ): void {
+			$zone->clear_locations();
+			foreach ( $locations as $location ) {
+				$zone->add_location( $location['code'], $location['type'] );
+			}
 		}
 
 		/**
@@ -763,7 +781,7 @@ if ( ! class_exists( 'Lafka_CLI_Seed_Demo' ) ) {
 				update_post_meta( $post_id, '_lafka_shipping_area_polygon_coordinates', wp_slash( $poly ) );
 				$manifest = self::record( $manifest, 'areas', $area['slug'], $post_id );
 			}
-			WP_CLI::log( 'Seeded delivery-zone polygon around the fake centre.' );
+			WP_CLI::log( 'Seeded delivery-zone polygon around the demo restaurant.' );
 		}
 
 		/**
