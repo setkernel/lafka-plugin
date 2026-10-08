@@ -20,9 +20,7 @@ if ( ! function_exists( 'lafka_pdp_render_checkout_email_capture' ) ) {
 		// sequence is deferred — v1 just collects." Operators on a different
 		// discount tier (or no discount at all) ended up promising 10% they
 		// never delivered.
-		$headline = function_exists( 'get_theme_mod' )
-			? trim( (string) get_theme_mod( 'lafka_pdp_winback_offer_text', '' ) )
-			: '';
+		$headline = trim( (string) get_theme_mod( 'lafka_pdp_winback_offer_text', '' ) );
 		if ( '' === $headline ) {
 			return;
 		}

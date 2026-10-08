@@ -66,55 +66,49 @@ require_once __DIR__ . '/display/class-lafka-engine-display.php';
 // Cache invalidation: any save/trash/delete of an addon CPT post invalidates
 // both the resolver's per-request VO cache and the helper's legacy-shape
 // cache so admin pages reading on the same request reflect current data.
-if ( function_exists( 'add_action' ) ) {
-	$lafka_addons_clear_caches = static function () {
-		Lafka_Engine_Resolver::clear_cache();
-		Lafka_Engine_Helper::clear_cache();
-	};
-	add_action( 'save_post_lafka_glb_addon', $lafka_addons_clear_caches );
-	add_action(
-		'trashed_post',
-		static function ( $post_id ) use ( $lafka_addons_clear_caches ) {
-			if ( 'lafka_glb_addon' === get_post_type( $post_id ) ) {
-				$lafka_addons_clear_caches();
-			}
+$lafka_addons_clear_caches = static function () {
+	Lafka_Engine_Resolver::clear_cache();
+	Lafka_Engine_Helper::clear_cache();
+};
+add_action( 'save_post_lafka_glb_addon', $lafka_addons_clear_caches );
+add_action(
+	'trashed_post',
+	static function ( $post_id ) use ( $lafka_addons_clear_caches ) {
+		if ( 'lafka_glb_addon' === get_post_type( $post_id ) ) {
+			$lafka_addons_clear_caches();
 		}
-	);
-	add_action(
-		'deleted_post',
-		static function ( $post_id ) use ( $lafka_addons_clear_caches ) {
-			if ( 'lafka_glb_addon' === get_post_type( $post_id ) ) {
-				$lafka_addons_clear_caches();
-			}
+	}
+);
+add_action(
+	'deleted_post',
+	static function ( $post_id ) use ( $lafka_addons_clear_caches ) {
+		if ( 'lafka_glb_addon' === get_post_type( $post_id ) ) {
+			$lafka_addons_clear_caches();
 		}
-	);
-}
+	}
+);
 
 // Privacy exporter/eraser registration. The filters only fire inside admin
 // (Tools → Export/Erase Personal Data), so we register on admin_init.
-if ( function_exists( 'add_action' ) ) {
-	add_action(
-		'admin_init',
-		static function () {
-			( new Lafka_Engine_Privacy() )->register();
-		}
-	);
-}
+add_action(
+	'admin_init',
+	static function () {
+		( new Lafka_Engine_Privacy() )->register();
+	}
+);
 
 // REST controller is loaded lazily on rest_api_init because it extends
 // WP_REST_Controller, which is only defined when WP's REST stack is loaded.
 // Loading the file at bootstrap time would fatal under CLI.
-if ( function_exists( 'add_action' ) ) {
-	add_action(
-		'rest_api_init',
-		static function () {
-			if ( class_exists( 'WP_REST_Controller' ) ) {
-				require_once __DIR__ . '/api/class-lafka-addons-rest-groups-controller.php';
-				( new Lafka_Addons_REST_Groups_Controller() )->register_routes();
-			}
+add_action(
+	'rest_api_init',
+	static function () {
+		if ( class_exists( 'WP_REST_Controller' ) ) {
+			require_once __DIR__ . '/api/class-lafka-addons-rest-groups-controller.php';
+			( new Lafka_Addons_REST_Groups_Controller() )->register_routes();
 		}
-	);
-}
+	}
+);
 
 // WP-CLI command surface — file no-ops when WP_CLI isn't defined.
 if ( defined( 'WP_CLI' ) && WP_CLI ) {

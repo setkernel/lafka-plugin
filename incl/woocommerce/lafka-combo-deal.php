@@ -29,7 +29,7 @@ if ( ! function_exists( 'lafka_combo_deal_term_id' ) ) {
 		if ( is_numeric( $value ) ) {
 			return (int) $value;
 		}
-		if ( is_string( $value ) && '' !== $value && function_exists( 'get_term_by' ) ) {
+		if ( is_string( $value ) && '' !== $value ) {
 			$term = get_term_by( 'slug', $value, 'product_cat' );
 			if ( $term && ! is_wp_error( $term ) ) {
 				return (int) $term->term_id;
@@ -45,8 +45,8 @@ if ( ! function_exists( 'lafka_combo_deal_config' ) ) {
 	 */
 	function lafka_combo_deal_config(): array {
 		$get    = static function ( $key, $default_value = '' ) {
-			$v = function_exists( 'get_option' ) ? get_option( $key, '' ) : '';
-			if ( ( '' === $v || false === $v ) && function_exists( 'get_theme_mod' ) ) {
+			$v = get_option( $key, '' );
+			if ( '' === $v || false === $v ) {
 				$v = get_theme_mod( $key, $default_value );
 			}
 			return $v;

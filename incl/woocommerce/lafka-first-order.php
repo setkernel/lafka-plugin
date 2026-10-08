@@ -27,11 +27,8 @@ if ( ! function_exists( 'lafka_first_order_discount_percent' ) ) {
 	 * @return float 0–100.
 	 */
 	function lafka_first_order_discount_percent(): float {
-		$percent = 0.0;
-		if ( function_exists( 'get_option' ) ) {
-			$percent = (float) get_option( 'lafka_first_order_discount_percent', 0 );
-		}
-		if ( $percent <= 0 && function_exists( 'get_theme_mod' ) ) {
+		$percent = (float) get_option( 'lafka_first_order_discount_percent', 0 );
+		if ( $percent <= 0 ) {
 			$percent = (float) get_theme_mod( 'lafka_first_order_discount_percent', 0 );
 		}
 		$percent = (float) apply_filters( 'lafka_first_order_discount_percent', $percent );
@@ -48,7 +45,7 @@ if ( ! function_exists( 'lafka_is_first_order_customer' ) ) {
 	 */
 	function lafka_is_first_order_customer(): bool {
 		$eligible = false;
-		if ( function_exists( 'is_user_logged_in' ) && is_user_logged_in() && function_exists( 'wc_get_customer_order_count' ) ) {
+		if ( is_user_logged_in() && function_exists( 'wc_get_customer_order_count' ) ) {
 			$eligible = 0 === (int) wc_get_customer_order_count( get_current_user_id() );
 		}
 		return (bool) apply_filters( 'lafka_is_first_order_customer', $eligible );

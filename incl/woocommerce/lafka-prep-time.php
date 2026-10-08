@@ -16,9 +16,6 @@ if ( ! function_exists( 'lafka_pdp_get_prep_time' ) ) {
 	function lafka_pdp_get_prep_time( int $product_id ): int {
 		$default = (int) get_theme_mod( 'lafka_pdp_prep_time_default', 25 );
 
-		if ( ! function_exists( 'wp_get_post_terms' ) ) {
-			return $default;
-		}
 		$terms = wp_get_post_terms( $product_id, 'product_cat', array( 'fields' => 'slugs' ) );
 		if ( is_wp_error( $terms ) || empty( $terms ) ) {
 			return $default;

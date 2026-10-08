@@ -135,16 +135,14 @@ if ( ! function_exists( 'lafka_cart_drawer_upsell_deal_category_ids' ) ) {
 	 */
 	function lafka_cart_drawer_upsell_deal_category_ids(): array {
 		$ids = array();
-		$mod = function_exists( 'get_theme_mod' ) ? (int) get_theme_mod( 'lafka_counter_deals_cat', 0 ) : 0;
+		$mod = (int) get_theme_mod( 'lafka_counter_deals_cat', 0 );
 		if ( $mod > 0 ) {
 			$ids[] = $mod;
 		}
-		if ( function_exists( 'get_term_by' ) ) {
-			foreach ( array( 'deals', 'combos', 'combo', 'specials' ) as $slug ) {
-				$term = get_term_by( 'slug', $slug, 'product_cat' );
-				if ( is_object( $term ) && ! empty( $term->term_id ) ) {
-					$ids[] = (int) $term->term_id;
-				}
+		foreach ( array( 'deals', 'combos', 'combo', 'specials' ) as $slug ) {
+			$term = get_term_by( 'slug', $slug, 'product_cat' );
+			if ( is_object( $term ) && ! empty( $term->term_id ) ) {
+				$ids[] = (int) $term->term_id;
 			}
 		}
 

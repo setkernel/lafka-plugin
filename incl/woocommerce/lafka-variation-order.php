@@ -37,7 +37,7 @@ if ( ! function_exists( 'lafka_variation_price_sort_enabled' ) ) {
 	 * @return bool
 	 */
 	function lafka_variation_price_sort_enabled( $product, string $attribute ): bool {
-		$on = function_exists( 'get_theme_mod' ) ? 'no' !== get_theme_mod( 'lafka_sort_variation_options', 'yes' ) : true;
+		$on = 'no' !== get_theme_mod( 'lafka_sort_variation_options', 'yes' );
 
 		/**
 		 * Filter whether variation options without an explicit order are

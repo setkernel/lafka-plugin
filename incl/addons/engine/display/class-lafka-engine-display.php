@@ -45,7 +45,7 @@ class Lafka_Engine_Display {
 	 * @return bool
 	 */
 	public static function group_toggle_enabled( array $addon ): bool {
-		$supported = function_exists( 'current_theme_supports' ) && current_theme_supports( 'lafka-addon-group-toggle' );
+		$supported = current_theme_supports( 'lafka-addon-group-toggle' );
 		return (bool) apply_filters( 'lafka_addon_group_toggle', $supported, $addon );
 	}
 

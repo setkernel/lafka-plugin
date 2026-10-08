@@ -495,7 +495,7 @@ if ( ! class_exists( 'Lafka_Site_Health_Seo' ) ) {
 		}
 	}
 
-	if ( function_exists( 'is_admin' ) && is_admin() ) {
+	if ( is_admin() ) {
 		Lafka_Site_Health_Seo::init();
 	}
 }

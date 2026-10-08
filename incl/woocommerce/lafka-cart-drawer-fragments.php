@@ -145,7 +145,7 @@ if ( ! function_exists( 'lafka_cart_drawer_stepper_enabled' ) ) {
 	 * @return bool
 	 */
 	function lafka_cart_drawer_stepper_enabled(): bool {
-		$enabled = function_exists( 'current_theme_supports' ) && (bool) current_theme_supports( 'lafka-drawer-stepper' );
+		$enabled = (bool) current_theme_supports( 'lafka-drawer-stepper' );
 
 		/**
 		 * Filter whether cart-drawer rows carry the quantity stepper.
@@ -275,7 +275,7 @@ if ( ! function_exists( 'lafka_cart_drawer_render_total' ) ) {
 		// rendered) only when the plugin isn't loaded.
 		$threshold = function_exists( 'lafka_get_free_delivery_threshold' )
 			? lafka_get_free_delivery_threshold()
-			: ( function_exists( 'get_theme_mod' ) ? (float) get_theme_mod( 'lafka_pdp_free_delivery_threshold', 0 ) : 0.0 );
+			: (float) get_theme_mod( 'lafka_pdp_free_delivery_threshold', 0 );
 		// Back-compat (deprecated): re-apply the legacy
 		// 'lafka_pdp_free_delivery_threshold' filter on top of the resolved value
 		// so existing child overrides keyed to that name keep working until they

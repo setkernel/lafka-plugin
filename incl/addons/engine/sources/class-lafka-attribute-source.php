@@ -26,7 +26,7 @@ class Lafka_Attribute_Source extends Lafka_Abstract_Options_Source {
 
 	public function get_options( Lafka_Addon_Group $group ): array {
 		$taxonomy = $group->options_source_attribute;
-		if ( '' === $taxonomy || ! function_exists( 'taxonomy_exists' ) || ! taxonomy_exists( $taxonomy ) ) {
+		if ( '' === $taxonomy || ! taxonomy_exists( $taxonomy ) ) {
 			return $group->options;
 		}
 		$terms = $this->fetch_terms( $taxonomy );
@@ -59,16 +59,13 @@ class Lafka_Attribute_Source extends Lafka_Abstract_Options_Source {
 	 * @return object[]
 	 */
 	private function fetch_terms( string $taxonomy ): array {
-		if ( ! function_exists( 'get_terms' ) ) {
-			return array();
-		}
 		$terms = get_terms(
 			array(
 				'taxonomy'   => $taxonomy,
 				'hide_empty' => false,
 			)
 		);
-		if ( function_exists( 'is_wp_error' ) && is_wp_error( $terms ) ) {
+		if ( is_wp_error( $terms ) ) {
 			return array();
 		}
 		return is_array( $terms ) ? $terms : array();

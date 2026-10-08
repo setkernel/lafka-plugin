@@ -122,11 +122,11 @@ if ( ! class_exists( 'Lafka_Payment_Labels' ) ) {
 			if ( ! in_array( $gateway_id, $gateways, true ) ) {
 				return '';
 			}
-			if ( function_exists( 'get_theme_mod' ) && ! get_theme_mod( self::MOD_ENABLED, true ) ) {
+			if ( ! get_theme_mod( self::MOD_ENABLED, true ) ) {
 				return '';
 			}
 			// Admin screens (gateway settings, order edit) show the configured title.
-			if ( function_exists( 'is_admin' ) && is_admin() && ! wp_doing_ajax() ) {
+			if ( is_admin() && ! wp_doing_ajax() ) {
 				return '';
 			}
 
@@ -144,7 +144,7 @@ if ( ! class_exists( 'Lafka_Payment_Labels' ) ) {
 		 * @return string
 		 */
 		private static function string( string $mod, string $fallback ): string {
-			$custom = function_exists( 'get_theme_mod' ) ? trim( (string) get_theme_mod( $mod, '' ) ) : '';
+			$custom = trim( (string) get_theme_mod( $mod, '' ) );
 
 			return '' !== $custom ? $custom : $fallback;
 		}

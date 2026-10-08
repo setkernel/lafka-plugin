@@ -229,9 +229,6 @@ if ( ! function_exists( 'lafka_product_serves_register_rest' ) ) {
 	 * @return void
 	 */
 	function lafka_product_serves_register_rest() {
-		if ( ! function_exists( 'register_rest_field' ) ) {
-			return;
-		}
 		register_rest_field(
 			'product',
 			'lafka_serves',

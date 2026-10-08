@@ -226,9 +226,6 @@ if ( ! class_exists( 'Lafka_Checkout_Fields' ) ) {
 		 * @return array<int,string>
 		 */
 		public static function get_branch_terms(): array {
-			if ( ! function_exists( 'get_terms' ) ) {
-				return array();
-			}
 			$terms = get_terms(
 				array(
 					'taxonomy'   => self::BRANCH_TAXONOMY,

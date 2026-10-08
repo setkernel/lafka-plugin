@@ -27,17 +27,14 @@ if ( ! function_exists( 'lafka_get_free_delivery_threshold' ) ) {
 	 * @return float
 	 */
 	function lafka_get_free_delivery_threshold(): float {
-		$value = 0.0;
 		// WooCommerce → Settings → Restaurant → Promotions (operator UI).
-		if ( function_exists( 'get_option' ) ) {
-			$value = (float) get_option( 'lafka_free_delivery_threshold', 0 );
-		}
+		$value = (float) get_option( 'lafka_free_delivery_threshold', 0 );
 		// Optional: the promotions admin knob, only when that module is loaded.
 		if ( $value <= 0 && class_exists( 'Lafka_Promotions' ) ) {
 			$value = (float) Lafka_Promotions::knob( 'free_delivery_threshold' );
 		}
 		// Customizer (the practical, always-available storefront setting).
-		if ( $value <= 0 && function_exists( 'get_theme_mod' ) ) {
+		if ( $value <= 0 ) {
 			$value = (float) get_theme_mod( 'lafka_pdp_free_delivery_threshold', 0 );
 			if ( $value <= 0 ) {
 				$value = (float) get_theme_mod( 'lafka_announce_bar_delivery_threshold', 0 );

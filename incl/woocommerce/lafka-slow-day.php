@@ -19,11 +19,8 @@ defined( 'ABSPATH' ) || exit;
 if ( ! function_exists( 'lafka_slow_day_percent' ) ) {
 	/** @return float 0–100 (0 = off). */
 	function lafka_slow_day_percent(): float {
-		$percent = 0.0;
-		if ( function_exists( 'get_option' ) ) {
-			$percent = (float) get_option( 'lafka_slow_day_discount_percent', 0 );
-		}
-		if ( $percent <= 0 && function_exists( 'get_theme_mod' ) ) {
+		$percent = (float) get_option( 'lafka_slow_day_discount_percent', 0 );
+		if ( $percent <= 0 ) {
 			$percent = (float) get_theme_mod( 'lafka_slow_day_discount_percent', 0 );
 		}
 		$percent = (float) apply_filters( 'lafka_slow_day_discount_percent', $percent );
@@ -60,11 +57,8 @@ if ( ! function_exists( 'lafka_slow_day_normalize_days' ) ) {
 if ( ! function_exists( 'lafka_slow_day_days' ) ) {
 	/** @return int[] Configured slow weekdays (0=Sun..6=Sat). */
 	function lafka_slow_day_days(): array {
-		$raw = '';
-		if ( function_exists( 'get_option' ) ) {
-			$raw = get_option( 'lafka_slow_day_days', '' );
-		}
-		if ( ( '' === $raw || array() === $raw ) && function_exists( 'get_theme_mod' ) ) {
+		$raw = get_option( 'lafka_slow_day_days', '' );
+		if ( '' === $raw || array() === $raw ) {
 			$raw = get_theme_mod( 'lafka_slow_day_days', '' );
 		}
 		$raw = apply_filters( 'lafka_slow_day_days', $raw );
@@ -88,7 +82,7 @@ if ( ! function_exists( 'lafka_slow_day_is_active_dow' ) ) {
 if ( ! function_exists( 'lafka_is_slow_day' ) ) {
 	/** @return bool Is today (site timezone) a configured slow day? */
 	function lafka_is_slow_day(): bool {
-		$dow = function_exists( 'current_time' ) ? (int) current_time( 'w' ) : -1;
+		$dow = (int) current_time( 'w' );
 		return lafka_slow_day_is_active_dow( $dow, lafka_slow_day_days() );
 	}
 }

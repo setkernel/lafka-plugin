@@ -166,7 +166,7 @@ if ( ! class_exists( 'Lafka_Checkout_Mode' ) ) {
 				? (int) wc_get_page_id( 'checkout' )
 				: (int) get_option( 'woocommerce_checkout_page_id', 0 );
 			$mode    = '';
-			if ( $page_id > 0 && function_exists( 'get_post' ) ) {
+			if ( $page_id > 0 ) {
 				$post = get_post( $page_id );
 				if ( is_object( $post ) && isset( $post->post_content ) ) {
 					$mode = self::mode_for_content( (string) $post->post_content );

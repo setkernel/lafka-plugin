@@ -82,9 +82,7 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/class-lafka-module-registry.php
  */
 require_once plugin_dir_path( __FILE__ ) . 'incl/checkout/class-lafka-checkout-mode.php';
 Lafka_Checkout_Mode::init();
-if ( function_exists( 'register_activation_hook' ) ) {
-	register_activation_hook( __FILE__, array( 'Lafka_Checkout_Mode', 'on_activation' ) );
-}
+register_activation_hook( __FILE__, array( 'Lafka_Checkout_Mode', 'on_activation' ) );
 
 /**
  * Observability (GX1 · Diagnostics): Lafka_Log facade on wc_get_logger() with
@@ -96,12 +94,8 @@ if ( function_exists( 'register_activation_hook' ) ) {
  * module (default ON). Required early so every module below can log.
  */
 require_once plugin_dir_path( __FILE__ ) . 'incl/observability/lafka-observability.php';
-if ( function_exists( 'register_activation_hook' ) ) {
-	register_activation_hook( __FILE__, array( 'Lafka_Incidents', 'install' ) );
-}
-if ( function_exists( 'register_deactivation_hook' ) ) {
-	register_deactivation_hook( __FILE__, array( 'Lafka_Diagnostics', 'unschedule' ) );
-}
+register_activation_hook( __FILE__, array( 'Lafka_Incidents', 'install' ) );
+register_deactivation_hook( __FILE__, array( 'Lafka_Diagnostics', 'unschedule' ) );
 
 /**
  * Plugin shim for lafka_get_option().
@@ -475,29 +469,25 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/customizer/class-lafka-customiz
  *
  * The table itself is dropped only on plugin uninstall (uninstall.php).
  */
-if ( function_exists( 'register_activation_hook' ) ) {
-	register_activation_hook(
-		__FILE__,
-		static function () {
-			if ( function_exists( 'lafka_ac_install_table' ) ) {
-				lafka_ac_install_table();
-			}
-			if ( function_exists( 'lafka_ac_schedule_events' ) ) {
-				lafka_ac_schedule_events();
-			}
+register_activation_hook(
+	__FILE__,
+	static function () {
+		if ( function_exists( 'lafka_ac_install_table' ) ) {
+			lafka_ac_install_table();
 		}
-	);
-}
-if ( function_exists( 'register_deactivation_hook' ) ) {
-	register_deactivation_hook(
-		__FILE__,
-		static function () {
-			if ( function_exists( 'lafka_ac_unschedule_events' ) ) {
-				lafka_ac_unschedule_events();
-			}
+		if ( function_exists( 'lafka_ac_schedule_events' ) ) {
+			lafka_ac_schedule_events();
 		}
-	);
-}
+	}
+);
+register_deactivation_hook(
+	__FILE__,
+	static function () {
+		if ( function_exists( 'lafka_ac_unschedule_events' ) ) {
+			lafka_ac_unschedule_events();
+		}
+	}
+);
 
 /**
  * v9.28.0 (Phase 3D — Analytics + SEO + Conversion plan):
@@ -587,29 +577,25 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/conversion/class-lafka-conversi
  *   on deactivate → unschedule cron events (table is kept so flip-off/on
  *                   doesn't lose subscribers; uninstall.php drops the table)
  */
-if ( function_exists( 'register_activation_hook' ) ) {
-	register_activation_hook(
-		__FILE__,
-		static function () {
-			if ( function_exists( 'lafka_push_install_table' ) ) {
-				lafka_push_install_table();
-			}
-			if ( function_exists( 'lafka_push_reorder_schedule_event' ) ) {
-				lafka_push_reorder_schedule_event();
-			}
+register_activation_hook(
+	__FILE__,
+	static function () {
+		if ( function_exists( 'lafka_push_install_table' ) ) {
+			lafka_push_install_table();
 		}
-	);
-}
-if ( function_exists( 'register_deactivation_hook' ) ) {
-	register_deactivation_hook(
-		__FILE__,
-		static function () {
-			if ( function_exists( 'lafka_push_reorder_unschedule_event' ) ) {
-				lafka_push_reorder_unschedule_event();
-			}
+		if ( function_exists( 'lafka_push_reorder_schedule_event' ) ) {
+			lafka_push_reorder_schedule_event();
 		}
-	);
-}
+	}
+);
+register_deactivation_hook(
+	__FILE__,
+	static function () {
+		if ( function_exists( 'lafka_push_reorder_unschedule_event' ) ) {
+			lafka_push_reorder_unschedule_event();
+		}
+	}
+);
 
 /**
  * Seed the framework's default option values on activation.
@@ -631,20 +617,18 @@ if ( function_exists( 'register_deactivation_hook' ) ) {
  * false. Activation runs in an admin request after `init` has fired, so calling
  * lafka_get_default_values() here is safe (no "_load_textdomain_just_in_time").
  */
-if ( function_exists( 'register_activation_hook' ) ) {
-	register_activation_hook(
-		__FILE__,
-		static function () {
-			if ( get_option( 'lafka' ) || ! function_exists( 'lafka_get_default_values' ) ) {
-				return;
-			}
-			$defaults = lafka_get_default_values();
-			if ( is_array( $defaults ) && ! empty( $defaults ) ) {
-				add_option( 'lafka', $defaults );
-			}
+register_activation_hook(
+	__FILE__,
+	static function () {
+		if ( get_option( 'lafka' ) || ! function_exists( 'lafka_get_default_values' ) ) {
+			return;
 		}
-	);
-}
+		$defaults = lafka_get_default_values();
+		if ( is_array( $defaults ) && ! empty( $defaults ) ) {
+			add_option( 'lafka', $defaults );
+		}
+	}
+);
 
 /**
  * P6-A11Y-9 (W2-T7): WP-CLI command to backfill missing/garbage image alt text.

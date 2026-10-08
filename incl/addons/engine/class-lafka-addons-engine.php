@@ -55,9 +55,7 @@ class Lafka_Addons_Engine {
 			// No built-in migrations as of v8.13.0 — framework is here for
 			// when future schema changes need it. Third parties can register
 			// migrations via the filter below.
-			if ( function_exists( 'apply_filters' ) ) {
-				$upgrader = apply_filters( 'lafka_addons_register_migration', $upgrader );
-			}
+			$upgrader       = apply_filters( 'lafka_addons_register_migration', $upgrader );
 			$this->upgrader = $upgrader;
 		}
 		return $this->upgrader;
@@ -75,13 +73,11 @@ class Lafka_Addons_Engine {
 	 */
 	public function sources(): array {
 		if ( null === $this->sources ) {
-			$built_in = array(
+			$built_in      = array(
 				Lafka_Addon_Schema::SOURCE_MANUAL    => new Lafka_Manual_Source(),
 				Lafka_Addon_Schema::SOURCE_ATTRIBUTE => new Lafka_Attribute_Source(),
 			);
-			if ( function_exists( 'apply_filters' ) ) {
-				$built_in = apply_filters( 'lafka_addons_register_options_source', $built_in );
-			}
+			$built_in      = apply_filters( 'lafka_addons_register_options_source', $built_in );
 			$this->sources = $built_in;
 		}
 		return $this->sources;

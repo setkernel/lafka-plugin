@@ -91,7 +91,7 @@ if ( ! function_exists( 'lafka_resolve_attachment_product_name' ) ) {
 		if ( $attachment_id <= 0 ) {
 			return '';
 		}
-		if ( ! function_exists( 'get_posts' ) || ! function_exists( 'wc_get_product' ) ) {
+		if ( ! function_exists( 'wc_get_product' ) ) {
 			return '';
 		}
 		$candidates = get_posts(

@@ -28,9 +28,6 @@ class Lafka_Addon_Repository {
 	 * @return Lafka_Addon_Group[]
 	 */
 	public function get_groups( int $post_id ): array {
-		if ( ! function_exists( 'get_post_meta' ) ) {
-			return array();
-		}
 		$raw = get_post_meta( $post_id, '_product_addons', true );
 		if ( ! is_array( $raw ) ) {
 			return array();
@@ -50,9 +47,6 @@ class Lafka_Addon_Repository {
 	 * @param Lafka_Addon_Group[] $groups
 	 */
 	public function save_groups( int $post_id, array $groups ): bool {
-		if ( ! function_exists( 'update_post_meta' ) ) {
-			return false;
-		}
 		$serialized = array();
 		foreach ( $groups as $group ) {
 			if ( ! $group instanceof Lafka_Addon_Group ) {

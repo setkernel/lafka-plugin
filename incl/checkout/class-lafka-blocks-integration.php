@@ -138,7 +138,7 @@ if ( ! class_exists( 'Lafka_Blocks_Integration' )
 		public function get_script_data() {
 			return array(
 				'currencySymbol' => self::currency_symbol(),
-				'ajaxUrl'        => function_exists( 'admin_url' ) ? admin_url( 'admin-ajax.php' ) : '',
+				'ajaxUrl'        => admin_url( 'admin-ajax.php' ),
 				'timeslot'       => self::timeslot_config(),
 				'i18n'           => array(
 					'freeDeliveryRemaining' => /* translators: %s: amount still needed to qualify for free delivery. */ __( 'Add %s more for free delivery', 'lafka-plugin' ),
@@ -177,7 +177,7 @@ if ( ! class_exists( 'Lafka_Blocks_Integration' )
 				'enabled'   => $enabled,
 				'mandatory' => (bool) $mandatory,
 				'daysAhead' => (int) $days_ahead,
-				'nonce'     => ( $enabled && function_exists( 'wp_create_nonce' ) ) ? wp_create_nonce( 'time_slots_for_date' ) : '',
+				'nonce'     => $enabled ? wp_create_nonce( 'time_slots_for_date' ) : '',
 			);
 		}
 

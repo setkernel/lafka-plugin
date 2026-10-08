@@ -229,7 +229,7 @@ class Lafka_Order_Hours {
 		if ( null === $schedule_json ) {
 			$options       = is_array( self::$lafka_order_hours_options )
 				? self::$lafka_order_hours_options
-				: ( function_exists( 'get_option' ) ? (array) get_option( 'lafka_order_hours_options' ) : array() );
+				: (array) get_option( 'lafka_order_hours_options' );
 			$schedule_json = $options['lafka_order_hours_schedule'] ?? '';
 		}
 

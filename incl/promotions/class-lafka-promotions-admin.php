@@ -66,7 +66,7 @@ if ( ! class_exists( 'Lafka_Promotions_Admin' ) ) {
 			if ( function_exists( 'is_lafka_promotions' ) && is_lafka_promotions() ) {
 				return;
 			}
-			if ( ! function_exists( 'get_stylesheet' ) || 'lafka-child' !== get_stylesheet() ) {
+			if ( 'lafka-child' !== get_stylesheet() ) {
 				return;
 			}
 			$settings_url = add_query_arg(

@@ -39,7 +39,7 @@ if ( ! function_exists( 'lafka_sanitize_category_tagline' ) ) {
 	function lafka_sanitize_category_tagline( $value ): string {
 		$line = is_scalar( $value ) ? sanitize_text_field( (string) $value ) : '';
 
-		return function_exists( 'mb_substr' ) ? mb_substr( $line, 0, LAFKA_CATEGORY_TAGLINE_MAX ) : substr( $line, 0, LAFKA_CATEGORY_TAGLINE_MAX );
+		return mb_substr( $line, 0, LAFKA_CATEGORY_TAGLINE_MAX );
 	}
 }
 
@@ -177,7 +177,7 @@ if ( ! function_exists( 'lafka_category_tagline_init' ) ) {
 	 */
 	function lafka_category_tagline_init() {
 		add_action( 'init', 'lafka_category_tagline_register_meta' );
-		if ( function_exists( 'is_admin' ) && is_admin() ) {
+		if ( is_admin() ) {
 			require_once dirname( __DIR__ ) . '/admin/lafka-term-form-nonce.php';
 			add_action( 'product_cat_add_form_fields', 'lafka_category_tagline_add_field', 20 );
 			add_action( 'product_cat_edit_form_fields', 'lafka_category_tagline_edit_field', 20 );

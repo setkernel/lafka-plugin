@@ -552,7 +552,7 @@ if ( ! class_exists( 'Lafka_Store_Api' ) ) {
 		 * @return string|null Error message when the selection is invalid.
 		 */
 		public static function branch_update_error( $term, bool $is_legit, bool $order_type_allowed ): ?string {
-			if ( ! is_object( $term ) || ( function_exists( 'is_wp_error' ) && is_wp_error( $term ) )
+			if ( ! is_object( $term ) || is_wp_error( $term )
 				|| ! isset( $term->taxonomy ) || 'lafka_branch_location' !== $term->taxonomy ) {
 				return __( 'Something is wrong. No such branch location.', 'lafka-plugin' );
 			}
@@ -646,11 +646,11 @@ if ( ! class_exists( 'Lafka_Store_Api' ) ) {
 		 * @return string
 		 */
 		private static function resolve_branch_name( int $branch_id ): string {
-			if ( $branch_id <= 0 || ! function_exists( 'get_term' ) ) {
+			if ( $branch_id <= 0 ) {
 				return '';
 			}
 			$term = get_term( $branch_id, 'lafka_branch_location' );
-			if ( ! is_object( $term ) || ( function_exists( 'is_wp_error' ) && is_wp_error( $term ) ) || ! isset( $term->name ) ) {
+			if ( ! is_object( $term ) || is_wp_error( $term ) || ! isset( $term->name ) ) {
 				return '';
 			}
 

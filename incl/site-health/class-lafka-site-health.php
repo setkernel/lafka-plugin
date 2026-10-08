@@ -46,8 +46,8 @@ if ( ! class_exists( 'Lafka_Site_Health' ) ) {
 				? get_plugin_data( LAFKA_PLUGIN_FILE, false, false )
 				: array( 'Version' => 'unknown' );
 
-			$theme  = function_exists( 'wp_get_theme' ) ? wp_get_theme() : null;
-			$child  = function_exists( 'wp_get_theme' ) && is_child_theme() ? wp_get_theme() : null;
+			$theme  = wp_get_theme();
+			$child  = is_child_theme() ? wp_get_theme() : null;
 			$parent = $theme && $theme->parent() ? $theme->parent() : $theme;
 
 			$lafka_options = get_option( 'lafka', array() );
@@ -222,7 +222,7 @@ if ( ! class_exists( 'Lafka_Site_Health' ) ) {
 		}
 	}
 
-	if ( function_exists( 'is_admin' ) && is_admin() ) {
+	if ( is_admin() ) {
 		Lafka_Site_Health::instance();
 	}
 }

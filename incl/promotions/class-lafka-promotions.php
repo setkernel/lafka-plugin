@@ -291,7 +291,7 @@ if ( ! class_exists( 'Lafka_Promotions' ) ) {
 		 * @return void
 		 */
 		private static function report_below_minimum(): void {
-			$session = function_exists( 'did_action' ) && did_action( 'woocommerce_init' ) && function_exists( 'WC' )
+			$session = did_action( 'woocommerce_init' ) && function_exists( 'WC' )
 				&& is_object( WC() ) && isset( WC()->session ) && is_object( WC()->session ) ? WC()->session : null;
 			$today   = gmdate( 'Y-m-d' );
 			if ( $session && method_exists( $session, 'get' ) && $today === $session->get( 'lafka_below_min_reported' ) ) {
@@ -537,8 +537,7 @@ if ( ! class_exists( 'Lafka_Promotions' ) ) {
 	// module gate is on. The admin settings screen requires this file for
 	// knob() reads even while the module is OFF — that load must not wire
 	// any front/cart hooks.
-	if ( function_exists( 'add_action' )
-		&& ( ! function_exists( 'is_lafka_promotions' ) || is_lafka_promotions() ) ) {
+	if ( ! function_exists( 'is_lafka_promotions' ) || is_lafka_promotions() ) {
 		Lafka_Promotions::instance();
 	}
 }

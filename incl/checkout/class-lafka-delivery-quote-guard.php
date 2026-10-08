@@ -281,7 +281,7 @@ if ( ! class_exists( 'Lafka_Delivery_Quote_Guard' ) ) {
 		 * @return bool
 		 */
 		public static function is_enabled(): bool {
-			$enabled = function_exists( 'get_theme_mod' ) ? (bool) get_theme_mod( self::MOD_ENABLED, true ) : true;
+			$enabled = (bool) get_theme_mod( self::MOD_ENABLED, true );
 
 			/**
 			 * Filter whether delivery rates are withheld until the address is complete.
@@ -297,7 +297,7 @@ if ( ! class_exists( 'Lafka_Delivery_Quote_Guard' ) ) {
 		 * @return string
 		 */
 		public static function message(): string {
-			$custom  = function_exists( 'get_theme_mod' ) ? trim( (string) get_theme_mod( self::MOD_MESSAGE, '' ) ) : '';
+			$custom  = trim( (string) get_theme_mod( self::MOD_MESSAGE, '' ) );
 			$message = '' !== $custom ? $custom : __( 'Enter your street address to see the delivery cost.', 'lafka-plugin' );
 
 			/**

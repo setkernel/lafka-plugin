@@ -109,7 +109,7 @@ if ( ! class_exists( 'Lafka_Pickup_Checkout' ) ) {
 		 * @return bool
 		 */
 		public static function is_enabled(): bool {
-			$enabled = function_exists( 'get_theme_mod' ) ? (bool) get_theme_mod( self::MOD_ENABLED, true ) : true;
+			$enabled = (bool) get_theme_mod( self::MOD_ENABLED, true );
 
 			/**
 			 * Filter whether pickup orders get the short checkout.
@@ -303,7 +303,7 @@ if ( ! class_exists( 'Lafka_Pickup_Checkout' ) ) {
 		 * @return void
 		 */
 		public static function print_client_config() {
-			if ( ! self::is_enabled() || ! function_exists( 'wp_add_inline_script' ) ) {
+			if ( ! self::is_enabled() ) {
 				return;
 			}
 			wp_add_inline_script(
