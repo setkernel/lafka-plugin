@@ -141,11 +141,8 @@ if ( ! function_exists( 'lafka_analytics_emit_page_context' ) ) {
 			$is_repeat = wc_get_customer_order_count( get_current_user_id() ) > 1;
 		}
 
-		// Fulfilment method from the order-method cookie (set by order-method.js).
-		$fulfilment = '';
-		if ( isset( $_COOKIE['lafka_order_method'] ) ) {
-			$fulfilment = sanitize_key( wp_unslash( $_COOKIE['lafka_order_method'] ) );
-		}
+		// Fulfilment mode in force: the visitor's choice, else the store's default.
+		$fulfilment = class_exists( 'Lafka_Fulfilment' ) ? Lafka_Fulfilment::current_mode() : '';
 
 		$store_open = null;
 		if ( function_exists( 'lafka_pdp_is_store_open' ) ) {

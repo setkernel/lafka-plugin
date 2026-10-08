@@ -337,7 +337,7 @@ if ( ! class_exists( 'Lafka_Pickup_Checkout' ) ) {
 			return array(
 				'enabled'         => true,
 				'orderType'       => self::current_order_type(),
-				'pickupMethods'   => array_values( array_map( 'strval', (array) apply_filters( 'lafka_pickup_shipping_method_ids', array( 'local_pickup', 'pickup_location' ) ) ) ),
+				'pickupMethods'   => Lafka_Fulfilment::pickup_method_ids(),
 				'addressGateways' => $address_gateways,
 				'addressToggle'   => self::delivery_possible(),
 				// The customer chose Delivery (header / cart toggle): open the

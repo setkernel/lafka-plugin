@@ -37,9 +37,15 @@
  *   · lafka_fulfilment_preference(): string  'pickup', 'delivery' or ''.
  *     Filter `lafka_fulfilment_preference`.
  *   · Lafka_Fulfilment::COOKIE  the cookie name a theme writes.
+ *   · Lafka_Fulfilment::pickup_method_ids(): string[]  the shipping method ids
+ *     that are a customer pickup, the one list (and filter) every PHP reader and
+ *     the scripts (through their config) use.
+ *   · Lafka_Fulfilment::current_mode(): string  the mode in force for this
+ *     visitor: their preference, else the first mode the store offers.
  *   · Filter `lafka_fulfilment_preselect_enabled` (bool, default true): turn
  *     the rate preselection off and keep WooCommerce's own default.
- *   · Which methods are pickup: `lafka_pickup_shipping_method_ids` (GX0).
+ *   · Which methods are pickup: `lafka_pickup_shipping_method_ids` (GX0), read
+ *     through pickup_method_ids().
  *
  * The preference is per visitor. A page-cached template should not print it
  * server-side as the only source; read the cookie in the browser too.
@@ -118,6 +124,30 @@ if ( ! class_exists( 'Lafka_Fulfilment' ) ) {
 			) as $hook ) {
 				add_action( $hook, array( __CLASS__, 'bust_modes_cache' ) );
 			}
+		}
+
+		/* ------------------------------------------------------------------ *
+		 *  Pickup methods
+		 * ------------------------------------------------------------------ */
+
+		/**
+		 * The shipping method ids that are a customer pickup: WooCommerce's
+		 * classic `local_pickup` and the blocks checkout's `pickup_location`.
+		 * The one list: lafka_is_pickup_shipping_method(), the checkout form,
+		 * the cart templates and the scripts (through their config) read it.
+		 *
+		 * @since 10.4.0
+		 *
+		 * @return string[]
+		 */
+		public static function pickup_method_ids(): array {
+			/**
+			 * Filter which shipping method ids are a customer pickup.
+			 *
+			 * @since 10.1.0
+			 * @param string[] $ids Method ids.
+			 */
+			return array_values( array_map( 'strval', (array) apply_filters( 'lafka_pickup_shipping_method_ids', array( 'local_pickup', 'pickup_location' ) ) ) );
 		}
 
 		/* ------------------------------------------------------------------ *
@@ -312,6 +342,24 @@ if ( ! class_exists( 'Lafka_Fulfilment' ) ) {
 			$preference = (string) apply_filters( 'lafka_fulfilment_preference', $preference );
 
 			return in_array( $preference, self::ALL_MODES, true ) ? $preference : '';
+		}
+
+		/**
+		 * The mode in force for this visitor: their preference when set (and
+		 * offered), else the first mode the store offers, '' when it offers none.
+		 *
+		 * @since 10.4.0
+		 *
+		 * @return string 'pickup', 'delivery' or ''.
+		 */
+		public static function current_mode(): string {
+			$mode = self::preference();
+			if ( '' !== $mode ) {
+				return $mode;
+			}
+			$modes = self::modes();
+
+			return array() === $modes ? '' : (string) $modes[0];
 		}
 
 		/**

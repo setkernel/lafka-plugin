@@ -10,6 +10,9 @@
 
 defined( 'ABSPATH' ) || exit;
 
+// The pickup method list lives in Lafka_Fulfilment (which loads this file too).
+require_once __DIR__ . '/checkout/class-lafka-fulfilment.php';
+
 if ( ! function_exists( 'lafka_is_pickup_shipping_method' ) ) {
 	/**
 	 * Whether a shipping method (id or chosen rate id) is a customer pickup.
@@ -24,9 +27,8 @@ if ( ! function_exists( 'lafka_is_pickup_shipping_method' ) ) {
 	 */
 	function lafka_is_pickup_shipping_method( $method ) {
 		$method_id = strtok( (string) $method, ':' );
-		$pickup    = (array) apply_filters( 'lafka_pickup_shipping_method_ids', array( 'local_pickup', 'pickup_location' ) );
 
-		return false !== $method_id && in_array( $method_id, $pickup, true );
+		return false !== $method_id && in_array( $method_id, Lafka_Fulfilment::pickup_method_ids(), true );
 	}
 }
 
