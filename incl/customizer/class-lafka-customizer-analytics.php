@@ -327,7 +327,7 @@ if ( ! class_exists( 'Lafka_Customizer_Analytics' ) ) {
 				'lafka_cf_beacon_token',
 				array(
 					'label'       => esc_html__( 'Cloudflare Web Analytics token', 'lafka-plugin' ),
-					'description' => esc_html__( '32-character token from dash.cloudflare.com → Analytics & Logs → Web Analytics → your site → "JS snippet" (the data-cf-beacon token). Cookieless + privacy-first, so it emits independently of GTM and consent.', 'lafka-plugin' ),
+					'description' => esc_html__( '32-character token from the Cloudflare dashboard → Analytics & Logs → Web Analytics → your site → "JS snippet" (the data-cf-beacon token). Cookieless + privacy-first, so it emits independently of GTM and consent.', 'lafka-plugin' ),
 					'section'     => 'lafka_analytics_direct',
 					'type'        => 'text',
 					'input_attrs' => array(

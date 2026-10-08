@@ -25,13 +25,15 @@ defined( 'ABSPATH' ) || exit;
 /*
  * Always-open 7-day order-hours schedule. The order-gate decoder
  * (Lafka_Order_Hours::is_shop_open) reads a JSON array indexed 0..6 ==
- * Monday..Sunday, each element carrying a `periods` list of { start, end }.
+ * Monday..Sunday, each element carrying its `day` index (the admin schedule
+ * editor places periods by it) and a `periods` list of { start, end }.
  * An end of "00:00" is normalised to "24:00" by the gate, so a single
  * 00:00→00:00 period means "open all day" — the store is always open now.
  */
 $lafka_seed_demo_open_schedule = array();
 for ( $lafka_seed_demo_day = 0; $lafka_seed_demo_day < 7; $lafka_seed_demo_day++ ) {
 	$lafka_seed_demo_open_schedule[] = array(
+		'day'     => $lafka_seed_demo_day,
 		'periods' => array(
 			array(
 				'start' => '00:00',

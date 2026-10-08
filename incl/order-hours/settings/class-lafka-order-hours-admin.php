@@ -48,8 +48,26 @@ class Lafka_Order_Hours_Admin {
 		);
 	}
 
+	/**
+	 * Sanitize the order-hours settings: text messages, checkboxes, the
+	 * override select and the JSON schedule/holidays written by the editor
+	 * (plain JSON, which text sanitization leaves intact).
+	 *
+	 * @param mixed $input Raw option value from the settings form.
+	 * @return array Sanitized option array.
+	 */
+	public function sanitize_options( $input ): array {
+		return is_array( $input ) ? map_deep( $input, 'sanitize_text_field' ) : array();
+	}
+
 	public function admin_init() {
-		register_setting( 'lafka_order_hours', 'lafka_order_hours_options' );
+		register_setting(
+			'lafka_order_hours',
+			'lafka_order_hours_options',
+			array(
+				'sanitize_callback' => array( $this, 'sanitize_options' ),
+			)
+		);
 
 		add_settings_section(
 			'lafka_order_hours_status_section',

@@ -704,9 +704,54 @@ class Lafka_Shipping_Areas_Admin {
 		return $output;
 	}
 
+	/**
+	 * Sanitize a settings group whose fields are all plain text, checkboxes
+	 * and selects (API keys, country lists, order type, branch selection).
+	 *
+	 * @param mixed $input Raw option value from the settings form.
+	 * @return array Sanitized option array.
+	 */
+	public static function sanitize_text_settings( $input ): array {
+		return is_array( $input ) ? map_deep( $input, 'sanitize_text_field' ) : array();
+	}
+
+	/**
+	 * Sanitize the advanced group. The store location is URL-encoded JSON
+	 * written by the map picker, so it is validated with the shared parser
+	 * (an invalid or placeholder pin is cleared) instead of text-sanitized,
+	 * which would strip its encoding.
+	 *
+	 * @param mixed $input Raw option value from the settings form.
+	 * @return array Sanitized option array.
+	 */
+	public static function sanitize_advanced_settings( $input ): array {
+		$input    = is_array( $input ) ? $input : array();
+		$location = isset( $input['store_map_location'] ) ? (string) $input['store_map_location'] : '';
+		unset( $input['store_map_location'] );
+
+		$output = map_deep( $input, 'sanitize_text_field' );
+		if ( '' !== $location ) {
+			$output['store_map_location'] = ( function_exists( 'lafka_parse_store_map_location' ) && null !== lafka_parse_store_map_location( $location ) ) ? $location : '';
+		}
+
+		return $output;
+	}
+
 	private static function create_main_settings() {
-		register_setting( 'lafka_shipping_areas_general', 'lafka_shipping_areas_general' );
-		register_setting( 'lafka_shipping_areas_advanced', 'lafka_shipping_areas_advanced' );
+		register_setting(
+			'lafka_shipping_areas_general',
+			'lafka_shipping_areas_general',
+			array(
+				'sanitize_callback' => array( __CLASS__, 'sanitize_text_settings' ),
+			)
+		);
+		register_setting(
+			'lafka_shipping_areas_advanced',
+			'lafka_shipping_areas_advanced',
+			array(
+				'sanitize_callback' => array( __CLASS__, 'sanitize_advanced_settings' ),
+			)
+		);
 		register_setting(
 			'lafka_shipping_areas_datetime',
 			'lafka_shipping_areas_datetime',
@@ -714,7 +759,13 @@ class Lafka_Shipping_Areas_Admin {
 				'sanitize_callback' => array( __CLASS__, 'sanitize_datetime_settings' ),
 			)
 		);
-		register_setting( 'lafka_shipping_areas_branches', 'lafka_shipping_areas_branches' );
+		register_setting(
+			'lafka_shipping_areas_branches',
+			'lafka_shipping_areas_branches',
+			array(
+				'sanitize_callback' => array( __CLASS__, 'sanitize_text_settings' ),
+			)
+		);
 
 		add_settings_section( 'general_section', '', null, 'lafka_shipping_areas_general' );
 		add_settings_field(
