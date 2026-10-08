@@ -13,10 +13,6 @@ class Lafka_Shipping_Areas_Admin {
 		add_action( 'admin_menu', array( __CLASS__, 'admin_menu' ) );
 		add_action( 'add_meta_boxes', array( __CLASS__, 'add_meta_boxes' ) );
 		add_action( 'save_post', array( __CLASS__, 'save_postdata' ) );
-
-		// Save Google Maps api key on both places
-		add_action( 'update_option_lafka_shipping_areas_general', array( __CLASS__, 'override_theme_options_api_key' ), 10, 2 );
-		add_action( 'update_option_lafka', array( __CLASS__, 'override_shipping_areas_options_api_key' ), 10, 2 );
 	}
 
 	public static function admin_init() {
@@ -125,40 +121,58 @@ class Lafka_Shipping_Areas_Admin {
 		wp_enqueue_style( 'lafka-shipping-areas-admin', plugins_url( '../assets/css/backend/lafka-shipping-areas-admin.css', __FILE__ ), array(), lafka_plugin_asset_version( 'incl/shipping-areas/assets/css/backend/lafka-shipping-areas-admin.css' ) );
 		if ( 'woocommerce_page_lafka_shipping_areas_admin' === $screen_id ) {
 			// Show/hide dependent settings rows on the settings form.
-			wp_enqueue_script( 'lafka-shipping-areas-admin', plugins_url( lafka_plugin_script_path( 'incl/shipping-areas/assets/js/backend/lafka-shipping-areas-admin.min.js' ), LAFKA_PLUGIN_FILE ), array( 'jquery' ), lafka_plugin_asset_version( lafka_plugin_script_path( 'incl/shipping-areas/assets/js/backend/lafka-shipping-areas-admin.min.js' ) ), true );
-		}
-		if ( wp_script_is( 'lafka-google-maps', 'registered' ) ) {
-			// These two map-pick UIs require Google Maps. Skip when no key
-			// is set — the rest of the shipping-areas admin still works.
-			if ( 'woocommerce_page_lafka_shipping_areas_admin' === $screen->id ) {
-				wp_enqueue_script( 'lafka-shipping-areas-admin-store-map', plugins_url( lafka_plugin_script_path( 'incl/shipping-areas/assets/js/backend/lafka-shipping-areas-pick-address-map.min.js' ), LAFKA_PLUGIN_FILE ), array( 'lafka-google-maps' ), lafka_plugin_asset_version( lafka_plugin_script_path( 'incl/shipping-areas/assets/js/backend/lafka-shipping-areas-pick-address-map.min.js' ) ), true );
-			} elseif ( 'lafka_shipping_areas' === $screen->id ) {
-				wp_enqueue_script( 'lafka-shipping-areas-admin-define-area', plugins_url( lafka_plugin_script_path( 'incl/shipping-areas/assets/js/backend/lafka-shipping-areas-define-area.min.js' ), LAFKA_PLUGIN_FILE ), array( 'lafka-google-maps' ), lafka_plugin_asset_version( lafka_plugin_script_path( 'incl/shipping-areas/assets/js/backend/lafka-shipping-areas-define-area.min.js' ) ), true );
+			self::enqueue( 'lafka-shipping-areas-admin', 'lafka-shipping-areas-admin', array( 'jquery' ) );
+			// The store-location map (Advanced tab): keyless OpenStreetMap, or
+			// Google with a key.
+			if ( 'advanced' === (string) lafka_input_get_text( 'tab', 'general' ) && lafka_enqueue_maps() ) {
+				self::enqueue( 'lafka-shipping-areas-admin-store-map', 'lafka-shipping-areas-pick-address-map', array( 'lafka-maps' ) );
+				wp_localize_script(
+					'lafka-shipping-areas-admin-store-map',
+					'lafkaStorePicker',
+					array(
+						'point'        => lafka_get_store_point(),
+						'storeAddress' => lafka_geo_wc_store_address(),
+						'i18n'         => array(
+							'searching' => __( 'Looking up the address…', 'lafka-plugin' ),
+						),
+					)
+				);
 			}
+		} elseif ( 'lafka_shipping_areas' === $screen_id && lafka_enqueue_maps() ) {
+			// The delivery-zone polygon editor.
+			self::enqueue( 'lafka-shipping-areas-admin-define-area', 'lafka-shipping-areas-define-area', array( 'lafka-maps' ) );
 		}
 	}
 
+	/**
+	 * Enqueue one of the backend scripts (the .min build unless SCRIPT_DEBUG).
+	 *
+	 * @param string   $handle Script handle.
+	 * @param string   $file   File name under assets/js/backend/, no extension.
+	 * @param string[] $deps   Dependencies.
+	 * @return void
+	 */
+	private static function enqueue( string $handle, string $file, array $deps ): void {
+		$path = lafka_plugin_script_path( 'incl/shipping-areas/assets/js/backend/' . $file . '.min.js' );
+		wp_enqueue_script( $handle, plugins_url( $path, LAFKA_PLUGIN_FILE ), $deps, lafka_plugin_asset_version( $path ), true );
+	}
+
 	public static function google_maps_api_key_cb( $args ) {
-		$google_maps_api_key = '';
-		if ( function_exists( 'lafka_get_option' ) ) {
-			$google_maps_api_key = lafka_get_option( 'google_maps_api_key' );
-		}
-		$options = get_option( 'lafka_shipping_areas_general' );
 		?>
 		<input id="<?php echo esc_attr( $args['label_for'] ); ?>"
 				name="lafka_shipping_areas_general[<?php echo esc_attr( $args['label_for'] ); ?>]"
 				class="lafka-admin-maps-api-key"
 				type="text"
-				value="<?php echo ! empty( $options[ $args['label_for'] ] ) ? esc_attr( $options[ $args['label_for'] ] ) : esc_attr( $google_maps_api_key ); ?>"
+				autocomplete="off"
+				value="<?php echo esc_attr( lafka_google_maps_key() ); ?>"
 		>
 		<p class="description">
-			<?php esc_html_e( 'This is the same key as the Google Maps API key in', 'lafka-plugin' ); ?>
-			<a href="<?php echo esc_url( admin_url( 'customize.php?autofocus[section]=lafka_settings_general' ) ); ?>"><?php esc_html_e( 'Customizer → Lafka — Site Settings → General', 'lafka-plugin' ); ?></a>
-			<?php esc_html_e( '(Lafka theme); a key saved in either place is used by both.', 'lafka-plugin' ); ?>
+			<?php esc_html_e( 'Optional. Without a key every map works with OpenStreetMap: delivery zones, the store and branch locations, the checkout pin and "use my location". With a key the maps use Google Maps instead, and the location popup suggests addresses as customers type.', 'lafka-plugin' ); ?>
 			<br>
-			<?php esc_html_e( 'If you don\'t have API key, see how to ', 'lafka-plugin' ); ?>
-			<a href="https://developers.google.com/maps/documentation/javascript/get-api-key" target="_blank"><?php esc_html_e( 'Generate Google Maps JavaScript API key', 'lafka-plugin' ); ?></a>
-			<?php esc_html_e( '(Enable following APIs: Places API, Geocoding API, Distance Matrix API)', 'lafka-plugin' ); ?>
+			<?php esc_html_e( 'This is the same key as the Google Maps API key in the Lafka theme\'s Customizer; changing it in either place changes it in both. Leave it empty to remove it.', 'lafka-plugin' ); ?>
+			<br>
+			<a href="https://developers.google.com/maps/documentation/javascript/get-api-key" target="_blank" rel="noopener"><?php esc_html_e( 'Get a Google Maps API key', 'lafka-plugin' ); ?></a>
+			<?php esc_html_e( '(enable the Maps JavaScript API, Places API and Geocoding API, and restrict the key to your site).', 'lafka-plugin' ); ?>
 		</p>
 		<?php
 	}
@@ -168,7 +182,7 @@ class Lafka_Shipping_Areas_Admin {
 		$values  = array(
 			''          => __( 'Disabled', 'lafka-plugin' ),
 			'always'    => __( 'Always show the delivery map', 'lafka-plugin' ),
-			'when_fail' => __( 'Show the delivery map when Google fail to geocode the delivery address', 'lafka-plugin' ),
+			'when_fail' => __( 'Show the delivery map only when the delivery address cannot be found precisely', 'lafka-plugin' ),
 		);
 		?>
 		<select id="<?php echo esc_attr( $args['label_for'] ); ?>"
@@ -181,7 +195,7 @@ class Lafka_Shipping_Areas_Admin {
 			<?php endforeach; ?>
 		</select>
 		<p class="description">
-			<?php esc_html_e( 'A map can be shown at checkout that let users pick their precise delivery location.', 'lafka-plugin' ); ?>
+			<?php esc_html_e( 'A map can be shown at the classic checkout that lets customers pin their precise delivery location (drag the pin, click the map, or "Use my location"). The block checkout has no pin map yet, so a pin is never required there.', 'lafka-plugin' ); ?>
 		</p>
 		<?php
 	}
@@ -201,68 +215,32 @@ class Lafka_Shipping_Areas_Admin {
 		<?php
 	}
 
-	public static function set_store_location_cb( $args ) {
-		$options = get_option( 'lafka_shipping_areas_advanced' );
-		$values  = array(
-			'geo_woo_store'      => __( 'Geocode WooCommerce Store Address on Checkout', 'lafka-plugin' ),
-			'pick_store_address' => __( 'Pick Store Location from Map', 'lafka-plugin' ),
-		);
-		?>
-		<select id="<?php echo esc_attr( $args['label_for'] ); ?>"
-				name="lafka_shipping_areas_advanced[<?php echo esc_attr( $args['label_for'] ); ?>]"
-		>
-			<?php foreach ( $values as $key => $value ) : ?>
-				<option value="<?php echo esc_attr( $key ); ?>" <?php echo isset( $options[ $args['label_for'] ] ) ? ( selected( $options[ $args['label_for'] ], $key, false ) ) : ( '' ); ?>>
-					<?php echo esc_html( $value ); ?>
-				</option>
-			<?php endforeach; ?>
-		</select>
-		<p class="description">
-			<?php esc_html_e( 'This location will be used as starting point when calculating dynamic shipping rates and as center point when using radius as shipping method restriction.', 'lafka-plugin' ); ?>
-			<br><br>
-			<?php esc_html_e( 'IMPORTANT: It is highly recommended to use the "Pick Store Location from Map" option whenever possible. Otherwise large amount of google traffic will be generated, which will cause slow performance and may generate additional costs.', 'lafka-plugin' ); ?>
-			<br><br>
-			<?php esc_html_e( 'NOTE: If you have set up Branch Locations (Products -> Lafka Branch Locations) and are using them in the shipping methods, then selected Branch Location will be used for calculating the radius restriction.', 'lafka-plugin' ); ?>
-		</p>
-		<?php
-	}
-
-	public static function store_map_location_cb( $args ) {
-		$options = get_option( 'lafka_shipping_areas_advanced' );
-		// Only a usable pinned location round-trips: a malformed value or the
-		// old Sydney placeholder renders empty, so saving the page can never
-		// re-persist it. The map writes the field only when the operator pins.
-		$saved = $options[ $args['label_for'] ] ?? '';
-		$saved = ( function_exists( 'lafka_parse_store_map_location' ) && null === lafka_parse_store_map_location( $saved ) ) ? '' : (string) $saved;
-		wp_add_inline_script(
-			'lafka-shipping-areas-admin-store-map',
-			'const lafka_admin_map_params = ' . wp_json_encode(
-				array(
-					'saved_store_address_lat_long' => $saved,
-					'store_address'                => trim( Lafka_Shipping_Areas::get_store_address() ),
-				)
-			),
-			'before'
-		);
+	public static function store_point_cb( $args ) {
+		$point   = lafka_get_store_point();
 		$problem = function_exists( 'lafka_store_location_problem' ) ? lafka_store_location_problem() : '';
 		if ( '' !== $problem ) {
 			echo '<p class="notice notice-warning inline">' . esc_html( $problem ) . '</p>';
 		}
 		?>
 		<input id="<?php echo esc_attr( $args['label_for'] ); ?>"
-				name="lafka_shipping_areas_advanced[<?php echo esc_attr( $args['label_for'] ); ?>]"
+				name="lafka_shipping_areas_advanced[store_point]"
 				type="hidden"
-				value="<?php echo esc_attr( $saved ); ?>"
+				value="<?php echo null === $point ? '' : esc_attr( rawurlencode( (string) wp_json_encode( $point ) ) ); ?>"
 		>
-		<button type="button" class="button-secondary"
-				id="lafka_shipping_store_map_locate"><?php esc_html_e( 'Try to Geocode WooCommerce Store Address and save the coordinates', 'lafka-plugin' ); ?></button>
+		<p class="description">
+			<?php esc_html_e( 'Where your store is: delivery maps start here and the checkout measures delivery distances from it. It is the same point as the restaurant coordinates under WooCommerce → Settings → Restaurant (and in the search-engine schema); pinning it here changes them there.', 'lafka-plugin' ); ?>
+		</p>
 		<p>
-			<?php esc_html_e( 'Or click on the map to pinpoint the exact store location. Note that this will not change the address set in WooCommerce settings.', 'lafka-plugin' ); ?>
+			<?php esc_html_e( 'Coordinates:', 'lafka-plugin' ); ?>
+			<span id="lafka-store-point-coordinates" class="lafka-store-point-coordinates"><?php echo null === $point ? esc_html__( 'not set', 'lafka-plugin' ) : esc_html( sprintf( '%.6f, %.6f', $point['lat'], $point['lng'] ) ); ?></span>
 		</p>
 		<span id="lafka-shipping-areas-floating-search-panel">
-			<input id="lafka-shipping-areas-search-address" type="textbox" placeholder="<?php esc_attr_e( 'Search an address', 'lafka-plugin' ); ?>"/>
-			<input id="lafka-shipping-areas-floating-search-panel-submit" type="button" value="<?php esc_html_e( 'Geocode', 'lafka-plugin' ); ?>"/>
+			<input id="lafka-shipping-areas-search-address" type="text" placeholder="<?php esc_attr_e( 'Search an address', 'lafka-plugin' ); ?>"/>
+			<input id="lafka-shipping-areas-floating-search-panel-submit" class="button" type="button" value="<?php esc_attr_e( 'Find', 'lafka-plugin' ); ?>"/>
+			<button type="button" class="button-secondary" id="lafka_shipping_store_map_locate"><?php esc_html_e( 'Use the WooCommerce store address', 'lafka-plugin' ); ?></button>
 		</span>
+		<p id="lafka-store-point-message" class="lafka-map-message" role="status"></p>
+		<p><?php esc_html_e( 'Or click the map, or drag the pin, to the exact spot. Save the settings to keep it.', 'lafka-plugin' ); ?></p>
 		<div id="lafka-shipping-areas-admin-store-map"></div>
 		<?php
 	}
@@ -406,7 +384,7 @@ class Lafka_Shipping_Areas_Admin {
 		<p class="description">
 			<?php
 			esc_html_e(
-				'In some areas Google doesn\'t resolve to the full addresses. If you operate in such areas, you can enable this option to allow entering partial addresses in the popup. The users will be able to enter the site and can precise their location at checkout.',
+				'In some areas the address lookup does not resolve full street addresses. If you operate in such areas, enable this option to accept a street without a house number in the popup. Customers can still pin their exact location at checkout.',
 				'lafka-plugin'
 			);
 			?>
@@ -424,7 +402,7 @@ class Lafka_Shipping_Areas_Admin {
 				value="<?php echo esc_attr( $options[ $args['label_for'] ] ?? '' ); ?>"
 		>
 		<p class="description">
-			<?php esc_html_e( 'Rectangle coordinates to set strict bounds where google will look to autocomplete the address. Enter the coordinates, separated by commas in the following format', 'lafka-plugin' ); ?>
+			<?php esc_html_e( 'Google Maps key only. Rectangle coordinates to set strict bounds where Google will look to autocomplete the address. Enter the coordinates, separated by commas in the following format', 'lafka-plugin' ); ?>
 			:
 			<strong><?php esc_html_e( 'East longitude, North latitude, South latitude, West longitude', 'lafka-plugin' ); ?></strong>
 			<br>
@@ -448,7 +426,7 @@ class Lafka_Shipping_Areas_Admin {
 			<?php endforeach; ?>
 		</select>
 		<p class="description">
-			<?php esc_html_e( 'Limit Google address autocomplete to up to 5 countries. This is the maximum allowed number by Google.', 'lafka-plugin' ); ?>
+			<?php esc_html_e( 'Google Maps key only. Limit Google address autocomplete to up to 5 countries. This is the maximum allowed number by Google.', 'lafka-plugin' ); ?>
 		</p>
 		<?php
 	}
@@ -591,33 +569,6 @@ class Lafka_Shipping_Areas_Admin {
 		<?php
 	}
 
-	public static function override_theme_options_api_key( $old_value, $value ) {
-		if ( function_exists( 'lafka_get_option' ) && ! empty( $value['google_maps_api_key'] ) ) {
-			$lafka_options = get_option( 'lafka' );
-			if ( isset( $lafka_options['google_maps_api_key'] ) && $lafka_options['google_maps_api_key'] !== $value['google_maps_api_key'] ) {
-				$lafka_options['google_maps_api_key'] = $value['google_maps_api_key'];
-				// Unhook to prevent recursion (this hook fires update_option_lafka which calls back here).
-				remove_action( 'update_option_lafka', array( __CLASS__, 'override_shipping_areas_options_api_key' ), 10 );
-				update_option( 'lafka', $lafka_options );
-				add_action( 'update_option_lafka', array( __CLASS__, 'override_shipping_areas_options_api_key' ), 10, 2 );
-			}
-		}
-	}
-
-	public static function override_shipping_areas_options_api_key( $old_value, $value ) {
-		if ( ! is_array( $value ) || empty( $value['google_maps_api_key'] ) ) {
-			return;
-		}
-		$options = get_option( 'lafka_shipping_areas_general' );
-		if ( is_array( $options ) && ! empty( $options['google_maps_api_key'] ) && $options['google_maps_api_key'] !== $value['google_maps_api_key'] ) {
-			$options['google_maps_api_key'] = $value['google_maps_api_key'];
-			// Unhook to prevent recursion (this hook fires update_option_lafka_shipping_areas_general which calls back here).
-			remove_action( 'update_option_lafka_shipping_areas_general', array( __CLASS__, 'override_theme_options_api_key' ), 10 );
-			update_option( 'lafka_shipping_areas_general', $options );
-			add_action( 'update_option_lafka_shipping_areas_general', array( __CLASS__, 'override_theme_options_api_key' ), 10, 2 );
-		}
-	}
-
 	public static function add_meta_boxes() {
 		add_meta_box(
 			'shipping_areas_define_map',
@@ -719,22 +670,46 @@ class Lafka_Shipping_Areas_Admin {
 	}
 
 	/**
-	 * Sanitize the advanced group. The store location is URL-encoded JSON
-	 * written by the map picker, so it is validated with the shared parser
-	 * (an invalid or placeholder pin is cleared) instead of text-sanitized,
-	 * which would strip its encoding.
+	 * Sanitize the general group. The Google Maps key is not stored here: it
+	 * is saved to lafka[google_maps_api_key], its one home (an emptied field
+	 * removes it).
+	 *
+	 * @param mixed $input Raw option value from the settings form.
+	 * @return array Sanitized option array.
+	 */
+	public static function sanitize_general_settings( $input ): array {
+		$input = is_array( $input ) ? $input : array();
+		if ( array_key_exists( 'google_maps_api_key', $input ) ) {
+			lafka_set_google_maps_key( is_string( $input['google_maps_api_key'] ) ? trim( $input['google_maps_api_key'] ) : '' );
+		}
+		unset( $input['google_maps_api_key'], $input['secondary_google_maps_api_key'] );
+
+		return map_deep( $input, 'sanitize_text_field' );
+	}
+
+	/**
+	 * Sanitize the advanced group. The store point (URL-encoded JSON written
+	 * by the map) is not stored here: a valid point is saved as the business
+	 * geo, its one home, and replaces any pre-10.4 store_map_location copy.
+	 * The retired "Set Store Location" mode is dropped.
 	 *
 	 * @param mixed $input Raw option value from the settings form.
 	 * @return array Sanitized option array.
 	 */
 	public static function sanitize_advanced_settings( $input ): array {
-		$input    = is_array( $input ) ? $input : array();
-		$location = isset( $input['store_map_location'] ) ? (string) $input['store_map_location'] : '';
-		unset( $input['store_map_location'] );
+		$input  = is_array( $input ) ? $input : array();
+		$point  = lafka_parse_store_map_location( isset( $input['store_point'] ) && is_string( $input['store_point'] ) ? $input['store_point'] : '' );
+		$legacy = isset( $input['store_map_location'] ) && is_string( $input['store_map_location'] ) ? $input['store_map_location'] : '';
+		if ( null !== $point ) {
+			lafka_set_store_point( $point['lat'], $point['lng'] );
+			$legacy = '';
+		}
+		unset( $input['store_point'], $input['store_map_location'], $input['set_store_location'] );
 
 		$output = map_deep( $input, 'sanitize_text_field' );
-		if ( '' !== $location ) {
-			$output['store_map_location'] = ( function_exists( 'lafka_parse_store_map_location' ) && null !== lafka_parse_store_map_location( $location ) ) ? $location : '';
+		// A pre-10.4 pin that was never re-saved stays readable as the fallback.
+		if ( '' !== $legacy && null !== lafka_parse_store_map_location( $legacy ) ) {
+			$output['store_map_location'] = $legacy;
 		}
 
 		return $output;
@@ -745,7 +720,7 @@ class Lafka_Shipping_Areas_Admin {
 			'lafka_shipping_areas_general',
 			'lafka_shipping_areas_general',
 			array(
-				'sanitize_callback' => array( __CLASS__, 'sanitize_text_settings' ),
+				'sanitize_callback' => array( __CLASS__, 'sanitize_general_settings' ),
 			)
 		);
 		register_setting(
@@ -773,7 +748,7 @@ class Lafka_Shipping_Areas_Admin {
 		add_settings_section( 'general_section', '', null, 'lafka_shipping_areas_general' );
 		add_settings_field(
 			'google_maps_api_key',
-			esc_html__( 'Google Maps API Key', 'lafka-plugin' ),
+			esc_html__( 'Google Maps API Key (optional)', 'lafka-plugin' ),
 			array(
 				__CLASS__,
 				'google_maps_api_key_cb',
@@ -814,30 +789,16 @@ class Lafka_Shipping_Areas_Admin {
 
 		add_settings_section( 'advanced_section', '', null, 'lafka_shipping_areas_advanced' );
 		add_settings_field(
-			'set_store_location',
-			esc_html__( 'Set Store Location', 'lafka-plugin' ),
+			'store_point',
+			esc_html__( 'Store location', 'lafka-plugin' ),
 			array(
 				__CLASS__,
-				'set_store_location_cb',
+				'store_point_cb',
 			),
 			'lafka_shipping_areas_advanced',
 			'advanced_section',
 			array(
-				'label_for' => 'set_store_location',
-			)
-		);
-		add_settings_field(
-			'store_map_location',
-			esc_html__( 'Pick Store Location', 'lafka-plugin' ),
-			array(
-				__CLASS__,
-				'store_map_location_cb',
-			),
-			'lafka_shipping_areas_advanced',
-			'advanced_section',
-			array(
-				'label_for' => 'store_map_location',
-				'class'     => 'lafka-shipping-pick-store-location-container hidden',
+				'label_for' => 'lafka_store_point',
 			)
 		);
 

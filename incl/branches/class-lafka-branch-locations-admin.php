@@ -52,26 +52,21 @@ class Lafka_Branch_Locations_Admin {
 		wp_enqueue_media();
 		wp_enqueue_style( 'lafka-schedule' );
 		wp_enqueue_style( 'flatpickr' );
-		// Skip the maps-dependent admin JS when no key is configured —
-		// otherwise it console-errors on every admin page-load. Branch
-		// management still works via the dropdown UI; only the map-pick
-		// surface is disabled.
-		if ( wp_script_is( 'lafka-google-maps', 'registered' ) ) {
-			$branch_admin_js = lafka_plugin_script_path( 'incl/shipping-areas/assets/js/backend/lafka-branch-locations-admin.min.js' );
-			wp_enqueue_script(
-				'lafka-branch-locations-admin',
-				plugins_url( $branch_admin_js, LAFKA_PLUGIN_FILE ),
-				array(
-					'jquery',
-					'lafka-google-maps',
-					'select2',
-					'lafka-schedule',
-					'flatpickr',
-				),
-				lafka_plugin_asset_version( $branch_admin_js ),
-				true
-			);
+		// The branch screens geocode the branch address on a map (keyless
+		// OpenStreetMap, or Google with a key); the other screens only need
+		// the Select2 / schedule / image parts of the script.
+		$deps = array( 'jquery', 'select2', 'lafka-schedule', 'flatpickr' );
+		if ( 'edit-lafka_branch_location' === (string) $screen->id && lafka_enqueue_maps() ) {
+			$deps[] = 'lafka-maps';
 		}
+		$branch_admin_js = lafka_plugin_script_path( 'incl/shipping-areas/assets/js/backend/lafka-branch-locations-admin.min.js' );
+		wp_enqueue_script(
+			'lafka-branch-locations-admin',
+			plugins_url( $branch_admin_js, LAFKA_PLUGIN_FILE ),
+			$deps,
+			lafka_plugin_asset_version( $branch_admin_js ),
+			true
+		);
 		$options_branches = get_option( 'lafka_shipping_areas_branches' );
 		wp_localize_script(
 			'lafka-branch-locations-admin',
@@ -609,9 +604,12 @@ class Lafka_Branch_Locations_Admin {
 			// was saved; the shared map-pin parser URL-decodes it and keeps only
 			// two in-range floats. Readers decodeURIComponent() before
 			// JSON.parse(), so the plain JSON stored here stays compatible.
+			// An emptied field ("Clear") removes the location.
 			$coords = lafka_parse_store_map_location( wp_unslash( $_POST['lafka_branch_address_geocoded'] ) );
 			if ( null !== $coords ) {
 				update_term_meta( $term_id, 'lafka_branch_address_geocoded', wp_json_encode( $coords ) );
+			} elseif ( '' === trim( sanitize_text_field( wp_unslash( $_POST['lafka_branch_address_geocoded'] ) ) ) ) {
+				delete_term_meta( $term_id, 'lafka_branch_address_geocoded' );
 			}
 		}
 		if ( isset( $_POST['lafka_branch_shipping_areas'] ) ) {

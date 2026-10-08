@@ -38,20 +38,25 @@
 }
 
 #lafka-shipping-areas-admin-store-map, #lafka-shipping-areas-admin-define-area-map, #lafka_geocode_branch_location_map {
-    height: 300px;
-    top: 10px;
-    margin-bottom: 20px;
+    height: 320px;
+    max-width: 960px;
+    margin: 10px 0 20px;
 }
 
 #lafka-shipping-areas-floating-search-panel {
-    position: relative;
-    top: 55px;
-    z-index: 5;
-    background-color: #fff;
-    padding: 10px;
-    border: 1px solid #999;
-    text-align: center;
-    line-height: 30px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    max-width: 960px;
+    margin-top: 10px;
+}
+
+#lafka-shipping-areas-search-address {
+    flex: 1 1 260px;
+}
+
+.lafka-store-point-coordinates {
+    font-family: monospace;
 }
 
 span.lafka-branch-address-instructions {
@@ -60,49 +65,15 @@ span.lafka-branch-address-instructions {
 }
 
 input#lafka_branch_address {
-    background-color: #fff;
-    border-radius: 2px;
-    margin: 10px;
-    padding: 0 0.5em;
-    overflow: hidden;
-    line-height: 40px;
-    margin-right: 0;
-    width: 40%;
+    width: 60%;
+    max-width: 480px;
 }
 
-input.lafka-geocode-branch-button {
-    background-color: #fff;
-    border: 0;
-    border-radius: 2px;
-    box-shadow: 0 1px 4px -1px rgba(0, 0, 0, 0.3);
-    margin: 10px;
-    padding: 0 0.5em;
-    overflow: hidden;
-    height: 40px;
-    cursor: pointer;
-    margin-left: 5px;
-}
-
-input.lafka-geocode-branch-button:hover {
-    background: #ebebeb;
-}
-
-input.lafka-geocode-branch-button.lafka-geocode-branch-address-submit {
-    background-color: #1a73e8;
-    color: #fff;
-}
-
-input.lafka-geocode-branch-button.lafka-geocode-branch-address-submit:hover {
-    background-color: #1765cc;
-}
-
-input.lafka-geocode-branch-button.lafka-geocode-branch-address-clear {
-    background-color: #fff;
-    color: #1a73e8;
-}
-
-input.lafka-geocode-branch-button.lafka-geocode-branch-address-clear:hover {
-    background-color: #d2e3fc;
+.lafka-geocode-branch-buttons {
+    display: inline-flex;
+    gap: 6px;
+    margin-left: 6px;
+    vertical-align: middle;
 }
 
 #instructions {

@@ -1,15 +1,39 @@
 <?php
+/**
+ * [lafka_shipping_areas] — a map of the delivery zones (and optionally a
+ * radius around the store) for a "Where we deliver" page.
+ *
+ *   [lafka_shipping_areas title="Where we deliver" map_height="400"
+ *       areas="<URL-encoded JSON list of {area_id, label_text, label_position, area_color}>"
+ *       circle_area="yes" circle_radius="5" circle_radius_unit="metric"
+ *       circle_label_text="5 km" circle_area_color="#d63638"]
+ *
+ * Draws with the configured map provider (keyless OpenStreetMap, or Google
+ * with a key). Each instance carries its own settings in a data attribute,
+ * so several maps can share a page. The radius is drawn around the store
+ * point (lafka_get_store_point()), else around a geocode of the WooCommerce
+ * store address.
+ *
+ * @package Lafka\Plugin
+ */
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
 require_once __DIR__ . '/../lafka-asset-helpers.php';
 
+/**
+ * Render the shortcode.
+ *
+ * @param array|string $atts    Attributes.
+ * @param string|null  $content Unused.
+ * @param string       $tag     Shortcode tag.
+ * @return string
+ */
 function lafka_shipping_areas_shortcode( $atts = array(), $content = null, $tag = '' ): string {
-	// normalize attribute keys, lowercase
 	$atts = array_change_key_case( (array) $atts, CASE_LOWER );
 
-	// override default attributes with user attributes
 	$shortcode_atts = shortcode_atts(
 		array(
 			'title'              => '',
@@ -25,69 +49,59 @@ function lafka_shipping_areas_shortcode( $atts = array(), $content = null, $tag 
 		$tag
 	);
 
-	$area_params = json_decode( urldecode( $shortcode_atts['areas'] ), true );
+	if ( ! lafka_enqueue_maps() ) {
+		return '';
+	}
 
-	$areas_array = array();
-	if ( ! empty( $area_params ) ) {
+	$area_params = json_decode( urldecode( (string) $shortcode_atts['areas'] ), true );
+	$areas       = array();
+	if ( is_array( $area_params ) ) {
 		foreach ( $area_params as $area_param ) {
-			if ( ! empty( $area_param['area_id'] ) ) {
-				$areas_array[] = array(
-					'label'               => $area_param['label_text'] ?? '',
-					'label_position'      => $area_param['label_position'] ?? '',
-					'polygon_coordinates' => get_post_meta( $area_param['area_id'], '_lafka_shipping_area_polygon_coordinates', true ),
-					'color'               => $area_param['area_color'] ?? '',
-				);
+			if ( ! is_array( $area_param ) || empty( $area_param['area_id'] ) ) {
+				continue;
 			}
+			$polygon = get_post_meta( (int) $area_param['area_id'], '_lafka_shipping_area_polygon_coordinates', true );
+			if ( ! is_string( $polygon ) || '' === $polygon ) {
+				continue;
+			}
+			$areas[] = array(
+				'label'    => sanitize_text_field( (string) ( $area_param['label_text'] ?? '' ) ),
+				'position' => sanitize_key( (string) ( $area_param['label_position'] ?? '' ) ),
+				'polygon'  => $polygon,
+				'color'    => (string) sanitize_hex_color( (string) ( $area_param['area_color'] ?? '' ) ),
+			);
 		}
 	}
 
-	// A missing/placeholder picked location falls back to geocoding the
-	// WooCommerce store address (see lafka_store_location_settings()).
-	$store_location     = function_exists( 'lafka_store_location_settings' ) ? lafka_store_location_settings() : array(
-		'mode'     => 'geo_woo_store',
-		'location' => '',
-	);
-	$set_store_location = $store_location['mode'];
-	$store_map_location = $store_location['location'];
-	$shortcode_id       = wp_unique_id( 'lafka_shipping_areas_shortcode' );
-	// `[lafka_shipping_areas]` renders an interactive map of delivery zones,
-	// which is meaningless without Google Maps. Show a polite admin-only
-	// notice when no key is configured rather than a console error.
-	if ( ! wp_script_is( 'lafka-google-maps', 'registered' ) ) {
-		return current_user_can( 'manage_options' )
-			? '<div class="lafka-shipping-areas-shortcode lafka-shipping-areas-shortcode--no-key" style="padding:1rem;border:1px dashed #ccc;color:#666;">'
-				. esc_html__( 'Lafka shipping-areas shortcode: set a Google Maps API key under WooCommerce → Lafka Shipping Settings to render the delivery-zone map.', 'lafka-plugin' )
-				. '</div>'
-			: '';
+	$circle = null;
+	if ( 'yes' === $shortcode_atts['circle_area'] && is_numeric( $shortcode_atts['circle_radius'] ) && (float) $shortcode_atts['circle_radius'] > 0 ) {
+		$radius = (float) $shortcode_atts['circle_radius'];
+		$circle = array(
+			'metres'       => 'imperial' === $shortcode_atts['circle_radius_unit'] ? $radius * 1609.344 : $radius * 1000,
+			'label'        => sanitize_text_field( (string) $shortcode_atts['circle_label_text'] ),
+			'color'        => (string) sanitize_hex_color( (string) $shortcode_atts['circle_area_color'] ),
+			'store'        => lafka_get_store_point(),
+			'storeAddress' => lafka_geo_wc_store_address(),
+		);
 	}
+
 	$shortcode_js = lafka_plugin_script_path( 'incl/shipping-areas/assets/js/frontend/lafka-shipping-areas-shortcode.min.js' );
-	wp_enqueue_script( 'lafka-shipping-areas-shortcode-' . $shortcode_id, plugins_url( $shortcode_js, LAFKA_PLUGIN_FILE ), array( 'lafka-google-maps' ), lafka_plugin_asset_version( $shortcode_js ), true );
-	wp_localize_script(
-		'lafka-shipping-areas-shortcode-' . $shortcode_id,
-		'lafka_shipping_areas_shortcode_php_variables',
-		array(
-			'shortcode_id'       => $shortcode_id,
-			'areas'              => wp_json_encode( $areas_array ),
-			'circle_area'        => $shortcode_atts['circle_area'],
-			'circle_radius'      => $shortcode_atts['circle_radius'],
-			'circle_radius_unit' => $shortcode_atts['circle_radius_unit'],
-			'circle_label_text'  => $shortcode_atts['circle_label_text'],
-			'circle_area_color'  => $shortcode_atts['circle_area_color'],
-			'set_store_location' => $set_store_location,
-			'store_location'     => Lafka_Shipping_Areas::get_store_address(),
-			'store_map_location' => $store_map_location,
-		)
+	wp_enqueue_script( 'lafka-shipping-areas-shortcode', plugins_url( $shortcode_js, LAFKA_PLUGIN_FILE ), array( 'lafka-maps' ), lafka_plugin_asset_version( $shortcode_js ), true );
+
+	$settings = array(
+		'areas'  => $areas,
+		'circle' => $circle,
 	);
 
 	ob_start();
 	?>
-	<div id="<?php echo esc_attr( $shortcode_id ); ?>" class="lafka-shipping-areas-shortcode">
-		<h2><?php echo esc_html( $shortcode_atts['title'] ); ?> </h2>
-		<div id="<?php echo esc_attr( $shortcode_id ) . '_map'; ?>" class="lafka-shipping-areas-shortcode-map" style="height: <?php echo esc_attr( $shortcode_atts['map_height'] ); ?>px;"></div>
+	<div class="lafka-shipping-areas-shortcode">
+		<?php if ( '' !== trim( (string) $shortcode_atts['title'] ) ) : ?>
+			<h2><?php echo esc_html( $shortcode_atts['title'] ); ?></h2>
+		<?php endif; ?>
+		<div class="lafka-shipping-areas-shortcode-map" style="height: <?php echo (int) $shortcode_atts['map_height']; ?>px;" data-lafka-zones="<?php echo esc_attr( (string) wp_json_encode( $settings ) ); ?>"></div>
 	</div>
 	<?php
-	$output = ob_get_clean();
 
-	// return output
-	return $output;
+	return (string) ob_get_clean();
 }

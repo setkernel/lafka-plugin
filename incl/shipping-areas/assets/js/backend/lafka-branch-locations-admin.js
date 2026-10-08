@@ -1,178 +1,254 @@
-!(function (i) {
+/**
+ * Products → Lafka Branch Locations (add / edit a branch), plus the branch
+ * settings that ride along on the product editor and Lafka Shipping Settings.
+ *
+ *   - Address geocoding: type the address and press "Geocode", or click the
+ *     map (the click is the branch's point; its address fills the field).
+ *     The point goes into the hidden #lafka_branch_address_geocoded input as
+ *     URL-encoded JSON { lat, lng }; only a geocoded branch can be chosen by
+ *     customers. Works with either map provider (window.lafkaMaps).
+ *   - Branch image (media frame), Select2 fields, the weekly order-hours
+ *     editor (jquery.schedule) and the holidays calendar (flatpickr).
+ *   - After "Add New Branch Location" (an AJAX save) the form is reset.
+ *
+ * Params: window.lafka_branch_location_properties (labels + options).
+ */
+( function ( $, window, document ) {
 	'use strict';
-	function _(a, e, o, n) {
-		(null !== a &&
-			((a.value = ''), (document.getElementById('lafka_branch_distance_restriction').value = '')),
-			(e.value = ''),
-			n.setMap(null),
-			o.setCenter(new google.maps.LatLng('0', '0')),
-			o.setZoom(2));
-	}
-	function d(e, o, a, n, t, r) {
-		(_(e, o, n, t),
-			a
-				.geocode(r)
-				.then((a) => {
-					a = a.results;
-					return (
-						'APPROXIMATE' === a[0].geometry.location_type
-							? alert(lafka_branch_location_properties.geocode_approximate)
-							: (s(n, t, a[0].geometry.location),
-								(e.value = a[0].formatted_address),
-								(o.value = encodeURIComponent(JSON.stringify(a[0].geometry.location)))),
-						a
-					);
-				})
-				.catch((a) => {
-					alert(lafka_branch_location_properties.geocode_error + ': ' + a);
-				}));
-	}
-	function s(a, e, o) {
-		(a.setCenter(o), a.setZoom(10), e.setPosition(o), e.setMap(a));
-	}
-	function u() {
-		(i('#lafka_branch_location_img')
-			.find('img')
-			.attr('src', lafka_branch_location_properties.placeholder_image_src),
-			i('#lafka_branch_location_img_id').val(''),
-			i('.lafka_branch_location_img_remove_image_button').hide());
-	}
-	(i(document).ajaxComplete(function (a, e, o) {
-		const n = new URLSearchParams(o.data);
-		if ('edit-lafka_branch_location' === n.get('screen')) {
-			(_(
-				document.getElementById('lafka_branch_address'),
-				document.getElementById('lafka_branch_address_geocoded'),
-				window.lafka_branch_location_map,
-				window.branch_location_map_marker,
-			),
-				u(),
-				i(document).find('#lafka_branch_user').val(null).trigger('change'));
-			const t = i(document).find('#lafka_branch_order_type'),
-				r =
-					(t.val(t.find('option:first').val()),
-					i(document).find('#lafka_branch_shipping_areas').val(null).trigger('change'),
-					i(document).find('#lafka_branch_distance_restriction').val(''),
-					i(document).find('#lafka_branch_distance_unit')),
-				c =
-					(r.val(r.find('option:first').val()),
-					i(document)
-						.find('#lafka_branch_override_datetime_global')
-						.prop('checked', !1)
-						.trigger('change'),
-					i(document)
-						.find('#lafka_branch_datetime_mandatory')
-						.prop('checked', !1)
-						.trigger('change'),
-					i(document).find('#lafka_branch_datetime_days_ahead').val('30'),
-					i(document).find('#lafka_branch_datetime_timeslot_duration').val('60'),
-					i(document)
-						.find('#lafka_branch_override_order_hours_global')
-						.prop('checked', !1)
-						.trigger('change'),
-					i(document).find('#lafka_branch_timezone').val('default').trigger('change'),
-					i(document).find('#lafka_branch_order_hours_force_override_check').prop('checked', !1),
-					i(document).find('#lafka_branch_order_hours_force_override_status')),
-				l =
-					(c.val(c.find('option:first').val()),
-					i(document).find('#lafka_branch_order_hours_schedule').val(''),
-					i(document).find('#lafka_branch_order_hours_container').jqs('reset'),
-					i(document).find('#lafka_branch_order_hours_holidays_calendar'));
-			l.length && l.flatpickr({ mode: 'multiple' }).clear();
+
+	const props = window.lafka_branch_location_properties || {};
+	let branchMap = null;
+	let branchMarker = null;
+
+	/** @return {?HTMLInputElement} The address field. */
+	const addressField = () => document.getElementById( 'lafka_branch_address' );
+	/** @return {?HTMLInputElement} The hidden geocoded point. */
+	const pointField = () => document.getElementById( 'lafka_branch_address_geocoded' );
+
+	/**
+	 * Show `point` as the branch location and store it.
+	 *
+	 * @param {{lat: number, lng: number}} point Point.
+	 * @param {boolean}                    store Write the hidden field too.
+	 */
+	function showPoint( point, store ) {
+		if ( ! branchMap ) {
+			return;
 		}
-	}),
-		window.addEventListener('DOMContentLoaded', function () {
-			let a;
-			(!(function (e, o) {
-				let a = document.getElementById('lafka_geocode_branch_location_map');
-				if (null === a) return;
-				void 0 === e &&
-					((e = new google.maps.Map(a, {
-						center: new google.maps.LatLng('0', '0'),
-						zoom: 2,
-						mapTypeControl: !1,
-					})),
-					(window.lafka_branch_location_map = e));
-				const n = new google.maps.Geocoder(),
-					t = document.getElementById('lafka_branch_address'),
-					r = document.getElementById('lafka_branch_address_geocoded'),
-					c = document.createElement('input'),
-					l =
-						((c.type = 'button'),
-						(c.value = lafka_branch_location_properties.geocode_label),
-						c.classList.add('lafka-geocode-branch-button', 'lafka-geocode-branch-address-submit'),
-						document.createElement('input'));
-				((l.type = 'button'),
-					(l.value = lafka_branch_location_properties.clear_label),
-					l.classList.add('lafka-geocode-branch-button', 'lafka-geocode-branch-address-clear'),
-					e.controls[google.maps.ControlPosition.TOP_LEFT].push(t),
-					e.controls[google.maps.ControlPosition.TOP_LEFT].push(c),
-					e.controls[google.maps.ControlPosition.TOP_LEFT].push(l),
-					void 0 === o &&
-						((o = new google.maps.Marker({ map: e })), (window.branch_location_map_marker = o)));
-				(e.addListener('click', (a) => {
-					d(t, r, n, e, o, { location: a.latLng });
-				}),
-					c.addEventListener('click', () => d(t, r, n, e, o, { address: t.value })),
-					l.addEventListener('click', () => {
-						_(t, r, e, o);
-					}),
-					t.addEventListener('change', (a) => {
-						a.target.value || _(null, r, e, o);
-					}),
-					r.value
-						? ((a = JSON.parse(decodeURIComponent(r.value))),
-							s(e, o, new google.maps.LatLng(a.lat, a.lng)))
-						: _(t, r, e, o));
-			})(),
-				i('#lafka_branch_location_img_id').val() ||
-					i('.lafka_branch_location_img_remove_image_button').hide(),
-				i(document).on('click', '.lafka_branch_location_img_upload_image_button', function (a) {
-					a.preventDefault();
-					let o;
-					(o ||
-						(o = wp.media({
-							title: lafka_branch_location_properties.choose_image_label,
-							button: { text: lafka_branch_location_properties.use_image_label },
-							multiple: !1,
-						})).on('select', function () {
-							const a = o.state().get('selection').first().toJSON();
-							let e;
-							((e = (void 0 === a.sizes.thumbnail ? a.sizes.full : a.sizes.thumbnail).url),
-								i('#lafka_branch_location_img_id').val(a.id),
-								i('#lafka_branch_location_img').find('img').attr('src', e),
-								i('.lafka_branch_location_img_remove_image_button').show());
-						}),
-						o.open());
-				}),
-				i(document).on('click', '.lafka_branch_location_img_remove_image_button', function () {
-					return (u(), !1);
-				}),
-				i('.lafka-admin-select2').select2(),
-				i('#autocomplete_countries').select2({ maximumSelectionLength: 5 }),
-				lafka_branch_location_properties.products_by_branches ||
-					i(document.body).find('#tagsdiv-lafka_branch_location').hide(),
-				(a = (function (a) {
-					try {
-						const e = JSON.parse(a);
-						if (e && 'object' == typeof e) return e;
-					} catch {
-						return [];
-					}
-					return [];
-				})(i('#lafka_branch_order_hours_schedule').val())),
-				i(document).find('#lafka_branch_order_hours_container').jqs({ data: a, periodOptions: !1 }),
-				i(document)
-					.find(
-						'body.taxonomy-lafka_branch_location form#addtag input:submit, body.taxonomy-lafka_branch_location form#edittag input:submit',
-					)
-					.on('click', function () {
-						i(document)
-							.find('#lafka_branch_order_hours_schedule')
-							.val(i(document).find('#lafka_branch_order_hours_container').jqs('export'));
-					}),
-				i(document)
-					.find('#lafka_branch_order_hours_holidays_calendar')
-					.flatpickr({ mode: 'multiple' }));
-		}));
-})(window.jQuery);
+		if ( branchMarker ) {
+			branchMarker.set( point );
+		} else {
+			branchMarker = branchMap.marker( point, { draggable: true, onMove: ( moved ) => showPoint( moved, true ) } );
+		}
+		branchMap.view( point, 15 );
+		if ( store && pointField() ) {
+			pointField().value = encodeURIComponent( JSON.stringify( { lat: point.lat, lng: point.lng } ) );
+		}
+	}
+
+	/**
+	 * Forget the location (and, with `address`, the typed address too).
+	 *
+	 * @param {boolean} address Clear the address field as well.
+	 */
+	function clearPoint( address ) {
+		if ( address && addressField() ) {
+			addressField().value = '';
+		}
+		if ( pointField() ) {
+			pointField().value = '';
+		}
+		if ( branchMarker ) {
+			branchMarker.remove();
+			branchMarker = null;
+		}
+		if ( branchMap && window.lafkaMaps ) {
+			branchMap.view( window.lafkaMaps.defaults, window.lafkaMaps.defaults.zoom );
+		}
+	}
+
+	/** Geocode the typed address. */
+	function geocodeAddress() {
+		const maps = window.lafkaMaps;
+		const field = addressField();
+		if ( ! maps || ! field || ! field.value.trim() ) {
+			return;
+		}
+		maps.geocode( field.value ).then(
+			( result ) => {
+				if ( ! result ) {
+					window.alert( maps.i18n.notFound || props.geocode_error );
+				} else if ( ! result.precise ) {
+					window.alert( props.geocode_approximate );
+				} else {
+					showPoint( result, true );
+				}
+			},
+			( error ) => window.alert( props.geocode_error + ': ' + error.message )
+		);
+	}
+
+	/**
+	 * A map click: that point is the branch; fill the address from it.
+	 *
+	 * @param {{lat: number, lng: number}} point Clicked point.
+	 */
+	function pickPoint( point ) {
+		showPoint( point, true );
+		window.lafkaMaps.reverse( point ).then(
+			( result ) => {
+				if ( result && result.label && addressField() ) {
+					addressField().value = result.label;
+				}
+			},
+			() => {}
+		);
+	}
+
+	/** Build the map under the address field (branch term screens only). */
+	function initMap() {
+		const container = document.getElementById( 'lafka_geocode_branch_location_map' );
+		const field = addressField();
+		if ( ! container || ! field || ! window.lafkaMaps ) {
+			return;
+		}
+
+		const buttons = document.createElement( 'span' );
+		buttons.className = 'lafka-geocode-branch-buttons';
+		[
+			[ props.geocode_label, 'lafka-geocode-branch-address-submit', geocodeAddress ],
+			[ props.clear_label, 'lafka-geocode-branch-address-clear', () => clearPoint( true ) ],
+		].forEach( ( [ label, className, action ] ) => {
+			const button = document.createElement( 'input' );
+			button.type = 'button';
+			button.value = label;
+			button.className = 'button lafka-geocode-branch-button ' + className;
+			button.addEventListener( 'click', action );
+			buttons.appendChild( button );
+		} );
+		field.insertAdjacentElement( 'afterend', buttons );
+		field.addEventListener( 'keydown', ( event ) => {
+			if ( 'Enter' === event.key ) {
+				event.preventDefault();
+				geocodeAddress();
+			}
+		} );
+		field.addEventListener( 'change', () => {
+			if ( ! field.value ) {
+				clearPoint( false );
+			}
+		} );
+
+		window.lafkaMaps.ready().then( ( maps ) => {
+			branchMap = maps.map( container, maps.defaults );
+			if ( ! branchMap ) {
+				return;
+			}
+			branchMap.onClick( pickPoint );
+			const saved = maps.point( pointField() ? pointField().value : '' );
+			if ( saved ) {
+				showPoint( saved, false );
+			}
+		} );
+	}
+
+	/** Put the branch image back to the placeholder. */
+	function resetImage() {
+		$( '#lafka_branch_location_img' ).find( 'img' ).attr( 'src', props.placeholder_image_src );
+		$( '#lafka_branch_location_img_id' ).val( '' );
+		$( '.lafka_branch_location_img_remove_image_button' ).hide();
+	}
+
+	/** Pick the first option of a select. */
+	function firstOption( selector ) {
+		const select = $( selector );
+		select.val( select.find( 'option:first' ).val() );
+	}
+
+	/** After "Add New Branch Location" saved over AJAX, empty the form. */
+	function resetAddForm() {
+		clearPoint( true );
+		resetImage();
+		$( '#lafka_branch_user' ).val( null ).trigger( 'change' );
+		firstOption( '#lafka_branch_order_type' );
+		$( '#lafka_branch_shipping_areas' ).val( null ).trigger( 'change' );
+		$( '#lafka_branch_distance_restriction' ).val( '' );
+		firstOption( '#lafka_branch_distance_unit' );
+		$( '#lafka_branch_override_datetime_global' ).prop( 'checked', false ).trigger( 'change' );
+		$( '#lafka_branch_datetime_mandatory' ).prop( 'checked', false ).trigger( 'change' );
+		$( '#lafka_branch_datetime_days_ahead' ).val( '30' );
+		$( '#lafka_branch_datetime_timeslot_duration' ).val( '60' );
+		$( '#lafka_branch_override_order_hours_global' ).prop( 'checked', false ).trigger( 'change' );
+		$( '#lafka_branch_timezone' ).val( 'default' ).trigger( 'change' );
+		$( '#lafka_branch_order_hours_force_override_check' ).prop( 'checked', false );
+		firstOption( '#lafka_branch_order_hours_force_override_status' );
+		$( '#lafka_branch_order_hours_schedule' ).val( '' );
+		$( '#lafka_branch_order_hours_container' ).jqs( 'reset' );
+		const holidays = $( '#lafka_branch_order_hours_holidays_calendar' );
+		if ( holidays.length ) {
+			holidays.flatpickr( { mode: 'multiple' } ).clear();
+		}
+	}
+
+	/** Branch image: media frame upload / remove. */
+	function initImage() {
+		if ( ! $( '#lafka_branch_location_img_id' ).val() ) {
+			$( '.lafka_branch_location_img_remove_image_button' ).hide();
+		}
+		$( document ).on( 'click', '.lafka_branch_location_img_upload_image_button', function ( event ) {
+			event.preventDefault();
+			const frame = wp.media( {
+				title: props.choose_image_label,
+				button: { text: props.use_image_label },
+				multiple: false,
+			} );
+			frame.on( 'select', function () {
+				const attachment = frame.state().get( 'selection' ).first().toJSON();
+				const size = attachment.sizes && attachment.sizes.thumbnail ? attachment.sizes.thumbnail : attachment.sizes.full;
+				$( '#lafka_branch_location_img_id' ).val( attachment.id );
+				$( '#lafka_branch_location_img' ).find( 'img' ).attr( 'src', size.url );
+				$( '.lafka_branch_location_img_remove_image_button' ).show();
+			} );
+			frame.open();
+		} );
+		$( document ).on( 'click', '.lafka_branch_location_img_remove_image_button', function () {
+			resetImage();
+			return false;
+		} );
+	}
+
+	/** The weekly order-hours editor and the holidays calendar. */
+	function initOrderHours() {
+		let schedule;
+		try {
+			const parsed = JSON.parse( $( '#lafka_branch_order_hours_schedule' ).val() );
+			schedule = parsed && 'object' === typeof parsed ? parsed : [];
+		} catch {
+			schedule = [];
+		}
+		$( '#lafka_branch_order_hours_container' ).jqs( { data: schedule, periodOptions: false } );
+		$( 'body.taxonomy-lafka_branch_location' )
+			.find( 'form#addtag input:submit, form#edittag input:submit' )
+			.on( 'click', function () {
+				$( '#lafka_branch_order_hours_schedule' ).val( $( '#lafka_branch_order_hours_container' ).jqs( 'export' ) );
+			} );
+		$( '#lafka_branch_order_hours_holidays_calendar' ).flatpickr( { mode: 'multiple' } );
+	}
+
+	$( document ).ajaxComplete( function ( event, xhr, settings ) {
+		if ( 'edit-lafka_branch_location' === new URLSearchParams( settings.data ).get( 'screen' ) ) {
+			resetAddForm();
+		}
+	} );
+
+	document.addEventListener( 'DOMContentLoaded', function () {
+		initMap();
+		initImage();
+		$( '.lafka-admin-select2' ).select2();
+		$( '#autocomplete_countries' ).select2( { maximumSelectionLength: 5 } );
+		if ( ! props.products_by_branches ) {
+			$( '#tagsdiv-lafka_branch_location' ).hide();
+		}
+		initOrderHours();
+	} );
+} )( window.jQuery, window, document );

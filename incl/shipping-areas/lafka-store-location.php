@@ -1,19 +1,14 @@
 <?php
 /**
- * The store location delivery areas measure from.
+ * The store location delivery areas measure from: an admin notice and a Site
+ * Health check while it is missing.
  *
- * Shipping Areas → Advanced → "Set Store Location" is either "geocode the
- * WooCommerce store address" or "pick the location on a map". The map picker
- * used to fall back to a hard-coded Sydney, Australia position and write it
- * into the setting as soon as the page opened, so saving the settings page
- * persisted Sydney as the store — and every radius check measured from there.
- *
- * lafka_store_location_settings() is the one reader: a picked location is
- * used only when it is a valid coordinate pair and not that legacy
- * placeholder; otherwise the store is "not configured" and delivery maths
- * falls back to geocoding the WooCommerce store address (the other supported
- * mode) instead of measuring from a wrong point. The operator is told through
- * an admin notice and a Site Health check.
+ * The store point itself is lafka_get_store_point() (incl/geo/lafka-geo.php):
+ * the business geo, else a valid pre-10.4 Shipping Settings pin. The old
+ * admin map fell back to a hard-coded Sydney, Australia position and wrote it
+ * as soon as the page opened, so many stores still have that placeholder
+ * saved; it is never read as a location (lafka_geo_point() rejects it) and
+ * the notice names it.
  *
  * @package Lafka\Plugin\ShippingAreas
  * @since   10.2.0
@@ -21,113 +16,23 @@
 
 defined( 'ABSPATH' ) || exit;
 
-if ( ! function_exists( 'lafka_parse_store_map_location' ) ) {
-	/**
-	 * Parse a saved store location (URL-encoded JSON {lat,lng}, as the admin
-	 * map writes it, or plain JSON). Null when missing, malformed, out of
-	 * range, or the legacy Sydney placeholder.
-	 *
-	 * @param mixed $raw Saved value.
-	 * @return array{lat:float,lng:float}|null
-	 */
-	function lafka_parse_store_map_location( $raw ): ?array {
-		if ( ! is_string( $raw ) || '' === trim( $raw ) ) {
-			return null;
-		}
-		$decoded = json_decode( rawurldecode( $raw ), true );
-		if ( ! is_array( $decoded ) || ! isset( $decoded['lat'], $decoded['lng'] ) || ! is_numeric( $decoded['lat'] ) || ! is_numeric( $decoded['lng'] ) ) {
-			return null;
-		}
-		$lat = (float) $decoded['lat'];
-		$lng = (float) $decoded['lng'];
-		if ( $lat < -90 || $lat > 90 || $lng < -180 || $lng > 180 ) {
-			return null;
-		}
-		if ( lafka_is_legacy_store_location_placeholder( $lat, $lng ) ) {
-			return null;
-		}
-
-		return array(
-			'lat' => $lat,
-			'lng' => $lng,
-		);
-	}
-}
-
-if ( ! function_exists( 'lafka_is_legacy_store_location_placeholder' ) ) {
-	/**
-	 * Whether a coordinate is the Sydney default the old admin map saved on
-	 * its own (Google's geocode of "Sydney"). No store pins that exact point.
-	 *
-	 * @param float $lat Latitude.
-	 * @param float $lng Longitude.
-	 * @return bool
-	 */
-	function lafka_is_legacy_store_location_placeholder( float $lat, float $lng ): bool {
-		return abs( $lat - -33.8688197 ) < 1e-6 && abs( $lng - 151.2092955 ) < 1e-6;
-	}
-}
-
-if ( ! function_exists( 'lafka_store_location_settings' ) ) {
-	/**
-	 * The effective store-location configuration.
-	 *
-	 * @return array{status:string,mode:string,location:string} status: 'ok' (a
-	 *         valid picked location), 'geocode' (geocode mode chosen),
-	 *         'missing' / 'placeholder' (pick mode without a usable location);
-	 *         mode: the mode delivery maths should use; location: the saved
-	 *         value to use ('' unless status is 'ok').
-	 */
-	function lafka_store_location_settings(): array {
-		$options = get_option( 'lafka_shipping_areas_advanced' );
-		$options = is_array( $options ) ? $options : array();
-		$mode    = empty( $options['set_store_location'] ) ? 'geo_woo_store' : (string) $options['set_store_location'];
-
-		if ( 'pick_store_address' !== $mode ) {
-			return array(
-				'status'   => 'geocode',
-				'mode'     => 'geo_woo_store',
-				'location' => '',
-			);
-		}
-
-		$raw = isset( $options['store_map_location'] ) ? $options['store_map_location'] : '';
-		if ( null !== lafka_parse_store_map_location( $raw ) ) {
-			return array(
-				'status'   => 'ok',
-				'mode'     => 'pick_store_address',
-				'location' => (string) $raw,
-			);
-		}
-
-		$decoded = is_string( $raw ) ? json_decode( rawurldecode( $raw ), true ) : null;
-		$legacy  = is_array( $decoded ) && isset( $decoded['lat'], $decoded['lng'] ) && is_numeric( $decoded['lat'] ) && is_numeric( $decoded['lng'] )
-			&& lafka_is_legacy_store_location_placeholder( (float) $decoded['lat'], (float) $decoded['lng'] );
-
-		return array(
-			'status'   => $legacy ? 'placeholder' : 'missing',
-			'mode'     => 'geo_woo_store',
-			'location' => '',
-		);
-	}
-}
-
 if ( ! function_exists( 'lafka_store_location_problem' ) ) {
 	/**
-	 * Operator-facing explanation when the picked location is unusable ('' when fine).
+	 * Operator-facing explanation when the store has no location ('' when fine).
 	 *
 	 * @return string
 	 */
 	function lafka_store_location_problem(): string {
-		$status = lafka_store_location_settings()['status'];
-		if ( 'placeholder' === $status ) {
-			return __( 'The saved store location is the old built-in placeholder (Sydney, Australia), not your store. Until you pin your store on the map, delivery distances are measured from a geocode of your WooCommerce store address.', 'lafka-plugin' );
+		if ( null !== lafka_get_store_point() ) {
+			return '';
 		}
-		if ( 'missing' === $status ) {
-			return __( 'No store location has been pinned on the map yet. Until you pin your store, delivery distances are measured from a geocode of your WooCommerce store address.', 'lafka-plugin' );
+		$advanced = get_option( 'lafka_shipping_areas_advanced' );
+		$raw      = is_array( $advanced ) && isset( $advanced['store_map_location'] ) && is_string( $advanced['store_map_location'] ) ? json_decode( rawurldecode( $advanced['store_map_location'] ), true ) : null;
+		if ( is_array( $raw ) && isset( $raw['lat'], $raw['lng'] ) && is_numeric( $raw['lat'] ) && is_numeric( $raw['lng'] ) && lafka_is_legacy_store_location_placeholder( (float) $raw['lat'], (float) $raw['lng'] ) ) {
+			return __( 'The saved store location is the old built-in placeholder (Sydney, Australia), not your store. Pin your store on the map so delivery maps start there and distances are measured from it.', 'lafka-plugin' );
 		}
 
-		return '';
+		return __( 'Your store has no map location yet. Pin it on the map (or enter the coordinates under WooCommerce → Settings → Restaurant) so delivery maps start there and distances are measured from it.', 'lafka-plugin' );
 	}
 }
 

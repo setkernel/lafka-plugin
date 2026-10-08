@@ -64,7 +64,7 @@ class Lafka_Branch_Locations {
 	}
 
 	public static function enqueue_scripts() {
-		// PERF-C11: Only load Google Maps JS (~200 KB), branch location scripts, and localized
+		// PERF-C11: Only load the map library, branch location scripts, and localized
 		// data on WooCommerce pages that actually use branch selection (checkout, cart, shop,
 		// product pages). Blog posts, about pages, etc. don't need these.
 		if ( function_exists( 'is_checkout' ) && ! is_checkout() && ! is_cart() && ! is_shop() && ! is_product() && ! is_product_category() && ! is_product_tag() && ! is_woocommerce() ) {
@@ -83,30 +83,24 @@ class Lafka_Branch_Locations {
 			$closable_because_of_option = true;
 		}
 
-		// Skip the front-end branch-locations JS entirely when Google Maps
-		// isn't configured: the script hard-depends on `google.maps.*` being
-		// loaded and would throw on every page-load otherwise. The modal
-		// markup (output_in_footer) is skipped with it.
-		if ( wp_script_is( 'lafka-google-maps', 'registered' ) ) {
-			$branch_front_js = lafka_plugin_script_path( 'incl/shipping-areas/assets/js/frontend/lafka-branch-locations-front.min.js' );
-			wp_enqueue_script(
-				'lafka-branch-locations-front',
-				plugins_url( $branch_front_js, LAFKA_PLUGIN_FILE ),
-				array(
-					'lafka-google-maps',
-					'jquery-blockui',
-					'wc-country-select',
-					// P3-04: this script calls $.magnificPopup.open() for the
-					// branch-selection modal; branch selection is on the order
-					// critical path, so magnific is preserved as a dep here while
-					// removed from the global enqueue everywhere else.
-					'magnific',
-				),
-				lafka_plugin_asset_version( $branch_front_js ),
-				true
-			);
-			wp_enqueue_style( 'magnific' );
+		// Delivery locates the customer's address on a map provider (keyless
+		// OpenStreetMap, or Google with a key); a pickup-only store needs no
+		// map at all, so it loads none.
+		$deps = array(
+			'jquery-blockui',
+			'wc-country-select',
+			// P3-04: this script calls $.magnificPopup.open() for the
+			// branch-selection modal; branch selection is on the order
+			// critical path, so magnific is preserved as a dep here while
+			// removed from the global enqueue everywhere else.
+			'magnific',
+		);
+		if ( in_array( 'delivery', self::get_order_type(), true ) && lafka_enqueue_maps( false ) ) {
+			$deps[] = 'lafka-maps';
 		}
+		$branch_front_js = lafka_plugin_script_path( 'incl/shipping-areas/assets/js/frontend/lafka-branch-locations-front.min.js' );
+		wp_enqueue_script( 'lafka-branch-locations-front', plugins_url( $branch_front_js, LAFKA_PLUGIN_FILE ), $deps, lafka_plugin_asset_version( $branch_front_js ), true );
+		wp_enqueue_style( 'magnific' );
 		wp_localize_script(
 			'lafka-branch-locations-front',
 			'lafka_branch_locations_front',
@@ -123,7 +117,9 @@ class Lafka_Branch_Locations {
 				'please_wait_message'                 => esc_html__( 'Please wait', 'lafka-plugin' ),
 				'info_message_select_branch_delivery' => esc_html__( 'Select from branches serving your area', 'lafka-plugin' ),
 				'info_message_select_branch_pickup'   => esc_html__( 'Select a branch', 'lafka-plugin' ),
-				'error_message_no_address'            => esc_html__( 'Please type your address and select suggestion or click on "Use current location...".', 'lafka-plugin' ),
+				'error_message_no_address'            => 'google' === lafka_maps_provider()
+					? esc_html__( 'Please type your address and choose a suggestion, or use your current location.', 'lafka-plugin' )
+					: esc_html__( 'Please type your address and press Find, or use your current location.', 'lafka-plugin' ),
 				'error_message_json_parse'            => esc_html__( 'Something is wrong. Please try again.', 'lafka-plugin' ),
 				'error_message_no_suitable_branches'  => esc_html__( 'Sorry, your address cannot be served by any of our branches.', 'lafka-plugin' ),
 				'error_message_not_found'             => esc_html__( 'No results found.', 'lafka-plugin' ),
@@ -140,9 +136,8 @@ class Lafka_Branch_Locations {
 		if ( function_exists( 'is_checkout' ) && ! is_checkout() && ! is_cart() && ! is_shop() && ! is_product() && ! is_product_category() && ! is_product_tag() && ! is_woocommerce() ) {
 			return;
 		}
-		// The modal is driven entirely by its script, which is only enqueued
-		// when Google Maps is configured; without it the markup would print
-		// as an inert block under the footer.
+		// The modal is driven entirely by its script; without it the markup
+		// would print as an inert block under the footer.
 		if ( ! wp_script_is( 'lafka-branch-locations-front', 'enqueued' ) ) {
 			return;
 		}
@@ -224,7 +219,11 @@ class Lafka_Branch_Locations {
 					<div class="lafka-branch-user-address">
 						<label for="lafka_branch_select_user_address"><?php esc_html_e( 'Address', 'lafka-plugin' ); ?>
 							<input type="text" id="lafka_branch_select_user_address" name="lafka_branch_select_user_address"
+									autocomplete="street-address"
 									placeholder="<?php esc_html_e( 'Enter a delivery address', 'lafka-plugin' ); ?>"/>
+							<?php if ( 'google' !== lafka_maps_provider() ) : ?>
+								<button type="button" class="button lafka-branch-find-address"><?php esc_html_e( 'Find', 'lafka-plugin' ); ?></button>
+							<?php endif; ?>
 							<?php if ( empty( $options_branches['disable_current_location'] ) ) : ?>
 								<a href="javascript:" class="lafka-branch-auto-locate" title="<?php esc_html_e( 'Use current location', 'lafka-plugin' ); ?>">
 									<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 11l18-8-8 18-2-8-8-2z"/></svg>

@@ -1,58 +1,42 @@
-let lafka_defined_polygon_coordinates = [];
-function lafka_shipping_areas_init_define_area() {
-	const a = new google.maps.Map(
-			document.getElementById('lafka-shipping-areas-admin-define-area-map'),
-			{ center: new google.maps.LatLng('0', '0'), zoom: 2 },
-		),
-		e = (lafka_init_polygon_coordinates(), new google.maps.LatLngBounds()),
-		n =
-			(lafka_defined_polygon_coordinates.forEach((a) => {
-				e.extend(a);
-			}),
-			new google.maps.Polygon({
-				path: lafka_defined_polygon_coordinates,
-				editable: !0,
-				strokeColor: '#0073ff',
-				strokeOpacity: 0.8,
-				strokeWeight: 3,
-				fillColor: '#0073ff',
-				fillOpacity: 0.35,
-			}));
-	(lafka_shipping_areas_define_events(a, n), n.setMap(a), e.isEmpty() || a.fitBounds(e));
-}
-function lafka_shipping_areas_define_events(a, n) {
-	(a.addListener('click', (a) => {
-		lafka_add_polygon_coordinate(n, a.latLng);
-	}),
-		n.addListener('click', (a) => {
-			if (void 0 !== a.vertex) {
-				const e = n.getPath();
-				(e.removeAt(a.vertex), lafka_update_polygon_path_and_input(n, e));
-			}
-		}),
-		n.getPath().addListener('set_at', () => {
-			const a = n.getPath();
-			lafka_update_polygon_path_and_input(n, a);
-		}),
-		n.getPath().addListener('insert_at', () => {
-			const a = n.getPath();
-			lafka_update_polygon_path_and_input(n, a);
-		}));
-}
-function lafka_add_polygon_coordinate(a, e) {
-	const n = a.getPath();
-	(n.push(e), lafka_update_polygon_path_and_input(a, n));
-}
-function lafka_update_polygon_path_and_input(a, e) {
-	(a.setPath(e),
-		(document.getElementById('lafka_shipping_area_polygon_coordinates').value =
-			google.maps.geometry.encoding.encodePath(a.getPath())));
-}
-function lafka_init_polygon_coordinates() {
-	lafka_defined_polygon_coordinates = google.maps.geometry.encoding.decodePath(
-		document.getElementById('lafka_shipping_area_polygon_coordinates').value,
-	);
-}
-window.addEventListener('DOMContentLoaded', function () {
-	lafka_shipping_areas_init_define_area();
-});
+/**
+ * Delivery zone editor (the "Draw Shipping Area" box on a Lafka Shipping
+ * Area): click the map to add a corner, drag a corner to move it, click a
+ * corner to remove it, drag a midpoint to insert a corner.
+ *
+ * The polygon is stored in the hidden #lafka_shipping_area_polygon_coordinates
+ * input as an Encoded Polyline (Google's algorithm, lafkaMaps.polyline) — the
+ * format the server decodes for the checkout geo-fence
+ * (Lafka_Shipping_Areas::decode_polygon_coordinates()), the branch modal and
+ * the [lafka_shipping_areas] map read. Works with either map provider.
+ *
+ * An existing zone opens fitted to its polygon; a new one on
+ * window.lafkaMapDefaults (the store, else the store's region).
+ */
+( function ( window, document ) {
+	'use strict';
+
+	function init( maps ) {
+		const container = document.getElementById( 'lafka-shipping-areas-admin-define-area-map' );
+		const input = document.getElementById( 'lafka_shipping_area_polygon_coordinates' );
+		if ( ! container || ! input ) {
+			return;
+		}
+		const path = maps.polyline.decode( input.value );
+		const map = maps.map( container, maps.defaults );
+		if ( ! map ) {
+			return;
+		}
+		map.editor( path, ( points ) => {
+			input.value = maps.polyline.encode( points );
+		} );
+		if ( path.length ) {
+			map.fit( path );
+		}
+	}
+
+	document.addEventListener( 'DOMContentLoaded', () => {
+		if ( window.lafkaMaps ) {
+			window.lafkaMaps.ready().then( init );
+		}
+	} );
+} )( window, document );

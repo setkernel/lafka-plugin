@@ -1,19 +1,5 @@
-#shipping_method li {
-    opacity: 0.75;
-}
-
 #lafka-pick-delivery-address-checkout-map {
     height: 400px;
-}
-
-.lafka-geocode-debug-info {
-    overflow-wrap: break-word;
-}
-
-button.button.lafka-disabled {
-    opacity: 0.5;
-    cursor: default;
-    background: #333;
 }
 
 .pac-container {
@@ -144,18 +130,27 @@ a.lafka-branch-delivery, a.lafka-branch-pickup {
     font-weight: 700;
 }
 
+/* Order-type icons: the theme's icon set when it provides one
+   (--lafka-icon-truck / --lafka-icon-bag), else these built-in drawings. */
 a.lafka-branch-delivery::before, a.lafka-branch-pickup::before {
     display: inline-block;
-    font-family: Flaticon, sans-serif;
-    content: "\f11e";
+    width: 21px;
+    height: 21px;
     margin-right: 8px;
-    font-size: 21px;
     vertical-align: middle;
-    font-weight: 400;
+    content: "";
+    background-color: currentcolor;
+    -webkit-mask: var(--lafka-icon-truck, url(data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27%23000%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M2%206h12v10H2z%27%2F%3E%3Cpath%20d%3D%27M14%2010h4l3%203v3h-7%27%2F%3E%3Ccircle%20cx%3D%276.5%27%20cy%3D%2717.5%27%20r%3D%271.5%27%2F%3E%3Ccircle%20cx%3D%2717.5%27%20cy%3D%2717.5%27%20r%3D%271.5%27%2F%3E%3C%2Fsvg%3E)) center / 21px 21px no-repeat;
+    mask: var(--lafka-icon-truck, url(data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27%23000%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M2%206h12v10H2z%27%2F%3E%3Cpath%20d%3D%27M14%2010h4l3%203v3h-7%27%2F%3E%3Ccircle%20cx%3D%276.5%27%20cy%3D%2717.5%27%20r%3D%271.5%27%2F%3E%3Ccircle%20cx%3D%2717.5%27%20cy%3D%2717.5%27%20r%3D%271.5%27%2F%3E%3C%2Fsvg%3E)) center / 21px 21px no-repeat;
 }
 
 a.lafka-branch-pickup::before {
-    content: "\f125";
+    -webkit-mask-image: var(--lafka-icon-bag, url(data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27%23000%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M5%208h14l-1.2%2012H6.2L5%208z%27%2F%3E%3Cpath%20d%3D%27M9%208a3%203%200%200%201%206%200%27%2F%3E%3C%2Fsvg%3E));
+    mask-image: var(--lafka-icon-bag, url(data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%20fill%3D%27none%27%20stroke%3D%27%23000%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M5%208h14l-1.2%2012H6.2L5%208z%27%2F%3E%3Cpath%20d%3D%27M9%208a3%203%200%200%201%206%200%27%2F%3E%3C%2Fsvg%3E));
+}
+
+.lafka-branch-user-address .lafka-branch-find-address {
+    margin: 6px 0 0;
 }
 
 .lafka-branch-select-tip {
@@ -168,10 +163,6 @@ a.lafka-branch-pickup::before {
 
 h3.lafka-address-not-found, h3.lafka-address-marked {
     display: none;
-}
-
-form.checkout h3.lafka-address-not-found, form.checkout h3.lafka-address-marked {
-    opacity: 0;
 }
 
 .woocommerce form.checkout h3.lafka-address-not-found, .woocommerce form.checkout h3.lafka-address-marked {
@@ -299,7 +290,7 @@ a.lafka-change-branch-button::before, .lafka-change-branch-button-select::before
     display: inline-block;
     margin: 0 4px 0 0;
     vertical-align: middle;
-    content: "\f06a";
+    content: "";
     font-size: 14px;
 }
 

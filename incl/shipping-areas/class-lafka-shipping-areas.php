@@ -226,49 +226,29 @@ class Lafka_Shipping_Areas {
 		}
 
 		if ( is_cart() || is_checkout() ) {
-			// The handle-shipping JS uses Google Maps for geo-fencing the
-			// customer's address against zone polygons. With no key the JS
-			// has no way to validate, so skip it — server-side validation in
-			// `validate_checkout_field_process` independently enforces the
-			// pinpoint's presence, valid lat/lng, and a point-in-polygon test
-			// against the published delivery zones, so the order is still gated
-			// even when the client-side map never loads.
-			if ( wp_script_is( 'lafka-google-maps', 'registered' ) ) {
-				$handle_shipping_js = lafka_plugin_script_path( 'incl/shipping-areas/assets/js/frontend/lafka-shipping-areas-handle-shipping.min.js' );
-				wp_enqueue_script(
-					'lafka-shipping-areas-handle-shipping',
-					plugins_url( $handle_shipping_js, LAFKA_PLUGIN_FILE ),
-					array(
-						'jquery',
-						'lafka-google-maps',
-						'jquery-blockui',
-					),
-					lafka_plugin_asset_version( $handle_shipping_js ),
-					true
-				);
+			// The branch bar follows the typed address on the classic cart and
+			// checkout; on the checkout the delivery pin map draws with the
+			// configured provider (keyless OpenStreetMap, or Google with a key).
+			// The server re-checks the pin against the delivery zones either way
+			// (validate_checkout_field_process()).
+			$options = get_option( 'lafka_shipping_areas_general' );
+			$deps    = array( 'jquery', 'jquery-blockui' );
+			if ( is_checkout() && ! empty( $options['pick_delivery_address'] ) && self::delivery_pinpoint_ui_available() && lafka_enqueue_maps() ) {
+				$deps[] = 'lafka-maps';
 			}
-
-			$options                 = get_option( 'lafka_shipping_areas_general' );
-			$options_advanced        = get_option( 'lafka_shipping_areas_advanced' );
-			$branch_location_session = WC()->session->get( 'lafka_branch_location' );
-			// A missing/placeholder picked location falls back to geocoding the
-			// WooCommerce store address rather than measuring from a wrong point.
-			$store_location = lafka_store_location_settings();
-
-			// Init a properties variable
-			wp_add_inline_script(
+			$branch_location_session = WC()->session ? WC()->session->get( 'lafka_branch_location' ) : null;
+			$handle_shipping_js      = lafka_plugin_script_path( 'incl/shipping-areas/assets/js/frontend/lafka-shipping-areas-handle-shipping.min.js' );
+			wp_enqueue_script( 'lafka-shipping-areas-handle-shipping', plugins_url( $handle_shipping_js, LAFKA_PLUGIN_FILE ), $deps, lafka_plugin_asset_version( $handle_shipping_js ), true );
+			wp_localize_script(
 				'lafka-shipping-areas-handle-shipping',
-				'
-				const lafka_shipping_properties = {};
-				const lafka_no_shipping_methods_string = ' . wp_json_encode( __( 'There are no shipping options available. Please ensure that your address has been entered correctly, or contact us if you need any help.', 'lafka-plugin' ) ) . ';
-				const lafka_debug_mode = ' . ( empty( $options_advanced['debug_mode'] ) ? 'false' : 'true' ) . ';
-				const lafka_lowest_cost_shipping = ' . ( empty( $options['lowest_cost_shipping'] ) ? 'false' : 'true' ) . ';
-				const lafka_store_address = ' . wp_json_encode( self::get_store_address() ) . ';
-				const lafka_set_store_location = ' . wp_json_encode( $store_location['mode'] ) . ';
-				const lafka_store_map_location = ' . wp_json_encode( $store_location['location'] ) . ';
-				const lafka_order_type = ' . wp_json_encode( empty( $branch_location_session['order_type'] ) ? '' : $branch_location_session['order_type'] ) . ';
-				',
-				'before'
+				'lafkaCheckoutMap',
+				array(
+					'orderType' => is_array( $branch_location_session ) && ! empty( $branch_location_session['order_type'] ) ? (string) $branch_location_session['order_type'] : '',
+					'mode'      => empty( $options['pick_delivery_address'] ) ? '' : (string) $options['pick_delivery_address'],
+					'i18n'      => array(
+						'locating' => __( 'Finding your location…', 'lafka-plugin' ),
+					),
+				)
 			);
 		}
 
@@ -520,39 +500,16 @@ class Lafka_Shipping_Areas {
 		echo '<h3 class="lafka-address-not-found">' . esc_html( $title ) . '</h3>';
 		echo '<h3 class="lafka-address-marked">' . esc_html__( 'Pinpoint your location on the map if it\'s not accurately marked.', 'lafka-plugin' ) . '</h3>';
 
-		woocommerce_form_field(
-			'lafka_picked_delivery_geocoded',
-			array(
-				'type'  => 'text',
-				'class' => array(
-					'hidden',
-				),
-				'label' => esc_html__( 'Please Precise Your Location', 'lafka-plugin' ),
-			)
-		);
-		woocommerce_form_field(
-			'lafka_is_location_clicked',
-			array(
-				'type'  => 'text',
-				'class' => array(
-					'hidden',
-				),
-			)
-		);
+		// The pin and whether the customer placed it themselves (the script
+		// writes both; validate_checkout_field_process() reads them).
+		echo '<input type="hidden" name="lafka_picked_delivery_geocoded" id="lafka_picked_delivery_geocoded" value="">';
+		echo '<input type="hidden" name="lafka_is_location_clicked" id="lafka_is_location_clicked" value="">';
 
+		echo '<button type="button" class="button lafka-map-locate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 11l18-8-8 18-2-8-8-2z"/></svg>' . esc_html__( 'Use my location', 'lafka-plugin' ) . '</button>';
+		echo '<p class="lafka-map-message" role="status"></p>';
 		echo '<div id="lafka-pick-delivery-address-content">';
 		echo '<div id="lafka-pick-delivery-address-checkout-map">';
 		echo '</div></div></div>';
-
-		wp_add_inline_script(
-			'lafka-shipping-areas-handle-shipping',
-			'lafka_checkout_map_properties = ' . wp_json_encode(
-				array(
-					'pick_delivery_address_option' => $options['pick_delivery_address'],
-				)
-			),
-			'before'
-		);
 	}
 
 	/**
@@ -586,21 +543,22 @@ class Lafka_Shipping_Areas {
 
 	/**
 	 * Whether this checkout can show the delivery pin map: the classic
-	 * checkout (the block checkout has no pin UI yet) with a map provider
-	 * loaded. Without it a mandatory pin would refuse every delivery order.
+	 * checkout (the block checkout has no pin UI yet) with a map provider. The
+	 * keyless provider (OpenStreetMap) always is one, so this is only false on
+	 * the block checkout or when `lafka_maps_provider` switches maps off.
+	 * Without a pin UI a mandatory pin would refuse every delivery order.
 	 *
 	 * @return bool
 	 */
 	public static function delivery_pinpoint_ui_available(): bool {
 		$classic   = ! class_exists( 'Lafka_Checkout_Mode' ) || Lafka_Checkout_Mode::is_classic();
-		$has_map   = function_exists( 'lafka_google_maps_script_url' ) && '' !== lafka_google_maps_script_url( 'places' );
-		$available = $classic && $has_map;
+		$available = $classic && function_exists( 'lafka_maps_available' ) && lafka_maps_available();
 
 		/**
 		 * Filter whether the checkout can collect a delivery pin.
 		 *
 		 * @since 10.4.0
-		 * @param bool $available Classic checkout with a map provider loaded.
+		 * @param bool $available Classic checkout with a map provider.
 		 */
 		return (bool) apply_filters( 'lafka_delivery_pinpoint_ui_available', $available );
 	}
@@ -685,9 +643,8 @@ class Lafka_Shipping_Areas {
 			return;
 		}
 
-		// Server-side geo-fence: reproduce the client-side Google Maps check in
-		// lafka-shipping-areas-handle-shipping.min.js so a tampered or skipped JS
-		// run can't push an out-of-zone address through. The point must fall
+		// Server-side geo-fence: the authority on the pin, so a tampered or
+		// skipped script can't push an out-of-zone address through. The point must fall
 		// inside at least one published delivery-zone polygon. The SAME
 		// is_point_in_delivery_zone() test is the authority on the Store API /
 		// block-checkout path (Lafka_Store_Api::validate_geo_fence()), so the two
@@ -746,12 +703,11 @@ class Lafka_Shipping_Areas {
 
 	/**
 	 * Build the list of delivery-zone polygons from every published
-	 * lafka_shipping_areas post. Each post stores its polygon as a Google Maps
-	 * "Encoded Polyline Algorithm Format" string in
-	 * `_lafka_shipping_area_polygon_coordinates` — the very value the frontend
-	 * feeds to google.maps.geometry.encoding.decodePath() (and that
-	 * get_branch_locations_json_data ships to the client). Decoding it here lets
-	 * the server reproduce the client geo-fence.
+	 * lafka_shipping_areas post. Each post stores its polygon as an "Encoded
+	 * Polyline Algorithm Format" string (Google's algorithm) in
+	 * `_lafka_shipping_area_polygon_coordinates` — the value the zone editor
+	 * writes with lafkaMaps.polyline.encode() and the branch modal and zone
+	 * map decode (get_branch_locations_json_data ships it to the client).
 	 *
 	 * @return array List of polygons, each an array of [ lat, lng ] float pairs.
 	 */
@@ -774,9 +730,9 @@ class Lafka_Shipping_Areas {
 	}
 
 	/**
-	 * Decode a Google Maps "Encoded Polyline Algorithm Format" string into a
-	 * list of [ lat, lng ] float pairs. Server-side mirror of
-	 * google.maps.geometry.encoding.decodePath() used on the client. Pure
+	 * Decode an "Encoded Polyline Algorithm Format" string into a list of
+	 * [ lat, lng ] float pairs. Server-side mirror of lafkaMaps.polyline.decode()
+	 * (assets/js/lafka-maps.js). Pure
 	 * function with no WordPress dependencies, so it is unit-testable.
 	 *
 	 * @param string $encoded Encoded polyline string.
@@ -893,24 +849,6 @@ class Lafka_Shipping_Areas {
 		$long = $location->lng;
 
 		return '<a target="_blank" href="https://www.google.com/maps/search/?api=1&query=' . $lat . ',' . $long . '" >' . esc_html__( 'Open delivery location with Google Maps', 'lafka-plugin' ) . '</a>';
-	}
-
-	public static function get_store_address(): string {
-		$store_address     = get_option( 'woocommerce_store_address', '' );
-		$store_address_2   = get_option( 'woocommerce_store_address_2', '' );
-		$store_city        = get_option( 'woocommerce_store_city', '' );
-		$store_postcode    = get_option( 'woocommerce_store_postcode', '' );
-		$store_raw_country = get_option( 'woocommerce_default_country', '' );
-		$split_country     = explode( ':', $store_raw_country );
-		// Country and state
-		$store_country = $split_country[0];
-		// Convert country code to full name if available
-		if ( isset( WC()->countries->countries[ $store_country ] ) ) {
-			$store_country = WC()->countries->countries[ $store_country ];
-		}
-		$store_state = $split_country[1] ?? '';
-
-		return $store_address . ' ' . $store_address_2 . ' ' . $store_postcode . ' ' . $store_city . ' ' . $store_state . ' ' . $store_country;
 	}
 
 	public static function get_all_legit_branch_locations(): array {

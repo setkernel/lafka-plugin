@@ -1,125 +1,40 @@
-!(function (a) {
+/**
+ * Lafka Shipping Settings: show a dependent setting only when the setting it
+ * depends on makes it meaningful.
+ *
+ *   "Mandatory to pick address"  only when the checkout pin map is on;
+ *   "Hide Address Fields"        only when pickup is an order type.
+ *
+ * (The handlers for the retired Lafka shipping method's zone modal were
+ * removed with that method: WooCommerce Distance Rate Shipping replaced it in
+ * 9.1.0, and no screen renders its fields.)
+ */
+( function ( $ ) {
 	'use strict';
-	a(document).ready(function () {
-		(_(), e(), i(), o());
-	});
-	const e = function () {
-			const e = a('#lafka-plugin-shipping-areas-form'),
-				o = e.find('.lafka-shipping-pick-store-location-container');
-			('geo_woo_store' === e.find('#set_store_location').val() ? o.hide() : o.show(),
-				e.on('change', '#set_store_location', function () {
-					o.toggle();
-				}));
-		},
-		o = function () {
-			(a(document.body).on('wc_backbone_modal_loaded', function () {
-				(a(document.body)
-					.find('#woocommerce_lafka_shipping_areas_method_delivery_area')
-					.closest('tr')
-					.hide(),
-					a(document.body)
-						.find('#woocommerce_lafka_shipping_areas_method_max_radius')
-						.closest('tr')
-						.hide(),
-					a(document.body)
-						.find('#woocommerce_lafka_shipping_areas_method_restrict_by')
-						.trigger('change'),
-					a(document.body)
-						.find('#woocommerce_lafka_shipping_areas_method_rate')
-						.closest('tr')
-						.hide(),
-					a(document.body)
-						.find('#woocommerce_lafka_shipping_areas_method_rate_fixed')
-						.closest('tr')
-						.hide(),
-					a(document.body)
-						.find('#woocommerce_lafka_shipping_areas_method_rate_distance')
-						.closest('tr')
-						.hide(),
-					a(document.body)
-						.find('#woocommerce_lafka_shipping_areas_method_round_distance')
-						.closest('tr')
-						.hide(),
-					a(document.body)
-						.find('#woocommerce_lafka_shipping_areas_method_rate_mode')
-						.trigger('change'));
-			}),
-				a(document.body).on(
-					'change',
-					'#woocommerce_lafka_shipping_areas_method_rate_mode',
-					function () {
-						switch (a(this).val()) {
-							case 'flat':
-								c(['#woocommerce_lafka_shipping_areas_method_rate']);
-								break;
-							case 'distance':
-								c([
-									'#woocommerce_lafka_shipping_areas_method_rate_distance',
-									'#woocommerce_lafka_shipping_areas_method_round_distance',
-								]);
-								break;
-							case 'fixed_and_distance':
-								c([
-									'#woocommerce_lafka_shipping_areas_method_rate_fixed',
-									'#woocommerce_lafka_shipping_areas_method_rate_distance',
-									'#woocommerce_lafka_shipping_areas_method_round_distance',
-								]);
-						}
-					},
-				),
-				a(document.body).on(
-					'change',
-					'#woocommerce_lafka_shipping_areas_method_restrict_by',
-					function () {
-						switch (a(this).val()) {
-							case 'shipping_area':
-								n(['#woocommerce_lafka_shipping_areas_method_delivery_area']);
-								break;
-							case 'radius':
-								n(['#woocommerce_lafka_shipping_areas_method_max_radius']);
-								break;
-							case 'none':
-								n([]);
-						}
-					},
-				));
-		},
-		_ = function () {
-			const e = a(document.body).find('#lafka-plugin-shipping-areas-form #pick_delivery_address');
-			(e.on('change', function () {
-				const e = a(document.body).find(
-					'#lafka-plugin-shipping-areas-form #mandatory_pickup_delivery',
-				);
-				a(this).val() ? e.closest('tr').show() : e.closest('tr').hide();
-			}),
-				e.trigger('change'));
-		},
-		i = function () {
-			const e = a(document.body).find('#lafka-plugin-shipping-areas-form #order_type');
-			(e.on('change', function () {
-				const e = a(document.body).find('#lafka-plugin-shipping-areas-form #hide_address_fields');
-				'delivery_pickup' === a(this).val() || 'pickup' === a(this).val()
-					? e.closest('tr').show()
-					: e.closest('tr').hide();
-			}),
-				e.trigger('change'));
-		},
-		n = function (o) {
-			[
-				'#woocommerce_lafka_shipping_areas_method_delivery_area',
-				'#woocommerce_lafka_shipping_areas_method_max_radius',
-			].forEach(function (e) {
-				o.includes(e) ? a(e).closest('tr').show(400) : a(e).closest('tr').hide();
-			});
-		},
-		c = function (o) {
-			[
-				'#woocommerce_lafka_shipping_areas_method_rate',
-				'#woocommerce_lafka_shipping_areas_method_rate_fixed',
-				'#woocommerce_lafka_shipping_areas_method_rate_distance',
-				'#woocommerce_lafka_shipping_areas_method_round_distance',
-			].forEach(function (e) {
-				o.includes(e) ? a(e).closest('tr').show(400) : a(e).closest('tr').hide();
-			});
-		};
-})(window.jQuery);
+
+	/**
+	 * Toggle the settings row of `dependent` whenever `controller` changes.
+	 *
+	 * @param {string}   controller Selector of the controlling field.
+	 * @param {string}   dependent  Selector of the dependent field.
+	 * @param {Function} shown      Receives the controller value; true shows the row.
+	 */
+	function dependsOn( controller, dependent, shown ) {
+		const form = $( '#lafka-plugin-shipping-areas-form' );
+		const field = form.find( controller );
+		const row = form.find( dependent ).closest( 'tr' );
+		if ( ! field.length || ! row.length ) {
+			return;
+		}
+		field
+			.on( 'change', function () {
+				row.toggle( shown( $( this ).val() ) );
+			} )
+			.trigger( 'change' );
+	}
+
+	$( function () {
+		dependsOn( '#pick_delivery_address', '#mandatory_pickup_delivery', ( value ) => '' !== value );
+		dependsOn( '#order_type', '#hide_address_fields', ( value ) => 'delivery_pickup' === value || 'pickup' === value );
+	} );
+} )( window.jQuery );

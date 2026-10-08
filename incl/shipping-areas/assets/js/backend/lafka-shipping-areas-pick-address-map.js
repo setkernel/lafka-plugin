@@ -1,132 +1,117 @@
 /**
- * Shipping Areas → Advanced → "Pick Store Location": the admin map.
+ * Lafka Shipping Settings → Advanced → "Store location": the admin map.
  *
- * The hidden #store_map_location input is written ONLY when the operator
- * pins the store — a map click, the address search, or "Geocode WooCommerce
- * Store Address". Opening (and saving) the page never writes a location.
- * With nothing saved, the map centres on a geocode of the WooCommerce store
- * address (no marker), or shows a neutral world view when that fails.
+ * The store point is the business geo (lafka_business_geo_lat / _lng), the
+ * one place the store's coordinates live: the schema, the directions links
+ * and every map read it. This map shows it and lets the operator move it:
+ * click the map, drag the pin, search an address, or geocode the WooCommerce
+ * store address. Each writes the hidden #lafka_store_point input
+ * (URL-encoded JSON { lat, lng }); saving the settings stores it as the
+ * business geo (Lafka_Shipping_Areas_Admin::sanitize_advanced_settings()).
+ * Opening and saving the page without pinning changes nothing.
  *
- * Params: lafka_admin_map_params = { saved_store_address_lat_long, store_address }.
+ * With no point yet the map opens on window.lafkaMapDefaults (the WooCommerce
+ * base region, else Canada).
+ *
+ * Params: window.lafkaStorePicker = { point: { lat, lng } | null, storeAddress, i18n }.
  */
-let markers = [];
+( function ( window, document ) {
+	'use strict';
 
-const LAFKA_WORLD_VIEW = { center: { lat: 20, lng: 0 }, zoom: 2 };
+	const params = window.lafkaStorePicker || {};
+	const i18n = params.i18n || {};
 
-function lafka_admin_map_config() {
-	return 'undefined' !== typeof lafka_admin_map_params && lafka_admin_map_params ? lafka_admin_map_params : {};
-}
-
-function lafka_parse_saved_location( raw ) {
-	if ( ! raw ) {
-		return null;
-	}
-	let value;
-	try {
-		value = JSON.parse( decodeURIComponent( raw ) );
-	} catch {
-		return null;
-	}
-	const lat = value ? parseFloat( value.lat ) : NaN;
-	const lng = value ? parseFloat( value.lng ) : NaN;
-	if ( ! isFinite( lat ) || ! isFinite( lng ) || Math.abs( lat ) > 90 || Math.abs( lng ) > 180 ) {
-		return null;
-	}
-	return { lat, lng };
-}
-
-function lafka_admin_init_store_location_map() {
-	const container = document.getElementById( 'lafka-shipping-areas-admin-store-map' );
-	if ( ! container ) {
-		return;
-	}
-	const params = lafka_admin_map_config();
-	const saved = lafka_parse_saved_location( params.saved_store_address_lat_long );
-	const storeAddress = String( params.store_address || '' ).trim();
-
-	const map = new google.maps.Map(
-		container,
-		saved ? { center: saved, zoom: 12 } : { center: LAFKA_WORLD_VIEW.center, zoom: LAFKA_WORLD_VIEW.zoom }
-	);
-	const geocoder = new google.maps.Geocoder();
-
-	if ( saved ) {
-		lafka_show_marker( map, saved );
-	} else if ( storeAddress ) {
-		// Orientation only: centre on the store address, no marker, no write.
-		geocoder
-			.geocode( { address: storeAddress } )
-			.then( ( { results } ) => {
-				if ( results && results[ 0 ] ) {
-					map.setCenter( results[ 0 ].geometry.location );
-					map.setZoom( 12 );
-				}
-			} )
-			.catch( () => {} );
+	/**
+	 * Write the chosen point into the hidden field the form saves.
+	 *
+	 * @param {{lat: number, lng: number}} point Point.
+	 */
+	function store( point ) {
+		const input = document.getElementById( 'lafka_store_point' );
+		if ( input ) {
+			input.value = encodeURIComponent( JSON.stringify( { lat: Number( point.lat.toFixed( 7 ) ), lng: Number( point.lng.toFixed( 7 ) ) } ) );
+		}
+		const shown = document.getElementById( 'lafka-store-point-coordinates' );
+		if ( shown ) {
+			shown.textContent = point.lat.toFixed( 6 ) + ', ' + point.lng.toFixed( 6 );
+		}
 	}
 
-	map.addListener( 'click', ( event ) => lafka_pick_location( map, event.latLng ) );
+	/**
+	 * @param {string} text Message ('' clears it).
+	 */
+	function say( text ) {
+		const box = document.getElementById( 'lafka-store-point-message' );
+		if ( box ) {
+			box.textContent = text || '';
+		}
+	}
 
-	const search = document.getElementById( 'lafka-shipping-areas-floating-search-panel-submit' );
-	if ( search ) {
-		search.addEventListener( 'click', () => lafka_geocode_address( geocoder, map, '' ) );
-	}
-	const locate = document.getElementById( 'lafka_shipping_store_map_locate' );
-	if ( locate ) {
-		locate.addEventListener( 'click', () => lafka_geocode_address( geocoder, map, storeAddress ) );
-	}
-}
+	function init( maps ) {
+		const container = document.getElementById( 'lafka-shipping-areas-admin-store-map' );
+		if ( ! container ) {
+			return;
+		}
+		const saved = maps.point( params.point );
+		const map = maps.map( container, saved ? { lat: saved.lat, lng: saved.lng, zoom: 15 } : maps.defaults );
+		if ( ! map ) {
+			return;
+		}
+		let marker = null;
 
-function lafka_geocode_address( geocoder, map, address ) {
-	const input = document.getElementById( 'lafka-shipping-areas-search-address' );
-	const query = '' === address ? ( input ? input.value : '' ) : address;
-	if ( ! query ) {
-		return Promise.resolve();
-	}
-	return geocoder
-		.geocode( { address: query } )
-		.then( ( { results } ) => {
-			if ( ! results || ! results[ 0 ] ) {
+		const pick = ( point ) => {
+			if ( marker ) {
+				marker.set( point );
+			} else {
+				marker = map.marker( point, { draggable: true, onMove: pick } );
+			}
+			store( point );
+			say( '' );
+		};
+
+		if ( saved ) {
+			marker = map.marker( saved, { draggable: true, onMove: pick } );
+		}
+		map.onClick( pick );
+
+		const lookUp = ( query ) => {
+			if ( ! query ) {
 				return;
 			}
-			map.setCenter( results[ 0 ].geometry.location );
-			map.setZoom( 12 );
-			lafka_pick_location( map, results[ 0 ].geometry.location );
-		} )
-		.catch( ( error ) => window.alert( 'Geocode was not successful for the following reason: ' + error ) );
-}
+			say( i18n.searching || '' );
+			maps.geocode( query ).then(
+				( result ) => {
+					if ( ! result ) {
+						say( maps.i18n.notFound || '' );
+						return;
+					}
+					map.view( result, 16 );
+					pick( result );
+				},
+				( error ) => say( error.message )
+			);
+		};
 
-/** The operator chose this point: show it and store it. */
-function lafka_pick_location( map, position ) {
-	lafka_show_marker( map, position );
-	lafka_fill_input( position );
-}
-
-function lafka_show_marker( map, position ) {
-	lafka_delete_markers();
-	markers.push( new google.maps.Marker( { position, map } ) );
-	map.panTo( position );
-}
-
-function lafka_delete_markers() {
-	for ( let i = 0; i < markers.length; i++ ) {
-		markers[ i ].setMap( null );
+		const search = document.getElementById( 'lafka-shipping-areas-floating-search-panel-submit' );
+		const field = document.getElementById( 'lafka-shipping-areas-search-address' );
+		if ( search && field ) {
+			search.addEventListener( 'click', () => lookUp( field.value.trim() ) );
+			field.addEventListener( 'keydown', ( event ) => {
+				if ( 'Enter' === event.key ) {
+					event.preventDefault();
+					lookUp( field.value.trim() );
+				}
+			} );
+		}
+		const locate = document.getElementById( 'lafka_shipping_store_map_locate' );
+		if ( locate ) {
+			locate.addEventListener( 'click', () => lookUp( String( params.storeAddress || '' ).trim() ) );
+		}
 	}
-	markers = [];
-}
 
-function lafka_fill_input( position ) {
-	const input = document.getElementById( 'store_map_location' );
-	if ( ! input ) {
-		return;
-	}
-	const point =
-		position && 'function' === typeof position.lat
-			? { lat: position.lat(), lng: position.lng() }
-			: { lat: position.lat, lng: position.lng };
-	input.value = encodeURIComponent( JSON.stringify( point ) );
-}
-
-window.addEventListener( 'DOMContentLoaded', function () {
-	lafka_admin_init_store_location_map();
-} );
+	document.addEventListener( 'DOMContentLoaded', () => {
+		if ( window.lafkaMaps ) {
+			window.lafkaMaps.ready().then( init, ( error ) => say( error.message ) );
+		}
+	} );
+} )( window, document );
