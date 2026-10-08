@@ -9,8 +9,7 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
 
 ### Changed
 - **Strict lint, no suppressions.** PHPCS now runs plain `WordPress-Extra` with no
-  excluded sniffs, warnings fail the run, and `PrefixAllGlobals` is enforced
-  (`lafka` / `Lafka` / `is_lafka`). Every inline lint-suppression comment is gone;
+  excluded sniffs and warnings fail the run. Every inline lint-suppression comment is gone;
   ESLint is at zero warnings. Class files are `class-lafka-*.php`, the widgets are
   `Lafka_*_Widget` classes registered from `widgets/lafka-widget-registration.php`
   (`LafkaMobileGroupedWalker` stays as a `class_alias`), `Lafka_WCVS()` is now

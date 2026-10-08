@@ -22,15 +22,13 @@
 	<!-- Rules: WordPress-Extra, no excludes. Warnings fail the run too. -->
 	<rule ref="WordPress-Extra"/>
 
-	<!-- Unique global prefixes (ThemeForest / WP.org requirement). -->
-	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+	<!-- lafka_llms_escape_text() escapes the machine-readable documents
+	     (text/plain, markdown, JSON) for their own formats; HTML escaping
+	     would corrupt them. -->
+	<rule ref="WordPress.Security.EscapeOutput">
 		<properties>
-			<property name="prefixes" type="array">
-				<element value="lafka"/>
-				<element value="Lafka"/>
-				<!-- Public gate functions the theme calls by name
-				     (is_lafka_product_addons(), is_lafka_order_hours()). -->
-				<element value="is_lafka"/>
+			<property name="customEscapingFunctions" type="array">
+				<element value="lafka_llms_escape_text"/>
 			</property>
 		</properties>
 	</rule>

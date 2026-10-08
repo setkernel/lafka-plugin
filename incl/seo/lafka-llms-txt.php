@@ -574,8 +574,25 @@ if ( ! function_exists( 'lafka_llms_serve' ) ) {
 		foreach ( lafka_llms_response_headers( $type ) as $line ) {
 			header( $line );
 		}
-		echo lafka_llms_document( $type );
+		echo lafka_llms_escape_text( lafka_llms_document( $type ) );
 		exit;
+	}
+}
+
+if ( ! function_exists( 'lafka_llms_escape_text' ) ) {
+	/**
+	 * Escape a machine-readable document (text/plain, text/markdown or JSON,
+	 * always sent with `nosniff`) for output. HTML entity escaping would corrupt
+	 * these formats, so this enforces what the formats need instead: valid UTF-8
+	 * and no control characters other than tab and line breaks. Registered as an
+	 * escaping function in .phpcs.xml.dist.
+	 *
+	 * @param string $text Document body.
+	 * @return string
+	 */
+	function lafka_llms_escape_text( string $text ): string {
+		$text = wp_check_invalid_utf8( $text, true );
+		return (string) preg_replace( '/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $text );
 	}
 }
 
