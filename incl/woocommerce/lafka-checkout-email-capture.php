@@ -48,8 +48,7 @@ if ( ! function_exists( 'lafka_pdp_save_checkout_email_capture' ) ) {
 		if ( ! lafka_verify_checkout_nonce() || empty( $_POST['lafka_winback_email'] ) ) {
 			return;
 		}
-		$raw   = wp_unslash( $_POST['lafka_winback_email'] );
-		$email = sanitize_email( $raw );
+		$email = sanitize_email( wp_unslash( $_POST['lafka_winback_email'] ) );
 		if ( ! $email || ! is_email( $email ) ) {
 			return;
 		}

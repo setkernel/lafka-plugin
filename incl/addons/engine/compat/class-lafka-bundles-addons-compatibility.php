@@ -175,7 +175,7 @@ class Lafka_Bundles_Addons_Compatibility {
 		// rebuilt from a saved order, not from a fresh user submission.
 		if (
 			isset( $_GET['order_again'], $_GET['_wpnonce'] )
-			&& wp_verify_nonce( wc_clean( wp_unslash( $_GET['_wpnonce'] ) ), 'woocommerce-order_again' )
+			&& wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ), 'woocommerce-order_again' )
 		) {
 			return (bool) $passed;
 		}

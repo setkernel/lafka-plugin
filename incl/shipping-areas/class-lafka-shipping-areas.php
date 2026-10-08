@@ -341,7 +341,7 @@ class Lafka_Shipping_Areas {
 		// lat/lng bounds here as a final guard and simply skip the meta write if
 		// the payload is unusable, rather than silently storing junk.
 		if ( ! empty( $_POST['lafka_picked_delivery_geocoded'] ) && ! empty( $_POST['lafka_is_location_clicked'] ) ) {
-			$raw_geocoded = wp_unslash( $_POST['lafka_picked_delivery_geocoded'] );
+			$raw_geocoded = sanitize_text_field( wp_unslash( $_POST['lafka_picked_delivery_geocoded'] ) );
 			$decoded      = json_decode( $raw_geocoded );
 
 			// Validate JSON structure contains valid lat/lng

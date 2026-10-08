@@ -47,7 +47,7 @@ class Lafka_Engine_Ajax {
 		}
 
 		$existing_raw = isset( $_POST['existing'] ) && is_array( $_POST['existing'] )
-			? wp_unslash( $_POST['existing'] )
+			? map_deep( wp_unslash( $_POST['existing'] ), 'sanitize_text_field' )
 			: array();
 
 		$existing_options = array();

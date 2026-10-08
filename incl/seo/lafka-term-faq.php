@@ -183,6 +183,30 @@ if ( ! function_exists( 'lafka_term_faq_edit_field' ) ) {
 	}
 }
 
+if ( ! function_exists( 'lafka_sanitize_term_faq_rows' ) ) {
+	/**
+	 * Sanitize the posted FAQ repeater (already unslashed): the question is
+	 * plain text, the answer allows post HTML. Rows that are not arrays are
+	 * dropped.
+	 *
+	 * @param mixed $raw Unslashed `lafka_term_faq` request value.
+	 * @return array<int,array{q:string,a:string}>
+	 */
+	function lafka_sanitize_term_faq_rows( $raw ): array {
+		$rows = array();
+		foreach ( (array) $raw as $row ) {
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+			$rows[] = array(
+				'q' => sanitize_text_field( (string) ( $row['q'] ?? '' ) ),
+				'a' => wp_kses_post( (string) ( $row['a'] ?? '' ) ),
+			);
+		}
+		return $rows;
+	}
+}
+
 if ( ! function_exists( 'lafka_term_faq_save' ) ) {
 	/**
 	 * Save the FAQ rows (edited_ / created_product_cat). Requires the core
@@ -202,18 +226,7 @@ if ( ! function_exists( 'lafka_term_faq_save' ) ) {
 		if ( empty( $_POST['lafka_term_faq_present'] ) ) {
 			return;
 		}
-		// Sanitised per field below; wp_unslash applied to the whole map first.
-		$raw  = isset( $_POST['lafka_term_faq'] ) && is_array( $_POST['lafka_term_faq'] ) ? wp_unslash( $_POST['lafka_term_faq'] ) : array();
-		$rows = array();
-		foreach ( (array) $raw as $row ) {
-			if ( ! is_array( $row ) ) {
-				continue;
-			}
-			$rows[] = array(
-				'q' => sanitize_text_field( (string) ( $row['q'] ?? '' ) ),
-				'a' => wp_kses_post( (string) ( $row['a'] ?? '' ) ),
-			);
-		}
+		$rows = isset( $_POST['lafka_term_faq'] ) && is_array( $_POST['lafka_term_faq'] ) ? lafka_sanitize_term_faq_rows( wp_unslash( $_POST['lafka_term_faq'] ) ) : array();
 		$faqs = lafka_seo_normalize_faqs( $rows );
 		if ( empty( $faqs ) ) {
 			delete_term_meta( (int) $term_id, LAFKA_TERM_FAQ_META );

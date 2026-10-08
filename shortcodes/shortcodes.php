@@ -1656,7 +1656,7 @@ if ( ! function_exists( 'lafka_woo_recent_viewed_products_shortcode' ) ) {
 			$atts
 		);
 
-		$viewed_products = ! empty( $_COOKIE['woocommerce_recently_viewed'] ) ? (array) explode( '|', wp_unslash( $_COOKIE['woocommerce_recently_viewed'] ) ) : array();
+		$viewed_products = ! empty( $_COOKIE['woocommerce_recently_viewed'] ) ? (array) explode( '|', sanitize_text_field( wp_unslash( $_COOKIE['woocommerce_recently_viewed'] ) ) ) : array();
 		$viewed_products = array_reverse( array_filter( array_map( 'absint', $viewed_products ) ) );
 
 		if ( empty( $viewed_products ) ) {

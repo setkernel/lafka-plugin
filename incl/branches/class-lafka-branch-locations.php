@@ -282,7 +282,12 @@ class Lafka_Branch_Locations {
 	public static function select_branch() {
 		check_ajax_referer( 'lafka_select_branch' );
 
-		$fields_string = sanitize_text_field( wp_unslash( $_POST['fields'] ) );
+		// The script posts encodeURIComponent( form.serialize() ), so the value is
+		// a query string encoded twice: urldecode() undoes the outer layer and
+		// parse_str() the inner one. Each field is sanitized below once decoded;
+		// sanitize_text_field() must not run on the encoded string, because it
+		// strips every %XX sequence and so every separator with it.
+		$fields_string = isset( $_POST['fields'] ) ? urldecode( wp_strip_all_tags( wp_unslash( $_POST['fields'] ) ) ) : '';
 		parse_str( $fields_string, $fields );
 
 		// Sanitize all parsed field values

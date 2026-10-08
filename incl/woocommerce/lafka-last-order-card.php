@@ -189,6 +189,59 @@ if ( ! function_exists( 'lafka_pdp_remember_confirmed_order' ) ) {
 	add_action( 'template_redirect', 'lafka_pdp_remember_confirmed_order' );
 }
 
+if ( ! function_exists( 'lafka_pdp_parse_last_order_cookie' ) ) {
+	/**
+	 * Decode the (unslashed) last-order cookie and accept it only when every
+	 * field has the type lafka_pdp_last_order_cookie_value() writes; anything
+	 * else yields null.
+	 *
+	 * Values are type-checked, not rewritten: the reorder endpoint re-signs the
+	 * items exactly as decoded and compares that HMAC with the cookie's, so any
+	 * rewrite would void a genuine cookie. The item name is display text that
+	 * every output path escapes, and the reorder endpoint casts and sanitizes
+	 * each field before it touches the cart.
+	 *
+	 * @param mixed $raw Unslashed cookie value.
+	 * @return array|null The decoded payload, or null when it is malformed.
+	 */
+	function lafka_pdp_parse_last_order_cookie( $raw ): ?array {
+		$parsed = is_string( $raw ) ? json_decode( $raw, true ) : null;
+		if ( ! is_array( $parsed ) || ! isset( $parsed['items'] ) || ! is_array( $parsed['items'] ) ) {
+			return null;
+		}
+		if ( isset( $parsed['order_id'] ) && ! is_int( $parsed['order_id'] ) ) {
+			return null;
+		}
+		if ( isset( $parsed['sig'] ) && ! is_string( $parsed['sig'] ) ) {
+			return null;
+		}
+		foreach ( $parsed['items'] as $item ) {
+			if ( ! is_array( $item ) ) {
+				return null;
+			}
+			foreach ( array( 'product_id', 'variation_id', 'qty' ) as $int_key ) {
+				if ( isset( $item[ $int_key ] ) && ! is_int( $item[ $int_key ] ) ) {
+					return null;
+				}
+			}
+			if ( isset( $item['name'] ) && ! is_string( $item['name'] ) ) {
+				return null;
+			}
+			if ( isset( $item['variation'] ) ) {
+				if ( ! is_array( $item['variation'] ) ) {
+					return null;
+				}
+				foreach ( $item['variation'] as $value ) {
+					if ( ! is_scalar( $value ) ) {
+						return null;
+					}
+				}
+			}
+		}
+		return $parsed;
+	}
+}
+
 if ( ! function_exists( 'lafka_pdp_get_last_order' ) ) {
 	function lafka_pdp_get_last_order(): ?array {
 		if ( is_user_logged_in() ) {
@@ -221,9 +274,8 @@ if ( ! function_exists( 'lafka_pdp_get_last_order' ) ) {
 		}
 
 		if ( ! empty( $_COOKIE[ LAFKA_PDP_LAST_ORDER_COOKIE ] ) ) {
-			$raw    = wp_unslash( $_COOKIE[ LAFKA_PDP_LAST_ORDER_COOKIE ] );
-			$parsed = json_decode( (string) $raw, true );
-			if ( is_array( $parsed ) && isset( $parsed['items'] ) && is_array( $parsed['items'] ) ) {
+			$parsed = lafka_pdp_parse_last_order_cookie( wp_unslash( $_COOKIE[ LAFKA_PDP_LAST_ORDER_COOKIE ] ) );
+			if ( null !== $parsed ) {
 				return $parsed;
 			}
 		}

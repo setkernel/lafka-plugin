@@ -652,7 +652,7 @@ class Lafka_Shipping_Areas_Admin {
 
 			// verify this came from our screen and with proper authorization,
 			// because save_post can be triggered at other times
-			if ( ! wp_verify_nonce( $_POST['lafka_shipping_area_polygon_nonce'], 'lafka_shipping_area_save' ) ) {
+			if ( ! isset( $_POST['lafka_shipping_area_polygon_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['lafka_shipping_area_polygon_nonce'] ) ), 'lafka_shipping_area_save' ) ) {
 				return;
 			}
 
@@ -660,7 +660,10 @@ class Lafka_Shipping_Areas_Admin {
 				return;
 			}
 
-			update_post_meta( $post_id, '_lafka_shipping_area_polygon_coordinates', sanitize_text_field( $_POST['lafka_shipping_area_polygon_coordinates'] ) );
+			// A Google encoded polyline: its alphabet includes the backslash, so the
+			// unslashed value is re-slashed for update_post_meta(), which unslashes
+			// what it stores.
+			update_post_meta( $post_id, '_lafka_shipping_area_polygon_coordinates', wp_slash( sanitize_text_field( wp_unslash( $_POST['lafka_shipping_area_polygon_coordinates'] ) ) ) );
 		}
 	}
 

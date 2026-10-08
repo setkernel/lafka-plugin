@@ -257,27 +257,27 @@ if ( ! function_exists( 'lafka_save_layout_postdata' ) ) {
 		}
 
 		if ( isset( $_POST['lafka_layout'] ) ) {
-			update_post_meta( $post_id, 'lafka_layout', sanitize_text_field( $_POST['lafka_layout'] ) );
+			update_post_meta( $post_id, 'lafka_layout', sanitize_text_field( wp_unslash( $_POST['lafka_layout'] ) ) );
 		}
 
 		if ( isset( $_POST['lafka_footer_style'] ) ) {
-			update_post_meta( $post_id, 'lafka_footer_style', sanitize_text_field( $_POST['lafka_footer_style'] ) );
+			update_post_meta( $post_id, 'lafka_footer_style', sanitize_text_field( wp_unslash( $_POST['lafka_footer_style'] ) ) );
 		}
 
 		if ( isset( $_POST['lafka_page_subtitle'] ) ) {
-			update_post_meta( $post_id, 'lafka_page_subtitle', sanitize_text_field( $_POST['lafka_page_subtitle'] ) );
+			update_post_meta( $post_id, 'lafka_page_subtitle', sanitize_text_field( wp_unslash( $_POST['lafka_page_subtitle'] ) ) );
 		}
 
 		if ( isset( $_POST['lafka_header_syle'] ) ) {
-			update_post_meta( $post_id, 'lafka_header_syle', sanitize_text_field( $_POST['lafka_header_syle'] ) );
+			update_post_meta( $post_id, 'lafka_header_syle', sanitize_text_field( wp_unslash( $_POST['lafka_header_syle'] ) ) );
 		}
 
 		if ( isset( $_POST['lafka_title_background_imgid'] ) ) {
-			update_post_meta( $post_id, 'lafka_title_background_imgid', sanitize_text_field( $_POST['lafka_title_background_imgid'] ) );
+			update_post_meta( $post_id, 'lafka_title_background_imgid', sanitize_text_field( wp_unslash( $_POST['lafka_title_background_imgid'] ) ) );
 		}
 
 		if ( isset( $_POST['lafka_title_alignment'] ) ) {
-			update_post_meta( $post_id, 'lafka_title_alignment', sanitize_text_field( $_POST['lafka_title_alignment'] ) );
+			update_post_meta( $post_id, 'lafka_title_alignment', sanitize_text_field( wp_unslash( $_POST['lafka_title_alignment'] ) ) );
 		}
 	}
 
@@ -501,31 +501,31 @@ if ( ! function_exists( 'lafka_save_page_options_postdata' ) ) {
 		}
 
 		if ( isset( $_POST['lafka_top_menu'] ) ) {
-			update_post_meta( $post_id, 'lafka_top_menu', sanitize_text_field( $_POST['lafka_top_menu'] ) );
+			update_post_meta( $post_id, 'lafka_top_menu', sanitize_text_field( wp_unslash( $_POST['lafka_top_menu'] ) ) );
 		}
 		if ( isset( $_POST['lafka_show_title_page'] ) ) {
-			update_post_meta( $post_id, 'lafka_show_title_page', sanitize_text_field( $_POST['lafka_show_title_page'] ) );
+			update_post_meta( $post_id, 'lafka_show_title_page', sanitize_text_field( wp_unslash( $_POST['lafka_show_title_page'] ) ) );
 		}
 		if ( isset( $_POST['lafka_show_breadcrumb'] ) ) {
-			update_post_meta( $post_id, 'lafka_show_breadcrumb', sanitize_text_field( $_POST['lafka_show_breadcrumb'] ) );
+			update_post_meta( $post_id, 'lafka_show_breadcrumb', sanitize_text_field( wp_unslash( $_POST['lafka_show_breadcrumb'] ) ) );
 		}
 		if ( isset( $_POST['lafka_show_feat_image_in_post'] ) ) {
-			update_post_meta( $post_id, 'lafka_show_feat_image_in_post', sanitize_text_field( $_POST['lafka_show_feat_image_in_post'] ) );
+			update_post_meta( $post_id, 'lafka_show_feat_image_in_post', sanitize_text_field( wp_unslash( $_POST['lafka_show_feat_image_in_post'] ) ) );
 		}
 		if ( isset( $_POST['lafka_show_sidebar'] ) ) {
-			update_post_meta( $post_id, 'lafka_show_sidebar', sanitize_text_field( $_POST['lafka_show_sidebar'] ) );
+			update_post_meta( $post_id, 'lafka_show_sidebar', sanitize_text_field( wp_unslash( $_POST['lafka_show_sidebar'] ) ) );
 		}
 		if ( isset( $_POST['lafka_sidebar_position'] ) ) {
-			update_post_meta( $post_id, 'lafka_sidebar_position', sanitize_text_field( $_POST['lafka_sidebar_position'] ) );
+			update_post_meta( $post_id, 'lafka_sidebar_position', sanitize_text_field( wp_unslash( $_POST['lafka_sidebar_position'] ) ) );
 		}
 		if ( isset( $_POST['lafka_show_offcanvas_sidebar'] ) ) {
-			update_post_meta( $post_id, 'lafka_show_offcanvas_sidebar', sanitize_text_field( $_POST['lafka_show_offcanvas_sidebar'] ) );
+			update_post_meta( $post_id, 'lafka_show_offcanvas_sidebar', sanitize_text_field( wp_unslash( $_POST['lafka_show_offcanvas_sidebar'] ) ) );
 		}
 		if ( isset( $_POST['lafka_custom_sidebar'] ) ) {
-			update_post_meta( $post_id, 'lafka_custom_sidebar', sanitize_text_field( $_POST['lafka_custom_sidebar'] ) );
+			update_post_meta( $post_id, 'lafka_custom_sidebar', sanitize_text_field( wp_unslash( $_POST['lafka_custom_sidebar'] ) ) );
 		}
 		if ( isset( $_POST['lafka_custom_offcanvas_sidebar'] ) ) {
-			update_post_meta( $post_id, 'lafka_custom_offcanvas_sidebar', sanitize_text_field( $_POST['lafka_custom_offcanvas_sidebar'] ) );
+			update_post_meta( $post_id, 'lafka_custom_offcanvas_sidebar', sanitize_text_field( wp_unslash( $_POST['lafka_custom_offcanvas_sidebar'] ) ) );
 		}
 	}
 
@@ -630,7 +630,7 @@ if ( ! function_exists( 'lafka_save_video_bckgr_postdata' ) ) {
 		}
 
 		if ( isset( $_POST['lafka_video_bckgr_url'] ) ) {
-			update_post_meta( $post_id, 'lafka_video_bckgr_url', esc_url( $_POST['lafka_video_bckgr_url'] ) );
+			update_post_meta( $post_id, 'lafka_video_bckgr_url', esc_url_raw( wp_unslash( $_POST['lafka_video_bckgr_url'] ) ) );
 		}
 	}
 
@@ -777,18 +777,21 @@ if ( ! function_exists( 'lafka_save_foodmenu_postdata' ) ) {
 			return;
 		}
 
-		update_post_meta( $post_id, 'lafka_item_single_price', sanitize_text_field( $_POST['lafka_item_single_price'] ) );
+		update_post_meta( $post_id, 'lafka_item_single_price', sanitize_text_field( wp_unslash( $_POST['lafka_item_single_price'] ) ) );
 		foreach ( array( 'lafka_item_weight', 'lafka_item_weight_unit' ) as $weight_field ) {
 			if ( isset( $_POST[ $weight_field ] ) ) {
 				update_post_meta( $post_id, $weight_field, sanitize_text_field( wp_unslash( $_POST[ $weight_field ] ) ) );
 			}
 		}
 		for ( $i = 1; $i <= 3; $i++ ) {
-			update_post_meta( $post_id, 'lafka_item_size' . $i, sanitize_text_field( $_POST[ 'lafka_item_size' . $i ] ) );
-			update_post_meta( $post_id, 'lafka_item_price' . $i, sanitize_text_field( $_POST[ 'lafka_item_price' . $i ] ) );
+			foreach ( array( 'lafka_item_size' . $i, 'lafka_item_price' . $i ) as $item_field ) {
+				if ( isset( $_POST[ $item_field ] ) ) {
+					update_post_meta( $post_id, $item_field, sanitize_text_field( wp_unslash( $_POST[ $item_field ] ) ) );
+				}
+			}
 		}
-		update_post_meta( $post_id, 'lafka_ingredients', sanitize_text_field( $_POST['lafka_ingredients'] ) );
-		update_post_meta( $post_id, 'lafka_allergens', sanitize_text_field( $_POST['lafka_allergens'] ) );
+		update_post_meta( $post_id, 'lafka_ingredients', sanitize_text_field( wp_unslash( $_POST['lafka_ingredients'] ) ) );
+		update_post_meta( $post_id, 'lafka_allergens', sanitize_text_field( wp_unslash( $_POST['lafka_allergens'] ) ) );
 		if ( class_exists( 'Lafka_Nutrition_Config' ) ) {
 			foreach ( Lafka_Nutrition_Config::$nutrition_meta_fields as $field_name => $field_data ) {
 				if ( ! isset( $_POST[ $field_name ] ) ) {
@@ -801,9 +804,12 @@ if ( ! function_exists( 'lafka_save_foodmenu_postdata' ) ) {
 				}
 			}
 		}
-		update_post_meta( $post_id, 'lafka_ext_link_button_title', sanitize_text_field( $_POST['lafka_ext_link_button_title'] ) );
-		update_post_meta( $post_id, 'lafka_ext_link_url', esc_url( $_POST['lafka_ext_link_url'] ) );
-		update_post_meta( $post_id, 'lafka_add_description', wp_kses_post( $_POST['lafka_add_description'] ) );
+		update_post_meta( $post_id, 'lafka_ext_link_button_title', sanitize_text_field( wp_unslash( $_POST['lafka_ext_link_button_title'] ) ) );
+		update_post_meta( $post_id, 'lafka_ext_link_url', esc_url_raw( wp_unslash( $_POST['lafka_ext_link_url'] ) ) );
+		// HTML field, handled as core's wp_filter_post_kses() does: kses runs on the
+		// unslashed markup (real attribute quotes, not escaped ones), then the result
+		// is re-slashed because update_post_meta() unslashes what it stores.
+		update_post_meta( $post_id, 'lafka_add_description', wp_slash( wp_kses_post( wp_unslash( $_POST['lafka_add_description'] ) ) ) );
 	}
 
 }
@@ -1005,7 +1011,7 @@ if ( ! function_exists( 'lafka_save_foodmenu_cz_postdata' ) ) {
 				return;
 		}
 
-		if ( isset( $_POST['lafka_prtfl_custom_content'] ) && $_POST['lafka_prtfl_custom_content'] ) {
+		if ( ! empty( $_POST['lafka_prtfl_custom_content'] ) ) {
 			update_post_meta( $post_id, 'lafka_prtfl_custom_content', 1 );
 		} else {
 			update_post_meta( $post_id, 'lafka_prtfl_custom_content', 0 );
@@ -1013,7 +1019,7 @@ if ( ! function_exists( 'lafka_save_foodmenu_cz_postdata' ) ) {
 
 		// It is checkbox - if is in the post - is set, if not - is not set
 		if ( isset( $_POST['lafka_prtfl_gallery'] ) ) {
-			update_post_meta( $post_id, 'lafka_prtfl_gallery', sanitize_text_field( $_POST['lafka_prtfl_gallery'] ) );
+			update_post_meta( $post_id, 'lafka_prtfl_gallery', sanitize_text_field( wp_unslash( $_POST['lafka_prtfl_gallery'] ) ) );
 		}
 	}
 
@@ -1099,7 +1105,7 @@ if ( ! function_exists( 'lafka_save_product_video_postdata' ) ) {
 		}
 
 		if ( isset( $_POST['lafka_product_video_url'] ) ) {
-			update_post_meta( $post_id, 'lafka_product_video_url', esc_url( $_POST['lafka_product_video_url'] ) );
+			update_post_meta( $post_id, 'lafka_product_video_url', esc_url_raw( wp_unslash( $_POST['lafka_product_video_url'] ) ) );
 		}
 	}
 
@@ -1187,7 +1193,7 @@ if ( ! function_exists( 'lafka_save_product_gallery_type_postdata' ) ) {
 		}
 
 		if ( isset( $_POST['lafka_single_product_gallery_type'] ) ) {
-			update_post_meta( $post_id, 'lafka_single_product_gallery_type', sanitize_text_field( $_POST['lafka_single_product_gallery_type'] ) );
+			update_post_meta( $post_id, 'lafka_single_product_gallery_type', sanitize_text_field( wp_unslash( $_POST['lafka_single_product_gallery_type'] ) ) );
 		}
 	}
 

@@ -473,8 +473,7 @@ if ( ! function_exists( 'lafka_review_banner_request_ip' ) ) {
 		if ( ! isset( $_SERVER['REMOTE_ADDR'] ) ) {
 			return '';
 		}
-		$ip = (string) $_SERVER['REMOTE_ADDR'];
-		$ip = trim( $ip );
+		$ip = sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) );
 		// Validate — drop anything that doesn't look like an IP, never letting
 		// caller-controlled bytes into the transient key uncleansed.
 		if ( filter_var( $ip, FILTER_VALIDATE_IP ) ) {

@@ -409,12 +409,12 @@ class Lafka_WC_Variation_Swatches_Admin {
 	 * Ajax function to handle add new attribute term
 	 */
 	public function add_new_attribute_ajax() {
-		$nonce  = isset( $_POST['nonce'] ) ? sanitize_text_field( $_POST['nonce'] ) : '';
-		$tax    = isset( $_POST['taxonomy'] ) ? sanitize_text_field( $_POST['taxonomy'] ) : '';
-		$type   = isset( $_POST['type'] ) ? sanitize_text_field( $_POST['type'] ) : '';
-		$name   = isset( $_POST['name'] ) ? sanitize_text_field( $_POST['name'] ) : '';
-		$slug   = isset( $_POST['slug'] ) ? sanitize_text_field( $_POST['slug'] ) : '';
-		$swatch = isset( $_POST['swatch'] ) ? sanitize_text_field( $_POST['swatch'] ) : '';
+		$nonce  = isset( $_POST['nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['nonce'] ) ) : '';
+		$tax    = isset( $_POST['taxonomy'] ) ? sanitize_text_field( wp_unslash( $_POST['taxonomy'] ) ) : '';
+		$type   = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
+		$name   = isset( $_POST['name'] ) ? sanitize_text_field( wp_unslash( $_POST['name'] ) ) : '';
+		$slug   = isset( $_POST['slug'] ) ? sanitize_text_field( wp_unslash( $_POST['slug'] ) ) : '';
+		$swatch = isset( $_POST['swatch'] ) ? sanitize_text_field( wp_unslash( $_POST['swatch'] ) ) : '';
 
 		if ( ! wp_verify_nonce( $nonce, '_lafka-wcs_create_attribute' ) ) {
 			wp_send_json_error( esc_html__( 'Wrong request', 'lafka-plugin' ) );

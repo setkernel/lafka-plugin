@@ -1255,8 +1255,8 @@ if ( ! function_exists( 'lafka_submit_contact' ) ) {
 
 		check_ajax_referer( 'lafka_contactform', false, true );
 
-		$unique_id = array_key_exists( 'unique_id', $_POST ) ? sanitize_text_field( $_POST['unique_id'] ) : '';
-		$nonce     = array_key_exists( '_ajax_nonce', $_POST ) ? sanitize_text_field( $_POST['_ajax_nonce'] ) : '';
+		$unique_id = array_key_exists( 'unique_id', $_POST ) ? sanitize_text_field( wp_unslash( $_POST['unique_id'] ) ) : '';
+		$nonce     = array_key_exists( '_ajax_nonce', $_POST ) ? sanitize_text_field( wp_unslash( $_POST['_ajax_nonce'] ) ) : '';
 
 		?>
 		<script>

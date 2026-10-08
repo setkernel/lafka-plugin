@@ -374,7 +374,7 @@ class Lafka_WCML_Product_Addons {
 			if ( ! wp_verify_nonce( $nonce, 'wcml_save_custom_prices' ) ) {
 				return;
 			}
-			$posted_prices  = isset( $_POST[ self::PRICE_OPTION_KEY ] ) && is_array( $_POST[ self::PRICE_OPTION_KEY ] ) ? wp_unslash( $_POST[ self::PRICE_OPTION_KEY ] ) : array();
+			$posted_prices  = isset( $_POST[ self::PRICE_OPTION_KEY ] ) && is_array( $_POST[ self::PRICE_OPTION_KEY ] ) ? map_deep( wp_unslash( $_POST[ self::PRICE_OPTION_KEY ] ), 'sanitize_text_field' ) : array();
 			$product_addons = $this->get_product_addons( $product_id );
 
 			if ( $product_addons ) {

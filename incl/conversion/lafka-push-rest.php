@@ -236,10 +236,7 @@ if ( ! function_exists( 'lafka_push_rest_request_ip' ) ) {
 		if ( ! isset( $_SERVER['REMOTE_ADDR'] ) ) {
 			return '';
 		}
-		$ip = function_exists( 'wp_unslash' )
-			? (string) wp_unslash( $_SERVER['REMOTE_ADDR'] )
-			: (string) $_SERVER['REMOTE_ADDR'];
-		$ip = trim( $ip );
+		$ip = sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) );
 		if ( filter_var( $ip, FILTER_VALIDATE_IP ) ) {
 			return $ip;
 		}
@@ -356,11 +353,7 @@ if ( ! function_exists( 'lafka_push_rest_subscribe' ) ) {
 		$user_id    = function_exists( 'get_current_user_id' ) ? (int) get_current_user_id() : 0;
 		$user_agent = '';
 		if ( isset( $_SERVER['HTTP_USER_AGENT'] ) ) {
-			$user_agent = (string) $_SERVER['HTTP_USER_AGENT'];
-			if ( function_exists( 'sanitize_text_field' ) ) {
-				$user_agent = sanitize_text_field( $user_agent );
-			}
-			$user_agent = substr( $user_agent, 0, 255 );
+			$user_agent = substr( sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ), 0, 255 );
 		}
 		$locale = function_exists( 'get_locale' ) ? (string) get_locale() : '';
 

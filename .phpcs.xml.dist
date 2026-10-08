@@ -55,6 +55,22 @@
 		</properties>
 	</rule>
 
+	<!-- Request-input sanitization: added explicitly because WordPress-Extra omits it. -->
+	<rule ref="WordPress.Security.ValidatedSanitizedInput">
+		<properties>
+			<!-- Plugin sanitizers for already-unslashed input: a capped text line,
+			     a clamped integer, the FAQ repeater (text question, kses answer),
+			     and the last-order cookie parser that rejects any payload whose
+			     fields are not the types the plugin writes. -->
+			<property name="customSanitizingFunctions" type="array">
+				<element value="lafka_sanitize_category_tagline"/>
+				<element value="lafka_sanitize_product_serves"/>
+				<element value="lafka_sanitize_term_faq_rows"/>
+				<element value="lafka_pdp_parse_last_order_cookie"/>
+			</property>
+		</properties>
+	</rule>
+
 	<!-- Cross-version PHP compatibility against the PHP floor (the plugin header
 	     is the single source for the floors). PHPCompatibility 10 (alpha) is
 	     required: 9.3.5 has no PHP 8.x sniffs. -->

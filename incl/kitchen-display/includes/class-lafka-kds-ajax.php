@@ -67,7 +67,7 @@ class Lafka_KDS_Ajax {
 		// Don't auto-die on bad nonce — we want to count it toward the rate limit.
 		$valid_nonce = (bool) check_ajax_referer( 'lafka_kds_nonce', 'nonce', false );
 
-		$token = isset( $_POST['kds_token'] ) ? sanitize_text_field( $_POST['kds_token'] ) : '';
+		$token = isset( $_POST['kds_token'] ) ? sanitize_text_field( wp_unslash( $_POST['kds_token'] ) ) : '';
 		// token_matches() is backward-compatible: validates legacy plaintext OR a hash-at-rest digest.
 		$valid_token = Lafka_Kitchen_Display::token_matches( $token );
 
@@ -362,7 +362,7 @@ class Lafka_KDS_Ajax {
 		}
 
 		$order_id  = isset( $_POST['order_id'] ) ? absint( $_POST['order_id'] ) : 0;
-		$order_key = isset( $_POST['order_key'] ) ? sanitize_text_field( $_POST['order_key'] ) : '';
+		$order_key = isset( $_POST['order_key'] ) ? sanitize_text_field( wp_unslash( $_POST['order_key'] ) ) : '';
 
 		if ( ! $order_id || ! $order_key ) {
 			wp_send_json_error( array( 'message' => 'Missing parameters' ) );

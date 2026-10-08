@@ -122,10 +122,10 @@ if ( ! class_exists( 'Lafka_Promotions_Admin' ) ) {
 			}
 			check_admin_referer( self::NONCE_ACTION );
 
-			$delivery_min  = isset( $_POST['delivery_min'] ) ? max( 0, (float) wp_unslash( $_POST['delivery_min'] ) ) : Lafka_Promotions::DELIVERY_MIN;
-			$bogo_discount = isset( $_POST['bogo_discount'] ) ? max( 0, min( 1, (float) wp_unslash( $_POST['bogo_discount'] ) ) ) : Lafka_Promotions::BOGO_DISCOUNT;
+			$delivery_min  = isset( $_POST['delivery_min'] ) ? max( 0, floatval( wp_unslash( $_POST['delivery_min'] ) ) ) : Lafka_Promotions::DELIVERY_MIN;
+			$bogo_discount = isset( $_POST['bogo_discount'] ) ? max( 0, min( 1, floatval( wp_unslash( $_POST['bogo_discount'] ) ) ) ) : Lafka_Promotions::BOGO_DISCOUNT;
 			$promo_key     = isset( $_POST['promo_key'] ) ? sanitize_key( wp_unslash( $_POST['promo_key'] ) ) : Lafka_Promotions::PROMO_KEY;
-			$dismiss_days  = isset( $_POST['dismiss_days'] ) ? max( 0, (int) wp_unslash( $_POST['dismiss_days'] ) ) : Lafka_Promotions::DISMISS_DAYS;
+			$dismiss_days  = isset( $_POST['dismiss_days'] ) ? max( 0, intval( wp_unslash( $_POST['dismiss_days'] ) ) ) : Lafka_Promotions::DISMISS_DAYS;
 
 			$opts = array(
 				'delivery_min'  => $delivery_min,

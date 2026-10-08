@@ -160,7 +160,7 @@ if ( ! function_exists( 'lafka_ac_get_session_id' ) ) {
 			}
 		}
 		// Fallback: hashed UA — never raw IP / PII.
-		$ua = isset( $_SERVER['HTTP_USER_AGENT'] ) ? (string) $_SERVER['HTTP_USER_AGENT'] : '';
+		$ua = isset( $_SERVER['HTTP_USER_AGENT'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : '';
 		return substr( md5( $ua . wp_salt() ), 0, 32 );
 	}
 }
