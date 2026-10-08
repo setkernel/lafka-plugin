@@ -11,8 +11,10 @@
  * @var string $body_id (T-19) Id of the collapsible body the button controls.
  */
 
-$lafka_toggle  = ! empty( $lafka_toggle ) && $name && ! empty( $lafka_body_id );
-$lafka_body_id = $lafka_toggle ? (string) $lafka_body_id : '';
+// $toggle and $body_id arrive from wc_get_template()'s args (extracted by
+// name), so they must keep those names.
+$lafka_toggle  = ! empty( $toggle ) && $name && ! empty( $body_id );
+$lafka_body_id = $lafka_toggle ? (string) $body_id : '';
 
 $lafka_classes = array( 'product-addon', sanitize_html_class( 'product-addon-' . $name ) );
 if ( 1 === (int) $required ) {
