@@ -715,7 +715,10 @@ if ( ! class_exists( 'Lafka_CLI_Seed_Demo' ) ) {
 			if ( class_exists( 'Lafka_Options' ) ) {
 				Lafka_Options::flush();
 			}
-			WP_CLI::log( 'Enabled order_hours + shipping_areas feature flags.' );
+			foreach ( (array) ( $fixtures['options'] ?? array() ) as $name => $value ) {
+				update_option( $name, $value );
+			}
+			WP_CLI::log( 'Enabled the demo feature flags and options (order hours, shipping areas, tips).' );
 		}
 
 		/**

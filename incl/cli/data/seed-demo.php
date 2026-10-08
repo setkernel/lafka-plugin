@@ -87,6 +87,11 @@ return array(
 		'shipping_areas' => 'enabled',
 	),
 
+	// ── Plain WooCommerce-style options the demo switches on ──
+	'options'      => array(
+		'lafka_tips_enabled' => 'yes',
+	),
+
 	// ── Product categories (neutral names). `order` is WooCommerce's category
 	// order (term meta `order`): Deals first, then the counter layout's
 	// automatic co-stars (Pizzas, Sides). ──
