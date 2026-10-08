@@ -1,0 +1,147 @@
+/*
+ * Order tracker: structure only, in neutral colours that follow the theme's
+ * --lafka-* tokens when it defines them. The theme owns the look.
+ */
+.lafka-tracker {
+	--lafka-tracker-dot: 1.75em;
+	--lafka-tracker-line: 4px;
+
+	margin: 0 0 1.5em;
+	padding: 1.25em;
+	border: 1px solid var(--lafka-color-border-subtle, #d9d9d9);
+	border-radius: var(--lafka-radius-lg, 8px);
+	background: var(--lafka-color-surface, #fff);
+}
+
+.lafka-tracker__title {
+	margin: 0 0 0.25em;
+}
+
+.lafka-tracker__headline {
+	margin: 0 0 1em;
+	font-size: 1.125em;
+	font-weight: 600;
+}
+
+/* Narrow screens: one step per row, the line runs down the dots. */
+.lafka-tracker__steps {
+	margin: 0 0 1em;
+	padding: 0;
+	list-style: none;
+}
+
+.lafka-tracker[data-kind="terminal"] .lafka-tracker__steps,
+.lafka-tracker[data-kind="waiting"] .lafka-tracker__steps {
+	display: none;
+}
+
+.lafka-tracker__steps > .lafka-tracker__step {
+	position: relative;
+	display: flex;
+	gap: 0.75em;
+	align-items: center;
+	min-width: 0;
+	margin: 0;
+	padding: 0.85em 0;
+}
+
+.lafka-tracker__step + .lafka-tracker__step::before {
+	content: "";
+	position: absolute;
+	top: -50%;
+	left: calc(var(--lafka-tracker-dot) / 2 - var(--lafka-tracker-line) / 2);
+	width: var(--lafka-tracker-line);
+	height: 100%;
+	background: var(--lafka-color-border-strong, #bdbdbd);
+}
+
+.lafka-tracker__step.is-done + .lafka-tracker__step::before,
+.lafka-tracker__step.is-current::before {
+	background: var(--lafka-color-success-500, #2e7d32);
+}
+
+.lafka-tracker__dot {
+	position: relative;
+	z-index: 1;
+	display: block;
+	flex: none;
+	box-sizing: border-box;
+	width: var(--lafka-tracker-dot);
+	height: var(--lafka-tracker-dot);
+	border: 3px solid var(--lafka-color-border-strong, #bdbdbd);
+	border-radius: 50%;
+	background: var(--lafka-color-surface, #fff);
+}
+
+.lafka-tracker__step.is-done .lafka-tracker__dot {
+	border-color: var(--lafka-color-success-500, #2e7d32);
+	background: var(--lafka-color-success-500, #2e7d32);
+}
+
+.lafka-tracker__step.is-current .lafka-tracker__dot {
+	border-color: var(--lafka-color-success-500, #2e7d32);
+}
+
+/* Wider screens: the steps sit in a row, the line runs between the dots. */
+@media (min-width: 640px) {
+
+	.lafka-tracker__steps {
+		display: flex;
+	}
+
+	.lafka-tracker__steps > .lafka-tracker__step {
+		display: block;
+		flex: 1 1 0;
+		padding: 0;
+		text-align: center;
+	}
+
+	.lafka-tracker__step + .lafka-tracker__step::before {
+		top: calc(var(--lafka-tracker-dot) / 2 - var(--lafka-tracker-line) / 2);
+		right: 50%;
+		left: -50%;
+		width: auto;
+		height: var(--lafka-tracker-line);
+	}
+
+	.lafka-tracker__dot {
+		margin: 0 auto 0.5em;
+	}
+}
+
+.lafka-tracker__label {
+	display: block;
+	overflow-wrap: anywhere;
+	line-height: 1.25;
+}
+
+.lafka-tracker__step.is-current .lafka-tracker__label {
+	font-weight: 700;
+}
+
+.lafka-tracker__eta {
+	margin: 0 0 1em;
+	font-weight: 600;
+}
+
+.lafka-tracker__where {
+	display: grid;
+	gap: 0.75em;
+	margin: 0 0 1em;
+}
+
+.lafka-tracker__where dt {
+	font-weight: 700;
+}
+
+.lafka-tracker__where dd {
+	margin: 0;
+}
+
+.lafka-tracker__reorder {
+	margin: 0;
+}
+
+.lafka-tracker [hidden] {
+	display: none;
+}

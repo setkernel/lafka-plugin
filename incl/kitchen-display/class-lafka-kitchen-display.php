@@ -55,7 +55,6 @@ class Lafka_Kitchen_Display {
 		require_once __DIR__ . '/includes/class-lafka-kds-order-formatter.php';
 		require_once __DIR__ . '/includes/class-lafka-kds-ajax.php';
 		require_once __DIR__ . '/includes/class-lafka-kds-frontend.php';
-		require_once __DIR__ . '/includes/class-lafka-kds-customer-view.php';
 		// Email classes loaded lazily in register_emails() — WC_Email not available yet
 
 		if ( is_admin() ) {
@@ -70,7 +69,6 @@ class Lafka_Kitchen_Display {
 		new Lafka_KDS_Order_Statuses();
 		new Lafka_KDS_Ajax();
 		new Lafka_KDS_Frontend();
-		new Lafka_KDS_Customer_View();
 
 		if ( is_admin() ) {
 			new Lafka_KDS_Admin();

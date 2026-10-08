@@ -160,6 +160,18 @@ groups). Each ticked option then offers *Left / Whole / Right*; a half costs hal
 option price (filter `lafka_addon_half_price_factor`). The cart, order, emails and
 kitchen screen read "Olives (left half)".
 
+### Order tracking
+
+Lafka → Modules → Order tracking (on by default). Customers get a status stepper on their order confirmation and, while the order is open, in My Account → view order: Received, Accepted, Preparing, Ready for pickup or Out for delivery, Done. It shows the restaurant phone (Restaurant settings), the pickup address (the branch, else the store address) or the delivery address, and the estimate: the kitchen's time when the kitchen display has set one, else the pickup or delivery slot the customer chose.
+
+- **Kitchen display on:** the steps follow the kitchen statuses and the page updates by itself every 20 seconds (the kitchen display's "Customer Poll Interval"), slows down while nothing changes, and stops when the order is done or the tab is hidden.
+- **Kitchen display off:** the page shows the WooCommerce status (Received, then Done when you mark the order Completed) and does not poll.
+- Cancelled, refunded, failed and rejected orders are shown in plain words instead of the steps.
+- Order emails: WooCommerce's "Processing order", "Order on hold" and "Completed order" emails carry a Track your order button (the order page; a guest confirms their email first, as WooCommerce asks).
+- **Order this again:** My Account → Orders lists Track for open orders and Order this again for completed ones; the confirmation shows the button once the order is done. It uses WooCommerce's order-again, so add-ons and half-and-half come back. A Deal is not re-added (it may have changed): the cart says so with a link to choose its items again. A guest on their confirmation page gets the same button.
+- This replaces the kitchen display's own customer progress bar.
+- Developers: filters `lafka_order_tracking_steps`, `lafka_order_tracking_state`, `lafka_order_tracking_poll_interval`, `lafka_order_tracking_email_ids` and `lafka_order_tracking_url`. The live endpoint is `/wp-json/lafka/v1/order-status/{id}?key=` plus the order key; its rate limit bucket is `order_status` (see the `lafka_rate_limit_` filters in the beacon guard). The look is `styles/lafka-order-tracker.css` in the theme (`--lafka-` tokens).
+
 ### Tips
 
 **WooCommerce → Settings → Restaurant → Tips** (also Lafka → Modules): suggested

@@ -23,6 +23,9 @@ if ( ! class_exists( 'Lafka_Deals_Cart' ) ) {
 	 */
 	final class Lafka_Deals_Cart {
 
+		/** Cart item data marking a deal line that "order again" must not re-add (the value is the deal id). */
+		const REORDER_KEY = 'lafka_reorder_deal';
+
 		/**
 		 * Re-entrancy guard for group removal / restore.
 		 *
@@ -48,7 +51,8 @@ if ( ! class_exists( 'Lafka_Deals_Cart' ) ) {
 			add_filter( 'woocommerce_get_item_data', array( __CLASS__, 'item_data' ), 5, 2 );
 			add_action( 'woocommerce_checkout_create_order_line_item', array( __CLASS__, 'order_line_item' ), 10, 3 );
 			add_filter( 'woocommerce_add_to_cart_validation', array( __CLASS__, 'block_direct_add' ), 5, 2 );
-			add_filter( 'woocommerce_order_again_cart_item_data', array( __CLASS__, 'order_again_data' ), 20 );
+			add_filter( 'woocommerce_order_again_cart_item_data', array( __CLASS__, 'order_again_data' ), 20, 2 );
+			add_action( 'woocommerce_cart_loaded_from_session', array( __CLASS__, 'drop_reordered_deals' ), 31 );
 		}
 
 		/**
@@ -344,16 +348,70 @@ if ( ! class_exists( 'Lafka_Deals_Cart' ) ) {
 		}
 
 		/**
-		 * "Order again" re-adds deal items at their à la carte price: the deal
-		 * may have changed or ended, so it is not silently re-applied.
+		 * "Order again" does not re-apply a deal: it may have changed or ended, and
+		 * its items are the customer's choice. A deal line is marked here so the
+		 * cart can leave it out and point the customer at the deal instead.
 		 *
-		 * @param array<string,mixed> $data Cart item data.
+		 * @param array<string,mixed>        $data Cart item data.
+		 * @param WC_Order_Item_Product|null $item Order line.
 		 * @return array<string,mixed>
 		 */
-		public static function order_again_data( $data ): array {
+		public static function order_again_data( $data, $item = null ): array {
 			$data = (array) $data;
 			unset( $data[ Lafka_Deals::CART_KEY ] );
+			$deal_id = $item instanceof WC_Order_Item ? (int) $item->get_meta( '_lafka_deal_id' ) : 0;
+			if ( $deal_id > 0 ) {
+				$data[ self::REORDER_KEY ] = $deal_id;
+			}
 			return $data;
+		}
+
+		/**
+		 * After WooCommerce's order-again filled the cart: take the deal lines
+		 * out and tell the customer which deals to choose again.
+		 *
+		 * @param WC_Cart $cart Cart.
+		 * @return void
+		 */
+		public static function drop_reordered_deals( $cart ): void {
+			if ( ! $cart instanceof WC_Cart ) {
+				return;
+			}
+			$deals = array();
+			foreach ( $cart->cart_contents as $key => $item ) {
+				if ( isset( $item[ self::REORDER_KEY ] ) ) {
+					$deals[ (int) $item[ self::REORDER_KEY ] ] = true;
+					unset( $cart->cart_contents[ $key ] );
+				}
+			}
+			if ( $deals ) {
+				self::notify_reordered_deals( array_keys( $deals ) );
+			}
+		}
+
+		/**
+		 * A notice per deal from the repeated order: choose its items again.
+		 *
+		 * @param int[] $deal_ids Deal product ids.
+		 * @return void
+		 */
+		public static function notify_reordered_deals( array $deal_ids ): void {
+			foreach ( $deal_ids as $deal_id ) {
+				$deal = wc_get_product( (int) $deal_id );
+				if ( $deal && $deal->is_purchasable() ) {
+					wc_add_notice(
+						sprintf(
+							/* translators: 1: deal name, 2: link to the deal. */
+							__( 'Your "%1$s" deal was not added. Choose its items again: %2$s', 'lafka-plugin' ),
+							esc_html( $deal->get_name() ),
+							'<a href="' . esc_url( $deal->get_permalink() ) . '">' . esc_html__( 'choose your items', 'lafka-plugin' ) . '</a>'
+						),
+						'notice'
+					);
+				} else {
+					wc_add_notice( __( 'A deal from your previous order is no longer available.', 'lafka-plugin' ), 'notice' );
+				}
+			}
 		}
 	}
 }

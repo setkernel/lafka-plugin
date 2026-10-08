@@ -213,7 +213,7 @@ if ( ! class_exists( 'Lafka_Module_Registry' ) ) {
 					array(
 						'id'              => 'kitchen_display',
 						'label'           => esc_html__( 'Kitchen display (KDS)', 'lafka-plugin' ),
-						'description'     => esc_html__( 'Full-screen kitchen screen with a live order state machine and customer-facing status tracking.', 'lafka-plugin' ),
+						'description'     => esc_html__( 'Full-screen kitchen screen with a live order state machine; customers follow it in Order tracking.', 'lafka-plugin' ),
 						'category'        => 'operations',
 						'storage'         => 'lafka_option',
 						'default_enabled' => false,
@@ -255,6 +255,23 @@ if ( ! class_exists( 'Lafka_Module_Registry' ) ) {
 						'set_enabled'     => self::flag_setter( 'deals' ),
 						'settings_path'   => 'post-new.php?post_type=product',
 						'docs_slug'       => 'deals',
+					)
+				)
+			);
+
+			// ---- Order tracking (default ON: static without the kitchen display) ----
+			self::register(
+				new Lafka_Module(
+					array(
+						'id'              => 'order_tracking',
+						'label'           => esc_html__( 'Order tracking', 'lafka-plugin' ),
+						'description'     => esc_html__( 'A status stepper on the order confirmation and in My Account, updated live while the kitchen works, a Track link in the order emails, and one-tap reorder. With the kitchen display off it shows the WooCommerce status and does not poll.', 'lafka-plugin' ),
+						'category'        => 'ordering',
+						'storage'         => 'lafka_option',
+						'default_enabled' => Lafka_Options::flag_default_on( 'order_tracking' ),
+						'get_enabled'     => self::flag_getter( 'order_tracking' ),
+						'set_enabled'     => self::flag_setter( 'order_tracking' ),
+						'docs_slug'       => 'order-tracking',
 					)
 				)
 			);

@@ -7,6 +7,10 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
 
 ## [Unreleased]
 
+### Removed
+- The kitchen display's customer progress bar and its `lafka_kds_customer_status` AJAX
+  action: Order tracking replaces them (the Customer Poll Interval setting still sets the poll).
+
 ### Added
 - **Delivery by distance** (`lafka_distance`): a native WooCommerce shipping method for
   zones, replacing the paid Distance Rate Shipping extension. Distance bands (up to N km
@@ -22,6 +26,16 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
 - `wp lafka shipping migrate-drs [--apply]`: prints every Distance Rate Shipping
   instance (zone, rules, settings; never the API key), the equivalent bands and what
   cannot be mapped; `--apply` adds a disabled copy to the same zone to compare.
+- **Order tracking** module (Lafka → Modules, on by default): a status stepper on the
+  order confirmation (classic, and the order-confirmation block of block themes) and
+  in My Account → view order, from the kitchen statuses when the kitchen display is on
+  or the WooCommerce status otherwise; ETA from the kitchen estimate or the chosen
+  timeslot; restaurant phone and pickup or delivery address; live updates through a
+  read-only, order-key-authorised, rate-limited endpoint
+  (`/wp-json/lafka/v1/order-status/{id}`); a Track your order button in WooCommerce's
+  processing, on-hold and completed emails; "Order this again" and "Track" in My
+  Account → Orders and a guest reorder on the confirmation. Order-again no longer
+  re-adds Deal lines: it leaves them out and links to the deal to choose again.
 - **Deals** (`lafka_deal` product type): "any 2 pizzas for $20" where the customer
   picks each item and its options. Slots by category or hand-picked items, locked
   options (e.g. size), optional add-on items, premiums that pay the difference;

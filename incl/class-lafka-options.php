@@ -31,6 +31,7 @@ class Lafka_Options {
 	const FLAG_DEFAULTS = array(
 		'product_addons' => 'enabled',
 		'deals'          => 'enabled',
+		'order_tracking' => 'enabled',
 	);
 
 	/**

@@ -387,6 +387,9 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/analytics/lafka-server-events.p
 // Deals: "any 2 pizzas for $20" where the customer picks each item.
 require_once plugin_dir_path( __FILE__ ) . 'incl/deals/lafka-deals-bootstrap.php';
 
+// Order tracking: the status stepper, its live endpoint and one-tap reorder.
+require_once plugin_dir_path( __FILE__ ) . 'incl/order-tracking/lafka-order-tracking-bootstrap.php';
+
 /**
  * v9.25.0 (Phase 1C — Analytics + SEO + Conversion plan):
  *

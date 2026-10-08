@@ -47,10 +47,6 @@ class Lafka_KDS_Ajax {
 		add_action( 'wp_ajax_lafka_kds_set_eta', array( $this, 'set_eta' ) );
 		add_action( 'wp_ajax_nopriv_lafka_kds_set_eta', array( $this, 'set_eta' ) );
 
-		// Customer endpoint
-		add_action( 'wp_ajax_lafka_kds_customer_status', array( $this, 'customer_status' ) );
-		add_action( 'wp_ajax_nopriv_lafka_kds_customer_status', array( $this, 'customer_status' ) );
-
 		// Nonce refresh endpoint (token-only auth, no nonce required)
 		add_action( 'wp_ajax_lafka_kds_refresh_nonce', array( $this, 'refresh_nonce' ) );
 		add_action( 'wp_ajax_nopriv_lafka_kds_refresh_nonce', array( $this, 'refresh_nonce' ) );
@@ -345,49 +341,6 @@ class Lafka_KDS_Ajax {
 				'order_id'    => $order_id,
 				'eta'         => $eta_timestamp,
 				'eta_minutes' => $minutes,
-			)
-		);
-	}
-
-	/**
-	 * Customer-facing status check (authenticated via order key).
-	 */
-	public function customer_status() {
-		$valid_nonce = (bool) check_ajax_referer( 'lafka_kds_customer_nonce', 'nonce', false );
-		if ( ! $valid_nonce ) {
-			if ( $this->track_auth_failure( 'customer_status' ) ) {
-				wp_send_json_error( array( 'message' => 'Too many failed attempts' ), 429 );
-			}
-			wp_send_json_error( array( 'message' => 'Invalid credentials' ), 403 );
-		}
-
-		$order_id  = isset( $_POST['order_id'] ) ? absint( $_POST['order_id'] ) : 0;
-		$order_key = isset( $_POST['order_key'] ) ? sanitize_text_field( wp_unslash( $_POST['order_key'] ) ) : '';
-
-		if ( ! $order_id || ! $order_key ) {
-			wp_send_json_error( array( 'message' => 'Missing parameters' ) );
-		}
-
-		$order = wc_get_order( $order_id );
-		if ( ! $order || ! hash_equals( $order->get_order_key(), $order_key ) ) {
-			if ( $this->track_auth_failure( 'customer_status' ) ) {
-				wp_send_json_error( array( 'message' => 'Too many failed attempts' ), 429 );
-			}
-			wp_send_json_error( array( 'message' => 'Invalid order' ), 403 );
-		}
-
-		$status    = $order->get_status();
-		$eta       = $order->get_meta( '_lafka_kds_eta' );
-		$statuses  = wc_get_order_statuses();
-		$wc_status = 'wc-' . $status;
-
-		wp_send_json_success(
-			array(
-				'status'       => $status,
-				'status_label' => isset( $statuses[ $wc_status ] ) ? $statuses[ $wc_status ] : $status,
-				'eta'          => $eta ? (int) $eta : null,
-				'order_type'   => Lafka_Kitchen_Display::get_order_type( $order ),
-				'server_time'  => time(),
 			)
 		);
 	}
