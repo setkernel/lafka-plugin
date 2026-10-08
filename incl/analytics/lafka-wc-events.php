@@ -135,9 +135,11 @@ if ( ! function_exists( 'lafka_dl_item_payload' ) ) {
 		$price = method_exists( $product, 'get_price' ) ? (float) $product->get_price() : 0.0;
 
 		$category = '';
-		if ( $id > 0 && function_exists( 'wc_get_product_category_list' ) ) {
+		// Variations carry no categories of their own; read the parent's.
+		$cat_id = ( method_exists( $product, 'get_parent_id' ) && (int) $product->get_parent_id() > 0 ) ? (int) $product->get_parent_id() : $id;
+		if ( $cat_id > 0 && function_exists( 'wc_get_product_category_list' ) ) {
 			// wc_get_product_category_list returns HTML — strip to first category.
-			$cat_html = wc_get_product_category_list( $id, ', ' );
+			$cat_html = wc_get_product_category_list( $cat_id, ', ' );
 			if ( is_string( $cat_html ) && '' !== $cat_html ) {
 				$stripped = wp_strip_all_tags( $cat_html );
 				$parts    = array_map( 'trim', explode( ',', $stripped ) );
@@ -487,7 +489,18 @@ if ( ! function_exists( 'lafka_dl_emit_purchase' ) ) {
 				$product = method_exists( $line, 'get_product' ) ? $line->get_product() : null;
 				$qty     = method_exists( $line, 'get_quantity' ) ? (int) $line->get_quantity() : 1;
 				if ( $product ) {
-					$items[] = lafka_dl_item_payload( $product, $qty );
+					$item = lafka_dl_item_payload( $product, $qty );
+					// What was paid, not today's catalogue price: the unit price
+					// after discounts, add-ons included, and the per-unit discount.
+					if ( method_exists( $order, 'get_item_total' ) && method_exists( $order, 'get_item_subtotal' ) ) {
+						$paid          = (float) $order->get_item_total( $line, false, true );
+						$before        = (float) $order->get_item_subtotal( $line, false, true );
+						$item['price'] = round( $paid, 2 );
+						if ( $before - $paid >= 0.01 ) {
+							$item['discount'] = round( $before - $paid, 2 );
+						}
+					}
+					$items[] = $item;
 				}
 			}
 		}
@@ -505,6 +518,10 @@ if ( ! function_exists( 'lafka_dl_emit_purchase' ) ) {
 			'shipping'       => round( $shipping, 2 ),
 			'items'          => $items,
 		);
+		$coupons = method_exists( $order, 'get_coupon_codes' ) ? (array) $order->get_coupon_codes() : array();
+		if ( array() !== $coupons ) {
+			$payload['coupon'] = implode( ',', $coupons );
+		}
 
 		lafka_dl_emit_push( 'purchase', $payload );
 
