@@ -1,6 +1,5 @@
 <wpml-config>
     <custom-fields>
-        <custom-field action="copy">lafka_prtfl_custom_content</custom-field>
         <custom-field action="copy">lafka_transparent_header</custom-field>
         <custom-field action="copy">lafka_layout</custom-field>
         <custom-field action="copy">lafka_footer_style</custom-field>
@@ -9,17 +8,11 @@
         <custom-field action="copy">lafka_show_sidebar</custom-field>
         <custom-field action="copy">lafka_custom_sidebar</custom-field>
         <custom-field action="copy">lafka_video_bckgr_url</custom-field>
-        <custom-field action="translate">lafka_ingredients</custom-field>
-        <custom-field action="translate">lafka_allergens</custom-field>
-        <custom-field action="translate">lafka_ext_link_button_title</custom-field>
-        <custom-field action="translate">lafka_ext_link_url</custom-field>
-        <custom-field action="translate">lafka_add_description</custom-field>
         <custom-field action="copy">lafka_featured_imgid_2</custom-field>
         <custom-field action="copy">lafka_featured_imgid_3</custom-field>
         <custom-field action="copy">lafka_featured_imgid_4</custom-field>
         <custom-field action="copy">lafka_featured_imgid_5</custom-field>
         <custom-field action="copy">lafka_featured_imgid_6</custom-field>
-        <custom-field action="copy">lafka_prtfl_gallery</custom-field>
         <custom-field action="translate">lafka_page_subtitle</custom-field>
         <custom-field action="copy">lafka_title_background_imgid</custom-field>
         <custom-field action="copy">lafka_title_alignment</custom-field>
@@ -28,15 +21,6 @@
         <custom-field action="copy">lafka_header_syle</custom-field>
         <custom-field action="copy">lafka_top_menu</custom-field>
         <custom-field action="copy">lafka_single_product_gallery_type</custom-field>
-        <custom-field action="copy">lafka_item_price1</custom-field>
-        <custom-field action="copy">lafka_item_price2</custom-field>
-        <custom-field action="copy">lafka_item_price3</custom-field>
-        <custom-field action="copy">lafka_item_single_price</custom-field>
-        <custom-field action="copy">lafka_item_size1</custom-field>
-        <custom-field action="copy">lafka_item_size2</custom-field>
-        <custom-field action="copy">lafka_item_size3</custom-field>
-        <custom-field action="translate">lafka_item_weight</custom-field>
-        <custom-field action="translate">lafka_item_weight_unit</custom-field>
         <custom-field action="copy">lafka_nutrition_carbs</custom-field>
         <custom-field action="copy">lafka_nutrition_energy</custom-field>
         <custom-field action="copy">lafka_nutrition_fat</custom-field>
@@ -54,11 +38,9 @@
 
     </custom-fields>
     <custom-types>
-        <custom-type translate="1">lafka-foodmenu</custom-type>
         <custom-type translate="1">lafka_glb_addon</custom-type>
     </custom-types>
     <taxonomies>
-        <taxonomy translate="1">lafka_foodmenu_category</taxonomy>
         <taxonomy translate="1">product_cat</taxonomy>
     </taxonomies>
     <shortcodes>

@@ -192,8 +192,8 @@ if ( ! function_exists( 'lafka_seo_should_noindex' ) ) {
 	 * URL that must carry `noindex` (it stays crawlable — robots.txt must
 	 * NOT block it, or the noindex would never be seen):
 	 *
-	 *   - attribute (`pa_*`) and legacy food-menu taxonomy archives;
-	 *   - legacy post types (the `lafka-foodmenu` demo CPT) — singles and archive;
+	 *   - attribute (`pa_*`) taxonomy archives;
+	 *   - legacy post types (lafka_seo_legacy_post_types()) — singles and archive;
 	 *   - author archives on a single-author site (filterable);
 	 *   - any post / page the operator marked "hide from search engines";
 	 *   - (T-29) the customer-account area (login / dashboard / endpoints).

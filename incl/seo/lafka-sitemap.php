@@ -153,7 +153,7 @@ if ( ! function_exists( 'lafka_seo_excluded_taxonomies' ) ) {
 	/**
 	 * Taxonomies whose archives are thin / duplicate for a restaurant:
 	 * WooCommerce attribute taxonomies (`pa_*`, e.g. /size/large/ listing
-	 * every product with that size) and the legacy food-menu categories.
+	 * every product with that size).
 	 *
 	 * @return list<string>
 	 */
@@ -165,9 +165,6 @@ if ( ! function_exists( 'lafka_seo_excluded_taxonomies' ) ) {
 					$taxonomies[] = (string) $name;
 				}
 			}
-		}
-		if ( in_array( 'lafka-foodmenu', lafka_seo_legacy_post_types(), true ) ) {
-			$taxonomies[] = 'lafka_foodmenu_category';
 		}
 		/**
 		 * Filter the taxonomies kept out of the sitemap and noindexed.
@@ -181,15 +178,15 @@ if ( ! function_exists( 'lafka_seo_excluded_taxonomies' ) ) {
 
 if ( ! function_exists( 'lafka_seo_legacy_post_types' ) ) {
 	/**
-	 * Post types superseded on this install: the theme's original
-	 * `lafka-foodmenu` CPT once WooCommerce products are the menu (demo
-	 * leftovers like "/restaurant-menu/angus-burger/" otherwise compete with
-	 * the real menu).
+	 * Post types superseded on this install (none by default — the theme's
+	 * original food-menu post type is gone and its old URLs 301 to the menu,
+	 * see lafka-url-hygiene.php). A site that keeps a retired post type
+	 * registered adds it here to keep it out of the sitemap and noindexed.
 	 *
 	 * @return list<string>
 	 */
 	function lafka_seo_legacy_post_types(): array {
-		$types = ( class_exists( 'WooCommerce' ) || function_exists( 'wc_get_products' ) ) ? array( 'lafka-foodmenu' ) : array();
+		$types = array();
 		/**
 		 * Filter the post types treated as legacy (not in sitemap, noindex).
 		 *

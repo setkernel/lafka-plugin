@@ -25,7 +25,6 @@ function lafka_register_widgets() {
 	register_widget( 'Lafka_Contacts_Widget' );
 	register_widget( 'Lafka_Payment_Options_Widget' );
 	register_widget( 'Lafka_Popular_Posts_Widget' );
-	register_widget( 'Lafka_Latest_Menu_Entries_Widget' );
 	if ( class_exists( 'Lafka_Product_Filter_Widget' ) ) {
 		register_widget( 'Lafka_Product_Filter_Widget' );
 	}

@@ -65,7 +65,7 @@ if ( ! function_exists( 'lafka_add_layout_metabox' ) ) {
 
 	function lafka_add_layout_metabox() {
 
-		$posttypes = array( 'page', 'post', 'lafka-foodmenu' );
+		$posttypes = array( 'page', 'post' );
 		if ( LAFKA_PLUGIN_IS_WOOCOMMERCE ) {
 			$posttypes[] = 'product';
 		}
@@ -154,9 +154,9 @@ if ( ! function_exists( 'lafka_layout_callback' ) ) {
 		$output .= '<input id="lafka_footer_style_hide" ' . checked( $values['lafka_footer_style'], 'lafka-reveal-footer', false ) . ' type="radio" value="lafka-reveal-footer" name="lafka_footer_style">';
 		$output .= '<label for="lafka_footer_style_hide">' . esc_html__( 'Reveal', 'lafka-plugin' ) . '</label>';
 
-		// Transparent header and Title with Image Background (posts, pages, foodmenu and products)
+		// Transparent header and Title with Image Background (posts, pages and products)
 		$screen = get_current_screen();
-		if ( $screen && in_array( $screen->post_type, array( 'post', 'page', 'lafka-foodmenu', 'product' ), true ) ) {
+		if ( $screen && in_array( $screen->post_type, array( 'post', 'page', 'product' ), true ) ) {
 
 			// Below is not for product
 			if ( 'product' !== (string) $screen->post_type ) {
@@ -294,7 +294,7 @@ if ( ! function_exists( 'lafka_add_page_options_metabox' ) ) {
 
 	function lafka_add_page_options_metabox() {
 
-		$posttypes = array( 'page', 'post', 'lafka-foodmenu' );
+		$posttypes = array( 'page', 'post' );
 
 		foreach ( $posttypes as $pt ) {
 			add_meta_box(
@@ -542,7 +542,7 @@ if ( ! function_exists( 'lafka_add_video_bckgr_metabox' ) ) {
 
 	function lafka_add_video_bckgr_metabox() {
 
-		$posttypes = array( 'page', 'post', 'lafka-foodmenu' );
+		$posttypes = array( 'page', 'post' );
 		if ( LAFKA_PLUGIN_IS_WOOCOMMERCE ) {
 			$posttypes[] = 'product';
 		}
@@ -637,194 +637,16 @@ if ( ! function_exists( 'lafka_save_video_bckgr_postdata' ) ) {
 }
 
 /**
- * Foodmenu CPT metaboxes
- */
-add_action( 'add_meta_boxes', 'lafka_add_foodmenu_metabox' );
-add_action( 'save_post', 'lafka_save_foodmenu_postdata' );
-
-/* Adds the custom fields for lafka-foodmenu CPT */
-if ( ! function_exists( 'lafka_add_foodmenu_metabox' ) ) {
-
-	function lafka_add_foodmenu_metabox() {
-		add_meta_box(
-			'lafka_foodmenu_details',
-			esc_html__( 'Menu Entry Fields', 'lafka-plugin' ),
-			'lafka_foodmenu_callback',
-			'lafka-foodmenu',
-			'normal',
-			'high'
-		);
-	}
-
-}
-
-/* Prints the foodmenu content */
-if ( ! function_exists( 'lafka_foodmenu_callback' ) ) {
-
-	function lafka_foodmenu_callback( $post ) {
-		// Use nonce for verification
-		wp_nonce_field( 'lafka_save_foodmenu_postdata', 'lafka_foodmenu_nonce' );
-
-		$currency = get_woocommerce_currency();
-		echo '<h4>' . esc_html__( 'The currency for all price fields will be the one set up in WooCommerce', 'lafka-plugin' ) . '</h4>';
-
-		echo '<div><label for="lafka_item_single_price" class="lafka-admin-option-label">';
-		esc_html_e( 'Item Price', 'lafka-plugin' );
-		echo '</label> ';
-		echo '<input type="text" id="lafka_item_single_price" name="lafka_item_single_price" value="' . esc_attr( get_post_meta( $post->ID, 'lafka_item_single_price', true ) ) . '" class="small-text" /> ' . esc_html( $currency ) . '</div>';
-
-		echo '<div><label for="lafka_item_weight" class="lafka-admin-option-label">';
-		esc_html_e( 'Item Weight', 'lafka-plugin' );
-		echo '</label> ';
-		echo '<input type="text" id="lafka_item_weight" name="lafka_item_weight" value="' . esc_attr( get_post_meta( $post->ID, 'lafka_item_weight', true ) ) . '" class="small-text" />';
-		echo ' <label for="lafka_item_weight_unit" >';
-		esc_html_e( 'Units (g)', 'lafka-plugin' );
-		echo '</label> ';
-		echo '<input type="text" id="lafka_item_weight_unit" name="lafka_item_weight_unit" value="' . esc_attr( get_post_meta( $post->ID, 'lafka_item_weight_unit', true ) ) . '" class="small-text" /></div>';
-
-		echo '<h4>' . esc_html__( 'Fill up to three option->price pairs. E.g. Small -> +5, Big -> 10', 'lafka-plugin' ) . '</h4>';
-
-		for ( $i = 1; $i <= 3; $i++ ) {
-			echo '<div>';
-			echo '<label for="lafka_item_size' . (int) $i . '">';
-			esc_html_e( 'Option', 'lafka-plugin' );
-			echo '</label> ';
-			echo '<input type="text" id="lafka_item_size1" name="lafka_item_size' . (int) $i . '" value="' . esc_attr( get_post_meta( $post->ID, 'lafka_item_size' . $i, true ) ) . '" class="regular-text" />';
-			echo ' <label for="lafka_item_price' . (int) $i . '">';
-			esc_html_e( 'Price', 'lafka-plugin' );
-			echo '</label> ';
-			echo '<input type="text" id="lafka_item_price' . (int) $i . '" name="lafka_item_price' . (int) $i . '" value="' . esc_attr( get_post_meta( $post->ID, 'lafka_item_price' . $i, true ) ) . '" class="small-text" /> ' . esc_html( $currency );
-			echo '</div>';
-		}
-
-		echo '<br>';
-
-		echo '<label for="lafka_ingredients">';
-		esc_html_e( 'Ingredients', 'lafka-plugin' );
-		echo '</label> ';
-		echo '<div><input type="text" id="lafka_ingredients" name="lafka_ingredients" value="' . esc_attr( get_post_meta( $post->ID, 'lafka_ingredients', true ) ) . '" class="regular-text" /></div>';
-
-		echo '<label for="lafka_allergens">';
-		esc_html_e( 'Allergens', 'lafka-plugin' );
-		echo '</label> ';
-		echo '<div><input type="text" id="lafka_allergens" name="lafka_allergens" value="' . esc_attr( get_post_meta( $post->ID, 'lafka_allergens', true ) ) . '" class="regular-text" /></div>';
-
-		if ( class_exists( 'Lafka_Nutrition_Config' ) ) {
-			echo '<h4>' . esc_html__( 'Nutrition Information:', 'lafka-plugin' ) . '</h4>';
-			echo '<div class="lafka-menu-nutrition-admin">';
-			foreach ( Lafka_Nutrition_Config::$nutrition_meta_fields as $field_name => $field_data ) {
-				echo '<div><label class="lafka-admin-option-label" for="' . esc_attr( $field_name ) . '">';
-				echo esc_html( $field_data['label'] );
-				echo '</label> ';
-				echo '<input type="text" id="' . esc_attr( $field_name ) . '" name="' . esc_attr( $field_name ) . '" value="' . esc_attr( get_post_meta( $post->ID, $field_name, true ) ) . '" class="small-text"  /></div>';
-			}
-			echo '</div>';
-		}
-
-		echo '<h4>' . esc_html__( 'Menu Entry External Links:', 'lafka-plugin' ) . '</h4>';
-		echo '<label for="lafka_ext_link_button_title">';
-		esc_html_e( 'First Button Title', 'lafka-plugin' );
-		echo '</label> ';
-		echo '<div><input type="text" id="lafka_ext_link_button_title" name="lafka_ext_link_button_title" value="' . esc_attr( get_post_meta( $post->ID, 'lafka_ext_link_button_title', true ) ) . '" class="regular-text" /></div>';
-
-		echo '<label for="lafka_ext_link_url">';
-		esc_html_e( 'First Button Url', 'lafka-plugin' );
-		echo '</label> ';
-		echo '<div><input type="text" id="lafka_ext_link_url" name="lafka_ext_link_url" value="' . esc_attr( get_post_meta( $post->ID, 'lafka_ext_link_url', true ) ) . '" class="regular-text" /></div>';
-
-		echo '<h4>' . esc_html__( 'Short Description', 'lafka-plugin' ) . '</h4>';
-		wp_editor(
-			wp_kses_post( get_post_meta( $post->ID, 'lafka_add_description', true ) ),
-			'lafkaadddescription',
-			$settings = array(
-				'textarea_name' => 'lafka_add_description',
-				'textarea_rows' => 5,
-			)
-		);
-	}
-
-}
-
-/* When the foodmenu is saved, saves our custom data */
-if ( ! function_exists( 'lafka_save_foodmenu_postdata' ) ) {
-
-	function lafka_save_foodmenu_postdata( $post_id ) {
-
-		// Check if our nonce is set, and verify in negated form.
-		if ( ! isset( $_POST['lafka_foodmenu_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['lafka_foodmenu_nonce'] ) ), 'lafka_save_foodmenu_postdata' ) ) {
-			return;
-		}
-
-		// If this is an autosave, our form has not been submitted, so we don't want to do anything.
-		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
-			return;
-		}
-
-		// Check the user's permissions.
-		if ( isset( $_POST['post_type'] ) && 'page' === $_POST['post_type'] ) {
-
-			if ( ! current_user_can( 'edit_post', $post_id ) ) {
-				return;
-			}
-		} elseif ( ! current_user_can( 'edit_posts', $post_id ) ) {
-
-				return;
-		}
-
-		/* OK, it's safe for us to save the data now. */
-		// Make sure that it is set.
-		if ( ! isset( $_POST['lafka_item_single_price'], $_POST['lafka_item_size1'], $_POST['lafka_item_price1'], $_POST['lafka_item_size2'], $_POST['lafka_item_price2'], $_POST['lafka_item_size3'], $_POST['lafka_item_price3'], $_POST['lafka_ingredients'], $_POST['lafka_allergens'], $_POST['lafka_ext_link_button_title'], $_POST['lafka_ext_link_url'], $_POST['lafka_add_description'] ) ) {
-			return;
-		}
-
-		update_post_meta( $post_id, 'lafka_item_single_price', sanitize_text_field( wp_unslash( $_POST['lafka_item_single_price'] ) ) );
-		foreach ( array( 'lafka_item_weight', 'lafka_item_weight_unit' ) as $weight_field ) {
-			if ( isset( $_POST[ $weight_field ] ) ) {
-				update_post_meta( $post_id, $weight_field, sanitize_text_field( wp_unslash( $_POST[ $weight_field ] ) ) );
-			}
-		}
-		for ( $i = 1; $i <= 3; $i++ ) {
-			foreach ( array( 'lafka_item_size' . $i, 'lafka_item_price' . $i ) as $item_field ) {
-				if ( isset( $_POST[ $item_field ] ) ) {
-					update_post_meta( $post_id, $item_field, sanitize_text_field( wp_unslash( $_POST[ $item_field ] ) ) );
-				}
-			}
-		}
-		update_post_meta( $post_id, 'lafka_ingredients', sanitize_text_field( wp_unslash( $_POST['lafka_ingredients'] ) ) );
-		update_post_meta( $post_id, 'lafka_allergens', sanitize_text_field( wp_unslash( $_POST['lafka_allergens'] ) ) );
-		if ( class_exists( 'Lafka_Nutrition_Config' ) ) {
-			foreach ( Lafka_Nutrition_Config::$nutrition_meta_fields as $field_name => $field_data ) {
-				if ( ! isset( $_POST[ $field_name ] ) ) {
-					continue; // Field not on this form: leave the stored value alone.
-				}
-				if ( is_numeric( $_POST[ $field_name ] ) ) {
-					update_post_meta( $post_id, $field_name, sanitize_text_field( wp_unslash( $_POST[ $field_name ] ) ) );
-				} else {
-					update_post_meta( $post_id, $field_name, '' );
-				}
-			}
-		}
-		update_post_meta( $post_id, 'lafka_ext_link_button_title', sanitize_text_field( wp_unslash( $_POST['lafka_ext_link_button_title'] ) ) );
-		update_post_meta( $post_id, 'lafka_ext_link_url', esc_url_raw( wp_unslash( $_POST['lafka_ext_link_url'] ) ) );
-		// HTML field, handled as core's wp_filter_post_kses() does: kses runs on the
-		// unslashed markup (real attribute quotes, not escaped ones), then the result
-		// is re-slashed because update_post_meta() unslashes what it stores.
-		update_post_meta( $post_id, 'lafka_add_description', wp_slash( wp_kses_post( wp_unslash( $_POST['lafka_add_description'] ) ) ) );
-	}
-
-}
-
-/**
  * Register additional featured images metaboxes (5)
  */
 add_action( 'add_meta_boxes', 'lafka_add_additonal_featured_meta' );
 add_action( 'save_post', 'lafka_save_additonal_featured_meta_postdata' );
 
-/* Adds a box to the side column on the Page/Post/Foodmenu edit screens */
+/* Adds a box to the side column on the Page/Post edit screens */
 if ( ! function_exists( 'lafka_add_additonal_featured_meta' ) ) {
 
 	function lafka_add_additonal_featured_meta() {
-		$post_types_array = array( 'page', 'post', 'lafka-foodmenu' );
+		$post_types_array = array( 'page', 'post' );
 
 		for ( $i = 2; $i <= 6; $i++ ) {
 			foreach ( $post_types_array as $post_type ) {
@@ -915,111 +737,6 @@ if ( ! function_exists( 'lafka_save_additonal_featured_meta_postdata' ) ) {
 			if ( strstr( $key, 'lafka_featured_imgid_' ) ) {
 				update_post_meta( $post_id, sanitize_key( $key ), sanitize_text_field( $value ) );
 			}
-		}
-	}
-
-}
-
-/**
- * Register Foodmenu enable Cloud Zoom metabox
- */
-add_action( 'add_meta_boxes', 'lafka_add_foodmenu_cz_metabox' );
-add_action( 'save_post', 'lafka_save_foodmenu_cz_postdata' );
-
-if ( ! function_exists( 'lafka_add_foodmenu_cz_metabox' ) ) {
-
-	function lafka_add_foodmenu_cz_metabox() {
-		add_meta_box(
-			'lafka_foodmenu_cz',
-			esc_html__( 'Menu Entry Options', 'lafka-plugin' ),
-			'lafka_foodmenu_cz_callback',
-			'lafka-foodmenu',
-			'side',
-			'low'
-		);
-	}
-
-}
-
-/* Prints the box content */
-if ( ! function_exists( 'lafka_foodmenu_cz_callback' ) ) {
-
-	function lafka_foodmenu_cz_callback( $post ) {
-
-		// Use nonce for verification
-		wp_nonce_field( 'lafka_save_foodmenu_cz_postdata', 'foodmenu_cz_nonce' );
-
-		$custom = get_post_custom( $post->ID );
-
-		// Set default
-		$lafka_prtfl_custom_content = 0;
-		$lafka_prtfl_gallery        = 'flex';
-
-		if ( isset( $custom['lafka_prtfl_custom_content'] ) && $custom['lafka_prtfl_custom_content'][0] ) {
-			$lafka_prtfl_custom_content = $custom['lafka_prtfl_custom_content'][0];
-		}
-		if ( isset( $custom['lafka_prtfl_gallery'] ) && $custom['lafka_prtfl_gallery'][0] ) {
-			$lafka_prtfl_gallery = $custom['lafka_prtfl_gallery'][0];
-		}
-
-		$output = '<p><b>' . esc_html__( 'Custom Content:', 'lafka-plugin' ) . '</b></p>';
-
-		$output .= '<p><label for="lafka_prtfl_custom_content">';
-		$output .= "<input type='checkbox' id='lafka_prtfl_custom_content' name='lafka_prtfl_custom_content' value='1' " .
-						checked( esc_attr( $lafka_prtfl_custom_content ), 1, false ) . '>' .
-						esc_html__( "Don't use the menu entry gallery and all fields. Use only the content.", 'lafka-plugin' ) . '</label></p>';
-
-		$output .= '<p><b>' . esc_html__( 'Menu entry gallery will appear as:', 'lafka-plugin' ) . '</b></p>';
-
-		$output .= '<div><input id="lafka_prtfl_gallery_flex" ' . checked( $lafka_prtfl_gallery, 'flex', false ) . ' type="radio" value="flex" name="lafka_prtfl_gallery">';
-		$output .= '<label for="lafka_prtfl_gallery_flex">' . esc_html__( 'Flex Slider', 'lafka-plugin' ) . '</label></div>';
-		$output .= '<div><input id="lafka_prtfl_gallery_cloud" ' . checked( $lafka_prtfl_gallery, 'cloud', false ) . ' type="radio" value="cloud" name="lafka_prtfl_gallery">';
-		$output .= '<label for="lafka_prtfl_gallery_cloud">' . esc_html__( 'Cloud Zoom', 'lafka-plugin' ) . '</label></div>';
-		$output .= '<div><input id="lafka_prtfl_gallery_list" ' . checked( $lafka_prtfl_gallery, 'list', false ) . ' type="radio" value="list" name="lafka_prtfl_gallery">';
-		$output .= '<label for="lafka_prtfl_gallery_list">' . esc_html__( 'Image List', 'lafka-plugin' ) . '</label></div>';
-
-		echo wp_kses( $output, lafka_metabox_allowed_html() );
-	}
-
-}
-
-/* When the post is saved, saves our custom data */
-if ( ! function_exists( 'lafka_save_foodmenu_cz_postdata' ) ) {
-
-	function lafka_save_foodmenu_cz_postdata( $post_id ) {
-		// verify if this is an auto save routine.
-		// If it is our form has not been submitted, so we dont want to do anything
-		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
-			return;
-		}
-
-		// verify this came from our screen and with proper authorization,
-		// because save_post can be triggered at other times
-
-		if ( ! isset( $_POST['foodmenu_cz_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['foodmenu_cz_nonce'] ) ), 'lafka_save_foodmenu_cz_postdata' ) ) {
-			return;
-		}
-
-		// Check the user's permissions.
-		if ( isset( $_POST['post_type'] ) && 'page' === $_POST['post_type'] ) {
-
-			if ( ! current_user_can( 'edit_post', $post_id ) ) {
-				return;
-			}
-		} elseif ( ! current_user_can( 'edit_posts', $post_id ) ) {
-
-				return;
-		}
-
-		if ( ! empty( $_POST['lafka_prtfl_custom_content'] ) ) {
-			update_post_meta( $post_id, 'lafka_prtfl_custom_content', 1 );
-		} else {
-			update_post_meta( $post_id, 'lafka_prtfl_custom_content', 0 );
-		}
-
-		// It is checkbox - if is in the post - is set, if not - is not set
-		if ( isset( $_POST['lafka_prtfl_gallery'] ) ) {
-			update_post_meta( $post_id, 'lafka_prtfl_gallery', sanitize_text_field( wp_unslash( $_POST['lafka_prtfl_gallery'] ) ) );
 		}
 	}
 

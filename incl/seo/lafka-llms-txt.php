@@ -31,8 +31,11 @@
 defined( 'ABSPATH' ) || exit;
 
 if ( ! defined( 'LAFKA_SEO_REWRITE_VERSION' ) ) {
-	/** Bump whenever the machine-readable / IndexNow rewrite rules change. */
-	define( 'LAFKA_SEO_REWRITE_VERSION', '1' );
+	/**
+	 * Bump whenever the plugin's rewrite rules change (machine-readable /
+	 * IndexNow routes; 2 = the retired food-menu post type's rules dropped).
+	 */
+	define( 'LAFKA_SEO_REWRITE_VERSION', '2' );
 }
 
 if ( ! function_exists( 'lafka_llms_documents' ) ) {

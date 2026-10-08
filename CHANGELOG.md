@@ -87,6 +87,19 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
   - `incl/compat/lafka-wpbakery-fallback.php` stays: it is content safety (orphaned
     `[vc_*]` / `[rev_slider]` tags in old pages), not an integration.
 
+- **The "Restaurant Menu" post type** (`lafka-foodmenu`) and its `lafka_foodmenu_category`
+  taxonomy: the registration, the "Menu Entry Fields" and "Menu Entry Options" meta boxes,
+  menu-category drag ordering (`incl/foodmenu-category-ordering.php`, its script and
+  stylesheet — its `terms_clauses` filter added a second column to `fields=ids` term
+  queries, the source of thousands of PHP warnings in production logs), the "Latest Menu
+  Entries" widget and the WPML keys. WooCommerce products are the menu. Old
+  `/restaurant-menu/…` and `/restaurant-menu-category/…` URLs that would 404 now 301 to the
+  menu (`lafka_get_menu_url()`); the prefixes are filterable
+  (`lafka_legacy_foodmenu_path_prefixes`), replacing the `lafka_legacy_foodmenu_redirect` /
+  `lafka_legacy_foodmenu_redirect_target` filters. `lafka_seo_legacy_post_types()` now
+  defaults to an empty list. `LAFKA_SEO_REWRITE_VERSION` is 2, so the old rewrite rules are
+  flushed once after the update. Uninstall still deletes any leftover entries and terms.
+
 ### Fixed
 - Promo tooltips never matched their default zone: the theme default
   `promo_tooltip_N_position` was `above_price` while the plugin compared against

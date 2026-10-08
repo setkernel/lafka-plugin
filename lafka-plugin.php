@@ -846,7 +846,7 @@ if ( ! function_exists( 'lafka_load_wc_dependent_widgets' ) ) {
 }
 
 function lafka_plugin_after_plugins_loaded() {
-	// Load Nutrition Config - it may be needed also for menu entries
+	// Load Nutrition Config (product nutrition fields).
 	require_once plugin_dir_path( __FILE__ ) . '/incl/nutrition/includes/class-lafka-nutrition-config.php';
 
 	/* independent widgets */
@@ -855,7 +855,6 @@ function lafka_plugin_after_plugins_loaded() {
 		'class-lafka-contacts-widget',
 		'class-lafka-payment-options-widget',
 		'class-lafka-popular-posts-widget',
-		'class-lafka-latest-menu-entries-widget',
 		'lafka-widget-registration',
 	) as $file ) {
 		require_once plugin_dir_path( __FILE__ ) . 'widgets/' . $file . '.php';
@@ -918,9 +917,6 @@ function lafka_plugin_after_plugins_loaded() {
 	if ( is_admin() ) {
 		require_once plugin_dir_path( __FILE__ ) . '/incl/metaboxes.php';
 	}
-
-	/* Load foodmenu_category ordering in admin */
-	require_once plugin_dir_path( __FILE__ ) . '/incl/foodmenu-category-ordering.php';
 
 	/* P6-UX-6 W3-T10: mobile menu IA grouping walker (opt-in via Customizer) */
 	require_once plugin_dir_path( __FILE__ ) . 'incl/menu/class-lafka-mobile-grouped-walker.php';
@@ -1088,119 +1084,6 @@ if ( ! function_exists( 'lafka_get_excerpt_by_id' ) ) {
 		$the_excerpt = '<p>' . esc_html( $the_excerpt ) . '</p>';
 
 		return $the_excerpt;
-	}
-
-}
-
-/**
- * Define Foodmenu custom post type
- * 'lafka-foodmenu'
- */
-if ( ! function_exists( 'lafka_register_cpt_lafka_foodmenu' ) ) {
-	add_action( 'init', 'lafka_register_cpt_lafka_foodmenu', 5 );
-
-	function lafka_register_cpt_lafka_foodmenu() {
-
-		$labels = array(
-			'name'               => esc_html__( 'Restaurant Menu', 'lafka-plugin' ),
-			'singular_name'      => esc_html__( 'Menu Entry', 'lafka-plugin' ),
-			'add_new'            => esc_html__( 'Add New Menu Entry', 'lafka-plugin' ),
-			'add_new_item'       => esc_html__( 'Add New Menu Entry', 'lafka-plugin' ),
-			'edit_item'          => esc_html__( 'Edit Restaurant Menu Entry', 'lafka-plugin' ),
-			'new_item'           => esc_html__( 'New Menu Entry', 'lafka-plugin' ),
-			'view_item'          => esc_html__( 'View Menu Entry', 'lafka-plugin' ),
-			'search_items'       => esc_html__( 'Search Menu Entries', 'lafka-plugin' ),
-			'not_found'          => esc_html__( 'No Menu Entries Found', 'lafka-plugin' ),
-			'not_found_in_trash' => esc_html__( 'No Menu Entries found in Trash', 'lafka-plugin' ),
-			'parent_item_colon'  => esc_html__( 'Parent Menu Entry:', 'lafka-plugin' ),
-			'menu_name'          => esc_html__( 'Restaurant Menu', 'lafka-plugin' ),
-		);
-
-		$args = array(
-			'labels'                => $labels,
-			'hierarchical'          => false,
-			'description'           => esc_html__( 'Lafka Restaurant Menu Post Type', 'lafka-plugin' ),
-			'supports'              => array( 'title', 'editor', 'excerpt', 'author', 'thumbnail', 'revisions', 'custom-fields' ),
-			'taxonomies'            => array( 'lafka_foodmenu_category' ),
-			'public'                => true,
-			'show_ui'               => true,
-			'show_in_menu'          => true,
-			'show_in_nav_menus'     => true,
-			'show_in_rest'          => true,
-			// `menu-items` collides with WP 5.9+ core nav-menu items endpoint
-			// (`/wp/v2/menu-items`) — core registers it later, wins, and
-			// returns 401 unauth. Lafka's CPT is therefore shadowed for
-			// public consumers. Use a Lafka-specific rest_base so the
-			// food-menu posts have a stable, unambiguous URL.
-			'rest_base'             => 'lafka-foodmenu',
-			'rest_controller_class' => 'WP_REST_Posts_Controller',
-			'publicly_queryable'    => true,
-			'exclude_from_search'   => false,
-			'has_archive'           => true,
-			'query_var'             => true,
-			'can_export'            => true,
-			'capability_type'       => 'page',
-			'menu_icon'             => 'dashicons-list-view',
-			'rewrite'               => array(
-				'slug' => esc_html__( 'restaurant-menu', 'lafka-plugin' ),
-			),
-		);
-
-		register_post_type( 'lafka-foodmenu', $args );
-	}
-
-}
-
-/**
- * Define lafka_foodmenu_category taxonomy
- * used by lafka-foodmenu post type
- */
-if ( ! function_exists( 'lafka_register_taxonomy_lafka_foodmenu_category' ) ) {
-	add_action( 'init', 'lafka_register_taxonomy_lafka_foodmenu_category', 5 );
-
-	function lafka_register_taxonomy_lafka_foodmenu_category() {
-
-		$labels = array(
-			'name'                       => esc_html__( 'Menu Categories', 'lafka-plugin' ),
-			'singular_name'              => esc_html__( 'Menu Category', 'lafka-plugin' ),
-			'search_items'               => esc_html__( 'Search Menu Categories', 'lafka-plugin' ),
-			'popular_items'              => esc_html__( 'Popular Menu Categories', 'lafka-plugin' ),
-			'all_items'                  => esc_html__( 'All Menu Categories', 'lafka-plugin' ),
-			'parent_item'                => esc_html__( 'Parent Menu Category', 'lafka-plugin' ),
-			'parent_item_colon'          => esc_html__( 'Parent Menu Category:', 'lafka-plugin' ),
-			'edit_item'                  => esc_html__( 'Edit Menu Category', 'lafka-plugin' ),
-			'update_item'                => esc_html__( 'Update Menu Category', 'lafka-plugin' ),
-			'add_new_item'               => esc_html__( 'Add New', 'lafka-plugin' ),
-			'new_item_name'              => esc_html__( 'New Menu Category', 'lafka-plugin' ),
-			'separate_items_with_commas' => esc_html__( 'Separate Menu Categories with commas', 'lafka-plugin' ),
-			'add_or_remove_items'        => esc_html__( 'Add or remove Menu Category', 'lafka-plugin' ),
-			'choose_from_most_used'      => esc_html__( 'Choose from the most used Menu Categories', 'lafka-plugin' ),
-			'menu_name'                  => esc_html__( 'Menu Categories', 'lafka-plugin' ),
-		);
-
-		$args = array(
-			'labels'                => $labels,
-			'public'                => true,
-			'show_in_nav_menus'     => true,
-			'show_ui'               => true,
-			'show_in_rest'          => true,
-			// Same collision: WP 5.9+ core registers `/wp/v2/menu-categories`
-			// (in fact only `/wp/v2/menus` ships in core, but matching the
-			// CPT's namespacing for consistency). Use the Lafka-prefixed
-			// path so the taxonomy doesn't shadow or get shadowed by any
-			// future core endpoint at the same name.
-			'rest_base'             => 'lafka-foodmenu-categories',
-			'rest_controller_class' => 'WP_REST_Terms_Controller',
-			'show_tagcloud'         => true,
-			'show_admin_column'     => false,
-			'hierarchical'          => true,
-			'query_var'             => true,
-			'rewrite'               => array(
-				'slug' => 'restaurant-menu-category',
-			),
-		);
-
-		register_taxonomy( 'lafka_foodmenu_category', array( 'lafka-foodmenu' ), $args );
 	}
 
 }

@@ -212,21 +212,6 @@ if ( ! function_exists( 'lafka_register_admin_plugin_scripts' ) ) {
 		);
 		wp_register_style( 'lafka-schedule', plugins_url( 'assets/css/schedule/jquery.schedule.min.css', LAFKA_PLUGIN_FILE ), array(), lafka_plugin_asset_version( 'assets/css/schedule/jquery.schedule.min.css' ) );
 
-		$screen    = get_current_screen();
-		$screen_id = $screen ? $screen->id : '';
-		if ( strstr( $screen_id, 'lafka_foodmenu_category' ) && $screen && 'lafka_foodmenu_category' === $screen->taxonomy ) {
-			wp_register_script( 'lafka-plugin-term-ordering', plugins_url( 'assets/js/lafka-plugin-foodmenu-cat-ordering.js', LAFKA_PLUGIN_FILE ), array( 'jquery-ui-sortable' ), lafka_plugin_asset_version( 'assets/js/lafka-plugin-foodmenu-cat-ordering.js' ), false );
-			wp_enqueue_script( 'lafka-plugin-term-ordering' );
-			wp_localize_script(
-				'lafka-plugin-term-ordering',
-				'lafka_cat_ordering',
-				array(
-					'nonce' => wp_create_nonce( 'lafka-foodmenu-cat-ordering' ),
-				)
-			);
-			wp_enqueue_style( 'lafka-plugin-term-ordering-style', plugins_url( 'assets/css/lafka-plugin-term-ordering.css', LAFKA_PLUGIN_FILE ), array(), lafka_plugin_asset_version( 'assets/css/lafka-plugin-term-ordering.css' ) );
-		}
-
 		// Same fail-closed rule as the front end: no key, no handle.
 		$maps_url = lafka_google_maps_script_url( 'geometry' );
 		if ( '' !== $maps_url ) {

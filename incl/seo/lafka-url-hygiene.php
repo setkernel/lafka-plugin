@@ -2,14 +2,14 @@
 /**
  * GX URL hygiene — redirects that keep crawlers and customers on the real menu.
  *
- *  - T-07: once WooCommerce products are the menu (lafka_seo_legacy_post_types()
- *    lists `lafka-foodmenu`), the theme's original food-menu CPT — singles,
- *    its archive and its category archives — 301s to the menu page (the
- *    published page with the `menu` slug, else the WooCommerce shop page,
- *    else home). Demo leftovers like /restaurant-menu/angus-burger/ otherwise
- *    stay public and compete with the real menu. Previews are never redirected.
- *    Filters: `lafka_legacy_foodmenu_redirect` (bool, false = keep the CPT
- *    pages), `lafka_legacy_foodmenu_redirect_target` (string URL).
+ *  - T-07: the theme's original "Restaurant Menu" post type is gone (the
+ *    WooCommerce products are the menu), but search engines still hold its old
+ *    URLs — /restaurant-menu/<entry>/ and /restaurant-menu-category/<term>/. A
+ *    request under one of those path prefixes that would otherwise 404 is sent
+ *    with a 301 to the menu (lafka_get_menu_url(), else home). A real page or
+ *    post that happens to live under the same path is never redirected.
+ *    Filter: `lafka_legacy_foodmenu_path_prefixes` (list of path prefixes,
+ *    an empty list turns the redirect off).
  *
  *  - T-36: WordPress' "guess the permalink" redirect for 404s sends a mistyped
  *    or retired URL to the closest-named post — e.g. /pa_size/large/ landed on
@@ -22,78 +22,54 @@
 
 defined( 'ABSPATH' ) || exit;
 
-if ( ! function_exists( 'lafka_legacy_foodmenu_redirect_target' ) ) {
-	/**
-	 * Where legacy food-menu URLs point: the menu page, else the shop, else home.
-	 *
-	 * @return string Absolute URL.
-	 */
-	function lafka_legacy_foodmenu_redirect_target(): string {
-		$target = '';
-		$page   = function_exists( 'get_page_by_path' ) ? get_page_by_path( 'menu' ) : null;
-		if ( is_object( $page ) && 'publish' === (string) ( $page->post_status ?? '' ) ) {
-			$target = (string) get_permalink( $page );
-		}
-		if ( '' === $target && function_exists( 'wc_get_page_id' ) ) {
-			$shop_id = (int) wc_get_page_id( 'shop' );
-			if ( $shop_id > 0 ) {
-				$target = (string) get_permalink( $shop_id );
-			}
-		}
-		if ( '' === $target ) {
-			$target = (string) home_url( '/' );
-		}
-
-		/**
-		 * Filter where legacy `lafka-foodmenu` URLs redirect to.
-		 *
-		 * @since 10.3.0
-		 * @param string $target Absolute URL (menu page / shop / home).
-		 */
-		return (string) apply_filters( 'lafka_legacy_foodmenu_redirect_target', $target );
-	}
-}
-
 if ( ! function_exists( 'lafka_legacy_foodmenu_redirect_url' ) ) {
 	/**
-	 * The 301 target for the current request, or '' when it is not a legacy
-	 * food-menu URL (or redirects are off).
+	 * The 301 target for a request path, or '' when the path is not under a
+	 * retired food-menu prefix.
 	 *
-	 * @return string
+	 * @param string $request_path Request path, e.g. "/restaurant-menu/angus/".
+	 * @return string Absolute URL, or ''.
 	 */
-	function lafka_legacy_foodmenu_redirect_url(): string {
-		if ( is_admin() || is_preview() ) {
-			return '';
+	function lafka_legacy_foodmenu_redirect_url( string $request_path ): string {
+		$home_path = (string) wp_parse_url( home_url( '/' ), PHP_URL_PATH );
+		$path      = '/' . ltrim( (string) wp_parse_url( $request_path, PHP_URL_PATH ), '/' );
+		if ( '' !== trim( $home_path, '/' ) && 0 === strpos( $path, rtrim( $home_path, '/' ) . '/' ) ) {
+			$path = substr( $path, strlen( rtrim( $home_path, '/' ) ) );
 		}
-		$legacy = function_exists( 'lafka_seo_legacy_post_types' ) ? lafka_seo_legacy_post_types() : array();
-		if ( ! in_array( 'lafka-foodmenu', $legacy, true ) ) {
-			return '';
-		}
-		if ( ! is_singular( 'lafka-foodmenu' ) && ! is_post_type_archive( 'lafka-foodmenu' ) && ! is_tax( 'lafka_foodmenu_category' ) ) {
-			return '';
-		}
+		$path = trailingslashit( strtolower( $path ) );
 
 		/**
-		 * Filter whether legacy food-menu URLs redirect to the menu.
+		 * Filter the path prefixes of the retired food-menu URLs.
 		 *
-		 * @since 10.3.0
-		 * @param bool $redirect Default true.
+		 * @since 10.4.0
+		 * @param list<string> $prefixes Path prefixes relative to the site root.
 		 */
-		if ( ! (bool) apply_filters( 'lafka_legacy_foodmenu_redirect', true ) ) {
-			return '';
+		$prefixes = (array) apply_filters( 'lafka_legacy_foodmenu_path_prefixes', array( '/restaurant-menu/', '/restaurant-menu-category/' ) );
+		foreach ( $prefixes as $prefix ) {
+			$prefix = trailingslashit( '/' . ltrim( strtolower( (string) $prefix ), '/' ) );
+			if ( '/' !== $prefix && 0 === strpos( $path, $prefix ) ) {
+				$target = function_exists( 'lafka_get_menu_url' ) ? lafka_get_menu_url() : '';
+				$target = (string) wp_validate_redirect( $target, '' );
+
+				return '' !== $target ? $target : (string) home_url( '/' );
+			}
 		}
-		return lafka_legacy_foodmenu_redirect_target();
+
+		return '';
 	}
 }
 
 if ( ! function_exists( 'lafka_legacy_foodmenu_redirect' ) ) {
 	/**
-	 * `template_redirect`: 301 a legacy food-menu URL to the menu.
+	 * `template_redirect`: 301 a retired food-menu URL that would 404 to the menu.
 	 *
 	 * @return void
 	 */
 	function lafka_legacy_foodmenu_redirect() {
-		$url = lafka_legacy_foodmenu_redirect_url();
+		if ( ! is_404() || ! isset( $_SERVER['REQUEST_URI'] ) ) {
+			return;
+		}
+		$url = lafka_legacy_foodmenu_redirect_url( esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) );
 		if ( '' === $url ) {
 			return;
 		}
