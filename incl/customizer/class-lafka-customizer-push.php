@@ -5,15 +5,15 @@
  * Single source of operator-configurable values for the Web Push module:
  *
  *   - Master enable toggle (default OFF - operator opts in)
- *   - VAPID public + private key (base64url; private rendered as password)
- *   - VAPID subject (mailto:operator@site - RFC 8292 requirement)
+ *   - VAPID subject (mailto:operator@site - RFC 8292 requirement). The VAPID
+ *     keypair is created by the plugin (see lafka_push_ensure_vapid_keys());
+ *     the private key is never in the Customizer.
  *   - Subscribe-prompt toggle + page-views threshold + copy
  *   - Reorder reminder toggle + days
  *
- * All settings are theme_mods (consistent with the rest of the Lafka
- * Customizer surface - analytics, PDP, abandoned-cart, reviews). Every
- * setting has a `sanitize_callback` so untrusted Customizer payloads can't
- * reach the DB.
+ * All settings are plugin options (type 'option'), so they survive a theme
+ * switch. Every setting has a `sanitize_callback` so untrusted Customizer
+ * payloads can't reach the DB.
  *
  * @package Lafka\Plugin\Customizer
  * @since   9.29.0
@@ -45,7 +45,7 @@ if ( ! class_exists( 'Lafka_Customizer_Push' ) ) {
 				'lafka_push',
 				array(
 					'title'       => esc_html__( 'Lafka - Push notifications', 'lafka-plugin' ),
-					'description' => esc_html__( 'Web Push notifications - browser-native alerts customers receive even when the site is closed. Generate a VAPID keypair (operator one-time cost), paste it below, and flip the master toggle on. Disabled by default so a fresh install never silently prompts customers.', 'lafka-plugin' ),
+					'description' => esc_html__( 'Web Push notifications - browser-native alerts customers receive even when the site is closed. Flip the master toggle on; the signing keys are created for you. Disabled by default so a fresh install never silently prompts customers.', 'lafka-plugin' ),
 					'priority'    => 36,
 				)
 			);
@@ -53,8 +53,8 @@ if ( ! class_exists( 'Lafka_Customizer_Push' ) ) {
 			$wp_customize->add_section(
 				'lafka_push_main',
 				array(
-					'title'       => esc_html__( 'VAPID + master toggle', 'lafka-plugin' ),
-					'description' => esc_html__( 'Generate a VAPID keypair once (e.g. via npx web-push generate-vapid-keys or vapidkeys.com). Public key is shown to subscribers; private key signs outbound pushes. Both must be base64url-encoded.', 'lafka-plugin' ),
+					'title'       => esc_html__( 'Master toggle and contact', 'lafka-plugin' ),
+					'description' => esc_html__( 'The signing keys (VAPID) are created and kept on the server automatically; the private key is never shown here. To create new keys, use WooCommerce → Push notifications.', 'lafka-plugin' ),
 					'panel'       => 'lafka_push',
 					'priority'    => 10,
 				)
@@ -79,8 +79,6 @@ if ( ! class_exists( 'Lafka_Customizer_Push' ) ) {
 			);
 
 			self::register_enabled( $wp_customize );
-			self::register_vapid_public( $wp_customize );
-			self::register_vapid_private( $wp_customize );
 			self::register_vapid_subject( $wp_customize );
 
 			self::register_subscribe_prompt_enabled( $wp_customize );
@@ -100,34 +98,6 @@ if ( ! class_exists( 'Lafka_Customizer_Push' ) ) {
 		 */
 		public static function sanitize_checkbox( $value ): string {
 			return ( '1' === (string) $value || 1 === $value || true === $value ) ? '1' : '0';
-		}
-
-		/**
-		 * Sanitize a VAPID public key - base64url, ~88 chars (65 bytes encoded).
-		 */
-		public static function sanitize_vapid_public( $value ): string {
-			$value = is_scalar( $value ) ? trim( (string) $value ) : '';
-			if ( '' === $value ) {
-				return '';
-			}
-			if ( ! preg_match( '/^[A-Za-z0-9_\-]{80,100}=*$/', $value ) ) {
-				return '';
-			}
-			return $value;
-		}
-
-		/**
-		 * Sanitize a VAPID private key - base64url, ~43 chars (32 bytes encoded).
-		 */
-		public static function sanitize_vapid_private( $value ): string {
-			$value = is_scalar( $value ) ? trim( (string) $value ) : '';
-			if ( '' === $value ) {
-				return '';
-			}
-			if ( ! preg_match( '/^[A-Za-z0-9_\-]{40,60}=*$/', $value ) ) {
-				return '';
-			}
-			return $value;
 		}
 
 		/**
@@ -175,6 +145,7 @@ if ( ! class_exists( 'Lafka_Customizer_Push' ) ) {
 			$wp_customize->add_setting(
 				'lafka_push_enabled',
 				array(
+					'type'              => 'option',
 					'default'           => '0',
 					'transport'         => 'refresh',
 					'sanitize_callback' => array( __CLASS__, 'sanitize_checkbox' ),
@@ -191,50 +162,11 @@ if ( ! class_exists( 'Lafka_Customizer_Push' ) ) {
 			);
 		}
 
-		private static function register_vapid_public( $wp_customize ): void {
-			$wp_customize->add_setting(
-				'lafka_push_vapid_public_key',
-				array(
-					'default'           => '',
-					'transport'         => 'refresh',
-					'sanitize_callback' => array( __CLASS__, 'sanitize_vapid_public' ),
-				)
-			);
-			$wp_customize->add_control(
-				'lafka_push_vapid_public_key',
-				array(
-					'label'       => esc_html__( 'VAPID public key', 'lafka-plugin' ),
-					'description' => esc_html__( 'base64url-encoded P-256 public key (~88 chars). Used as applicationServerKey when customers subscribe.', 'lafka-plugin' ),
-					'section'     => 'lafka_push_main',
-					'type'        => 'text',
-				)
-			);
-		}
-
-		private static function register_vapid_private( $wp_customize ): void {
-			$wp_customize->add_setting(
-				'lafka_push_vapid_private_key',
-				array(
-					'default'           => '',
-					'transport'         => 'refresh',
-					'sanitize_callback' => array( __CLASS__, 'sanitize_vapid_private' ),
-				)
-			);
-			$wp_customize->add_control(
-				'lafka_push_vapid_private_key',
-				array(
-					'label'       => esc_html__( 'VAPID private key', 'lafka-plugin' ),
-					'description' => esc_html__( 'base64url-encoded 32-byte private key (~43 chars). Treat as a secret - never share. Used to sign the VAPID JWT on every push. SECURITY NOTE: anyone with the edit_theme_options capability can read this field. For stronger isolation on multi-admin sites, define LAFKA_PUSH_VAPID_PRIVATE_KEY (and optionally LAFKA_PUSH_VAPID_PUBLIC_KEY + LAFKA_PUSH_VAPID_SUBJECT) as constants in wp-config.php — the constant takes precedence over the theme_mod and keeps the key out of the database entirely.', 'lafka-plugin' ),
-					'section'     => 'lafka_push_main',
-					'type'        => 'password',
-				)
-			);
-		}
-
 		private static function register_vapid_subject( $wp_customize ): void {
 			$wp_customize->add_setting(
 				'lafka_push_vapid_subject',
 				array(
+					'type'              => 'option',
 					'default'           => '', // Empty = the site admin email (lafka_push_default_vapid_subject()).
 					'transport'         => 'refresh',
 					'sanitize_callback' => array( __CLASS__, 'sanitize_vapid_subject' ),
@@ -255,6 +187,7 @@ if ( ! class_exists( 'Lafka_Customizer_Push' ) ) {
 			$wp_customize->add_setting(
 				'lafka_push_subscribe_prompt_enabled',
 				array(
+					'type'              => 'option',
 					'default'           => '1',
 					'transport'         => 'refresh',
 					'sanitize_callback' => array( __CLASS__, 'sanitize_checkbox' ),
@@ -275,6 +208,7 @@ if ( ! class_exists( 'Lafka_Customizer_Push' ) ) {
 			$wp_customize->add_setting(
 				'lafka_push_subscribe_prompt_threshold',
 				array(
+					'type'              => 'option',
 					'default'           => 2,
 					'transport'         => 'refresh',
 					'sanitize_callback' => array( __CLASS__, 'sanitize_prompt_threshold' ),
@@ -300,6 +234,7 @@ if ( ! class_exists( 'Lafka_Customizer_Push' ) ) {
 			$wp_customize->add_setting(
 				'lafka_push_subscribe_prompt_copy',
 				array(
+					'type'              => 'option',
 					'default'           => 'Want occasional treats? We send 1-2 notifications a week max - never spam.',
 					'transport'         => 'refresh',
 					'sanitize_callback' => 'sanitize_textarea_field',
@@ -320,6 +255,7 @@ if ( ! class_exists( 'Lafka_Customizer_Push' ) ) {
 			$wp_customize->add_setting(
 				'lafka_push_reorder_reminder_enabled',
 				array(
+					'type'              => 'option',
 					'default'           => '0',
 					'transport'         => 'refresh',
 					'sanitize_callback' => array( __CLASS__, 'sanitize_checkbox' ),
@@ -340,6 +276,7 @@ if ( ! class_exists( 'Lafka_Customizer_Push' ) ) {
 			$wp_customize->add_setting(
 				'lafka_push_reorder_reminder_days',
 				array(
+					'type'              => 'option',
 					'default'           => 14,
 					'transport'         => 'refresh',
 					'sanitize_callback' => array( __CLASS__, 'sanitize_reorder_days' ),

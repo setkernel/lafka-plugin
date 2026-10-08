@@ -88,6 +88,10 @@ if ( ! class_exists( 'Lafka_Push_Admin' ) ) {
 					} elseif ( 'preview' === $action ) {
 						$result = self::handle_preview( $_POST );
 						$status = 'preview';
+					} elseif ( 'regenerate_keys' === $action ) {
+						$status = function_exists( 'lafka_push_generate_vapid_keys' ) && lafka_push_store_vapid_keys( lafka_push_generate_vapid_keys() )
+							? 'keys_regenerated'
+							: 'keys_failed';
 					}
 				}
 			}
@@ -105,7 +109,7 @@ if ( ! class_exists( 'Lafka_Push_Admin' ) ) {
 					<div class="notice notice-warning">
 						<p>
 							<strong><?php echo esc_html__( 'Push is disabled.', 'lafka-plugin' ); ?></strong>
-							<?php echo esc_html__( 'Enable it and paste your VAPID keys in the Customizer panel below.', 'lafka-plugin' ); ?>
+							<?php echo esc_html__( 'Turn it on in the Customizer; the signing keys are created for you.', 'lafka-plugin' ); ?>
 							<a href="<?php echo esc_url( $customizer_link ); ?>"><?php echo esc_html__( 'Open Customizer', 'lafka-plugin' ); ?></a>
 						</p>
 					</div>
@@ -113,10 +117,15 @@ if ( ! class_exists( 'Lafka_Push_Admin' ) ) {
 					<div class="notice notice-error">
 						<p>
 							<strong><?php echo esc_html__( 'VAPID keys missing.', 'lafka-plugin' ); ?></strong>
-							<?php echo esc_html__( 'Paste your public + private VAPID keys in the Customizer panel before sending.', 'lafka-plugin' ); ?>
-							<a href="<?php echo esc_url( $customizer_link ); ?>"><?php echo esc_html__( 'Open Customizer', 'lafka-plugin' ); ?></a>
+							<?php echo esc_html__( 'The signing keys could not be created on this server (PHP needs OpenSSL with elliptic-curve support). Define LAFKA_PUSH_VAPID_PUBLIC_KEY and LAFKA_PUSH_VAPID_PRIVATE_KEY in wp-config.php instead.', 'lafka-plugin' ); ?>
 						</p>
 					</div>
+				<?php endif; ?>
+
+				<?php if ( 'keys_regenerated' === $status ) : ?>
+					<div class="notice notice-success"><p><?php echo esc_html__( 'New signing keys created. Customers who subscribed earlier stop receiving notifications until they allow them again.', 'lafka-plugin' ); ?></p></div>
+				<?php elseif ( 'keys_failed' === $status ) : ?>
+					<div class="notice notice-error"><p><?php echo esc_html__( 'Could not create new signing keys on this server.', 'lafka-plugin' ); ?></p></div>
 				<?php endif; ?>
 
 				<?php if ( 'nonce_failed' === $status ) : ?>
@@ -214,6 +223,19 @@ if ( ! class_exists( 'Lafka_Push_Admin' ) ) {
 						<button type="submit" class="button button-primary" name="lafka_push_action" value="send" onclick="return confirm('<?php echo esc_js( __( 'Send this push to all selected subscribers?', 'lafka-plugin' ) ); ?>');"><?php echo esc_html__( 'Send now', 'lafka-plugin' ); ?></button>
 					</p>
 				</form>
+
+				<h2><?php echo esc_html__( 'Signing keys', 'lafka-plugin' ); ?></h2>
+				<p>
+					<?php echo esc_html__( 'Public key (shared with browsers):', 'lafka-plugin' ); ?>
+					<code><?php echo esc_html( '' !== (string) ( $vapid['public'] ?? '' ) ? (string) $vapid['public'] : '-' ); ?></code>
+				</p>
+				<?php if ( ! ( defined( 'LAFKA_PUSH_VAPID_PRIVATE_KEY' ) && '' !== (string) LAFKA_PUSH_VAPID_PRIVATE_KEY ) ) : ?>
+					<form method="post" action="">
+						<?php wp_nonce_field( self::NONCE_ACTION, self::NONCE_NAME ); ?>
+						<p class="description"><?php echo esc_html__( 'The private key is kept on the server and never shown. Creating new keys is only needed if you suspect it leaked: every customer who already subscribed must then allow notifications again.', 'lafka-plugin' ); ?></p>
+						<button type="submit" class="button" name="lafka_push_action" value="regenerate_keys" onclick="return confirm('<?php echo esc_js( __( 'Create new signing keys? Existing subscribers will stop receiving notifications until they subscribe again.', 'lafka-plugin' ) ); ?>');"><?php echo esc_html__( 'Create new keys', 'lafka-plugin' ); ?></button>
+					</form>
+				<?php endif; ?>
 
 				<h2><?php echo esc_html__( 'Activity log (last 20 sends)', 'lafka-plugin' ); ?></h2>
 				<?php if ( empty( $activity_log ) ) : ?>

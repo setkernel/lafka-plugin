@@ -21,7 +21,7 @@
  *     to rows owned by their own user_id.
  *
  *   GET  /wp-json/lafka/v1/push/vapid-key
- *     Returns { key: string } — the public VAPID key from the Customizer.
+ *     Returns { key: string } — the public VAPID key.
  *     Public, no nonce — the key is by definition public, and the SW needs to
  *     fetch it before the user has any auth context.
  *
@@ -41,10 +41,10 @@ if ( ! function_exists( 'lafka_push_rest_is_enabled' ) ) {
 	 * @return bool
 	 */
 	function lafka_push_rest_is_enabled(): bool {
-		if ( ! function_exists( 'get_theme_mod' ) ) {
+		if ( ! function_exists( 'lafka_setting' ) ) {
 			return false;
 		}
-		return '1' === (string) get_theme_mod( 'lafka_push_enabled', '0' );
+		return '1' === (string) lafka_setting( 'lafka_push_enabled', '0' );
 	}
 }
 
@@ -461,9 +461,7 @@ if ( ! function_exists( 'lafka_push_rest_vapid_key' ) ) {
 	function lafka_push_rest_vapid_key( $request = null ) {
 		unset( $request );
 
-		$key = function_exists( 'get_theme_mod' )
-			? (string) get_theme_mod( 'lafka_push_vapid_public_key', '' )
-			: '';
+		$key = lafka_push_get_vapid_config()['public'];
 
 		return array(
 			'enabled' => lafka_push_rest_is_enabled(),
