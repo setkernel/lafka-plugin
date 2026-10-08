@@ -167,6 +167,48 @@ percentages of the order's items, an optional custom amount, every order or deli
 only, and the label. The tip is a separate, non-taxable fee line on the order, on
 the classic and the block checkout.
 
+### Delivery maps (no API key needed)
+
+Every map works out of the box with **OpenStreetMap**: the store location, the
+delivery-zone editor, branch addresses, the location popup, the checkout pin and the
+`[lafka_shipping_areas]` zone map. A **Google Maps API key** is optional (Lafka
+Shipping Settings → General, or the Lafka theme's Customizer; it is one setting): with
+it the maps use Google and the location popup suggests addresses as customers type.
+Enable the Maps JavaScript, Places and Geocoding APIs and restrict the key to your
+site. Empty the field to go back to OpenStreetMap.
+
+- **Store location** (Lafka Shipping Settings → Advanced): click the map, drag the
+  pin, search an address or use the WooCommerce store address, then save. It is the
+  same point as the coordinates under WooCommerce → Settings → Restaurant (and in the
+  search-engine schema). Every map opens there; with no point yet they open on your
+  WooCommerce province or state, else your country, else Canada.
+- **Delivery zones** (WooCommerce → Lafka Shipping Areas): click the map to add a
+  corner, drag a corner to move it, click a corner to remove it, drag the small dot
+  between two corners to add one. Checkout refuses a pinned address outside every
+  zone.
+- **Checkout pin** (Lafka Shipping Settings → General → Pick Precise Delivery
+  Address from Map, classic checkout): the typed address is looked up once; a precise
+  match becomes the pin, otherwise the customer clicks the map, drags the pin or uses
+  **Use my location**. "Mandatory" only applies where this pin map exists: the block
+  checkout has none yet, so it never asks for a pin.
+- **Location popup**: customers type their address and press **Find** (or use their
+  location); a pickup-only store loads no map at all.
+
+Without a key, addresses are looked up through OpenStreetMap's Nominatim service from
+your server: one lookup per address, cached for 30 days, at most one request a second,
+sent with your site address and admin email so the service can contact you, and
+limited to 20 lookups an hour per visitor. Nothing is looked up while customers type.
+For more than light use point the `lafka_geocoder_endpoint` filter at your own
+Nominatim (or a compatible service). Map tiles come from OpenStreetMap
+(`lafka_map_tile_url`, `lafka_map_tile_attribution` to use another tile server); the
+browser caches them, the site does not. Filters: `lafka_map_default_view`,
+`lafka_store_point`, `lafka_maps_provider` (return `osm` to ignore a saved key, or
+`none` to switch maps off), `lafka_geocoder_contact_email`,
+`lafka_geocoder_user_agent`, `lafka_delivery_pinpoint_ui_available`.
+
+Distance-priced delivery comes from the separate WooCommerce Distance Rate Shipping
+plugin, which uses its own Google key and Google's Routes API.
+
 ## Local SEO
 
 Goal: rank in the Google Map Pack and local results for "[cuisine] near me" and

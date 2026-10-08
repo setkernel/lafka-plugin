@@ -27,6 +27,13 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
 - **WP Consent API**: with a compatible consent plugin active, Lafka's banner stands
   down and all tags (and server-side conversions) follow its statistics / marketing
   decisions; Lafka declares compatibility.
+- **Maps without an API key**: every map (store location, delivery-zone editor, branch
+  addresses, location popup, checkout pin, `[lafka_shipping_areas]`) works with
+  OpenStreetMap (Leaflet 1.9.4, bundled) when no Google Maps key is set; a key switches
+  them to Google. Addresses are looked up server-side through Nominatim, cached and
+  rate limited (`lafka/v1/geocode`, `lafka/v1/admin/geocode`;
+  `lafka_geocoder_endpoint` for your own geocoder). The checkout pin map gains "Use my
+  location" and a draggable pin.
 - **Search**: `OrderAction` on the restaurant schema; ready-to-paste order links for
   Google Business Profile, Apple Business Connect and Bing Places under Search & AI.
 - Deals can run on chosen weekdays and between dates ("Two for Tuesday"); outside
@@ -35,6 +42,24 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
   toppings and tips.
 
 ### Changed
+- **Maps, one source.** Every map opens on `lafka_get_map_default_view()`: the store
+  point, else the WooCommerce province / state, else the country, else Canada (never
+  Brussels, Sydney or 0,0). The store point is the business geo: the Shipping Settings
+  map now saves it there (a pre-10.4 pin is still read until the page is saved), and
+  the "Set Store Location" mode is gone. The Google Maps key lives only in
+  `lafka[google_maps_api_key]`: a copy in the Shipping Settings option is moved there
+  once and the second and secondary key fields and their sync hooks are removed (an
+  emptied field now removes the key). The Delivery areas module counts as configured
+  once the store has a location.
+- The checkout pin requirement applies wherever the classic pin map can show, which is
+  now always on the classic checkout (no key needed).
+- The location popup's delivery and pickup icons come from the theme's icon set (with
+  a built-in fallback); the Flaticon glyphs had been blank since the font was removed.
+- The four shipping-areas scripts are readable, documented sources again; the
+  client-side rate filtering for the retired Lafka shipping method, the unused debug
+  output and their styles are removed.
+- Demo seed: the demo restaurant, its zone, branch and WooCommerce store address and
+  base region are in Halifax, Nova Scotia (CAD), matching its coordinates.
 - Tracking settings moved from theme_mods to one plugin option, `lafka_tracking`
   (migrated once), so they survive a theme switch. Clarity and the Meta Pixel load from
   the effective consent (banner decision, else your defaults); direct GA4 receives
@@ -172,6 +197,11 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
   applies (`woocommerce_product_add_to_cart_text` / `_url` stay).
 
 ### Fixed
+- A branch whose map location was cleared kept its old location.
+- "Pick the delivery map only when the address cannot be found" with "Mandatory"
+  refused every order whose address was found.
+- The location popup measured branch delivery radii in km even when the branch is set
+  to miles.
 - Abandoned carts were never captured on the block checkout; they are now captured
   as the email is typed and marked recovered when the order is placed.
 - The WP Consent API alone (no consent manager) failed open: every tag and

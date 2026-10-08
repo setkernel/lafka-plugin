@@ -42,11 +42,13 @@ older PHP and WordPress.
   `incl/compat/class-lafka-block-cart-shim.php` rewrites unedited default block
   Cart and Checkout pages to the shortcodes and keeps the original markup so the
   switch is reversible. It never touches pages an operator edited.
-- **Google Maps:** the loader (`lafka-google-maps`) is registered only when a key is
-  set (Customizer, Google Maps API key, stored as `lafka[google_maps_api_key]`).
-  Without one, `[lafka_map]` and `[lafka_shipping_areas]` show an admin-only notice,
-  map pickers fall back to dropdowns and text inputs, and server-side geo-fence
-  validation still gates orders.
+- **Maps:** `incl/geo/` is the one source: `lafka_get_store_point()` (the business
+  geo), `lafka_get_map_default_view()`, `lafka_maps_provider()` ('google' with a key
+  in `lafka[google_maps_api_key]`, else 'osm') and the Nominatim proxy
+  (`Lafka_Geocoder`). Every map script talks to `assets/js/lafka-maps.js`
+  (`window.lafkaMaps`: Leaflet + OpenStreetMap or Google, polyline encode/decode,
+  distance, point-in-polygon, geocoding); features call `lafka_enqueue_maps()`.
+  Server-side geo-fence validation gates orders either way.
 - **Server hardening:** the security-headers toggle (Tools, Lafka Security) strips
   `X-Powered-By`. The `Server:` header comes from the web server: use
   `ServerTokens Prod` and `ServerSignature Off` on Apache, or `server_tokens off;`
