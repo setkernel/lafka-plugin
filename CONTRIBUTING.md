@@ -53,7 +53,7 @@ explicit time) instead of reading the clock twice.
 
 - `lafka-plugin.php` — bootstrap, CPT/taxonomy registration, AJAX endpoints, asset enqueues, HPOS + Cart-Checkout-Blocks compat declaration.
 - `incl/` — feature modules. Gating is declared in `Lafka_Module_Registry` (`incl/class-lafka-module-registry.php`), which the Lafka → Modules page and Site Health read. The five legacy flags (product add-ons, shipping areas, order hours, KDS, promotions) are also exposed as `is_lafka_<feature>()` helpers over `Lafka_Options`; the conversion modules read their own theme_mod toggles.
-  - `addons/` — WooCommerce product addons; the v2 **engine** lives in `addons/engine/` (resolver, pricing strategies, `cart/`, `display/`, `admin/`, REST `api/`, `cli/`, `compat/` WC Product Bundles bridge, `data/`, `sources/`, `migrations/`). Bundles/combos are now the official WC Product Bundles plugin bridged here — the old `combos/` fork was removed in v9.0.0.
+  - `addons/` — WooCommerce product addons; the v2 **engine** lives in `addons/engine/` (resolver, pricing strategies, `cart/`, `display/`, `admin/`, REST `api/`, `cli/`, `compat/` WC Product Bundles bridge, `data/`, `sources/`, `migrations/`). Bundles are the official WC Product Bundles plugin, bridged here.
   - `nutrition/` — nutrition labels for food-menu items
   - `order-hours/` — store-hours and holiday closures
   - `shipping-areas/` — delivery-zone coordinator; branches (`branches/`), the date/time picker (`timeslots/`) and `[lafka_map]` (`map-shortcode/`) are split out into sibling modules

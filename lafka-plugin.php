@@ -96,22 +96,6 @@ if ( function_exists( 'register_deactivation_hook' ) ) {
 	register_deactivation_hook( __FILE__, array( 'Lafka_Diagnostics', 'unschedule' ) );
 }
 
-if ( ! function_exists( 'lafka_write_log' ) ) {
-	/**
-	 * Legacy debug logger, kept for back-compat.
-	 *
-	 * @deprecated 10.2.0 Use Lafka_Log::{level}( $channel, $message, $context ) or lafka_log().
-	 *
-	 * @param mixed $log Message, array or object.
-	 * @return void
-	 */
-	function lafka_write_log( $log ) {
-		$message = is_scalar( $log ) ? (string) $log : 'lafka_write_log';
-		$context = is_scalar( $log ) ? array() : array( 'value' => is_object( $log ) ? get_object_vars( $log ) : $log );
-		lafka_log( 'debug', 'core', $message, $context );
-	}
-}
-
 /**
  * Plugin shim for lafka_get_option().
  *
@@ -186,12 +170,6 @@ if ( ! defined( 'LAFKA_IS_WOOCOMMERCE' ) ) {
 }
 if ( ! defined( 'LAFKA_IS_BBPRESS' ) ) {
 	define( 'LAFKA_IS_BBPRESS', LAFKA_PLUGIN_IS_BBPRESS );
-}
-if ( ! defined( 'LAFKA_IS_REVOLUTION' ) ) {
-	define( 'LAFKA_IS_REVOLUTION', LAFKA_PLUGIN_IS_REVOLUTION );
-}
-if ( ! defined( 'LAFKA_IS_WC_MARKETPLACE' ) ) {
-	define( 'LAFKA_IS_WC_MARKETPLACE', LAFKA_PLUGIN_IS_WC_MARKETPLACE );
 }
 
 // Feature-flag checks — accept legacy $lafka_options array for backward compat,

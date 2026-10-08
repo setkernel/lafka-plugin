@@ -138,8 +138,8 @@ maps loader without a key. Closed in plugin v8.7.4 + theme v5.8.3.
   meta is written on `woocommerce_checkout_create_order` (not
   `woocommerce_checkout_update_order_meta`) so it receives the `WC_Order`
   before save.
-- **PHP < 8.1** — uses `static fn()` short closures (since 7.4 actually,
-  but 8.1 is the floor for declared types in pricing helpers).
+- **PHP < 8.1** — 8.1 is the floor for the declared types used in the
+  pricing helpers.
 
 ## HPOS (custom_order_tables) status
 

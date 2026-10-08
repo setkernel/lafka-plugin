@@ -51,7 +51,7 @@ The plugin ships with **zero hardcoded restaurant data** — every public NAP / 
 - **Shipping Areas** (`lafka_shipping_areas`) — Delivery zone management
 - **Product Addons** (`lafka_glb_addon`) — Global addon groups
 
-For bundled / composite products, install the official **[WooCommerce Product Bundles](https://woocommerce.com/products/product-bundles/)** plugin. Lafka's addons engine bridges into it via `incl/addons/engine/compat/class-bundles-addons-compatibility.php` (since v9.6.0). The legacy `wc_combined_product` fork was removed in v9.0.0.
+For bundled / composite products, install the official **[WooCommerce Product Bundles](https://woocommerce.com/products/product-bundles/)** plugin. Lafka's addons engine bridges into it via `incl/addons/engine/compat/class-bundles-addons-compatibility.php`.
 
 ### Shortcodes (26)
 Most shortcodes are also mapped as WPBakery elements; WPBakery itself is optional (see `incl/compat/lafka-wpbakery-fallback.php`).
@@ -98,10 +98,6 @@ Gated features are declared in `Lafka_Module_Registry` (`incl/class-lafka-module
 - **Analytics** (`incl/analytics/`) — GA4 / GTM with Consent Mode v2 defaults, `dataLayer` WooCommerce ecommerce events, and custom event hooks
 - **Conversion** (`incl/conversion/`) — Abandoned-cart capture / cron / DB / email / resume, web-push (db / REST / sender / re-order cron), and review-prompt banner + email
 
-### Icon Packs
-- Elegant Icons (etline) — 100+ icons
-- Flaticon Food Icons — 50+ food-specific icons
-
 ## Structure
 
 ```
@@ -116,16 +112,18 @@ lafka-plugin/
 │   ├── customizer/      # Restaurant Info / PDP / Upsell / Abandoned-Cart / Analytics / Push / Reviews panels
 │   ├── compat/          # Block-cart shim, WPBakery/Revslider fallbacks, address-autocomplete compat, WP Importer ↔ WC attrs bridge
 │   ├── conversion/      # Abandoned-cart + web-push + review prompts
+│   ├── insights/        # First-party funnel sessions, nightly rollups, weekly insights email
 │   ├── kitchen-display/ # KDS state machine + AJAX + emails
 │   ├── map-shortcode/   # [lafka_map] (split from shipping-areas v9.3.0)
 │   ├── menu/            # Mobile grouped walker
 │   ├── nutrition/       # Per-product nutrition facts
+│   ├── observability/   # Lafka_Log, fatal capture, incidents table, diagnostics + error digest
 │   ├── order-hours/     # Open/close scheduling
 │   ├── perf/            # Image dimensions, LCP preload, asset pruning
 │   ├── promotions/      # BOGO + delivery minimum (migrated from child v6.0.0)
 │   ├── schema/          # JSON-LD + lafka_get_restaurant_info() resolver
 │   ├── security/        # Headers + REST user-enum block
-│   ├── seo/             # Shop archive canonical
+│   ├── seo/             # Titles, head meta, canonical, sitemap + robots, llms.txt, IndexNow, term FAQs
 │   ├── shipping-areas/  # Coordinator (delivery zones + CPT)
 │   ├── site-health/     # WP Site Health integration
 │   ├── store-api/       # Store API parity: cart validation + order-meta persistence (v10.0.0)
@@ -138,6 +136,7 @@ lafka-plugin/
 ├── widgets/             # Widget classes
 ├── scripts/             # Dev tooling (version sync) — not shipped in the release zip
 ├── assets/              # JS, CSS, images
+├── docs/                # Owner docs: LOCAL_SEO, TRACKING, PERFORMANCE, DIAGNOSTICS
 ├── languages/           # Translation files
 └── lafka-plugin.php     # Main plugin file
 ```

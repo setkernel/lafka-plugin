@@ -48,11 +48,6 @@ updates:
     labels:
       - dependencies
       - javascript
-    # Known peer ceiling: @wordpress/stylelint-config 23.x peers on stylelint
-    # ^16 (see COMPATIBILITY.md "Known incompatibilities").
-    ignore:
-      - dependency-name: 'stylelint'
-        update-types: ['version-update:semver-major']
     groups:
       npm-minor-and-patch:
         patterns: ['*']

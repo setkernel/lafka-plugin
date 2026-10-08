@@ -85,8 +85,8 @@ class Lafka_Options {
 	/**
 	 * Check whether a feature flag option is explicitly set to 'enabled'.
 	 *
-	 * Useful for: product_addons, shipping_areas, product_combos, order_hours,
-	 * kitchen_display, etc.
+	 * Useful for: product_addons, shipping_areas, order_hours, kitchen_display,
+	 * promotions, etc.
 	 *
 	 * @param string $name Option key (e.g. 'product_addons').
 	 *
