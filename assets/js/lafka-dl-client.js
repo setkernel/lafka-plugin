@@ -129,29 +129,85 @@
 	}
 
 	// ------------------------------------------------------------------
-	// add_shipping_info / add_payment_info — checkout radio changes.
+	// add_shipping_info / add_payment_info — checkout radio changes, and on
+	// "Place order" for whatever was never changed (a single shipping rate
+	// or a preselected payment method shows no radio to change).
 	// ------------------------------------------------------------------
+	const checkoutSent = { shipping: false, payment: false };
+	const SHIPPING_SCOPE = '.wc-block-components-shipping-rates-control, .wp-block-woocommerce-checkout-shipping-methods-block, .wp-block-woocommerce-checkout-pickup-options-block';
+	const PAYMENT_NAMES = ['payment_method', 'radio-control-wc-payment-method-options'];
+
+	function pushShipping(tier) {
+		checkoutSent.shipping = true;
+		push('add_shipping_info', withCheckoutTotals({
+			shipping_tier: tier,
+			items: collectCheckoutItemsFromDom()
+		}));
+	}
+
+	function pushPayment(ptype) {
+		checkoutSent.payment = true;
+		push('add_payment_info', withCheckoutTotals({
+			payment_type: ptype,
+			items: collectCheckoutItemsFromDom()
+		}));
+	}
+
+	function currentShippingTier() {
+		const classic = document.querySelector('input[name^="shipping_method"]:checked, input[type="hidden"][name^="shipping_method"]');
+		if (classic) {
+			return classic.value;
+		}
+		const scopes = document.querySelectorAll(SHIPPING_SCOPE);
+		for (let i = 0; i < scopes.length; i++) {
+			const checked = scopes[i].querySelector('input[type="radio"]:checked');
+			if (checked) {
+				return checked.value;
+			}
+		}
+		const toggle = document.querySelector('.wc-block-checkout__shipping-method-option--selected');
+		return toggle ? toggle.textContent.trim() : '';
+	}
+
+	function currentPaymentType() {
+		for (let i = 0; i < PAYMENT_NAMES.length; i++) {
+			const checked = document.querySelector('input[name="' + PAYMENT_NAMES[i] + '"]:checked');
+			if (checked) {
+				return checked.value;
+			}
+		}
+		return '';
+	}
+
+	document.addEventListener('click', function (ev) {
+		const button = ev.target && ev.target.closest && ev.target.closest('#place_order, .wc-block-components-checkout-place-order-button');
+		if (!button) {
+			return;
+		}
+		const tier = currentShippingTier();
+		if (!checkoutSent.shipping && tier) {
+			pushShipping(tier);
+		}
+		const ptype = currentPaymentType();
+		if (!checkoutSent.payment && ptype) {
+			pushPayment(ptype);
+		}
+	}, true);
+
 	document.addEventListener('change', function (ev) {
 		const target = ev.target;
 		if (!target || !target.name) {
 			return;
 		}
-		// Shipping method radio
-		if (/^shipping_method/.test(target.name)) {
-			const tier = (target.value || '').toString();
-			push('add_shipping_info', withCheckoutTotals({
-				shipping_tier: tier,
-				items: collectCheckoutItemsFromDom()
-			}));
+		// Shipping method radio: classic `shipping_method[n]`; on the block
+		// checkout a radio-control input inside its shipping or pickup options.
+		const blockShipping = /^radio-control-/.test(target.name) && target.closest && target.closest(SHIPPING_SCOPE);
+		if (/^shipping_method/.test(target.name) || blockShipping) {
+			pushShipping((target.value || '').toString());
 			return;
 		}
-		// Payment method radio
-		if (target.name === 'payment_method') {
-			const ptype = (target.value || '').toString();
-			push('add_payment_info', withCheckoutTotals({
-				payment_type: ptype,
-				items: collectCheckoutItemsFromDom()
-			}));
+		if (PAYMENT_NAMES.indexOf(target.name) !== -1) {
+			pushPayment((target.value || '').toString());
 		}
 	});
 

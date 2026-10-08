@@ -405,10 +405,14 @@ if ( ! function_exists( 'lafka_dl_emit_view_cart' ) ) {
 	 * `view_cart` — emit on /cart/ page load.
 	 */
 	function lafka_dl_emit_view_cart(): void {
-		if ( ! function_exists( 'is_cart' ) || ! is_cart() ) {
+		// From woocommerce_before_cart on the classic cart, else wp_footer (the
+		// block cart fires no classic hook): once.
+		static $emitted = false;
+		if ( $emitted || ! function_exists( 'is_cart' ) || ! is_cart() ) {
 			return;
 		}
-		$items = lafka_dl_items_from_cart();
+		$emitted = true;
+		$items   = lafka_dl_items_from_cart();
 		if ( empty( $items ) ) {
 			return;
 		}
@@ -429,7 +433,10 @@ if ( ! function_exists( 'lafka_dl_emit_begin_checkout' ) ) {
 	 * view_cart on that destination already handles signal).
 	 */
 	function lafka_dl_emit_begin_checkout(): void {
-		if ( ! function_exists( 'is_checkout' ) || ! is_checkout() ) {
+		// From woocommerce_before_checkout_form on the classic checkout, else
+		// wp_footer (the block checkout fires no classic hook): once.
+		static $emitted = false;
+		if ( $emitted || ! function_exists( 'is_checkout' ) || ! is_checkout() ) {
 			return;
 		}
 		// Don't fire on /order-received/ — that's a checkout-endpoint URL but
@@ -441,6 +448,7 @@ if ( ! function_exists( 'lafka_dl_emit_begin_checkout' ) ) {
 		if ( empty( $items ) ) {
 			return;
 		}
+		$emitted = true;
 		$payload = array(
 			'currency' => lafka_dl_currency(),
 			'value'    => lafka_dl_cart_value(),
@@ -794,7 +802,9 @@ if ( function_exists( 'add_action' ) ) {
 	add_action( 'woocommerce_before_main_content', 'lafka_dl_emit_view_item_list', 5 );
 	add_action( 'wp_footer', 'lafka_dl_emit_view_item_list', 5 );
 	add_action( 'woocommerce_before_cart', 'lafka_dl_emit_view_cart', 5 );
+	add_action( 'wp_footer', 'lafka_dl_emit_view_cart', 5 );
 	add_action( 'woocommerce_before_checkout_form', 'lafka_dl_emit_begin_checkout', 5 );
+	add_action( 'wp_footer', 'lafka_dl_emit_begin_checkout', 5 );
 	add_action( 'woocommerce_thankyou', 'lafka_dl_emit_purchase', 10 );
 
 	// Interaction events — queue to session, flush on next page load.
