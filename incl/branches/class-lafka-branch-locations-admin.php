@@ -667,7 +667,7 @@ class Lafka_Branch_Locations_Admin {
 			$raw_schedule     = sanitize_text_field( wp_unslash( $_POST['lafka_branch_order_hours_schedule'] ) );
 			$decoded_schedule = json_decode( $raw_schedule );
 			if ( null !== $decoded_schedule ) {
-				update_term_meta( $term_id, 'lafka_branch_order_hours_schedule', wp_json_encode( $decoded_schedule ) );
+				update_term_meta( $term_id, 'lafka_branch_order_hours_schedule', wp_slash( wp_json_encode( $decoded_schedule ) ) );
 			}
 		}
 		if ( isset( $_POST['lafka_branch_order_hours_holidays_calendar'] ) ) {

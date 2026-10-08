@@ -231,7 +231,8 @@ if ( ! function_exists( 'lafka_term_faq_save' ) ) {
 		if ( empty( $faqs ) ) {
 			delete_term_meta( (int) $term_id, LAFKA_TERM_FAQ_META );
 		} else {
-			update_term_meta( (int) $term_id, LAFKA_TERM_FAQ_META, $faqs );
+			// update_term_meta() unslashes; slash so typed backslashes survive.
+			update_term_meta( (int) $term_id, LAFKA_TERM_FAQ_META, wp_slash( $faqs ) );
 		}
 		if ( function_exists( 'do_action' ) ) {
 			do_action( 'lafka_menu_data_changed' );

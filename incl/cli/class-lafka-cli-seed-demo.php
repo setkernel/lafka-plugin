@@ -701,7 +701,8 @@ if ( ! class_exists( 'Lafka_CLI_Seed_Demo' ) ) {
 				);
 			}
 			if ( $post_id > 0 ) {
-				update_post_meta( $post_id, '_lafka_shipping_area_polygon_coordinates', $poly );
+				// Encoded polylines may contain backslashes; the meta API unslashes.
+				update_post_meta( $post_id, '_lafka_shipping_area_polygon_coordinates', wp_slash( $poly ) );
 				$manifest = self::record( $manifest, 'areas', $area['slug'], $post_id );
 			}
 			WP_CLI::log( 'Seeded delivery-zone polygon around the fake centre.' );

@@ -147,7 +147,8 @@ if ( ! function_exists( 'lafka_pdp_set_last_order_cookie' ) ) {
 		}
 
 		setcookie( LAFKA_PDP_LAST_ORDER_COOKIE, $json, lafka_pdp_last_order_cookie_options() );
-		$_COOKIE[ LAFKA_PDP_LAST_ORDER_COOKIE ] = $json;
+		// WordPress keeps $_COOKIE slashed and the reader unslashes it.
+		$_COOKIE[ LAFKA_PDP_LAST_ORDER_COOKIE ] = wp_slash( $json );
 	}
 }
 
