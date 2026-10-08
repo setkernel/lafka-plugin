@@ -58,6 +58,9 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/lafka-shipping-method-helpers.p
 // SCRIPT_DEBUG-aware script path helper.
 require_once plugin_dir_path( __FILE__ ) . 'incl/lafka-asset-helpers.php';
 
+// wp_kses() allowlists shared across the plugin.
+require_once plugin_dir_path( __FILE__ ) . 'incl/lafka-kses-helpers.php';
+
 // Typed feature-module registry (NX1-01) — the single list of gated modules
 // the Modules dashboard, Site Health and (later) the setup wizard read from.
 // Foundational: required before Site Health / the Modules page below.
@@ -148,19 +151,19 @@ if ( ! defined( 'LAFKA_IS_WOOCOMMERCE' ) ) {
 
 // Feature-flag checks — accept legacy $lafka_options array for backward compat,
 // but delegate to Lafka_Options::is_enabled() for consistent access.
-function is_lafka_product_addons( $lafka_options = null ) {
+function is_lafka_product_addons() {
 	return Lafka_Options::is_enabled( 'product_addons' );
 }
 
-function is_lafka_shipping_areas( $lafka_options = null ) {
+function is_lafka_shipping_areas() {
 	return Lafka_Options::is_enabled( 'shipping_areas' );
 }
 
-function is_lafka_order_hours( $lafka_options = null ) {
+function is_lafka_order_hours() {
 	return Lafka_Options::is_enabled( 'order_hours' );
 }
 
-function is_lafka_kitchen_display( $lafka_options = null ) {
+function is_lafka_kitchen_display() {
 	return Lafka_Options::is_enabled( 'kitchen_display' );
 }
 
@@ -171,7 +174,7 @@ function is_lafka_kitchen_display( $lafka_options = null ) {
  * implementation was removed in lafka-child 6.0.0, so there is no fallback.
  * Sites upgrading from lafka-child <= 5.x must enable this module explicitly.
  */
-function is_lafka_promotions( $lafka_options = null ) {
+function is_lafka_promotions() {
 	return Lafka_Options::is_enabled( 'promotions' );
 }
 
@@ -902,8 +905,8 @@ function lafka_plugin_after_plugins_loaded() {
 		global $sitepress;
 		global $woocommerce_wpml;
 		if ( LAFKA_PLUGIN_IS_WPML_WCML && is_lafka_product_addons( get_option( 'lafka' ) ) && ! empty( $sitepress ) && ! empty( $woocommerce_wpml ) ) {
-			require_once plugin_dir_path( __FILE__ ) . '/incl/wpml/addons/class-wcml-lafka-product-addons.php';
-			$lafka_product_addons = new WCML_Lafka_Product_Addons( $sitepress, $woocommerce_wpml );
+			require_once plugin_dir_path( __FILE__ ) . '/incl/wpml/addons/class-lafka-wcml-product-addons.php';
+			$lafka_product_addons = new Lafka_WCML_Product_Addons( $sitepress, $woocommerce_wpml );
 			$lafka_product_addons->add_hooks();
 		}
 
@@ -1082,17 +1085,15 @@ if ( ! defined( 'LAFKA_PLUGIN_IMAGES_PATH' ) ) {
 	define( 'LAFKA_PLUGIN_IMAGES_PATH', plugins_url( '/assets/image/', plugin_basename( __FILE__ ) ) );
 }
 
-/**
- * Generate excerpt by post Id
- *
- * @param type $post_id
- * @param type $excerpt_length
- * @param type $dots_to_link
- * @return string
- */
 if ( ! function_exists( 'lafka_get_excerpt_by_id' ) ) {
 
-	function lafka_get_excerpt_by_id( $post_id, $excerpt_length = 35, $dots_to_link = false ) {
+	/**
+	 * Generate excerpt by post Id
+	 *
+	 * @param int $post_id Post ID.
+	 * @return string
+	 */
+	function lafka_get_excerpt_by_id( $post_id ) {
 
 		$the_post = get_post( $post_id );
 		if ( ! $the_post ) {
@@ -1270,7 +1271,6 @@ if ( ! function_exists( 'lafka_submit_contact' ) ) {
 		$unique_id = array_key_exists( 'unique_id', $_POST ) ? sanitize_text_field( $_POST['unique_id'] ) : '';
 		$nonce     = array_key_exists( '_ajax_nonce', $_POST ) ? sanitize_text_field( $_POST['_ajax_nonce'] ) : '';
 
-		ob_start();
 		?>
 		<script>
 			//<![CDATA[
@@ -1304,10 +1304,6 @@ if ( ! function_exists( 'lafka_submit_contact' ) ) {
 		<?php
 		require plugin_dir_path( __FILE__ ) . 'shortcodes/partials/contact-form.php';
 
-		$output = ob_get_contents();
-		ob_end_clean();
-
-		echo $output;
 		wp_die();
 	}
 

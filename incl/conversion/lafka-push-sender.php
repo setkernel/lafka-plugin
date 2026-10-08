@@ -781,18 +781,18 @@ if ( ! function_exists( 'lafka_push_count_active_subscriptions' ) ) {
 			if ( empty( $ids ) || ! method_exists( $wpdb, 'prepare' ) ) {
 				return 0;
 			}
-			$placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
-			$count        = (int) $wpdb->get_var(
+			$count = (int) $wpdb->get_var(
 				$wpdb->prepare(
-					"SELECT COUNT(*) FROM {$table} WHERE unsubscribed_at IS NULL AND user_id IN ({$placeholders})",
-					$ids
+					'SELECT COUNT(*) FROM %i WHERE unsubscribed_at IS NULL AND FIND_IN_SET( user_id, %s )',
+					$table,
+					implode( ',', $ids )
 				)
 			);
 			return max( 0, $count );
 		}
 
 		$count = (int) $wpdb->get_var(
-			"SELECT COUNT(*) FROM {$table} WHERE unsubscribed_at IS NULL"
+			$wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE unsubscribed_at IS NULL', $table )
 		);
 		return max( 0, $count );
 	}
@@ -837,12 +837,13 @@ if ( ! function_exists( 'lafka_push_get_active_subscriptions_after' ) ) {
 			if ( empty( $ids ) ) {
 				return array();
 			}
-			$placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
-			$args         = array_merge( $ids, array( $after_id, $limit ) );
-			$rows         = $wpdb->get_results(
+			$rows = $wpdb->get_results(
 				$wpdb->prepare(
-					"SELECT * FROM {$table} WHERE unsubscribed_at IS NULL AND user_id IN ({$placeholders}) AND id > %d ORDER BY id ASC LIMIT %d",
-					$args
+					'SELECT * FROM %i WHERE unsubscribed_at IS NULL AND FIND_IN_SET( user_id, %s ) AND id > %d ORDER BY id ASC LIMIT %d',
+					$table,
+					implode( ',', $ids ),
+					$after_id,
+					$limit
 				)
 			);
 			return is_array( $rows ) ? $rows : array();
@@ -850,7 +851,8 @@ if ( ! function_exists( 'lafka_push_get_active_subscriptions_after' ) ) {
 
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT * FROM {$table} WHERE unsubscribed_at IS NULL AND id > %d ORDER BY id ASC LIMIT %d",
+				'SELECT * FROM %i WHERE unsubscribed_at IS NULL AND id > %d ORDER BY id ASC LIMIT %d',
+				$table,
 				$after_id,
 				$limit
 			)

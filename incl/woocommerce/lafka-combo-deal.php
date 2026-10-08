@@ -174,7 +174,7 @@ if ( ! function_exists( 'lafka_combo_deal_cart_items' ) ) {
 }
 
 if ( ! function_exists( 'lafka_combo_deal_component' ) ) {
-	add_filter( 'lafka_order_discount_components', 'lafka_combo_deal_component', 10, 2 );
+	add_filter( 'lafka_order_discount_components', 'lafka_combo_deal_component', 10, 1 );
 	/**
 	 * Feed the combo deal into the shared order-discount coordinator
 	 * (lafka_order_discount_apply) instead of adding its own cart fee.
@@ -195,7 +195,7 @@ if ( ! function_exists( 'lafka_combo_deal_component' ) ) {
 	 * @param \WC_Cart|null $cart      Current cart (unused; pair test reads WC()->cart).
 	 * @return array
 	 */
-	function lafka_combo_deal_component( $components, $cart = null ) {
+	function lafka_combo_deal_component( $components ) {
 		if ( ! is_array( $components ) ) {
 			$components = array();
 		}

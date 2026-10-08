@@ -93,20 +93,19 @@ if ( ! function_exists( 'lafka_category_tagline_register_meta' ) ) {
 	}
 }
 
-if ( ! function_exists( 'lafka_category_tagline_input' ) ) {
+if ( ! function_exists( 'lafka_category_tagline_print_input' ) ) {
 	/**
-	 * The input + description markup.
+	 * Print the input + description markup.
 	 *
 	 * @param string $value Current value.
-	 * @return string
+	 * @return void
 	 */
-	function lafka_category_tagline_input( string $value ): string {
-		return sprintf(
-			'<input type="hidden" name="lafka_tagline_present" value="1"><input type="text" class="regular-text" id="lafka_tagline" name="lafka_tagline" value="%1$s" maxlength="%2$d"><p class="description">%3$s</p>',
-			esc_attr( $value ),
-			(int) LAFKA_CATEGORY_TAGLINE_MAX,
-			esc_html__( 'Short line under the heading, e.g. what comes on it. Plain text, up to 140 characters. Leave empty to show nothing (some layouts then use the first sentence of the description).', 'lafka-plugin' )
-		);
+	function lafka_category_tagline_print_input( string $value ) {
+		?>
+		<input type="hidden" name="lafka_tagline_present" value="1">
+		<input type="text" class="regular-text" id="lafka_tagline" name="lafka_tagline" value="<?php echo esc_attr( $value ); ?>" maxlength="<?php echo esc_attr( (string) (int) LAFKA_CATEGORY_TAGLINE_MAX ); ?>">
+		<p class="description"><?php esc_html_e( 'Short line under the heading, e.g. what comes on it. Plain text, up to 140 characters. Leave empty to show nothing (some layouts then use the first sentence of the description).', 'lafka-plugin' ); ?></p>
+		<?php
 	}
 }
 
@@ -120,7 +119,7 @@ if ( ! function_exists( 'lafka_category_tagline_add_field' ) ) {
 		?>
 		<div class="form-field">
 			<label for="lafka_tagline"><?php esc_html_e( 'Tagline (optional)', 'lafka-plugin' ); ?></label>
-			<?php echo lafka_category_tagline_input( '' ); ?>
+			<?php lafka_category_tagline_print_input( '' ); ?>
 		</div>
 		<?php
 	}
@@ -138,7 +137,7 @@ if ( ! function_exists( 'lafka_category_tagline_edit_field' ) ) {
 		?>
 		<tr class="form-field">
 			<th scope="row"><label for="lafka_tagline"><?php esc_html_e( 'Tagline (optional)', 'lafka-plugin' ); ?></label></th>
-			<td><?php echo lafka_category_tagline_input( $value ); ?></td>
+			<td><?php lafka_category_tagline_print_input( $value ); ?></td>
 		</tr>
 		<?php
 	}

@@ -65,13 +65,13 @@ else :
 	WC()->mailer()->email_header( $email_heading );
 	?>
 
-	<p><?php printf( esc_html__( 'Hi %s,', 'lafka-plugin' ), esc_html( $order->get_billing_first_name() ) ); ?></p>
+	<p><?php printf( /* translators: %s: customer first name. */ esc_html__( 'Hi %s,', 'lafka-plugin' ), esc_html( $order->get_billing_first_name() ) ); ?></p>
 	<p style="font-size:18px;font-weight:bold;">
 		<?php
 		if ( $lafka_is_pickup ) {
-			printf( esc_html__( 'Your order #%s is ready for pickup!', 'lafka-plugin' ), esc_html( $order->get_order_number() ) );
+			printf( /* translators: %s: order number. */ esc_html__( 'Your order #%s is ready for pickup!', 'lafka-plugin' ), esc_html( $order->get_order_number() ) );
 		} else {
-			printf( esc_html__( 'Your order #%s is ready and will be delivered shortly!', 'lafka-plugin' ), esc_html( $order->get_order_number() ) );
+			printf( /* translators: %s: order number. */ esc_html__( 'Your order #%s is ready and will be delivered shortly!', 'lafka-plugin' ), esc_html( $order->get_order_number() ) );
 		}
 		?>
 	</p>

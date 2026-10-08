@@ -34,7 +34,7 @@ class Lafka_WC_Variation_Swatches_Frontend {
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 
 		add_filter( 'woocommerce_dropdown_variation_attribute_options_html', array( $this, 'get_swatch_html' ), 100, 2 );
-		add_filter( 'lafka-wcs_swatch_html', array( $this, 'swatch_html' ), 5, 4 );
+		add_filter( 'lafka_wcs_swatch_html', array( $this, 'swatch_html' ), 5, 4 );
 	}
 
 	/**
@@ -84,7 +84,8 @@ class Lafka_WC_Variation_Swatches_Frontend {
 
 				foreach ( $terms as $term ) {
 					if ( in_array( $term->slug, $options, true ) ) {
-						$swatches .= apply_filters( 'lafka-wcs_swatch_html', '', $term, $attr, $args );
+						$swatch_html = apply_filters( 'lafka_wcs_swatch_html', '', $term, $attr, $args );
+						$swatches   .= apply_filters_deprecated( 'lafka-wcs_swatch_html', array( $swatch_html, $term, $attr, $args ), '10.4.0', 'lafka_wcs_swatch_html' );
 					}
 				}
 			}

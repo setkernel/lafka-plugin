@@ -11,10 +11,8 @@
  *     email or cookie id is ever stored.
  *
  *   {prefix}lafka_insights_daily — aggregate counters (day, metric, dim, value),
- *     upserted with a single multi-row INSERT … ON DUPLICATE KEY UPDATE.
- *
- * Every write is one statement, so the beacon endpoint stays within its
- * budget of two writes (one session upsert + one counter upsert).
+ *     upserted with INSERT … ON DUPLICATE KEY UPDATE, one prepared statement
+ *     per (metric, dim) counter.
  *
  * Schema version: option `lafka_insights_db_version`; maybe_install() re-runs
  * dbDelta when it drifts (same self-heal as the abandoned-cart table).
@@ -194,41 +192,43 @@ if ( ! class_exists( 'Lafka_Insights_DB' ) ) {
 			if ( ! isset( $wpdb ) || ! is_object( $wpdb ) || 1 !== preg_match( '/^[a-f0-9]{32}$/', $sid ) ) {
 				return false;
 			}
-			$table = self::sessions_table_name();
-			$sql   = $wpdb->prepare(
-				"INSERT INTO {$table} (day,sid,stages,block_mask,last_block,device,source_type,source,medium,campaign,landing,hour,dow,pageviews)
-				VALUES (%s,UNHEX(%s),%d,%d,%s,%d,%s,%s,%s,%s,%s,%d,%d,%d)
-				ON DUPLICATE KEY UPDATE
-				stages = stages | VALUES(stages),
-				block_mask = block_mask | VALUES(block_mask),
-				last_block = IF(VALUES(last_block) = '', last_block, VALUES(last_block)),
-				device = IF(device = 0, VALUES(device), device),
-				source = IF(source_type = '', VALUES(source), source),
-				medium = IF(source_type = '', VALUES(medium), medium),
-				campaign = IF(source_type = '', VALUES(campaign), campaign),
-				source_type = IF(source_type = '', VALUES(source_type), source_type),
-				landing = IF(landing = '', VALUES(landing), landing),
-				pageviews = pageviews + VALUES(pageviews)",
-				$day,
-				$sid,
-				(int) ( $row['stages'] ?? 0 ),
-				(int) ( $row['block_mask'] ?? 0 ),
-				substr( (string) ( $row['last_block'] ?? '' ), 0, 32 ),
-				(int) ( $row['device'] ?? 0 ),
-				substr( (string) ( $row['source_type'] ?? '' ), 0, 16 ),
-				substr( (string) ( $row['source'] ?? '' ), 0, 64 ),
-				substr( (string) ( $row['medium'] ?? '' ), 0, 32 ),
-				substr( (string) ( $row['campaign'] ?? '' ), 0, 64 ),
-				substr( (string) ( $row['landing'] ?? '' ), 0, 16 ),
-				(int) ( $row['hour'] ?? 0 ),
-				(int) ( $row['dow'] ?? 0 ),
-				(int) ( $row['pageviews'] ?? 0 )
+			$result = $wpdb->query(
+				$wpdb->prepare(
+					'INSERT INTO %i (day,sid,stages,block_mask,last_block,device,source_type,source,medium,campaign,landing,hour,dow,pageviews)
+					VALUES (%s,UNHEX(%s),%d,%d,%s,%d,%s,%s,%s,%s,%s,%d,%d,%d)
+					ON DUPLICATE KEY UPDATE
+					stages = stages | VALUES(stages),
+					block_mask = block_mask | VALUES(block_mask),
+					last_block = IF(VALUES(last_block) = \'\', last_block, VALUES(last_block)),
+					device = IF(device = 0, VALUES(device), device),
+					source = IF(source_type = \'\', VALUES(source), source),
+					medium = IF(source_type = \'\', VALUES(medium), medium),
+					campaign = IF(source_type = \'\', VALUES(campaign), campaign),
+					source_type = IF(source_type = \'\', VALUES(source_type), source_type),
+					landing = IF(landing = \'\', VALUES(landing), landing),
+					pageviews = pageviews + VALUES(pageviews)',
+					self::sessions_table_name(),
+					$day,
+					$sid,
+					(int) ( $row['stages'] ?? 0 ),
+					(int) ( $row['block_mask'] ?? 0 ),
+					substr( (string) ( $row['last_block'] ?? '' ), 0, 32 ),
+					(int) ( $row['device'] ?? 0 ),
+					substr( (string) ( $row['source_type'] ?? '' ), 0, 16 ),
+					substr( (string) ( $row['source'] ?? '' ), 0, 64 ),
+					substr( (string) ( $row['medium'] ?? '' ), 0, 32 ),
+					substr( (string) ( $row['campaign'] ?? '' ), 0, 64 ),
+					substr( (string) ( $row['landing'] ?? '' ), 0, 16 ),
+					(int) ( $row['hour'] ?? 0 ),
+					(int) ( $row['dow'] ?? 0 ),
+					(int) ( $row['pageviews'] ?? 0 )
+				)
 			);
-			return false !== $wpdb->query( $sql );
+			return false !== $result;
 		}
 
 		/**
-		 * Add to counters with ONE multi-row upsert.
+		 * Add to counters (one prepared upsert per metric/dim pair).
 		 *
 		 * @param string                          $day      Y-m-d.
 		 * @param array<string,array<string,int>> $counters metric => [ dim => increment ].
@@ -240,8 +240,8 @@ if ( ! class_exists( 'Lafka_Insights_DB' ) ) {
 			if ( ! isset( $wpdb ) || ! is_object( $wpdb ) ) {
 				return false;
 			}
-			$tuples = array();
-			$args   = array();
+			$table = self::daily_table_name();
+			$ok    = true;
 			foreach ( $counters as $metric => $dims ) {
 				$metric = substr( (string) $metric, 0, 24 );
 				if ( '' === $metric || ! is_array( $dims ) ) {
@@ -252,17 +252,37 @@ if ( ! class_exists( 'Lafka_Insights_DB' ) ) {
 					if ( $value <= 0 && ! $replace ) {
 						continue;
 					}
-					$tuples[] = '(%s,%s,%s,%d)';
-					array_push( $args, $day, $metric, substr( (string) $dim, 0, 100 ), max( 0, $value ) );
+					$dim   = substr( (string) $dim, 0, 100 );
+					$value = max( 0, $value );
+					if ( $replace ) {
+						$result = $wpdb->query(
+							$wpdb->prepare(
+								'INSERT INTO %i (day,metric,dim,value) VALUES (%s,%s,%s,%d) ON DUPLICATE KEY UPDATE value = VALUES(value)',
+								$table,
+								$day,
+								$metric,
+								$dim,
+								$value
+							)
+						);
+					} else {
+						$result = $wpdb->query(
+							$wpdb->prepare(
+								'INSERT INTO %i (day,metric,dim,value) VALUES (%s,%s,%s,%d) ON DUPLICATE KEY UPDATE value = value + VALUES(value)',
+								$table,
+								$day,
+								$metric,
+								$dim,
+								$value
+							)
+						);
+					}
+					if ( false === $result ) {
+						$ok = false;
+					}
 				}
 			}
-			if ( empty( $tuples ) ) {
-				return true;
-			}
-			$table  = self::daily_table_name();
-			$update = $replace ? 'value = VALUES(value)' : 'value = value + VALUES(value)';
-			$sql    = $wpdb->prepare( "INSERT INTO {$table} (day,metric,dim,value) VALUES " . implode( ',', $tuples ) . " ON DUPLICATE KEY UPDATE {$update}", $args );
-			return false !== $wpdb->query( $sql );
+			return $ok;
 		}
 
 		/**
@@ -279,13 +299,13 @@ if ( ! class_exists( 'Lafka_Insights_DB' ) ) {
 			if ( ! isset( $wpdb ) || ! is_object( $wpdb ) ) {
 				return array( 0, 0 );
 			}
-			$sessions = self::sessions_table_name();
-			$daily    = self::daily_table_name();
-			$row      = $wpdb->get_row(
+			$row = $wpdb->get_row(
 				$wpdb->prepare(
-					"SELECT (SELECT pageviews FROM {$sessions} WHERE day = %s AND sid = UNHEX(%s)) AS pv, (SELECT value FROM {$daily} WHERE day = %s AND metric = 'beacons' AND dim = %s) AS g",
+					"SELECT (SELECT pageviews FROM %i WHERE day = %s AND sid = UNHEX(%s)) AS pv, (SELECT value FROM %i WHERE day = %s AND metric = 'beacons' AND dim = %s) AS g",
+					self::sessions_table_name(),
 					$day,
 					$sid,
+					self::daily_table_name(),
 					$day,
 					$hour
 				),
@@ -304,10 +324,16 @@ if ( ! class_exists( 'Lafka_Insights_DB' ) ) {
 			if ( ! isset( $wpdb ) || ! is_object( $wpdb ) ) {
 				return '';
 			}
-			$sessions = self::sessions_table_name();
-			$daily    = self::daily_table_name();
-			$day      = $wpdb->get_var( "SELECT LEAST( COALESCE( (SELECT MIN(day) FROM {$sessions}), '9999-12-31' ), COALESCE( (SELECT MIN(day) FROM {$daily}), '9999-12-31' ) )" );
-			$day      = is_string( $day ) ? substr( $day, 0, 10 ) : '';
+			$day = $wpdb->get_var(
+				$wpdb->prepare(
+					'SELECT LEAST( COALESCE( (SELECT MIN(day) FROM %i), %s ), COALESCE( (SELECT MIN(day) FROM %i), %s ) )',
+					self::sessions_table_name(),
+					'9999-12-31',
+					self::daily_table_name(),
+					'9999-12-31'
+				)
+			);
+			$day = is_string( $day ) ? substr( $day, 0, 10 ) : '';
 			return ( 1 === preg_match( '/^\d{4}-\d{2}-\d{2}$/', $day ) && '9999-12-31' !== $day ) ? $day : '';
 		}
 
@@ -322,10 +348,10 @@ if ( ! class_exists( 'Lafka_Insights_DB' ) ) {
 			if ( ! isset( $wpdb ) || ! is_object( $wpdb ) ) {
 				return array();
 			}
-			$table = self::sessions_table_name();
-			$rows  = $wpdb->get_results(
+			$rows = $wpdb->get_results(
 				$wpdb->prepare(
-					"SELECT stages, block_mask, last_block, device, source_type, source, medium, campaign, landing, hour, dow, pageviews FROM {$table} WHERE day = %s",
+					'SELECT stages, block_mask, last_block, device, source_type, source, medium, campaign, landing, hour, dow, pageviews FROM %i WHERE day = %s',
+					self::sessions_table_name(),
 					$day
 				),
 				ARRAY_A
@@ -347,15 +373,36 @@ if ( ! class_exists( 'Lafka_Insights_DB' ) ) {
 				return array();
 			}
 			$table = self::daily_table_name();
-			$args  = array( $from, $to );
-			$in    = '';
-			if ( ! empty( $metrics ) ) {
-				$in   = ' AND metric IN (' . implode( ',', array_fill( 0, count( $metrics ), '%s' ) ) . ')';
-				$args = array_merge( $args, array_values( $metrics ) );
+			if ( empty( $metrics ) ) {
+				$rows = $wpdb->get_results(
+					$wpdb->prepare(
+						'SELECT metric, dim, SUM(value) AS value FROM %i WHERE day BETWEEN %s AND %s GROUP BY metric, dim',
+						$table,
+						$from,
+						$to
+					),
+					ARRAY_A
+				);
+				return is_array( $rows ) ? $rows : array();
 			}
-			$sql  = $wpdb->prepare( "SELECT metric, dim, SUM(value) AS value FROM {$table} WHERE day BETWEEN %s AND %s{$in} GROUP BY metric, dim", $args );
-			$rows = $wpdb->get_results( $sql, ARRAY_A );
-			return is_array( $rows ) ? $rows : array();
+			// One grouped read per metric: (metric, dim) groups never span metrics, so the union equals the single IN() query.
+			$out = array();
+			foreach ( array_unique( array_map( 'strval', array_values( $metrics ) ) ) as $metric ) {
+				$rows = $wpdb->get_results(
+					$wpdb->prepare(
+						'SELECT metric, dim, SUM(value) AS value FROM %i WHERE day BETWEEN %s AND %s AND metric = %s GROUP BY metric, dim',
+						$table,
+						$from,
+						$to,
+						$metric
+					),
+					ARRAY_A
+				);
+				if ( is_array( $rows ) ) {
+					$out = array_merge( $out, $rows );
+				}
+			}
+			return $out;
 		}
 
 		/**
@@ -373,10 +420,8 @@ if ( ! class_exists( 'Lafka_Insights_DB' ) ) {
 				return;
 			}
 			$base     = strtotime( $today . ' 00:00:00 UTC' );
-			$sessions = self::sessions_table_name();
-			$daily    = self::daily_table_name();
-			$wpdb->query( $wpdb->prepare( "DELETE FROM {$sessions} WHERE day < %s", gmdate( 'Y-m-d', $base - $keep_days * 86400 ) ) );
-			$wpdb->query( $wpdb->prepare( "DELETE FROM {$daily} WHERE day < %s", gmdate( 'Y-m-d', $base - $counter_days * 86400 ) ) );
+			$wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE day < %s', self::sessions_table_name(), gmdate( 'Y-m-d', $base - $keep_days * 86400 ) ) );
+			$wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE day < %s', self::daily_table_name(), gmdate( 'Y-m-d', $base - $counter_days * 86400 ) ) );
 		}
 	}
 }

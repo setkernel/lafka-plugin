@@ -40,9 +40,9 @@ class Lafka_Branch_Locations_Admin {
 		// HPOS
 		add_action( 'woocommerce_order_query_args', array( __CLASS__, 'orders_list_define_sort_and_search_queries_for_custom_fields_hpos' ) );
 		// Legacy orders
-		add_action( 'restrict_manage_posts', array( __CLASS__, 'add_fields_to_orders_list_filter' ), 10, 2 );
+		add_action( 'restrict_manage_posts', array( __CLASS__, 'add_fields_to_orders_list_filter' ), 10, 1 );
 		// HPOS
-		add_action( 'woocommerce_order_list_table_restrict_manage_orders', array( __CLASS__, 'add_fields_to_orders_list_filter' ), 10, 2 );
+		add_action( 'woocommerce_order_list_table_restrict_manage_orders', array( __CLASS__, 'add_fields_to_orders_list_filter' ), 10, 1 );
 		// TODO: HPOS ???
 		add_filter( 'woocommerce_menu_order_count', array( __CLASS__, 'menu_order_count_for_user' ) );
 	}
@@ -940,7 +940,7 @@ class Lafka_Branch_Locations_Admin {
 		return $args;
 	}
 
-	public static function add_fields_to_orders_list_filter( $post_type, $which ) {
+	public static function add_fields_to_orders_list_filter( $post_type ) {
 		if ( 'shop_order' === (string) $post_type ) {
 			$branches_for_select = array();
 			if ( class_exists( 'Lafka_Branch_Locations' ) ) {

@@ -141,7 +141,7 @@ if ( ! class_exists( 'Lafka_Blocks_Integration' )
 				'ajaxUrl'        => function_exists( 'admin_url' ) ? admin_url( 'admin-ajax.php' ) : '',
 				'timeslot'       => self::timeslot_config(),
 				'i18n'           => array(
-					'freeDeliveryRemaining' => __( 'Add %s more for free delivery', 'lafka-plugin' ),
+					'freeDeliveryRemaining' => /* translators: %s: amount still needed to qualify for free delivery. */ __( 'Add %s more for free delivery', 'lafka-plugin' ),
 					'freeDeliveryReached'   => __( 'You have unlocked free delivery!', 'lafka-plugin' ),
 					'timeslotHeading'       => __( 'Delivery / pickup time', 'lafka-plugin' ),
 					'chooseDate'            => __( 'Choose a date', 'lafka-plugin' ),

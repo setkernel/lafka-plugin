@@ -184,16 +184,16 @@ if ( ! class_exists( 'Lafka_Incidents' ) ) {
 			$context = is_array( $record['context'] ?? null ) ? Lafka_Log_Scrubber::bound( $record['context'], 2048 ) : array();
 			$json    = wp_json_encode( $context );
 			$now     = gmdate( 'Y-m-d H:i:s' );
-			$table   = self::table_name();
 
 			$suppress = method_exists( $wpdb, 'suppress_errors' ) ? $wpdb->suppress_errors( true ) : null;
 			$result   = $wpdb->query(
 				$wpdb->prepare(
-					"INSERT INTO {$table} (fingerprint, channel, level, code, message, sample_context, first_seen, last_seen, hit_count, last_request_id, status)
+					"INSERT INTO %i (fingerprint, channel, level, code, message, sample_context, first_seen, last_seen, hit_count, last_request_id, status)
 					VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 1, %s, 'open')
 					ON DUPLICATE KEY UPDATE hit_count = hit_count + 1, last_seen = VALUES(last_seen), level = VALUES(level),
 					sample_context = VALUES(sample_context), last_request_id = VALUES(last_request_id),
 					status = IF(status = 'resolved', 'open', status)",
+					self::table_name(),
 					$print,
 					substr( $channel, 0, 32 ),
 					substr( (string) ( $record['level'] ?? 'warning' ), 0, 16 ),
@@ -228,25 +228,21 @@ if ( ! class_exists( 'Lafka_Incidents' ) ) {
 			$channel  = isset( $args['channel'] ) ? (string) $args['channel'] : '';
 			$per_page = max( 1, min( 200, (int) ( $args['per_page'] ?? 25 ) ) );
 			$offset   = max( 0, ( (int) ( $args['page'] ?? 1 ) - 1 ) * $per_page );
-			$table    = self::table_name();
-
-			$where  = array( '1=1' );
-			$params = array();
-			if ( in_array( $status, self::STATUSES, true ) ) {
-				$where[]  = 'status = %s';
-				$params[] = $status;
+			if ( ! in_array( $status, self::STATUSES, true ) ) {
+				$status = '';
 			}
-			if ( '' !== $channel ) {
-				$where[]  = 'channel = %s';
-				$params[] = $channel;
-			}
-			$params[] = $per_page;
-			$params[] = $offset;
 
+			// Empty status / channel mean "no filter" (one fixed statement, no dynamic SQL).
 			$rows = $wpdb->get_results(
 				$wpdb->prepare(
-					"SELECT * FROM {$table} WHERE " . implode( ' AND ', $where ) . ' ORDER BY last_seen DESC LIMIT %d OFFSET %d',
-					$params
+					"SELECT * FROM %i WHERE ( %s = '' OR status = %s ) AND ( %s = '' OR channel = %s ) ORDER BY last_seen DESC LIMIT %d OFFSET %d",
+					self::table_name(),
+					$status,
+					$status,
+					$channel,
+					$channel,
+					$per_page,
+					$offset
 				)
 			);
 			return is_array( $rows ) ? $rows : array();
@@ -263,8 +259,7 @@ if ( ! class_exists( 'Lafka_Incidents' ) ) {
 			if ( ! self::db_ready() ) {
 				return $out;
 			}
-			$table = self::table_name();
-			$rows  = $wpdb->get_results( "SELECT status, COUNT(*) AS n FROM {$table} GROUP BY status" );
+			$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT status, COUNT(*) AS n FROM %i GROUP BY status', self::table_name() ) );
 			foreach ( is_array( $rows ) ? $rows : array() as $row ) {
 				if ( isset( $out[ $row->status ] ) ) {
 					$out[ $row->status ] = (int) $row->n;
@@ -299,9 +294,8 @@ if ( ! class_exists( 'Lafka_Incidents' ) ) {
 			if ( $days < 1 || ! self::db_ready() ) {
 				return 0;
 			}
-			$table   = self::table_name();
 			$cutoff  = gmdate( 'Y-m-d H:i:s', time() - $days * 86400 );
-			$deleted = $wpdb->query( $wpdb->prepare( "DELETE FROM {$table} WHERE last_seen < %s", $cutoff ) );
+			$deleted = $wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE last_seen < %s', self::table_name(), $cutoff ) );
 			return is_numeric( $deleted ) ? (int) $deleted : 0;
 		}
 
@@ -317,10 +311,10 @@ if ( ! class_exists( 'Lafka_Incidents' ) ) {
 			if ( ! self::db_ready() ) {
 				return 0;
 			}
-			$table   = self::table_name();
 			$updated = $wpdb->query(
 				$wpdb->prepare(
-					"UPDATE {$table} SET status = 'resolved' WHERE code = 'place_order_incomplete' AND status <> 'resolved' AND ( message LIKE %s OR message LIKE %s )",
+					"UPDATE %i SET status = 'resolved' WHERE code = 'place_order_incomplete' AND status <> 'resolved' AND ( message LIKE %s OR message LIKE %s )",
+					self::table_name(),
 					'%' . $wpdb->esc_like( '[Shortcode #6' ) . '%',
 					'%' . $wpdb->esc_like( '[Store API #9' ) . '%'
 				)
@@ -340,9 +334,8 @@ if ( ! class_exists( 'Lafka_Incidents' ) ) {
 			if ( ! self::db_ready() ) {
 				return 0;
 			}
-			$table = self::table_name();
 			$since = gmdate( 'Y-m-d H:i:s', time() - $hours * 3600 );
-			$n     = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE channel = %s AND status <> 'muted' AND last_seen >= %s", $channel, $since ) );
+			$n     = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM %i WHERE channel = %s AND status <> 'muted' AND last_seen >= %s", self::table_name(), $channel, $since ) );
 			return (int) $n;
 		}
 
@@ -359,20 +352,19 @@ if ( ! class_exists( 'Lafka_Incidents' ) ) {
 			if ( ! self::db_ready() ) {
 				return array();
 			}
-			$table    = self::table_name();
-			$channels = implode( ',', array_fill( 0, count( self::DIGEST_CHANNELS ), '%s' ) );
-			$warn     = implode( ',', array_fill( 0, count( self::WARNING_LEVELS ), '%s' ) );
-			$err      = implode( ',', array_fill( 0, count( self::ERROR_LEVELS ), '%s' ) );
-			$params   = array_merge( self::DIGEST_CHANNELS, self::WARNING_LEVELS, self::ERROR_LEVELS, array( max( 1, $limit ) ) );
-
+			// The channel / level lists are fixed class constants without commas, so FIND_IN_SET matches IN().
 			$rows = $wpdb->get_results(
 				$wpdb->prepare(
-					"SELECT * FROM {$table}
+					"SELECT * FROM %i
 					WHERE status = 'open'
 					AND ( notified_at IS NULL OR last_seen > notified_at )
-					AND ( ( channel IN ({$channels}) AND level IN ({$warn}) ) OR level IN ({$err}) )
+					AND ( ( FIND_IN_SET( channel, %s ) AND FIND_IN_SET( level, %s ) ) OR FIND_IN_SET( level, %s ) )
 					ORDER BY last_seen DESC LIMIT %d",
-					$params
+					self::table_name(),
+					implode( ',', self::DIGEST_CHANNELS ),
+					implode( ',', self::WARNING_LEVELS ),
+					implode( ',', self::ERROR_LEVELS ),
+					max( 1, $limit )
 				)
 			);
 			return is_array( $rows ) ? $rows : array();
@@ -390,12 +382,12 @@ if ( ! class_exists( 'Lafka_Incidents' ) ) {
 			if ( empty( $ids ) || ! self::db_ready() ) {
 				return;
 			}
-			$table        = self::table_name();
-			$placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
 			$wpdb->query(
 				$wpdb->prepare(
-					"UPDATE {$table} SET notified_at = %s WHERE id IN ({$placeholders})",
-					array_merge( array( gmdate( 'Y-m-d H:i:s' ) ), $ids )
+					'UPDATE %i SET notified_at = %s WHERE FIND_IN_SET( id, %s )',
+					self::table_name(),
+					gmdate( 'Y-m-d H:i:s' ),
+					implode( ',', $ids )
 				)
 			);
 		}

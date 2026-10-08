@@ -148,7 +148,7 @@ if ( ! function_exists( 'lafka_pdp_render_upsell_row' ) ) {
 							// when no <img> is present — but having an inline node also helps in case
 							// the cascade strips the pseudo).
 							if ( '' !== $img ) {
-								echo $img;
+								echo wp_kses( $img, lafka_kses_allowed_image_html() );
 							} else {
 								echo '<span class="lafka-pdp-upsell__placeholder" aria-hidden="true"></span>';
 							}

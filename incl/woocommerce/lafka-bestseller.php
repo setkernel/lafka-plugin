@@ -48,7 +48,8 @@ if ( ! function_exists( 'lafka_pdp_get_bestseller_ids' ) ) {
 		$is_hpos = \Automattic\WooCommerce\Utilities\OrderUtil::custom_orders_table_usage_is_enabled();
 
 		if ( $is_hpos ) {
-			$sql = "SELECT oim.meta_value AS product_id
+			$rows = $wpdb->get_col(
+				"SELECT oim.meta_value AS product_id
 				   FROM {$wpdb->prefix}wc_orders o
 			 INNER JOIN {$wpdb->prefix}woocommerce_order_items oi
 				     ON oi.order_id = o.id
@@ -59,10 +60,12 @@ if ( ! function_exists( 'lafka_pdp_get_bestseller_ids' ) ) {
 				    AND o.status IN ('wc-completed','wc-processing')
 				  GROUP BY oim.meta_value
 				  ORDER BY COUNT(*) DESC
-				  LIMIT 25";
+				  LIMIT 25"
+			);
 		} else {
 			// Legacy CPT order storage — orders live in wp_posts as `shop_order` rows.
-			$sql = "SELECT oim.meta_value AS product_id
+			$rows = $wpdb->get_col(
+				"SELECT oim.meta_value AS product_id
 				   FROM {$wpdb->posts} o
 			 INNER JOIN {$wpdb->prefix}woocommerce_order_items oi
 				     ON oi.order_id = o.ID
@@ -74,10 +77,9 @@ if ( ! function_exists( 'lafka_pdp_get_bestseller_ids' ) ) {
 				    AND o.post_status IN ('wc-completed','wc-processing')
 				  GROUP BY oim.meta_value
 				  ORDER BY COUNT(*) DESC
-				  LIMIT 25";
+				  LIMIT 25"
+			);
 		}
-
-		$rows = $wpdb->get_col( $sql );
 
 		// Filter to live products only. wc_get_product() uses the WC object cache,
 		// so this loop costs ~0 extra DB queries when products are already cached.

@@ -80,8 +80,8 @@ class Lafka_KDS_Frontend {
 		$css_ver        = filemtime( $asset_base . '/css/lafka-kds.css' );
 		$js_suffix      = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
 		$js_ver         = filemtime( $asset_base . '/js/lafka-kds' . $js_suffix . '.js' );
-		$css_url        = plugins_url( '../assets/css/lafka-kds.css', __FILE__ ) . '?ver=' . $css_ver;
-		$js_url         = plugins_url( '../assets/js/lafka-kds' . $js_suffix . '.js', __FILE__ ) . '?ver=' . $js_ver;
+		$css_url        = plugins_url( '../assets/css/lafka-kds.css', __FILE__ );
+		$js_url         = plugins_url( '../assets/js/lafka-kds' . $js_suffix . '.js', __FILE__ );
 		$sound_url      = plugins_url( '../assets/sounds/new-order.mp3', __FILE__ );
 		$site_name      = get_bloginfo( 'name' );
 		$pickup_times   = array_map( 'absint', array_filter( explode( ',', $options['pickup_times'] ) ) );
@@ -144,6 +144,10 @@ class Lafka_KDS_Frontend {
 			),
 		);
 
+		wp_enqueue_style( 'lafka-kds', $css_url, array(), (string) $css_ver );
+		wp_enqueue_script( 'lafka-kds', $js_url, array(), (string) $js_ver, true );
+		wp_add_inline_script( 'lafka-kds', 'var LAFKA_KDS = ' . wp_json_encode( $config, JSON_HEX_TAG | JSON_HEX_AMP ) . ';', 'before' );
+
 		?>
 <!DOCTYPE html>
 <html <?php language_attributes(); ?>>
@@ -151,7 +155,7 @@ class Lafka_KDS_Frontend {
 	<meta charset="<?php bloginfo( 'charset' ); ?>">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 	<title><?php echo esc_html( $site_name ); ?> &mdash; <?php esc_html_e( 'Kitchen Display', 'lafka-plugin' ); ?></title>
-	<link rel="stylesheet" href="<?php echo esc_url( $css_url ); ?>">
+		<?php wp_print_styles( 'lafka-kds' ); ?>
 </head>
 <body>
 	<header class="kds-header">
@@ -236,8 +240,7 @@ class Lafka_KDS_Frontend {
 		</div>
 	</div>
 
-	<script>var LAFKA_KDS = <?php echo wp_json_encode( $config ); ?>;</script>
-	<script src="<?php echo esc_url( $js_url ); ?>"></script>
+		<?php wp_print_scripts( 'lafka-kds' ); ?>
 </body>
 </html>
 		<?php

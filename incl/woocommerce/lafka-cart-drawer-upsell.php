@@ -216,7 +216,7 @@ if ( ! function_exists( 'lafka_cart_drawer_render_upsell' ) ) {
 					<a class="lafka-cart-drawer__upsell-link" href="<?php echo esc_url( get_permalink( $id ) ); ?>">
 						<?php
 						if ( '' !== $img ) {
-							echo $img;
+							echo wp_kses( $img, lafka_kses_allowed_image_html() );
 						} else {
 							echo '<span class="lafka-cart-drawer__upsell-img lafka-cart-drawer__upsell-img--ph" aria-hidden="true"></span>';
 						}

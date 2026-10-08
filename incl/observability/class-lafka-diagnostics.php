@@ -325,8 +325,12 @@ if ( ! class_exists( 'Lafka_Diagnostics' ) ) {
 
 			$traces = array();
 			foreach ( array_slice( $files, 0, max( 1, $limit ) ) as $file ) {
-				$contents = file_get_contents( $file, false, null, 0, 262144 );
-				if ( false === $contents ) {
+				try {
+					$contents = ( new SplFileObject( $file, 'r' ) )->fread( 262144 );
+				} catch ( RuntimeException $e ) {
+					continue;
+				}
+				if ( ! is_string( $contents ) ) {
 					continue;
 				}
 				$basename = basename( $file );
@@ -552,10 +556,10 @@ if ( ! class_exists( 'Lafka_Diagnostics' ) ) {
 			if ( ! isset( $wpdb ) || ! is_object( $wpdb ) || ! method_exists( $wpdb, 'get_results' ) ) {
 				return array();
 			}
-			$table = $wpdb->prefix . 'woocommerce_log';
-			$rows  = $wpdb->get_results(
+			$rows = $wpdb->get_results(
 				$wpdb->prepare(
-					"SELECT source, timestamp, level, message, context FROM {$table} WHERE source LIKE %s ORDER BY log_id ASC LIMIT 2000",
+					'SELECT source, timestamp, level, message, context FROM %i WHERE source LIKE %s ORDER BY log_id ASC LIMIT 2000',
+					$wpdb->prefix . 'woocommerce_log',
 					$wpdb->esc_like( 'place-order-debug-' ) . '%'
 				)
 			);

@@ -49,8 +49,8 @@ if ( ! class_exists( 'Lafka_Order_Path' ) ) {
 		 * @return void
 		 */
 		public static function init() {
-			add_filter( 'woocommerce_shipping_package_name', array( __CLASS__, 'package_name' ), 20, 3 );
-			add_filter( 'woocommerce_form_field_args', array( __CLASS__, 'card_field_args' ), 20, 3 );
+			add_filter( 'woocommerce_shipping_package_name', array( __CLASS__, 'package_name' ), 20, 2 );
+			add_filter( 'woocommerce_form_field_args', array( __CLASS__, 'card_field_args' ), 20, 2 );
 			add_action( 'woocommerce_after_checkout_validation', array( __CLASS__, 'validate_phone' ), 20, 2 );
 			add_filter( 'wp_speculation_rules_href_exclude_paths', array( __CLASS__, 'speculation_exclusions' ) );
 			add_action( 'woocommerce_checkout_order_processed', array( __CLASS__, 'restore_order_street' ), 99, 3 );
@@ -107,7 +107,7 @@ if ( ! class_exists( 'Lafka_Order_Path' ) ) {
 		 * @param mixed $package Package (unused).
 		 * @return mixed
 		 */
-		public static function package_name( $name, $index = 0, $package = array() ) {
+		public static function package_name( $name, $index = 0 ) {
 			if ( 0 !== (int) $index || ! function_exists( 'lafka_fulfilment_modes' ) ) {
 				return $name;
 			}
@@ -154,7 +154,7 @@ if ( ! class_exists( 'Lafka_Order_Path' ) ) {
 		 * @param mixed $value Field value (unused).
 		 * @return mixed
 		 */
-		public static function card_field_args( $args, $key = '', $value = null ) {
+		public static function card_field_args( $args, $key = '' ) {
 			if ( ! is_array( $args ) || ! self::is_csc_field( (string) $key, $args ) ) {
 				return $args;
 			}

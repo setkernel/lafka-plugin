@@ -34,7 +34,7 @@ class Lafka_About_Widget extends WP_Widget {
 	public function form( $instance ) {
 		// Defaults
 		$defaults = array(
-			'title'        => sprintf( esc_html__( 'About %s store', 'lafka-plugin' ), get_bloginfo( 'name' ) ),
+			'title'        => sprintf( /* translators: %s: site name. */ esc_html__( 'About %s store', 'lafka-plugin' ), get_bloginfo( 'name' ) ),
 			'aboutus_page' => '',
 		);
 

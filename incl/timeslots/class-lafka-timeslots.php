@@ -101,7 +101,7 @@ class Lafka_Timeslots {
 		// (rather than `woocommerce_checkout_update_order_meta`, which only
 		// passes an order ID after the save) fires before the order is saved,
 		// receives WC_Order directly, and is HPOS-safe without branching.
-		add_action( 'woocommerce_checkout_create_order', array( $this, 'checkout_datetime_update_order_meta' ), 10, 2 );
+		add_action( 'woocommerce_checkout_create_order', array( $this, 'checkout_datetime_update_order_meta' ), 10, 1 );
 
 		// Show datetime in admin order list — both legacy CPT + HPOS.
 		add_filter( 'manage_shop_order_posts_columns', array( __CLASS__, 'add_datetime_to_orders_list' ), 20 );
@@ -373,7 +373,7 @@ class Lafka_Timeslots {
 		return null;
 	}
 
-	public function checkout_datetime_update_order_meta( $order, $data = null ) {
+	public function checkout_datetime_update_order_meta( $order ) {
 		// Backward-compat: legacy hook passed an int order_id.
 		if ( is_numeric( $order ) ) {
 			$order = wc_get_order( $order );

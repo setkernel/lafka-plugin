@@ -71,13 +71,13 @@ else :
 	WC()->mailer()->email_header( $email_heading );
 	?>
 
-	<p><?php printf( esc_html__( 'Hi %s,', 'lafka-plugin' ), esc_html( $order->get_billing_first_name() ) ); ?></p>
+	<p><?php printf( /* translators: %s: customer first name. */ esc_html__( 'Hi %s,', 'lafka-plugin' ), esc_html( $order->get_billing_first_name() ) ); ?></p>
 	<p>
 		<?php
 		if ( $lafka_is_pickup ) {
-			printf( esc_html__( 'Great news! Your order #%s has been accepted. We\'ll have it ready for you to pick up shortly.', 'lafka-plugin' ), esc_html( $order->get_order_number() ) );
+			printf( /* translators: %s: order number. */ esc_html__( 'Great news! Your order #%s has been accepted. We\'ll have it ready for you to pick up shortly.', 'lafka-plugin' ), esc_html( $order->get_order_number() ) );
 		} else {
-			printf( esc_html__( 'Great news! Your order #%s has been accepted and will be delivered to you soon.', 'lafka-plugin' ), esc_html( $order->get_order_number() ) );
+			printf( /* translators: %s: order number. */ esc_html__( 'Great news! Your order #%s has been accepted and will be delivered to you soon.', 'lafka-plugin' ), esc_html( $order->get_order_number() ) );
 		}
 		?>
 	</p>
@@ -92,7 +92,7 @@ else :
 	if ( $lafka_eta_minutes ) :
 		?>
 		<p style="font-size:18px;font-weight:bold;">
-			<?php printf( esc_html__( 'Estimated time: approximately %d minutes from now', 'lafka-plugin' ), (int) $lafka_eta_minutes ); ?>
+			<?php printf( /* translators: %d: number of minutes. */ esc_html__( 'Estimated time: approximately %d minutes from now', 'lafka-plugin' ), (int) $lafka_eta_minutes ); ?>
 		</p>
 	<?php endif; ?>
 

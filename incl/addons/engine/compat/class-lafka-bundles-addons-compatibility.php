@@ -54,14 +54,14 @@ class Lafka_Bundles_Addons_Compatibility {
 		add_action( 'woocommerce_bundled_single_variation', array( __CLASS__, 'render_addons' ), 15, 2 );
 
 		// Scope addon field names per bundled item via the engine's existing prefix filter.
-		add_filter( 'lafka_product_addons_field_prefix', array( __CLASS__, 'field_prefix' ), 10, 2 );
+		add_filter( 'lafka_product_addons_field_prefix', array( __CLASS__, 'field_prefix' ), 10, 1 );
 
 		// Per-request cache key disambiguation: different bundled items must not
 		// share a cached addon list keyed only by post_id.
-		add_filter( 'lafka_product_addons_cache_key_extra', array( __CLASS__, 'cache_key_extra' ), 10, 3 );
+		add_filter( 'lafka_product_addons_cache_key_extra', array( __CLASS__, 'cache_key_extra' ), 10, 1 );
 
 		// Validate bundled-item addon submissions.
-		add_filter( 'woocommerce_bundled_item_add_to_cart_validation', array( __CLASS__, 'validate_addons' ), 10, 5 );
+		add_filter( 'woocommerce_bundled_item_add_to_cart_validation', array( __CLASS__, 'validate_addons' ), 10, 4 );
 
 		// Capture addon selections into the bundled-item stamp so distinct
 		// configurations make distinct bundle cart rows.
@@ -71,7 +71,7 @@ class Lafka_Bundles_Addons_Compatibility {
 		// `woocommerce_add_cart_item_data` filter doesn't double-process: the
 		// addon data is already serialized into the parent's stamp by this point.
 		add_action( 'woocommerce_bundled_item_before_add_to_cart', array( __CLASS__, 'before_bundled_add_to_cart' ), 10, 5 );
-		add_action( 'woocommerce_bundled_item_after_add_to_cart', array( __CLASS__, 'after_bundled_add_to_cart' ), 10, 5 );
+		add_action( 'woocommerce_bundled_item_after_add_to_cart', array( __CLASS__, 'after_bundled_add_to_cart' ), 10, 0 );
 
 		// Hydrate the bundled cart-item data with addons from the parent's stamp.
 		add_filter( 'woocommerce_bundled_item_cart_data', array( __CLASS__, 'restore_addons_from_parent_stamp' ), 10, 2 );
@@ -88,8 +88,8 @@ class Lafka_Bundles_Addons_Compatibility {
 	 * @param WC_Bundled_Item $bundled_item The bundled item wrapper.
 	 */
 	public static function render_addons( $product_id, $bundled_item ): void {
-		$Lafka_Engine_Display = $GLOBALS['Lafka_Engine_Display'] ?? null;
-		if ( ! $Lafka_Engine_Display instanceof Lafka_Engine_Display ) {
+		$lafka_engine_display = $GLOBALS['Lafka_Engine_Display'] ?? null;
+		if ( ! $lafka_engine_display instanceof Lafka_Engine_Display ) {
 			return;
 		}
 
@@ -115,7 +115,7 @@ class Lafka_Bundles_Addons_Compatibility {
 
 		self::$addons_prefix = (string) $bundled_item->get_id();
 
-		$Lafka_Engine_Display->display( $product_id );
+		$lafka_engine_display->display( $product_id );
 
 		self::$addons_prefix = '';
 		if ( $product_bak_id ) {
@@ -134,7 +134,7 @@ class Lafka_Bundles_Addons_Compatibility {
 	 * @param int    $product_id The product whose addons are being prefixed.
 	 * @return string
 	 */
-	public static function field_prefix( $prefix, $product_id ): string {
+	public static function field_prefix( $prefix ): string {
 		if ( '' !== self::$addons_prefix ) {
 			return self::$addons_prefix . '-' . $prefix;
 		}
@@ -153,7 +153,7 @@ class Lafka_Bundles_Addons_Compatibility {
 	 * @param string $prefix     Explicit prefix arg, if any (usually empty here).
 	 * @return string
 	 */
-	public static function cache_key_extra( $extra, $post_id, $prefix ): string {
+	public static function cache_key_extra( $extra ): string {
 		if ( '' !== self::$addons_prefix ) {
 			return $extra . '|bundle:' . self::$addons_prefix;
 		}
@@ -170,7 +170,7 @@ class Lafka_Bundles_Addons_Compatibility {
 	 * @param int             $variation_id
 	 * @return bool
 	 */
-	public static function validate_addons( $passed, $bundle_id, $bundled_item, $quantity, $variation_id ): bool {
+	public static function validate_addons( $passed, $bundle_id, $bundled_item, $quantity ): bool {
 		// Order-again submissions skip revalidation: the cart data is being
 		// rebuilt from a saved order, not from a fresh user submission.
 		if (
@@ -180,13 +180,13 @@ class Lafka_Bundles_Addons_Compatibility {
 			return (bool) $passed;
 		}
 
-		$Lafka_Engine_Cart = $GLOBALS['Lafka_Engine_Cart'] ?? null;
-		if ( ! $Lafka_Engine_Cart instanceof Lafka_Engine_Cart ) {
+		$lafka_engine_cart = $GLOBALS['Lafka_Engine_Cart'] ?? null;
+		if ( ! $lafka_engine_cart instanceof Lafka_Engine_Cart ) {
 			return (bool) $passed;
 		}
 
 		self::$addons_prefix = (string) $bundled_item->get_id();
-		$valid               = $Lafka_Engine_Cart->validate_add_cart_item( true, $bundled_item->get_product_id(), $quantity );
+		$valid               = $lafka_engine_cart->validate_add_cart_item( true, $bundled_item->get_product_id(), $quantity );
 		self::$addons_prefix = '';
 
 		return (bool) $passed && $valid;
@@ -204,8 +204,8 @@ class Lafka_Bundles_Addons_Compatibility {
 	 * @return array
 	 */
 	public static function stamp_addons( $stamp, $bundled_item_id ): array {
-		$Lafka_Engine_Cart = $GLOBALS['Lafka_Engine_Cart'] ?? null;
-		if ( ! $Lafka_Engine_Cart instanceof Lafka_Engine_Cart ) {
+		$lafka_engine_cart = $GLOBALS['Lafka_Engine_Cart'] ?? null;
+		if ( ! $lafka_engine_cart instanceof Lafka_Engine_Cart ) {
 			return (array) $stamp;
 		}
 
@@ -216,7 +216,7 @@ class Lafka_Bundles_Addons_Compatibility {
 		self::$addons_prefix = (string) $bundled_item_id;
 
 		try {
-			$cart_item_data = $Lafka_Engine_Cart->add_cart_item_data( array(), (int) $stamp['product_id'] );
+			$cart_item_data = $lafka_engine_cart->add_cart_item_data( array(), (int) $stamp['product_id'] );
 		} catch ( Exception $e ) {
 			$cart_item_data = array();
 		}
@@ -236,8 +236,8 @@ class Lafka_Bundles_Addons_Compatibility {
 	 * letting the engine re-process per-bundled-item would duplicate it.
 	 */
 	public static function before_bundled_add_to_cart( $product_id, $quantity, $variation_id, $variations, $bundled_item_cart_data ): void {
-		$Lafka_Engine_Cart = $GLOBALS['Lafka_Engine_Cart'] ?? null;
-		if ( ! $Lafka_Engine_Cart instanceof Lafka_Engine_Cart ) {
+		$lafka_engine_cart = $GLOBALS['Lafka_Engine_Cart'] ?? null;
+		if ( ! $lafka_engine_cart instanceof Lafka_Engine_Cart ) {
 			return;
 		}
 
@@ -245,7 +245,7 @@ class Lafka_Bundles_Addons_Compatibility {
 			? (string) $bundled_item_cart_data['bundled_item_id']
 			: '';
 
-		remove_filter( 'woocommerce_add_cart_item_data', array( $Lafka_Engine_Cart, 'add_cart_item_data' ), 10 );
+		remove_filter( 'woocommerce_add_cart_item_data', array( $lafka_engine_cart, 'add_cart_item_data' ), 10 );
 	}
 
 	/**
@@ -253,14 +253,14 @@ class Lafka_Bundles_Addons_Compatibility {
 	 * bundled add-to-cart completes, so non-bundled add-to-cart submissions
 	 * keep working.
 	 */
-	public static function after_bundled_add_to_cart( $product_id, $quantity, $variation_id, $variations, $bundled_item_cart_data ): void {
-		$Lafka_Engine_Cart = $GLOBALS['Lafka_Engine_Cart'] ?? null;
-		if ( ! $Lafka_Engine_Cart instanceof Lafka_Engine_Cart ) {
+	public static function after_bundled_add_to_cart(): void {
+		$lafka_engine_cart = $GLOBALS['Lafka_Engine_Cart'] ?? null;
+		if ( ! $lafka_engine_cart instanceof Lafka_Engine_Cart ) {
 			return;
 		}
 
 		self::$addons_prefix = '';
-		add_filter( 'woocommerce_add_cart_item_data', array( $Lafka_Engine_Cart, 'add_cart_item_data' ), 10, 2 );
+		add_filter( 'woocommerce_add_cart_item_data', array( $lafka_engine_cart, 'add_cart_item_data' ), 10, 2 );
 	}
 
 	/**

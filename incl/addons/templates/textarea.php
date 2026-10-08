@@ -7,11 +7,11 @@
 foreach ( $addon['options'] as $lafka_key => $lafka_option ) :
 	/**
 	 * @var WC_Product $product
-	 * @var Lafka_Engine_Display $Lafka_Engine_Display
+	 * @var Lafka_Engine_Display $lafka_engine_display
 	 */
 
 	global $product;
-	global $Lafka_Engine_Display;
+	$lafka_engine_display = $GLOBALS['Lafka_Engine_Display'];
 
 	$lafka_option_price             = lafka_get_option_price_on_default_attribute( $product, $lafka_option['price'] );
 	$lafka_option_price_for_display = '';
@@ -34,8 +34,8 @@ foreach ( $addon['options'] as $lafka_key => $lafka_option ) :
 	$lafka_attribute_raw_prices = $lafka_option['price'];
 	$lafka_attribute_prices     = lafka_convert_attribute_raw_prices_to_prices( $lafka_attribute_raw_prices );
 
-	$lafka_custom_image_id      = $Lafka_Engine_Display->get_addon_option_custom_image_id( $lafka_option );
-	$lafka_custom_image_classes = $Lafka_Engine_Display->get_addon_option_image_classes( $lafka_custom_image_id );
+	$lafka_custom_image_id      = $lafka_engine_display->get_addon_option_custom_image_id( $lafka_option );
+	$lafka_custom_image_classes = $lafka_engine_display->get_addon_option_image_classes( $lafka_custom_image_id );
 	?>
 
 	<p class="form-row form-row-wide addon-wrap-<?php echo esc_attr( sanitize_title( $addon['field-name'] ) ); ?>">

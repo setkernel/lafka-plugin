@@ -131,10 +131,9 @@ if ( ! class_exists( 'Lafka_Conversion_Privacy' ) ) {
 		 * Hard-delete every push subscription owned by the email's WP user.
 		 *
 		 * @param string $email_address
-		 * @param int    $page 1-indexed (unused — a single DELETE clears all rows).
 		 * @return array{items_removed:int,items_retained:bool,messages:array,done:bool}
 		 */
-		public function erase_push( string $email_address, int $page = 1 ): array {
+		public function erase_push( string $email_address ): array {
 			global $wpdb;
 			$removed = 0;
 			$user_id = $this->user_id_for_email( $email_address );
@@ -214,10 +213,9 @@ if ( ! class_exists( 'Lafka_Conversion_Privacy' ) ) {
 		 * existing right-to-be-forgotten helper.
 		 *
 		 * @param string $email_address
-		 * @param int    $page 1-indexed (unused — the helper clears all rows).
 		 * @return array{items_removed:int,items_retained:bool,messages:array,done:bool}
 		 */
-		public function erase_abandoned_carts( string $email_address, int $page = 1 ): array {
+		public function erase_abandoned_carts( string $email_address ): array {
 			$removed = 0;
 			if ( '' !== $email_address && function_exists( 'lafka_ac_delete_by_email' ) ) {
 				$removed = (int) lafka_ac_delete_by_email( $email_address );
@@ -246,11 +244,11 @@ if ( ! class_exists( 'Lafka_Conversion_Privacy' ) ) {
 			if ( $user_id <= 0 ) {
 				return array();
 			}
-			$table  = $this->push_table();
 			$offset = ( max( 1, $page ) - 1 ) * self::PAGE_SIZE;
 			$rows   = $wpdb->get_results(
 				$wpdb->prepare(
-					"SELECT * FROM {$table} WHERE user_id = %d ORDER BY id ASC LIMIT %d OFFSET %d",
+					'SELECT * FROM %i WHERE user_id = %d ORDER BY id ASC LIMIT %d OFFSET %d',
+					$this->push_table(),
 					$user_id,
 					self::PAGE_SIZE,
 					$offset
@@ -269,11 +267,11 @@ if ( ! class_exists( 'Lafka_Conversion_Privacy' ) ) {
 			if ( '' === $email || ! isset( $wpdb ) || ! is_object( $wpdb ) || ! method_exists( $wpdb, 'get_results' ) || ! method_exists( $wpdb, 'prepare' ) ) {
 				return array();
 			}
-			$table  = $this->ac_table();
 			$offset = ( max( 1, $page ) - 1 ) * self::PAGE_SIZE;
 			$rows   = $wpdb->get_results(
 				$wpdb->prepare(
-					"SELECT * FROM {$table} WHERE customer_email = %s ORDER BY id ASC LIMIT %d OFFSET %d",
+					'SELECT * FROM %i WHERE customer_email = %s ORDER BY id ASC LIMIT %d OFFSET %d',
+					$this->ac_table(),
 					$email,
 					self::PAGE_SIZE,
 					$offset

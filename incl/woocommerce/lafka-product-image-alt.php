@@ -29,7 +29,7 @@ if ( ! function_exists( 'lafka_backfill_product_image_alt' ) ) {
 	 * @param string $size       Requested image size (unused).
 	 * @return array
 	 */
-	function lafka_backfill_product_image_alt( $attr, $attachment, $size ) {
+	function lafka_backfill_product_image_alt( $attr, $attachment ) {
 		// Fast path: alt already present (operator-set or earlier filter).
 		if ( ! empty( $attr['alt'] ) ) {
 			return $attr;
@@ -73,7 +73,7 @@ if ( ! function_exists( 'lafka_backfill_product_image_alt' ) ) {
 
 		return $attr;
 	}
-	add_filter( 'wp_get_attachment_image_attributes', 'lafka_backfill_product_image_alt', 20, 3 );
+	add_filter( 'wp_get_attachment_image_attributes', 'lafka_backfill_product_image_alt', 20, 2 );
 }
 
 if ( ! function_exists( 'lafka_resolve_attachment_product_name' ) ) {

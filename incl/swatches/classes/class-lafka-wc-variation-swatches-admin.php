@@ -36,7 +36,7 @@ class Lafka_WC_Variation_Swatches_Admin {
 		add_action( 'woocommerce_product_option_terms', array( $this, 'product_option_terms' ), 10, 2 );
 
 		// Display attribute fields
-		add_action( 'lafka-wcs_product_attribute_field', array( $this, 'attribute_fields' ), 10, 3 );
+		add_action( 'lafka_wcs_product_attribute_field', array( $this, 'attribute_fields' ), 10, 3 );
 
 		// ajax add attribute
 		add_action( 'wp_ajax_lafka-wcs_add_new_attribute', array( $this, 'add_new_attribute_ajax' ) );
@@ -105,7 +105,8 @@ class Lafka_WC_Variation_Swatches_Admin {
 	public function add_attribute_fields( $taxonomy ) {
 		$attr = lafka_wcvs()->get_tax_attribute( $taxonomy );
 
-		do_action( 'lafka-wcs_product_attribute_field', $attr->attribute_type, '', 'add' );
+		do_action( 'lafka_wcs_product_attribute_field', $attr->attribute_type, '', 'add' );
+		do_action_deprecated( 'lafka-wcs_product_attribute_field', array( $attr->attribute_type, '', 'add' ), '10.4.0', 'lafka_wcs_product_attribute_field' );
 	}
 
 	/**
@@ -118,7 +119,8 @@ class Lafka_WC_Variation_Swatches_Admin {
 		$attr  = lafka_wcvs()->get_tax_attribute( $taxonomy );
 		$value = get_term_meta( $term->term_id, $attr->attribute_type, true );
 
-		do_action( 'lafka-wcs_product_attribute_field', $attr->attribute_type, $value, 'edit' );
+		do_action( 'lafka_wcs_product_attribute_field', $attr->attribute_type, $value, 'edit' );
+		do_action_deprecated( 'lafka-wcs_product_attribute_field', array( $attr->attribute_type, $value, 'edit' ), '10.4.0', 'lafka_wcs_product_attribute_field' );
 	}
 
 	/**
@@ -248,12 +250,14 @@ class Lafka_WC_Variation_Swatches_Admin {
 			<?php
 
 			$all_terms = get_terms(
-				$taxonomy_name,
-				apply_filters(
-					'woocommerce_product_attribute_terms',
-					array(
-						'orderby'    => 'name',
-						'hide_empty' => false,
+				array_merge(
+					array( 'taxonomy' => $taxonomy_name ),
+					apply_filters(
+						'woocommerce_product_attribute_terms',
+						array(
+							'orderby'    => 'name',
+							'hide_empty' => false,
+						)
 					)
 				)
 			);

@@ -18,7 +18,7 @@ $lafka_fields_strings['address'] = esc_html__( 'Street Address', 'lafka-plugin' 
 $lafka_fields_strings['subject'] = esc_html__( 'Subject', 'lafka-plugin' );
 
 //response messages
-$lafka_missing_content = esc_html__( 'Please enter %s.', 'lafka-plugin' );
+$lafka_missing_content = /* translators: %s: name of the missing form field. */ esc_html__( 'Please enter %s.', 'lafka-plugin' );
 $lafka_missing_message = esc_html__( 'Please enter a message.', 'lafka-plugin' );
 $lafka_captcha_message = esc_html__( 'Calculation result was not correct.', 'lafka-plugin' );
 $lafka_email_invalid   = esc_html__( 'Email Address Invalid.', 'lafka-plugin' );
@@ -200,7 +200,7 @@ if ( isset( $_POST['lafka_contact_submitted'] ) ) {
 	}
 
 	if ( ! $lafka_has_error ) {
-		$lafka_sent = wp_mail( sanitize_email( $lafka_contact_mail_to ), ( $lafka_subject ? sanitize_text_field( $lafka_subject ) : sprintf( esc_html__( 'Someone sent a message from %s', 'lafka-plugin' ), sanitize_text_field( get_bloginfo( 'name' ) ) ) ), ( $lafka_name ? 'Name: ' . sanitize_text_field( $lafka_name ) : '' ) . "\r\n" . ( $lafka_email ? 'E-Mail Address: ' . sanitize_text_field( $lafka_email ) . "\r\n" : '' ) . ( $lafka_phone ? 'Phone: ' . sanitize_text_field( $lafka_phone ) . "\r\n" : '' ) . ( $lafka_address ? 'Street Address: ' . sanitize_text_field( $lafka_address ) . "\r\n" : '' ) . "\r\n" . wp_kses_post( $lafka_message ), $lafka_headers );
+		$lafka_sent = wp_mail( sanitize_email( $lafka_contact_mail_to ), ( $lafka_subject ? sanitize_text_field( $lafka_subject ) : sprintf( /* translators: %s: site name. */ esc_html__( 'Someone sent a message from %s', 'lafka-plugin' ), sanitize_text_field( get_bloginfo( 'name' ) ) ) ), ( $lafka_name ? 'Name: ' . sanitize_text_field( $lafka_name ) : '' ) . "\r\n" . ( $lafka_email ? 'E-Mail Address: ' . sanitize_text_field( $lafka_email ) . "\r\n" : '' ) . ( $lafka_phone ? 'Phone: ' . sanitize_text_field( $lafka_phone ) . "\r\n" : '' ) . ( $lafka_address ? 'Street Address: ' . sanitize_text_field( $lafka_address ) . "\r\n" : '' ) . "\r\n" . wp_kses_post( $lafka_message ), $lafka_headers );
 		if ( $lafka_sent ) {
 			$lafka_contactform_response = lafka_contact_form_generate_response( 'success', $lafka_message_sent ); //message sent!
 			// Bump the per-IP rate counter only on successful sends so attackers spamming garbage don't lock out legit users.

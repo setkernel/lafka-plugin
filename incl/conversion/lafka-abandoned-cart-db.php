@@ -200,7 +200,8 @@ if ( ! function_exists( 'lafka_ac_save_cart' ) ) {
 		if ( method_exists( $wpdb, 'get_var' ) && method_exists( $wpdb, 'prepare' ) ) {
 			$existing_id = (int) $wpdb->get_var(
 				$wpdb->prepare(
-					"SELECT id FROM {$table} WHERE customer_email = %s AND session_id = %s AND recovery_sent_at IS NULL AND order_id = 0 LIMIT 1",
+					'SELECT id FROM %i WHERE customer_email = %s AND session_id = %s AND recovery_sent_at IS NULL AND order_id = 0 LIMIT 1',
+					$table,
 					$email,
 					$session_id
 				)
@@ -326,11 +327,11 @@ if ( ! function_exists( 'lafka_ac_get_pending' ) ) {
 		}
 		$delay_minutes = max( 1, $delay_minutes );
 		$limit         = max( 1, min( 500, $limit ) );
-		$table         = lafka_ac_table_name();
 
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT * FROM {$table} WHERE recovery_sent_at IS NULL AND order_id = 0 AND last_seen_at < DATE_SUB(NOW(), INTERVAL %d MINUTE) ORDER BY last_seen_at ASC LIMIT %d",
+				'SELECT * FROM %i WHERE recovery_sent_at IS NULL AND order_id = 0 AND last_seen_at < DATE_SUB(NOW(), INTERVAL %d MINUTE) ORDER BY last_seen_at ASC LIMIT %d',
+				lafka_ac_table_name(),
 				$delay_minutes,
 				$limit
 			)
@@ -354,10 +355,10 @@ if ( ! function_exists( 'lafka_ac_get_row_by_token' ) ) {
 		if ( '' === $token ) {
 			return null;
 		}
-		$table = lafka_ac_table_name();
-		$row   = $wpdb->get_row(
+		$row = $wpdb->get_row(
 			$wpdb->prepare(
-				"SELECT * FROM {$table} WHERE resume_token = %s LIMIT 1",
+				'SELECT * FROM %i WHERE resume_token = %s LIMIT 1',
+				lafka_ac_table_name(),
 				$token
 			)
 		);
@@ -378,10 +379,10 @@ if ( ! function_exists( 'lafka_ac_cleanup' ) ) {
 			return 0;
 		}
 		$days_old = max( 1, $days_old );
-		$table    = lafka_ac_table_name();
 		$result   = $wpdb->query(
 			$wpdb->prepare(
-				"DELETE FROM {$table} WHERE created_at < DATE_SUB(NOW(), INTERVAL %d DAY)",
+				'DELETE FROM %i WHERE created_at < DATE_SUB(NOW(), INTERVAL %d DAY)',
+				lafka_ac_table_name(),
 				$days_old
 			)
 		);

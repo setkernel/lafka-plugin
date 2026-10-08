@@ -9,9 +9,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 // of $_GET in display methods are for admin UI state, not state mutation.
 
 /**
- * Class WCML_Lafka_Product_Addons
+ * Class Lafka_WCML_Product_Addons
  */
-class WCML_Lafka_Product_Addons {
+class Lafka_WCML_Product_Addons {
 
 	const PRICE_OPTION_KEY = '_product_addon_prices';
 
@@ -29,7 +29,7 @@ class WCML_Lafka_Product_Addons {
 	private $multi_currency_mode;
 
 	/**
-	 * WCML_Lafka_Product_Addons constructor.
+	 * Lafka_WCML_Product_Addons constructor.
 	 * @param SitePress $sitepress
 	 * @param woocommerce_wpml $woocommerce_wpml
 	 */
@@ -60,7 +60,7 @@ class WCML_Lafka_Product_Addons {
 				add_action( 'wcml_before_sync_product', array( $this, 'update_custom_prices_values' ) );
 			}
 		} else {
-			add_filter( 'get_post_metadata', array( $this, 'translate_addons_strings' ), 10, 4 );
+			add_filter( 'get_post_metadata', array( $this, 'translate_addons_strings' ), 10, 3 );
 		}
 
 		add_filter(
@@ -122,13 +122,13 @@ class WCML_Lafka_Product_Addons {
 	 *
 	 * @return array
 	 */
-	public function translate_addons_strings( $check, $object_id, $meta_key, $single ) {
+	public function translate_addons_strings( $check, $object_id, $meta_key ) {
 
 		if ( '_product_addons' === $meta_key && 'lafka_glb_addon' === get_post_type( $object_id ) ) {
 
 			remove_filter( 'get_post_metadata', array( $this, 'translate_addons_strings' ), 10, 4 );
 			$addons = get_post_meta( $object_id, $meta_key, true );
-			add_filter( 'get_post_metadata', array( $this, 'translate_addons_strings' ), 10, 4 );
+			add_filter( 'get_post_metadata', array( $this, 'translate_addons_strings' ), 10, 3 );
 
 			if ( is_array( $addons ) ) {
 				foreach ( $addons as $key => $addon ) {
@@ -176,7 +176,7 @@ class WCML_Lafka_Product_Addons {
 		if ( ! empty( $product_addons ) ) {
 			foreach ( $product_addons as $addon_id => $product_addon ) {
 
-				$addons_section = new WPML_Editor_UI_Field_Section( sprintf( __( 'Product Lafka Add-ons Group "%s"', 'lafka-plugin' ), $product_addon['name'] ) );
+				$addons_section = new WPML_Editor_UI_Field_Section( sprintf( /* translators: %s: add-on group name. */ __( 'Product Lafka Add-ons Group "%s"', 'lafka-plugin' ), $product_addon['name'] ) );
 
 				$group       = new WPML_Editor_UI_Field_Group( '', true );
 				$addon_field = new WPML_Editor_UI_Single_Line_Field( 'addon_' . $addon_id . '_name', __( 'Name', 'lafka-plugin' ), $data, false );
@@ -273,7 +273,7 @@ class WCML_Lafka_Product_Addons {
 	public function show_pointer_info() {
 
 		$pointer_ui = new WCML_Pointer_UI(
-			sprintf( __( 'You can translate the Group Name, Group Description and every Option Label of your product add-on on the %1$sWooCommerce product translation page%2$s', 'lafka-plugin' ), '<a href="' . admin_url( 'admin.php?page=wpml-wcml' ) . '">', '</a>' ),
+			sprintf( /* translators: 1: opening link tag, 2: closing link tag. */ __( 'You can translate the Group Name, Group Description and every Option Label of your product add-on on the %1$sWooCommerce product translation page%2$s', 'lafka-plugin' ), '<a href="' . admin_url( 'admin.php?page=wpml-wcml' ) . '">', '</a>' ),
 			'',
 			'product_addons_data>p'
 		);
@@ -361,7 +361,7 @@ class WCML_Lafka_Product_Addons {
 		$is_product_page     = 'post.php' === $pagenow && isset( $_GET['post'] );
 		$is_product_new_page = 'post-new.php' === $pagenow && isset( $_GET['post_type'] ) && 'product' === $_GET['post_type'];
 		if ( $is_product_page || $is_product_new_page ) {
-			wp_enqueue_script( 'wcml-product-addons', WCML_PLUGIN_URL . '/compatibility/res/js/wcml-product-addons' . WCML_JS_MIN . '.js', array( 'jquery' ), WCML_VERSION );
+			wp_enqueue_script( 'wcml-product-addons', WCML_PLUGIN_URL . '/compatibility/res/js/wcml-product-addons' . WCML_JS_MIN . '.js', array( 'jquery' ), WCML_VERSION, true );
 			wp_enqueue_style( 'wcml-product-addons', WCML_PLUGIN_URL . '/compatibility/res/css/wcml-product-addons.css', '', WCML_VERSION );
 		}
 	}

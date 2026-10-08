@@ -19,8 +19,8 @@ class Lafka_Shipping_Areas_Admin {
 		add_action( 'save_post', array( __CLASS__, 'save_postdata' ) );
 
 		// Save Google Maps api key on both places
-		add_action( 'update_option_lafka_shipping_areas_general', array( __CLASS__, 'override_theme_options_api_key' ), 10, 3 );
-		add_action( 'update_option_lafka', array( __CLASS__, 'override_shipping_areas_options_api_key' ), 10, 3 );
+		add_action( 'update_option_lafka_shipping_areas_general', array( __CLASS__, 'override_theme_options_api_key' ), 10, 2 );
+		add_action( 'update_option_lafka', array( __CLASS__, 'override_shipping_areas_options_api_key' ), 10, 2 );
 	}
 
 	public static function admin_init() {
@@ -350,7 +350,7 @@ class Lafka_Shipping_Areas_Admin {
 		<?php
 	}
 
-	public static function branches_section_cb( $args ) {
+	public static function branches_section_cb() {
 		?>
 		<p class="lafka-tab-description">
 			<?php esc_html_e( 'Branch Location entries can be managed from "Products" -> "Lafka Branch Locations"', 'lafka-plugin' ); ?>
@@ -410,8 +410,7 @@ class Lafka_Shipping_Areas_Admin {
 		<p class="description">
 			<?php
 			esc_html_e(
-				'In some areas Google doesn\'t resolve to the full addresses. If you operate in such areas, you can enable this option to allow entering partial addresses in the popup. ' .
-								'The users will be able to enter the site and can precise their location at checkout.',
+				'In some areas Google doesn\'t resolve to the full addresses. If you operate in such areas, you can enable this option to allow entering partial addresses in the popup. The users will be able to enter the site and can precise their location at checkout.',
 				'lafka-plugin'
 			);
 			?>
@@ -596,7 +595,7 @@ class Lafka_Shipping_Areas_Admin {
 		<?php
 	}
 
-	public static function override_theme_options_api_key( $old_value, $value, $option ) {
+	public static function override_theme_options_api_key( $old_value, $value ) {
 		if ( function_exists( 'lafka_get_option' ) && ! empty( $value['google_maps_api_key'] ) ) {
 			$lafka_options = get_option( 'lafka' );
 			if ( isset( $lafka_options['google_maps_api_key'] ) && $lafka_options['google_maps_api_key'] !== $value['google_maps_api_key'] ) {
@@ -604,12 +603,12 @@ class Lafka_Shipping_Areas_Admin {
 				// Unhook to prevent recursion (this hook fires update_option_lafka which calls back here).
 				remove_action( 'update_option_lafka', array( __CLASS__, 'override_shipping_areas_options_api_key' ), 10 );
 				update_option( 'lafka', $lafka_options );
-				add_action( 'update_option_lafka', array( __CLASS__, 'override_shipping_areas_options_api_key' ), 10, 3 );
+				add_action( 'update_option_lafka', array( __CLASS__, 'override_shipping_areas_options_api_key' ), 10, 2 );
 			}
 		}
 	}
 
-	public static function override_shipping_areas_options_api_key( $old_value, $value, $option ) {
+	public static function override_shipping_areas_options_api_key( $old_value, $value ) {
 		if ( ! is_array( $value ) || empty( $value['google_maps_api_key'] ) ) {
 			return;
 		}
@@ -619,7 +618,7 @@ class Lafka_Shipping_Areas_Admin {
 			// Unhook to prevent recursion (this hook fires update_option_lafka_shipping_areas_general which calls back here).
 			remove_action( 'update_option_lafka_shipping_areas_general', array( __CLASS__, 'override_theme_options_api_key' ), 10 );
 			update_option( 'lafka_shipping_areas_general', $options );
-			add_action( 'update_option_lafka_shipping_areas_general', array( __CLASS__, 'override_theme_options_api_key' ), 10, 3 );
+			add_action( 'update_option_lafka_shipping_areas_general', array( __CLASS__, 'override_theme_options_api_key' ), 10, 2 );
 		}
 	}
 

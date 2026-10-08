@@ -13,8 +13,8 @@
 defined( 'ABSPATH' ) || exit;
 
 if ( ! function_exists( 'lafka_normalize_price_html' ) ) {
-	add_filter( 'woocommerce_get_price_html', 'lafka_normalize_price_html', 99, 2 );
-	function lafka_normalize_price_html( $html, $product ) {
+	add_filter( 'woocommerce_get_price_html', 'lafka_normalize_price_html', 99, 1 );
+	function lafka_normalize_price_html( $html ) {
 		if ( ! $html ) {
 			return $html;
 		}

@@ -28,7 +28,7 @@ class Lafka_KDS_Order_Statuses {
 				'exclude_from_search'       => false,
 				'show_in_admin_all_list'    => true,
 				'show_in_admin_status_list' => true,
-				'label_count'               => _n_noop( 'Accepted <span class="count">(%s)</span>', 'Accepted <span class="count">(%s)</span>', 'lafka-plugin' ),
+				'label_count'               => /* translators: %s: number of orders. */ _n_noop( 'Accepted <span class="count">(%s)</span>', 'Accepted <span class="count">(%s)</span>', 'lafka-plugin' ),
 			)
 		);
 
@@ -40,7 +40,7 @@ class Lafka_KDS_Order_Statuses {
 				'exclude_from_search'       => false,
 				'show_in_admin_all_list'    => true,
 				'show_in_admin_status_list' => true,
-				'label_count'               => _n_noop( 'Preparing <span class="count">(%s)</span>', 'Preparing <span class="count">(%s)</span>', 'lafka-plugin' ),
+				'label_count'               => /* translators: %s: number of orders. */ _n_noop( 'Preparing <span class="count">(%s)</span>', 'Preparing <span class="count">(%s)</span>', 'lafka-plugin' ),
 			)
 		);
 
@@ -52,7 +52,7 @@ class Lafka_KDS_Order_Statuses {
 				'exclude_from_search'       => false,
 				'show_in_admin_all_list'    => true,
 				'show_in_admin_status_list' => true,
-				'label_count'               => _n_noop( 'Ready <span class="count">(%s)</span>', 'Ready <span class="count">(%s)</span>', 'lafka-plugin' ),
+				'label_count'               => /* translators: %s: number of orders. */ _n_noop( 'Ready <span class="count">(%s)</span>', 'Ready <span class="count">(%s)</span>', 'lafka-plugin' ),
 			)
 		);
 
@@ -64,7 +64,7 @@ class Lafka_KDS_Order_Statuses {
 				'exclude_from_search'       => false,
 				'show_in_admin_all_list'    => true,
 				'show_in_admin_status_list' => true,
-				'label_count'               => _n_noop( 'Rejected <span class="count">(%s)</span>', 'Rejected <span class="count">(%s)</span>', 'lafka-plugin' ),
+				'label_count'               => /* translators: %s: number of orders. */ _n_noop( 'Rejected <span class="count">(%s)</span>', 'Rejected <span class="count">(%s)</span>', 'lafka-plugin' ),
 			)
 		);
 	}

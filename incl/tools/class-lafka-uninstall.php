@@ -309,7 +309,8 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 			$table = $wpdb->prefix . 'woocommerce_attribute_taxonomies';
 			$wpdb->query(
 				$wpdb->prepare(
-					"UPDATE {$table} SET attribute_type = %s WHERE attribute_type IN ( %s, %s, %s )",
+					'UPDATE %i SET attribute_type = %s WHERE attribute_type IN ( %s, %s, %s )',
+					$table,
 					'select',
 					'color',
 					'image',
@@ -332,7 +333,7 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 			}
 			foreach ( self::tables() as $suffix ) {
 				$table = $wpdb->prefix . $suffix;
-				$wpdb->query( "DROP TABLE IF EXISTS {$table}" );
+				$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $table ) );
 			}
 		}
 
@@ -403,7 +404,8 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 				$like = $wpdb->esc_like( $prefix ) . '%';
 				$wpdb->query(
 					$wpdb->prepare(
-						"DELETE FROM {$options} WHERE option_name LIKE %s",
+						'DELETE FROM %i WHERE option_name LIKE %s',
+						$options,
 						$like
 					)
 				);
@@ -429,7 +431,8 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 				$like = $wpdb->esc_like( $prefix ) . '%';
 				$wpdb->query(
 					$wpdb->prepare(
-						"DELETE FROM {$options} WHERE option_name LIKE %s",
+						'DELETE FROM %i WHERE option_name LIKE %s',
+						$options,
 						$like
 					)
 				);
@@ -454,7 +457,8 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 			foreach ( self::post_types() as $post_type ) {
 				$ids = $wpdb->get_col(
 					$wpdb->prepare(
-						"SELECT ID FROM {$posts} WHERE post_type = %s",
+						'SELECT ID FROM %i WHERE post_type = %s',
+						$posts,
 						$post_type
 					)
 				);
@@ -510,7 +514,8 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 			foreach ( self::deleted_post_meta_keys() as $key ) {
 				$wpdb->query(
 					$wpdb->prepare(
-						"DELETE FROM {$postmeta} WHERE meta_key = %s",
+						'DELETE FROM %i WHERE meta_key = %s',
+						$postmeta,
 						$key
 					)
 				);
@@ -520,7 +525,8 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 			foreach ( self::deleted_user_meta_keys() as $key ) {
 				$wpdb->query(
 					$wpdb->prepare(
-						"DELETE FROM {$usermeta} WHERE meta_key = %s",
+						'DELETE FROM %i WHERE meta_key = %s',
+						$usermeta,
 						$key
 					)
 				);

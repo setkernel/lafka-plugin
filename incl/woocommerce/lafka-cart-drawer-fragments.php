@@ -76,7 +76,7 @@ if ( ! function_exists( 'lafka_cart_drawer_render_item' ) ) {
 		<li class="lafka-cart-drawer__item" data-cart-key="<?php echo esc_attr( $cart_item_key ); ?>">
 			<span class="lafka-cart-drawer__thumb">
 				<?php
-				echo $thumb;
+				echo wp_kses( $thumb, lafka_kses_allowed_image_html() );
 				?>
 			</span>
 			<span class="lafka-cart-drawer__name"><?php echo wp_kses_post( $name ); ?></span>
@@ -212,7 +212,7 @@ if ( ! function_exists( 'lafka_cart_drawer_render_stepper_item' ) ) {
 		<li class="lafka-cart-drawer__item lafka-cart-drawer__item--stepper" data-cart-key="<?php echo esc_attr( $cart_item_key ); ?>">
 			<span class="lafka-cart-drawer__thumb">
 				<?php
-				echo $thumb;
+				echo wp_kses( $thumb, lafka_kses_allowed_image_html() );
 				?>
 			</span>
 			<?php // __info, not __body: that is the drawer's scroll container class (O-01). ?>

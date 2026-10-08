@@ -104,7 +104,7 @@ msgstr ""
 #: incl/addons/engine/admin/class-lafka-engine-addons-list-table.php:41
 #: incl/addons/engine/admin/views/editor.php:37
 #: incl/swatches/classes/class-lafka-wc-variation-swatches-admin.php:338
-#: incl/wpml/addons/class-wcml-lafka-product-addons.php:183
+#: incl/wpml/addons/class-lafka-wcml-product-addons.php:183
 #: shortcodes/partials/contact-form.php:15
 #: shortcodes/shortcodes_to_vc_mapping.php:1400
 #: shortcodes/shortcodes_to_vc_mapping.php:2320
@@ -127,7 +127,7 @@ msgstr ""
 
 #: incl/addons/engine/admin/class-lafka-engine-addons-list-table.php:45
 #: incl/addons/engine/admin/views/parts/option-rows.php:47
-#: incl/wpml/addons/class-wcml-lafka-product-addons.php:192
+#: incl/wpml/addons/class-lafka-wcml-product-addons.php:192
 msgid "Options"
 msgstr ""
 
@@ -194,7 +194,7 @@ msgid "Free text"
 msgstr ""
 
 #: incl/addons/engine/admin/views/editor.php:54
-#: incl/wpml/addons/class-wcml-lafka-product-addons.php:185
+#: incl/wpml/addons/class-lafka-wcml-product-addons.php:185
 msgid "Description"
 msgstr ""
 
@@ -295,7 +295,7 @@ msgstr ""
 #: incl/addons/engine/admin/views/parts/option-rows.php:59
 #: incl/swatches/classes/class-lafka-wc-variation-swatches-admin.php:389
 #: incl/swatches/class-lafka-wc-variation-swatches.php:61
-#: incl/wpml/addons/class-wcml-lafka-product-addons.php:195
+#: incl/wpml/addons/class-lafka-wcml-product-addons.php:195
 msgid "Label"
 msgstr ""
 
@@ -7678,12 +7678,12 @@ msgstr ""
 msgid "Add"
 msgstr ""
 
-#: incl/wpml/addons/class-wcml-lafka-product-addons.php:180
+#: incl/wpml/addons/class-lafka-wcml-product-addons.php:180
 #, php-format
 msgid "Product Lafka Add-ons Group \"%s\""
 msgstr ""
 
-#: incl/wpml/addons/class-wcml-lafka-product-addons.php:277
+#: incl/wpml/addons/class-lafka-wcml-product-addons.php:277
 #, php-format
 msgid "You can translate the Group Name, Group Description and every Option Label of your product add-on on the %1$sWooCommerce product translation page%2$s"
 msgstr ""

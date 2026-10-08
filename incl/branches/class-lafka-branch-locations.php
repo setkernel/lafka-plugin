@@ -26,12 +26,12 @@ class Lafka_Branch_Locations {
 		// (rather than `woocommerce_checkout_update_order_meta`, which only
 		// passes an order ID after the save) fires before save and receives
 		// WC_Order directly so HPOS works without branching.
-		add_action( 'woocommerce_checkout_create_order', array( __CLASS__, 'checkout_field_update_order_meta_fields' ), 10, 2 );
+		add_action( 'woocommerce_checkout_create_order', array( __CLASS__, 'checkout_field_update_order_meta_fields' ), 10, 1 );
 
 		// Alter Products meta query to get only the corresponding branch products
 		$options_branches = get_option( 'lafka_shipping_areas_branches' );
 		if ( ! empty( $options_branches['products_by_branches'] ) ) {
-			add_filter( 'woocommerce_product_query_tax_query', array( __CLASS__, 'modify_products_tax_query_to_get_branch_products' ), 10, 2 );
+			add_filter( 'woocommerce_product_query_tax_query', array( __CLASS__, 'modify_products_tax_query_to_get_branch_products' ), 10, 1 );
 			add_filter( 'woocommerce_product_related_posts_query', array( __CLASS__, 'modify_related_products_query_to_get_branch_products' ) );
 			add_filter( 'woocommerce_products_widget_query_args', array( __CLASS__, 'modify_products_tax_query_to_get_branch_products_for_widgets' ) );
 			add_filter( 'woocommerce_subcategory_count_html', '__return_false' );
@@ -480,7 +480,7 @@ class Lafka_Branch_Locations {
 		return $query;
 	}
 
-	public static function modify_products_tax_query_to_get_branch_products( $tax_query, $wc_query ) {
+	public static function modify_products_tax_query_to_get_branch_products( $tax_query ) {
 		if ( isset( WC()->session ) ) {
 			$branch_location_session = WC()->session->get( 'lafka_branch_location' );
 			if ( ! empty( $branch_location_session['branch_id'] ) && is_numeric( $branch_location_session['branch_id'] ) ) {
@@ -622,7 +622,7 @@ class Lafka_Branch_Locations {
 		return $to_return;
 	}
 
-	public static function checkout_field_update_order_meta_fields( $order, $data = null ) {
+	public static function checkout_field_update_order_meta_fields( $order ) {
 		// Backward-compat: legacy hook passed an int order_id.
 		if ( is_numeric( $order ) ) {
 			$order = wc_get_order( $order );

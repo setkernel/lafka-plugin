@@ -60,7 +60,7 @@ class Lafka_Engine_Display {
 		// mutating the global hook table.
 		add_action( 'woocommerce_before_add_to_cart_button', array( $this, 'display_for_simple_product' ), 10 );
 		add_action( 'woocommerce_single_variation', array( $this, 'display_for_variable_product' ), 15 );
-		add_action( 'lafka-product-addons_end', array( $this, 'totals' ), 10 );
+		add_action( 'lafka_product_addons_end', array( $this, 'totals' ), 10 );
 
 		// Add-to-cart button overrides for products with required addons.
 		add_filter( 'add_to_cart_text', array( $this, 'add_to_cart_text' ), 15 );
@@ -159,7 +159,8 @@ class Lafka_Engine_Display {
 			return;
 		}
 
-		do_action( 'lafka-product-addons_start', $post_id );
+		do_action( 'lafka_product_addons_start', $post_id );
+		do_action_deprecated( 'lafka-product-addons_start', array( $post_id ), '10.4.0', 'lafka_product_addons_start' );
 
 		foreach ( $product_addons as $addon ) {
 			if ( ! isset( $addon['field-name'] ) ) {
@@ -195,7 +196,7 @@ class Lafka_Engine_Display {
 				$this->plugin_path() . '/templates/'
 			);
 
-			echo $this->get_addon_html( $addon );
+			$this->render_addon_html( $addon );
 
 			wc_get_template(
 				'addon-end.php',
@@ -208,7 +209,8 @@ class Lafka_Engine_Display {
 			);
 		}
 
-		do_action( 'lafka-product-addons_end', $post_id );
+		do_action( 'lafka_product_addons_end', $post_id );
+		do_action_deprecated( 'lafka-product-addons_end', array( $post_id ), '10.4.0', 'lafka_product_addons_end' );
 	}
 
 	public function totals( $post_id ): void {
@@ -244,13 +246,30 @@ class Lafka_Engine_Display {
 		);
 	}
 
-	public function get_addon_html( array $addon ): string {
-		ob_start();
+	/**
+	 * Print the markup for one add-on group (the template renders its own
+	 * escaped output).
+	 *
+	 * @param array $addon Add-on group.
+	 */
+	public function render_addon_html( array $addon ): void {
 		$method_name = 'get_' . $addon['type'] . '_html';
 		if ( method_exists( $this, $method_name ) ) {
 			$this->{$method_name}( $addon );
 		}
-		do_action( 'lafka-product-addons_get_' . $addon['type'] . '_html', $addon );
+		do_action( 'lafka_product_addons_get_' . $addon['type'] . '_html', $addon );
+		do_action_deprecated( 'lafka-product-addons_get_' . $addon['type'] . '_html', array( $addon ), '10.4.0', 'lafka_product_addons_get_' . $addon['type'] . '_html' );
+	}
+
+	/**
+	 * Markup for one add-on group as a string.
+	 *
+	 * @param array $addon Add-on group.
+	 * @return string
+	 */
+	public function get_addon_html( array $addon ): string {
+		ob_start();
+		$this->render_addon_html( $addon );
 		return (string) ob_get_clean();
 	}
 

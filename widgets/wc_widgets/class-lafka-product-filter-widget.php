@@ -150,9 +150,14 @@ class Lafka_Product_Filter_Widget extends WC_Widget {
 		$attribute_object = lafka_wcvs()->get_tax_attribute( $taxonomy );
 		$display_type     = $attribute_object->attribute_type;
 
-		$terms = get_terms( $taxonomy, array( 'hide_empty' => '1' ) );
+		$terms = get_terms(
+			array(
+				'taxonomy'   => $taxonomy,
+				'hide_empty' => true,
+			)
+		);
 
-		if ( 0 === count( $terms ) ) {
+		if ( is_wp_error( $terms ) || 0 === count( $terms ) ) {
 			return;
 		}
 
@@ -191,7 +196,7 @@ class Lafka_Product_Filter_Widget extends WC_Widget {
 		if ( ! $found ) {
 			ob_end_clean();
 		} else {
-			echo ob_get_clean();
+			ob_end_flush();
 		}
 	}
 
@@ -287,7 +292,7 @@ class Lafka_Product_Filter_Widget extends WC_Widget {
 			}
 
 			echo '<input type="hidden" name="filter_' . esc_attr( $taxonomy_filter_name ) . '" value="' . esc_attr( implode( ',', $current_values ) ) . '" />';
-			echo wc_query_string_form_fields( null, array( 'filter_' . $taxonomy_filter_name, 'query_type_' . $taxonomy_filter_name ), '', true );
+			wc_query_string_form_fields( null, array( 'filter_' . $taxonomy_filter_name, 'query_type_' . $taxonomy_filter_name ), '', false );
 			echo '</form>';
 
 			wp_add_inline_script(

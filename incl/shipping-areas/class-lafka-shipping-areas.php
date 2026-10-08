@@ -106,7 +106,7 @@ class Lafka_Shipping_Areas {
 		// an order ID after the save) fires before the order is saved on the classic
 		// checkout path, receives WC_Order directly, and is HPOS-safe without
 		// branching or a second save.
-		add_action( 'woocommerce_checkout_create_order', array( $this, 'checkout_update_order_meta' ), 10, 2 );
+		add_action( 'woocommerce_checkout_create_order', array( $this, 'checkout_update_order_meta' ), 10, 1 );
 
 		// `lowest_cost_shipping`, `hide_shipping_cost_at_cart`,
 		// `deactivate_post_code`, `disable_state` settings were tied to the
@@ -124,12 +124,12 @@ class Lafka_Shipping_Areas {
 		// see includes() above.
 
 		// Output order type, time for delivery/pickup, branch, picked delivery location in all places
-		add_filter( 'woocommerce_get_order_item_totals', array( __CLASS__, 'output_custom_fields_in_thank_you_page' ), 10, 3 );
+		add_filter( 'woocommerce_get_order_item_totals', array( __CLASS__, 'output_custom_fields_in_thank_you_page' ), 10, 2 );
 
 		// Handle order emails for branch managers
 		if ( empty( $branches_options['disable_order_emails'] ) ) {
 			foreach ( array( 'cancelled_order', 'failed_order', 'new_order' ) as $email_type_id ) {
-				add_filter( 'woocommerce_email_recipient_' . $email_type_id, array( __CLASS__, 'add_recipient_to_order_emails' ), 10, 3 );
+				add_filter( 'woocommerce_email_recipient_' . $email_type_id, array( __CLASS__, 'add_recipient_to_order_emails' ), 10, 2 );
 			}
 		}
 	}
@@ -321,7 +321,7 @@ class Lafka_Shipping_Areas {
 		return $fragments;
 	}
 
-	public function checkout_update_order_meta( $order, $data = null ) {
+	public function checkout_update_order_meta( $order ) {
 		// Backward-compat: legacy hook passed an int order_id.
 		if ( is_numeric( $order ) ) {
 			$order = wc_get_order( $order );
@@ -361,7 +361,7 @@ class Lafka_Shipping_Areas {
 		}
 	}
 
-	public static function add_recipient_to_order_emails( $recipient, $email_object, $wc_email_object ): string {
+	public static function add_recipient_to_order_emails( $recipient, $email_object ): string {
 		// Any order object — the WC Analytics Order override class only exists
 		// when WC Admin is loaded, so matching it silently skipped branch
 		// managers on stores without Analytics.
@@ -382,7 +382,7 @@ class Lafka_Shipping_Areas {
 		return $recipient;
 	}
 
-	public static function output_custom_fields_in_thank_you_page( $total_rows, $order, $tax_display ) {
+	public static function output_custom_fields_in_thank_you_page( $total_rows, $order ) {
 		$order_type                     = self::get_order_meta_backward_compatible( $order->get_id(), 'lafka_order_type' );
 		$lafka_checkout_date            = self::get_order_meta_backward_compatible( $order->get_id(), 'lafka_checkout_date' );
 		$lafka_checkout_timeslot        = self::get_order_meta_backward_compatible( $order->get_id(), 'lafka_checkout_timeslot' );

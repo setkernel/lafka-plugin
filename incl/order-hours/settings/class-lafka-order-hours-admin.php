@@ -244,7 +244,7 @@ class Lafka_Order_Hours_Admin {
 		<?php
 	}
 
-	public function lafka_order_hours_status_section_cb( $args ) {
+	public function lafka_order_hours_status_section_cb() {
 		?>
 		<p><?php esc_html_e( 'WooCommerce main store current time', 'lafka-plugin' ); ?>:<br>
 			<span class="lafka-order-hours-current-time <?php echo esc_attr( Lafka_Order_Hours::get_shop_status()->code ); ?>">

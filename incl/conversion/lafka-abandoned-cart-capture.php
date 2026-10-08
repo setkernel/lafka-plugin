@@ -269,10 +269,10 @@ if ( ! function_exists( 'lafka_ac_handle_order_processed' ) ) {
 		if ( ! isset( $wpdb ) || ! is_object( $wpdb ) || ! method_exists( $wpdb, 'get_var' ) ) {
 			return;
 		}
-		$table  = lafka_ac_table_name();
 		$row_id = (int) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT id FROM {$table} WHERE customer_email = %s AND order_id = 0 ORDER BY last_seen_at DESC LIMIT 1",
+				'SELECT id FROM %i WHERE customer_email = %s AND order_id = 0 ORDER BY last_seen_at DESC LIMIT 1',
+				lafka_ac_table_name(),
 				$email
 			)
 		);

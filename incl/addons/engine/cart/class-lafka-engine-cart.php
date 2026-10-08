@@ -38,7 +38,7 @@ class Lafka_Engine_Cart {
 		add_filter( 'woocommerce_add_cart_item_data', array( $this, 'add_cart_item_data' ), 10, 2 );
 		add_filter( 'woocommerce_add_to_cart_validation', array( $this, 'validate_add_cart_item' ), 999, 3 );
 		add_action( 'woocommerce_checkout_create_order_line_item', array( $this, 'order_line_item' ), 10, 3 );
-		add_filter( 'woocommerce_order_again_cart_item_data', array( $this, 're_add_cart_item_data' ), 10, 3 );
+		add_filter( 'woocommerce_order_again_cart_item_data', array( $this, 're_add_cart_item_data' ), 10, 2 );
 	}
 
 	/**
@@ -285,7 +285,7 @@ class Lafka_Engine_Cart {
 	 * @param WC_Order|null  $order
 	 * @return array
 	 */
-	public function re_add_cart_item_data( $cart_item_meta, $product, $order ): array {
+	public function re_add_cart_item_data( $cart_item_meta, $product ): array {
 		// Skip validation while reconstructing — past orders are trusted by definition.
 		remove_filter( 'woocommerce_add_to_cart_validation', array( $this, 'validate_add_cart_item' ), 999 );
 

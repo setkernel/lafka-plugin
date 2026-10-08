@@ -80,7 +80,7 @@ class Lafka_Kitchen_Display {
 		add_filter( 'woocommerce_email_classes', array( $this, 'register_emails' ) );
 
 		// Add KDS notification email to WC new-order recipient list
-		add_filter( 'woocommerce_email_recipient_new_order', array( $this, 'add_kds_admin_to_new_order' ), 10, 2 );
+		add_filter( 'woocommerce_email_recipient_new_order', array( $this, 'add_kds_admin_to_new_order' ), 10, 1 );
 	}
 
 	/**
@@ -107,7 +107,7 @@ class Lafka_Kitchen_Display {
 	 *
 	 * This is the only admin-facing email — status-change emails go to the customer only.
 	 */
-	public function add_kds_admin_to_new_order( $recipient, $order ) {
+	public function add_kds_admin_to_new_order( $recipient ) {
 		$options   = self::get_options();
 		$kds_email = sanitize_email( $options['order_notification_email'] );
 

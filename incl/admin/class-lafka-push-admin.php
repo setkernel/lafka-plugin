@@ -362,9 +362,8 @@ if ( ! class_exists( 'Lafka_Push_Admin' ) ) {
 			if ( ! function_exists( 'lafka_push_table_name' ) ) {
 				return 0;
 			}
-			$table = lafka_push_table_name();
 			$count = (int) $wpdb->get_var(
-				"SELECT COUNT(*) FROM {$table} WHERE unsubscribed_at IS NULL"
+				$wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE unsubscribed_at IS NULL', lafka_push_table_name() )
 			);
 			return max( 0, $count );
 		}

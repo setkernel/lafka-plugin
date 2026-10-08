@@ -30,7 +30,7 @@ class Lafka_Addons_CLI_Commands {
 	 *
 	 * @when after_wp_load
 	 */
-	public function list( $args, $assoc_args ): void {
+	public function list(): void {
 		$posts = get_posts(
 			array(
 				'post_type'      => 'lafka_glb_addon',
@@ -81,7 +81,7 @@ class Lafka_Addons_CLI_Commands {
 	 *
 	 * @when after_wp_load
 	 */
-	public function show( $args, $assoc_args ): void {
+	public function show( $args ): void {
 		$post_id = isset( $args[0] ) ? (int) $args[0] : 0;
 		if ( $post_id <= 0 ) {
 			\WP_CLI::error( 'A positive integer post_id is required.' );
@@ -216,7 +216,7 @@ class Lafka_Addons_CLI_Commands {
 	 *
 	 * @when after_wp_load
 	 */
-	public function resolve( $args, $assoc_args ): void {
+	public function resolve( $args ): void {
 		$product_id = isset( $args[0] ) ? (int) $args[0] : 0;
 		if ( $product_id <= 0 ) {
 			\WP_CLI::error( 'A positive integer product_id is required.' );

@@ -198,7 +198,8 @@ if ( ! function_exists( 'lafka_push_save_subscription' ) ) {
 		if ( method_exists( $wpdb, 'get_var' ) && method_exists( $wpdb, 'prepare' ) ) {
 			$existing_id = (int) $wpdb->get_var(
 				$wpdb->prepare(
-					"SELECT id FROM {$table} WHERE endpoint = %s LIMIT 1",
+					'SELECT id FROM %i WHERE endpoint = %s LIMIT 1',
+					$table,
 					$endpoint
 				)
 			);
@@ -336,12 +337,12 @@ if ( ! function_exists( 'lafka_push_get_active_subscriptions' ) ) {
 			if ( empty( $ids ) ) {
 				return array();
 			}
-			$placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
-			$args         = array_merge( $ids, array( $limit ) );
-			$rows         = $wpdb->get_results(
+			$rows = $wpdb->get_results(
 				$wpdb->prepare(
-					"SELECT * FROM {$table} WHERE unsubscribed_at IS NULL AND user_id IN ({$placeholders}) ORDER BY id ASC LIMIT %d",
-					$args
+					'SELECT * FROM %i WHERE unsubscribed_at IS NULL AND FIND_IN_SET( user_id, %s ) ORDER BY id ASC LIMIT %d',
+					$table,
+					implode( ',', $ids ),
+					$limit
 				)
 			);
 			return is_array( $rows ) ? $rows : array();
@@ -349,7 +350,8 @@ if ( ! function_exists( 'lafka_push_get_active_subscriptions' ) ) {
 
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT * FROM {$table} WHERE unsubscribed_at IS NULL ORDER BY id ASC LIMIT %d",
+				'SELECT * FROM %i WHERE unsubscribed_at IS NULL ORDER BY id ASC LIMIT %d',
+				$table,
 				$limit
 			)
 		);
@@ -375,7 +377,8 @@ if ( ! function_exists( 'lafka_push_get_subscription_by_endpoint' ) ) {
 		$table = lafka_push_table_name();
 		$row   = $wpdb->get_row(
 			$wpdb->prepare(
-				"SELECT * FROM {$table} WHERE endpoint = %s LIMIT 1",
+				'SELECT * FROM %i WHERE endpoint = %s LIMIT 1',
+				$table,
 				$endpoint
 			)
 		);
@@ -414,7 +417,8 @@ if ( ! function_exists( 'lafka_push_cleanup' ) ) {
 		$table    = lafka_push_table_name();
 		$result   = $wpdb->query(
 			$wpdb->prepare(
-				"DELETE FROM {$table} WHERE unsubscribed_at IS NOT NULL AND unsubscribed_at < DATE_SUB(NOW(), INTERVAL %d DAY)",
+				'DELETE FROM %i WHERE unsubscribed_at IS NOT NULL AND unsubscribed_at < DATE_SUB(NOW(), INTERVAL %d DAY)',
+				$table,
 				$days_old
 			)
 		);

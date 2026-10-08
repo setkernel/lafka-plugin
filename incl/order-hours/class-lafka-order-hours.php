@@ -821,7 +821,7 @@ class Lafka_Order_Hours {
 			<p class="lafka-store-closed-card__title"><?php echo esc_html( $title ); ?></p>
 			<?php if ( '' !== $subtitle_human ) : ?>
 				<p class="lafka-store-closed-card__subtitle">
-					<?php echo esc_html( sprintf( __( 'Opens %s', 'lafka-plugin' ), $subtitle_human ) ); ?>
+					<?php echo esc_html( sprintf( /* translators: %s: human-readable opening time. */ __( 'Opens %s', 'lafka-plugin' ), $subtitle_human ) ); ?>
 				</p>
 			<?php endif; ?>
 			<?php

@@ -139,8 +139,8 @@ if ( ! class_exists( 'Lafka_Promotions' ) ) {
 			// BOGO 50%
 			add_action( 'woocommerce_before_calculate_totals', array( $this, 'apply_bogo_to_cart' ), 20, 1 );
 			add_filter( 'woocommerce_get_item_data', array( $this, 'render_bogo_label' ), 10, 2 );
-			add_filter( 'woocommerce_cart_item_price', array( $this, 'render_bogo_unit_price' ), 10, 3 );
-			add_filter( 'woocommerce_cart_item_subtotal', array( $this, 'render_bogo_subtotal' ), 10, 3 );
+			add_filter( 'woocommerce_cart_item_price', array( $this, 'render_bogo_unit_price' ), 10, 2 );
+			add_filter( 'woocommerce_cart_item_subtotal', array( $this, 'render_bogo_subtotal' ), 10, 2 );
 
 			// Banner
 			add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_banner_assets' ) );
@@ -415,14 +415,14 @@ if ( ! class_exists( 'Lafka_Promotions' ) ) {
 			return $item_data;
 		}
 
-		public function render_bogo_unit_price( $price_html, $cart_item, $cart_item_key ) {
+		public function render_bogo_unit_price( $price_html, $cart_item ) {
 			if ( ! empty( $cart_item['_bogo_50'] ) && isset( $cart_item['_bogo_original_price'] ) ) {
 				return wc_price( (float) $cart_item['_bogo_original_price'] );
 			}
 			return $price_html;
 		}
 
-		public function render_bogo_subtotal( $subtotal_html, $cart_item, $cart_item_key ) {
+		public function render_bogo_subtotal( $subtotal_html, $cart_item ) {
 			if ( empty( $cart_item['_bogo_50'] ) || ! isset( $cart_item['_bogo_savings'] ) ) {
 				return $subtotal_html;
 			}

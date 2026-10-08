@@ -88,11 +88,11 @@ if ( ! function_exists( 'lafka_counter_shortcode' ) ) {
 		$i_icon_flaticon    = $lafka_sc_atts['i_icon_flaticon'];
 		$i_custom_color     = $lafka_sc_atts['i_custom_color'];
 
-		$iconClass = '';
+		$icon_class = '';
 
 		if ( ! empty( $add_icon ) && 'true' === $add_icon ) {
-			if ( isset( ${'i_icon_' . $i_type} ) ) {
-				$iconClass = ${'i_icon_' . $i_type};
+			if ( isset( $lafka_sc_atts[ 'i_icon_' . $i_type ] ) ) {
+				$icon_class = $lafka_sc_atts[ 'i_icon_' . $i_type ];
 			}
 			lafka_icon_element_fonts_enqueue( $i_type );
 		}
@@ -111,8 +111,8 @@ if ( ! function_exists( 'lafka_counter_shortcode' ) ) {
 				?>
 				style="color:<?php echo esc_attr( $text_color ); ?>" <?php endif; ?> >
 				<?php echo esc_html( $txt_before_counter ); ?>
-				<?php if ( $iconClass ) : ?>
-					<i class="<?php echo esc_attr( $iconClass ); ?>" 
+				<?php if ( $icon_class ) : ?>
+					<i class="<?php echo esc_attr( $icon_class ); ?>" 
 					<?php
 					if ( $icon_color && 'custom' !== $icon_color ) :
 						?>
@@ -273,7 +273,6 @@ if ( ! function_exists( 'lafka_blogposts_shortcode' ) ) {
 				// load Isotope
 				wp_enqueue_script( 'isotope' );
 				// Isotope settings
-				ob_start();
 				?>
 				<script>
 					//<![CDATA[
@@ -288,7 +287,6 @@ if ( ! function_exists( 'lafka_blogposts_shortcode' ) ) {
 					//]]>
 				</script>
 				<?php
-				echo ob_get_clean();
 				break;
 		}
 
@@ -762,7 +760,7 @@ if ( ! function_exists( 'lafka_banner_shortcode' ) ) {
 		// Enqueue needed icon font.
 		lafka_icon_element_fonts_enqueue( $type );
 
-		$iconClass = isset( ${'icon_' . $type} ) ? esc_attr( ${'icon_' . $type} ) : 'fas fa-adjust';
+		$icon_class = isset( $lafka_sc_atts[ 'icon_' . $type ] ) ? esc_attr( $lafka_sc_atts[ 'icon_' . $type ] ) : 'fas fa-adjust';
 
 		ob_start();
 		?>
@@ -796,8 +794,8 @@ if ( ! function_exists( 'lafka_banner_shortcode' ) ) {
 					<div class="lafka_banner_text">
 						<div class="lafka_banner_centering">
 							<div class="lafka_banner_centered">
-								<?php if ( $iconClass ) : ?>
-									<span class="lafka_banner-icon <?php echo esc_attr( $iconClass ); ?>" ></span>
+								<?php if ( $icon_class ) : ?>
+									<span class="lafka_banner-icon <?php echo esc_attr( $icon_class ); ?>" ></span>
 								<?php endif; ?>
 								<?php if ( $pre_title ) : ?>
 									<h5 
@@ -858,7 +856,7 @@ if ( ! function_exists( 'lafka_cloudzoom_gallery_shortcode' ) ) {
 					$first_image_attach_id  = $images[0];
 					$first_image            = wp_get_attachment_image( $first_image_attach_id, $img_size );
 					$first_image_attach_url = wp_get_attachment_url( $first_image_attach_id );
-					printf( '<a id="%s" href="%s" itemprop="image" class="cloud-zoom" rel="position: \'inside\' , showTitle: false, adjustX:-4, adjustY:-4">%s</a>', esc_attr( $unique_id ), esc_url( $first_image_attach_url ), $first_image );
+					printf( '<a id="%s" href="%s" itemprop="image" class="cloud-zoom" rel="position: \'inside\' , showTitle: false, adjustX:-4, adjustY:-4">%s</a>', esc_attr( $unique_id ), esc_url( $first_image_attach_url ), wp_kses( $first_image, lafka_kses_allowed_image_html() ) );
 					?>
 
 					<ul class="additional-images">
@@ -871,7 +869,7 @@ if ( ! function_exists( 'lafka_cloudzoom_gallery_shortcode' ) ) {
 							?>
 							<li>
 								<?php
-								printf( '<a rel="useZoom: \'%s\', smallImage: \'%s\'" class="cloud-zoom-gallery" href="%s">%s</a>', esc_attr( $unique_id ), esc_url( $small_image_params[0] ), esc_url( $image_attach_url ), $thumb_image );
+								printf( '<a rel="useZoom: \'%s\', smallImage: \'%s\'" class="cloud-zoom-gallery" href="%s">%s</a>', esc_attr( $unique_id ), esc_url( $small_image_params[0] ), esc_url( $image_attach_url ), wp_kses( $thumb_image, lafka_kses_allowed_image_html() ) );
 								?>
 							</li>
 						<?php endforeach; ?>
@@ -1196,8 +1194,8 @@ if ( ! function_exists( 'lafka_map_shortcode' ) ) {
 					: '';
 			}
 
-			$map_canvas_unique_id = uniqid( 'map_canvas' );
-			$routeStart_unique_id = uniqid( 'routeStart' );
+			$map_canvas_unique_id  = uniqid( 'map_canvas' );
+			$route_start_unique_id = uniqid( 'routeStart' );
 
 			// Enqueue google maps script
 			wp_enqueue_script( 'lafka-google-maps' );
@@ -1220,8 +1218,8 @@ if ( ! function_exists( 'lafka_map_shortcode' ) ) {
 				<div class="directions_holder">
 					<h4><i class="fa fa-map-marker"></i> <?php esc_html_e( 'Get Directions', 'lafka-plugin' ); ?></h4>
 					<p><?php esc_html_e( 'Fill in your address or zipcode to calculate the route', 'lafka-plugin' ); ?></p>
-					<form action="" align="right" class="lafka-directions-form" data-route-start="<?php echo esc_attr( $routeStart_unique_id ); ?>" data-lat="<?php echo esc_attr( $map_latitude ); ?>" data-lng="<?php echo esc_attr( $map_longitude ); ?>" data-canvas="<?php echo esc_attr( $map_canvas_unique_id ); ?>">
-						<input type="text" id="<?php echo esc_attr( $routeStart_unique_id ); ?>" value="" placeholder="<?php esc_html_e( 'Address or postcode', 'lafka-plugin' ); ?>" style="margin-top:3px"><br /><br />
+					<form action="" align="right" class="lafka-directions-form" data-route-start="<?php echo esc_attr( $route_start_unique_id ); ?>" data-lat="<?php echo esc_attr( $map_latitude ); ?>" data-lng="<?php echo esc_attr( $map_longitude ); ?>" data-canvas="<?php echo esc_attr( $map_canvas_unique_id ); ?>">
+						<input type="text" id="<?php echo esc_attr( $route_start_unique_id ); ?>" value="" placeholder="<?php esc_html_e( 'Address or postcode', 'lafka-plugin' ); ?>" style="margin-top:3px"><br /><br />
 						<input type="submit" value="<?php esc_html_e( 'Calculate route', 'lafka-plugin' ); ?>" class="button" />
 					</form>
 					<script>
@@ -1343,7 +1341,7 @@ add_shortcode( 'lafka_pricing_table', 'lafka_pricing_table_shortcode' );
  */
 if ( ! function_exists( 'lafka_contact_form_shortcode' ) ) {
 
-	function lafka_contact_form_shortcode( $atts, $content = '' ) {
+	function lafka_contact_form_shortcode( $atts ) {
 
 		$current_user_email = '';
 		if ( is_user_logged_in() ) {

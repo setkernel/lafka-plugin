@@ -49,9 +49,9 @@ else :
 	WC()->mailer()->email_header( $email_heading );
 	?>
 
-	<p><?php printf( esc_html__( 'Hi %s,', 'lafka-plugin' ), esc_html( $order->get_billing_first_name() ) ); ?></p>
+	<p><?php printf( /* translators: %s: customer first name. */ esc_html__( 'Hi %s,', 'lafka-plugin' ), esc_html( $order->get_billing_first_name() ) ); ?></p>
 	<p>
-		<?php printf( esc_html__( 'Unfortunately, we are unable to fulfill your order #%s at this time.', 'lafka-plugin' ), esc_html( $order->get_order_number() ) ); ?>
+		<?php printf( /* translators: %s: order number. */ esc_html__( 'Unfortunately, we are unable to fulfill your order #%s at this time.', 'lafka-plugin' ), esc_html( $order->get_order_number() ) ); ?>
 	</p>
 
 	<p style="background:#f8f8f8;padding:12px 16px;border-radius:6px;font-size:14px;color:#555;">
