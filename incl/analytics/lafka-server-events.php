@@ -76,6 +76,9 @@ if ( ! function_exists( 'lafka_server_consent' ) ) {
 	 * @return bool
 	 */
 	function lafka_server_consent( string $category ): bool {
+		if ( function_exists( 'lafka_consent_api_active' ) && lafka_consent_api_active() && function_exists( 'wp_has_consent' ) ) {
+			return (bool) wp_has_consent( 'ads' === $category ? 'marketing' : 'statistics' );
+		}
 		$cookie = 'ads' === $category ? 'lafka_consent_ads' : 'lafka_consent';
 		if ( lafka_analytics_banner_enabled() && isset( $_COOKIE[ $cookie ] ) ) {
 			return '1' === sanitize_text_field( wp_unslash( $_COOKIE[ $cookie ] ) );

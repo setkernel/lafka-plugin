@@ -45,6 +45,7 @@ if ( ! function_exists( 'lafka_tracking_keys' ) ) {
 			'lafka_cf_beacon_token',
 			'lafka_meta_pixel_id',
 			'lafka_meta_capi_token',
+			'lafka_tiktok_pixel_id',
 			'lafka_ga4_api_secret',
 			'lafka_google_ads_id',
 			'lafka_google_ads_purchase_label',
@@ -135,6 +136,13 @@ if ( ! function_exists( 'lafka_analytics_meta_pixel_id' ) ) {
 	}
 }
 
+if ( ! function_exists( 'lafka_analytics_tiktok_pixel_id' ) ) {
+	function lafka_analytics_tiktok_pixel_id(): string {
+		$id = lafka_analytics_get_setting( 'lafka_tiktok_pixel_id', '' );
+		return preg_match( '/^[A-Z0-9]{15,25}$/', $id ) ? $id : '';
+	}
+}
+
 if ( ! function_exists( 'lafka_analytics_google_ads_id' ) ) {
 	function lafka_analytics_google_ads_id(): string {
 		$id = lafka_analytics_get_setting( 'lafka_google_ads_id', '' );
@@ -176,7 +184,21 @@ if ( ! function_exists( 'lafka_analytics_consent_defaults' ) ) {
 
 if ( ! function_exists( 'lafka_analytics_banner_enabled' ) ) {
 	function lafka_analytics_banner_enabled(): bool {
-		return '1' === lafka_analytics_get_setting( 'lafka_consent_banner_enabled', '1' );
+		return '1' === lafka_analytics_get_setting( 'lafka_consent_banner_enabled', '1' ) && ! lafka_consent_api_active();
+	}
+}
+
+if ( ! function_exists( 'lafka_consent_api_active' ) ) {
+	/**
+	 * Whether a consent plugin speaking the WP Consent API (Complianz,
+	 * CookieYes, Cookiebot and others) manages consent. Lafka's own banner then
+	 * stands down and every Lafka tag follows that plugin's decisions:
+	 * statistics → analytics_storage, marketing → the three ad signals.
+	 *
+	 * @return bool
+	 */
+	function lafka_consent_api_active(): bool {
+		return (bool) apply_filters( 'lafka_consent_api_active', function_exists( 'wp_has_consent' ) );
 	}
 }
 
@@ -193,7 +215,7 @@ if ( ! function_exists( 'lafka_analytics_needs_consent_banner' ) ) {
 	 * @return bool
 	 */
 	function lafka_analytics_needs_consent_banner(): bool {
-		foreach ( array( 'lafka_analytics_gtm_id', 'lafka_analytics_ga4_id', 'lafka_analytics_google_ads_id', 'lafka_analytics_clarity_id', 'lafka_analytics_meta_pixel_id', 'lafka_analytics_cf_beacon_token' ) as $accessor ) {
+		foreach ( array( 'lafka_analytics_gtm_id', 'lafka_analytics_ga4_id', 'lafka_analytics_google_ads_id', 'lafka_analytics_clarity_id', 'lafka_analytics_meta_pixel_id', 'lafka_analytics_tiktok_pixel_id', 'lafka_analytics_cf_beacon_token' ) as $accessor ) {
 			if ( function_exists( $accessor ) && '' !== (string) call_user_func( $accessor ) ) {
 				return true;
 			}
@@ -289,10 +311,24 @@ if ( ! function_exists( 'lafka_emit_consent_mode_defaults' ) ) {
 		// the visitor's stored banner decision when there is one, otherwise the
 		// operator's default. Without a banner the defaults are the decision.
 		echo 'window.lafkaConsentGranted = function(c){var d=' . wp_json_encode( $payload ) . ';';
+		if ( lafka_consent_api_active() ) {
+			// WP Consent API categories: statistics for analytics, marketing for ads.
+			echo "if(typeof window.wp_has_consent==='function'){return window.wp_has_consent(c==='analytics_storage'?'statistics':'marketing');}";
+		}
 		if ( $banner ) {
 			echo "try{var s=JSON.parse(window.localStorage.getItem('lafka_consent_v1')||'null');if(s&&typeof s[c]!=='undefined'){return !!s[c];}}catch(e){}";
 		}
 		echo "return d[c]==='granted';};\n";
+		// Apply a consent decision everywhere: Google Consent Mode, the
+		// dataLayer, and the tags that ignore Consent Mode (Meta, TikTok,
+		// Clarity). Called by Lafka's banner and by the WP Consent API bridge.
+		echo 'window.lafkaApplyConsent=function(s){var g=function(v){return v?"granted":"denied";};';
+		echo 'gtag("consent","update",{analytics_storage:g(s.analytics_storage),ad_storage:g(s.ad_storage),ad_user_data:g(s.ad_user_data),ad_personalization:g(s.ad_personalization)});';
+		echo 'window.dataLayer.push({event:"consent_update",consent_state:s});';
+		echo 'if(window.ttq){if(s.ad_storage){window.ttq.grantConsent();}else{window.ttq.revokeConsent();}}';
+		echo 'if(window.fbq){window.fbq("consent",s.ad_storage?"grant":"revoke");if(s.ad_storage&&!window._lafkaFbPageView){window.fbq("track","PageView");window._lafkaFbPageView=true;}}';
+		echo 'if(s.analytics_storage&&typeof window.lafkaLoadClarity==="function"){window.lafkaLoadClarity();}';
+		echo 'if(typeof window.clarity==="function"){window.clarity("consentv2",{analytics_Storage:g(s.analytics_storage),ad_Storage:g(s.ad_storage)});}};' . "\n";
 		// One subscription point over dataLayer pushes, so every direct
 		// destination (GA4, Meta) sees the same events, including those pushed
 		// before it was set up.
@@ -300,6 +336,27 @@ if ( ! function_exists( 'lafka_emit_consent_mode_defaults' ) ) {
 		echo 'function each(fn,o){if(o&&typeof o==="object"&&o.event&&String(o.event).indexOf("gtm.")!==0){try{fn(o);}catch(e){}}}';
 		echo 'dl.push=function(){var r=op.apply(dl,arguments);for(var i=0;i<arguments.length;i++){for(var j=0;j<subs.length;j++){each(subs[j],arguments[i]);}}return r;};';
 		echo "return {on:function(fn){subs.push(fn);for(var i=0;i<dl.length;i++){each(fn,dl[i]);}}};})();\n";
+		echo "</script>\n";
+	}
+}
+
+if ( ! function_exists( 'lafka_emit_consent_api_bridge' ) ) {
+	/**
+	 * WP Consent API bridge (footer): apply the consent plugin's current
+	 * decision once its script has loaded, then every change it announces
+	 * (`wp_listen_for_consent_change`).
+	 *
+	 * @return void
+	 */
+	function lafka_emit_consent_api_bridge(): void {
+		if ( ! lafka_consent_api_active() || ! lafka_analytics_needs_consent_banner() ) {
+			return;
+		}
+		echo "<script id=\"lafka-consent-api-bridge\">\n";
+		echo '(function(){function state(){var h=window.wp_has_consent;if(typeof h!=="function"){return null;}var m=h("marketing");return {analytics_storage:h("statistics"),ad_storage:m,ad_user_data:m,ad_personalization:m};}';
+		echo 'function apply(){var s=state();if(s&&typeof window.lafkaApplyConsent==="function"){window.lafkaApplyConsent(s);}}';
+		echo 'if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",apply);}else{apply();}';
+		echo 'document.addEventListener("wp_listen_for_consent_change",apply);})();' . "\n";
 		echo "</script>\n";
 	}
 }
@@ -551,6 +608,44 @@ if ( ! function_exists( 'lafka_emit_direct_clarity' ) ) {
 	}
 }
 
+if ( ! function_exists( 'lafka_emit_direct_tiktok_pixel' ) ) {
+	/**
+	 * Emit the TikTok Pixel — only when GTM is empty and a Pixel ID is set.
+	 * Consent: TikTok's own hold / grant / revoke API, driven by the effective
+	 * ad consent; standard events from the same dataLayer events as Meta, the
+	 * purchase carrying event_id purchase-<order> for Events API dedupe.
+	 */
+	function lafka_emit_direct_tiktok_pixel(): void {
+		if ( '' !== lafka_analytics_gtm_id() ) {
+			return;
+		}
+		$pixel_id = lafka_analytics_tiktok_pixel_id();
+		if ( '' === $pixel_id ) {
+			return;
+		}
+		echo "<!-- Lafka — direct TikTok Pixel -->\n";
+		echo "<script>\n";
+		// TikTok's published base code (ttq queue + loader).
+		echo '!function (w, d, t) {w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie","holdConsent","revokeConsent","grantConsent"],ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);ttq.instance=function(t){for(var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n]);return e},ttq.load=function(e,n){var r="https://analytics.tiktok.com/i18n/pixel/events.js";ttq._i=ttq._i||{},ttq._i[e]=[],ttq._i[e]._u=r,ttq._t=ttq._t||{},ttq._t[e]=+new Date,ttq._o=ttq._o||{},ttq._o[e]=n||{};var o=d.createElement("script");o.type="text/javascript",o.async=!0,o.src=r+"?sdkid="+e+"&lib="+t;var a=d.getElementsByTagName("script")[0];a.parentNode.insertBefore(o,a)};' . "\n";
+		echo "ttq.holdConsent();\n";
+		echo "ttq.load('" . esc_js( $pixel_id ) . "');\n";
+		echo "if (window.lafkaConsentGranted('ad_storage')) { ttq.grantConsent(); }\n";
+		echo "ttq.page();\n";
+		echo "}(window, document, 'ttq');\n";
+		echo "window.lafkaDL.on(function(o){\n";
+		echo "\tvar names = { view_item: 'ViewContent', add_to_cart: 'AddToCart', begin_checkout: 'InitiateCheckout', add_payment_info: 'AddPaymentInfo', purchase: 'CompletePayment', search: 'Search' };\n";
+		echo "\tvar name = names[o.event];\n";
+		echo "\tif (!name || !window.ttq || !window.lafkaConsentGranted('ad_storage')) { return; }\n";
+		echo "\tvar e = o.ecommerce || {}, d = { contents: (e.items || []).map(function(i){ return { content_id: String(i.item_id), content_name: i.item_name, quantity: i.quantity || 1, price: i.price }; }), content_type: 'product' };\n";
+		echo "\tif (typeof e.value !== 'undefined') { d.value = e.value; }\n";
+		echo "\tif (e.currency) { d.currency = e.currency; }\n";
+		echo "\tif (o.search_term) { d.query = o.search_term; }\n";
+		echo "\twindow.ttq.track(name, d, e.transaction_id ? { event_id: 'purchase-' + e.transaction_id } : undefined);\n";
+		echo "});\n";
+		echo "</script>\n";
+	}
+}
+
 if ( ! function_exists( 'lafka_emit_direct_meta_pixel' ) ) {
 	/**
 	 * Emit Meta (Facebook) Pixel — only when GTM is empty AND Pixel ID is set.
@@ -738,30 +833,9 @@ CSS;
 	}
 
 	function applyConsent(state){
-		var gtag = gtagSafe();
-		gtag('consent','update', {
-			analytics_storage:   state.analytics_storage   ? 'granted' : 'denied',
-			ad_storage:          state.ad_storage          ? 'granted' : 'denied',
-			ad_user_data:        state.ad_user_data        ? 'granted' : 'denied',
-			ad_personalization:  state.ad_personalization  ? 'granted' : 'denied'
-		});
-		window.dataLayer.push({ event: 'consent_update', consent_state: state });
-		// Non-Google platforms ignore Consent Mode, so drive them from the same
-		// decision. Meta Pixel: grant/revoke, plus a one-time PageView once
-		// ad_storage is granted (deduped against the head emit via the flag).
-		// Clarity: lazy-load the external tag only after analytics_storage grants.
-		if (window.fbq){
-			window.fbq('consent', state.ad_storage ? 'grant' : 'revoke');
-			if (state.ad_storage && !window._lafkaFbPageView){
-				window.fbq('track','PageView');
-				window._lafkaFbPageView = true;
-			}
-		}
-		if (state.analytics_storage && typeof window.lafkaLoadClarity === 'function'){
-			window.lafkaLoadClarity();
-		}
-		if (typeof window.clarity === 'function'){
-			window.clarity('consentv2', { analytics_Storage: state.analytics_storage ? 'granted' : 'denied', ad_Storage: state.ad_storage ? 'granted' : 'denied' });
+		// One implementation, emitted in <head> (lafka_emit_consent_mode_defaults).
+		if (typeof window.lafkaApplyConsent === 'function') {
+			window.lafkaApplyConsent(state);
 		}
 	}
 
@@ -893,6 +967,12 @@ if ( function_exists( 'add_action' ) ) {
 	add_action( 'wp_head', 'lafka_emit_direct_ga4', 2 );
 	add_action( 'wp_head', 'lafka_emit_direct_clarity', 2 );
 	add_action( 'wp_head', 'lafka_emit_direct_meta_pixel', 2 );
+	add_action( 'wp_head', 'lafka_emit_direct_tiktok_pixel', 2 );
+	add_action( 'wp_footer', 'lafka_emit_consent_api_bridge', 100 );
+	// Declare WP Consent API compatibility (the API lists plugins that declare it).
+	if ( defined( 'LAFKA_PLUGIN_FILE' ) ) {
+		add_filter( 'wp_consent_api_registered_' . plugin_basename( LAFKA_PLUGIN_FILE ), '__return_true' );
+	}
 
 	// GTM noscript: canonical position is immediately after <body>. Falls
 	// back to wp_footer when the theme doesn't call wp_body_open().

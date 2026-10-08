@@ -23,6 +23,10 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
   Protocol (Action Scheduler, consent-gated, deduplicated); the full GA4 funnel on
   the block cart and checkout; `view_item_list` on the menu page; purchase items at
   the price paid.
+- **TikTok Pixel** (direct mode) with standard events and consent hold/grant.
+- **WP Consent API**: with a compatible consent plugin active, Lafka's banner stands
+  down and all tags (and server-side conversions) follow its statistics / marketing
+  decisions; Lafka declares compatibility.
 - **Search**: `OrderAction` on the restaurant schema; ready-to-paste order links for
   Google Business Profile, Apple Business Connect and Bing Places under Search & AI.
 - Demo seed: a delivery zone and block-checkout pickup, a Deal, half-and-half

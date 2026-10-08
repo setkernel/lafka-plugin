@@ -204,6 +204,17 @@ if ( ! class_exists( 'Lafka_Customizer_Analytics' ) ) {
 			return preg_match( '/^[A-Za-z0-9_-]{6,40}$/', $value ) ? $value : '';
 		}
 
+		/**
+		 * TikTok Pixel ID: 15-25 capital letters and digits, else empty.
+		 *
+		 * @param mixed $value Raw value.
+		 * @return string
+		 */
+		public static function sanitize_tiktok_pixel_id( $value ): string {
+			$value = is_scalar( $value ) ? strtoupper( trim( (string) $value ) ) : '';
+			return preg_match( '/^[A-Z0-9]{15,25}$/', $value ) ? $value : '';
+		}
+
 		public static function sanitize_meta_pixel_id( $value ): string {
 			if ( ! is_scalar( $value ) ) {
 				return '';
@@ -404,6 +415,25 @@ if ( ! class_exists( 'Lafka_Customizer_Analytics' ) ) {
 				array(
 					'label'       => esc_html__( 'Meta Pixel ID', 'lafka-plugin' ),
 					'description' => esc_html__( '15-16 digit numeric ID from business.facebook.com → Events Manager → Data Sources. Only needed when running paid Facebook / Instagram ads. Only used when GTM is empty.', 'lafka-plugin' ),
+					'section'     => 'lafka_analytics_direct',
+					'type'        => 'text',
+				)
+			);
+
+			$wp_customize->add_setting(
+				self::setting_id( 'lafka_tiktok_pixel_id' ),
+				array(
+					'type'              => 'option',
+					'default'           => '',
+					'transport'         => 'refresh',
+					'sanitize_callback' => array( __CLASS__, 'sanitize_tiktok_pixel_id' ),
+				)
+			);
+			$wp_customize->add_control(
+				self::setting_id( 'lafka_tiktok_pixel_id' ),
+				array(
+					'label'       => esc_html__( 'TikTok Pixel ID', 'lafka-plugin' ),
+					'description' => esc_html__( 'TikTok Ads Manager → Assets → Events → Web events → your pixel (the ID in capitals, e.g. C1ABCD2EFGHIJK3LMN4O). Only needed when running TikTok ads. Only used when GTM is empty.', 'lafka-plugin' ),
 					'section'     => 'lafka_analytics_direct',
 					'type'        => 'text',
 				)

@@ -83,6 +83,9 @@ if ( ! function_exists( 'lafka_analytics_has_datalayer_destination' ) ) {
 		if ( function_exists( 'lafka_analytics_google_ads_id' ) && '' !== lafka_analytics_google_ads_id() ) {
 			return true;
 		}
+		if ( function_exists( 'lafka_analytics_tiktok_pixel_id' ) && '' !== lafka_analytics_tiktok_pixel_id() ) {
+			return true;
+		}
 		if ( function_exists( 'lafka_insights_is_collecting' ) && lafka_insights_is_collecting() ) {
 			return true;
 		}

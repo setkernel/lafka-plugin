@@ -333,6 +333,10 @@ reach your tools depends on the setup.
   it, so they load from the *effective* consent: the visitor's banner decision when
   there is one, otherwise your defaults (so with the banner off and defaults granted,
   they load). Clarity also receives its own consent signal.
+- **Consent plugins.** With a plugin that speaks the WP Consent API (Complianz,
+  CookieYes, Cookiebot and others) active, Lafka's own banner stands down and every
+  Lafka tag, and the server-side conversions, follow that plugin: *statistics* for
+  analytics, *marketing* for ads.
 
 ### Configuration
 
@@ -349,6 +353,7 @@ theme_mods once, automatically).
 | `lafka_clarity_project_id` | Microsoft Clarity, used when GTM is empty. |
 | `lafka_cf_beacon_token` | Cloudflare Web Analytics token. |
 | `lafka_meta_pixel_id` | Meta Pixel, only for paid Facebook or Instagram ads. |
+| `lafka_tiktok_pixel_id` | TikTok Pixel, only for TikTok ads: the same standard events as Meta (CompletePayment for orders, with `event_id` for Events API dedupe), held until ad consent. |
 | `lafka_meta_capi_token` | Meta Conversions API token: every paid order is also sent from the server, deduplicated with the Pixel (`purchase-<order id>`), with ad consent. Left alone when the official Meta for WooCommerce plugin is active. |
 | `lafka_gsc_*`, `lafka_consent_*` | Search Console verification and Consent Mode v2 defaults (default denied). |
 
