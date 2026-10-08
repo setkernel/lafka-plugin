@@ -55,6 +55,14 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
   `WC_Install` methods. HPOS and legacy order storage are both still supported.
 
 ### Fixed
+- Promo tooltips never matched their default zone: the theme default
+  `promo_tooltip_N_position` was `above_price` while the plugin compared against
+  `above-price`, so an unsaved tooltip never rendered on the product page. The zone
+  slugs now live in one place (`lafka_promo_tooltip_zones()`), and
+  `lafka_promo_tooltip_position()` accepts the underscore form and falls back to
+  `above-price`. The hook priorities (9 / 11 / 39) come from the same map.
+- The foodmenu metabox no longer reads the retired `foodmenu_currency` option; it
+  always shows the WooCommerce currency (WooCommerce is a required plugin).
 - `[lafka_counter]` no longer fatals on `add_icon="true"` when WPBakery is not
   installed (it called a WPBakery function); icon fonts are enqueued by
   `lafka_icon_element_fonts_enqueue()`, now defined in `shortcodes/shortcodes.php`.

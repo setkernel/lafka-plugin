@@ -1389,27 +1389,52 @@ if ( ! function_exists( 'lafka_show_custom_product_popup_link' ) ) {
 }
 
 // Promo info tooltips
-add_action(
-	'woocommerce_single_product_summary',
-	function () {
-		lafka_output_info_tooltips( 'above-price' );
-	},
-	9
-);
-add_action(
-	'woocommerce_single_product_summary',
-	function () {
-		lafka_output_info_tooltips( 'below-price' );
-	},
-	11
-);
-add_action(
-	'woocommerce_single_product_summary',
-	function () {
-		lafka_output_info_tooltips( 'below-add-to-cart' );
-	},
-	39
-);
+if ( ! function_exists( 'lafka_promo_tooltip_zones' ) ) {
+	/**
+	 * The single product page zones a promo tooltip can sit in, mapped to the
+	 * `woocommerce_single_product_summary` priority each renders at.
+	 *
+	 * This is the one place the zone slugs live: they are the stored
+	 * `promo_tooltip_N_position` values and the `lafka-promo-{zone}` CSS modifier.
+	 * The first zone is the default. Themes that render their own summary hook can
+	 * loop over this map instead of repeating the slugs and priorities.
+	 *
+	 * @return array<string,int> Zone slug => summary hook priority.
+	 */
+	function lafka_promo_tooltip_zones(): array {
+		return array(
+			'above-price'       => 9,
+			'below-price'       => 11,
+			'below-add-to-cart' => 39,
+		);
+	}
+}
+
+if ( ! function_exists( 'lafka_promo_tooltip_position' ) ) {
+	/**
+	 * The zone a promo tooltip is placed in. An unset, unknown or underscore-style
+	 * value (`above_price`) resolves to the zone slug, falling back to the default.
+	 *
+	 * @param int $index Tooltip number, 1-3.
+	 * @return string One of the lafka_promo_tooltip_zones() slugs.
+	 */
+	function lafka_promo_tooltip_position( int $index ): string {
+		$zones  = array_keys( lafka_promo_tooltip_zones() );
+		$stored = str_replace( '_', '-', (string) lafka_get_option( 'promo_tooltip_' . $index . '_position' ) );
+
+		return in_array( $stored, $zones, true ) ? $stored : $zones[0];
+	}
+}
+
+foreach ( lafka_promo_tooltip_zones() as $lafka_promo_zone => $lafka_promo_priority ) {
+	add_action(
+		'woocommerce_single_product_summary',
+		static function () use ( $lafka_promo_zone ) {
+			lafka_output_info_tooltips( $lafka_promo_zone );
+		},
+		$lafka_promo_priority
+	);
+}
 add_action(
 	'woocommerce_after_shop_loop_item_title',
 	function () {
@@ -1421,7 +1446,7 @@ add_action(
 if ( ! function_exists( 'lafka_output_info_tooltips' ) ) {
 	function lafka_output_info_tooltips( $position, $show_in_listing = false ) {
 		for ( $i = 1; $i <= 3; $i++ ) {
-			if ( function_exists( 'lafka_get_option' ) && lafka_get_option( 'promo_tooltip_' . $i . '_trigger_text' ) && ( $position === lafka_get_option( 'promo_tooltip_' . $i . '_position' ) || $show_in_listing && lafka_get_option( 'promo_tooltip_' . $i . '_show_in_listing' ) ) ) {
+			if ( function_exists( 'lafka_get_option' ) && lafka_get_option( 'promo_tooltip_' . $i . '_trigger_text' ) && ( $position === lafka_promo_tooltip_position( $i ) || $show_in_listing && lafka_get_option( 'promo_tooltip_' . $i . '_show_in_listing' ) ) ) {
 				?>
 				<div class="lafka-promo-wrapper
 				<?php

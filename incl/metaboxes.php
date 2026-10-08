@@ -616,13 +616,8 @@ if ( ! function_exists( 'lafka_foodmenu_callback' ) ) {
 		// Use nonce for verification
 		wp_nonce_field( 'lafka_save_foodmenu_postdata', 'lafka_foodmenu_nonce' );
 
-		if ( defined( 'LAFKA_PLUGIN_IS_WOOCOMMERCE' ) && LAFKA_PLUGIN_IS_WOOCOMMERCE ) {
-			$currency = get_woocommerce_currency();
-			echo '<h4>' . esc_html__( 'The currency for all price fields will be the one set up in WooCommerce', 'lafka-plugin' ) . '</h4>';
-		} else {
-			$currency = function_exists( 'lafka_get_option' ) ? lafka_get_option( 'foodmenu_currency' ) : '';
-			echo '<h4>' . esc_html__( 'The currency for all price fields will be the one set up in Theme Options -> Restaurant Menu', 'lafka-plugin' ) . '</h4>';
-		}
+		$currency = get_woocommerce_currency();
+		echo '<h4>' . esc_html__( 'The currency for all price fields will be the one set up in WooCommerce', 'lafka-plugin' ) . '</h4>';
 
 		echo '<div><label for="lafka_item_single_price" class="lafka-admin-option-label">';
 		esc_html_e( 'Item Price', 'lafka-plugin' );
