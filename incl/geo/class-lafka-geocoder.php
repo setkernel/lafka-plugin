@@ -126,7 +126,7 @@ if ( ! class_exists( 'Lafka_Geocoder' ) ) {
 			if ( ! Lafka_Beacon_Guard::is_same_origin( $request ) ) {
 				return new WP_Error( 'lafka_geocode_origin', __( 'Address lookup is only available on this site.', 'lafka-plugin' ), array( 'status' => 403 ) );
 			}
-			if ( Lafka_Beacon_Guard::rate_limited( 'geocode', self::visitor_key( $request ), 20, 600, HOUR_IN_SECONDS ) ) {
+			if ( Lafka_Beacon_Guard::rate_limited( 'geocode', self::visitor_key(), 20, 600, HOUR_IN_SECONDS ) ) {
 				return new WP_Error( 'lafka_geocode_rate_limited', __( 'Too many address lookups. Please place the pin on the map instead.', 'lafka-plugin' ), array( 'status' => 429 ) );
 			}
 
@@ -161,28 +161,24 @@ if ( ! class_exists( 'Lafka_Geocoder' ) ) {
 		}
 
 		/**
-		 * A per-visitor rate-limit key: the WooCommerce session's customer id
-		 * when the visitor has one, else their IP and browser. Hashed by the
-		 * limiter; never stored raw.
+		 * A per-visitor rate-limit key the visitor cannot rotate: the account
+		 * when logged in, else the connection IP (Cloudflare's client IP only
+		 * when the request really came through Cloudflare). Never a cookie,
+		 * browser string or forwarded-for header, which a client can change on
+		 * every request to get a fresh allowance. Hashed by the limiter.
 		 *
-		 * @param WP_REST_Request $request Request.
 		 * @return string
 		 */
-		private static function visitor_key( $request ): string {
+		private static function visitor_key(): string {
 			$user = get_current_user_id();
 			if ( $user > 0 ) {
 				return 'u' . $user;
 			}
-			$cookie = defined( 'COOKIEHASH' ) ? 'wp_woocommerce_session_' . COOKIEHASH : '';
-			if ( '' !== $cookie && isset( $_COOKIE[ $cookie ] ) ) {
-				$parts = explode( '||', sanitize_text_field( wp_unslash( $_COOKIE[ $cookie ] ) ) );
-				if ( '' !== $parts[0] ) {
-					return 's' . $parts[0];
-				}
+			if ( ! class_exists( 'Lafka_Insights_Session' ) ) {
+				require_once dirname( __DIR__ ) . '/insights/class-lafka-insights-session.php';
 			}
-			$ip = class_exists( 'WC_Geolocation' ) ? WC_Geolocation::get_ip_address() : ( isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '' );
 
-			return 'i' . $ip . '|' . (string) $request->get_header( 'user_agent' );
+			return 'i' . Lafka_Insights_Session::client_ip();
 		}
 
 		/**
