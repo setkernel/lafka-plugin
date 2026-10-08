@@ -109,7 +109,7 @@ if ( ! class_exists( 'Lafka_Pickup_Checkout' ) ) {
 		 * @return bool
 		 */
 		public static function is_enabled(): bool {
-			$enabled = (bool) get_theme_mod( self::MOD_ENABLED, true );
+			$enabled = (bool) lafka_setting( self::MOD_ENABLED, true );
 
 			/**
 			 * Filter whether pickup orders get the short checkout.
