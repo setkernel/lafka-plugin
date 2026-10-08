@@ -79,12 +79,145 @@ if ( ! class_exists( 'Lafka_Address_Search' ) ) {
 		}
 
 		/**
-		 * Which backend answers: 'google' with the Maps key, else 'photon'.
+		 * Which backend answers: 'google' with the Maps key while today's paid
+		 * budget lasts, else 'photon'.
 		 *
 		 * @return string
 		 */
 		public static function backend(): string {
-			return '' !== lafka_google_maps_key() ? 'google' : 'photon';
+			return '' !== lafka_google_maps_key() && self::google_budget_left() ? 'google' : 'photon';
+		}
+
+		/**
+		 * Most Google autocomplete sessions (one billed search each) per day.
+		 * 0 turns the paid service off.
+		 *
+		 * @return int
+		 */
+		public static function google_daily_budget(): int {
+			/**
+			 * Filter the daily budget of paid Google Places sessions. A session is
+			 * one address search from first keystroke to the chosen suggestion.
+			 * After it is used up, suggestions come from Photon until midnight (site time).
+			 *
+			 * @since 10.4.0
+			 * @param int $sessions Default: the `lafka_address_google_daily_sessions` setting, else 500.
+			 */
+			return max( 0, (int) apply_filters( 'lafka_address_google_daily_budget', (int) lafka_setting( 'lafka_address_google_daily_sessions', 500 ) ) );
+		}
+
+		/**
+		 * Cache key of today's count of paid sessions.
+		 *
+		 * @return string
+		 */
+		private static function budget_key(): string {
+			return self::CACHE_PREFIX . 'day_' . wp_date( 'Ymd' );
+		}
+
+		/**
+		 * Whether today's paid budget is not used up yet.
+		 *
+		 * @return bool
+		 */
+		public static function google_budget_left(): bool {
+			return (int) get_transient( self::budget_key() ) < self::google_daily_budget();
+		}
+
+		/**
+		 * Decide whether a Google search session may go on, counting it once
+		 * against the daily budget the first time its token is seen.
+		 *
+		 * @param string $session Session token from the browser.
+		 * @param string $step    'suggest' or 'place'.
+		 * @return string 'ok', 'none' (no usable token or a place for an unknown session), 'budget' (used up) or 'cap' (this session searched enough).
+		 */
+		private static function google_session( string $session, string $step ): string {
+			if ( 1 !== preg_match( '/^[A-Za-z0-9-]{16,64}$/', $session ) ) {
+				return 'none';
+			}
+			$key   = self::CACHE_PREFIX . 'sess_' . md5( $session );
+			$state = get_transient( $key );
+			if ( ! is_array( $state ) ) {
+				if ( 'suggest' !== $step ) {
+					return 'none';
+				}
+				if ( ! self::google_budget_left() ) {
+					self::log_budget();
+
+					return 'budget';
+				}
+				$state = array(
+					'suggest' => 0,
+					'place'   => 0,
+				);
+				set_transient( self::budget_key(), (int) get_transient( self::budget_key() ) + 1, 2 * DAY_IN_SECONDS );
+			}
+			/**
+			 * Filter how many suggestion searches one Google session may make.
+			 *
+			 * @since 10.4.0
+			 * @param int $max Default 15.
+			 */
+			$limit = 'suggest' === $step ? (int) apply_filters( 'lafka_address_google_session_searches', 15 ) : 3;
+			if ( (int) $state[ $step ] >= $limit ) {
+				return 'cap';
+			}
+			++$state[ $step ];
+			set_transient( $key, $state, 30 * MINUTE_IN_SECONDS );
+
+			return 'ok';
+		}
+
+		/**
+		 * Log, once a day, that the paid budget is used up.
+		 *
+		 * @return void
+		 */
+		private static function log_budget(): void {
+			$flag = self::CACHE_PREFIX . 'budget_logged_' . wp_date( 'Ymd' );
+			if ( false === get_transient( $flag ) ) {
+				set_transient( $flag, 1, DAY_IN_SECONDS );
+				self::log( 'budget_used_up', 'The daily budget of ' . self::google_daily_budget() . ' Google address sessions is used up; Photon answers until midnight.' );
+			}
+		}
+
+		/**
+		 * The page token that lets a checkout visitor use the routes. It binds
+		 * to the WooCommerce customer session (a session cookie exists once
+		 * the cart holds something) and is only printed on the checkout page.
+		 *
+		 * @param int $back How many 12-hour periods back (0 = now).
+		 * @return string '' without a customer session.
+		 */
+		public static function page_token( int $back = 0 ): string {
+			$wc = function_exists( 'WC' ) ? WC() : null;
+			$id = ( is_object( $wc ) && isset( $wc->session ) && is_object( $wc->session ) ) ? (string) $wc->session->get_customer_id() : '';
+			if ( '' === $id ) {
+				return '';
+			}
+
+			return substr( wp_hash( 'lafka_address|' . $id . '|' . ( (int) floor( time() / ( 12 * HOUR_IN_SECONDS ) ) - $back ), 'nonce' ), 0, 24 );
+		}
+
+		/**
+		 * Whether a request carries a valid page token and belongs to a
+		 * shopper with something in the cart.
+		 *
+		 * @param WP_REST_Request $request Request.
+		 * @return string '' when fine, else the reason ('token' or 'session').
+		 */
+		private static function refuse_reason( $request ): string {
+			if ( function_exists( 'wc_load_cart' ) && ( ! isset( WC()->session ) || ! isset( WC()->cart ) || ! WC()->cart ) ) {
+				wc_load_cart();
+			}
+			$given = (string) $request->get_header( 'x_lafka_address_token' );
+			if ( '' === $given || ( ! hash_equals( self::page_token( 0 ), $given ) && ! hash_equals( self::page_token( 1 ), $given ) ) || '' === self::page_token( 0 ) ) {
+				return 'token';
+			}
+			$cart = isset( WC()->cart ) ? WC()->cart : null;
+
+			return ( is_object( $cart ) && ! $cart->is_empty() ) ? '' : 'session';
 		}
 
 		/**
@@ -192,7 +325,11 @@ if ( ! class_exists( 'Lafka_Address_Search' ) ) {
 			if ( ! Lafka_Beacon_Guard::is_same_origin( $request ) ) {
 				return new WP_Error( 'lafka_address_origin', __( 'Address suggestions are only available on this site.', 'lafka-plugin' ), array( 'status' => 403 ) );
 			}
-			if ( Lafka_Beacon_Guard::rate_limited( 'address', Lafka_Geocoder::visitor_key(), 90, 2000, 10 * MINUTE_IN_SECONDS ) ) {
+			// The origin header is only a hint (scripts can send anything): the page token proves the visitor loaded the checkout with items in the cart.
+			if ( '' !== self::refuse_reason( $request ) ) {
+				return new WP_Error( 'lafka_address_session', __( 'Address suggestions are only available while you check out.', 'lafka-plugin' ), array( 'status' => 403 ) );
+			}
+			if ( Lafka_Beacon_Guard::rate_limited( 'address', Lafka_Geocoder::visitor_key(), 90, 1000, 10 * MINUTE_IN_SECONDS ) ) {
 				return new WP_Error( 'lafka_address_rate_limited', __( 'Too many address lookups. Please type the address in full.', 'lafka-plugin' ), array( 'status' => 429 ) );
 			}
 			if ( $needs_country && ! in_array( (string) $request->get_param( 'country' ), self::countries(), true ) ) {
@@ -261,19 +398,48 @@ if ( ! class_exists( 'Lafka_Address_Search' ) ) {
 			if ( strlen( $query ) < self::MIN_CHARS || strlen( $query ) > 120 ) {
 				return array();
 			}
+			if ( ! class_exists( 'Lafka_Beacon_Guard' ) ) {
+				require_once dirname( __DIR__ ) . '/class-lafka-beacon-guard.php';
+			}
 			$backend = self::backend();
-			$point   = function_exists( 'lafka_get_store_point' ) ? lafka_get_store_point() : null;
-			$key     = self::CACHE_PREFIX . 's_' . md5( $backend . '|' . strtolower( $query ) . '|' . $country . '|' . wp_json_encode( $point ) . '|' . self::language() );
-			$cached  = get_transient( $key );
+			if ( 'photon' === $backend && '' !== lafka_google_maps_key() && ! self::google_budget_left() ) {
+				self::log_budget();
+			}
+			// A search already counted against the budget finishes on Google.
+			if ( 'photon' === $backend && '' !== lafka_google_maps_key() && false !== get_transient( self::CACHE_PREFIX . 'sess_' . md5( $session ) ) ) {
+				$backend = 'google';
+			}
+			$point  = function_exists( 'lafka_get_store_point' ) ? lafka_get_store_point() : null;
+			$key    = static function ( string $which ) use ( $query, $country, $point ): string {
+				return self::CACHE_PREFIX . 's_' . md5( $which . '|' . strtolower( $query ) . '|' . $country . '|' . wp_json_encode( $point ) . '|' . self::language() );
+			};
+			$cached = get_transient( $key( $backend ) );
 			if ( is_array( $cached ) ) {
 				return $cached;
+			}
+
+			if ( 'google' === $backend ) {
+				// Paid path: a low site-wide pace, and one counted session per search.
+				if ( Lafka_Beacon_Guard::rate_limited( 'address_paid', 'site', 0, 30, 60 ) ) {
+					$backend = 'photon';
+				} else {
+					$step = self::google_session( $session, 'suggest' );
+					if ( 'cap' === $step ) {
+						return array();
+					}
+					$backend = 'ok' === $step ? 'google' : 'photon';
+				}
+				$cached = 'photon' === $backend ? get_transient( $key( 'photon' ) ) : false;
+				if ( is_array( $cached ) ) {
+					return $cached;
+				}
 			}
 
 			$found = 'google' === $backend ? self::google_suggest( $query, $country, $session, $point ) : self::photon_suggest( $query, $country, $point );
 			if ( is_wp_error( $found ) ) {
 				return $found;
 			}
-			set_transient( $key, $found, 6 * HOUR_IN_SECONDS );
+			set_transient( $key( $backend ), $found, 6 * HOUR_IN_SECONDS );
 
 			return $found;
 		}
@@ -299,6 +465,10 @@ if ( ! class_exists( 'Lafka_Address_Search' ) ) {
 			$cached = get_transient( $key );
 			if ( is_array( $cached ) ) {
 				return $cached;
+			}
+			// A paid details call only closes a search session this site counted.
+			if ( 'ok' !== self::google_session( $session, 'place' ) ) {
+				return new WP_Error( 'lafka_address_session', __( 'Please search for the address again.', 'lafka-plugin' ) );
 			}
 			$place = self::google_place( $id, $session );
 			if ( is_wp_error( $place ) ) {

@@ -309,6 +309,15 @@ favouring places near the restaurant. Suggestions start at 4 characters after a 
 show at most 5, and only for countries you sell to (WooCommerce → Settings → General →
 Selling location(s)).
 
+**Cost and abuse protection.** Suggestions only work for a visitor who is on the checkout
+with something in the cart (a page token tied to their shopping session), so the routes
+cannot be used as a free Google proxy. Google bills per search *session* (first keystroke to
+the chosen address), and Lafka counts sessions: a **daily budget** (default 500, option
+`lafka_address_google_daily_sessions`, filter `lafka_address_google_daily_budget`; 0 turns Google
+off) after which Photon answers until midnight (the use-up is logged once), a cap of 15 searches
+per session, and at most 30 new Google searches a minute for the whole site. Set a budget
+alert in Google Cloud as well.
+
 **Delivery price.** Choosing a suggestion also gives the delivery price the exact point, so
 a fee by distance uses it; the server still checks it against its own lookup of the address
 (see "Delivery by distance"), so a suggestion far from the typed address cannot get a cheaper

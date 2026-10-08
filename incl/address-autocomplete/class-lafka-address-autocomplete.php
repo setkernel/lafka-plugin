@@ -156,6 +156,7 @@ if ( ! class_exists( 'Lafka_Address_Autocomplete' ) ) {
 				'minChars'   => Lafka_Address_Search::MIN_CHARS,
 				'debounce'   => $debounce,
 				'namespace'  => self::NAMESPACE,
+				'token'      => Lafka_Address_Search::page_token(),
 			);
 		}
 

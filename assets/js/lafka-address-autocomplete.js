@@ -111,6 +111,7 @@
 		try {
 			const response = await window.fetch( url( config.suggestUrl, { q: query, country, session: state.session } ), {
 				credentials: 'same-origin',
+				headers: { 'X-Lafka-Address-Token': config.token || '' },
 				signal: controller.signal,
 			} );
 			if ( ! response.ok ) {
@@ -238,6 +239,7 @@
 		const type = state.type;
 		const response = await window.fetch( url( config.placeUrl, { id, country: country || countryOf( type ), session: state.session } ), {
 			credentials: 'same-origin',
+			headers: { 'X-Lafka-Address-Token': config.token || '' },
 		} );
 		const body = response.ok ? await response.json() : null;
 		const place = body && body.place;

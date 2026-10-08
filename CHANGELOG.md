@@ -106,6 +106,10 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
   WooCommerce setting is on). Filters `lafka_address_autocomplete_countries`, `lafka_address_photon_endpoint`,
   `lafka_address_photon_params`, `lafka_address_google_endpoint`, `lafka_address_autocomplete_bias_radius`,
   `lafka_address_autocomplete_debounce`, `lafka_address_number_after_street`. Service disclosure added to readme.txt.
+  The routes need a page token printed only on the checkout and tied to the shopper's session
+  (cart not empty), count Google searches as billing sessions against a daily budget
+  (`lafka_address_google_daily_sessions`, default 500; Photon takes over when it is used up), cap
+  searches per session and Google searches per minute, and keep the keyless path rate limited.
 - Block checkout: when delivery was chosen and no delivery rate is on offer, the `lafka` cart
   extension carries `delivery_unavailable_message` (the distance method's reason, else the
   plain "we can't deliver") that the block cart/checkout shows under the shipping options,
