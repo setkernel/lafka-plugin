@@ -49,7 +49,7 @@
  *
  * Pure, side-effect-free class methods (no hooks registered at include time) so
  * the whole round-trip is unit-testable via Brain Monkey without booting WP.
- * The WP-CLI (incl/cli/lafka-config-cli.php) and admin Tools screen
+ * The WP-CLI (incl/cli/class-lafka-config-cli-command.php) and admin Tools screen
  * (incl/admin/class-lafka-tools-page.php) are thin surfaces over this class.
  *
  * @package Lafka\Plugin\Tools

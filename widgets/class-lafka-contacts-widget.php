@@ -17,7 +17,7 @@ defined( 'ABSPATH' ) || exit;
  *
  * @author aatanasov
  */
-class LafkaContactsWidget extends WP_Widget {
+class Lafka_Contacts_Widget extends WP_Widget {
 
 	public function __construct() {
 		$widget_ops = array( 'description' => esc_html__( 'Shows contact details. Defaults to your WooCommerce store settings + Lafka Customizer NAP — only fill the fields below if you want this widget to display different values.', 'lafka-plugin' ) );
@@ -192,13 +192,4 @@ class LafkaContactsWidget extends WP_Widget {
 
 		return $instance;
 	}
-}
-
-add_action( 'widgets_init', 'lafka_register_lafka_contacts_widget' );
-if ( ! function_exists( 'lafka_register_lafka_contacts_widget' ) ) {
-
-	function lafka_register_lafka_contacts_widget() {
-		register_widget( 'LafkaContactsWidget' );
-	}
-
 }

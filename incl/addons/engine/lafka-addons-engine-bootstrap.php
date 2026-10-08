@@ -27,41 +27,41 @@ if ( ! defined( 'LAFKA_ADDONS_ENGINE_PATH' ) ) {
 // registers the cache-invalidation, privacy, REST and CLI hooks below.
 require_once __DIR__ . '/interfaces/interface-pricing-strategy.php';
 require_once __DIR__ . '/interfaces/interface-options-source.php';
-require_once __DIR__ . '/data/class-addon-schema.php';
-require_once __DIR__ . '/data/class-addon-option.php';
-require_once __DIR__ . '/data/class-addon-group.php';
-require_once __DIR__ . '/data/class-addon-repository.php';
-require_once __DIR__ . '/pricing/abstract-pricing-strategy.php';
-require_once __DIR__ . '/pricing/class-flat-group-pricing.php';
-require_once __DIR__ . '/pricing/class-flat-per-option-pricing.php';
-require_once __DIR__ . '/pricing/class-flat-per-size-pricing.php';
-require_once __DIR__ . '/pricing/class-matrix-pricing.php';
-require_once __DIR__ . '/pricing/class-pricing-resolver.php';
-require_once __DIR__ . '/sources/abstract-options-source.php';
-require_once __DIR__ . '/sources/class-manual-source.php';
-require_once __DIR__ . '/sources/class-attribute-source.php';
+require_once __DIR__ . '/data/class-lafka-addon-schema.php';
+require_once __DIR__ . '/data/class-lafka-addon-option.php';
+require_once __DIR__ . '/data/class-lafka-addon-group.php';
+require_once __DIR__ . '/data/class-lafka-addon-repository.php';
+require_once __DIR__ . '/pricing/class-lafka-abstract-pricing-strategy.php';
+require_once __DIR__ . '/pricing/class-lafka-flat-group-pricing.php';
+require_once __DIR__ . '/pricing/class-lafka-flat-per-option-pricing.php';
+require_once __DIR__ . '/pricing/class-lafka-flat-per-size-pricing.php';
+require_once __DIR__ . '/pricing/class-lafka-matrix-pricing.php';
+require_once __DIR__ . '/pricing/class-lafka-pricing-resolver.php';
+require_once __DIR__ . '/sources/class-lafka-abstract-options-source.php';
+require_once __DIR__ . '/sources/class-lafka-manual-source.php';
+require_once __DIR__ . '/sources/class-lafka-attribute-source.php';
 // Migration framework — interface + upgrader are kept for future schema
 // changes. v8.13.0 has no v1→v2 migration class because legacy addon data
 // is intentionally not preserved (fresh start per operator decision).
 require_once __DIR__ . '/migrations/abstract-migration.php';
-require_once __DIR__ . '/migrations/class-upgrader.php';
-require_once __DIR__ . '/admin/class-engine-admin.php';
-require_once __DIR__ . '/admin/class-engine-editor.php';
-require_once __DIR__ . '/admin/class-engine-ajax.php';
-require_once __DIR__ . '/admin/class-engine-product-panel.php';
+require_once __DIR__ . '/migrations/class-lafka-addons-upgrader.php';
+require_once __DIR__ . '/admin/class-lafka-engine-admin.php';
+require_once __DIR__ . '/admin/class-lafka-engine-editor.php';
+require_once __DIR__ . '/admin/class-lafka-engine-ajax.php';
+require_once __DIR__ . '/admin/class-lafka-engine-product-panel.php';
 // List table is required by class-engine-admin's render_list(); we lazy-require
 // it from there because WP_List_Table itself is admin-only.
-require_once __DIR__ . '/class-engine.php';
-require_once __DIR__ . '/class-engine-privacy.php';
-require_once __DIR__ . '/class-engine-resolver.php';
-require_once __DIR__ . '/class-engine-helper.php';
-require_once __DIR__ . '/cart/fields/abstract-engine-field.php';
-require_once __DIR__ . '/cart/fields/class-engine-field-list.php';
-require_once __DIR__ . '/cart/fields/class-engine-field-textarea.php';
-require_once __DIR__ . '/cart/fields/class-engine-field-factory.php';
-require_once __DIR__ . '/cart/class-engine-cart.php';
-require_once __DIR__ . '/cart/class-engine-store-api.php';
-require_once __DIR__ . '/display/class-engine-display.php';
+require_once __DIR__ . '/class-lafka-addons-engine.php';
+require_once __DIR__ . '/class-lafka-engine-privacy.php';
+require_once __DIR__ . '/class-lafka-engine-resolver.php';
+require_once __DIR__ . '/class-lafka-engine-helper.php';
+require_once __DIR__ . '/cart/fields/class-lafka-engine-field.php';
+require_once __DIR__ . '/cart/fields/class-lafka-engine-field-list.php';
+require_once __DIR__ . '/cart/fields/class-lafka-engine-field-textarea.php';
+require_once __DIR__ . '/cart/fields/class-lafka-engine-field-factory.php';
+require_once __DIR__ . '/cart/class-lafka-engine-cart.php';
+require_once __DIR__ . '/cart/class-lafka-engine-store-api.php';
+require_once __DIR__ . '/display/class-lafka-engine-display.php';
 
 // Cache invalidation: any save/trash/delete of an addon CPT post invalidates
 // both the resolver's per-request VO cache and the helper's legacy-shape
@@ -109,7 +109,7 @@ if ( function_exists( 'add_action' ) ) {
 		'rest_api_init',
 		static function () {
 			if ( class_exists( 'WP_REST_Controller' ) ) {
-				require_once __DIR__ . '/api/class-rest-groups-controller.php';
+				require_once __DIR__ . '/api/class-lafka-addons-rest-groups-controller.php';
 				( new Lafka_Addons_REST_Groups_Controller() )->register_routes();
 			}
 		}
@@ -118,5 +118,5 @@ if ( function_exists( 'add_action' ) ) {
 
 // WP-CLI command surface — file no-ops when WP_CLI isn't defined.
 if ( defined( 'WP_CLI' ) && WP_CLI ) {
-	require_once __DIR__ . '/cli/class-cli-commands.php';
+	require_once __DIR__ . '/cli/class-lafka-addons-cli-commands.php';
 }

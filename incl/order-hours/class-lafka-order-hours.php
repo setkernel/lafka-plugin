@@ -87,7 +87,7 @@ class Lafka_Order_Hours {
 		$this->handle_shop_status();
 
 		if ( is_admin() ) {
-			include_once __DIR__ . '/settings/Lafka_Order_Hours_Admin.php';
+			include_once __DIR__ . '/settings/class-lafka-order-hours-admin.php';
 			new Lafka_Order_Hours_Admin();
 		}
 	}

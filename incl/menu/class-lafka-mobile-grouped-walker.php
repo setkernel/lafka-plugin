@@ -3,7 +3,7 @@
  * P6-UX-6 W3-T10: groups WC product categories into logical clusters
  * (Pizzas / Mains / Sides / Combos & Kids / Desserts / Drinks) for the
  * mobile drawer. The theme calls LafkaMobileGroupedWalker::group_terms()
- * with its category terms. (The class keeps its historical name; the
+ * with its category terms. (The theme's historical class name is kept as a class_alias() at the bottom of this file; the
  * nav-menu walker half was never wired to a rendered menu and was removed
  * in 10.1.0.)
  *
@@ -36,9 +36,9 @@
  */
 defined( 'ABSPATH' ) || exit;
 
-if ( ! class_exists( 'LafkaMobileGroupedWalker' ) ) {
+if ( ! class_exists( 'Lafka_Mobile_Grouped_Walker' ) ) {
 
-	class LafkaMobileGroupedWalker {
+	class Lafka_Mobile_Grouped_Walker {
 
 		/**
 		 * Default heuristic group → slug-pattern map.
@@ -147,3 +147,5 @@ if ( ! class_exists( 'LafkaMobileGroupedWalker' ) ) {
 		}
 	}
 }
+
+class_alias( 'Lafka_Mobile_Grouped_Walker', 'LafkaMobileGroupedWalker' );

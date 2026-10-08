@@ -61,6 +61,7 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/lafka-asset-helpers.php';
 // Typed feature-module registry (NX1-01) — the single list of gated modules
 // the Modules dashboard, Site Health and (later) the setup wizard read from.
 // Foundational: required before Site Health / the Modules page below.
+require_once plugin_dir_path( __FILE__ ) . 'incl/class-lafka-module.php';
 require_once plugin_dir_path( __FILE__ ) . 'incl/class-lafka-module-registry.php';
 
 /**
@@ -437,7 +438,7 @@ Lafka_Diag_Beacon::boot();
  *     `LAFKA_Abandoned_Cart_Email` WC_Email subclass through the
  *     `woocommerce_email_classes` filter so the recovery email inherits WC's
  *     own header/footer/styling. The class body lives in the sibling
- *     class-lafka-abandoned-cart-email-class.php file (lazy-loaded — WC_Email
+ *     class-lafka-abandoned-cart-email.php file (lazy-loaded — WC_Email
  *     isn't defined until WC has booted).
  *   - incl/conversion/lafka-abandoned-cart-resume.php  hooks `wp_loaded`
  *     priority 20 (after WC loads the session cart) to inspect `$_GET['lafka_resume_cart']`, restore the visitor's cart, and
@@ -644,7 +645,7 @@ if ( function_exists( 'register_activation_hook' ) ) {
  * Self-gates: the file returns early when WP_CLI is not defined, so it is safe
  * to require unconditionally here — it only attaches behaviour during WP-CLI runs.
  */
-require_once plugin_dir_path( __FILE__ ) . 'incl/cli/lafka-image-alt-backfill.php';
+require_once plugin_dir_path( __FILE__ ) . 'incl/cli/class-lafka-image-alt-backfill-command.php';
 
 /**
  * P6-UX-8 (W3-T6): WP-CLI helpers for WooCommerce product review configuration.
@@ -654,7 +655,7 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/cli/lafka-image-alt-backfill.ph
  *   wp lafka reviews enable
  *   wp lafka reviews disable
  */
-require_once plugin_dir_path( __FILE__ ) . 'incl/cli/lafka-reviews-cli.php';
+require_once plugin_dir_path( __FILE__ ) . 'incl/cli/class-lafka-reviews-cli-command.php';
 
 /**
  * WP-CLI: bulk-generate WebP siblings for every PNG/JPG in wp-content/uploads.
@@ -665,7 +666,7 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/cli/lafka-reviews-cli.php';
  *   wp lafka images convert-webp --quality=85 --force
  *   wp lafka images convert-webp --path=2026/01 --dry-run
  */
-require_once plugin_dir_path( __FILE__ ) . 'incl/cli/lafka-webp-convert.php';
+require_once plugin_dir_path( __FILE__ ) . 'incl/cli/class-lafka-webp-convert-command.php';
 
 /**
  * WP-CLI: export/import a Lafka configuration bundle (NX1-05).
@@ -674,7 +675,7 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/cli/lafka-webp-convert.php';
  *   wp lafka config export --file=lafka-config.json
  *   wp lafka config import --file=lafka-config.json --dry-run
  */
-require_once plugin_dir_path( __FILE__ ) . 'incl/cli/lafka-config-cli.php';
+require_once plugin_dir_path( __FILE__ ) . 'incl/cli/class-lafka-config-cli-command.php';
 
 /**
  * WP-CLI: untick Virtual on menu items so they offer pickup/delivery.
@@ -683,7 +684,7 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/cli/lafka-config-cli.php';
  *   wp lafka products unvirtual              (dry run)
  *   wp lafka products unvirtual --ids=12,34 --yes
  */
-require_once plugin_dir_path( __FILE__ ) . 'incl/cli/lafka-products-cli.php';
+require_once plugin_dir_path( __FILE__ ) . 'incl/cli/class-lafka-products-cli-command.php';
 
 /**
  * WP-CLI: provision a deterministic demo restaurant for e2e/CI + preset QA (NX1-09a).
@@ -740,7 +741,7 @@ if ( LAFKA_PLUGIN_IS_WOOCOMMERCE ) {
 	require_once plugin_dir_path( __FILE__ ) . 'incl/woocommerce/lafka-price-presentation.php';
 
 	/* Load nutrition and allergens */
-	require_once plugin_dir_path( __FILE__ ) . '/incl/nutrition/lafka-nutrition.php';
+	require_once plugin_dir_path( __FILE__ ) . '/incl/nutrition/class-lafka-nutrition.php';
 
 	/*
 	 * Store API (block cart/checkout, headless) server-truth parity (NX1-04a).
@@ -794,7 +795,7 @@ if ( LAFKA_PLUGIN_IS_WOOCOMMERCE ) {
 
 	if ( is_lafka_product_addons( get_option( 'lafka' ) ) ) {
 		/* Load addons */
-		require_once plugin_dir_path( __FILE__ ) . '/incl/addons/lafka-product-addons.php';
+		require_once plugin_dir_path( __FILE__ ) . '/incl/addons/class-lafka-product-addons.php';
 	}
 
 	if ( is_lafka_shipping_areas( get_option( 'lafka' ) ) ) {
@@ -803,7 +804,7 @@ if ( LAFKA_PLUGIN_IS_WOOCOMMERCE ) {
 
 	if ( is_lafka_order_hours( get_option( 'lafka' ) ) ) {
 		/* Load order_hours */
-		require_once plugin_dir_path( __FILE__ ) . '/incl/order-hours/Lafka_Order_Hours.php';
+		require_once plugin_dir_path( __FILE__ ) . '/incl/order-hours/class-lafka-order-hours.php';
 	}
 
 	if ( is_lafka_kitchen_display( get_option( 'lafka' ) ) ) {
@@ -830,7 +831,7 @@ if ( LAFKA_PLUGIN_IS_WOOCOMMERCE ) {
 
 add_action( 'plugins_loaded', 'lafka_plugin_after_plugins_loaded' );
 // The variation-swatches constructor is hooked to plugins_loaded by the
-// swatches file itself (incl/swatches/variation-swatches.php), which is
+// swatches file itself (incl/swatches/class-lafka-wc-variation-swatches.php), which is
 // required from lafka_plugin_after_plugins_loaded() during this same
 // plugins_loaded dispatch; the add_action there registers it for the current
 // priority-10 pass, so no duplicate registration is needed here.
@@ -850,9 +851,7 @@ if ( ! function_exists( 'lafka_load_wc_dependent_widgets' ) ) {
 		if ( ! class_exists( 'WC_Widget' ) ) {
 			return;
 		}
-		foreach ( array( 'LafkaProductFilterWidget' ) as $file ) {
-			require_once plugin_dir_path( __FILE__ ) . 'widgets/wc_widgets/' . $file . '.php';
-		}
+		require_once plugin_dir_path( __FILE__ ) . 'widgets/wc_widgets/class-lafka-product-filter-widget.php';
 	}
 }
 
@@ -862,11 +861,12 @@ function lafka_plugin_after_plugins_loaded() {
 
 	/* independent widgets */
 	foreach ( array(
-		'LafkaAboutWidget',
-		'LafkaContactsWidget',
-		'LafkaPaymentOptionsWidget',
-		'LafkaPopularPostsWidget',
-		'LafkaLatestMenuEntriesWidget',
+		'class-lafka-about-widget',
+		'class-lafka-contacts-widget',
+		'class-lafka-payment-options-widget',
+		'class-lafka-popular-posts-widget',
+		'class-lafka-latest-menu-entries-widget',
+		'lafka-widget-registration',
 	) as $file ) {
 		require_once plugin_dir_path( __FILE__ ) . 'widgets/' . $file . '.php';
 	}
@@ -922,7 +922,7 @@ function lafka_plugin_after_plugins_loaded() {
 	require_once plugin_dir_path( __FILE__ ) . 'shortcodes/shortcodes.php';
 
 	/* Load variation product swatches */
-	require_once plugin_dir_path( __FILE__ ) . 'incl/swatches/variation-swatches.php';
+	require_once plugin_dir_path( __FILE__ ) . 'incl/swatches/class-lafka-wc-variation-swatches.php';
 
 	/* include metaboxes.php — PERF-H09: admin-only (add_meta_boxes + save_post with nonce) */
 	if ( is_admin() ) {
@@ -1042,7 +1042,7 @@ function lafka_plugin_after_plugins_loaded() {
 		Lafka_Order_Path::init();
 		require_once plugin_dir_path( __FILE__ ) . 'incl/woocommerce/lafka-product-serves.php';
 		lafka_product_serves_init();
-		require_once plugin_dir_path( __FILE__ ) . 'incl/addons/lafka-required-addons.php';
+		require_once plugin_dir_path( __FILE__ ) . 'incl/addons/class-lafka-required-addons.php';
 		require_once plugin_dir_path( __FILE__ ) . 'incl/store-api/lafka-store-api-product.php';
 		add_action( 'woocommerce_init', 'lafka_store_api_product_register' );
 		// Drawer quantity stepper: wc-ajax=lafka_cart_set_qty + client, live only

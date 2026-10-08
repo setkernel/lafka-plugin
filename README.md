@@ -47,7 +47,7 @@ The plugin ships with **zero hardcoded restaurant data** — every public NAP / 
 - **Shipping Areas** (`lafka_shipping_areas`) — Delivery zone management
 - **Product Addons** (`lafka_glb_addon`) — Global addon groups
 
-For bundled / composite products, install the official **[WooCommerce Product Bundles](https://woocommerce.com/products/product-bundles/)** plugin. Lafka's addons engine bridges into it via `incl/addons/engine/compat/class-bundles-addons-compatibility.php`.
+For bundled / composite products, install the official **[WooCommerce Product Bundles](https://woocommerce.com/products/product-bundles/)** plugin. Lafka's addons engine bridges into it via `incl/addons/engine/compat/class-lafka-bundles-addons-compatibility.php`.
 
 ### Shortcodes (24)
 Old pages built with WPBakery or Slider Revolution still render cleanly: `incl/compat/lafka-wpbakery-fallback.php` strips their orphaned `[vc_*]` / `[rev_slider]` tags from stored content. Neither plugin is supported or required.

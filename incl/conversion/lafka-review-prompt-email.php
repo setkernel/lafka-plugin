@@ -144,7 +144,7 @@ if ( ! function_exists( 'lafka_review_email_register_class' ) ) {
 			return $email_classes;
 		}
 		if ( ! class_exists( 'LAFKA_Review_Prompt_Email' ) ) {
-			require_once __DIR__ . '/class-lafka-review-prompt-email-class.php';
+			require_once __DIR__ . '/class-lafka-review-prompt-email.php';
 		}
 		if ( class_exists( 'LAFKA_Review_Prompt_Email' ) ) {
 			$email_classes['LAFKA_Review_Prompt_Email'] = new LAFKA_Review_Prompt_Email();
@@ -160,7 +160,7 @@ if ( function_exists( 'add_filter' ) ) {
 // Eagerly load the subclass file when WC is available — keeps the class
 // definition in its own file.
 if ( ! class_exists( 'LAFKA_Review_Prompt_Email' ) && class_exists( 'WC_Email' ) ) {
-	require_once __DIR__ . '/class-lafka-review-prompt-email-class.php';
+	require_once __DIR__ . '/class-lafka-review-prompt-email.php';
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

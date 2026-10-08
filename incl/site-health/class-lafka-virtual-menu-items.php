@@ -15,7 +15,7 @@
  *   Product edit screen: a one-line warning on a flagged, published product,
  *     with a per-product "this item is meant to be virtual" link (post meta
  *     `_lafka_virtual_ok`), which also drops it from Site Health.
- *   `wp lafka products unvirtual` (incl/cli/lafka-products-cli.php): plan() +
+ *   `wp lafka products unvirtual` (incl/cli/class-lafka-products-cli-command.php): plan() +
  *     apply() below.
  *
  * Checks run only while the store offers pickup or delivery

@@ -67,8 +67,8 @@ final class Lafka_WC_Variation_Swatches {
 	 * Include required core files used in admin and on the frontend.
 	 */
 	public function includes() {
-		require_once plugin_dir_path( __FILE__ ) . 'classes/class-admin.php';
-		require_once plugin_dir_path( __FILE__ ) . 'classes/class-frontend.php';
+		require_once plugin_dir_path( __FILE__ ) . 'classes/class-lafka-wc-variation-swatches-admin.php';
+		require_once plugin_dir_path( __FILE__ ) . 'classes/class-lafka-wc-variation-swatches-frontend.php';
 	}
 
 	/**

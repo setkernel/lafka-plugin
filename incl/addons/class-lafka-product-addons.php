@@ -46,7 +46,7 @@ class Lafka_Product_Addons {
 		// WC PB is active. Restores the toppings-on-bundled-pizzas capability
 		// that the deleted Lafka Combos fork (v9.0.0) used to provide.
 		if ( class_exists( 'WC_Bundled_Item' ) ) {
-			require_once __DIR__ . '/engine/compat/class-bundles-addons-compatibility.php';
+			require_once __DIR__ . '/engine/compat/class-lafka-bundles-addons-compatibility.php';
 			Lafka_Bundles_Addons_Compatibility::init();
 		}
 	}

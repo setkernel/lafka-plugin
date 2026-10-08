@@ -12,7 +12,7 @@
  * product, substitutes the product's display name. Operators who do fill in
  * descriptive alt text always win — the filter only kicks in when alt is empty.
  *
- * The CLI command `wp lafka image-alts apply` (incl/cli/lafka-image-alt-backfill.php)
+ * The CLI command `wp lafka image-alts apply` (incl/cli/class-lafka-image-alt-backfill-command.php)
  * remains the canonical way to permanently persist alts. This filter is the
  * runtime safety net for unpersisted images.
  *

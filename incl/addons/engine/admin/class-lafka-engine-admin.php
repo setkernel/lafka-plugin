@@ -8,7 +8,7 @@
  *
  * Phase 2: this class replaces the legacy Lafka_Product_Addon_Admin's
  * global-admin surface. The legacy class is no longer instantiated by the
- * loader (see incl/addons/lafka-product-addons.php). Per-product addon
+ * loader (see incl/addons/class-lafka-product-addons.php). Per-product addon
  * panel integration on the WC product editor lands in Phase 3.
  *
  * @package Lafka_Addons_Engine
@@ -98,7 +98,7 @@ class Lafka_Engine_Admin {
 	}
 
 	private function render_list(): void {
-		require_once __DIR__ . '/class-list-table.php';
+		require_once __DIR__ . '/class-lafka-engine-addons-list-table.php';
 		$table = new Lafka_Engine_Addons_List_Table();
 		$table->prepare_items();
 		require __DIR__ . '/views/global-list.php';

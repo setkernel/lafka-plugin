@@ -4,7 +4,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Lafka latest menu entries widget class
  */
-class LafkaLatestMenuEntriesWidget extends WP_Widget {
+class Lafka_Latest_Menu_Entries_Widget extends WP_Widget {
 
 	public function __construct() {
 		$widget_ops = array(
@@ -120,13 +120,4 @@ class LafkaLatestMenuEntriesWidget extends WP_Widget {
 
 		<?php
 	}
-}
-
-add_action( 'widgets_init', 'lafka_register_lafka_latest_projects_widget' );
-if ( ! function_exists( 'lafka_register_lafka_latest_projects_widget' ) ) {
-
-	function lafka_register_lafka_latest_projects_widget() {
-		register_widget( 'LafkaLatestMenuEntriesWidget' );
-	}
-
 }

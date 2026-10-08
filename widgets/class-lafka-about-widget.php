@@ -6,7 +6,7 @@ defined( 'ABSPATH' ) || exit;
  *
  * @author aatanasov
  */
-class LafkaAboutWidget extends WP_Widget {
+class Lafka_About_Widget extends WP_Widget {
 
 	public function __construct() {
 		$widget_ops = array( 'description' => esc_html__( 'Shows excerpt of the About us page', 'lafka-plugin' ) );
@@ -71,13 +71,3 @@ class LafkaAboutWidget extends WP_Widget {
 		return $instance;
 	}
 }
-
-add_action( 'widgets_init', 'lafka_register_lafka_about_widget' );
-if ( ! function_exists( 'lafka_register_lafka_about_widget' ) ) {
-
-	function lafka_register_lafka_about_widget() {
-		register_widget( 'LafkaAboutWidget' );
-	}
-
-}
-?>

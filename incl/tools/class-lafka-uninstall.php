@@ -295,7 +295,7 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 		 * default 'select' so removing the plugin doesn't leave orphaned types.
 		 *
 		 * Scoped to the three types Lafka itself registers (color/image/label —
-		 * see incl/swatches/variation-swatches.php): a blanket "everything but
+		 * see incl/swatches/class-lafka-wc-variation-swatches.php): a blanket "everything but
 		 * text" reset would also clobber attribute types owned by unrelated
 		 * plugins the moment Lafka is uninstalled.
 		 *

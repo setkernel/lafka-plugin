@@ -20,7 +20,7 @@
  *
  * Registered on the `wp_privacy_personal_data_exporters` /
  * `wp_privacy_personal_data_erasers` filters from lafka-plugin.php. Mirrors the
- * addon-engine privacy contract (incl/addons/engine/class-engine-privacy.php).
+ * addon-engine privacy contract (incl/addons/engine/class-lafka-engine-privacy.php).
  *
  * @package Lafka\Plugin\Conversion
  * @since   10.0.0

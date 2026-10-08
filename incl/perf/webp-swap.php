@@ -9,7 +9,7 @@
  * support for WebP is universal in 2026 (Safari 14+, all evergreens).
  *
  * Generating the WebP siblings: run `wp lafka images convert-webp` (see
- * incl/cli/lafka-webp-convert.php) or use any image-optimization plugin
+ * incl/cli/class-lafka-webp-convert-command.php) or use any image-optimization plugin
  * (ShortPixel, EWWW, Imagify, Smush) — this module is plugin-agnostic.
  *
  * Performance: file_exists() checks are cached per-request via a static

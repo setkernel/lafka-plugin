@@ -5,7 +5,7 @@ defined( 'ABSPATH' ) || exit;
  * Lafka popular posts widget class
  *
  */
-class LafkaPopularPostsWidget extends WP_Widget {
+class Lafka_Popular_Posts_Widget extends WP_Widget {
 
 	public function __construct() {
 		$widget_ops = array(
@@ -34,7 +34,7 @@ class LafkaPopularPostsWidget extends WP_Widget {
 		// PERF-9: cache the popular-posts ID list. Without this, every page that
 		// renders the widget runs a `SELECT … ORDER BY comment_count DESC LIMIT N`
 		// — a filesort that doesn't get query-cached because the LIMIT depends on
-		// the widget instance. Mirror the LafkaLatestMenuEntriesWidget pattern:
+		// the widget instance. Mirror the Lafka_Latest_Menu_Entries_Widget pattern:
 		// `wp_cache_get/set` keyed by widget id + number, busted on save_post /
 		// deleted_post via the lafka_popular_posts_widget_flush() helper below.
 		$cache_ver = (int) wp_cache_get( 'lafka_popular_widget_ver', 'widget' );
@@ -124,33 +124,4 @@ class LafkaPopularPostsWidget extends WP_Widget {
 
 		<?php
 	}
-}
-
-add_action( 'widgets_init', 'lafka_register_lafka_popular_widget' );
-if ( ! function_exists( 'lafka_register_lafka_popular_widget' ) ) {
-
-	function lafka_register_lafka_popular_widget() {
-		register_widget( 'LafkaPopularPostsWidget' );
-	}
-
-}
-
-/**
- * Bust the popular-posts widget cache whenever post comment counts can change.
- * The widget caches a list of post IDs ordered by `comment_count`, which
- * shifts on `save_post`, `deleted_post`, `wp_set_comment_status`, and
- * `comment_post`. We don't have a per-instance cache key, so flush the whole
- * `widget` cache group prefix here — the impact is one extra cache miss for
- * any other widget consuming that group, which is negligible.
- */
-if ( ! function_exists( 'lafka_popular_posts_widget_flush' ) ) {
-	function lafka_popular_posts_widget_flush() {
-		// Bump a single integer "version" so cached entries become unreachable.
-		$ver = (int) wp_cache_get( 'lafka_popular_widget_ver', 'widget' );
-		wp_cache_set( 'lafka_popular_widget_ver', $ver + 1, 'widget' );
-	}
-	add_action( 'save_post', 'lafka_popular_posts_widget_flush' );
-	add_action( 'deleted_post', 'lafka_popular_posts_widget_flush' );
-	add_action( 'wp_set_comment_status', 'lafka_popular_posts_widget_flush' );
-	add_action( 'comment_post', 'lafka_popular_posts_widget_flush' );
 }

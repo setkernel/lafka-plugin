@@ -5,12 +5,12 @@ use Automattic\WooCommerce\Internal\ProductAttributesLookup\Filterer;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Class LafkaProductFilterWidget
+ * Class Lafka_Product_Filter_Widget
  *
  * Customized WC_Widget_Layered_Nav WC widget
  * in order to display the swatches
  */
-class LafkaProductFilterWidget extends WC_Widget {
+class Lafka_Product_Filter_Widget extends WC_Widget {
 
 	/**
 	 * Constructor.
@@ -582,13 +582,4 @@ class LafkaProductFilterWidget extends WC_Widget {
 
 		return $found;
 	}
-}
-
-add_action( 'widgets_init', 'lafka_register_lafka_product_filter_widget' );
-if ( ! function_exists( 'lafka_register_lafka_product_filter_widget' ) ) {
-
-	function lafka_register_lafka_product_filter_widget() {
-		register_widget( 'LafkaProductFilterWidget' );
-	}
-
 }

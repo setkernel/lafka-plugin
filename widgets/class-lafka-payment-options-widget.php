@@ -5,7 +5,7 @@ defined( 'ABSPATH' ) || exit;
  *
  * @author aatanasov
  */
-class LafkaPaymentOptionsWidget extends WP_Widget {
+class Lafka_Payment_Options_Widget extends WP_Widget {
 	public function __construct() {
 		$widget_ops = array( 'description' => esc_html__( 'Display a list of available payment methods and seal code', 'lafka-plugin' ) );
 		parent::__construct( 'lafka_payment_options_widget', 'Lafka Payment Options', $widget_ops );
@@ -131,11 +131,3 @@ class LafkaPaymentOptionsWidget extends WP_Widget {
 		return $instance;
 	}
 }
-
-add_action( 'widgets_init', 'lafka_register_lafka_payment_widget' );
-if ( ! function_exists( 'lafka_register_lafka_payment_widget' ) ) {
-	function lafka_register_lafka_payment_widget() {
-		register_widget( 'LafkaPaymentOptionsWidget' );
-	}
-}
-?>
