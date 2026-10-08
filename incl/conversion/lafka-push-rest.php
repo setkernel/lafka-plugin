@@ -55,10 +55,6 @@ if ( ! function_exists( 'lafka_push_register_rest_routes' ) ) {
 	 * @return void
 	 */
 	function lafka_push_register_rest_routes(): void {
-		if ( ! function_exists( 'register_rest_route' ) ) {
-			return;
-		}
-
 		register_rest_route(
 			'lafka/v1',
 			'/push/subscribe',
@@ -188,7 +184,7 @@ if ( ! function_exists( 'lafka_push_endpoint_host_allowed' ) ) {
 	 * @return bool True if the host is allowed.
 	 */
 	function lafka_push_endpoint_host_allowed( string $endpoint ): bool {
-		$parsed = function_exists( 'wp_parse_url' ) ? wp_parse_url( $endpoint ) : parse_url( $endpoint );
+		$parsed = wp_parse_url( $endpoint );
 		if ( ! is_array( $parsed ) || empty( $parsed['host'] ) ) {
 			return false;
 		}

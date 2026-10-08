@@ -178,10 +178,7 @@ if ( ! function_exists( 'lafka_get_restaurant_info' ) ) {
 		// feeds JSON-LD / llms.txt (plain text) as well as escaped HTML.
 		$name_default  = function_exists( 'get_bloginfo' ) ? html_entity_decode( (string) get_bloginfo( 'name' ), ENT_QUOTES | ENT_HTML5, 'UTF-8' ) : '';
 		$email_default = function_exists( 'get_bloginfo' ) ? (string) get_bloginfo( 'admin_email' ) : '';
-		$logo_url      = '';
-		if ( function_exists( 'get_site_icon_url' ) ) {
-			$logo_url = (string) get_site_icon_url( 1200 );
-		}
+		$logo_url      = (string) get_site_icon_url( 1200 );
 		// Canonical menu URL — the SAME resolver every visible "Order now" /
 		// "Browse the menu" CTA uses, so hasMenu (schema-restaurant.php) can
 		// never point somewhere the on-page buttons don't.
@@ -527,13 +524,7 @@ function lafka_schema_get_postal_address(): ?array {
  * @return string
  */
 function lafka_schema_get_logo_url(): string {
-	if ( function_exists( 'get_site_icon_url' ) ) {
-		$url = (string) get_site_icon_url( 1200 );
-		if ( '' !== $url ) {
-			return $url;
-		}
-	}
-	return '';
+	return (string) get_site_icon_url( 1200 );
 }
 
 if ( ! function_exists( 'lafka_schema_get_brand_logo_url' ) ) {
@@ -545,7 +536,7 @@ if ( ! function_exists( 'lafka_schema_get_brand_logo_url' ) ) {
 	 */
 	function lafka_schema_get_brand_logo_url(): string {
 		$url = '';
-		if ( function_exists( 'get_theme_mod' ) && function_exists( 'wp_get_attachment_image_url' ) ) {
+		if ( function_exists( 'get_theme_mod' ) ) {
 			$logo_id = (int) get_theme_mod( 'custom_logo', 0 );
 			if ( $logo_id > 0 ) {
 				$url = (string) wp_get_attachment_image_url( $logo_id, 'full' );
@@ -573,7 +564,7 @@ if ( ! function_exists( 'lafka_schema_get_restaurant_images' ) ) {
 		$images = array();
 
 		$og_default = function_exists( 'get_theme_mod' ) ? get_theme_mod( 'lafka_og_image_default', '' ) : '';
-		if ( is_numeric( $og_default ) && (int) $og_default > 0 && function_exists( 'wp_get_attachment_image_url' ) ) {
+		if ( is_numeric( $og_default ) && (int) $og_default > 0 ) {
 			$images[] = (string) wp_get_attachment_image_url( (int) $og_default, 'large' );
 		} elseif ( is_string( $og_default ) && false !== filter_var( $og_default, FILTER_VALIDATE_URL ) ) {
 			$images[] = $og_default;

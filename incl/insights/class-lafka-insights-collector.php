@@ -92,7 +92,7 @@ if ( ! class_exists( 'Lafka_Insights_Collector' ) ) {
 			}
 
 			$day  = Lafka_Insights_Session::today();
-			$hour = function_exists( 'wp_date' ) ? (string) wp_date( 'H' ) : gmdate( 'H' );
+			$hour = (string) wp_date( 'H' );
 			$sid  = Lafka_Insights_Session::current_visitor_id();
 
 			list( $visit_beacons, $hour_beacons ) = Lafka_Insights_DB::beacon_counts( $day, $sid, $hour );
@@ -106,7 +106,7 @@ if ( ! class_exists( 'Lafka_Insights_Collector' ) ) {
 				$row['device'] = Lafka_Insights_Session::device_from_ua( Lafka_Insights_Session::user_agent() );
 			}
 			$row['hour']      = (int) $hour;
-			$row['dow']       = function_exists( 'wp_date' ) ? (int) wp_date( 'w' ) : (int) gmdate( 'w' );
+			$row['dow']       = (int) wp_date( 'w' );
 			$row['pageviews'] = 1;
 
 			Lafka_Insights_DB::upsert_session( $day, $sid, $row );

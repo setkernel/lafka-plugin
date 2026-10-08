@@ -147,7 +147,7 @@ if ( ! function_exists( 'lafka_insert_og_tags' ) ) {
 			$url         = $term ? get_term_link( $term ) : home_url( '/' );
 			$og_type     = 'website';
 			// T-16: a menu category shares its own photo (category thumbnail).
-			if ( $term && isset( $term->term_id ) && function_exists( 'get_term_meta' ) ) {
+			if ( $term && isset( $term->term_id ) ) {
 				$thumb_id = (int) get_term_meta( (int) $term->term_id, 'thumbnail_id', true );
 				if ( $thumb_id > 0 ) {
 					$src = wp_get_attachment_image_src( $thumb_id, 'large' );
@@ -203,7 +203,7 @@ if ( ! function_exists( 'lafka_insert_og_tags' ) ) {
 
 		// Tier 4 (last resort): site icon. Square, low resolution — still
 		// better than no preview at all.
-		if ( '' === $image && function_exists( 'get_site_icon_url' ) ) {
+		if ( '' === $image ) {
 			$icon = get_site_icon_url( 1200 );
 			if ( $icon ) {
 				$image        = $icon;

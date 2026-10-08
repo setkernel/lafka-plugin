@@ -32,7 +32,7 @@ if ( ! class_exists( 'Lafka_Insights_Scheduler' ) ) {
 		 */
 		public static function next_local( string $time, ?int $weekday = null, ?int $now = null, string $tz = '' ): int {
 			$now  = null === $now ? time() : $now;
-			$zone = '' !== $tz ? new DateTimeZone( $tz ) : ( function_exists( 'wp_timezone' ) ? wp_timezone() : new DateTimeZone( 'UTC' ) );
+			$zone = '' !== $tz ? new DateTimeZone( $tz ) : wp_timezone();
 			$at   = ( new DateTimeImmutable( '@' . $now ) )->setTimezone( $zone );
 			list( $h, $m ) = array_map( 'intval', explode( ':', $time ) );
 			$candidate = $at->setTime( $h, $m, 0 );

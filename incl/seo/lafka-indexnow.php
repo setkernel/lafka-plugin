@@ -55,7 +55,7 @@ if ( ! function_exists( 'lafka_indexnow_can_ping' ) ) {
 	 * @return bool
 	 */
 	function lafka_indexnow_can_ping(): bool {
-		$env = function_exists( 'wp_get_environment_type' ) ? (string) wp_get_environment_type() : 'production';
+		$env = (string) wp_get_environment_type();
 		$ok  = lafka_indexnow_enabled() && 'production' === $env && '0' !== (string) get_option( 'blog_public', '1' );
 		/**
 		 * Filter whether IndexNow may send pings on this request.

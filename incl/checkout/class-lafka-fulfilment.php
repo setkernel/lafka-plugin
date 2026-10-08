@@ -485,7 +485,7 @@ if ( ! class_exists( 'Lafka_Fulfilment' ) ) {
 			if ( 'GET' !== $method ) {
 				return false;
 			}
-			if ( function_exists( 'wp_doing_ajax' ) && wp_doing_ajax() ) {
+			if ( wp_doing_ajax() ) {
 				return false;
 			}
 

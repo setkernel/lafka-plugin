@@ -159,7 +159,7 @@ if ( ! class_exists( 'Lafka_Diagnostics' ) ) {
 				$hour = (int) apply_filters( 'lafka_diagnostics_daily_hour', $hour );
 			}
 			$hour = max( 0, min( 23, $hour ) );
-			$tz   = function_exists( 'wp_timezone' ) ? wp_timezone() : new \DateTimeZone( 'UTC' );
+			$tz   = wp_timezone();
 			$next = ( new \DateTimeImmutable( 'today', $tz ) )->setTime( $hour, 0 );
 			if ( $next->getTimestamp() <= time() ) {
 				$next = $next->modify( '+1 day' );
@@ -592,7 +592,7 @@ if ( ! class_exists( 'Lafka_Diagnostics' ) ) {
 		 * @return string
 		 */
 		public static function log_handler(): string {
-			if ( class_exists( '\Automattic\WooCommerce\Utilities\LoggingUtil' ) && method_exists( '\Automattic\WooCommerce\Utilities\LoggingUtil', 'get_default_handler' ) ) {
+			if ( class_exists( '\Automattic\WooCommerce\Utilities\LoggingUtil' ) ) {
 				return (string) \Automattic\WooCommerce\Utilities\LoggingUtil::get_default_handler();
 			}
 			return defined( 'WC_LOG_HANDLER' ) ? (string) WC_LOG_HANDLER : '';
@@ -604,7 +604,7 @@ if ( ! class_exists( 'Lafka_Diagnostics' ) ) {
 		 * @return string
 		 */
 		public static function log_directory(): string {
-			if ( class_exists( '\Automattic\WooCommerce\Utilities\LoggingUtil' ) && method_exists( '\Automattic\WooCommerce\Utilities\LoggingUtil', 'get_log_directory' ) ) {
+			if ( class_exists( '\Automattic\WooCommerce\Utilities\LoggingUtil' ) ) {
 				return (string) \Automattic\WooCommerce\Utilities\LoggingUtil::get_log_directory();
 			}
 			return defined( 'WC_LOG_DIR' ) ? (string) WC_LOG_DIR : '';
@@ -617,7 +617,7 @@ if ( ! class_exists( 'Lafka_Diagnostics' ) ) {
 		 * @return string
 		 */
 		public static function logs_url( string $source = '' ): string {
-			$base = class_exists( '\Automattic\WooCommerce\Utilities\LoggingUtil' ) && method_exists( '\Automattic\WooCommerce\Utilities\LoggingUtil', 'get_logs_tab_url' )
+			$base = class_exists( '\Automattic\WooCommerce\Utilities\LoggingUtil' )
 				? (string) \Automattic\WooCommerce\Utilities\LoggingUtil::get_logs_tab_url()
 				: ( function_exists( 'admin_url' ) ? admin_url( 'admin.php?page=wc-status&tab=logs' ) : '' );
 			return '' !== $source && function_exists( 'add_query_arg' ) ? add_query_arg( 'source', $source, $base ) : $base;

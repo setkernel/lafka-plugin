@@ -6,12 +6,8 @@ Originally developed by [theAlThemist](https://www.althemist.com). Continued as 
 
 ## Requirements
 
-- WordPress 6.6+
-- WooCommerce 9.5+
-- PHP 8.1+
+- Current WordPress, WooCommerce and PHP — the exact floors and tested-up-to versions are in [COMPATIBILITY.md](COMPATIBILITY.md) (the single source for them). The plugin will fatal-error or behave unexpectedly on older versions.
 - Recommended (not required): the [Lafka Theme](https://github.com/setkernel/lafka-theme), which ships the matching styling
-
-These match the floor declared in `lafka-plugin.php` (`Requires at least:` / `Requires PHP:` / `WC requires at least:`). The plugin will fatal-error or behave unexpectedly on older versions. WC tested up to: 11.1.
 
 ## Installation
 
@@ -147,7 +143,7 @@ Standard local checks:
 composer install        # PHPCS + WPCS + PHPCompatibility
 npm ci                  # ESLint + Stylelint
 
-composer phpcs          # WordPress-Extra + PHPCompatibility (see COMPATIBILITY.md for the floor); parallel + cached
+composer phpcs          # WordPress-Extra + PHPCompatibility (floor in COMPATIBILITY.md); parallel + cached
 npm run lint            # ESLint + Stylelint (cached)
 npm run build           # regenerate every .min.js from its readable source (esbuild)
 npm run check-version   # version SSOT drift guard

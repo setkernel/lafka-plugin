@@ -45,7 +45,7 @@ if ( ! class_exists( 'Lafka_Insights_Session' ) ) {
 		 * @return string
 		 */
 		public static function today(): string {
-			return function_exists( 'wp_date' ) ? (string) wp_date( 'Y-m-d' ) : gmdate( 'Y-m-d' );
+			return (string) wp_date( 'Y-m-d' );
 		}
 
 		/**

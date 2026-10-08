@@ -494,11 +494,7 @@ if ( ! class_exists( 'Lafka_Promotions' ) ) {
 		 */
 		public function print_prepaint_dismiss_check(): void {
 			echo '<style id="lafka-bogo-prepaint">.lafka-bogo-dismissed #lafka-bogo-banner{display:none}</style>' . "\n";
-			if ( function_exists( 'wp_print_inline_script_tag' ) ) {
-				wp_print_inline_script_tag( self::prepaint_script(), array( 'id' => 'lafka-bogo-prepaint-js' ) );
-				return;
-			}
-			echo '<script id="lafka-bogo-prepaint-js">' . self::prepaint_script() . "</script>\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static script; the only variable part is wp_json_encode()d.
+			wp_print_inline_script_tag( self::prepaint_script(), array( 'id' => 'lafka-bogo-prepaint-js' ) );
 		}
 
 		/**

@@ -1,8 +1,17 @@
 # Lafka Compatibility Matrix
 
 Supported versions of the Lafka plugin's dependencies, and how each is checked.
+**This file is the single source of truth for the version floors**; the other
+docs link here instead of repeating the numbers.
 
-> The "minimum" floor is what the plugin header declares.
+> The "minimum" column is the floor the plugin declares: `lafka-plugin.php`
+> (`Requires at least` / `Requires PHP` / `WC requires at least` /
+> `WC tested up to`), `readme.txt` (`Requires at least` / `Tested up to` /
+> `Requires PHP`), `composer.json` (`php`), and `.phpcs.xml.dist`
+> (`testVersion`, `minimum_wp_version`). Change a floor here first, then in
+> those four files. Code is written against the floors: there are no
+> `version_compare()` branches and no polyfills for older WordPress,
+> WooCommerce or PHP.
 > The "recommended" column is the maintainer-recommended production target;
 > what CI actually runs is described in the *CI* section below.
 
@@ -10,11 +19,15 @@ Supported versions of the Lafka plugin's dependencies, and how each is checked.
 
 | Component   | Minimum | Recommended | Latest tested |
 |-------------|---------|-------------|---------------|
-| **PHP**     | 8.1     | 8.4         | 8.4           |
-| **WordPress** | 6.6   | 7.1         | 7.1.2         |
-| **WooCommerce** | 9.5 | 11.1        | 11.1.2        |
+| **PHP**     | 8.3     | 8.3 (production) | 8.5 (syntax-linted) |
+| **WordPress** | 7.0   | 7.1         | 7.1           |
+| **WooCommerce** | 11.0 | 11.2       | 11.2          |
 | **Node.js** (build only) | 20 | 24 | 24         |
 | **Apache** (recommended for security headers) | 2.4 | 2.4.66+ | 2.4.66 |
+
+WooCommerce 11.2 itself requires WordPress 7.0, which is why the WordPress
+floor is 7.0. HPOS can still be switched off by a store, so order code supports
+both the custom-orders-table and the legacy post-storage backends.
 
 Local development runs in the Docker stack under `../local-env` (repos are
 bind-mounted live). End-to-end coverage is the theme repo's Playwright smoke
@@ -122,14 +135,11 @@ maps loader without a key. Closed in plugin v8.7.4 + theme v5.8.3.
 
 ## Known incompatibilities
 
-- **WP < 6.6** — uses `wp_body_open()` (since 5.2) but several other APIs
-  the codebase depends on (CPT REST, modern HPOS hooks) are 6.6+.
-- **WC < 9.5** — addons rely on hook signatures changed in 9.5. Checkout
-  meta is written on `woocommerce_checkout_create_order` (not
-  `woocommerce_checkout_update_order_meta`) so it receives the `WC_Order`
-  before save.
-- **PHP < 8.1** — 8.1 is the floor for the declared types used in the
-  pricing helpers.
+Anything below the floors in *Stack versions* is unsupported: the plugin header
+blocks activation on older PHP / WordPress, and the code uses APIs that older
+versions lack (for example `wp_date()`, `wp_timezone()` and the WooCommerce
+logging utilities). Checkout meta is written on `woocommerce_checkout_create_order` so it receives
+the `WC_Order` before save.
 
 ## HPOS (custom_order_tables) status
 

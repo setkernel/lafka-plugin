@@ -238,7 +238,7 @@ if ( ! function_exists( 'lafka_llms_header_lines' ) ) {
 			foreach ( $info['hours'] as $day => $range ) {
 				$lines[] = '- ' . $day . ': ' . ( 'Closed' === $range ? __( 'Closed', 'lafka-plugin' ) : str_replace( '-', '–', (string) $range ) );
 			}
-			$tz = function_exists( 'wp_timezone_string' ) ? (string) wp_timezone_string() : '';
+			$tz = (string) wp_timezone_string();
 			if ( '' !== $tz ) {
 				/* translators: %s: timezone identifier. */
 				$lines[] = '- ' . sprintf( __( 'Times are local (%s).', 'lafka-plugin' ), $tz );

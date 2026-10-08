@@ -200,7 +200,7 @@ if ( ! class_exists( 'Lafka_Checkout_Failures' ) ) {
 		 * @return string
 		 */
 		private static function day_offset( int $offset ): string {
-			$tz = function_exists( 'wp_timezone' ) ? wp_timezone() : new \DateTimeZone( 'UTC' );
+			$tz = wp_timezone();
 			$dt = new \DateTimeImmutable( 'now', $tz );
 			return $dt->modify( sprintf( '%+d days', $offset ) )->format( 'Y-m-d' );
 		}
@@ -517,7 +517,7 @@ if ( ! class_exists( 'Lafka_Checkout_Failures' ) ) {
 			if ( ! is_object( $order ) || ! method_exists( $order, 'get_status' ) || 'failed' !== $order->get_status() ) {
 				return;
 			}
-			if ( function_exists( 'is_admin' ) && is_admin() && ! ( function_exists( 'wp_doing_ajax' ) && wp_doing_ajax() ) ) {
+			if ( function_exists( 'is_admin' ) && is_admin() && ! wp_doing_ajax() ) {
 				return; // Notes typed on the order screen are not payment attempts.
 			}
 			if ( isset( self::$payment_orders[ (int) $order->get_id() ] ) ) {

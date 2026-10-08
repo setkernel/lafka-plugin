@@ -3,7 +3,7 @@
 	"description": "Lafka Companion Plugin",
 	"type": "wordpress-plugin",
 	"require": {
-		"php": "^8.1"
+		"php": ">=8.3"
 	},
 	"require-dev": {
 		"squizlabs/php_codesniffer": "^3.13",

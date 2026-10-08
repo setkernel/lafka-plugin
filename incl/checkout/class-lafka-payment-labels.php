@@ -126,7 +126,7 @@ if ( ! class_exists( 'Lafka_Payment_Labels' ) ) {
 				return '';
 			}
 			// Admin screens (gateway settings, order edit) show the configured title.
-			if ( function_exists( 'is_admin' ) && is_admin() && ! ( function_exists( 'wp_doing_ajax' ) && wp_doing_ajax() ) ) {
+			if ( function_exists( 'is_admin' ) && is_admin() && ! wp_doing_ajax() ) {
 				return '';
 			}
 

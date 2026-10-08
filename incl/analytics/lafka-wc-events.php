@@ -139,7 +139,7 @@ if ( ! function_exists( 'lafka_dl_item_payload' ) ) {
 			// wc_get_product_category_list returns HTML — strip to first category.
 			$cat_html = wc_get_product_category_list( $id, ', ' );
 			if ( is_string( $cat_html ) && '' !== $cat_html ) {
-				$stripped = function_exists( 'wp_strip_all_tags' ) ? wp_strip_all_tags( $cat_html ) : strip_tags( $cat_html );
+				$stripped = wp_strip_all_tags( $cat_html );
 				$parts    = array_map( 'trim', explode( ',', $stripped ) );
 				$category = $parts[0] ?? '';
 			}
@@ -556,7 +556,7 @@ if ( ! function_exists( 'lafka_dl_emit_add_to_cart' ) ) {
 		// event into the response — we don't need to also emit a <script>
 		// here (the page won't re-render anyway). Only emit synchronously
 		// for non-AJAX flows.
-		$is_ajax = ( function_exists( 'wp_doing_ajax' ) && wp_doing_ajax() )
+		$is_ajax = wp_doing_ajax()
 			|| ( defined( 'DOING_AJAX' ) && DOING_AJAX );
 		if ( $is_ajax ) {
 			return;

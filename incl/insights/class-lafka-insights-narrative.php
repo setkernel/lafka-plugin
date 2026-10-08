@@ -78,7 +78,7 @@ if ( ! class_exists( 'Lafka_Insights_Narrative' ) ) {
 		 */
 		public static function format_day( string $day ): string {
 			$ts = strtotime( $day . ' 12:00:00 UTC' );
-			if ( false === $ts || ! function_exists( 'wp_date' ) ) {
+			if ( false === $ts ) {
 				return $day;
 			}
 			$format = function_exists( 'get_option' ) ? (string) get_option( 'date_format', 'F j, Y' ) : 'F j, Y';

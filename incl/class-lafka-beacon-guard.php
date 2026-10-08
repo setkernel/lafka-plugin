@@ -160,7 +160,7 @@ if ( ! class_exists( 'Lafka_Beacon_Guard' ) ) {
 
 			$now       = time();
 			$cache_key = 'lafka_rl_' . $bucket;
-			$use_cache = function_exists( 'wp_using_ext_object_cache' ) && wp_using_ext_object_cache();
+			$use_cache = wp_using_ext_object_cache();
 			$state     = $use_cache ? wp_cache_get( $cache_key, 'lafka' ) : get_transient( $cache_key );
 
 			if ( ! is_array( $state ) || ! isset( $state['t'], $state['g'], $state['k'] ) || ( $now - (int) $state['t'] ) >= $window ) {

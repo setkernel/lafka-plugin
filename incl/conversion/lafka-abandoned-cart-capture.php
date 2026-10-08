@@ -100,7 +100,7 @@ if ( ! function_exists( 'lafka_ac_get_cart_snapshot' ) ) {
 					}
 					if ( method_exists( $product, 'get_image_id' ) ) {
 						$image_id = (int) $product->get_image_id();
-						if ( $image_id > 0 && function_exists( 'wp_get_attachment_image_url' ) ) {
+						if ( $image_id > 0 ) {
 							$resolved = wp_get_attachment_image_url( $image_id, 'thumbnail' );
 							if ( is_string( $resolved ) ) {
 								$image = $resolved;

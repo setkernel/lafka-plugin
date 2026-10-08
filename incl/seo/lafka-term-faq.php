@@ -66,7 +66,7 @@ if ( ! function_exists( 'lafka_seo_get_term_faqs' ) ) {
 	 * @return list<array{q:string,a:string}>
 	 */
 	function lafka_seo_get_term_faqs( int $term_id ): array {
-		if ( $term_id <= 0 || ! function_exists( 'get_term_meta' ) ) {
+		if ( $term_id <= 0 ) {
 			return array();
 		}
 		$faqs = lafka_seo_normalize_faqs( get_term_meta( $term_id, LAFKA_TERM_FAQ_META, true ) );

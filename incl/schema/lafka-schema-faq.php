@@ -348,9 +348,7 @@ if ( ! function_exists( 'lafka_schema_faq' ) ) {
 			// emphasis is fine but it's safer to ship the operator copy as
 			// plain text. wp_strip_all_tags() preserves &amp; etc. correctly
 			// (wp_json_encode handles the escaping at emit time).
-			$answer_text = function_exists( 'wp_strip_all_tags' )
-				? wp_strip_all_tags( $item['a'] )
-				: strip_tags( $item['a'] );
+			$answer_text = wp_strip_all_tags( $item['a'] );
 
 			$main_entity[] = array(
 				'@type'          => 'Question',

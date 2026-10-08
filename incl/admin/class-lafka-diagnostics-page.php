@@ -638,9 +638,9 @@ if ( ! class_exists( 'Lafka_Diagnostics_Page' ) ) {
 					? sprintf( __( '%1$s (setting) · %2$s (checkout page)', 'lafka-plugin' ), Lafka_Checkout_Mode::get_mode(), Lafka_Checkout_Mode::get_effective_mode() )
 					: '',
 				__( 'Lafka minimum log level', 'lafka-plugin' ) => Lafka_Log::min_level(),
-				__( 'WooCommerce logging', 'lafka-plugin' )     => $logging && method_exists( '\Automattic\WooCommerce\Utilities\LoggingUtil', 'logging_is_enabled' ) && ! \Automattic\WooCommerce\Utilities\LoggingUtil::logging_is_enabled() ? __( 'Disabled — Lafka records will not be written', 'lafka-plugin' ) : __( 'Enabled', 'lafka-plugin' ),
+				__( 'WooCommerce logging', 'lafka-plugin' )     => $logging && ! \Automattic\WooCommerce\Utilities\LoggingUtil::logging_is_enabled() ? __( 'Disabled — Lafka records will not be written', 'lafka-plugin' ) : __( 'Enabled', 'lafka-plugin' ),
 				__( 'WooCommerce log handler', 'lafka-plugin' ) => Lafka_Diagnostics::log_handler(),
-				__( 'WooCommerce log retention', 'lafka-plugin' ) => $logging && method_exists( '\Automattic\WooCommerce\Utilities\LoggingUtil', 'get_retention_period' )
+				__( 'WooCommerce log retention', 'lafka-plugin' ) => $logging
 					? sprintf( /* translators: %d: days */ __( '%d days (30 recommended)', 'lafka-plugin' ), (int) \Automattic\WooCommerce\Utilities\LoggingUtil::get_retention_period() )
 					: '',
 				__( 'Incident table', 'lafka-plugin' )          => Lafka_Incidents::is_installed()

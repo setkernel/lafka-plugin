@@ -323,7 +323,7 @@ if ( ! function_exists( 'lafka_sitemap_use_image_renderer' ) ) {
 	 * @return void
 	 */
 	function lafka_sitemap_use_image_renderer( $wp_sitemaps ) {
-		if ( ! lafka_sitemap_images_enabled() || ! is_object( $wp_sitemaps ) || ! class_exists( 'WP_Sitemaps_Renderer' ) ) {
+		if ( ! lafka_sitemap_images_enabled() || ! is_object( $wp_sitemaps ) ) {
 			return;
 		}
 		require_once __DIR__ . '/class-lafka-sitemaps-image-renderer.php';

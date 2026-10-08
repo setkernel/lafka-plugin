@@ -353,8 +353,8 @@ if ( ! class_exists( 'Lafka_Insights_Server_Events' ) ) {
 					'block_mask' => '' !== $reason ? self::reason_bit( $reason ) : 0,
 					'last_block' => $reason,
 					'device'     => Lafka_Insights_Session::device_from_ua( $ua ),
-					'hour'       => function_exists( 'wp_date' ) ? (int) wp_date( 'G' ) : (int) gmdate( 'G' ),
-					'dow'        => function_exists( 'wp_date' ) ? (int) wp_date( 'w' ) : (int) gmdate( 'w' ),
+					'hour'       => (int) wp_date( 'G' ),
+					'dow'        => (int) wp_date( 'w' ),
 				)
 			);
 			if ( $counters ) {

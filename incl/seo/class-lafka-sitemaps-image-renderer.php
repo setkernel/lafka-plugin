@@ -15,7 +15,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-if ( class_exists( 'WP_Sitemaps_Renderer' ) && ! class_exists( 'Lafka_Sitemaps_Image_Renderer' ) ) {
+if ( ! class_exists( 'Lafka_Sitemaps_Image_Renderer' ) ) {
 
 	/**
 	 * Sitemap renderer that also emits image entries.

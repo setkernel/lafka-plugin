@@ -338,7 +338,7 @@ if ( ! class_exists( 'Lafka_CLI_Seed_Demo' ) ) {
 		 * @return void
 		 */
 		private function ensure_wc_pages(): void {
-			if ( class_exists( 'WC_Install' ) && method_exists( 'WC_Install', 'create_pages' ) ) {
+			if ( class_exists( 'WC_Install' ) ) {
 				WC_Install::create_pages();
 				WP_CLI::log( 'Ensured WooCommerce pages (shop/cart/checkout/my-account).' );
 			}

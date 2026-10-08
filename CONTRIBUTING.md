@@ -58,7 +58,7 @@ The plugin currently ships no automated test suite.
 ## Coding standards
 
 - WordPress-Extra (PHPCS) with short arrays.
-- Min PHP 8.1, min WP 6.6, min WC 9.5.
+- Version floors (PHP / WordPress / WooCommerce): see [COMPATIBILITY.md](COMPATIBILITY.md), the single source. Write against the floors — no `version_compare()` branches or polyfills for older versions.
 - Text domain: `lafka-plugin`.
 - All public-by-default AJAX (`_nopriv_`) handlers MUST: verify nonce, sanitize input, escape output, gate by capability where appropriate.
 - All `$wpdb` queries MUST use `prepare()` or be string-literal.

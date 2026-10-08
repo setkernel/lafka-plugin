@@ -170,9 +170,7 @@ if ( ! class_exists( 'LAFKA_Review_Prompt_Email' ) ) {
 		 * @return string
 		 */
 		public function get_content_plain(): string {
-			return function_exists( 'wp_strip_all_tags' )
-				? wp_strip_all_tags( $this->get_content_html() )
-				: strip_tags( $this->get_content_html() );
+			return wp_strip_all_tags( $this->get_content_html() );
 		}
 	}
 }

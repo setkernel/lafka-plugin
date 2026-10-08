@@ -1,9 +1,9 @@
 === Lafka Plugin — Commission-Free Restaurant Ordering for WooCommerce ===
 Contributors: setkernel
 Tags: restaurant, food ordering, delivery, woocommerce, online ordering
-Requires at least: 6.6
+Requires at least: 7.0
 Tested up to: 7.1
-Requires PHP: 8.1
+Requires PHP: 8.3
 Requires Plugins: woocommerce
 Stable tag: 10.3.0
 License: GPLv2 or later

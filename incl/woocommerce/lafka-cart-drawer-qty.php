@@ -177,7 +177,7 @@ if ( ! function_exists( 'lafka_cart_drawer_qty_endpoint' ) ) {
 	 * @return string
 	 */
 	function lafka_cart_drawer_qty_endpoint( string $action ): string {
-		if ( class_exists( 'WC_AJAX' ) && method_exists( 'WC_AJAX', 'get_endpoint' ) ) {
+		if ( class_exists( 'WC_AJAX' ) ) {
 			return (string) WC_AJAX::get_endpoint( $action );
 		}
 

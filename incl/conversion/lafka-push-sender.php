@@ -889,13 +889,7 @@ if ( ! function_exists( 'lafka_push_generate_job_id' ) ) {
 	 * Generate an opaque, option-name-safe broadcast job id.
 	 */
 	function lafka_push_generate_job_id(): string {
-		if ( function_exists( 'wp_generate_uuid4' ) ) {
-			return (string) wp_generate_uuid4();
-		}
-		if ( function_exists( 'random_bytes' ) ) {
-			return bin2hex( random_bytes( 8 ) );
-		}
-		return (string) uniqid( '', true );
+		return (string) wp_generate_uuid4();
 	}
 }
 

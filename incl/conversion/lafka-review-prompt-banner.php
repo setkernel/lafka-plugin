@@ -311,10 +311,6 @@ if ( ! function_exists( 'lafka_review_banner_register_rest_routes' ) ) {
 	 * @return void
 	 */
 	function lafka_review_banner_register_rest_routes(): void {
-		if ( ! function_exists( 'register_rest_route' ) ) {
-			return;
-		}
-
 		register_rest_route(
 			'lafka/v1',
 			'/review-banner-dismiss',
