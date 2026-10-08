@@ -348,9 +348,13 @@ if ( ! class_exists( 'Lafka_Promotions' ) ) {
 				return;
 			}
 
-			// Reset everything and store original prices.
+			// Reset everything and store original prices. Deal lines are already
+			// priced as a deal and never take part in BOGO.
 			$total_quantity = 0;
 			foreach ( $cart->get_cart() as $key => $cart_item ) {
+				if ( class_exists( 'Lafka_Deals' ) && Lafka_Deals::is_deal_line( $cart_item ) ) {
+					continue;
+				}
 				if ( isset( $cart->cart_contents[ $key ]['_bogo_original_price'] ) ) {
 					$cart_item['data']->set_price( $cart->cart_contents[ $key ]['_bogo_original_price'] );
 				} else {
@@ -369,6 +373,9 @@ if ( ! class_exists( 'Lafka_Promotions' ) ) {
 			// Expand into individual units; helper sorts internally.
 			$units = array();
 			foreach ( $cart->get_cart() as $key => $cart_item ) {
+				if ( class_exists( 'Lafka_Deals' ) && Lafka_Deals::is_deal_line( $cart_item ) ) {
+					continue;
+				}
 				$price = (float) $cart->cart_contents[ $key ]['_bogo_original_price'];
 				for ( $i = 0; $i < $cart_item['quantity']; $i++ ) {
 					$units[] = array(

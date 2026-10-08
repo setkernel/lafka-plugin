@@ -161,6 +161,9 @@ if ( ! function_exists( 'lafka_combo_deal_cart_items' ) ) {
 			return $out;
 		}
 		foreach ( WC()->cart->get_cart() as $key => $item ) {
+			if ( class_exists( 'Lafka_Deals' ) && Lafka_Deals::is_deal_line( $item ) ) {
+				continue; // Already priced as a deal.
+			}
 			$pid           = (int) ( $item['product_id'] ?? 0 );
 			$qty           = max( 1, (int) ( $item['quantity'] ?? 1 ) );
 			$line_subtotal = isset( $item['line_subtotal'] ) ? (float) $item['line_subtotal'] : 0.0;

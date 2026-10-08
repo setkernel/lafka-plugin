@@ -139,7 +139,7 @@ if ( ! class_exists( 'Lafka_Engine_Store_Api' ) ) {
 				return $data;
 			}
 
-			$post_data               = $this->map_selections_to_post_data( $owner_id, $selections );
+			$post_data               = self::map_selections_to_post_data( $owner_id, $selections );
 			$this->pending_post_data = $post_data;
 
 			$addons = $this->build_addons( $owner_id, $post_data );
@@ -243,7 +243,7 @@ if ( ! class_exists( 'Lafka_Engine_Store_Api' ) ) {
 		 * @param array<string, mixed> $selections field-name → submitted value.
 		 * @return array
 		 */
-		public function map_selections_to_post_data( int $owner_id, array $selections ): array {
+		public static function map_selections_to_post_data( int $owner_id, array $selections ): array {
 			$post_data = array( 'add-to-cart' => $owner_id );
 
 			foreach ( $selections as $field => $value ) {

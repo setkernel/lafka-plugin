@@ -1,0 +1,264 @@
+/**
+ * Deal builder (Lafka_Deals_Builder). Structure and states only: colours,
+ * radii, type and spacing come from the active theme's Lafka tokens, with
+ * neutral fallbacks for any other theme.
+ */
+
+.lafka-deal {
+	--lafka-deal-accent: var(--lafka-color-accent-500, #b0271d);
+	--lafka-deal-on-accent: var(--lafka-color-accent-contrast, #fff);
+	--lafka-deal-border: var(--lafka-color-border-default, #d9d4cc);
+	--lafka-deal-surface: var(--lafka-color-surface-raised, #fff);
+	--lafka-deal-muted: var(--lafka-color-text-secondary, #5c564f);
+	--lafka-deal-radius: var(--lafka-radius-md, 12px);
+
+	display: grid;
+	gap: var(--lafka-space-3, 12px);
+	margin: var(--lafka-space-4, 16px) 0;
+}
+
+.lafka-deal__intro {
+	margin: 0;
+	color: var(--lafka-deal-muted);
+}
+
+.lafka-deal__slots {
+	display: grid;
+	gap: var(--lafka-space-2, 8px);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.lafka-deal-slot {
+	border: 1px solid var(--lafka-deal-border);
+	border-radius: var(--lafka-deal-radius);
+	background: var(--lafka-deal-surface);
+}
+
+.lafka-deal-slot.is-chosen {
+	border-color: var(--lafka-deal-accent);
+}
+
+.lafka-deal-slot__head {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	gap: 2px var(--lafka-space-3, 12px);
+	align-items: center;
+	width: 100%;
+	min-height: 56px;
+	padding: var(--lafka-space-3, 12px) var(--lafka-space-4, 16px);
+	border: 0;
+	background: none;
+	color: inherit;
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+}
+
+.lafka-deal-slot__num {
+	display: grid;
+	grid-row: span 2;
+	place-items: center;
+	width: 32px;
+	height: 32px;
+	border-radius: 50%;
+	background: var(--lafka-color-surface-muted, #f3efe9);
+	font-weight: 700;
+}
+
+.lafka-deal-slot.is-chosen .lafka-deal-slot__num {
+	background: var(--lafka-deal-accent);
+	color: var(--lafka-deal-on-accent);
+}
+
+.lafka-deal-slot__label {
+	font-weight: 700;
+}
+
+.lafka-deal-slot__optional,
+.lafka-deal-slot__choice {
+	color: var(--lafka-deal-muted);
+	font-weight: 400;
+}
+
+.lafka-deal-slot__body {
+	padding: 0 var(--lafka-space-4, 16px) var(--lafka-space-4, 16px);
+}
+
+.lafka-deal-slot__locks {
+	margin: 0 0 var(--lafka-space-2, 8px);
+}
+
+.lafka-deal-slot__lock {
+	display: inline-block;
+	padding: 2px 10px;
+	border-radius: var(--lafka-radius-pill, 999px);
+	background: var(--lafka-color-surface-muted, #f3efe9);
+	font-size: var(--lafka-font-size-sm, 0.875rem);
+}
+
+.lafka-deal-slot__pool {
+	display: grid;
+	gap: var(--lafka-space-2, 8px);
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+.lafka-deal-option {
+	margin: 0;
+	font: inherit;
+	letter-spacing: normal;
+	text-transform: none;
+	display: grid;
+	grid-template-columns: auto auto 1fr auto;
+	gap: var(--lafka-space-3, 12px);
+	align-items: center;
+	min-height: 48px;
+	padding: var(--lafka-space-2, 8px) var(--lafka-space-3, 12px);
+	border: 1px solid var(--lafka-deal-border);
+	border-radius: var(--lafka-radius-sm, 8px);
+	cursor: pointer;
+}
+
+.lafka-deal-option:focus-within {
+	outline: 2px solid var(--lafka-color-border-focus, #1a5fb4);
+	outline-offset: 2px;
+}
+
+.lafka-deal-option:has(input:checked) {
+	border-color: var(--lafka-deal-accent);
+	box-shadow: 0 0 0 1px var(--lafka-deal-accent);
+}
+
+.lafka-deal-option input {
+	accent-color: var(--lafka-deal-accent);
+}
+
+.lafka-deal-option__img {
+	width: 48px;
+	height: 48px;
+	border-radius: var(--lafka-radius-sm, 8px);
+	object-fit: cover;
+}
+
+.lafka-deal-option--none {
+	grid-template-columns: auto 1fr;
+}
+
+.lafka-deal-option__text {
+	display: grid;
+	min-width: 0;
+}
+
+.lafka-deal-option__name {
+	font-family: var(--lafka-font-family-body, inherit);
+	font-size: var(--lafka-font-size-body, 1rem);
+	font-weight: 600;
+	text-transform: none;
+}
+
+.lafka-deal-option__desc {
+	font-family: var(--lafka-font-family-body, inherit);
+	overflow: hidden;
+	color: var(--lafka-deal-muted);
+	font-size: var(--lafka-font-size-sm, 0.875rem);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.lafka-deal-option__premium {
+	color: var(--lafka-deal-muted);
+	font-size: var(--lafka-font-size-sm, 0.875rem);
+	white-space: nowrap;
+}
+
+.lafka-deal-slot__options:not(:empty) {
+	display: grid;
+	gap: var(--lafka-space-3, 12px);
+	margin-top: var(--lafka-space-4, 16px);
+	padding-top: var(--lafka-space-4, 16px);
+	border-top: 1px solid var(--lafka-deal-border);
+}
+
+.lafka-deal-slot__options[aria-busy="true"] {
+	min-height: 48px;
+	opacity: 0.5;
+}
+
+.lafka-deal-slot__attr label {
+	display: grid;
+	gap: 4px;
+	font-weight: 600;
+}
+
+.lafka-deal-slot__attr select {
+	min-height: 44px;
+}
+
+.lafka-deal-slot__next {
+	justify-self: start;
+	min-height: 44px;
+}
+
+.lafka-deal__error {
+	margin: 0;
+	padding: var(--lafka-space-2, 8px) var(--lafka-space-3, 12px);
+	border-radius: var(--lafka-radius-sm, 8px);
+	background: var(--lafka-color-error-bg, #fdecea);
+	color: var(--lafka-color-error, #a1271b);
+}
+
+/* The total and the button stay in reach while the customer scrolls the list. */
+.lafka-deal__bar {
+	display: flex;
+	position: sticky;
+	bottom: 0;
+	z-index: 5;
+	gap: var(--lafka-space-3, 12px);
+	align-items: center;
+	padding: var(--lafka-space-3, 12px) 0;
+	background: var(--lafka-color-surface-page, #fff);
+	box-shadow: 0 -1px 0 var(--lafka-deal-border);
+}
+
+.lafka-deal__total {
+	display: grid;
+	flex: 0 0 auto;
+}
+
+.lafka-deal__price {
+	font-size: var(--lafka-font-size-lg, 1.25rem);
+	font-weight: 700;
+}
+
+.lafka-deal__note {
+	color: var(--lafka-deal-muted);
+	font-size: var(--lafka-font-size-sm, 0.875rem);
+}
+
+.lafka-deal__add {
+	flex: 1;
+	min-height: 48px;
+	padding: 12px 24px;
+	border: 0;
+	border-radius: var(--lafka-radius-button, 999px);
+	background: var(--lafka-deal-accent);
+	color: var(--lafka-deal-on-accent);
+	font: inherit;
+	font-weight: 700;
+	cursor: pointer;
+}
+
+.lafka-deal__add:disabled {
+	background: var(--lafka-disabled-bg, #e7e2da);
+	color: var(--lafka-disabled-text, #6b655d);
+	cursor: not-allowed;
+}
+
+.lafka-deal-qty {
+	display: inline-block;
+	min-width: 2em;
+	text-align: center;
+}
