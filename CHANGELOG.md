@@ -7,6 +7,64 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
 
 ## [Unreleased]
 
+### Settings, data and wiring
+- **Plugin settings are plugin options, not theme_mods.** Abandoned-cart, web-push, review-request,
+  product-page, checkout (delivery-quote guard, short pickup checkout, cash-on-delivery wording),
+  upsell-pick and SEO (default locale, share image) settings keep their Customizer controls but are
+  stored as options (`incl/settings/lafka-settings.php`: `lafka_settings_keys()`, the one reader
+  `lafka_setting()`), so a theme or child-theme switch no longer loses them and uninstall finds them.
+  A one-time migration (`lafka_settings_maybe_migrate()`, version `lafka_settings_version`) copies the
+  old theme_mods of the active theme and its parent across and removes them; an option that already
+  exists wins. The module registry reads the options. The dual option-then-theme_mod reads of the
+  promotion knobs are gone. A deprecated `theme_mod_<key>` filter keeps child code that still calls
+  `get_theme_mod()` on a moved setting working until the next major version.
+- **VAPID keys**: created on the server the first time push is on, stored as options (the private key
+  is never autoloaded and is no longer in the Customizer; wp-config constants still take precedence).
+  WooCommerce → Push notifications shows the public key and a "Create new keys" button (existing
+  subscribers must subscribe again). `GET /push/vapid-key` now also honours the constants.
+- **Consent**: one `lafka_has_consent( 'analytics'|'ads' )` (WP Consent API, else the banner cookie,
+  else the configured default) for Insights and the server-side conversions, and one cookie-name
+  source (`lafka_consent_cookie_name()`, passed to the mirror script as `window.lafkaConsentCookies`).
+  Insights in `consent_required` mode now measures with a WP Consent API plugin or default-granted
+  consent too.
+- **One schema registry** (`Lafka_Schema`, `incl/tools/class-lafka-schema.php`) declares the five custom
+  tables (SQL, version, version option, module gate); one upgrader serves activation, the self-heal
+  and uninstall. Abandoned carts gain indexes on `order_id`, `created_at` and
+  `(recovery_sent_at, order_id, last_seen_at)` (table version 1.1.0); push audience queries use
+  `user_id IN (...)` instead of `FIND_IN_SET`.
+- `lafka_tracking` (holds the GA4 api secret and the Meta token) is no longer autoloaded.
+- **Uninstall** also removes the moved settings, the tip options, the Lafka widget instances, every
+  Lafka wp-cron event (review email, push batch, IndexNow and Insights fallbacks) and every Action
+  Scheduler action of the `lafka` groups; the dead food-menu entries are gone.
+- The contact-page FAQ is business data: WooCommerce → Settings → Restaurant → Contact FAQ
+  (`lafka_contact_faq_items()`, read by the theme, the FAQPage schema and /llms.txt). The deals category
+  is `lafka_get_deals_category_id()` (WooCommerce → Settings → Restaurant → Promotions, else a category
+  named deals, combos or specials). The free-delivery threshold has one setting (the Customizer
+  duplicate migrates into it). Default locale and default share image are in Restaurant → Search & AI;
+  the per-page share image field is in the SEO box.
+- `lafka_get_restaurant_info()` gains `phone_tel` (digits and "+", for `tel:` links).
+- Real reviews only: `lafka_get_store_reviews()` / `lafka_get_store_review_summary()` read approved
+  WooCommerce product reviews for the theme's reviews band.
+- Kitchen display customer emails go out when an order ENTERS accepted, preparing, ready or rejected,
+  from any status, once per status per order (not per transition pair).
+- The config bundle has a `settings` section (non-secret plugin settings); old bundles that carried
+  them in `theme_mods` import into the options.
+- Site Health lists default-on modules (add-ons, Deals, Order tracking) as Enabled.
+- Hooks (since 10.4.0): `lafka_home_hero_image_id`, `lafka_deals_category_slugs`,
+  `lafka_deals_category_id`.
+
+### Removed
+- The product promo tooltips, the custom product pop-up and the category-description position
+  (read from `lafka` keys nothing could set; unused on the live store), with their `wpml-config.xml`
+  entries; the win-back email field at checkout (it saved addresses nothing used) and its setting;
+  the per-post `lafka_show_share` read; `lafka_input_get_text_list()`; the legacy
+  `lafka['enable_security_headers']` read (migrated to `lafka_security_options`); the stale seeded
+  `top_bar_message_phone`; `lafka_server_consent()` (use `lafka_has_consent()`); the homepage-hero
+  Customizer field of the legacy Restaurant Info panel (the theme's hero image is read through the
+  `lafka_home_hero_image_id` filter).
+- The appearance meta boxes (page layout, header style, page subtitle, top menu, sidebars, product
+  video, gallery type) moved to the theme; the meta keys are unchanged.
+
 ### Removed
 - The kitchen display's customer progress bar and its `lafka_kds_customer_status` AJAX
   action: Order tracking replaces them (the Customer Poll Interval setting still sets the poll).

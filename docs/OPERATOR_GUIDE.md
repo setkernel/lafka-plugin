@@ -4,8 +4,8 @@ How to run a store on the Lafka plugin: find what went wrong, set up local
 search, keep pages fast, and understand what the store tracks. Requirements and
 compatibility are in the [README](../README.md#requirements--compatibility).
 
-Contents: [Diagnostics](#diagnostics) · [Local SEO](#local-seo) ·
-[Performance](#performance) · [Tracking](#tracking)
+Contents: [Diagnostics](#diagnostics) · [Where settings live](#where-settings-live) ·
+[Local SEO](#local-seo) · [Performance](#performance) · [Tracking](#tracking)
 
 ## Diagnostics
 
@@ -279,6 +279,31 @@ the fees for a few real addresses, then disable the old method and enable the ne
 the zone (and deactivate the old plugin when you are happy). Check the DRS origin address
 is the same place as your store location.
 
+## Where settings live
+
+The Customizer controls under **Lafka — Analytics, Push, Reviews, Abandoned cart, Checkout, PDP,
+Upsell** and the search defaults are saved as plugin options, not per-theme settings: switching
+theme or child theme keeps them, and **Plugins → Delete** with "Remove all data on uninstall" on
+removes them. Sites on older versions are moved automatically, once, the first time they load.
+
+| What | Where |
+|---|---|
+| Restaurant facts, hours, social profiles, contact-page FAQ, free-delivery minimum, deals category, tips, default locale and share image | WooCommerce → Settings → **Restaurant** |
+| Abandoned-cart email, push toggle and prompt, review requests, checkout switches | Customizer panels named above |
+| Colours, fonts, home-page text, footer and contact-page text, photos | Customizer (theme) |
+| Web-push signing keys | Created for you; WooCommerce → **Push notifications** shows the public key and "Create new keys" (people who subscribed before must allow notifications again) |
+| Which features are on | Lafka → **Modules** (Site Health shows the same state) |
+
+The footer's social links come from **Restaurant → Social Profiles** (Facebook, Instagram, TikTok,
+X, Pinterest and LinkedIn; other listings such as Yelp are not shown as social links). The
+home page's reviews band shows your customers' real WooCommerce product reviews (4 stars and up)
+and disappears until there are some.
+
+Kitchen display emails ("accepted", "preparing", "ready", "rejected") are sent when an order enters
+that status, from whichever status it came, once per status per order. Orders waiting for payment
+(on hold) are not on the kitchen board; mark one Accepted from the Orders screen once it has been
+paid.
+
 ## Local SEO
 
 Goal: rank in the Google Map Pack and local results for "[cuisine] near me" and
@@ -513,13 +538,13 @@ Module `insights`, off by default. Enable under **Lafka → Modules**, read unde
   share whose numerator could exceed its denominator shows "—". All placed orders
   by WooCommerce Order Attribution are listed separately and never divided by
   visits.
-- **Consent** (Customizer → Lafka — Analytics → Insights, theme_mod
+- **Consent** (Customizer → Lafka — Analytics → Insights, stored in the `lafka_tracking` option as
   `lafka_insights_consent_mode`):
 
   | Mode | Behaviour |
   |---|---|
   | `aggregate` (default) | Cookieless; skips browsers sending Global Privacy Control or Do Not Track; needs no cookie banner. |
-  | `consent_required` | Nothing is measured until the visitor allows analytics in the consent banner, which mirrors the choice into the first-party `lafka_consent` cookie (`assets/js/lafka-consent-mirror.js`) and turns on WooCommerce Order Attribution. |
+  | `consent_required` | Nothing is measured until the visitor allows analytics in the consent banner, which mirrors the choice into the first-party `lafka_consent` cookie (`assets/js/lafka-consent-mirror.js`; server code asks `lafka_has_consent( 'analytics' )`, which also honours a WP Consent API plugin) and turns on WooCommerce Order Attribution. |
   | `off` | Collects nothing; reports stay readable. |
 
   A paragraph is added to Settings → Privacy → Policy guide.
