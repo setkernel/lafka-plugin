@@ -707,6 +707,15 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/cli/class-lafka-config-cli-comm
 require_once plugin_dir_path( __FILE__ ) . 'incl/cli/class-lafka-products-cli-command.php';
 
 /**
+ * WP-CLI: copy WooCommerce Distance Rate Shipping instances to Lafka's own
+ * distance-priced delivery (disabled, to compare). Self-gates on WP_CLI.
+ *
+ *   wp lafka shipping migrate-drs
+ *   wp lafka shipping migrate-drs --apply
+ */
+require_once plugin_dir_path( __FILE__ ) . 'incl/cli/class-lafka-shipping-cli-command.php';
+
+/**
  * WP-CLI: provision a deterministic demo restaurant for e2e/CI + preset QA (NX1-09a).
  * The class is always defined; only the command registration self-gates on
  * WP_CLI.
