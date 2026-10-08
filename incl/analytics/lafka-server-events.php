@@ -13,9 +13,8 @@
  *   - GA4: a purchase only when the thank-you page never emitted one (GA4 has
  *     no browser/server dedupe), keyed to the visitor's GA client id.
  *
- * Consent: a snapshot taken at checkout from the mirrored consent cookies
- * (`lafka_consent`, `lafka_consent_ads`), or the configured defaults when
- * there is no banner. Nothing is sent without the matching consent.
+ * Consent: a snapshot taken at checkout through lafka_has_consent() (the
+ * mirrored banner cookies, a WP Consent API plugin, or the configured defaults). Nothing is sent without the matching consent.
  *
  * Settings live in the `lafka_tracking` option (Customizer → Lafka —
  * Analytics → direct IDs): `lafka_meta_capi_token`, `lafka_ga4_api_secret`.
@@ -67,30 +66,6 @@ if ( ! function_exists( 'lafka_server_events_any_ready' ) ) {
 	}
 }
 
-if ( ! function_exists( 'lafka_server_consent' ) ) {
-	/**
-	 * Consent for a server-side send: the visitor's mirrored banner decision
-	 * when there is one, otherwise the configured default.
-	 *
-	 * @param string $category 'analytics' or 'ads' (ad_storage and ad_user_data).
-	 * @return bool
-	 */
-	function lafka_server_consent( string $category ): bool {
-		if ( function_exists( 'lafka_consent_api_active' ) && lafka_consent_api_active() && function_exists( 'wp_has_consent' ) ) {
-			return (bool) wp_has_consent( 'ads' === $category ? 'marketing' : 'statistics' );
-		}
-		$cookie = 'ads' === $category ? 'lafka_consent_ads' : 'lafka_consent';
-		if ( lafka_analytics_banner_enabled() && isset( $_COOKIE[ $cookie ] ) ) {
-			return '1' === sanitize_text_field( wp_unslash( $_COOKIE[ $cookie ] ) );
-		}
-		$defaults = lafka_analytics_consent_defaults();
-		if ( 'ads' === $category ) {
-			return 'granted' === $defaults['ad_storage'] && 'granted' === $defaults['ad_user_data'];
-		}
-		return 'granted' === $defaults['analytics_storage'];
-	}
-}
-
 if ( ! function_exists( 'lafka_server_events_capture' ) ) {
 	/**
 	 * At checkout, store what a later server-side send needs and cannot read
@@ -121,8 +96,8 @@ if ( ! function_exists( 'lafka_server_events_capture' ) ) {
 		$order->update_meta_data(
 			'_lafka_server_events',
 			array(
-				'analytics' => lafka_server_consent( 'analytics' ),
-				'ads'       => lafka_server_consent( 'ads' ),
+				'analytics' => lafka_has_consent( 'analytics' ),
+				'ads'       => lafka_has_consent( 'ads' ),
 				'ga_cid'    => $client_id,
 				'fbp'       => $cookie( '_fbp' ),
 				'fbc'       => $cookie( '_fbc' ),

@@ -99,11 +99,28 @@ if ( ! function_exists( 'lafka_tracking_maybe_migrate' ) ) {
 				$settings[ $key ] = (string) $value;
 			}
 		}
-		add_option( 'lafka_tracking', $settings );
+		add_option( 'lafka_tracking', $settings, '', false );
 		foreach ( array_keys( $settings ) as $key ) {
 			remove_theme_mod( $key );
 		}
 	}
+}
+
+if ( ! function_exists( 'lafka_tracking_keep_out_of_autoload' ) ) {
+	/**
+	 * The tracking option holds secrets (GA4 api_secret, Meta CAPI token), so
+	 * it is never autoloaded: it would be read into memory on every request,
+	 * including those that never need it. Applied when the option is created
+	 * (the Customizer's first save) and, once, to an existing row by
+	 * lafka_settings_maybe_migrate().
+	 *
+	 * @since 10.4.0
+	 * @return void
+	 */
+	function lafka_tracking_keep_out_of_autoload(): void {
+		wp_set_option_autoload( 'lafka_tracking', false );
+	}
+	add_action( 'add_option_lafka_tracking', 'lafka_tracking_keep_out_of_autoload' );
 }
 
 if ( ! function_exists( 'lafka_analytics_gtm_id' ) ) {
@@ -209,6 +226,50 @@ if ( ! function_exists( 'lafka_consent_api_active' ) ) {
 	}
 }
 
+if ( ! function_exists( 'lafka_consent_cookie_name' ) ) {
+	/**
+	 * Name of the first-party cookie the consent banner mirrors a decision
+	 * into for server-side code. The one place the names are written; the
+	 * mirror script receives them from here.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param string $category 'analytics' or 'ads' (ad_storage and ad_user_data).
+	 * @return string
+	 */
+	function lafka_consent_cookie_name( string $category ): string {
+		return 'ads' === $category ? 'lafka_consent_ads' : 'lafka_consent';
+	}
+}
+
+if ( ! function_exists( 'lafka_has_consent' ) ) {
+	/**
+	 * The one answer to "may we measure or send this?" for server-side code
+	 * (Insights, server-side conversions): a consent plugin's decision when
+	 * one manages consent (WP Consent API), else the visitor's mirrored banner
+	 * decision, else the configured default.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param string $category 'analytics' or 'ads' (ad_storage and ad_user_data).
+	 * @return bool
+	 */
+	function lafka_has_consent( string $category ): bool {
+		if ( lafka_consent_api_active() && function_exists( 'wp_has_consent' ) ) {
+			return (bool) wp_has_consent( 'ads' === $category ? 'marketing' : 'statistics' );
+		}
+		$cookie = lafka_consent_cookie_name( $category );
+		if ( lafka_analytics_banner_enabled() && isset( $_COOKIE[ $cookie ] ) ) {
+			return '1' === sanitize_text_field( wp_unslash( $_COOKIE[ $cookie ] ) );
+		}
+		$defaults = lafka_analytics_consent_defaults();
+		if ( 'ads' === $category ) {
+			return 'granted' === $defaults['ad_storage'] && 'granted' === $defaults['ad_user_data'];
+		}
+		return 'granted' === $defaults['analytics_storage'];
+	}
+}
+
 if ( ! function_exists( 'lafka_analytics_needs_consent_banner' ) ) {
 	/**
 	 * Whether anything on the page needs the visitor's consent decision: a
@@ -264,7 +325,11 @@ if ( ! function_exists( 'lafka_emit_consent_mirror' ) ) {
 		$file = dirname( __DIR__, 2 ) . '/assets/js/lafka-consent-mirror.min.js';
 		$code = (string) lafka_read_local_file( $file );
 		if ( '' !== $code ) {
-			wp_print_inline_script_tag( $code, array( 'id' => 'lafka-consent-mirror' ) );
+			$names = array(
+				'analytics' => lafka_consent_cookie_name( 'analytics' ),
+				'ads'       => lafka_consent_cookie_name( 'ads' ),
+			);
+			wp_print_inline_script_tag( 'window.lafkaConsentCookies=' . wp_json_encode( $names ) . ';' . $code, array( 'id' => 'lafka-consent-mirror' ) );
 			echo "\n";
 		}
 	}

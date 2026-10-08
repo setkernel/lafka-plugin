@@ -8,8 +8,9 @@
  * banner already makes — from the head replay for a returning visitor and on
  * every Accept / Reject / Save — and mirrors the choice into:
  *   - first-party cookies (180 days) the server reads, since PHP cannot see
- *     localStorage: `lafka_consent` (analytics, '1' / '0') and
- *     `lafka_consent_ads` (ad_storage and ad_user_data, '1' / '0');
+ *     localStorage (analytics and ad_storage + ad_user_data, '1' / '0'; the
+ *     names are lafka_consent_cookie_name() in PHP, passed in as
+ *     window.lafkaConsentCookies);
  *   - WooCommerce Order Attribution, via wc_order_attribution.setOrderTracking().
  */
 (function (w) {
@@ -20,10 +21,16 @@
 		w.document.cookie = name + '=' + (granted ? '1' : '0') + ';path=/;max-age=15552000;SameSite=Lax' + (w.location.protocol === 'https:' ? ';Secure' : '');
 	}
 
+	// Cookie names come from PHP (lafka_consent_cookie_name()) in window.lafkaConsentCookies.
+	const names = w.lafkaConsentCookies;
+
 	function mirror(state) {
+		if (!names) {
+			return;
+		}
 		try {
-			setCookie('lafka_consent', state.analytics_storage);
-			setCookie('lafka_consent_ads', state.ad_storage && state.ad_user_data);
+			setCookie(names.analytics, state.analytics_storage);
+			setCookie(names.ads, state.ad_storage && state.ad_user_data);
 		} catch {
 			// Cookies blocked: server-side events simply stay off.
 		}

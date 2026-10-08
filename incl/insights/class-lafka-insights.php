@@ -40,8 +40,6 @@ if ( ! class_exists( 'Lafka_Insights' ) ) {
 		const MODE_CONSENT   = 'consent_required';
 		const MODE_OFF       = 'off';
 
-		/** First-party cookie the consent banner mirrors analytics consent into. */
-		const CONSENT_COOKIE = 'lafka_consent';
 
 		/** First local day (Y-m-d) of the current collection period. */
 		const SINCE_OPTION = 'lafka_insights_collecting_since';
@@ -144,7 +142,6 @@ if ( ! class_exists( 'Lafka_Insights' ) ) {
 			self::$active = true;
 			self::load();
 
-			add_action( 'plugins_loaded', array( 'Lafka_Insights_DB', 'maybe_install' ), 20 );
 			add_action( self::NIGHTLY_HOOK, array( 'Lafka_Insights_Rollup', 'run_nightly' ) );
 			add_action( self::WEEKLY_HOOK, array( __CLASS__, 'send_weekly_email' ) );
 			add_action( 'admin_init', array( 'Lafka_Insights_Scheduler', 'ensure_scheduled' ) );
@@ -376,7 +373,8 @@ if ( ! class_exists( 'Lafka_Insights' ) ) {
 				. __( 'Visits are counted without cookies. To tell one visit from another on the same day, the site combines your IP address and browser type with a secret key that changes every day and is then deleted; your IP address is never stored and the result cannot be linked back to you or to your visits on other days. Only the page type, device class (phone, tablet or desktop), the referring website and campaign tags, and the steps reached are kept, for at most 35 days; daily totals without any identifier are kept for up to 25 months.', 'lafka-plugin' ) . "\n\n"
 				. __( 'Because no personal data is stored, there is nothing to export or erase for a data request. Browsers that send a Global Privacy Control or Do Not Track signal are not measured.', 'lafka-plugin' );
 			if ( self::MODE_CONSENT === self::consent_mode() ) {
-				$text .= "\n\n" . __( 'Measurement only starts after you allow analytics in the cookie banner; your choice is remembered in a first-party cookie named lafka_consent.', 'lafka-plugin' );
+				/* translators: %s: name of the first-party cookie that remembers the choice. */
+				$text .= "\n\n" . sprintf( __( 'Measurement only starts after you allow analytics in the cookie banner; your choice is remembered in a first-party cookie named %s.', 'lafka-plugin' ), lafka_consent_cookie_name( 'analytics' ) );
 			}
 			return $text;
 		}

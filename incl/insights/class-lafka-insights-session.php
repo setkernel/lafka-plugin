@@ -279,20 +279,9 @@ if ( ! class_exists( 'Lafka_Insights_Session' ) ) {
 		}
 
 		/**
-		 * True when the consent banner recorded an analytics grant (it mirrors
-		 * the decision into the first-party `lafka_consent` cookie).
-		 *
-		 * @return bool
-		 */
-		public static function has_consent_cookie(): bool {
-			$name = Lafka_Insights::CONSENT_COOKIE;
-			return isset( $_COOKIE[ $name ] ) && '1' === sanitize_text_field( wp_unslash( $_COOKIE[ $name ] ) );
-		}
-
-		/**
 		 * Whether the current request may be measured at all: not a bot, not
 		 * staff, and allowed by the consent mode (aggregate honours GPC/DNT,
-		 * consent_required needs the consent cookie, off measures nothing).
+		 * consent_required needs analytics consent (lafka_has_consent), off measures nothing).
 		 *
 		 * @return bool
 		 */
@@ -307,7 +296,7 @@ if ( ! class_exists( 'Lafka_Insights_Session' ) ) {
 				case Lafka_Insights::MODE_AGGREGATE:
 					return ! self::has_privacy_signal();
 				case Lafka_Insights::MODE_CONSENT:
-					return self::has_consent_cookie();
+					return function_exists( 'lafka_has_consent' ) && lafka_has_consent( 'analytics' );
 				default:
 					return false;
 			}
