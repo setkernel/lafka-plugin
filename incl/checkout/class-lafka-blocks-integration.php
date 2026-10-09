@@ -54,6 +54,15 @@ if ( ! class_exists( 'Lafka_Blocks_Integration' )
 		const SCRIPT_HANDLE = 'lafka-blocks-checkout';
 
 		/**
+		 * Checkout blocks that get the Delivery wording (see labels()).
+		 */
+		const LABELLED_BLOCKS = array(
+			'woocommerce/checkout-shipping-method-block',
+			'woocommerce/checkout-shipping-address-block',
+			'woocommerce/checkout-shipping-methods-block',
+		);
+
+		/**
 		 * Hook the cart + checkout block integration registries. Called once from
 		 * the plugin bootstrap; each registry only fires when its block renders.
 		 *
@@ -62,7 +71,8 @@ if ( ! class_exists( 'Lafka_Blocks_Integration' )
 		public static function init() {
 			add_action( 'woocommerce_blocks_cart_block_registration', array( __CLASS__, 'register_integration' ) );
 			add_action( 'woocommerce_blocks_checkout_block_registration', array( __CLASS__, 'register_integration' ) );
-			foreach ( array_keys( self::labels() ) as $block_name ) {
+			// The names only: the translated labels are read at render time.
+			foreach ( self::LABELLED_BLOCKS as $block_name ) {
 				add_filter( 'render_block_' . $block_name, array( __CLASS__, 'label_block' ), 10, 2 );
 			}
 		}
