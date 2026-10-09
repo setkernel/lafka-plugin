@@ -15,6 +15,10 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
   (cart-extensions update `lafka` → `quote_delivery`); a cached address is priced at once, and the classic checkout
   is unchanged. The method also only looks up a destination the quote guard calls complete (street + postcode, or
   what the country needs) even when the guard is switched off. New: cart extension field `delivery_quote_pending`.
+- Buy 1, get 1 charged a cent more than it said: two $22.99 items showed "You save $11.50" next to a $34.49 line
+  (the half-cent saving was rounded one way for the label and the other way in the line). The saving is now rounded
+  once and the line is the original total less it ($34.48), on the cart, the checkout and the order. New:
+  `Lafka_Promotions::savings()`.
 - WooCommerce's Completed order email told a pickup customer "Your order from … is on its way!" / "Good things are
   heading your way!". For a pickup order the plugin now supplies "Your order from {site_title} is complete" /
   "Thank you for your order. Enjoy your meal!" through WooCommerce's email filters, only while the subject and

@@ -239,7 +239,24 @@ if ( ! class_exists( 'Lafka_Promotions' ) ) {
 		}
 
 		/**
-		 * Blended per-unit price after discounting `$disc_qty` of `$qty` units.
+		 * What BOGO takes off `$disc_qty` units, rounded to the store's price
+		 * decimals once, so the saving shown and the line charged add up to
+		 * the original price ($45.98 = $34.48 + $11.50, never $34.49 + $11.50).
+		 *
+		 * @since 10.4.0
+		 * @param float|int $orig     Original unit price.
+		 * @param int       $disc_qty Units to discount.
+		 * @return float
+		 */
+		public static function savings( $orig, $disc_qty ): float {
+			$decimals = function_exists( 'wc_get_price_decimals' ) ? wc_get_price_decimals() : 2;
+			// `bogo_discount` is the fraction taken OFF (0.5 = 50% off, 1 = free).
+			return round( (float) $orig * (float) self::knob( 'bogo_discount' ) * max( 0, (int) $disc_qty ), $decimals );
+		}
+
+		/**
+		 * Blended per-unit price after discounting `$disc_qty` of `$qty` units:
+		 * the line's original total less the rounded saving, spread over the units.
 		 *
 		 * @param float|int $orig     Original unit price.
 		 * @param int       $qty      Total units in the line item.
@@ -255,12 +272,7 @@ if ( ! class_exists( 'Lafka_Promotions' ) ) {
 				return $orig;
 			}
 
-			$full_units = $qty - $disc_qty;
-			// `bogo_discount` is the fraction taken OFF (0.5 = 50% off, 1 = free),
-			// so each discounted unit is CHARGED its complement ( 1 - discount ).
-			// This keeps the blended charge reconciled with the cart's displayed
-			// subtotal/savings, which also key off the same fraction-off knob.
-			return ( $full_units * $orig + $disc_qty * $orig * ( 1 - (float) self::knob( 'bogo_discount' ) ) ) / $qty;
+			return ( $orig * $qty - self::savings( $orig, $disc_qty ) ) / $qty;
 		}
 
 		/**
@@ -422,7 +434,7 @@ if ( ! class_exists( 'Lafka_Promotions' ) ) {
 				$qty  = (int) $item['quantity'];
 				$orig = (float) $item['_bogo_original_price'];
 
-				$savings = $orig * (float) self::knob( 'bogo_discount' ) * $disc_qty;
+				$savings = self::savings( $orig, $disc_qty );
 				$blended = self::blended_price( $orig, $qty, $disc_qty );
 
 				$item['data']->set_price( $blended );
