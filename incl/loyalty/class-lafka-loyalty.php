@@ -19,10 +19,10 @@
  *   lafka_loyalty_expiry_months  months without earning or redeeming after which points expire (0 = never)
  *
  * Order meta (the order is the record, HPOS-safe through the CRUD API):
- *   _lafka_loyalty_state   awarded | revoked
- *   _lafka_loyalty_earned  points awarded for this award cycle
- *   _lafka_loyalty_clawed  points taken back so far (including any shortfall)
- *   _lafka_loyalty_cycle   award cycle (a cancelled order that is completed again earns again)
+ *   _lafka_loyalty_state   awarded (completed at least once and standing) | revoked (cancelled / failed)
+ *   _lafka_loyalty_earned  what the order is entitled to now (shown in the completed email)
+ * What the customer holds from an order is the sum of its earn / refund /
+ * cancel / settle ledger rows (Lafka_Loyalty_Ledger::order_net()).
  *
  * @package Lafka\Plugin\Loyalty
  * @since   10.4.0
@@ -138,6 +138,15 @@ if ( ! class_exists( 'Lafka_Loyalty' ) ) {
 		}
 
 		// ---------------------------------------------------------------- earning.
+		//
+		// One rule for every event (completed, cancelled, failed, refunded, a
+		// refund deleted): what the order is ENTITLED to now is compared with
+		// what the customer still HOLDS from it in the ledger, and the
+		// difference is credited or taken back. Points that were already spent
+		// when something had to be taken back stay counted as held, so
+		// cancelling and completing again (in any order, any number of times)
+		// never earns twice, and they are recovered from the customer's next
+		// earnings (settle_debts()).
 
 		/**
 		 * The part of an order's items that earns points: items after
@@ -151,29 +160,49 @@ if ( ! class_exists( 'Lafka_Loyalty' ) ) {
 		}
 
 		/**
-		 * What an order earns on: its items after discounts, less the share
-		 * already refunded (a refund made before the order is completed must
-		 * not earn).
-		 *
-		 * @param WC_Order $order Order.
-		 * @return float
-		 */
-		public static function award_base( $order ): float {
-			return self::earn_base( $order ) * ( 1.0 - self::refunded_share( $order ) );
-		}
-
-		/**
 		 * The share of an order's items refunded so far (0 to 1).
 		 *
 		 * @param WC_Order $order Order.
 		 * @return float
 		 */
 		private static function refunded_share( $order ): float {
+			if ( $order->get_remaining_refund_amount() <= 0 && (float) $order->get_total() > 0 ) {
+				return 1.0;
+			}
 			$share = 0.0;
 			foreach ( $order->get_refunds() as $refund ) {
 				$share += self::refund_share( $refund, $order );
 			}
 			return max( 0.0, min( 1.0, $share ) );
+		}
+
+		/**
+		 * The share of an order's items one refund returns (0 to 1).
+		 *
+		 * A refund of items counts by their value; a refund of only shipping
+		 * or fees counts for nothing; a bare amount counts against the items
+		 * first (a refund typed as an amount is almost always food).
+		 *
+		 * @param WC_Order_Refund $refund Refund.
+		 * @param WC_Order        $order  Order.
+		 * @return float
+		 */
+		private static function refund_share( $refund, $order ): float {
+			$base = self::earn_base( $order );
+			if ( $base <= 0 ) {
+				return 1.0;
+			}
+			$items = 0.0;
+			foreach ( $refund->get_items( 'line_item' ) as $item ) {
+				$items += abs( (float) $item->get_total() );
+			}
+			if ( $items > 0 ) {
+				return min( 1.0, $items / $base );
+			}
+			if ( array() !== $refund->get_items( array( 'shipping', 'fee' ) ) ) {
+				return 0.0;
+			}
+			return min( 1.0, abs( (float) $refund->get_amount() ) / $base );
 		}
 
 		/**
@@ -198,7 +227,86 @@ if ( ! class_exists( 'Lafka_Loyalty' ) ) {
 		}
 
 		/**
-		 * Award an order's points when it is completed.
+		 * What an order is entitled to now: its items after discounts and
+		 * refunds once it has been completed, nothing once it is cancelled or
+		 * failed (or before it is completed).
+		 *
+		 * @param WC_Order $order Order.
+		 * @return int
+		 */
+		public static function entitled( $order ): int {
+			if ( 'awarded' !== $order->get_meta( '_lafka_loyalty_state' ) ) {
+				return 0;
+			}
+			return self::points_for( self::earn_base( $order ) * ( 1.0 - self::refunded_share( $order ) ), $order );
+		}
+
+		/**
+		 * Bring what the customer holds from an order in line with what it is
+		 * entitled to, under the customer's ledger lock.
+		 *
+		 * @param WC_Order $order  Order.
+		 * @param string   $reason Ledger reason for a debit: refund | cancel.
+		 * @return int Points credited (> 0) or taken back (< 0, before clamping).
+		 */
+		private static function reconcile( $order, string $reason ): int {
+			$user_id = (int) $order->get_customer_id();
+			if ( $user_id <= 0 ) {
+				return 0;
+			}
+			/* translators: %s: order number. */
+			$note = sprintf( __( 'Order #%s', 'lafka-plugin' ), $order->get_order_number() );
+			$diff = 0;
+			Lafka_Loyalty_Ledger::locked(
+				$user_id,
+				static function () use ( $order, $user_id, $reason, $note, &$diff ) {
+					$diff = self::entitled( $order ) - Lafka_Loyalty_Ledger::order_net( $order->get_id() );
+					if ( $diff > 0 ) {
+						$result = Lafka_Loyalty_Ledger::add( $user_id, $diff, 'earn', $order->get_id(), null, $note );
+						if ( 'ok' === $result['status'] ) {
+							self::settle_debts( $user_id, $diff, $order->get_id() );
+						}
+					} elseif ( $diff < 0 ) {
+						Lafka_Loyalty_Ledger::add( $user_id, $diff, $reason, $order->get_id(), null, $note, 'clamp' );
+					}
+				}
+			);
+			$order->update_meta_data( '_lafka_loyalty_earned', self::entitled( $order ) );
+			$order->save_meta_data();
+			return $diff;
+		}
+
+		/**
+		 * Recover points still owed from other orders (taken back after the
+		 * customer had spent them) out of points just earned.
+		 *
+		 * @param int $user_id   User id.
+		 * @param int $available Points just credited.
+		 * @param int $except    The order that earned them.
+		 * @return void
+		 */
+		private static function settle_debts( int $user_id, int $available, int $except ): void {
+			foreach ( Lafka_Loyalty_Ledger::orders_held( $user_id ) as $order_id => $held ) {
+				if ( $available <= 0 ) {
+					return;
+				}
+				if ( $order_id === $except ) {
+					continue;
+				}
+				$other = wc_get_order( $order_id );
+				$owe   = $other instanceof WC_Order ? $held - self::entitled( $other ) : 0;
+				if ( $owe <= 0 ) {
+					continue;
+				}
+				$take = min( $owe, $available );
+				/* translators: %s: order number. */
+				$result     = Lafka_Loyalty_Ledger::add( $user_id, -$take, 'settle', $order_id, null, sprintf( __( 'Points owed from order #%s', 'lafka-plugin' ), $other->get_order_number() ), 'clamp' );
+				$available -= max( 0, - (int) $result['applied'] );
+			}
+		}
+
+		/**
+		 * An order is completed: it earns.
 		 *
 		 * @param int           $order_id Order id.
 		 * @param WC_Order|null $order    The order WooCommerce is changing (the email is built from this same object, so the award is written to it).
@@ -206,67 +314,16 @@ if ( ! class_exists( 'Lafka_Loyalty' ) ) {
 		 */
 		public static function award( $order_id, $order = null ): void {
 			$order = $order instanceof WC_Order ? $order : wc_get_order( $order_id );
-			if ( ! $order instanceof WC_Order || ! self::enabled() || 'awarded' === $order->get_meta( '_lafka_loyalty_state' ) ) {
+			if ( ! $order instanceof WC_Order || ! self::enabled() || (int) $order->get_customer_id() <= 0 ) {
 				return;
-			}
-			$user_id = (int) $order->get_customer_id();
-			if ( $user_id <= 0 ) {
-				return;
-			}
-			$cycle  = (int) $order->get_meta( '_lafka_loyalty_cycle' ) + 1;
-			$points = self::points_for( self::award_base( $order ), $order );
-			// Completed again after a cancellation whose clawback found the
-			// points already spent: the new award first covers that shortfall,
-			// so cancelling and re-completing never earns twice.
-			$owed = 0;
-			if ( $cycle > 1 ) {
-				$row  = Lafka_Loyalty_Ledger::row_by_ref( 'cancel:' . $order->get_id() . ':' . ( $cycle - 1 ) );
-				$owed = null === $row ? 0 : max( 0, (int) $row['shortfall'] );
-			}
-			$points = max( 0, $points - $owed );
-			if ( $points > 0 ) {
-				/* translators: %s: order number. */
-				$note   = sprintf( __( 'Order #%s', 'lafka-plugin' ), $order->get_order_number() );
-				$result = Lafka_Loyalty_Ledger::add( $user_id, $points, 'earn', $order->get_id(), 'earn:' . $order->get_id() . ':' . $cycle, $note );
-				if ( 'ok' !== $result['status'] && 'duplicate' !== $result['status'] ) {
-					return;
-				}
 			}
 			$order->update_meta_data( '_lafka_loyalty_state', 'awarded' );
-			$order->update_meta_data( '_lafka_loyalty_cycle', $cycle );
-			$order->update_meta_data( '_lafka_loyalty_earned', $points );
-			// Refunds made before the award are already out of it.
-			$order->update_meta_data( '_lafka_loyalty_refunded_at_award', self::refunded_share( $order ) );
-			$order->update_meta_data( '_lafka_loyalty_clawed', 0 );
-			$order->save_meta_data();
-		}
-
-		// ---------------------------------------------------------------- clawback.
-
-		/**
-		 * Take back points from an order's award.
-		 *
-		 * @param WC_Order $order  Order.
-		 * @param int      $points Points to take back (counted against the award, shortfall included).
-		 * @param string   $reason ledger reason.
-		 * @param string   $ref    Idempotency key.
-		 * @param string   $note   Note.
-		 * @return void
-		 */
-		private static function take_back( $order, int $points, string $reason, string $ref, string $note ): void {
-			$user_id = (int) $order->get_customer_id();
-			if ( $points <= 0 || $user_id <= 0 ) {
-				return;
-			}
-			$result = Lafka_Loyalty_Ledger::add( $user_id, -$points, $reason, $order->get_id(), $ref, $note, 'clamp' );
-			if ( 'ok' === $result['status'] ) {
-				$order->update_meta_data( '_lafka_loyalty_clawed', (int) $order->get_meta( '_lafka_loyalty_clawed' ) + $points );
-				$order->save_meta_data();
-			}
+			self::reconcile( $order, 'refund' );
 		}
 
 		/**
-		 * A cancelled (or failed) order after an award: take back what is left.
+		 * A cancelled or failed order is entitled to nothing: take back what
+		 * the customer holds from it.
 		 *
 		 * @param int           $order_id Order id.
 		 * @param WC_Order|null $order    The order WooCommerce is changing.
@@ -277,86 +334,38 @@ if ( ! class_exists( 'Lafka_Loyalty' ) ) {
 			if ( ! $order instanceof WC_Order || 'awarded' !== $order->get_meta( '_lafka_loyalty_state' ) ) {
 				return;
 			}
-			$left = (int) $order->get_meta( '_lafka_loyalty_earned' ) - (int) $order->get_meta( '_lafka_loyalty_clawed' );
-			$ref  = 'cancel:' . $order->get_id() . ':' . (int) $order->get_meta( '_lafka_loyalty_cycle' );
-			/* translators: %s: order number. */
-			self::take_back( $order, $left, 'cancel', $ref, sprintf( __( 'Order #%s', 'lafka-plugin' ), $order->get_order_number() ) );
 			$order->update_meta_data( '_lafka_loyalty_state', 'revoked' );
-			$order->save_meta_data();
+			self::reconcile( $order, 'cancel' );
 		}
 
 		/**
-		 * The share of an order's items a refund returns (0 to 1).
-		 *
-		 * A refund of items counts by their value, a refund of only shipping,
-		 * fees or tax counts for nothing, and a refund of a bare amount counts
-		 * by its share of the order total.
-		 *
-		 * @param WC_Order_Refund $refund Refund.
-		 * @param WC_Order        $order  Order.
-		 * @return float
-		 */
-		private static function refund_share( $refund, $order ): float {
-			$items = 0.0;
-			foreach ( $refund->get_items( 'line_item' ) as $item ) {
-				$items += abs( (float) $item->get_total() );
-			}
-			if ( $items > 0 ) {
-				$base = self::earn_base( $order );
-				return $base > 0 ? min( 1.0, $items / $base ) : 1.0;
-			}
-			if ( array() !== $refund->get_items( array( 'shipping', 'fee' ) ) ) {
-				return 0.0;
-			}
-			$total = (float) $order->get_total();
-			return $total > 0 ? min( 1.0, abs( (float) $refund->get_amount() ) / $total ) : 0.0;
-		}
-
-		/**
-		 * A refund: take back the same share of the award.
+		 * A refund was made: the order is entitled to less.
 		 *
 		 * @param int $order_id  Order id.
 		 * @param int $refund_id Refund id.
 		 * @return void
 		 */
 		public static function claw_back_refund( $order_id, $refund_id ): void {
-			$order  = wc_get_order( $order_id );
-			$refund = wc_get_order( $refund_id );
-			if ( ! $order instanceof WC_Order || ! $refund instanceof WC_Order_Refund || 'awarded' !== $order->get_meta( '_lafka_loyalty_state' ) ) {
-				return;
+			unset( $refund_id );
+			$order = wc_get_order( $order_id );
+			if ( $order instanceof WC_Order ) {
+				self::reconcile( $order, 'refund' );
 			}
-			$earned = (int) $order->get_meta( '_lafka_loyalty_earned' );
-			$share  = self::refunded_share( $order );
-			if ( $order->get_remaining_refund_amount() <= 0 ) {
-				$share = 1.0;
-			}
-			// Only refunds after the award count against it: the award was
-			// already made on the items left after earlier refunds.
-			$before = min( 0.999999, max( 0.0, (float) $order->get_meta( '_lafka_loyalty_refunded_at_award' ) ) );
-			$share  = max( 0.0, ( $share - $before ) / ( 1.0 - $before ) );
-			$target = (int) round( $earned * min( 1.0, $share ) );
-			$take   = $target - (int) $order->get_meta( '_lafka_loyalty_clawed' );
-			/* translators: %s: order number. */
-			self::take_back( $order, $take, 'refund', 'refund:' . $refund_id, sprintf( __( 'Order #%s', 'lafka-plugin' ), $order->get_order_number() ) );
 		}
 
 		/**
-		 * A refund that is deleted gives back the points it took.
+		 * A refund was deleted: the order is entitled to more again (only
+		 * while it stands; a cancelled order stays at nothing).
 		 *
 		 * @param int $refund_id Refund id.
 		 * @param int $order_id  Order id.
 		 * @return void
 		 */
 		public static function restore_refund( $refund_id, $order_id ): void {
-			$row   = Lafka_Loyalty_Ledger::row_by_ref( 'refund:' . $refund_id );
+			unset( $refund_id );
 			$order = wc_get_order( $order_id );
-			if ( null === $row || ! $order instanceof WC_Order ) {
-				return;
-			}
-			$result = Lafka_Loyalty_Ledger::add( (int) $row['user_id'], - (int) $row['delta'], 'refund', $order->get_id(), 'unrefund:' . $refund_id, __( 'Refund removed', 'lafka-plugin' ) );
-			if ( 'ok' === $result['status'] ) {
-				$order->update_meta_data( '_lafka_loyalty_clawed', max( 0, (int) $order->get_meta( '_lafka_loyalty_clawed' ) - ( - (int) $row['delta'] + (int) $row['shortfall'] ) ) );
-				$order->save_meta_data();
+			if ( $order instanceof WC_Order ) {
+				self::reconcile( $order, 'refund' );
 			}
 		}
 

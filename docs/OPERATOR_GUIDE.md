@@ -412,9 +412,12 @@ Lafka → Modules → Loyalty points (off by default), settings in WooCommerce �
 - **Earning.** A customer with an account earns points when an order is **Completed**, on the items only
   (after discounts; never tips, fees, shipping or tax). Default: 1 point per 1.00. Guests earn nothing, so
   leave WooCommerce's "Allow customers to create an account during checkout" (Settings → Accounts & Privacy)
-  on; the Loyalty screen warns when it is off. An order is awarded once, however often its status changes;
-  items refunded before completion earn nothing, and an order completed again after a cancellation first
-  makes up any points that cancellation could not take back.
+  on; the Loyalty screen warns when it is off.
+- **One rule for every change.** Whenever an order is completed, cancelled, failed or refunded, or a refund is
+  deleted, Lafka compares what the order is entitled to now (its items after discounts and refunds once
+  completed; nothing once cancelled or failed) with what the customer still holds from it, and credits or takes
+  back the difference. Status changes back and forth can never earn twice. A refund typed as a bare amount
+  counts against the items first.
 - **Spending.** At checkout (classic and block) the customer chooses how many points to use (default 100 points
   = 1.00, at least 500 points, at most 50% of the items). Lafka issues a single-use WooCommerce coupon for that
   customer ("Loyalty points" in the totals) and reserves the points. They return if the coupon leaves the cart,
@@ -422,8 +425,9 @@ Lafka → Modules → Loyalty points (off by default), settings in WooCommerce �
   coupon is not used within two hours (an hourly Action Scheduler job, `lafka_loyalty_maintenance`). If a
   cancelled order is reinstated after the customer spent those points, the order gets a note saying how much
   of its discount points no longer cover.
-- **Refunds and cancellations** take back the same share of the points an order earned. A balance never goes
-  below zero: what could not be taken back is kept as the row's shortfall.
+- **Points already spent.** A balance never goes below zero. Points that could not be taken back (the customer
+  had already spent them) stay owed, and are recovered from the customer's next earned points before those
+  reach their balance ("Points still owed from an earlier order" in their history).
 - **Expiry** (optional): points expire after N months without earning or spending.
 - **Seeing and fixing points.** Customers see balance and history under My Account → Points, and a line in the
   completed email. On a customer's user profile in wp-admin you see the balance and history and can add or

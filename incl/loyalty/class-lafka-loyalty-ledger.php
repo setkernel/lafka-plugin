@@ -79,7 +79,7 @@ if ( ! class_exists( 'Lafka_Loyalty_Ledger' ) ) {
 		 *
 		 * @param int         $user_id  User id.
 		 * @param int         $delta    Signed change in points.
-		 * @param string      $reason   earn | reserve | release | refund | cancel | expire | adjust.
+		 * @param string      $reason   earn | reserve | release | refund | cancel | settle | expire | adjust.
 		 * @param int         $order_id WooCommerce order id, or 0.
 		 * @param string|null $ref      Idempotency key; null for rows that may repeat.
 		 * @param string      $note     Short note (shown to the customer).
@@ -156,6 +156,56 @@ if ( ! class_exists( 'Lafka_Loyalty_Ledger' ) ) {
 		}
 
 		/**
+		 * Run a change under the customer's lock (the same named lock add()
+		 * takes; MySQL / MariaDB let a session take it again).
+		 *
+		 * @param int      $user_id User id.
+		 * @param callable $work    Work to run.
+		 * @return bool Whether the lock was had and the work ran.
+		 */
+		public static function locked( int $user_id, callable $work ): bool {
+			global $wpdb;
+			$lock = 'lafka_loyalty_' . $user_id;
+			if ( 1 !== (int) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, %d)', $lock, self::LOCK_WAIT ) ) ) {
+				return false;
+			}
+			try {
+				$work();
+			} finally {
+				$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) );
+			}
+			return true;
+		}
+
+		/**
+		 * What the customer holds from one order: the sum of its earn, refund,
+		 * cancel and settle rows.
+		 *
+		 * @param int $order_id Order id.
+		 * @return int
+		 */
+		public static function order_net( int $order_id ): int {
+			global $wpdb;
+			return (int) $wpdb->get_var( $wpdb->prepare( "SELECT COALESCE(SUM(delta),0) FROM %i WHERE order_id = %d AND reason IN ('earn','refund','cancel','settle')", self::table(), $order_id ) );
+		}
+
+		/**
+		 * A customer's orders from which they still hold points: order id => points.
+		 *
+		 * @param int $user_id User id.
+		 * @return array<int,int>
+		 */
+		public static function orders_held( int $user_id ): array {
+			global $wpdb;
+			$rows = $wpdb->get_results( $wpdb->prepare( "SELECT order_id, SUM(delta) AS held FROM %i WHERE user_id = %d AND order_id > 0 AND reason IN ('earn','refund','cancel','settle') GROUP BY order_id HAVING held > 0 ORDER BY order_id", self::table(), $user_id ), ARRAY_A );
+			$out  = array();
+			foreach ( (array) $rows as $row ) {
+				$out[ (int) $row['order_id'] ] = (int) $row['held'];
+			}
+			return $out;
+		}
+
+		/**
 		 * The row with a ref, or null.
 		 *
 		 * @param string $ref Ref.
@@ -212,7 +262,7 @@ if ( ! class_exists( 'Lafka_Loyalty_Ledger' ) ) {
 		 */
 		public static function last_activity( int $user_id ): string {
 			global $wpdb;
-			return (string) $wpdb->get_var( $wpdb->prepare( "SELECT MAX(created_at) FROM %i WHERE user_id = %d AND reason IN ('earn','reserve')", self::table(), $user_id ) );
+			return (string) $wpdb->get_var( $wpdb->prepare( "SELECT MAX(created_at) FROM %i WHERE user_id = %d AND ( reason = 'earn' OR ( reason = 'reserve' AND order_id > 0 ) )", self::table(), $user_id ) );
 		}
 
 		/**
@@ -223,7 +273,7 @@ if ( ! class_exists( 'Lafka_Loyalty_Ledger' ) ) {
 		 */
 		public static function inactive_since( string $before ): array {
 			global $wpdb;
-			$ids = $wpdb->get_col( $wpdb->prepare( "SELECT user_id FROM %i GROUP BY user_id HAVING SUM(delta) > 0 AND MAX(CASE WHEN reason IN ('earn','reserve') THEN created_at END) < %s", self::table(), $before ) );
+			$ids = $wpdb->get_col( $wpdb->prepare( "SELECT user_id FROM %i GROUP BY user_id HAVING SUM(delta) > 0 AND MAX(CASE WHEN reason = 'earn' OR ( reason = 'reserve' AND order_id > 0 ) THEN created_at END) < %s", self::table(), $before ) );
 			return array_map( 'intval', (array) $ids );
 		}
 

@@ -129,6 +129,7 @@ if ( ! class_exists( 'Lafka_Loyalty_Account' ) ) {
 				'release' => __( 'Points returned', 'lafka-plugin' ),
 				'refund'  => __( 'Points taken back for a refund', 'lafka-plugin' ),
 				'cancel'  => __( 'Points taken back for a cancelled order', 'lafka-plugin' ),
+				'settle'  => __( 'Points still owed from an earlier order', 'lafka-plugin' ),
 				'expire'  => __( 'Points expired', 'lafka-plugin' ),
 				'adjust'  => __( 'Adjustment', 'lafka-plugin' ),
 			);
