@@ -32,6 +32,14 @@ require_once dirname( __DIR__, 3 ) . '/observability/class-lafka-checkout-block-
 class Lafka_Engine_Cart {
 
 	/**
+	 * Order item meta (hidden): add-on name => the submitted choices, e.g.
+	 * "olives--left", so "Order again" rebuilds half-and-half exactly.
+	 *
+	 * @since 10.4.0
+	 */
+	const CHOICES_META = '_lafka_addon_choices';
+
+	/**
 	 * The add-to-cart form body.
 	 *
 	 * WooCommerce does not put a nonce on add-to-cart (so product pages stay
@@ -269,8 +277,12 @@ class Lafka_Engine_Cart {
 			return;
 		}
 
-		$keys = array();
+		$keys    = array();
+		$choices = array();
 		foreach ( $values['addons'] as $addon ) {
+			if ( isset( $addon['choice'] ) && '' !== (string) $addon['choice'] ) {
+				$choices[ (string) $addon['name'] ][] = (string) $addon['choice'];
+			}
 			$key         = $addon['name'];
 			$addon_price = $this->coerce_price_to_scalar( $addon['price'] );
 
@@ -288,6 +300,9 @@ class Lafka_Engine_Cart {
 		// ("Extra Toppings ($1.50)"); record which keys are add-on data so the
 		// privacy exporter/eraser can find them later (hidden: leading "_").
 		$item->add_meta_data( Lafka_Engine_Privacy::KEYS_META, array_values( array_unique( $keys ) ), true );
+		if ( $choices ) {
+			$item->add_meta_data( self::CHOICES_META, $choices, true );
+		}
 	}
 
 	/**
@@ -352,6 +367,11 @@ class Lafka_Engine_Cart {
 		$value = array();
 
 		if ( in_array( $addon['type'], array( 'checkbox', 'radiobutton' ), true ) ) {
+			// Orders since 10.4.0 keep the choices themselves (half-and-half included).
+			$choices = $product->get_meta( self::CHOICES_META );
+			if ( is_array( $choices ) && isset( $choices[ $addon['name'] ] ) ) {
+				return array_map( 'strval', (array) $choices[ $addon['name'] ] );
+			}
 			foreach ( $product->get_meta_data() as $meta ) {
 				if ( 0 !== stripos( (string) $meta->key, $addon['name'] ) ) {
 					continue;

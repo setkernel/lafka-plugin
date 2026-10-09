@@ -107,10 +107,13 @@ class Lafka_Engine_Field_List extends Lafka_Engine_Field {
 					$price = self::scale_price( $price, self::half_factor() );
 				}
 				$cart_item_data[] = array(
-					'name'  => $this->addon['name'],
-					'image' => $option['image'] ?? '',
-					'value' => $label,
-					'price' => $price,
+					'name'   => $this->addon['name'],
+					'image'  => $option['image'] ?? '',
+					'value'  => $label,
+					'price'  => $price,
+					// What was chosen, machine-readable ("olives--left"): the order
+					// keeps it so "Order again" can rebuild the choice exactly.
+					'choice' => $submitted,
 				);
 			}
 		}

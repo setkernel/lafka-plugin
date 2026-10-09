@@ -8,6 +8,10 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
 ## [Unreleased]
 
 ### Fixed
+- "Order again" dropped half-and-half toppings: the order kept only the shown wording ("Olives (left half)"), which
+  never matched an option again. Order lines now also keep the choices themselves (hidden item meta
+  `_lafka_addon_choices`, e.g. `olives--left`) and "Order again" rebuilds them exactly; older orders fall back to the
+  shown wording as before.
 - `wp lafka seed-demo` left the demo without a Contact page and a site icon, so the contact surfaces and the
   installable app could not be tried out of the box. It now also ensures `/contact/` (on the theme's contact
   template when the active theme has it) and, only when the site has no icon, a generated 512px site icon with
