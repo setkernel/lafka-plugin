@@ -353,7 +353,34 @@ if ( ! function_exists( 'lafka_ac_handle_account_deleted' ) ) {
 	}
 }
 
+if ( ! function_exists( 'lafka_ac_email_refreshes_checkout' ) ) {
+	/**
+	 * Classic checkout: WooCommerce refreshes the order review (the request the
+	 * capture listens to) only when an address field, the shipping choice or a
+	 * field marked `update_totals_on_change` changes; the email field is none
+	 * of these, so an email typed by a customer who then left (a pickup order
+	 * shows no address at all) was never captured. While capture is on, the
+	 * email field is marked so typing it refreshes the review.
+	 *
+	 * @since 10.4.0
+	 * @param mixed $fields Checkout fields.
+	 * @return mixed
+	 */
+	function lafka_ac_email_refreshes_checkout( $fields ) {
+		if ( ! lafka_ac_capture_is_enabled() || ! isset( $fields['billing']['billing_email'] ) ) {
+			return $fields;
+		}
+		$classes = (array) ( $fields['billing']['billing_email']['class'] ?? array() );
+		if ( ! in_array( 'update_totals_on_change', $classes, true ) ) {
+			$classes[] = 'update_totals_on_change';
+		}
+		$fields['billing']['billing_email']['class'] = $classes;
+		return $fields;
+	}
+}
+
 if ( function_exists( 'add_action' ) ) {
+	add_filter( 'woocommerce_checkout_fields', 'lafka_ac_email_refreshes_checkout', 20 );
 	add_action( 'woocommerce_checkout_update_order_review', 'lafka_ac_handle_update_order_review', 20, 1 );
 	add_action( 'woocommerce_checkout_order_processed', 'lafka_ac_handle_order_processed', 20, 1 );
 	add_action( 'woocommerce_store_api_cart_update_customer_from_request', 'lafka_ac_handle_store_api_customer', 20, 1 );

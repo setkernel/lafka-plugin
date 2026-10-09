@@ -31,6 +31,9 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
   (cart-extensions update `lafka` → `quote_delivery`); a cached address is priced at once, and the classic checkout
   is unchanged. The method also only looks up a destination the quote guard calls complete (street + postcode, or
   what the country needs) even when the guard is switched off. New: cart extension field `delivery_quote_pending`.
+- Abandoned-cart capture never saw an email typed on the classic checkout unless the customer then changed an address
+  field or the shipping choice (WooCommerce only refreshes the order review for those), so a pickup customer who typed
+  their email and left was never captured. While capture is on, the email field refreshes the order review.
 - The Kitchen Display board stopped loading (every refresh answered 500) once any order had been refunded in the last
   four hours: WooCommerce stores a refund as an order record with status "completed", the board's query returned it,
   and formatting it failed. The board, and Insights' orders-by-source report (which counted refunds as orders), now
