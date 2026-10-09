@@ -8,6 +8,11 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
 ## [Unreleased]
 
 ### Fixed
+- The block checkout's own Ship / Pickup toggle and the site's Pickup / Delivery preference (header, drawer,
+  `lafka_order_method`) disagreed: choosing Ship at checkout left the header on Pickup, and the header did not move
+  the toggle. The customer's toggle now goes through `window.lafka.fulfilment.set()` (the preference's one writer),
+  and a header or drawer choice sets the toggle the way WooCommerce's own toggle does; WooCommerce settling the
+  toggle on page load writes nothing.
 - Distance delivery on the block checkout looked up every half-typed street ("15", "1500 Bar", …) because
   WooCommerce saves the address on each pause in typing. While WooCommerce saves the address
   (`cart/update-customer`) an address that was never looked up is now left unpriced ("Checking the delivery price

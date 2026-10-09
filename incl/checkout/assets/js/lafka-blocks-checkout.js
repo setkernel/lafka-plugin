@@ -18,6 +18,9 @@
  *   · Delivery quote after the address — WooCommerce saves the address while it
  *     is typed; the server prices a new address only when asked, so this sends
  *     `quote_delivery` once the customer has left the address fields.
+ *   · Pickup / Delivery preference — the block checkout's own Ship / Pickup
+ *     toggle and the site's preference (window.lafka.fulfilment, the one writer
+ *     of the `lafka_order_method` cookie, header and drawer) follow each other.
  *
  * Emits stable, namespaced `lafka-` markup only. The theme owns all styling.
  */
@@ -238,6 +241,77 @@
 		document.addEventListener( 'focusout', function () {
 			window.setTimeout( maybeQuoteDelivery, 0 );
 		} );
+	}
+
+	/* ------------------------------------------------------------------ *
+	 *  Pickup / Delivery preference <-> the block Ship / Pickup toggle
+	 * ------------------------------------------------------------------ */
+
+	// The toggle is WooCommerce's `prefersCollection`. When the customer uses
+	// it, hand the choice to lafka.fulfilment.set() (cookie, header, drawer);
+	// WooCommerce settling the toggle on its own (page load, rates arriving) is
+	// not a choice and writes nothing. A choice made in the header or drawer
+	// (`lafka:fulfilment`) sets the toggle the way WooCommerce's own toggle does.
+	// Each side only acts when the other differs, so neither echoes back.
+	function syncFulfilmentPreference() {
+		const fulfilment = window.lafka && window.lafka.fulfilment;
+		const checkoutStore = wp.data && wp.data.select ? wp.data.select( 'wc/store/checkout' ) : null;
+		if ( ! fulfilment || ! checkoutStore || ! checkoutStore.prefersCollection || ! document.querySelector( '.wp-block-woocommerce-checkout' ) ) {
+			return;
+		}
+		const current = function () {
+			return checkoutStore.prefersCollection() ? 'pickup' : 'delivery';
+		};
+		let shown = current();
+		let customerToggled = false;
+
+		const markToggle = function ( event ) {
+			if ( event.target && event.target.closest && event.target.closest( '.wc-block-checkout__shipping-method-option' ) ) {
+				customerToggled = true;
+			}
+		};
+		document.addEventListener( 'click', markToggle, true );
+		document.addEventListener( 'keydown', markToggle, true );
+
+		wp.data.subscribe( function () {
+			const mode = current();
+			if ( mode === shown ) {
+				return;
+			}
+			shown = mode;
+			if ( customerToggled && fulfilment.get() !== mode ) {
+				fulfilment.set( mode );
+			}
+			customerToggled = false;
+		}, 'wc/store/checkout' );
+
+		document.addEventListener( 'lafka:fulfilment', function ( event ) {
+			const mode = event.detail && event.detail.method;
+			if ( ( mode !== 'pickup' && mode !== 'delivery' ) || mode === shown ) {
+				return;
+			}
+			wp.data.dispatch( 'wc/store/checkout' ).setPrefersCollection( mode === 'pickup' );
+			if ( mode === 'delivery' ) {
+				const cartStore = wp.data.select( 'wc/store/cart' );
+				const pickupIds = ( window.lafkaCfg && window.lafkaCfg.pickupMethods ) || [ 'local_pickup', 'pickup_location' ];
+				const hasDelivery = cartStore.getShippingRates().some( function ( pkg ) {
+					return pkg.shipping_rates.some( function ( rate ) {
+						return pickupIds.indexOf( rate.method_id ) === -1;
+					} );
+				} );
+				if ( ! hasDelivery ) {
+					wp.data.dispatch( 'wc/store/cart' ).selectShippingRate( '', null );
+				}
+			}
+		} );
+	}
+
+	if ( wp.data && wp.data.subscribe ) {
+		if ( document.readyState === 'loading' ) {
+			document.addEventListener( 'DOMContentLoaded', syncFulfilmentPreference );
+		} else {
+			syncFulfilmentPreference();
+		}
 	}
 
 	/* ------------------------------------------------------------------ *
