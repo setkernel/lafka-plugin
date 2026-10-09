@@ -226,6 +226,15 @@ if ( ! class_exists( 'Lafka_Payment_Labels' ) ) {
 				return '';
 			}
 
+			// Pay for order: the order being paid says how it is fulfilled.
+			if ( function_exists( 'is_checkout_pay_page' ) && is_checkout_pay_page() ) {
+				$order = wc_get_order( absint( get_query_var( 'order-pay' ) ) );
+				if ( $order instanceof WC_Order ) {
+					$type = lafka_order_fulfilment_type( $order );
+					return in_array( $type, array( 'pickup', 'delivery' ), true ) ? $type : '';
+				}
+			}
+
 			// After the totals: the rate WooCommerce actually settled on (it can
 			// switch to delivery during the refresh that unlocked the delivery
 			// rates, while the posted radio still says pickup).

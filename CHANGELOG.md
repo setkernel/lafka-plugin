@@ -92,6 +92,8 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
   "Thank you for your order. Enjoy your meal!" through WooCommerce's email filters, only while the subject and
   heading are WooCommerce's defaults (a text typed in WooCommerce → Settings → Emails always wins); delivery orders
   keep WooCommerce's wording. New: `Lafka_Fulfilment_Emails`, filter `lafka_pickup_completed_email_text`.
+- The Pay for order page offered "Cash on delivery — Pay with cash upon delivery." for a pickup order (no cart to read
+  the fulfilment from); it follows the order being paid ("Pay at pickup").
 - Pickup orders paid by cash said "Pay with cash upon delivery." on the order-received page and in the customer's
   emails (WooCommerce prints the gateway's instructions there, which the contextual payment labels did not cover).
   The instructions now follow the order's fulfilment ("Pay when you collect your order." / "Pay when your order
