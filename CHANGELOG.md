@@ -31,6 +31,10 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
   (cart-extensions update `lafka` → `quote_delivery`); a cached address is priced at once, and the classic checkout
   is unchanged. The method also only looks up a destination the quote guard calls complete (street + postcode, or
   what the country needs) even when the guard is switched off. New: cart extension field `delivery_quote_pending`.
+- The Kitchen Display board stopped loading (every refresh answered 500) once any order had been refunded in the last
+  four hours: WooCommerce stores a refund as an order record with status "completed", the board's query returned it,
+  and formatting it failed. The board, and Insights' orders-by-source report (which counted refunds as orders), now
+  ask for orders only.
 - Lafka → Modules said the Cart & Checkout pages "already match this choice (or have been edited)" when the Checkout
   page showed the classic checkout inside a page builder while Blocks was chosen; it now says the page is edited and
   shows the other checkout, and what to do.

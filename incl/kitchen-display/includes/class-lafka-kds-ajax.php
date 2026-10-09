@@ -145,8 +145,11 @@ class Lafka_KDS_Ajax {
 		// deliberately not on the board: they wait for payment (bank transfer,
 		// cheque), and cooking must not start before it clears. Staff move one to
 		// Accepted from the Orders screen (bulk action) once it is paid.
+		// Orders only: a refund is an order record too (status completed) and
+		// has no customer, payment or line-item data the board can show.
 		$orders = wc_get_orders(
 			array(
+				'type'    => 'shop_order',
 				'status'  => array( 'processing', 'accepted', 'preparing', 'ready' ),
 				'limit'   => 100,
 				'orderby' => 'date',
@@ -157,6 +160,7 @@ class Lafka_KDS_Ajax {
 		// Recently completed orders (last 4 hours) so staff can still see them
 		$completed = wc_get_orders(
 			array(
+				'type'       => 'shop_order',
 				'status'     => 'completed',
 				'limit'      => 50,
 				'orderby'    => 'date',

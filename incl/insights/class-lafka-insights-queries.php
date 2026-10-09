@@ -262,6 +262,7 @@ if ( ! class_exists( 'Lafka_Insights_Queries' ) ) {
 			}
 			$orders = wc_get_orders(
 				array(
+					'type'         => 'shop_order',
 					'status'       => array( 'wc-processing', 'wc-completed', 'wc-on-hold' ),
 					'date_created' => $from . '...' . $to,
 					'limit'        => 1000,
