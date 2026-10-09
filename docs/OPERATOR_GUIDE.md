@@ -413,6 +413,11 @@ checkout, and the payment instructions on the order-received page and in the cus
 Lafka — Checkout changes the texts or turns this off; `lafka_cod_title`, `lafka_cod_description`,
 `lafka_cod_instructions`).
 
+WooCommerce's Completed order email says "on its way" by default. For a pickup order it reads "Your
+order from (store) is complete" / "Thank you for your order. Enjoy your meal!" instead, as long as the
+subject and heading under WooCommerce → Settings → Emails → Completed order are left empty; a text
+typed there is always used (`lafka_pickup_completed_email_text`).
+
 ### Text messages
 
 Turn it on under WooCommerce → Settings → Restaurant → Text messages (or Lafka → Modules → Text messages).

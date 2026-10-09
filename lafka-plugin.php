@@ -837,6 +837,9 @@ if ( LAFKA_PLUGIN_IS_WOOCOMMERCE ) {
 	Lafka_Pickup_Checkout::init();
 	require_once plugin_dir_path( __FILE__ ) . 'incl/checkout/class-lafka-payment-labels.php';
 	Lafka_Payment_Labels::init();
+	// The Completed order email reads right for a pickup order (WooCommerce's defaults say "on its way").
+	require_once plugin_dir_path( __FILE__ ) . 'incl/checkout/class-lafka-fulfilment-emails.php';
+	Lafka_Fulfilment_Emails::init();
 	// Tips at checkout (WooCommerce → Settings → Restaurant → Tips; off by default).
 	require_once plugin_dir_path( __FILE__ ) . 'incl/checkout/class-lafka-tips.php';
 	Lafka_Tips::init();

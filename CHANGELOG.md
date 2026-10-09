@@ -15,6 +15,11 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
   (cart-extensions update `lafka` → `quote_delivery`); a cached address is priced at once, and the classic checkout
   is unchanged. The method also only looks up a destination the quote guard calls complete (street + postcode, or
   what the country needs) even when the guard is switched off. New: cart extension field `delivery_quote_pending`.
+- WooCommerce's Completed order email told a pickup customer "Your order from … is on its way!" / "Good things are
+  heading your way!". For a pickup order the plugin now supplies "Your order from {site_title} is complete" /
+  "Thank you for your order. Enjoy your meal!" through WooCommerce's email filters, only while the subject and
+  heading are WooCommerce's defaults (a text typed in WooCommerce → Settings → Emails always wins); delivery orders
+  keep WooCommerce's wording. New: `Lafka_Fulfilment_Emails`, filter `lafka_pickup_completed_email_text`.
 - Pickup orders paid by cash said "Pay with cash upon delivery." on the order-received page and in the customer's
   emails (WooCommerce prints the gateway's instructions there, which the contextual payment labels did not cover).
   The instructions now follow the order's fulfilment ("Pay when you collect your order." / "Pay when your order
