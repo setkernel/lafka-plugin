@@ -25,7 +25,10 @@
  *   - one branch term + one shipping-area polygon around the demo restaurant
  *     (Halifax, Nova Scotia — address, coordinates, zone and WooCommerce base
  *     region agree),
- *   - WC pages (shop/cart/checkout/my-account) + a /menu/ page,
+ *   - WC pages (shop/cart/checkout/my-account) + a /menu/ page + a /contact/
+ *     page on the theme's contact template (when the active theme has it),
+ *   - a generated 512px site icon (only when the site has none), so the
+ *     installable app and its "Add to home screen" card work out of the box,
  *   - order_hours + shipping_areas feature flags enabled so the gates fire.
  *
  * Idempotent: everything is matched by slug/SKU/title and updated in place, so a
@@ -327,6 +330,8 @@ if ( ! class_exists( 'Lafka_CLI_Seed_Demo' ) ) {
 			$this->seed_area( $fixtures, $manifest );
 			$this->seed_branch( $fixtures, $manifest );
 			$this->seed_menu_page( $fixtures, $manifest );
+			$this->seed_contact_page( $fixtures, $manifest );
+			$this->seed_site_icon( $fixtures, $manifest );
 			$this->enable_flags( $fixtures );
 
 			$manifest['seeded_at'] = gmdate( 'c' );
@@ -879,6 +884,73 @@ if ( ! class_exists( 'Lafka_CLI_Seed_Demo' ) ) {
 		}
 
 		/**
+		 * Ensure the /contact/ page, on the active theme's contact template when
+		 * the theme provides it (any other theme shows it as a normal page).
+		 *
+		 * @param array<string,mixed> $fixtures Fixture data.
+		 * @param array<string,mixed> $manifest Manifest (by reference).
+		 * @return void
+		 */
+		private function seed_contact_page( array $fixtures, array &$manifest ): void {
+			$page      = $fixtures['page_contact'];
+			$existing  = get_page_by_path( $page['slug'] );
+			$page_args = array(
+				'post_title'  => $page['title'],
+				'post_name'   => $page['slug'],
+				'post_status' => 'publish',
+				'post_type'   => 'page',
+			);
+			if ( $existing && isset( $existing->ID ) ) {
+				$page_args['ID'] = (int) $existing->ID;
+				$page_id         = (int) wp_update_post( $page_args );
+			} else {
+				$page_args['post_content'] = '';
+				$page_id                   = (int) wp_insert_post( $page_args );
+			}
+			if ( $page_id <= 0 ) {
+				return;
+			}
+			$templates = wp_get_theme()->get_page_templates( null, 'page' );
+			if ( isset( $templates[ $page['template'] ] ) ) {
+				update_post_meta( $page_id, '_wp_page_template', $page['template'] );
+			}
+			$manifest = self::record( $manifest, 'pages', $page['slug'], $page_id );
+			WP_CLI::log( 'Ensured /contact/ page.' );
+		}
+
+		/**
+		 * Give the site a generated square icon when it has none (the web app
+		 * manifest and the install card need one). An icon the owner set is
+		 * never replaced.
+		 *
+		 * @param array<string,mixed> $fixtures Fixture data.
+		 * @param array<string,mixed> $manifest Manifest (by reference).
+		 * @return void
+		 */
+		private function seed_site_icon( array $fixtures, array &$manifest ): void {
+			$icon    = $fixtures['site_icon'];
+			$current = (int) get_option( 'site_icon', 0 );
+			$ours    = self::recorded_id( $manifest, 'attachments', $icon['key'] );
+			if ( $current > 0 && $current !== $ours && get_post( $current ) ) {
+				WP_CLI::log( 'Kept the site icon already set.' );
+				return;
+			}
+			// WordPress's own site-icon sizes (512, 270, 192, 180, 32), as when an
+			// icon is chosen under Settings > General.
+			require_once ABSPATH . 'wp-admin/includes/class-wp-site-icon.php';
+			$site_icon = new WP_Site_Icon();
+			add_filter( 'intermediate_image_sizes_advanced', array( $site_icon, 'additional_sizes' ) );
+			$size = (int) $icon['size'];
+			$id   = $this->ensure_image( $icon['key'], $icon['label'], $manifest, $size, $size );
+			remove_filter( 'intermediate_image_sizes_advanced', array( $site_icon, 'additional_sizes' ) );
+			if ( $id > 0 ) {
+				update_post_meta( $id, '_wp_attachment_context', 'site-icon' );
+				update_option( 'site_icon', $id );
+				WP_CLI::log( 'Ensured the site icon.' );
+			}
+		}
+
+		/**
 		 * Generate a tiny solid-colour placeholder PNG (with the item's initial
 		 * when GD text is available), sideload it into the media library, and
 		 * return the attachment id. Deterministic per key: a previously-seeded
@@ -888,9 +960,11 @@ if ( ! class_exists( 'Lafka_CLI_Seed_Demo' ) ) {
 		 * @param string              $key      Stable object key (product slug).
 		 * @param string              $label    Human label (alt text / initial).
 		 * @param array<string,mixed> $manifest Manifest (by reference).
+		 * @param int                 $width    Width in pixels.
+		 * @param int                 $height   Height in pixels.
 		 * @return int Attachment id (0 on failure).
 		 */
-		private function ensure_image( string $key, string $label, array &$manifest ): int {
+		private function ensure_image( string $key, string $label, array &$manifest, int $width = 800, int $height = 600 ): int {
 			$recorded = self::recorded_id( $manifest, 'attachments', $key );
 			if ( $recorded > 0 && get_post( $recorded ) ) {
 				return $recorded;
@@ -899,7 +973,7 @@ if ( ! class_exists( 'Lafka_CLI_Seed_Demo' ) ) {
 				return 0;
 			}
 
-			$data = $this->render_placeholder_png( $key, $label );
+			$data = $this->render_placeholder_png( $key, $label, $width, $height );
 			if ( '' === $data ) {
 				return 0;
 			}
@@ -931,15 +1005,17 @@ if ( ! class_exists( 'Lafka_CLI_Seed_Demo' ) ) {
 		}
 
 		/**
-		 * Render an 800x600 solid-colour PNG whose colour is deterministic in the
-		 * key, with the label's initial drawn in the centre.
+		 * Render a solid-colour PNG (800x600 by default) whose colour is
+		 * deterministic in the key, with the label's initial drawn in the centre.
 		 *
-		 * @param string $key   Stable key (drives the colour).
-		 * @param string $label Human label (drives the initial).
+		 * @param string $key    Stable key (drives the colour).
+		 * @param string $label  Human label (drives the initial).
+		 * @param int    $width  Width in pixels.
+		 * @param int    $height Height in pixels.
 		 * @return string Raw PNG bytes, or '' on failure.
 		 */
-		private function render_placeholder_png( string $key, string $label ): string {
-			$image = imagecreatetruecolor( 800, 600 );
+		private function render_placeholder_png( string $key, string $label, int $width = 800, int $height = 600 ): string {
+			$image = imagecreatetruecolor( max( 1, $width ), max( 1, $height ) );
 			if ( false === $image ) {
 				return '';
 			}
@@ -956,8 +1032,8 @@ if ( ! class_exists( 'Lafka_CLI_Seed_Demo' ) ) {
 			$letters    = preg_replace( '/[^A-Za-z]/', '', $label );
 			$initial    = '' !== (string) $letters ? strtoupper( substr( (string) $letters, 0, 1 ) ) : 'D';
 			$font       = 5;
-			$x          = (int) ( ( 800 - imagefontwidth( $font ) ) / 2 );
-			$y          = (int) ( ( 600 - imagefontheight( $font ) ) / 2 );
+			$x          = (int) ( ( $width - imagefontwidth( $font ) ) / 2 );
+			$y          = (int) ( ( $height - imagefontheight( $font ) ) / 2 );
 			imagestring( $image, $font, $x, $y, $initial, $foreground );
 
 			ob_start();
@@ -986,6 +1062,9 @@ if ( ! class_exists( 'Lafka_CLI_Seed_Demo' ) ) {
 						continue;
 					}
 					if ( 'attachments' === $bucket ) {
+						if ( (int) get_option( 'site_icon', 0 ) === $id ) {
+							delete_option( 'site_icon' );
+						}
 						wp_delete_attachment( $id, true );
 					} else {
 						wp_delete_post( $id, true );

@@ -8,6 +8,10 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
 ## [Unreleased]
 
 ### Fixed
+- `wp lafka seed-demo` left the demo without a Contact page and a site icon, so the contact surfaces and the
+  installable app could not be tried out of the box. It now also ensures `/contact/` (on the theme's contact
+  template when the active theme has it) and, only when the site has no icon, a generated 512px site icon with
+  WordPress's own icon sizes. Both are idempotent and removed by `--reset`.
 - The block cart and checkout showed the loyalty redemption as its raw coupon code ("loyalty-xxxx"); it now reads
   "Loyalty points" like the classic checkout, through WooCommerce's `coupons` checkout filter (the `lafka-loyalty`
   cart extension now carries the coupon code). The points panel stays on the checkout only.

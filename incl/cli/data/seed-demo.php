@@ -556,4 +556,18 @@ return array(
 		'slug'  => 'menu',
 		'title' => 'Menu',
 	),
+
+	// ── /contact/ page on the theme's contact template (NAP, hours, FAQ) ──
+	'page_contact' => array(
+		'slug'     => 'contact',
+		'title'    => 'Contact',
+		'template' => 'template-contact.php',
+	),
+
+	// ── Site icon: the installable app's icon and the browser tab icon ──
+	'site_icon'    => array(
+		'key'   => 'site-icon',
+		'label' => 'Demo Restaurant',
+		'size'  => 512,
+	),
 );
