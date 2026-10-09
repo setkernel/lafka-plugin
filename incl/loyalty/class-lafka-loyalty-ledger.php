@@ -88,6 +88,8 @@ if ( ! class_exists( 'Lafka_Loyalty_Ledger' ) ) {
 		 */
 		public static function add( int $user_id, int $delta, string $reason, int $order_id = 0, ?string $ref = null, string $note = '', string $mode = 'clamp' ): array {
 			global $wpdb;
+			// The first write may come in the request that switched the module on.
+			Lafka_Schema::ensure( 'loyalty' );
 			$fail = static function ( string $status ) use ( $user_id ): array {
 				return array(
 					'status'    => $status,

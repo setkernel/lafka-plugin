@@ -8,6 +8,10 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
 ## [Unreleased]
 
 ### Fixed
+- Switching Loyalty on and writing to its points ledger in the same request failed (the table was only created on
+  the next page load). A module's table is now created the moment its switch is turned on (`lafka_loyalty_enabled`,
+  `lafka_ac_enabled`, `lafka_push_enabled`), and the ledger makes sure its table exists before its first write.
+  New: `Lafka_Schema::ensure()`, `Lafka_Schema::watch_switches()`.
 - Address suggestions answered 403 for a signed-in customer (the routes read the request as a stranger's, so the
   shopping session did not match the page token); the script now sends the REST nonce for a signed-in customer.
 

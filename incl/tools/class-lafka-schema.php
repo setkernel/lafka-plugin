@@ -79,6 +79,21 @@ if ( ! class_exists( 'Lafka_Schema' ) ) {
 		}
 
 		/**
+		 * The option that switches a module-owned table's module on: option name
+		 * => definition id. Turning the module on creates (or upgrades) its table
+		 * in the same request, so a write that follows at once finds it.
+		 *
+		 * @return array<string,string>
+		 */
+		private static function switches(): array {
+			return array(
+				'lafka_loyalty_enabled' => 'loyalty',
+				'lafka_ac_enabled'      => 'abandoned_carts',
+				'lafka_push_enabled'    => 'push',
+			);
+		}
+
+		/**
 		 * Tables created by a definition's SQL beyond its own suffix (one entry
 		 * may create more than one table).
 		 *
@@ -159,6 +174,59 @@ if ( ! class_exists( 'Lafka_Schema' ) ) {
 			}
 			dbDelta( self::sql( $id ) );
 			update_option( $def['version_option'], $def['version'] );
+		}
+
+		/**
+		 * Make sure one table exists at its current version before it is used,
+		 * whatever its module's state (a module switched on earlier in this
+		 * request was off when the plugins_loaded self-heal ran).
+		 *
+		 * @since 10.4.0
+		 * @param string $id Definition id.
+		 * @return bool Whether the table is at its current version.
+		 */
+		public static function ensure( string $id ): bool {
+			if ( ! self::is_installed( $id ) ) {
+				self::install( $id );
+			}
+			return self::is_installed( $id );
+		}
+
+		/**
+		 * Create a module's table the moment its switch option is turned on
+		 * (add_option_* / update_option_* of the options in switches()).
+		 *
+		 * @since 10.4.0
+		 * @return void
+		 */
+		public static function watch_switches(): void {
+			foreach ( self::switches() as $option => $id ) {
+				$on_add    = static function ( $name, $value ) use ( $id ) {
+					unset( $name );
+					if ( self::switched_on( $value ) ) {
+						self::ensure( $id );
+					}
+				};
+				$on_update = static function ( $old_value, $value ) use ( $id ) {
+					unset( $old_value );
+					if ( self::switched_on( $value ) ) {
+						self::ensure( $id );
+					}
+				};
+				add_action( 'add_option_' . $option, $on_add, 10, 2 );
+				add_action( 'update_option_' . $option, $on_update, 10, 2 );
+			}
+		}
+
+		/**
+		 * Whether a stored switch value means "on" ('yes' for WooCommerce-style
+		 * options, '1' for the Customizer-style ones).
+		 *
+		 * @param mixed $value Stored value.
+		 * @return bool
+		 */
+		private static function switched_on( $value ): bool {
+			return true === $value || in_array( (string) $value, array( 'yes', '1' ), true );
 		}
 
 		/**

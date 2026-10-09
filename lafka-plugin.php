@@ -62,6 +62,7 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/settings/lafka-settings.php';
 // The one registry of the custom tables and the one upgrader (activation, self-heal, uninstall).
 require_once plugin_dir_path( __FILE__ ) . 'incl/tools/class-lafka-schema.php';
 add_action( 'plugins_loaded', array( 'Lafka_Schema', 'maybe_install' ), 20 );
+Lafka_Schema::watch_switches();
 register_activation_hook( __FILE__, array( 'Lafka_Schema', 'install_all' ) );
 
 // Pickup-vs-delivery shipping-method recognition shared across modules.
