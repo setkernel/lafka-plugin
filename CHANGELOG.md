@@ -49,6 +49,9 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
   changed. Each change re-prices the order and adds an order note. Of two orders placed at the same moment (classic or
   block), the one checked first keeps it; an order that cannot get the lock does not keep it. New: `lafka_first_order_counted_statuses()`, `lafka_first_order_retry_ids()`,
   `lafka_first_order_paid_statuses()`, `lafka_first_order_identity_order_ids()`, `lafka_first_order_check()`,
+  `lafka_first_order_share()` (the first-order part is recorded on the discount fee item, `_lafka_first_order`, from the
+  computation that built the cart fee, via `woocommerce_checkout_create_order_fee_item` on both checkouts; a promo fee
+  item without a recorded split counts as carrying the configured percentage),
   `lafka_first_order_on_paid()` (an order paid with the discount after another order of the same person was gets an
   order note and a dashboard warning with "mark reviewed"; the paid amount is never changed), `lafka_order_discount_fee()`.
 - The deal builder showed a missing required add-on as `Pizza 1: &quot;Crust&quot; is a required field.`; the message

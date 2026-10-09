@@ -260,33 +260,9 @@ if ( ! function_exists( 'lafka_is_first_order_customer' ) ) {
 	}
 }
 
-if ( ! function_exists( 'lafka_first_order_force' ) ) {
-	/**
-	 * Override eligibility for the rest of the request (true / false), or
-	 * clear the override (null). Used to price an order with and without the
-	 * first-order discount when it is checked at order creation.
-	 *
-	 * @since 10.4.0
-	 * @param bool|null $state Forced state, or null to clear it.
-	 * @param bool      $read  True to only read the current override.
-	 * @return bool|null The override in force.
-	 */
-	function lafka_first_order_force( ?bool $state = null, bool $read = false ): ?bool {
-		static $forced = null;
-		if ( ! $read ) {
-			$forced = $state;
-		}
-		return $forced;
-	}
-}
-
 if ( ! function_exists( 'lafka_first_order_eligible' ) ) {
 	/** @return bool Feature on AND visitor qualifies. */
 	function lafka_first_order_eligible(): bool {
-		$forced = lafka_first_order_force( null, true );
-		if ( null !== $forced ) {
-			return $forced && lafka_first_order_discount_percent() > 0;
-		}
 		return lafka_first_order_discount_percent() > 0 && lafka_is_first_order_customer();
 	}
 }
@@ -298,8 +274,10 @@ if ( ! function_exists( 'lafka_first_order_eligible' ) ) {
  *
  *   · Order placed (classic: woocommerce_checkout_order_created; block:
  *     woocommerce_store_api_checkout_order_processed; both fire before the
- *     gateway runs). The first-order part of the combined discount fee is
- *     recorded on the order (_lafka_first_order_discount, _label). If the
+ *     gateway runs). The first-order part of the combined discount fee was
+ *     recorded on the fee item when WooCommerce created it from the cart fee
+ *     (lafka_first_order_mark_fee_item()) and is copied onto the order
+ *     (_lafka_first_order_discount) for the lookups. If the
  *     person already has a settled order that counts
  *     (lafka_first_order_identity_order_ids()), it comes off this order;
  *     otherwise this order holds it and the same account's other unpaid
@@ -368,9 +346,54 @@ if ( ! function_exists( 'lafka_first_order_settled_others' ) ) {
 	}
 }
 
+if ( ! function_exists( 'lafka_first_order_fee_item' ) ) {
+	/**
+	 * The order's combined promo discount fee (the item made from the cart fee
+	 * lafka_order_discount_apply() added; marked when the order was created).
+	 *
+	 * @since 10.4.0
+	 * @param WC_Order $order Order.
+	 * @return WC_Order_Item_Fee|null
+	 */
+	function lafka_first_order_fee_item( WC_Order $order ) {
+		foreach ( $order->get_fees() as $fee ) {
+			if ( '' !== (string) $fee->get_meta( '_lafka_order_discount' ) ) {
+				return $fee;
+			}
+		}
+		return null;
+	}
+}
+
+if ( ! function_exists( 'lafka_first_order_share' ) ) {
+	/**
+	 * How much of the order's promo discount fee is the first-order part: the
+	 * split recorded on the fee item when the order was created
+	 * (`_lafka_first_order`). Fail closed: a promo fee item without a recorded
+	 * split is assumed to carry the configured percentage of the items after
+	 * coupons (capped at the fee), so it can be taken out if the customer is
+	 * not eligible.
+	 *
+	 * @since 10.4.0
+	 * @param WC_Order $order Order.
+	 * @return float
+	 */
+	function lafka_first_order_share( WC_Order $order ): float {
+		$fee = lafka_first_order_fee_item( $order );
+		if ( null === $fee || (float) $fee->get_total() >= 0 ) {
+			return 0.0;
+		}
+		if ( $fee->meta_exists( '_lafka_first_order' ) ) {
+			return max( 0.0, (float) $fee->get_meta( '_lafka_first_order' ) );
+		}
+		$base = max( 0.0, (float) $order->get_subtotal() - (float) $order->get_discount_total() );
+		return min( abs( (float) $fee->get_total() ), lafka_first_order_discount_amount( $base, lafka_first_order_discount_percent() ) );
+	}
+}
+
 if ( ! function_exists( 'lafka_first_order_strip' ) ) {
 	/**
-	 * Take the first-order part out of an order's combined discount fee,
+	 * Take the first-order part out of the order's promo discount fee item,
 	 * recalculate the totals and say why in an order note.
 	 *
 	 * @since 10.4.0
@@ -379,30 +402,24 @@ if ( ! function_exists( 'lafka_first_order_strip' ) ) {
 	 * @return void
 	 */
 	function lafka_first_order_strip( WC_Order $order, string $why ): void {
-		$delta = (float) $order->get_meta( '_lafka_first_order_discount' );
-		$label = (string) $order->get_meta( '_lafka_first_order_label' );
-		$named = (string) $order->get_meta( '_lafka_first_order_fee' );
-		if ( $delta <= 0 ) {
+		$fee   = lafka_first_order_fee_item( $order );
+		$share = lafka_first_order_share( $order );
+		if ( null === $fee || $share <= 0 ) {
 			return;
 		}
-		foreach ( $order->get_fees() as $item_id => $fee ) {
-			$total = (float) $fee->get_total();
-			// The fee recorded when the order was placed (its name, whatever the
-			// lafka_order_discount_label filter made it).
-			if ( $total >= 0 || $fee->get_name() !== $named ) {
-				continue;
-			}
-			$left = round( $total + $delta, wc_get_price_decimals() );
-			if ( $left >= 0 ) {
-				$order->remove_item( $item_id );
-			} else {
+		$left  = round( (float) $fee->get_total() + $share, wc_get_price_decimals() );
+		$label = (string) $fee->get_meta( '_lafka_first_order_label' );
+		if ( $left >= 0 ) {
+			$order->remove_item( $fee->get_id() );
+		} else {
+			if ( '' !== $label ) {
 				$name = trim( str_replace( array( ' + ' . $label, $label . ' + ', $label ), '', $fee->get_name() ) );
 				$fee->set_name( '' !== $name ? $name : __( 'Discount', 'lafka-plugin' ) );
-				$fee->set_amount( (string) $left );
-				$fee->set_total( (string) $left );
-				$fee->save();
 			}
-			break;
+			$fee->set_amount( (string) $left );
+			$fee->set_total( (string) $left );
+			$fee->update_meta_data( '_lafka_first_order', '0' );
+			$fee->save();
 		}
 		$order->delete_meta_data( '_lafka_first_order_discount' );
 		$order->calculate_totals( true );
@@ -411,41 +428,46 @@ if ( ! function_exists( 'lafka_first_order_strip' ) ) {
 	}
 }
 
+if ( ! function_exists( 'lafka_first_order_mark_fee_item' ) ) {
+	add_action( 'woocommerce_checkout_create_order_fee_item', 'lafka_first_order_mark_fee_item', 10, 3 );
+	/**
+	 * When WooCommerce turns the cart fees into order fee items (classic
+	 * checkout and Store API alike, WC_Checkout::create_order_fee_lines()),
+	 * mark the promo discount item and record its first-order part from the
+	 * computation that built the cart fee.
+	 *
+	 * @since 10.4.0
+	 * @param mixed $item    Order fee item.
+	 * @param mixed $fee_key Cart fee key.
+	 * @param mixed $fee     Cart fee.
+	 * @return void
+	 */
+	function lafka_first_order_mark_fee_item( $item, $fee_key = '', $fee = null ): void {
+		unset( $fee_key );
+		if ( ! $item instanceof WC_Order_Item_Fee || ! is_object( $fee ) || ! isset( $fee->lafka_order_discount ) ) {
+			return;
+		}
+		$item->add_meta_data( '_lafka_order_discount', '1', true );
+		$item->add_meta_data( '_lafka_first_order', (string) (float) ( $fee->lafka_first_order ?? 0 ), true );
+		$item->add_meta_data( '_lafka_first_order_label', (string) ( $fee->lafka_first_order_label ?? '' ), true );
+	}
+}
+
 if ( ! function_exists( 'lafka_first_order_record' ) ) {
 	/**
-	 * Record on a just-placed order how much of its discount fee is the
-	 * first-order part (priced from the cart with and without it).
+	 * Copy the first-order share of a just-placed order onto the order (for
+	 * the lookups of other orders) from its fee item.
 	 *
 	 * @since 10.4.0
 	 * @param WC_Order $order Order.
 	 * @return void
 	 */
 	function lafka_first_order_record( WC_Order $order ): void {
-		$order->delete_meta_data( '_lafka_first_order_discount' );
-		$cart = function_exists( 'WC' ) && isset( WC()->cart ) ? WC()->cart : null;
-		if ( is_object( $cart ) && lafka_first_order_discount_percent() > 0 ) {
-			lafka_first_order_force( true );
-			$with = lafka_order_discount_fee( $cart );
-			lafka_first_order_force( false );
-			$without = lafka_order_discount_fee( $cart );
-			lafka_first_order_force( null );
-			$carried = false;
-			foreach ( $order->get_fees() as $fee ) {
-				$carried = $carried || ( null !== $with && $fee->get_name() === $with['label'] );
-			}
-			$delta = null !== $with ? round( $with['amount'] - ( null !== $without ? $without['amount'] : 0.0 ), wc_get_price_decimals() ) : 0.0;
-			if ( $carried && $delta > 0 ) {
-				$order->update_meta_data( '_lafka_first_order_discount', $delta );
-				$order->update_meta_data( '_lafka_first_order_fee', $with['label'] );
-				$order->update_meta_data(
-					'_lafka_first_order_label',
-					sprintf(
-						/* translators: %s = discount percent, e.g. 15 */
-						__( 'First-order discount (%s%% off)', 'lafka-plugin' ),
-						(string) lafka_first_order_discount_percent()
-					)
-				);
-			}
+		$share = lafka_first_order_share( $order );
+		if ( $share > 0 ) {
+			$order->update_meta_data( '_lafka_first_order_discount', $share );
+		} else {
+			$order->delete_meta_data( '_lafka_first_order_discount' );
 		}
 		$order->save();
 	}
@@ -453,22 +475,18 @@ if ( ! function_exists( 'lafka_first_order_record' ) ) {
 
 if ( ! function_exists( 'lafka_first_order_check' ) ) {
 	/**
-	 * The check itself, under the lock. $placing: the order was just placed
-	 * from the cart (record its first-order part first); otherwise it is about
-	 * to be paid.
+	 * The check itself, under the lock (the order was just placed, or is
+	 * about to be paid).
 	 *
 	 * @since 10.4.0
 	 * @param WC_Order $order   Order.
-	 * @param bool     $placing Placed from the cart in this request.
 	 * @return void
 	 */
-	function lafka_first_order_check( WC_Order $order, bool $placing ): void {
+	function lafka_first_order_check( WC_Order $order ): void {
 		global $wpdb;
 		$locked = 1 === (int) $wpdb->get_var( "SELECT GET_LOCK('lafka_first_order', 10)" );
 		try {
-			if ( $placing ) {
-				lafka_first_order_record( $order );
-			}
+			lafka_first_order_record( $order );
 			$holds  = (float) $order->get_meta( '_lafka_first_order_discount' ) > 0;
 			$others = $holds && $locked ? lafka_first_order_settled_others( $order ) : array();
 			if ( $holds && ! $locked ) {
@@ -531,7 +549,7 @@ if ( ! function_exists( 'lafka_first_order_on_placed' ) ) {
 	 */
 	function lafka_first_order_on_placed( $order ): void {
 		if ( $order instanceof WC_Order ) {
-			lafka_first_order_check( $order, true );
+			lafka_first_order_check( $order );
 		}
 	}
 }
@@ -539,9 +557,7 @@ if ( ! function_exists( 'lafka_first_order_on_placed' ) ) {
 if ( ! function_exists( 'lafka_first_order_on_store_api' ) ) {
 	add_action( 'woocommerce_store_api_checkout_order_processed', 'lafka_first_order_on_store_api' );
 	/**
-	 * Block checkout (and the Store API order-pay route), before payment: the
-	 * session's draft order was placed from the cart; any other order is being
-	 * paid.
+	 * Block checkout (and the Store API order-pay route), before payment.
 	 *
 	 * @since 10.4.0
 	 * @param mixed $order Order.
@@ -549,7 +565,7 @@ if ( ! function_exists( 'lafka_first_order_on_store_api' ) ) {
 	 */
 	function lafka_first_order_on_store_api( $order ): void {
 		if ( $order instanceof WC_Order ) {
-			lafka_first_order_check( $order, in_array( $order->get_id(), lafka_first_order_retry_ids(), true ) );
+			lafka_first_order_check( $order );
 		}
 	}
 }
@@ -566,8 +582,8 @@ if ( ! function_exists( 'lafka_first_order_on_pay' ) ) {
 	 * @return void
 	 */
 	function lafka_first_order_on_pay( $order ): void {
-		if ( $order instanceof WC_Order && (float) $order->get_meta( '_lafka_first_order_discount' ) > 0 ) {
-			lafka_first_order_check( $order, false );
+		if ( $order instanceof WC_Order && lafka_first_order_share( $order ) > 0 ) {
+			lafka_first_order_check( $order );
 		}
 	}
 }
@@ -873,30 +889,44 @@ if ( ! function_exists( 'lafka_order_discount_apply' ) ) {
 			return;
 		}
 		$fee = lafka_order_discount_fee( $cart );
-		if ( null !== $fee ) {
-			$cart->add_fee( $fee['label'], -$fee['amount'], $fee['taxable'], $fee['tax_class'] );
+		if ( null !== $fee && method_exists( $cart, 'fees_api' ) ) {
+			// The split travels with the cart fee to the order fee item
+			// (lafka_first_order_mark_fee_item()).
+			$cart->fees_api()->add_fee(
+				array(
+					'name'                    => $fee['label'],
+					'amount'                  => -$fee['amount'],
+					'taxable'                 => $fee['taxable'],
+					'tax_class'               => $fee['tax_class'],
+					'lafka_order_discount'    => true,
+					'lafka_first_order'       => $fee['first_order'],
+					'lafka_first_order_label' => $fee['first_order_label'],
+				)
+			);
 		}
 	}
 }
 
 if ( ! function_exists( 'lafka_order_discount_fee' ) ) {
 	/**
-	 * The combined order-level discount for a cart: its label, amount and tax
-	 * treatment, or null when no promo applies. One computation for the cart
-	 * fee and for re-pricing an order (lafka_first_order_revalidate()).
+	 * The combined order-level discount for a cart: its label, amount, tax
+	 * treatment and first-order part, or null when no promo applies.
 	 *
 	 * @since 10.4.0
 	 * @param \WC_Cart $cart Cart.
-	 * @return array{label:string,amount:float,taxable:bool,tax_class:string}|null
+	 * @return array{label:string,amount:float,taxable:bool,tax_class:string,first_order:float,first_order_label:string}|null
 	 */
 	function lafka_order_discount_fee( $cart ): ?array {
 		$components = apply_filters( 'lafka_order_discount_components', array(), $cart );
 		if ( ! is_array( $components ) || array() === $components ) {
 			return null;
 		}
-		$percents = array();
-		$fixed    = 0.0;
-		$labels   = array();
+		$percents      = array();
+		$fixed         = 0.0;
+		$labels        = array();
+		$rest_percents = array();
+		$rest_fixed    = 0.0;
+		$fo_label      = '';
 		foreach ( $components as $component ) {
 			if ( ! is_array( $component ) ) {
 				continue;
@@ -905,13 +935,19 @@ if ( ! function_exists( 'lafka_order_discount_fee' ) ) {
 			if ( $value <= 0.0 ) {
 				continue;
 			}
+			$first = 'first_order' === ( $component['source'] ?? '' );
 			if ( isset( $component['type'] ) && 'fixed' === $component['type'] ) {
-				$fixed += $value;
+				$fixed      += $value;
+				$rest_fixed += $first ? 0.0 : $value;
 			} else {
 				$percents[] = $value;
+				if ( ! $first ) {
+					$rest_percents[] = $value;
+				}
 			}
 			if ( ! empty( $component['label'] ) ) {
 				$labels[] = (string) $component['label'];
+				$fo_label = $first ? (string) $component['label'] : $fo_label;
 			}
 		}
 		if ( array() === $percents && $fixed <= 0.0 ) {
@@ -925,6 +961,8 @@ if ( ! function_exists( 'lafka_order_discount_fee' ) ) {
 		if ( $amount <= 0.0 ) {
 			return null;
 		}
+		// The first-order part: the combined amount less what the other promos give alone.
+		$rest  = array() === $rest_percents && $rest_fixed <= 0.0 ? 0.0 : lafka_order_discount_combined( (float) $cart->get_subtotal(), $rest_percents, $rest_fixed, $already );
 		$label = array() === $labels ? __( 'Discount', 'lafka-plugin' ) : implode( ' + ', $labels );
 		/**
 		 * Filter the single combined discount fee label shown in the cart/checkout.
@@ -940,10 +978,12 @@ if ( ! function_exists( 'lafka_order_discount_fee' ) ) {
 		// base, consistent with BOGO; a non-taxable fee (the old behaviour) left
 		// tax on the full pre-discount subtotal and over-charged the order.
 		return array(
-			'label'     => $label,
-			'amount'    => $amount,
-			'taxable'   => function_exists( 'wc_tax_enabled' ) ? (bool) wc_tax_enabled() : true,
-			'tax_class' => lafka_order_discount_tax_class( $cart ),
+			'label'             => $label,
+			'amount'            => $amount,
+			'taxable'           => function_exists( 'wc_tax_enabled' ) ? (bool) wc_tax_enabled() : true,
+			'tax_class'         => lafka_order_discount_tax_class( $cart ),
+			'first_order'       => '' !== $fo_label ? max( 0.0, round( $amount - $rest, 2 ) ) : 0.0,
+			'first_order_label' => $fo_label,
 		);
 	}
 }
