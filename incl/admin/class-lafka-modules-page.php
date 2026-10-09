@@ -287,8 +287,19 @@ if ( ! class_exists( 'Lafka_Modules_Page' ) ) {
 					)
 				);
 				$this->render_checkout_pages_button( Lafka_Block_Cart_Shim::APPLY_ACTION, __( 'Switch the pages now', 'lafka-plugin' ), 'button-primary' );
+			} elseif ( class_exists( 'Lafka_Checkout_Mode' ) && Lafka_Checkout_Mode::has_mismatch() ) {
+				// The Checkout page renders the other checkout and is not the default
+				// content (e.g. a page builder wraps the shortcode): say so plainly.
+				printf(
+					'<p class="lafka-checkout-mode__edited"><strong>%s</strong></p>',
+					esc_html(
+						'blocks' === $mode
+							? __( 'Your Checkout page still shows the classic checkout, and its content has been edited (for example by a page builder), so Lafka will not change it. To use the block checkout, replace the page content with the Checkout block in the page editor, or choose the classic checkout above.', 'lafka-plugin' )
+							: __( 'Your Checkout page still shows the block checkout, and its content has been edited, so Lafka will not change it. To use the classic checkout, replace the page content with the [woocommerce_checkout] shortcode in the page editor, or choose the block checkout above.', 'lafka-plugin' )
+					)
+				);
 			} else {
-				echo '<p>' . esc_html__( 'Your Cart & Checkout pages already match this choice (or have been edited, so Lafka leaves them alone).', 'lafka-plugin' ) . '</p>';
+				echo '<p>' . esc_html__( 'Your Cart & Checkout pages already match this choice.', 'lafka-plugin' ) . '</p>';
 			}
 			if ( array() !== $status['undo'] ) {
 				echo '<p>' . esc_html(

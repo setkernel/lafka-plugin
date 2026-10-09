@@ -31,6 +31,9 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
   (cart-extensions update `lafka` → `quote_delivery`); a cached address is priced at once, and the classic checkout
   is unchanged. The method also only looks up a destination the quote guard calls complete (street + postcode, or
   what the country needs) even when the guard is switched off. New: cart extension field `delivery_quote_pending`.
+- Lafka → Modules said the Cart & Checkout pages "already match this choice (or have been edited)" when the Checkout
+  page showed the classic checkout inside a page builder while Blocks was chosen; it now says the page is edited and
+  shows the other checkout, and what to do.
 - A first-time customer whose card was declined lost the first-order discount on the retry: the failed order counted
   as a prior order, so the retry was priced without the discount and placed as a second order. Failed, cancelled and
   draft orders no longer count, nor does the order the checkout is retrying (`order_awaiting_payment` / the Store API

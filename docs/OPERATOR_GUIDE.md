@@ -363,7 +363,10 @@ fully on both. Saving the choice never edits your pages. The **Switch the pages 
 button below it rewrites the Cart and Checkout pages once, only when they still hold the
 unedited WooCommerce default (block markup to the classic shortcodes, or Lafka's saved
 copy back to blocks), and **Undo the last switch** puts back exactly what was there.
-Pages you edited are never touched.
+Pages you edited are never touched: when the Checkout page shows the other checkout and
+has been edited (for example a page builder wraps the shortcode), the screen says so, and
+Tools → Site Health warns; replace the page content with the Checkout block (or the
+`[woocommerce_checkout]` shortcode) yourself, or choose the experience the page has.
 
 ### Closed store
 
