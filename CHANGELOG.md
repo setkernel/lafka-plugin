@@ -31,6 +31,8 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
   (cart-extensions update `lafka` → `quote_delivery`); a cached address is priced at once, and the classic checkout
   is unchanged. The method also only looks up a destination the quote guard calls complete (street + postcode, or
   what the country needs) even when the guard is switched off. New: cart extension field `delivery_quote_pending`.
+- The abandoned-cart recovery email logged "Undefined variable $email_instance" twice per send; the email passes
+  itself to WooCommerce's email header and footer.
 - Abandoned-cart capture never saw an email typed on the classic checkout unless the customer then changed an address
   field or the shipping choice (WooCommerce only refreshes the order review for those), so a pickup customer who typed
   their email and left was never captured. While capture is on, the email field refreshes the order review.

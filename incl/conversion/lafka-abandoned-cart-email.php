@@ -133,10 +133,11 @@ if ( ! function_exists( 'lafka_ac_render_email_body' ) ) {
 	 * Uses WC's own email header + footer actions so the wrapper matches every
 	 * other transactional email from the store.
 	 *
-	 * @param object $row Row from wp_lafka_abandoned_carts.
+	 * @param object        $row            Row from wp_lafka_abandoned_carts.
+	 * @param WC_Email|null $email_instance The email being sent (passed to WooCommerce's header and footer).
 	 * @return string
 	 */
-	function lafka_ac_render_email_body( $row ): string {
+	function lafka_ac_render_email_body( $row, $email_instance = null ): string {
 		$contents = isset( $row->cart_contents ) ? (string) $row->cart_contents : '';
 		$decoded  = json_decode( $contents, true );
 		if ( ! is_array( $decoded ) || empty( $decoded['items'] ) ) {

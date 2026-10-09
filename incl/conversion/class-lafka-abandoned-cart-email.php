@@ -90,7 +90,7 @@ if ( ! class_exists( 'LAFKA_Abandoned_Cart_Email' ) ) {
 
 			if ( $this->is_enabled() && $this->get_recipient() ) {
 				$body = function_exists( 'lafka_ac_render_email_body' )
-					? lafka_ac_render_email_body( $row )
+					? lafka_ac_render_email_body( $row, $this )
 					: '';
 
 				if ( '' !== $body ) {
@@ -133,7 +133,7 @@ if ( ! class_exists( 'LAFKA_Abandoned_Cart_Email' ) ) {
 				)
 			);
 			return function_exists( 'lafka_ac_render_email_body' )
-				? lafka_ac_render_email_body( $sample_row )
+				? lafka_ac_render_email_body( $sample_row, $this )
 				: '';
 		}
 
