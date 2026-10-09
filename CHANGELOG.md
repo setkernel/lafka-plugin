@@ -145,7 +145,9 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
   The routes need a page token printed only on the checkout and tied to the shopper's session
   (cart not empty), count Google searches as billing sessions against a daily budget
   (`lafka_address_google_daily_sessions`, default 500; Photon takes over when it is used up), cap
-  searches per session and Google searches per minute, and keep the keyless path rate limited.
+  searches per session and Google searches per minute, and keep the keyless path rate limited. A search
+  answered from the cache still lets the customer choose the place, and the place lookup shares the
+  per-minute Google cap.
 - Block checkout: when delivery was chosen and no delivery rate is on offer, the `lafka` cart
   extension carries `delivery_unavailable_message` (the distance method's reason, else the
   plain "we can't deliver") that the block cart/checkout shows under the shipping options,

@@ -170,6 +170,31 @@ if ( ! class_exists( 'Lafka_Address_Search' ) ) {
 		}
 
 		/**
+		 * Let a search session that was answered from the cache go on to its
+		 * place lookup. It is not counted against the daily budget: no paid
+		 * autocomplete call was made for it.
+		 *
+		 * @param string $session Session token from the browser.
+		 * @return void
+		 */
+		private static function remember_session( string $session ): void {
+			if ( 1 !== preg_match( '/^[A-Za-z0-9-]{16,64}$/', $session ) ) {
+				return;
+			}
+			$key = self::CACHE_PREFIX . 'sess_' . md5( $session );
+			if ( false === get_transient( $key ) ) {
+				set_transient(
+					$key,
+					array(
+						'suggest' => 1,
+						'place'   => 0,
+					),
+					30 * MINUTE_IN_SECONDS
+				);
+			}
+		}
+
+		/**
 		 * Log, once a day, that the paid budget is used up.
 		 *
 		 * @return void
@@ -415,6 +440,11 @@ if ( ! class_exists( 'Lafka_Address_Search' ) ) {
 			};
 			$cached = get_transient( $key( $backend ) );
 			if ( is_array( $cached ) ) {
+				if ( 'google' === $backend ) {
+					// No paid call was made, but the customer may still choose one of these places.
+					self::remember_session( $session );
+				}
+
 				return $cached;
 			}
 
@@ -466,8 +496,11 @@ if ( ! class_exists( 'Lafka_Address_Search' ) ) {
 			if ( is_array( $cached ) ) {
 				return $cached;
 			}
-			// A paid details call only closes a search session this site counted.
-			if ( 'ok' !== self::google_session( $session, 'place' ) ) {
+			// A paid details call only closes a search session this site knows, and shares the paid path's site-wide pace.
+			if ( ! class_exists( 'Lafka_Beacon_Guard' ) ) {
+				require_once dirname( __DIR__ ) . '/class-lafka-beacon-guard.php';
+			}
+			if ( Lafka_Beacon_Guard::rate_limited( 'address_paid', 'site', 0, 30, 60 ) || 'ok' !== self::google_session( $session, 'place' ) ) {
 				return new WP_Error( 'lafka_address_session', __( 'Please search for the address again.', 'lafka-plugin' ) );
 			}
 			$place = self::google_place( $id, $session );
