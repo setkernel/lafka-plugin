@@ -150,13 +150,15 @@ if ( ! class_exists( 'Lafka_Loyalty' ) ) {
 
 		/**
 		 * The part of an order's items that earns points: items after
-		 * discounts, without tax, shipping, fees or tips.
+		 * discounts (coupons and the first-order / slow-day / combo discount),
+		 * without tax, shipping, fees or tips.
 		 *
 		 * @param WC_Order $order Order.
 		 * @return float
 		 */
 		public static function earn_base( $order ): float {
-			return max( 0.0, (float) $order->get_subtotal() - (float) $order->get_total_discount( true ) );
+			$promo = function_exists( 'lafka_order_discount_fee_amount' ) ? lafka_order_discount_fee_amount( $order ) : 0.0;
+			return max( 0.0, (float) $order->get_subtotal() - (float) $order->get_total_discount( true ) - $promo );
 		}
 
 		/**

@@ -8,6 +8,10 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
 ## [Unreleased]
 
 ### Fixed
+- A percentage tip, the points an order earns and the "You'll earn" line counted the items before the first-order,
+  slow-day and combo discount (only coupons were taken off), so a first order's 10% tip was worked out on more
+  than the customer paid for the items. "Items after discounts" now takes that discount off too, on both
+  checkouts. New: `lafka_order_discount_fee_amount()`.
 - "Order again" dropped half-and-half toppings: the order kept only the shown wording ("Olives (left half)"), which
   never matched an option again. Order lines now also keep the choices themselves (hidden item meta
   `_lafka_addon_choices`, e.g. `olives--left`) and "Order again" rebuilds them exactly; older orders fall back to the

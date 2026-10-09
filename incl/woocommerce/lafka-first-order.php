@@ -907,6 +907,37 @@ if ( ! function_exists( 'lafka_order_discount_apply' ) ) {
 	}
 }
 
+if ( ! function_exists( 'lafka_order_discount_fee_amount' ) ) {
+	/**
+	 * How much the combined order-level discount (first-order, slow-day,
+	 * combo: the negative fee lafka_order_discount_apply() adds) takes off a
+	 * cart or an order, as a positive amount without tax. "Items after
+	 * discounts" (the tip's base, the points a customer earns) is the items
+	 * subtotal less WooCommerce's coupon discount less this.
+	 *
+	 * @since 10.4.0
+	 * @param \WC_Cart|\WC_Order $source Cart (its fees so far) or order.
+	 * @return float
+	 */
+	function lafka_order_discount_fee_amount( $source ): float {
+		$total = 0.0;
+		if ( $source instanceof WC_Order ) {
+			foreach ( $source->get_fees() as $fee ) {
+				if ( '1' === (string) $fee->get_meta( '_lafka_order_discount' ) ) {
+					$total -= (float) $fee->get_total();
+				}
+			}
+		} elseif ( is_object( $source ) && method_exists( $source, 'fees_api' ) ) {
+			foreach ( (array) $source->fees_api()->get_fees() as $fee ) {
+				if ( is_object( $fee ) && ! empty( $fee->lafka_order_discount ) ) {
+					$total -= (float) $fee->amount;
+				}
+			}
+		}
+		return max( 0.0, $total );
+	}
+}
+
 if ( ! function_exists( 'lafka_order_discount_fee' ) ) {
 	/**
 	 * The combined order-level discount for a cart: its label, amount, tax

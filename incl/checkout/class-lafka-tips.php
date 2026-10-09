@@ -148,14 +148,16 @@ if ( ! class_exists( 'Lafka_Tips' ) ) {
 		}
 
 		/**
-		 * The order's items total the percentages apply to (after discounts,
-		 * before tax and delivery).
+		 * The order's items total the percentages apply to (after discounts:
+		 * coupons and the first-order / slow-day / combo discount; before tax
+		 * and delivery).
 		 *
 		 * @return float
 		 */
 		private static function base(): float {
-			$cart = WC()->cart;
-			return max( 0.0, (float) $cart->get_subtotal() - (float) $cart->get_discount_total() );
+			$cart  = WC()->cart;
+			$promo = function_exists( 'lafka_order_discount_fee_amount' ) ? lafka_order_discount_fee_amount( $cart ) : 0.0;
+			return max( 0.0, (float) $cart->get_subtotal() - (float) $cart->get_discount_total() - $promo );
 		}
 
 		/**

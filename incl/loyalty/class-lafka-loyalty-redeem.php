@@ -113,7 +113,8 @@ if ( ! class_exists( 'Lafka_Loyalty_Redeem' ) ) {
 		public static function state(): array {
 			$user    = get_current_user_id();
 			$cart    = WC()->cart;
-			$base    = $cart ? max( 0.0, (float) $cart->get_subtotal() - (float) $cart->get_discount_total() ) : 0.0;
+			$promo   = $cart && function_exists( 'lafka_order_discount_fee_amount' ) ? lafka_order_discount_fee_amount( $cart ) : 0.0;
+			$base    = $cart ? max( 0.0, (float) $cart->get_subtotal() - (float) $cart->get_discount_total() - $promo ) : 0.0;
 			$earn    = Lafka_Loyalty::points_for( $base );
 			$balance = $user > 0 ? Lafka_Loyalty_Ledger::balance( $user ) : 0;
 			$coupon  = $user > 0 ? self::current_coupon() : null;
