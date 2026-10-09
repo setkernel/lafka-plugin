@@ -36,14 +36,26 @@ if ( ! function_exists( 'lafka_first_order_discount_percent' ) ) {
 if ( ! function_exists( 'lafka_is_first_order_customer' ) ) {
 	/**
 	 * Whether the current visitor qualifies as a first-time customer.
-	 * Logged-in + zero prior orders. Filterable.
+	 * Logged-in + no prior order that went through. An order whose payment
+	 * failed, one still awaiting payment, a cancelled one and a checkout draft
+	 * do not count, so a declined card does not cost the customer the discount
+	 * on the retry. Filterable.
 	 *
 	 * @return bool
 	 */
 	function lafka_is_first_order_customer(): bool {
 		$eligible = false;
-		if ( is_user_logged_in() && function_exists( 'wc_get_customer_order_count' ) ) {
-			$eligible = 0 === (int) wc_get_customer_order_count( get_current_user_id() );
+		if ( is_user_logged_in() && function_exists( 'wc_get_orders' ) && function_exists( 'wc_get_order_statuses' ) ) {
+			$statuses = array_diff( array_keys( wc_get_order_statuses() ), array( 'wc-pending', 'wc-failed', 'wc-cancelled', 'wc-checkout-draft' ) );
+			$prior    = wc_get_orders(
+				array(
+					'customer_id' => get_current_user_id(),
+					'status'      => $statuses,
+					'limit'       => 1,
+					'return'      => 'ids',
+				)
+			);
+			$eligible = array() === $prior;
 		}
 		return (bool) apply_filters( 'lafka_is_first_order_customer', $eligible );
 	}
