@@ -405,6 +405,14 @@ that far (we deliver up to 10 km). Choose Pickup instead."), and placing the ord
 refused until they pick Pickup or a reachable address. The sentence is filterable
 (`lafka_distance_unavailable_message`).
 
+### Pickup and delivery wording
+
+WooCommerce's cash on delivery reads after the order type: "Pay at pickup" / "Pay on delivery" at
+checkout, and the payment instructions on the order-received page and in the customer's emails say
+"Pay when you collect your order." or "Pay when your order arrives." (Appearance → Customize →
+Lafka — Checkout changes the texts or turns this off; `lafka_cod_title`, `lafka_cod_description`,
+`lafka_cod_instructions`).
+
 ### Text messages
 
 Turn it on under WooCommerce → Settings → Restaurant → Text messages (or Lafka → Modules → Text messages).

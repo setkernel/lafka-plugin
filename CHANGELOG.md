@@ -15,6 +15,11 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
   (cart-extensions update `lafka` → `quote_delivery`); a cached address is priced at once, and the classic checkout
   is unchanged. The method also only looks up a destination the quote guard calls complete (street + postcode, or
   what the country needs) even when the guard is switched off. New: cart extension field `delivery_quote_pending`.
+- Pickup orders paid by cash said "Pay with cash upon delivery." on the order-received page and in the customer's
+  emails (WooCommerce prints the gateway's instructions there, which the contextual payment labels did not cover).
+  The instructions now follow the order's fulfilment ("Pay when you collect your order." / "Pay when your order
+  arrives.", the same Customizer texts as the checkout description), on the classic page, the Order Confirmation
+  block and every customer email, including those sent from the admin. New filter `lafka_cod_instructions`.
 - Switching Loyalty on and writing to its points ledger in the same request failed (the table was only created on
   the next page load). A module's table is now created the moment its switch is turned on (`lafka_loyalty_enabled`,
   `lafka_ac_enabled`, `lafka_push_enabled`), and the ledger makes sure its table exists before its first write.

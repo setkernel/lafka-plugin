@@ -81,7 +81,7 @@ if ( ! class_exists( 'Lafka_Customizer_Checkout' ) ) {
 				$wp_customize,
 				'lafka_cod_contextual_title',
 				esc_html__( 'Name "cash on delivery" after the order type', 'lafka-plugin' ),
-				esc_html__( 'The cash on delivery payment option reads "Pay at pickup" on pickup orders and "Pay on delivery" on delivery orders. The texts below override those defaults.', 'lafka-plugin' )
+				esc_html__( 'The cash on delivery payment option reads "Pay at pickup" on pickup orders and "Pay on delivery" on delivery orders. The description is also the payment instruction on the order-received page and in the customer\'s emails. The texts below override those defaults.', 'lafka-plugin' )
 			);
 			self::text( $wp_customize, 'lafka_cod_title_pickup', esc_html__( 'Pickup: payment option title', 'lafka-plugin' ), esc_html__( 'Default: "Pay at pickup".', 'lafka-plugin' ) );
 			self::text( $wp_customize, 'lafka_cod_description_pickup', esc_html__( 'Pickup: payment option description', 'lafka-plugin' ), esc_html__( 'Default: "Pay when you collect your order."', 'lafka-plugin' ) );
