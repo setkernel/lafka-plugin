@@ -579,6 +579,11 @@ if ( ! class_exists( 'Lafka_Fulfilment' ) ) {
 			if ( 'delivery' !== self::preference() || lafka_shipping_has_delivery_rate() ) {
 				return '';
 			}
+			// Under the Promotions delivery minimum: the address is fine, the order is too small.
+			$minimum = class_exists( 'Lafka_Promotions' ) ? Lafka_Promotions::delivery_minimum_message() : '';
+			if ( '' !== $minimum ) {
+				return $minimum;
+			}
 
 			return __( 'We can\'t deliver to this address. Check the street and postcode, or choose Pickup to collect your order.', 'lafka-plugin' );
 		}

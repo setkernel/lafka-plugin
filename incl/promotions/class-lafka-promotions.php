@@ -284,6 +284,30 @@ if ( ! class_exists( 'Lafka_Promotions' ) ) {
 			return (float) $contents_cost < lafka_delivery_minimum();
 		}
 
+		/**
+		 * Why delivery is not offered when the cart is under the delivery
+		 * minimum, as plain text ('' when the minimum is met or off). The
+		 * cart and checkout notices on both checkouts say the same sentence.
+		 *
+		 * @since 10.4.0
+		 * @return string
+		 */
+		public static function delivery_minimum_message(): string {
+			if ( ! function_exists( 'WC' ) || ! WC()->cart || WC()->cart->is_empty() ) {
+				return '';
+			}
+			$base = (float) WC()->cart->get_cart_contents_total();
+			if ( ! self::should_block_delivery( $base ) ) {
+				return '';
+			}
+			return sprintf(
+				/* translators: 1: minimum in store currency, 2: remaining amount */
+				__( 'Delivery is available on orders over %1$s. Add %2$s more to your cart for delivery.', 'lafka-plugin' ),
+				lafka_price_plain( lafka_delivery_minimum() ),
+				lafka_price_plain( lafka_delivery_minimum() - $base )
+			);
+		}
+
 		// ─── Delivery-minimum hooks ──────────────────────────────────────────
 
 		/**

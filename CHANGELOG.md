@@ -8,6 +8,10 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
 ## [Unreleased]
 
 ### Fixed
+- Under the Promotions delivery minimum the block checkout (and the classic checkout's place-order refusal) said
+  "We can't deliver to this address. Check the street and postcode" although the address was fine; they now say
+  "Delivery is available on orders over $30.00. Add $7.00 more to your cart for delivery." (the cart notice's
+  sentence). New: `Lafka_Promotions::delivery_minimum_message()`.
 - A percentage tip, the points an order earns and the "You'll earn" line counted the items before the first-order,
   slow-day and combo discount (only coupons were taken off), so a first order's 10% tip was worked out on more
   than the customer paid for the items. "Items after discounts" now takes that discount off too, on both
