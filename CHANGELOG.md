@@ -8,6 +8,10 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
 ## [Unreleased]
 
 ### Fixed
+- With branch selection on, the block checkout's required "Order type" and "Branch" fields started empty although
+  the customer had just chosen both in the branch popup, so Place order failed with "Please select a valid option"
+  until they chose again. Both fields now start at the popup's choice (WooCommerce's
+  `woocommerce_get_default_value_for_{field}` filters).
 - The abandoned-cart resume link brought the items back without their add-ons (toppings, half-and-half, combo
   choices). The captured cart now also keeps WooCommerce's session form of each line (`session` in the row's
   `cart_contents`); the link hands it to WooCommerce's session (starting one for a browser that has none, as when

@@ -118,6 +118,46 @@ if ( ! class_exists( 'Lafka_Checkout_Fields' ) ) {
 			}
 
 			add_action( 'woocommerce_set_additional_field_value', array( __CLASS__, 'sync_field_to_session' ), 10, 4 );
+			// Start the fields at what the customer already chose in the branch popup.
+			add_filter( 'woocommerce_get_default_value_for_' . self::FIELD_ORDER_TYPE, array( __CLASS__, 'default_order_type' ), 10, 3 );
+			add_filter( 'woocommerce_get_default_value_for_' . self::FIELD_BRANCH, array( __CLASS__, 'default_branch' ), 10, 3 );
+		}
+
+		/**
+		 * Default of the order-type field: the order type chosen in the branch
+		 * popup (the session), so the customer does not choose it twice.
+		 *
+		 * @since 10.4.0
+		 * @param mixed  $value     Default so far (null).
+		 * @param string $group     Field group (unused).
+		 * @param mixed  $wc_object Object the value is read from (unused).
+		 * @return mixed
+		 */
+		public static function default_order_type( $value, $group = 'other', $wc_object = null ) {
+			unset( $group, $wc_object );
+			$type = (string) ( self::get_branch_session()['order_type'] ?? '' );
+			if ( null === $value && in_array( $type, wp_list_pluck( self::get_order_type_options(), 'value' ), true ) ) {
+				return $type;
+			}
+			return $value;
+		}
+
+		/**
+		 * Default of the branch field: the branch chosen in the popup.
+		 *
+		 * @since 10.4.0
+		 * @param mixed  $value     Default so far (null).
+		 * @param string $group     Field group (unused).
+		 * @param mixed  $wc_object Object the value is read from (unused).
+		 * @return mixed
+		 */
+		public static function default_branch( $value, $group = 'other', $wc_object = null ) {
+			unset( $group, $wc_object );
+			$branch = (int) ( self::get_branch_session()['branch_id'] ?? 0 );
+			if ( null === $value && $branch > 0 && true === self::validate_branch_value( (string) $branch ) ) {
+				return (string) $branch;
+			}
+			return $value;
 		}
 
 		/* --------------------------------------------------------------------- *
