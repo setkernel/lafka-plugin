@@ -1,0 +1,89 @@
+/*
+ * "Add to home screen" card: structure only, in neutral colours that follow
+ * the theme's --lafka-* tokens when it defines them. The theme owns the look.
+ * It sits in the corner the other prompts use, below them in the stack, and
+ * clears the cookie consent banner.
+ */
+.lafka-install-card {
+	position: fixed;
+	right: 16px;
+	bottom: calc(16px + var(--lafka-consent-banner-h, 0px));
+	z-index: calc(var(--lafka-z-toast, 1100) - 30);
+	width: 340px;
+	max-width: calc(100vw - 32px);
+	opacity: 0;
+	transform: translateY(16px);
+	pointer-events: none;
+	transition: opacity 200ms ease-out, transform 200ms ease-out;
+}
+
+.lafka-install-card[hidden],
+.lafka-install-card [hidden] {
+	display: none;
+}
+
+.lafka-install-card[data-visible="true"] {
+	opacity: 1;
+	transform: translateY(0);
+	pointer-events: auto;
+}
+
+.lafka-install-card__inner {
+	position: relative;
+	padding: 16px 48px 16px 16px;
+	border: 1px solid var(--lafka-color-border-subtle, #d9d9d9);
+	border-radius: var(--lafka-radius-lg, 8px);
+	background: var(--lafka-color-surface-raised, #fff);
+	color: var(--lafka-color-text-primary, #1f1f1f);
+}
+
+.lafka-install-card__title,
+.lafka-install-card__text {
+	margin: 0 0 8px;
+}
+
+.lafka-install-card__title {
+	font-weight: 700;
+}
+
+.lafka-install-card__share {
+	vertical-align: text-bottom;
+}
+
+.lafka-install-card__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.lafka-install-card__close {
+	position: absolute;
+	top: 0;
+	right: 0;
+	width: 44px;
+	height: 44px;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: inherit;
+	font-size: 1.5rem;
+	line-height: 1;
+	cursor: pointer;
+}
+
+@media (max-width: 767px) {
+
+	.lafka-install-card {
+		right: 16px;
+		left: 16px;
+		width: auto;
+		max-width: none;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+	.lafka-install-card {
+		transition: none;
+	}
+}

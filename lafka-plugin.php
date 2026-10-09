@@ -414,6 +414,9 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/loyalty/lafka-loyalty-bootstrap
 // Text messages: SMS / WhatsApp order updates for customers who opt in, and the WhatsApp chat link (off by default).
 require_once plugin_dir_path( __FILE__ ) . 'incl/notify/lafka-notify-bootstrap.php';
 
+// Installable app: the web app manifest, the offline page and the "Add to home screen" card.
+require_once plugin_dir_path( __FILE__ ) . 'incl/pwa/lafka-pwa-bootstrap.php';
+
 /**
  * v9.25.0 (Phase 1C — Analytics + SEO + Conversion plan):
  *

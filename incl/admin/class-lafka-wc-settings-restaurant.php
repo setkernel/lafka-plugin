@@ -98,6 +98,8 @@ if ( ! function_exists( 'lafka_define_wc_settings_restaurant_class' ) ) {
 					'promotions' => __( 'Promotions', 'lafka-plugin' ),
 					'tips'       => __( 'Tips', 'lafka-plugin' ),
 					'loyalty'    => __( 'Loyalty', 'lafka-plugin' ),
+					'notify'     => __( 'Text messages', 'lafka-plugin' ),
+					'app'        => __( 'App', 'lafka-plugin' ),
 				);
 			}
 
@@ -119,12 +121,12 @@ if ( ! function_exists( 'lafka_define_wc_settings_restaurant_class' ) ) {
 						return $this->get_tips_settings();
 					case 'loyalty':
 						return $this->get_loyalty_settings();
-					default:
-						return $this->get_hours_settings();
 					case 'notify':
 						return class_exists( 'Lafka_Notify_Settings' ) ? Lafka_Notify_Settings::fields() : array();
 					case 'app':
 						return $this->get_app_settings();
+					default:
+						return $this->get_hours_settings();
 				}
 			}
 
@@ -574,6 +576,69 @@ if ( ! function_exists( 'lafka_define_wc_settings_restaurant_class' ) ) {
 					array(
 						'type' => 'sectionend',
 						'id'   => 'lafka_tips_end',
+					),
+				);
+			}
+
+			/**
+			 * Installable app (Lafka_Pwa).
+			 *
+			 * @return array
+			 */
+			private function get_app_settings() {
+				$desc = __( 'Customers can add your site to their phone\'s home screen and open it like an app. The manifest uses your restaurant name, your site icon and the colours of the active design; offline, customers see your phone and hours, and the menu they last opened. The cart, checkout and account are never kept offline.', 'lafka-plugin' );
+				if ( ! has_site_icon() ) {
+					$desc .= ' ' . sprintf(
+						/* translators: %s: link to the site identity Customizer section. */
+						__( 'There is no site icon yet, so the site cannot be installed. Add a square image of at least 512 by 512 pixels in %s.', 'lafka-plugin' ),
+						'<a href="' . esc_url( admin_url( 'customize.php?autofocus[section]=title_tagline' ) ) . '">' . esc_html__( 'Appearance → Customize → Site Identity', 'lafka-plugin' ) . '</a>'
+					);
+				}
+				return array(
+					array(
+						'title' => __( 'Installable app', 'lafka-plugin' ),
+						'type'  => 'title',
+						'desc'  => wp_kses( $desc, array( 'a' => array( 'href' => array() ) ) ),
+						'id'    => 'lafka_pwa_title',
+					),
+					array(
+						'title'   => __( 'Installable app', 'lafka-plugin' ),
+						'desc'    => __( 'Make the site installable and keep an offline page', 'lafka-plugin' ),
+						'id'      => 'lafka_pwa_enabled',
+						'type'    => 'checkbox',
+						'default' => 'yes',
+					),
+					array(
+						'title'   => __( 'Home screen card', 'lafka-plugin' ),
+						'desc'    => __( 'Offer to add the site to the home screen (never together with another pop-up)', 'lafka-plugin' ),
+						'id'      => 'lafka_pwa_install_prompt',
+						'type'    => 'checkbox',
+						'default' => 'no',
+					),
+					array(
+						'title'             => __( 'Show the card on visit number', 'lafka-plugin' ),
+						'desc_tip'          => __( 'The card appears from this visit on, or right after an order. A dismissed card stays away for 30 days.', 'lafka-plugin' ),
+						'id'                => 'lafka_pwa_install_visits',
+						'type'              => 'number',
+						'default'           => '2',
+						'css'               => 'width: 90px;',
+						'custom_attributes' => array(
+							'min'  => '1',
+							'max'  => '10',
+							'step' => '1',
+						),
+					),
+					array(
+						'title'             => __( 'Name under the icon', 'lafka-plugin' ),
+						'desc_tip'          => __( 'Up to 12 characters. Empty = your restaurant name, shortened.', 'lafka-plugin' ),
+						'id'                => 'lafka_pwa_short_name',
+						'type'              => 'text',
+						'default'           => '',
+						'custom_attributes' => array( 'maxlength' => '12' ),
+					),
+					array(
+						'type' => 'sectionend',
+						'id'   => 'lafka_pwa_end',
 					),
 				);
 			}

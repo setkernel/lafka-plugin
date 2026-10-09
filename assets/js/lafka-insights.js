@@ -117,8 +117,8 @@
 			p: str(loc.pathname, 100),
 			t: pageType,
 			r: str(ref, 64),
-			us: str(q.get('utm_source'), 64),
-			um: str(q.get('utm_medium'), 32),
+			us: str(q.get('utm_source') || (q.get('source') === 'pwa' ? 'pwa' : ''), 64),
+			um: str(q.get('utm_medium') || (q.get('source') === 'pwa' ? 'app' : ''), 32),
 			uc: str(q.get('utm_campaign'), 64),
 			d: width && width < 768 ? 'm' : width && width < 1024 ? 't' : 'd',
 			e: queue

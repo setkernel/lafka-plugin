@@ -344,6 +344,32 @@ if ( ! class_exists( 'Lafka_Module_Registry' ) ) {
 				)
 			);
 
+			// ---- Installable app (a WooCommerce yes/no option; default on, the home-screen card has its own switch) ----
+			self::register(
+				new Lafka_Module(
+					array(
+						'id'              => 'pwa',
+						'label'           => esc_html__( 'Installable app', 'lafka-plugin' ),
+						'description'     => esc_html__( 'Customers can add the site to their home screen. Adds a web app manifest from your site icon and colours, and an offline page and menu snapshot (never the cart, checkout or account). The "Add to home screen" card is a separate switch.', 'lafka-plugin' ),
+						'category'        => 'conversion',
+						'storage'         => 'option',
+						'default_enabled' => true,
+						'get_enabled'     => static function () {
+							return 'yes' === get_option( 'lafka_pwa_enabled', 'yes' );
+						},
+						'set_enabled'     => static function ( bool $enabled ) {
+							update_option( 'lafka_pwa_enabled', $enabled ? 'yes' : 'no' );
+						},
+						// Installing needs a site icon.
+						'is_configured'   => static function () {
+							return has_site_icon();
+						},
+						'settings_path'   => 'admin.php?page=wc-settings&tab=lafka_restaurant&section=app',
+						'docs_slug'       => 'installable-app',
+					)
+				)
+			);
+
 			// ---- Text messages (a WooCommerce yes/no option; the settings live with it) ----
 			self::register(
 				new Lafka_Module(

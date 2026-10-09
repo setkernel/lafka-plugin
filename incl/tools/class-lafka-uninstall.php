@@ -193,6 +193,7 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 					'lafka_tips_',           // tip presets and labels (WooCommerce → Restaurant → Tips)
 					'lafka_loyalty_',        // loyalty settings, db version, rewrite marker
 					'lafka_notify_',         // text-message settings and credentials (WooCommerce → Restaurant → Text messages)
+					'lafka_pwa_',            // installable-app settings (WooCommerce → Restaurant → App)
 					'widget_lafka_',         // widget instances (about, contacts, payment options)
 					'widget_lafka-',         // widget instances (popular posts)
 				)

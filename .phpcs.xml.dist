@@ -24,11 +24,12 @@
 
 	<!-- lafka_llms_escape_text() escapes the machine-readable documents
 	     (text/plain, markdown, JSON) for their own formats; HTML escaping
-	     would corrupt them. -->
+	     would corrupt them. lafka_pwa_json() does the same for the web app manifest. -->
 	<rule ref="WordPress.Security.EscapeOutput">
 		<properties>
 			<property name="customEscapingFunctions" type="array">
 				<element value="lafka_llms_escape_text"/>
+				<element value="lafka_pwa_json"/>
 			</property>
 		</properties>
 	</rule>

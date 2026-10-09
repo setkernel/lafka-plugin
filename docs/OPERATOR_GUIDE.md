@@ -458,6 +458,32 @@ Lafka → Modules → Loyalty points (off by default), settings in WooCommerce �
   every cached balance from the ledger.
 - Filters: `lafka_loyalty_earn_points`, `lafka_loyalty_reservation_ttl`, `lafka_loyalty_failed_grace`.
 
+### Installable app (home screen and offline)
+
+Lafka → Modules → Installable app (on by default), settings in WooCommerce → Settings → Restaurant → App.
+
+- **What it does.** Customers can add your site to their phone's home screen and open it like an app. It needs a
+  **site icon** (a square image of at least 512 by 512 pixels, set in Appearance → Customize → Site Identity);
+  without one the site is not installable and the screen says so. The name is your restaurant name (the label under
+  the icon is shortened to 12 characters, or set it yourself), the toolbar and splash colours come from the active
+  design, and the app opens on your menu page.
+- **Offline.** One service worker (the same one Web Push uses) keeps an offline page with your name, a tap-to-call
+  phone and your hours, and a copy of the menu page and its pictures, so a customer without a signal still sees the
+  menu. The copy is only shown when the network fails or is slow; online, customers always get the live menu. The
+  cart, checkout, My Account, order pages, the admin, the REST and Store API and AJAX calls are never kept, and
+  nobody with a cart or an account gets a copy of a page on their device.
+- **Home screen card (off by default).** "Add to home screen" shows a small card on the second visit, or right after
+  an order. Android and desktop Chrome offer a real install button; on iPhone and iPad it explains Share, then Add to
+  Home Screen, once. It never shows with another pop-up (push, review, exit intent, cookie banner), steps aside if
+  one opens, and a dismissed card stays away for 30 days. Not shown on the cart, checkout, account or product pages.
+- **Counting.** The app opens on `/menu/?source=pwa`; the Insights module counts those visits as source `pwa`,
+  medium `app`. The card fires the dataLayer events `pwa_install_prompt_shown`, `pwa_install_prompt_accept`,
+  `pwa_install_prompt_dismiss` and `pwa_installed`.
+- **Updating.** Caches are named after the plugin version; an update deletes the old ones.
+- Filters: `lafka_pwa_manifest`, `lafka_pwa_colors`, `lafka_pwa_maskable_icon_url` (a 512 pixel icon drawn for
+  masking), `lafka_pwa_install_copy`, `lafka_pwa_snooze_days`, `lafka_pwa_service_worker_url`,
+  `lafka_service_worker_config` (theme).
+
 ## Where settings live
 
 The Customizer controls under **Lafka — Analytics, Push, Reviews, Abandoned cart, Checkout, PDP,

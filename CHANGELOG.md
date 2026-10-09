@@ -7,6 +7,19 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
 
 ## [Unreleased]
 
+### Installable app
+- New gated module (Lafka → Modules → Installable app, default on; WooCommerce → Settings → Restaurant → App).
+  Serves a web app manifest (`/?lafka_manifest=1`: restaurant name, WordPress site icon at 192/512 and an optional
+  maskable icon, colours from the active design through `lafka_pwa_colors`, standalone, start page the menu with
+  `?source=pwa`) and an offline page (`/?lafka_offline=1`: name, tap-to-call phone, hours, open-now line while it is
+  still true). Hands the theme's single service worker its settings through `lafka_service_worker_config` (cache
+  version = plugin version, offline page, never-cached paths), registers it from `lafka-pwa.js` and tells it which
+  files the menu uses. Pages served to a visitor with a session carry `X-Lafka-Session: 1` and are never kept.
+  "Add to home screen" card (own switch, default off, visit threshold, 30-day snooze): `beforeinstallprompt` on
+  Chrome, a one-time Share hint on iOS, never together with another prompt. Insights counts `?source=pwa` as source
+  `pwa`, medium `app`. New: `Lafka_Pwa`, `lafka_pwa_json()`, filters `lafka_pwa_manifest`, `lafka_pwa_colors`,
+  `lafka_pwa_maskable_icon_url`, `lafka_pwa_install_copy`, `lafka_pwa_snooze_days`, `lafka_pwa_service_worker_url`.
+
 ### Text messages
 - New gated module (Lafka → Modules → Text messages, default off; WooCommerce → Settings → Restaurant → Text
   messages). Customers who tick an unticked opt-in at checkout (classic `woocommerce_checkout_fields`; block
