@@ -59,6 +59,14 @@ if ( ! class_exists( 'Lafka_Schema' ) ) {
 					'version_option' => 'lafka_incidents_db_version',
 					'gate'           => null,
 				),
+				'loyalty'         => array(
+					'suffix'         => 'lafka_loyalty_ledger',
+					'version'        => '1.0.0',
+					'version_option' => 'lafka_loyalty_db_version',
+					'gate'           => static function () {
+						return class_exists( 'Lafka_Loyalty' ) && Lafka_Loyalty::enabled();
+					},
+				),
 				'insights'        => array(
 					'suffix'         => 'lafka_insights_sessions',
 					'version'        => '1.0.0',
@@ -264,6 +272,27 @@ if ( ! class_exists( 'Lafka_Schema' ) ) {
   UNIQUE KEY fingerprint (fingerprint),
   KEY status_last_seen (status,last_seen),
   KEY channel (channel)
+) {$charset};";
+
+				case 'loyalty':
+					$table = self::table_name( $id );
+					// delta is signed; ref makes a row write-once (NULL repeats freely);
+					// order_id is a WooCommerce order id (HPOS-safe, no posts join).
+					return "CREATE TABLE {$table} (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  user_id BIGINT UNSIGNED NOT NULL,
+  order_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
+  delta INT NOT NULL DEFAULT 0,
+  reason VARCHAR(24) NOT NULL DEFAULT '',
+  ref VARCHAR(64) NULL DEFAULT NULL,
+  note VARCHAR(255) NOT NULL DEFAULT '',
+  shortfall INT UNSIGNED NOT NULL DEFAULT 0,
+  balance_after INT NOT NULL DEFAULT 0,
+  created_at DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
+  PRIMARY KEY  (id),
+  UNIQUE KEY ref (ref),
+  KEY user_created (user_id,created_at),
+  KEY order_id (order_id)
 ) {$charset};";
 
 				case 'insights':

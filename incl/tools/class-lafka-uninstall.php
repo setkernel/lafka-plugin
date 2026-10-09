@@ -191,6 +191,7 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 					'lafka_tracking',        // tracking IDs and consent settings (Customizer → Analytics)
 					'lafka_settings_',       // settings migration marker
 					'lafka_tips_',           // tip presets and labels (WooCommerce → Restaurant → Tips)
+					'lafka_loyalty_',        // loyalty settings, db version, rewrite marker
 					'widget_lafka_',         // widget instances (about, contacts, payment options)
 					'widget_lafka-',         // widget instances (popular posts)
 				)
@@ -270,6 +271,7 @@ if ( ! class_exists( 'Lafka_Uninstall' ) ) {
 				'_lafka_review_email_optout',
 				'_lafka_push_reorder_opt_out',
 				'_lafka_notified_order_ids', // per-user new-order alert bookkeeping
+				'lafka_loyalty_balance', // cached loyalty balance (the ledger table is dropped with the plugin tables)
 			);
 		}
 

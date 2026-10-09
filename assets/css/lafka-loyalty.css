@@ -1,0 +1,29 @@
+/*
+ * Loyalty points in My Account: structure only, in neutral colours that follow
+ * the theme's --lafka-* tokens when it defines them. The theme owns the look.
+ */
+.lafka-loyalty-account__balance {
+	margin: 0 0 1.5em;
+	padding: 1.25em;
+	border: 1px solid var(--lafka-color-border-subtle, #d9d9d9);
+	border-radius: var(--lafka-radius-lg, 8px);
+	background: var(--lafka-color-surface-raised, #fff);
+}
+
+.lafka-loyalty-account__label,
+.lafka-loyalty-account__worth,
+.lafka-loyalty-account__rules,
+.lafka-loyalty-account__expiry {
+	margin: 0 0 0.5em;
+}
+
+.lafka-loyalty-account__points {
+	margin: 0;
+	font-size: 2.5em;
+	font-weight: 700;
+	line-height: 1.1;
+}
+
+.lafka-loyalty-account__delta {
+	font-weight: 700;
+}

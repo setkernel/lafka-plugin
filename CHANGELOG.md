@@ -7,6 +7,18 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
 
 ## [Unreleased]
 
+### Loyalty points
+- New gated module (Lafka → Modules → Loyalty points, default off; WooCommerce → Settings → Restaurant →
+  Loyalty). Points are earned on Completed orders (items only, once per order), spent at checkout on the classic
+  and block checkout through a single-use, customer-bound WooCommerce coupon, and taken back in proportion on
+  refunds and on cancellation. Ledger table `lafka_loyalty_ledger` in `Lafka_Schema` (HPOS-safe order ids,
+  write-once refs, per-customer database lock so two tabs cannot spend the same points, negative balances never
+  created, shortfalls recorded); balance cached in user meta and rebuilt by `wp lafka loyalty recalc`. My
+  Account → Points, a line in the completed email, an admin adjustment on the user profile, optional expiry, hourly
+  Action Scheduler upkeep, privacy export and erase. New: `Lafka_Loyalty`, `Lafka_Loyalty_Ledger`,
+  `Lafka_Loyalty_Redeem`, `Lafka_Loyalty_Account`, Store API cart extension `lafka-loyalty`, filters
+  `lafka_loyalty_earn_points` and `lafka_loyalty_reservation_ttl`.
+
 ### Deals
 - Deal extras: pricing modes (percent off, amount off, cheapest item free, besides the fixed price),
   conditions (pickup / delivery only, an hours window, most uses per customer and in total counted on

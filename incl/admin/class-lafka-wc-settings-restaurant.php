@@ -97,6 +97,7 @@ if ( ! function_exists( 'lafka_define_wc_settings_restaurant_class' ) ) {
 					'search'     => __( 'Search & AI', 'lafka-plugin' ),
 					'promotions' => __( 'Promotions', 'lafka-plugin' ),
 					'tips'       => __( 'Tips', 'lafka-plugin' ),
+					'loyalty'    => __( 'Loyalty', 'lafka-plugin' ),
 				);
 			}
 
@@ -116,6 +117,8 @@ if ( ! function_exists( 'lafka_define_wc_settings_restaurant_class' ) ) {
 						return $this->get_promotions_settings();
 					case 'tips':
 						return $this->get_tips_settings();
+					case 'loyalty':
+						return $this->get_loyalty_settings();
 					default:
 						return $this->get_hours_settings();
 				}
@@ -567,6 +570,102 @@ if ( ! function_exists( 'lafka_define_wc_settings_restaurant_class' ) ) {
 					array(
 						'type' => 'sectionend',
 						'id'   => 'lafka_tips_end',
+					),
+				);
+			}
+
+			/**
+			 * Loyalty points (Lafka_Loyalty).
+			 *
+			 * @return array
+			 */
+			private function get_loyalty_settings() {
+				$desc = __( 'Customers with an account earn points when an order is Completed (on the items only: no tips, fees, shipping or tax) and spend them at checkout for a discount. Refunds and cancellations take the points back.', 'lafka-plugin' );
+				if ( 'yes' !== get_option( 'woocommerce_enable_signup_and_login_from_checkout', 'no' ) ) {
+					$desc .= ' ' . sprintf(
+						/* translators: %s: link to the Accounts & Privacy settings. */
+						__( 'Guests earn nothing, and WooCommerce\'s "Allow customers to create an account during checkout" is off, so new customers cannot start earning at checkout. Turn it on in %s.', 'lafka-plugin' ),
+						'<a href="' . esc_url( admin_url( 'admin.php?page=wc-settings&tab=account' ) ) . '">' . esc_html__( 'Accounts & Privacy', 'lafka-plugin' ) . '</a>'
+					);
+				}
+				return array(
+					array(
+						'title' => __( 'Loyalty points', 'lafka-plugin' ),
+						'type'  => 'title',
+						'desc'  => wp_kses( $desc, array( 'a' => array( 'href' => array() ) ) ),
+						'id'    => 'lafka_loyalty_title',
+					),
+					array(
+						'title'   => __( 'Loyalty points', 'lafka-plugin' ),
+						'desc'    => __( 'Turn loyalty points on', 'lafka-plugin' ),
+						'id'      => 'lafka_loyalty_enabled',
+						'type'    => 'checkbox',
+						'default' => 'no',
+					),
+					array(
+						'title'             => __( 'Points earned per 1.00 spent', 'lafka-plugin' ),
+						'desc_tip'          => __( 'On the items after discounts. With 1, a 20.00 order earns 20 points.', 'lafka-plugin' ),
+						'id'                => 'lafka_loyalty_earn_rate',
+						'type'              => 'number',
+						'default'           => '1',
+						'css'               => 'width: 90px;',
+						'custom_attributes' => array(
+							'min'  => '0',
+							'step' => '0.1',
+						),
+					),
+					array(
+						'title'             => __( 'Points worth 1.00', 'lafka-plugin' ),
+						'desc_tip'          => __( 'How many points take 1.00 off an order. With 100, 500 points are worth 5.00.', 'lafka-plugin' ),
+						'id'                => 'lafka_loyalty_redeem_rate',
+						'type'              => 'number',
+						'default'           => '100',
+						'css'               => 'width: 90px;',
+						'custom_attributes' => array(
+							'min'  => '1',
+							'step' => '1',
+						),
+					),
+					array(
+						'title'             => __( 'Fewest points to redeem', 'lafka-plugin' ),
+						'desc_tip'          => __( 'The least a customer can use on one order.', 'lafka-plugin' ),
+						'id'                => 'lafka_loyalty_min_redeem',
+						'type'              => 'number',
+						'default'           => '500',
+						'css'               => 'width: 90px;',
+						'custom_attributes' => array(
+							'min'  => '1',
+							'step' => '1',
+						),
+					),
+					array(
+						'title'             => __( 'Most of the items points can cover (%)', 'lafka-plugin' ),
+						'desc_tip'          => __( 'Points can take off at most this share of the items on one order.', 'lafka-plugin' ),
+						'id'                => 'lafka_loyalty_max_share',
+						'type'              => 'number',
+						'default'           => '50',
+						'css'               => 'width: 90px;',
+						'custom_attributes' => array(
+							'min'  => '1',
+							'max'  => '100',
+							'step' => '1',
+						),
+					),
+					array(
+						'title'             => __( 'Points expire after (months)', 'lafka-plugin' ),
+						'desc_tip'          => __( 'A customer\'s points expire after this many months without earning or using points. 0 = never.', 'lafka-plugin' ),
+						'id'                => 'lafka_loyalty_expiry_months',
+						'type'              => 'number',
+						'default'           => '0',
+						'css'               => 'width: 90px;',
+						'custom_attributes' => array(
+							'min'  => '0',
+							'step' => '1',
+						),
+					),
+					array(
+						'type' => 'sectionend',
+						'id'   => 'lafka_loyalty_end',
 					),
 				);
 			}

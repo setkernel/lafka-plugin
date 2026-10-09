@@ -408,6 +408,9 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/deals/lafka-deals-bootstrap.php
 // Order tracking: the status stepper, its live endpoint and one-tap reorder.
 require_once plugin_dir_path( __FILE__ ) . 'incl/order-tracking/lafka-order-tracking-bootstrap.php';
 
+// Loyalty points: earned on completed orders, redeemed at checkout through a coupon (off by default).
+require_once plugin_dir_path( __FILE__ ) . 'incl/loyalty/lafka-loyalty-bootstrap.php';
+
 /**
  * v9.25.0 (Phase 1C — Analytics + SEO + Conversion plan):
  *

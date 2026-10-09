@@ -322,6 +322,28 @@ if ( ! class_exists( 'Lafka_Module_Registry' ) ) {
 				)
 			);
 
+			// ---- Loyalty points (a WooCommerce yes/no option; the settings live with it) ----
+			self::register(
+				new Lafka_Module(
+					array(
+						'id'              => 'loyalty',
+						'label'           => esc_html__( 'Loyalty points', 'lafka-plugin' ),
+						'description'     => esc_html__( 'Customers with an account earn points on completed orders and spend them at checkout, on the classic and block checkout, as a single-use WooCommerce coupon. Points show in My Account and in the completed email; refunds and cancellations take them back.', 'lafka-plugin' ),
+						'category'        => 'conversion',
+						'storage'         => 'option',
+						'default_enabled' => false,
+						'get_enabled'     => static function () {
+							return 'yes' === lafka_setting( 'lafka_loyalty_enabled', 'no' );
+						},
+						'set_enabled'     => static function ( bool $enabled ) {
+							update_option( 'lafka_loyalty_enabled', $enabled ? 'yes' : 'no' );
+						},
+						'settings_path'   => 'admin.php?page=wc-settings&tab=lafka_restaurant&section=loyalty',
+						'docs_slug'       => 'loyalty',
+					)
+				)
+			);
+
 			// ---- New-order alerts (a checkbox flag in the 'lafka' option array) ----
 			// Stored as a '1'/'0' checkbox (NOT the 'enabled'/'disabled' sentinel the
 			// five flags above use), so it gets bespoke truthy getter/setter rather
