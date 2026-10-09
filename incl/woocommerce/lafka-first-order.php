@@ -853,6 +853,87 @@ if ( ! function_exists( 'lafka_order_discount_tax_class' ) ) {
 	}
 }
 
+if ( ! function_exists( 'lafka_order_discount_fee_taxes' ) ) {
+	add_filter( 'woocommerce_cart_totals_get_fees_from_cart_taxes', 'lafka_order_discount_fee_taxes', 10, 2 );
+	/**
+	 * The tax the combined discount takes off, worked out on the taxable items
+	 * it discounts. WooCommerce spreads a negative fee's tax over every cost in
+	 * the cart, including a non-taxable tip, so a tipping customer got less of
+	 * the item tax back than the discount removed (and paid a few cents more).
+	 *
+	 * @since 10.4.0
+	 * @param array    $taxes Fee taxes WooCommerce computed (cents, by rate id).
+	 * @param stdClass $fee   WooCommerce's fee row (total in cents, object = the cart fee).
+	 * @return array
+	 */
+	function lafka_order_discount_fee_taxes( $taxes, $fee ) {
+		if ( ! is_object( $fee ) || empty( $fee->object->lafka_order_discount ) || ! isset( $fee->total ) || 0 <= $fee->total
+			|| ! function_exists( 'WC' ) || ! WC()->cart || ! wc_tax_enabled() ) {
+			return $taxes;
+		}
+		$costs = array();
+		foreach ( WC()->cart->get_cart() as $item ) {
+			$product = $item['data'] ?? null;
+			if ( ! $product instanceof WC_Product || ! $product->is_taxable() ) {
+				continue;
+			}
+			$class           = (string) $product->get_tax_class();
+			$costs[ $class ] = ( $costs[ $class ] ?? 0.0 ) + max( 0.0, (float) ( $item['line_total'] ?? 0 ) );
+		}
+		$total = array_sum( $costs );
+		if ( $total <= 0 ) {
+			return $taxes;
+		}
+		$recomputed = array();
+		foreach ( $costs as $class => $cost ) {
+			$recomputed = wc_array_merge_recursive_numeric( $recomputed, WC_Tax::calc_tax( $fee->total * ( $cost / $total ), WC_Tax::get_rates( $class, WC()->cart->get_customer() ) ) );
+		}
+		return $recomputed;
+	}
+}
+
+if ( ! function_exists( 'lafka_order_discount_fee_item_taxes' ) ) {
+	add_action( 'woocommerce_order_item_fee_after_calculate_taxes', 'lafka_order_discount_fee_item_taxes', 10, 2 );
+	/**
+	 * The order's side of lafka_order_discount_fee_taxes(): when WooCommerce
+	 * (re)calculates the order, the combined discount's tax is taken off the
+	 * taxable items only, as in the cart.
+	 *
+	 * @since 10.4.0
+	 * @param WC_Order_Item_Fee $item              Fee item.
+	 * @param array             $calculate_tax_for Location WooCommerce prices tax for.
+	 * @return void
+	 */
+	function lafka_order_discount_fee_item_taxes( $item, $calculate_tax_for ) {
+		if ( ! $item instanceof WC_Order_Item_Fee || '1' !== (string) $item->get_meta( '_lafka_order_discount' ) || 0 <= (float) $item->get_total()
+			|| ! wc_tax_enabled() || ! is_array( $calculate_tax_for ) ) {
+			return;
+		}
+		$order = $item->get_order();
+		if ( ! $order instanceof WC_Order ) {
+			return;
+		}
+		$costs = array();
+		foreach ( $order->get_items( 'line_item' ) as $line ) {
+			if ( 'taxable' !== $line->get_tax_status() ) {
+				continue;
+			}
+			$class           = (string) $line->get_tax_class();
+			$costs[ $class ] = ( $costs[ $class ] ?? 0.0 ) + max( 0.0, (float) $line->get_total() );
+		}
+		$total = array_sum( $costs );
+		if ( $total <= 0 ) {
+			return;
+		}
+		$taxes = array();
+		foreach ( $costs as $class => $cost ) {
+			$calculate_tax_for['tax_class'] = $class;
+			$taxes                          = wc_array_merge_recursive_numeric( $taxes, WC_Tax::calc_tax( (float) $item->get_total() * ( $cost / $total ), WC_Tax::find_rates( $calculate_tax_for ) ) );
+		}
+		$item->set_taxes( array( 'total' => $taxes ) );
+	}
+}
+
 if ( ! function_exists( 'lafka_order_discount_apply' ) ) {
 	add_action( 'woocommerce_cart_calculate_fees', 'lafka_order_discount_apply' );
 	/**

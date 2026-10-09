@@ -8,6 +8,11 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
 ## [Unreleased]
 
 ### Fixed
+- The first-order / slow-day / combo discount gave back less tax than it removed when the order had a tip:
+  WooCommerce spreads a negative fee's tax over every cost, the non-taxable tip included, so a tipping customer paid
+  a few cents more tax (e.g. $0.92 back on a $6.77 discount instead of $1.00). The discount's tax is now worked out
+  on the taxable items it discounts, in the cart (`woocommerce_cart_totals_get_fees_from_cart_taxes`) and on the
+  order (`woocommerce_order_item_fee_after_calculate_taxes`), so both agree.
 - A declined card dropped the customer's tip: the tip choice was cleared as soon as the order was created (before
   payment), so the successful retry was charged without the tip the checkout still showed. The choice is now cleared
   when the cart is emptied after an order goes through (`woocommerce_cart_emptied`).
