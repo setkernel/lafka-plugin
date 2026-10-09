@@ -51,8 +51,9 @@ if ( ! class_exists( 'Lafka_Tips' ) ) {
 			add_action( 'wp_ajax_nopriv_lafka_set_tip', array( __CLASS__, 'ajax_set' ) );
 			add_action( 'woocommerce_checkout_process', array( __CLASS__, 'checkout_posted' ) );
 			add_action( 'wp_enqueue_scripts', array( __CLASS__, 'assets' ) );
-			add_action( 'woocommerce_checkout_order_processed', array( __CLASS__, 'clear' ) );
-			add_action( 'woocommerce_store_api_checkout_order_processed', array( __CLASS__, 'clear' ) );
+			// The cart is emptied once an order goes through (paid, or cash / bank
+			// transfer accepted); a declined payment keeps the cart, and the tip.
+			add_action( 'woocommerce_cart_emptied', array( __CLASS__, 'clear' ) );
 			add_action( 'woocommerce_blocks_loaded', array( __CLASS__, 'register_store_api' ) );
 			if ( did_action( 'woocommerce_blocks_loaded' ) ) {
 				self::register_store_api();
@@ -418,7 +419,9 @@ if ( ! class_exists( 'Lafka_Tips' ) ) {
 		}
 
 		/**
-		 * A placed order takes its tip; the next order starts without one.
+		 * An order that went through takes its tip; the next order starts
+		 * without one. Not cleared when the order is merely created: a declined
+		 * payment's retry must still carry the customer's tip.
 		 *
 		 * @return void
 		 */

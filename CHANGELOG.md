@@ -8,6 +8,9 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
 ## [Unreleased]
 
 ### Fixed
+- A declined card dropped the customer's tip: the tip choice was cleared as soon as the order was created (before
+  payment), so the successful retry was charged without the tip the checkout still showed. The choice is now cleared
+  when the cart is emptied after an order goes through (`woocommerce_cart_emptied`).
 - With branch selection on, the block checkout's required "Order type" and "Branch" fields started empty although
   the customer had just chosen both in the branch popup, so Place order failed with "Please select a valid option"
   until they chose again. Both fields now start at the popup's choice (WooCommerce's
