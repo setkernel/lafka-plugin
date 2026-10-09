@@ -132,6 +132,10 @@ if ( ! function_exists( 'lafka_ac_get_cart_snapshot' ) ) {
 			'items'    => $items,
 			'subtotal' => $subtotal,
 			'currency' => $currency,
+			// The cart exactly as WooCommerce keeps it in the session (add-ons,
+			// half-and-half, deal groups, variation attributes): the resume
+			// link restores this, so nothing the customer chose is lost.
+			'session'  => method_exists( $cart, 'get_cart_for_session' ) ? (array) $cart->get_cart_for_session() : array(),
 		);
 	}
 }

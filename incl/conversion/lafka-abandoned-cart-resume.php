@@ -97,6 +97,18 @@ if ( ! function_exists( 'lafka_ac_restore_cart_from_payload' ) ) {
 		if ( method_exists( $cart, 'empty_cart' ) ) {
 			$cart->empty_cart();
 		}
+		// Rows captured since 10.4.0 carry the session form of the cart: hand it to
+		// WooCommerce's session, which rebuilds and re-checks every line (stock,
+		// add-on prices, deal groups) when the cart page loads it.
+		$session = isset( $payload['session'] ) && is_array( $payload['session'] ) ? $payload['session'] : array();
+		if ( array() !== $session && isset( $wc->session ) && is_object( $wc->session ) && method_exists( $wc->session, 'set' ) ) {
+			// A fresh browser (the email link) has no session cookie yet.
+			if ( method_exists( $wc->session, 'has_session' ) && ! $wc->session->has_session() && method_exists( $wc->session, 'set_customer_session_cookie' ) ) {
+				$wc->session->set_customer_session_cookie( true );
+			}
+			$wc->session->set( 'cart', $session );
+			return;
+		}
 		if ( ! method_exists( $cart, 'add_to_cart' ) ) {
 			return;
 		}

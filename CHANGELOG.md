@@ -8,6 +8,11 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
 ## [Unreleased]
 
 ### Fixed
+- The abandoned-cart resume link brought the items back without their add-ons (toppings, half-and-half, combo
+  choices), and a fresh browser opening the link from the email got an empty cart. The captured cart now also keeps
+  WooCommerce's session form of each line (`session` in the row's `cart_contents`), the link hands it to
+  WooCommerce's session (starting one for a new visitor), and WooCommerce re-checks every line as the cart loads.
+  Rows captured before keep the old item-by-item restore.
 - Under the Promotions delivery minimum the block checkout (and the classic checkout's place-order refusal) said
   "We can't deliver to this address. Check the street and postcode" although the address was fine; they now say
   "Delivery is available on orders over $30.00. Add $7.00 more to your cart for delivery." (the cart notice's
