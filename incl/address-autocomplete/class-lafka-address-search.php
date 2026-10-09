@@ -142,16 +142,21 @@ if ( ! class_exists( 'Lafka_Address_Search' ) ) {
 				if ( 'suggest' !== $step ) {
 					return 'none';
 				}
+				$state = array(
+					'suggest' => 0,
+					'place'   => 0,
+					'counted' => false,
+				);
+			}
+			// A session is counted against the budget at its first paid call, and only while budget is left.
+			if ( empty( $state['counted'] ) ) {
 				if ( ! self::google_budget_left() ) {
 					self::log_budget();
 
 					return 'budget';
 				}
-				$state = array(
-					'suggest' => 0,
-					'place'   => 0,
-				);
 				set_transient( self::budget_key(), (int) get_transient( self::budget_key() ) + 1, 2 * DAY_IN_SECONDS );
+				$state['counted'] = true;
 			}
 			/**
 			 * Filter how many suggestion searches one Google session may make.
@@ -170,9 +175,22 @@ if ( ! class_exists( 'Lafka_Address_Search' ) ) {
 		}
 
 		/**
+		 * Whether a session was already counted against the budget (so it may
+		 * finish on Google although the budget is used up since).
+		 *
+		 * @param string $session Session token from the browser.
+		 * @return bool
+		 */
+		private static function session_counted( string $session ): bool {
+			$state = get_transient( self::CACHE_PREFIX . 'sess_' . md5( $session ) );
+
+			return is_array( $state ) && ! empty( $state['counted'] );
+		}
+
+		/**
 		 * Let a search session that was answered from the cache go on to its
-		 * place lookup. It is not counted against the daily budget: no paid
-		 * autocomplete call was made for it.
+		 * place lookup. It is not counted against the daily budget yet: its
+		 * first paid call counts it (and is refused when the budget is used up).
 		 *
 		 * @param string $session Session token from the browser.
 		 * @return void
@@ -188,6 +206,7 @@ if ( ! class_exists( 'Lafka_Address_Search' ) ) {
 					array(
 						'suggest' => 1,
 						'place'   => 0,
+						'counted' => false,
 					),
 					30 * MINUTE_IN_SECONDS
 				);
@@ -431,7 +450,7 @@ if ( ! class_exists( 'Lafka_Address_Search' ) ) {
 				self::log_budget();
 			}
 			// A search already counted against the budget finishes on Google.
-			if ( 'photon' === $backend && '' !== lafka_google_maps_key() && false !== get_transient( self::CACHE_PREFIX . 'sess_' . md5( $session ) ) ) {
+			if ( 'photon' === $backend && '' !== lafka_google_maps_key() && self::session_counted( $session ) ) {
 				$backend = 'google';
 			}
 			$point  = function_exists( 'lafka_get_store_point' ) ? lafka_get_store_point() : null;
