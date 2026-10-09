@@ -19,6 +19,18 @@
 
 defined( 'ABSPATH' ) || exit;
 
+if ( ! function_exists( 'lafka_phone_nanp_countries' ) ) {
+	/**
+	 * Countries in the North American Numbering Plan (calling code +1).
+	 *
+	 * @since 10.4.0
+	 * @return string[]
+	 */
+	function lafka_phone_nanp_countries(): array {
+		return array( 'US', 'CA', 'AG', 'AI', 'AS', 'BB', 'BM', 'BS', 'DM', 'DO', 'GD', 'GU', 'JM', 'KN', 'KY', 'LC', 'MP', 'MS', 'PR', 'SX', 'TC', 'TT', 'VC', 'VG', 'VI' );
+	}
+}
+
 if ( ! function_exists( 'lafka_phone_is_bare_number' ) ) {
 	/**
 	 * Whether a phone string is an unformatted number: optional "+" then
@@ -76,8 +88,7 @@ if ( ! function_exists( 'lafka_phone_format_bare_number' ) ) {
 		$international = '+' === $raw[0];
 		$digits        = ltrim( $raw, '+' );
 
-		// Countries in the North American Numbering Plan (+1).
-		$nanp = array( 'US', 'CA', 'AG', 'AI', 'AS', 'BB', 'BM', 'BS', 'DM', 'DO', 'GD', 'GU', 'JM', 'KN', 'KY', 'LC', 'MP', 'MS', 'PR', 'SX', 'TC', 'TT', 'VC', 'VG', 'VI' );
+		$nanp = lafka_phone_nanp_countries();
 
 		$national = null;
 		if ( $international && 11 === strlen( $digits ) && '1' === $digits[0] ) {
@@ -132,5 +143,69 @@ if ( ! function_exists( 'lafka_phone_format_bare_number' ) ) {
 		}
 
 		return '+' . $code . ' ' . implode( ' ', $groups );
+	}
+}
+
+if ( ! function_exists( 'lafka_phone_to_e164' ) ) {
+	/**
+	 * A phone number in E.164 ("+19025550100"), the form SMS and WhatsApp
+	 * services need; '' when the text is not a usable number.
+	 *
+	 * A number with a "+" (or an international "00" prefix) is kept as typed. A
+	 * national number gets the calling code of $country (the trunk "0" of non-
+	 * North-American numbers is dropped); North American numbers need ten
+	 * digits, optionally led by 1. An extension ("x22", "ext. 22") is ignored.
+	 *
+	 * @since 10.4.0
+	 *
+	 * @param string $phone   Phone text as a customer or operator typed it.
+	 * @param string $country ISO country the number is national to ('' = WooCommerce base country).
+	 * @return string
+	 */
+	function lafka_phone_to_e164( string $phone, string $country = '' ): string {
+		$raw = trim( (string) preg_replace( '/\s*(?:ext\.?|x|#).*$/i', '', $phone ) );
+		if ( '' === $raw ) {
+			return '';
+		}
+		if ( '' === $country && function_exists( 'get_option' ) ) {
+			$country = (string) strtok( (string) get_option( 'woocommerce_default_country', '' ), ':' );
+		}
+		$country = strtoupper( $country );
+
+		$international = 0 === strpos( $raw, '+' );
+		$digits        = (string) preg_replace( '/\D+/', '', $raw );
+		if ( ! $international && 0 === strpos( $digits, '00' ) ) {
+			$international = true;
+			$digits        = substr( $digits, 2 );
+		}
+
+		$e164 = '';
+		if ( $international ) {
+			$e164 = '+' . $digits;
+		} elseif ( in_array( $country, lafka_phone_nanp_countries(), true ) ) {
+			if ( 11 === strlen( $digits ) && '1' === $digits[0] ) {
+				$digits = substr( $digits, 1 );
+			}
+			$e164 = 1 === preg_match( '/^[2-9]\d{9}$/', $digits ) ? '+1' . $digits : '';
+		} elseif ( '' !== $country && function_exists( 'WC' ) && WC()->countries ) {
+			$code = WC()->countries->get_country_calling_code( $country );
+			$code = (string) preg_replace( '/\D+/', '', (string) ( is_array( $code ) ? reset( $code ) : $code ) );
+			if ( '' !== $code ) {
+				$e164 = '+' . $code . (string) preg_replace( '/^0/', '', $digits );
+			}
+		}
+
+		$e164 = 1 === preg_match( '/^\+[1-9]\d{7,14}$/', $e164 ) ? $e164 : '';
+
+		/**
+		 * Filters a phone number after it was normalised to E.164.
+		 *
+		 * @since 10.4.0
+		 *
+		 * @param string $e164    E.164 number, or '' when the text is not a usable number.
+		 * @param string $phone   Phone text as given.
+		 * @param string $country ISO country used for national numbers.
+		 */
+		return (string) apply_filters( 'lafka_phone_to_e164', $e164, $phone, $country );
 	}
 }
