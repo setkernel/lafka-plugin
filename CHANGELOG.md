@@ -38,15 +38,17 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
   as a prior order, so the retry was priced without the discount and placed as a second order. Failed, cancelled and
   draft orders no longer count, nor does the order the checkout is retrying (`order_awaiting_payment` / the Store API
   draft), so the retry keeps the discount and WooCommerce pays the same order. Pending, on-hold, processing, completed
-  and refunded orders still count, by the same account, billing email or billing phone (compared in E.164) across
-  accounts and guest orders, so a new account does not get it again. One order holds the discount: it is checked again,
-  under a database lock, once the order exists and before payment (classic `woocommerce_checkout_order_created`, block
-  `woocommerce_store_api_checkout_order_processed`) and before a Pay for order payment (`before_woocommerce_pay_form`,
-  `woocommerce_before_pay_action`). If the person already has another settled counted order the discount comes off
-  this order; otherwise this order holds it and their other unpaid (failed or pending) orders lose it. Each change
-  re-prices the order and adds an order note. Of two orders placed at the same moment (classic or block), the one
-  checked first keeps it. New: `lafka_first_order_counted_statuses()`, `lafka_first_order_retry_ids()`,
-  `lafka_first_order_identity_order_ids()`, `lafka_first_order_check()`, `lafka_order_discount_fee()`.
+  and refunded orders of the same account still count; orders found by the same billing email or billing phone
+  (compared in E.164) across accounts and guest orders count once they went through (processing, completed, refunded),
+  so a new account does not get it again and nobody can block a stranger's discount by typing their details on an
+  unpaid order. One order holds the discount: it is checked again, under a database lock, once the order exists and
+  before payment (classic `woocommerce_checkout_order_created`, block `woocommerce_store_api_checkout_order_processed`)
+  and before a Pay for order payment (`before_woocommerce_pay_form`, `woocommerce_before_pay_action`). If the person
+  already has another settled order that counts, the discount comes off this order; otherwise this order holds it and
+  the same account's other unpaid (failed or pending) orders lose it; another account's or a guest's order is never
+  changed. Each change re-prices the order and adds an order note. Of two orders placed at the same moment (classic or
+  block), the one checked first keeps it; an order that cannot get the lock does not keep it. New: `lafka_first_order_counted_statuses()`, `lafka_first_order_retry_ids()`,
+  `lafka_first_order_paid_statuses()`, `lafka_first_order_identity_order_ids()`, `lafka_first_order_check()`, `lafka_order_discount_fee()`.
 - The deal builder showed a missing required add-on as `Pizza 1: &quot;Crust&quot; is a required field.`; the message
   is plain text now (`Pizza 1: "Crust" is a required field.`).
 - A half-and-half topping showed its whole price in the product page's "Options total" when the topping was ticked

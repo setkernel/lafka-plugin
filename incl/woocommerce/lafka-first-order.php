@@ -49,6 +49,28 @@ if ( ! function_exists( 'lafka_first_order_counted_statuses' ) ) {
 	}
 }
 
+if ( ! function_exists( 'lafka_first_order_paid_statuses' ) ) {
+	/**
+	 * Statuses of an order that went through: WooCommerce's paid statuses
+	 * (processing, completed) and refunded.
+	 *
+	 * @since 10.4.0
+	 * @return string[] wc- prefixed.
+	 */
+	function lafka_first_order_paid_statuses(): array {
+		$paid = function_exists( 'wc_get_is_paid_statuses' ) ? (array) wc_get_is_paid_statuses() : array( 'processing', 'completed' );
+		$paid = array_unique( array_merge( $paid, array( 'refunded' ) ) );
+		return array_values(
+			array_map(
+				static function ( $status ) {
+					return 0 === strpos( (string) $status, 'wc-' ) ? (string) $status : 'wc-' . $status;
+				},
+				$paid
+			)
+		);
+	}
+}
+
 if ( ! function_exists( 'lafka_first_order_retry_ids' ) ) {
 	/**
 	 * The order this checkout is (re)paying, which never counts against
@@ -69,40 +91,61 @@ if ( ! function_exists( 'lafka_first_order_retry_ids' ) ) {
 
 if ( ! function_exists( 'lafka_first_order_identity_order_ids' ) ) {
 	/**
-	 * Orders of the same person, whichever account (or none) placed them: by
-	 * account, by billing email (case-insensitive) and by billing phone
-	 * compared in E.164 (lafka_phone_to_e164()), so a new account or a guest
-	 * order cannot claim the first-order discount again.
+	 * Orders that make this person not new, whichever account (or none)
+	 * placed them. The account's own orders count in every counted status
+	 * (lafka_first_order_counted_statuses()). Orders found by billing email
+	 * (case-insensitive) or billing phone (compared in E.164,
+	 * lafka_phone_to_e164()) count only once they went through
+	 * (lafka_first_order_paid_statuses()), so a new account or a guest order
+	 * cannot claim the discount again, and nobody can take a stranger's
+	 * discount away by typing their email or phone on an unpaid order.
+	 * Read-only: used to decide this order's eligibility, never to change
+	 * another person's order.
 	 *
 	 * @since 10.4.0
-	 * @param int      $user_id  Account id (0 for none).
-	 * @param string[] $emails   Billing / account emails.
-	 * @param string   $phone    Billing phone as typed.
-	 * @param string[] $statuses Statuses to look in (wc- prefixed).
-	 * @param int[]    $exclude  Order ids to leave out.
+	 * @param int      $user_id Account id (0 for none).
+	 * @param string[] $emails  Billing / account emails.
+	 * @param string   $phone   Billing phone as typed.
+	 * @param int[]    $exclude Order ids to leave out.
 	 * @return int[]
 	 */
-	function lafka_first_order_identity_order_ids( int $user_id, array $emails, string $phone, array $statuses, array $exclude = array() ): array {
+	function lafka_first_order_identity_order_ids( int $user_id, array $emails, string $phone, array $exclude = array() ): array {
 		$exclude = array_values( array_filter( array_map( 'absint', $exclude ) ) );
 		$base    = array(
-			'status'  => $statuses,
 			'exclude' => $exclude,
 			'limit'   => 50,
 			'return'  => 'ids',
 			'type'    => 'shop_order',
 		);
+		$paid    = lafka_first_order_paid_statuses();
 		$ids     = array();
 		if ( $user_id > 0 ) {
-			$ids = array_merge( $ids, wc_get_orders( $base + array( 'customer_id' => $user_id ) ) );
+			$ids = array_merge(
+				$ids,
+				wc_get_orders(
+					$base + array(
+						'customer_id' => $user_id,
+						'status'      => lafka_first_order_counted_statuses(),
+					)
+				)
+			);
 		}
 		foreach ( array_unique( array_filter( array_map( 'trim', $emails ) ) ) as $email ) {
 			if ( is_email( $email ) ) {
-				$ids = array_merge( $ids, wc_get_orders( $base + array( 'billing_email' => $email ) ) );
+				$ids = array_merge(
+					$ids,
+					wc_get_orders(
+						$base + array(
+							'billing_email' => $email,
+							'status'        => $paid,
+						)
+					)
+				);
 			}
 		}
 		$e164 = function_exists( 'lafka_phone_to_e164' ) ? lafka_phone_to_e164( $phone ) : '';
 		if ( '' !== $e164 ) {
-			$ids = array_merge( $ids, lafka_first_order_orders_by_phone( $e164, $statuses, $exclude ) );
+			$ids = array_merge( $ids, lafka_first_order_orders_by_phone( $e164, $paid, $exclude ) );
 		}
 		return array_values( array_unique( array_map( 'intval', $ids ) ) );
 	}
@@ -199,11 +242,10 @@ if ( ! function_exists( 'lafka_is_first_order_customer' ) ) {
 			$customer = function_exists( 'WC' ) && isset( WC()->customer ) && is_object( WC()->customer ) ? WC()->customer : null;
 			$typed    = lafka_first_order_typed_contact();
 			$emails   = array( (string) $user->user_email, $customer ? (string) $customer->get_billing_email() : '', $typed['email'] );
-			$counted  = lafka_first_order_counted_statuses();
 			$retry    = lafka_first_order_retry_ids();
-			$ids      = lafka_first_order_identity_order_ids( (int) $user->ID, $emails, $customer ? (string) $customer->get_billing_phone() : '', $counted, $retry );
+			$ids      = lafka_first_order_identity_order_ids( (int) $user->ID, $emails, $customer ? (string) $customer->get_billing_phone() : '', $retry );
 			if ( '' !== $typed['phone'] ) {
-				$ids = array_merge( $ids, lafka_first_order_identity_order_ids( 0, array(), $typed['phone'], $counted, $retry ) );
+				$ids = array_merge( $ids, lafka_first_order_identity_order_ids( 0, array(), $typed['phone'], $retry ) );
 			}
 			$eligible = array() === $ids;
 		}
@@ -251,9 +293,11 @@ if ( ! function_exists( 'lafka_first_order_eligible' ) ) {
  *     woocommerce_store_api_checkout_order_processed; both fire before the
  *     gateway runs). The first-order part of the combined discount fee is
  *     recorded on the order (_lafka_first_order_discount, _label). If the
- *     person already has a settled counted order, it comes off this order;
- *     otherwise this order holds it and any other unpaid (failed / pending)
- *     order of theirs that carried it loses it.
+ *     person already has a settled order that counts
+ *     (lafka_first_order_identity_order_ids()), it comes off this order;
+ *     otherwise this order holds it and the same account's other unpaid
+ *     (failed / pending) orders that carried it lose it. Another account's
+ *     or a guest's order is never changed.
  *   · Order paid later (the classic Pay for order page and its submit:
  *     before_woocommerce_pay_form, woocommerce_before_pay_action; the block
  *     path's order route fires the same Store API action): a holder is paid
@@ -263,7 +307,8 @@ if ( ! function_exists( 'lafka_first_order_eligible' ) ) {
  * older than the in-flight window: an order being placed at the same moment
  * and not yet checked is left to its own check, which then sees this one.
  * Whichever order is checked first keeps the discount, also when a block
- * draft turns pending after another order's check.
+ * draft turns pending after another order's check. The lock fails closed:
+ * an order that cannot get it within 10 seconds does not keep the discount.
  */
 
 if ( ! function_exists( 'lafka_first_order_identity_of' ) ) {
@@ -298,7 +343,7 @@ if ( ! function_exists( 'lafka_first_order_settled_others' ) ) {
 	function lafka_first_order_settled_others( WC_Order $order ): array {
 		list( $user, $emails, $phone ) = lafka_first_order_identity_of( $order );
 		$settled                       = array();
-		foreach ( lafka_first_order_identity_order_ids( $user, $emails, $phone, lafka_first_order_counted_statuses(), array( $order->get_id() ) ) as $id ) {
+		foreach ( lafka_first_order_identity_order_ids( $user, $emails, $phone, array( $order->get_id() ) ) as $id ) {
 			$other = wc_get_order( $id );
 			if ( ! $other instanceof WC_Order ) {
 				continue;
@@ -414,8 +459,11 @@ if ( ! function_exists( 'lafka_first_order_check' ) ) {
 				lafka_first_order_record( $order );
 			}
 			$holds  = (float) $order->get_meta( '_lafka_first_order_discount' ) > 0;
-			$others = $holds ? lafka_first_order_settled_others( $order ) : array();
-			if ( $holds && array() !== $others ) {
+			$others = $holds && $locked ? lafka_first_order_settled_others( $order ) : array();
+			if ( $holds && ! $locked ) {
+				// Fail closed: without the lock the check cannot be trusted.
+				lafka_first_order_strip( $order, __( 'First-order discount removed: the order could not be checked (the store was busy).', 'lafka-plugin' ) );
+			} elseif ( $holds && array() !== $others ) {
 				lafka_first_order_strip(
 					$order,
 					sprintf(
@@ -424,9 +472,19 @@ if ( ! function_exists( 'lafka_first_order_check' ) ) {
 						(int) $others[0]
 					)
 				);
-			} elseif ( $holds ) {
-				list( $user, $emails, $phone ) = lafka_first_order_identity_of( $order );
-				foreach ( lafka_first_order_identity_order_ids( $user, $emails, $phone, array( 'wc-failed', 'wc-pending' ), array( $order->get_id() ) ) as $id ) {
+			} elseif ( $holds && $order->get_customer_id() > 0 ) {
+				// Only the same account's own unpaid orders give the discount up.
+				$unpaid = wc_get_orders(
+					array(
+						'customer_id' => $order->get_customer_id(),
+						'status'      => array( 'wc-failed', 'wc-pending' ),
+						'exclude'     => array( $order->get_id() ),
+						'limit'       => 50,
+						'return'      => 'ids',
+						'type'        => 'shop_order',
+					)
+				);
+				foreach ( $unpaid as $id ) {
 					$other = wc_get_order( $id );
 					if ( $other instanceof WC_Order && (float) $other->get_meta( '_lafka_first_order_discount' ) > 0 ) {
 						lafka_first_order_strip(
