@@ -144,6 +144,31 @@ customer chooses, one slot per item:
   only on the ticked weekdays (site timezone) and between the dates. On other days
   the deal page says when it runs, and a deal still in a cart is removed with a
   notice. Leave all of it empty to run the deal every day.
+- **Pricing** (top of the tab): *Fixed price* is the Regular / Sale price on the General tab.
+  *Percent off* and *Amount off* take the discount off the chosen items at their own prices;
+  *Cheapest chosen item free* leaves the cheapest pizza at nothing (a 2-for-1). The deal page
+  shows "From $x" for these, optional items and add-ons are charged on top, and premium-item
+  differences only apply to a fixed price.
+- **Order type**: pickup only, delivery only or both. A deal in the cart is kept when the
+  customer switches, but the cart and checkout (classic and block) refuse to place the order
+  and say which deal needs which order type.
+- **Hours**: a time of day (store clock, as the opening hours; an end before the start runs
+  past midnight), for a lunch special. Outside it the page says when it runs and a deal left
+  in a cart is removed with the reason.
+- **Most uses per customer / in total**: counted on paid orders (processing or completed),
+  by account or billing email. A guest is checked once the email is known, at checkout. A
+  cancelled or refunded order stops counting. Two simultaneous orders can pass the same last
+  use, so treat the total as a target, not a lock.
+- **Coupons**: *No coupons on an order with this deal* makes WooCommerce refuse any coupon
+  while the deal is in the cart (and the deal while a coupon is applied), with a message;
+  coupons are never hidden.
+
+When the cart holds items that would fill a deal's slots, the cart drawer, the cart page
+and the block cart show "Add 1 more item to get Any 2 Medium Pizzas for $22.00" (or, once
+the items already fill it and the deal is cheaper, "Switch to the deal and save $x"). The
+button opens the deal with those items chosen; adding the deal takes them out of the cart,
+so nothing is charged twice. Extras on a cart item are not carried over: the customer
+chooses them again. Filter `lafka_deal_nudge` changes or hides the nudge.
 
 On the deal's page the customer picks each item and sets its own options (crust,
 toppings, half and half); a sticky bar shows the total and what is still missing.

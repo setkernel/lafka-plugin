@@ -55,6 +55,20 @@ if ( ! class_exists( 'Lafka_Deals' ) ) {
 		const FROM_META  = '_lafka_deal_from';
 		const UNTIL_META = '_lafka_deal_until';
 
+		/** Product meta: how the deal is priced ('fixed', 'percent', 'amount' or 'cheapest') and its value. */
+		const MODE_META  = '_lafka_deal_mode';
+		const VALUE_META = '_lafka_deal_value';
+
+		/** The pricing modes. */
+		const MODES = array( 'fixed', 'percent', 'amount', 'cheapest' );
+
+		/**
+		 * Per-request cache of unavailable_reason().
+		 *
+		 * @var array<string,string>
+		 */
+		private static $reasons = array();
+
 		/**
 		 * Hook the product type in.
 		 *
@@ -324,7 +338,7 @@ if ( ! class_exists( 'Lafka_Deals' ) ) {
 		 * @return float
 		 */
 		public static function max_saving( WC_Product $deal ): float {
-			$total = 0.0;
+			$tops  = array();
 			$extra = 0.0;
 			foreach ( self::get_slots( $deal ) as $slot ) {
 				if ( ! $slot['required'] ) {
@@ -334,13 +348,191 @@ if ( ! class_exists( 'Lafka_Deals' ) ) {
 				if ( array() === $pool ) {
 					return 0.0;
 				}
-				$top    = (float) max( array_column( $pool, 'base' ) );
-				$total += $top;
-				if ( $slot['upcharge'] ) {
+				$top = (float) max( array_column( $pool, 'base' ) );
+				if ( $slot['upcharge'] && self::upcharges_apply( $deal ) ) {
 					$extra += $top - self::pool_floor( $pool );
+					$top    = self::pool_floor( $pool );
 				}
+				$tops[] = $top;
 			}
-			return max( 0.0, round( $total - (float) $deal->get_price() - $extra, 2 ) );
+			$total = (float) array_sum( $tops ) + $extra;
+			return max( 0.0, round( $total - self::price_for( $deal, $tops ) - $extra, 2 ) );
+		}
+
+		/**
+		 * How the deal is priced.
+		 *
+		 * @since 10.4.0
+		 *
+		 * @param int|WC_Product $deal Deal.
+		 * @return array{mode: string, value: float}
+		 */
+		public static function pricing( $deal ): array {
+			$id    = is_object( $deal ) ? (int) $deal->get_id() : (int) $deal;
+			$mode  = (string) get_post_meta( $id, self::MODE_META, true );
+			$mode  = in_array( $mode, self::MODES, true ) ? $mode : 'fixed';
+			$value = max( 0.0, (float) get_post_meta( $id, self::VALUE_META, true ) );
+			return array(
+				'mode'  => $mode,
+				'value' => 'percent' === $mode ? min( 100.0, $value ) : $value,
+			);
+		}
+
+		/**
+		 * Whether the deal has its own price (the product's Regular / Sale
+		 * price) rather than discounting the items the customer chooses.
+		 *
+		 * @since 10.4.0
+		 *
+		 * @param int|WC_Product $deal Deal.
+		 * @return bool
+		 */
+		public static function is_fixed( $deal ): bool {
+			return 'fixed' === self::pricing( $deal )['mode'];
+		}
+
+		/**
+		 * Whether premium items pay a difference over the slot's cheapest
+		 * item: only a fixed-price deal has a price for them to exceed. The
+		 * discount modes charge each item its own price.
+		 *
+		 * @since 10.4.0
+		 *
+		 * @param int|WC_Product $deal Deal.
+		 * @return bool
+		 */
+		public static function upcharges_apply( $deal ): bool {
+			return self::is_fixed( $deal );
+		}
+
+		/**
+		 * The price of the deal's required items.
+		 *
+		 * Fixed: the product's price, whatever the items. Percent / amount off:
+		 * the items' à la carte total less the discount. Cheapest free: the
+		 * total less the cheapest item. Optional items and add-ons are charged
+		 * on top by the caller.
+		 *
+		 * @since 10.4.0
+		 *
+		 * @param WC_Product        $deal       Deal.
+		 * @param array<int, float> $references À la carte price of each required item (a fixed deal's slot floors).
+		 * @return float
+		 */
+		public static function price_for( WC_Product $deal, array $references ): float {
+			$pricing    = self::pricing( $deal );
+			$references = array_values( array_filter( array_map( 'floatval', $references ), static fn( $price ) => $price > 0 ) );
+			$sum        = (float) array_sum( $references );
+			switch ( $pricing['mode'] ) {
+				case 'percent':
+					$price = $sum * ( 100 - $pricing['value'] ) / 100;
+					break;
+				case 'amount':
+					$price = max( 0.0, $sum - $pricing['value'] );
+					break;
+				case 'cheapest':
+					$price = array() === $references ? 0.0 : $sum - min( $references );
+					break;
+				default:
+					return (float) $deal->get_price( 'edit' );
+			}
+			return round( $price, 2 );
+		}
+
+		/**
+		 * The least a discount deal can cost: its cheapest choice in every
+		 * required slot. Shown as the deal's "from" price.
+		 *
+		 * @since 10.4.0
+		 *
+		 * @param WC_Product $deal Deal.
+		 * @return float
+		 */
+		public static function from_price( WC_Product $deal ): float {
+			static $cache = array();
+			$id           = $deal->get_id();
+			if ( ! isset( $cache[ $id ] ) ) {
+				$floors = array();
+				foreach ( self::get_slots( $deal ) as $slot ) {
+					if ( $slot['required'] ) {
+						$floors[] = self::pool_floor( self::pool( $slot ) );
+					}
+				}
+				$cache[ $id ] = self::price_for( $deal, $floors );
+			}
+			return $cache[ $id ];
+		}
+
+		/**
+		 * What the customer gets, in a few words: "for $22.00", "20% off",
+		 * "$5.00 off", "cheapest free".
+		 *
+		 * @since 10.4.0
+		 *
+		 * @param WC_Product $deal Deal.
+		 * @return string Plain text.
+		 */
+		public static function offer_text( WC_Product $deal ): string {
+			$pricing = self::pricing( $deal );
+			switch ( $pricing['mode'] ) {
+				case 'percent':
+					/* translators: %s: percentage, e.g. "20". */
+					return sprintf( __( '%s%% off', 'lafka-plugin' ), (string) (float) $pricing['value'] );
+				case 'amount':
+					/* translators: %s: amount, e.g. "$5.00". */
+					return sprintf( __( '%s off', 'lafka-plugin' ), lafka_price_plain( $pricing['value'] ) );
+				case 'cheapest':
+					return __( 'cheapest free', 'lafka-plugin' );
+				default:
+					/* translators: %s: deal price, e.g. "$22.00". */
+					return sprintf( __( 'for %s', 'lafka-plugin' ), lafka_price_plain( (float) $deal->get_price( 'edit' ) ) );
+			}
+		}
+
+		/**
+		 * Why the deal cannot be ordered right now, or '' when it can: it is
+		 * not running today, outside its hours, sold out, or the customer has
+		 * used it as often as allowed. The one gate behind is_purchasable(), so
+		 * the page, the builder, the AJAX endpoints and the cart re-check all
+		 * say the same thing. The order type is separate (it can change with
+		 * one tap): Lafka_Deals_Conditions::order_type_error().
+		 *
+		 * @since 10.4.0
+		 *
+		 * @param int|WC_Product $deal    Deal.
+		 * @param bool           $in_cart Judging a deal already in the cart (a customer's own limit is not a reason to remove it).
+		 * @return string Plain text.
+		 */
+		public static function unavailable_reason( $deal, bool $in_cart = false ): string {
+			$id  = is_object( $deal ) ? (int) $deal->get_id() : (int) $deal;
+			$key = $id . '|' . (int) $in_cart . '|' . ( class_exists( 'Lafka_Deals_Conditions' ) ? Lafka_Deals_Conditions::customer_key() : '' );
+			if ( isset( self::$reasons[ $key ] ) ) {
+				return self::$reasons[ $key ];
+			}
+			$reason = '';
+			if ( ! self::is_available_today( $id ) ) {
+				$when   = self::availability_text( $id );
+				$reason = __( 'This deal is not available right now.', 'lafka-plugin' );
+				if ( '' !== $when ) {
+					/* translators: %s: when the deal runs, e.g. "every Tuesday · until October 31". */
+					$reason .= ' ' . sprintf( __( 'It runs %s.', 'lafka-plugin' ), $when );
+				}
+			} elseif ( class_exists( 'Lafka_Deals_Conditions' ) ) {
+				$reason = Lafka_Deals_Conditions::time_or_limit_reason( $id, $in_cart );
+			}
+			self::$reasons[ $key ] = $reason;
+			return $reason;
+		}
+
+		/**
+		 * Forget the per-request reasons (a test or a long-running job).
+		 *
+		 * @since 10.4.0
+		 *
+		 * @return void
+		 */
+		public static function flush(): void {
+			self::$reasons = array();
 		}
 
 		/**

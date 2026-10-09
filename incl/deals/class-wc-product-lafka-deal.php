@@ -26,12 +26,65 @@ if ( ! class_exists( 'WC_Product_Lafka_Deal' ) && class_exists( 'WC_Product' ) )
 		}
 
 		/**
-		 * Purchasable when it has a price, at least one slot, and runs today.
+		 * The deal price. A discount deal (percent / amount off, cheapest
+		 * free) has no price of its own: it reads as the least it can cost,
+		 * so lists and cards have a "from" figure.
+		 *
+		 * @param string $context 'view' or 'edit'.
+		 * @return string
+		 */
+		public function get_price( $context = 'view' ) {
+			if ( 'view' === $context && ! Lafka_Deals::is_fixed( $this ) ) {
+				return (string) Lafka_Deals::from_price( $this );
+			}
+			return parent::get_price( $context );
+		}
+
+		/**
+		 * "From $x" for a discount deal, the price otherwise.
+		 *
+		 * @param string $deprecated Unused.
+		 * @return string
+		 */
+		public function get_price_html( $deprecated = '' ) {
+			if ( Lafka_Deals::is_fixed( $this ) ) {
+				return parent::get_price_html( $deprecated );
+			}
+			/* translators: 1: lowest price, 2: the offer, e.g. "20% off". */
+			$html = sprintf( __( 'From %1$s (%2$s)', 'lafka-plugin' ), wc_price( (float) $this->get_price() ), esc_html( Lafka_Deals::offer_text( $this ) ) );
+			return (string) apply_filters( 'woocommerce_get_price_html', $html, $this );
+		}
+
+		/**
+		 * Purchasable when it has a price (or discounts the chosen items), at
+		 * least one slot, and nothing stops it today: its days and hours, its
+		 * limits (Lafka_Deals::unavailable_reason()).
 		 *
 		 * @return bool
 		 */
 		public function is_purchasable() {
-			$purchasable = $this->exists() && 'publish' === $this->get_status() && '' !== (string) $this->get_price() && array() !== Lafka_Deals::get_slots( $this ) && Lafka_Deals::is_available_today( $this );
+			return $this->purchasable( false );
+		}
+
+		/**
+		 * Whether a deal already in the cart can stay there. The same gate, but
+		 * a customer's own use limit does not remove it: the cart and checkout
+		 * refuse that with a message instead (Lafka_Deals_Conditions).
+		 *
+		 * @return bool
+		 */
+		public function is_purchasable_in_cart(): bool {
+			return $this->purchasable( true );
+		}
+
+		/**
+		 * The purchasable gate.
+		 *
+		 * @param bool $in_cart Judging a deal already in the cart.
+		 * @return bool
+		 */
+		private function purchasable( bool $in_cart ): bool {
+			$purchasable = $this->exists() && 'publish' === $this->get_status() && '' !== (string) $this->get_price() && array() !== Lafka_Deals::get_slots( $this ) && '' === Lafka_Deals::unavailable_reason( $this, $in_cart );
 			return (bool) apply_filters( 'woocommerce_is_purchasable', $purchasable, $this );
 		}
 

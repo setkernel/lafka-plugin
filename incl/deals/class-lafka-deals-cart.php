@@ -133,6 +133,31 @@ if ( ! class_exists( 'Lafka_Deals_Cart' ) ) {
 		}
 
 		/**
+		 * Each line's share of the deal. A fixed price is split by reference
+		 * price; percent and amount off split the discounted total the same
+		 * way; cheapest free leaves the cheapest item at nothing and every
+		 * other item at its own price.
+		 *
+		 * @since 10.4.0
+		 *
+		 * @param WC_Product           $deal       Deal.
+		 * @param array<string, float> $references Cart key => reference price.
+		 * @return array<string, float> Cart key => share.
+		 */
+		public static function shares( WC_Product $deal, array $references ): array {
+			if ( 'cheapest' !== Lafka_Deals::pricing( $deal )['mode'] ) {
+				return self::split( Lafka_Deals::price_for( $deal, array_values( $references ) ), $references );
+			}
+			$priced = array_filter( $references, static fn( $price ) => $price > 0 );
+			$free   = array() === $priced ? null : array_search( min( $priced ), $priced, true );
+			$shares = array();
+			foreach ( $references as $key => $price ) {
+				$shares[ $key ] = $key === $free ? 0.0 : round( (float) $price, 2 );
+			}
+			return $shares;
+		}
+
+		/**
 		 * Set each deal line's price.
 		 *
 		 * @param WC_Cart $cart Cart.
@@ -152,7 +177,7 @@ if ( ! class_exists( 'Lafka_Deals_Cart' ) ) {
 				foreach ( $items as $key => $item ) {
 					$references[ $key ] = (float) self::deal_of( $item )['reference'];
 				}
-				$shares = self::split( (float) $deal->get_price(), $references );
+				$shares = self::shares( $deal, $references );
 				foreach ( $items as $key => $item ) {
 					$data = self::deal_of( $item );
 					$cart->cart_contents[ $key ]['data']->set_price( $shares[ $key ] + (float) $data['upcharge'] + self::extras( $item ) );
@@ -190,7 +215,7 @@ if ( ! class_exists( 'Lafka_Deals_Cart' ) ) {
 			foreach ( self::groups( $cart->get_cart() ) as $items ) {
 				$first = self::deal_of( reset( $items ) );
 				$deal  = wc_get_product( (int) $first['deal_id'] );
-				if ( $deal && $deal->is_purchasable() && count( $items ) === (int) $first['slots'] ) {
+				if ( $deal instanceof WC_Product_Lafka_Deal && $deal->is_purchasable_in_cart() && count( $items ) === (int) $first['slots'] ) {
 					continue;
 				}
 				self::$busy = true;
@@ -198,8 +223,11 @@ if ( ! class_exists( 'Lafka_Deals_Cart' ) ) {
 					$cart->remove_cart_item( $key );
 				}
 				self::$busy = false;
+				// Say why when a day, an hour or a limit ended it.
+				$reason = $deal ? Lafka_Deals::unavailable_reason( $deal, true ) : '';
 				/* translators: %s: deal name. */
-				wc_add_notice( sprintf( __( '"%s" is no longer available as chosen and was removed from your order.', 'lafka-plugin' ), (string) $first['deal_name'] ), 'notice' );
+				$message = sprintf( __( '"%s" is no longer available as chosen and was removed from your order.', 'lafka-plugin' ), (string) $first['deal_name'] );
+				wc_add_notice( trim( $message . ' ' . $reason ), 'notice' );
 			}
 		}
 

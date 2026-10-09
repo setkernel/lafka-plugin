@@ -8,6 +8,8 @@
  *
  *   · Free-delivery progress — SlotFill on the block CART, reading the `lafka`
  *     cart-extension exposed by NX1-04a (threshold / remaining).
+ *   · Deal nudge — SlotFill on the block CART showing the Deals module's
+ *     "add one more item for the deal" message (cart extension `lafka_deals`).
  *   · Delivery notices — SlotFill under the shipping options on both blocks: the
  *     quote guard's "enter your address" and the "no delivery rate" reason.
  *   · Timeslot picker — SlotFill on the block CHECKOUT, driven by the existing
@@ -97,6 +99,46 @@
 	registerPlugin( 'lafka-free-delivery', {
 		render: renderFreeDelivery,
 		scope: 'woocommerce-cart',
+	} );
+
+	/* ------------------------------------------------------------------ *
+	 *  Deal nudge (block cart)
+	 * ------------------------------------------------------------------ */
+
+	// The Deals module resolves the nudge server-side (message, button label,
+	// link to the prefilled builder) and exposes it on the cart extension.
+	function DealNudge( props ) {
+		const deals = ( props && props.extensions && props.extensions.lafka_deals ) || {};
+		const nudge = deals.nudge;
+		if ( ! props || props.context !== 'woocommerce/cart' || ! nudge || ! nudge.message || ! nudge.url ) {
+			return null;
+		}
+		return el(
+			'div',
+			{
+				className: 'lafka-deal-nudge lafka-card lafka-card--sm lafka-card--flat',
+				role: 'status',
+				'data-lafka-deal-nudge': String( nudge.deal_id || '' ),
+			},
+			el( 'p', { className: 'lafka-deal-nudge__text' }, String( nudge.message ) ),
+			el(
+				'a',
+				{
+					className: 'lafka-deal-nudge__cta lafka-btn lafka-btn--primary lafka-btn--sm',
+					href: String( nudge.url ),
+				},
+				String( nudge.cta || '' )
+			)
+		);
+	}
+
+	registerPlugin( 'lafka-deal-nudge', {
+		render: function () {
+			return el( ExperimentalOrderMeta, null, el( DealNudge ) );
+		},
+		// WooCommerce mounts one PluginArea for the cart and the checkout,
+		// scoped 'woocommerce-checkout'; the nudge itself is for the cart only.
+		scope: 'woocommerce-checkout',
 	} );
 
 	/* ------------------------------------------------------------------ *

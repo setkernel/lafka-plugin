@@ -75,22 +75,28 @@ if ( ! class_exists( 'Lafka_Deals_Builder' ) ) {
 			$slots = Lafka_Deals::get_slots( $product );
 			$when  = Lafka_Deals::availability_text( $product );
 			if ( array() === $slots || ! $product->is_purchasable() ) {
-				echo '<p class="lafka-deal-builder__unavailable">' . esc_html__( 'This deal is not available right now.', 'lafka-plugin' );
-				if ( '' !== $when ) {
-					/* translators: %s: when the deal runs, e.g. "every Tuesday · until October 31". */
-					echo ' ' . esc_html( sprintf( __( 'It runs %s.', 'lafka-plugin' ), $when ) );
-				}
-				echo '</p>';
+				$reason = Lafka_Deals::unavailable_reason( $product );
+				echo '<p class="lafka-deal-builder__unavailable">' . esc_html( '' !== $reason ? $reason : __( 'This deal is not available right now.', 'lafka-plugin' ) ) . '</p>';
 				return;
 			}
 			if ( '' !== $when ) {
 				/* translators: %s: when the deal runs. */
 				echo '<p class="lafka-deal-builder__when">' . esc_html( sprintf( __( 'Runs %s.', 'lafka-plugin' ), $when ) ) . '</p>';
 			}
+			$notes = Lafka_Deals_Conditions::notes( $product );
+			if ( array() !== $notes ) {
+				echo '<p class="lafka-deal-builder__when">' . esc_html( ucfirst( implode( ' · ', $notes ) ) . '.' ) . '</p>';
+			}
 			if ( class_exists( 'Lafka_Order_Hours' ) && Lafka_Order_Hours::is_add_to_cart_blocked() ) {
 				Lafka_Order_Hours::echo_closed_store_message();
 				return;
 			}
+			$blocked = Lafka_Deals_Conditions::builder_error( $product );
+			if ( '' !== $blocked ) {
+				echo '<p class="lafka-deal-builder__unavailable" role="alert">' . esc_html( $blocked ) . '</p>';
+				return;
+			}
+			$prefill = self::prefill( $product );
 
 			$rel = lafka_plugin_script_path( 'assets/js/lafka-deal-builder.min.js' );
 			wp_enqueue_script( 'lafka-deal-builder', plugins_url( $rel, LAFKA_PLUGIN_FILE ), array(), lafka_plugin_asset_version( $rel ), true );
@@ -115,10 +121,15 @@ if ( ! class_exists( 'Lafka_Deals_Builder' ) ) {
 					'added'  => __( 'Added to your order', 'lafka-plugin' ),
 					'failed' => __( 'Something went wrong. Please try again.', 'lafka-plugin' ),
 				),
+				'prefill' => $prefill['slots'],
+				'convert' => $prefill['convert'],
 			);
 			$saving = Lafka_Deals::max_saving( $product );
 			?>
 			<div class="lafka-deal-builder" data-lafka-deal="<?php echo esc_attr( (string) wp_json_encode( $config ) ); ?>">
+				<?php if ( '' !== $prefill['note'] ) : ?>
+					<p class="lafka-deal-builder__prefill" role="status"><?php echo esc_html( $prefill['note'] ); ?></p>
+				<?php endif; ?>
 				<p class="lafka-deal-builder__intro">
 					<?php
 					echo esc_html(
@@ -155,6 +166,88 @@ if ( ! class_exists( 'Lafka_Deals_Builder' ) ) {
 				</div>
 			</div>
 			<?php
+		}
+
+		/**
+		 * Items to start from: the cart lines the deal nudge linked here
+		 * (`?lafka_deal_cart=key,key`), matched to this deal's slots by the
+		 * same rule the nudge used. Only lines still in the cart count.
+		 *
+		 * @param WC_Product $deal Deal.
+		 * @return array{slots: array<int, array<string,mixed>>, convert: array<int,string>, note: string}
+		 */
+		private static function prefill( WC_Product $deal ): array {
+			$none = array(
+				'slots'   => array(),
+				'convert' => array(),
+				'note'    => '',
+			);
+			if ( ! lafka_input_has_get( Lafka_Deals_Nudge::QUERY_ARG ) || ! function_exists( 'WC' ) || ! WC()->cart ) {
+				return $none;
+			}
+			$keys     = array_values( array_filter( array_map( 'sanitize_key', explode( ',', lafka_input_get_text( Lafka_Deals_Nudge::QUERY_ARG ) ) ) ) );
+			$units    = Lafka_Deals_Nudge::units( null, $keys );
+			$assigned = array() === $units ? array() : Lafka_Deals_Nudge::assign( $deal, $units );
+			if ( array() === $assigned ) {
+				return $none;
+			}
+			$slots   = array();
+			$convert = array();
+			$names   = array();
+			$addons  = false;
+			foreach ( $assigned as $index => $u ) {
+				$unit = $units[ $u ];
+				// Choices a variable item leaves open (size, crust…) start as they were in the cart.
+				$slots[ $index ]   = array(
+					'product_id' => $unit['product_id'],
+					'attributes' => array_combine( array_map( static fn( $name ) => 'attribute_' . $name, array_keys( $unit['attributes'] ) ), array_values( $unit['attributes'] ) ),
+				);
+				$convert[ $index ] = $unit['key'];
+				$names[]           = $unit['name'];
+				$addons            = $addons || $unit['addons'];
+			}
+			/* translators: %s: item names from the cart. */
+			$note = sprintf( __( 'Started with %s from your order. Adding the deal replaces them.', 'lafka-plugin' ), wp_sprintf( '%l', $names ) );
+			if ( $addons ) {
+				$note .= ' ' . __( 'Extras on those items are not carried over: choose them again below.', 'lafka-plugin' );
+			}
+			return array(
+				'slots'   => $slots,
+				'convert' => $convert,
+				'note'    => $note,
+			);
+		}
+
+		/**
+		 * The cart lines a deal just replaced: one unit of each line the
+		 * customer started the deal from, when they kept that very item (same
+		 * product and variation) in the slot. Whatever they changed stays in
+		 * the cart as it was, so nothing is removed that the deal did not take
+		 * over and nothing is charged twice.
+		 *
+		 * @param array<int, array<string,mixed>> $lines   Resolved deal lines.
+		 * @param array<int,string>               $convert Slot index => cart item key.
+		 * @return int Units taken out of the cart.
+		 */
+		private static function convert( array $lines, array $convert ): int {
+			$removed = 0;
+			foreach ( $lines as $index => $line ) {
+				$key  = $convert[ $index ] ?? '';
+				$item = '' === $key ? null : WC()->cart->get_cart_item( $key );
+				if ( ! is_array( $item ) || array() === $item || Lafka_Deals::is_deal_line( $item ) ) {
+					continue;
+				}
+				if ( (int) $item['product_id'] !== (int) $line['product_id'] || (int) $item['variation_id'] !== (int) $line['variation_id'] ) {
+					continue;
+				}
+				if ( (int) $item['quantity'] > 1 ) {
+					WC()->cart->set_quantity( $key, (int) $item['quantity'] - 1 );
+				} else {
+					WC()->cart->remove_cart_item( $key );
+				}
+				++$removed;
+			}
+			return $removed;
 		}
 
 		/**
@@ -206,7 +299,7 @@ if ( ! class_exists( 'Lafka_Deals_Builder' ) ) {
 							<?php foreach ( $pool as $id => $entry ) : ?>
 								<?php
 								$item    = $entry['product'];
-								$premium = $slot['upcharge'] ? round( $entry['base'] - $floor, 2 ) : 0.0;
+								$premium = $slot['upcharge'] && Lafka_Deals::upcharges_apply( $deal ) ? round( $entry['base'] - $floor, 2 ) : 0.0;
 								?>
 								<label class="lafka-deal-option">
 									<input type="radio" name="lafka_deal_product" value="<?php echo esc_attr( (string) $id ); ?>">
@@ -238,7 +331,15 @@ if ( ! class_exists( 'Lafka_Deals_Builder' ) ) {
 		 */
 		private static function deal_or_fail( int $deal_id ): array {
 			$deal = wc_get_product( $deal_id );
-			if ( ! $deal || ! Lafka_Deals::is_deal( $deal ) || ! $deal->is_purchasable() ) {
+			if ( ! $deal || ! Lafka_Deals::is_deal( $deal ) ) {
+				wp_send_json_error( array( 'message' => __( 'This deal is not available right now.', 'lafka-plugin' ) ), 404 );
+			}
+			// Why, in words: the days and hours, the order type, the limits, coupons.
+			$reason = Lafka_Deals_Conditions::builder_error( $deal );
+			if ( '' !== $reason ) {
+				wp_send_json_error( array( 'message' => $reason ), 409 );
+			}
+			if ( ! $deal->is_purchasable() ) {
 				wp_send_json_error( array( 'message' => __( 'This deal is not available right now.', 'lafka-plugin' ) ), 404 );
 			}
 			return array( $deal, Lafka_Deals::get_slots( $deal ) );
@@ -426,7 +527,7 @@ if ( ! class_exists( 'Lafka_Deals_Builder' ) ) {
 
 				$base     = (float) $priced->get_price();
 				$floor    = Lafka_Deals::pool_floor( $pool );
-				$upcharge = $slot['upcharge'] ? max( 0.0, round( $base - $floor, 2 ) ) : 0.0;
+				$upcharge = $slot['upcharge'] && Lafka_Deals::upcharges_apply( $deal ) ? max( 0.0, round( $base - $floor, 2 ) ) : 0.0;
 				if ( ! $slot['required'] ) {
 					// An optional add-on item is not part of the deal price: it
 					// costs its own price, on top.
@@ -477,7 +578,7 @@ if ( ! class_exists( 'Lafka_Deals_Builder' ) ) {
 		private static function totals( WC_Product $deal, array $lines ): array {
 			$upcharges = (float) array_sum( array_column( $lines, 'upcharge' ) );
 			$extras    = (float) array_sum( array_column( $lines, 'extras' ) );
-			$total     = (float) $deal->get_price() + $upcharges + $extras;
+			$total     = Lafka_Deals::price_for( $deal, array_column( $lines, 'reference' ) ) + $upcharges + $extras;
 			$a_la      = (float) array_sum( array_column( $lines, 'base' ) ) + $extras;
 			return array(
 				'total'     => round( $total, 2 ),
@@ -544,6 +645,14 @@ if ( ! class_exists( 'Lafka_Deals_Builder' ) ) {
 				wp_send_json_error( array( 'message' => $message ), 400 );
 			}
 
+			$convert = array();
+			$raw     = isset( $_POST['convert'] ) ? json_decode( sanitize_textarea_field( wp_unslash( $_POST['convert'] ) ), true ) : array();
+			foreach ( is_array( $raw ) ? $raw : array() as $index => $key ) {
+				if ( is_string( $key ) ) {
+					$convert[ absint( $index ) ] = sanitize_key( $key );
+				}
+			}
+
 			$group = wp_generate_uuid4();
 			$added = array();
 			foreach ( $resolved['lines'] as $index => $line ) {
@@ -580,6 +689,7 @@ if ( ! class_exists( 'Lafka_Deals_Builder' ) ) {
 				$added[] = $key;
 			}
 			wc_clear_notices();
+			$converted = self::convert( $resolved['lines'], $convert );
 
 			WC()->cart->calculate_totals();
 			ob_start();
@@ -590,6 +700,7 @@ if ( ! class_exists( 'Lafka_Deals_Builder' ) ) {
 					'fragments' => apply_filters( 'woocommerce_add_to_cart_fragments', array( 'div.widget_shopping_cart_content' => '<div class="widget_shopping_cart_content">' . $mini . '</div>' ) ),
 					'cart_hash' => WC()->cart->get_cart_hash(),
 					'count'     => WC()->cart->get_cart_contents_count(),
+					'converted' => $converted,
 				)
 			);
 		}

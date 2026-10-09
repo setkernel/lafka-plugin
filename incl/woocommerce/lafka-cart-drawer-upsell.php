@@ -162,6 +162,13 @@ if ( ! function_exists( 'lafka_cart_drawer_render_upsell' ) ) {
 	 */
 	function lafka_cart_drawer_render_upsell(): void {
 		echo '<div class="lafka-cart-drawer__upsell" data-lafka-drawer-upsell>';
+		/**
+		 * Fires first inside the drawer's upsell wrapper, which refreshes on every
+		 * cart change: a place for a short cart message (the Deals nudge).
+		 *
+		 * @since 10.4.0
+		 */
+		do_action( 'lafka_cart_drawer_upsell_start' );
 		$ids = ( function_exists( 'WC' ) && WC()->cart && ! WC()->cart->is_empty() )
 			? lafka_cart_drawer_get_upsell_ids()
 			: array();

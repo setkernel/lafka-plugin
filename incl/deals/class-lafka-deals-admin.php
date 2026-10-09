@@ -172,9 +172,13 @@ if ( ! class_exists( 'Lafka_Deals_Admin' ) ) {
 			?>
 			<div id="lafka_deal_data" class="panel woocommerce_options_panel hidden">
 				<p class="form-field"><span class="description">
-					<?php esc_html_e( 'The deal price is this product\'s Regular / Sale price (General tab). Each slot is one item the customer chooses; each chosen item becomes its own cart line with its own options, and the deal price is split across them. Extra toppings and other add-ons are charged on top.', 'lafka-plugin' ); ?>
+					<?php esc_html_e( 'Each slot is one item the customer chooses; each chosen item becomes its own cart line with its own options, and the deal price is split across them. Extra toppings and other add-ons are charged on top.', 'lafka-plugin' ); ?>
 				</span></p>
-				<?php self::availability_fields( $product_object ); ?>
+				<?php
+				self::pricing_fields( $product_object );
+				self::availability_fields( $product_object );
+				self::condition_fields( $product_object );
+				?>
 				<div data-lafka-deal-slots data-next-index="<?php echo esc_attr( (string) max( 2, count( $slots ) ) ); ?>">
 					<?php
 					$rows = array() === $slots ? array( array( 'label' => __( 'Item 1', 'lafka-plugin' ) ), array( 'label' => __( 'Item 2', 'lafka-plugin' ) ) ) : $slots;
@@ -189,6 +193,88 @@ if ( ! class_exists( 'Lafka_Deals_Admin' ) ) {
 				<p class="form-field"><button type="button" class="button" data-lafka-deal-add><?php esc_html_e( 'Add slot', 'lafka-plugin' ); ?></button></p>
 				<?php wp_nonce_field( 'lafka_deal_slots', 'lafka_deal_slots_nonce' ); ?>
 			</div>
+			<?php
+		}
+
+		/**
+		 * How the deal is priced: its own price, or a discount on the items chosen.
+		 *
+		 * @param WC_Product|null $product Product being edited.
+		 * @return void
+		 */
+		private static function pricing_fields( $product ): void {
+			$pricing = $product instanceof WC_Product ? Lafka_Deals::pricing( $product ) : array(
+				'mode'  => 'fixed',
+				'value' => 0.0,
+			);
+			$modes   = array(
+				'fixed'    => __( 'Fixed price (the Regular / Sale price on the General tab)', 'lafka-plugin' ),
+				'percent'  => __( 'Percent off the chosen items', 'lafka-plugin' ),
+				'amount'   => __( 'Amount off the chosen items', 'lafka-plugin' ),
+				'cheapest' => __( 'Cheapest chosen item free', 'lafka-plugin' ),
+			);
+			?>
+			<p class="form-field">
+				<label for="lafka_deal_mode"><?php esc_html_e( 'Pricing', 'lafka-plugin' ); ?></label>
+				<select id="lafka_deal_mode" name="lafka_deal_mode" data-lafka-deal-mode>
+					<?php foreach ( $modes as $value => $label ) : ?>
+						<option value="<?php echo esc_attr( $value ); ?>" <?php selected( $pricing['mode'], $value ); ?>><?php echo esc_html( $label ); ?></option>
+					<?php endforeach; ?>
+				</select>
+			</p>
+			<p class="form-field" data-lafka-deal-value>
+				<label for="lafka_deal_value"><?php esc_html_e( 'Discount', 'lafka-plugin' ); ?></label>
+				<input type="number" min="0" step="0.01" class="short" id="lafka_deal_value" name="lafka_deal_value" value="<?php echo esc_attr( $pricing['value'] > 0 ? (string) $pricing['value'] : '' ); ?>" />
+				<span class="description"><?php esc_html_e( 'A percentage for "percent off", an amount for "amount off". The items count at their own prices; premium-item differences do not apply. Optional items are charged on top.', 'lafka-plugin' ); ?></span>
+			</p>
+			<?php
+		}
+
+		/**
+		 * Conditions: order type, hours, limits and coupons.
+		 *
+		 * @param WC_Product|null $product Product being edited.
+		 * @return void
+		 */
+		private static function condition_fields( $product ): void {
+			$conditions = $product instanceof WC_Product ? Lafka_Deals_Conditions::conditions( $product ) : Lafka_Deals_Conditions::conditions( 0 );
+			?>
+			<p class="form-field">
+				<label for="lafka_deal_order_type"><?php esc_html_e( 'Order type', 'lafka-plugin' ); ?></label>
+				<select id="lafka_deal_order_type" name="lafka_deal_order_type">
+					<option value="" <?php selected( $conditions['order_type'], '' ); ?>><?php esc_html_e( 'Pickup and delivery', 'lafka-plugin' ); ?></option>
+					<option value="pickup" <?php selected( $conditions['order_type'], 'pickup' ); ?>><?php esc_html_e( 'Pickup only', 'lafka-plugin' ); ?></option>
+					<option value="delivery" <?php selected( $conditions['order_type'], 'delivery' ); ?>><?php esc_html_e( 'Delivery only', 'lafka-plugin' ); ?></option>
+				</select>
+			</p>
+			<p class="form-field">
+				<label for="lafka_deal_hours_from"><?php esc_html_e( 'Hours', 'lafka-plugin' ); ?></label>
+				<input type="time" id="lafka_deal_hours_from" name="lafka_deal_hours_from" value="<?php echo esc_attr( $conditions['hours_from'] ); ?>" />
+				<?php esc_html_e( 'to', 'lafka-plugin' ); ?>
+				<input type="time" id="lafka_deal_hours_until" name="lafka_deal_hours_until" value="<?php echo esc_attr( $conditions['hours_until'] ); ?>" />
+				<span class="description" style="display:block;"><?php esc_html_e( 'Optional. The time of day the deal runs, on the store\'s clock (Lafka → Order hours); an end before the start runs past midnight. Leave empty for all day.', 'lafka-plugin' ); ?></span>
+			</p>
+			<?php
+			foreach ( array(
+				'max_customer' => __( 'Most uses per customer', 'lafka-plugin' ),
+				'max_total'    => __( 'Most uses in total', 'lafka-plugin' ),
+			) as $key => $label ) :
+				?>
+				<p class="form-field">
+					<label for="lafka_deal_<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $label ); ?></label>
+					<input type="number" min="0" step="1" class="short" id="lafka_deal_<?php echo esc_attr( $key ); ?>" name="lafka_deal_<?php echo esc_attr( $key ); ?>" value="<?php echo esc_attr( $conditions[ $key ] > 0 ? (string) $conditions[ $key ] : '' ); ?>" placeholder="<?php esc_attr_e( 'No limit', 'lafka-plugin' ); ?>" />
+					<?php if ( 'max_customer' === $key ) : ?>
+						<span class="description"><?php esc_html_e( 'Counted on paid orders, by account or billing email.', 'lafka-plugin' ); ?></span>
+					<?php endif; ?>
+				</p>
+			<?php endforeach; ?>
+			<p class="form-field">
+				<label for="lafka_deal_coupons"><?php esc_html_e( 'Coupons', 'lafka-plugin' ); ?></label>
+				<select id="lafka_deal_coupons" name="lafka_deal_coupons">
+					<option value="allow" <?php selected( $conditions['coupons'], 'allow' ); ?>><?php esc_html_e( 'Can be used with coupons', 'lafka-plugin' ); ?></option>
+					<option value="block" <?php selected( $conditions['coupons'], 'block' ); ?>><?php esc_html_e( 'No coupons on an order with this deal', 'lafka-plugin' ); ?></option>
+				</select>
+			</p>
 			<?php
 		}
 
@@ -258,6 +344,28 @@ if ( ! class_exists( 'Lafka_Deals_Admin' ) ) {
 				$rows[ $i ]['required']   = ! empty( $row['required'] );
 			}
 			$product->update_meta_data( Lafka_Deals::SLOTS_META, Lafka_Deals::normalize_slots( array_values( $rows ) ) );
+
+			$mode = isset( $_POST['lafka_deal_mode'] ) ? sanitize_key( wp_unslash( $_POST['lafka_deal_mode'] ) ) : 'fixed';
+			$product->update_meta_data( Lafka_Deals::MODE_META, in_array( $mode, Lafka_Deals::MODES, true ) ? $mode : 'fixed' );
+			$product->update_meta_data( Lafka_Deals::VALUE_META, isset( $_POST['lafka_deal_value'] ) ? max( 0.0, (float) wc_format_decimal( sanitize_text_field( wp_unslash( $_POST['lafka_deal_value'] ) ) ) ) : 0.0 );
+
+			$type = isset( $_POST['lafka_deal_order_type'] ) ? sanitize_key( wp_unslash( $_POST['lafka_deal_order_type'] ) ) : '';
+			$product->update_meta_data( Lafka_Deals_Conditions::ORDER_TYPE_META, in_array( $type, array( 'pickup', 'delivery' ), true ) ? $type : '' );
+			foreach ( array(
+				'lafka_deal_hours_from'  => Lafka_Deals_Conditions::HOURS_FROM_META,
+				'lafka_deal_hours_until' => Lafka_Deals_Conditions::HOURS_UNTIL_META,
+			) as $field => $meta ) {
+				$time = isset( $_POST[ $field ] ) ? sanitize_text_field( wp_unslash( $_POST[ $field ] ) ) : '';
+				$product->update_meta_data( $meta, preg_match( '/^\d{2}:\d{2}$/', $time ) ? $time : '' );
+			}
+			foreach ( array(
+				'lafka_deal_max_customer' => Lafka_Deals_Conditions::MAX_CUSTOMER_META,
+				'lafka_deal_max_total'    => Lafka_Deals_Conditions::MAX_TOTAL_META,
+			) as $field => $meta ) {
+				$product->update_meta_data( $meta, isset( $_POST[ $field ] ) ? absint( wp_unslash( $_POST[ $field ] ) ) : 0 );
+			}
+			$coupons = isset( $_POST['lafka_deal_coupons'] ) ? sanitize_key( wp_unslash( $_POST['lafka_deal_coupons'] ) ) : 'allow';
+			$product->update_meta_data( Lafka_Deals_Conditions::COUPONS_META, 'block' === $coupons ? 'block' : 'allow' );
 
 			$days = isset( $_POST['lafka_deal_days'] ) && is_array( $_POST['lafka_deal_days'] ) ? array_map( 'absint', wp_unslash( $_POST['lafka_deal_days'] ) ) : array();
 			$days = array_values( array_unique( array_filter( $days, static fn( $d ) => $d <= 6 ) ) );

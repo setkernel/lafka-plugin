@@ -7,6 +7,15 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
 
 ## [Unreleased]
 
+### Deals
+- Deal extras: pricing modes (percent off, amount off, cheapest item free, besides the fixed price),
+  conditions (pickup / delivery only, an hours window, most uses per customer and in total counted on
+  paid orders, allow or block coupons) and a cart nudge ("Add 1 more item to get ...") in the cart
+  drawer, the classic cart and the block cart, linking to the deal with the cart's items chosen; adding
+  the deal replaces them. Every condition shows its reason on the deal page, in the builder and on the
+  cart / checkout (classic and Store API). New: `Lafka_Deals_Conditions`, `Lafka_Deals_Nudge`, filter
+  `lafka_deal_nudge`, action `lafka_cart_drawer_upsell_start`, Store API cart extension `lafka_deals`.
+
 ### Design system
 - Front-end CSS reads the theme's tokens with a neutral fallback: the branch popup and its Google
   suggestion list use `--lafka-z-popup` / `--lafka-z-maps-suggest` (the list stays above the popup), colours

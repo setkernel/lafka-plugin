@@ -15,6 +15,17 @@
 	$(document.body).trigger('woocommerce-product-type-change', [$('#product-type').val()]);
 	$('#product-type').trigger('change');
 
+	// The discount field only matters for percent / amount off.
+	const mode = document.querySelector('[data-lafka-deal-mode]');
+	const value = document.querySelector('[data-lafka-deal-value]');
+	if (mode && value) {
+		const sync = function () {
+			value.hidden = mode.value !== 'percent' && mode.value !== 'amount';
+		};
+		mode.addEventListener('change', sync);
+		sync();
+	}
+
 	const list = document.querySelector('[data-lafka-deal-slots]');
 	const tmpl = document.getElementById('tmpl-lafka-deal-slot');
 	if (!list || !tmpl) {

@@ -138,7 +138,7 @@
 		return done;
 	}
 
-	function loadItem(slot, productId) {
+	function loadItem(slot, productId, onLoaded) {
 		const options = slot.querySelector('[data-lafka-deal-options]');
 		options.textContent = '';
 		if (!productId) {
@@ -156,6 +156,9 @@
 			// add-on engine's own fields).
 			options.innerHTML = response.data.html;
 			options.appendChild(nextButton(slot));
+			if (onLoaded) {
+				onLoaded(options);
+			}
 			quote();
 		}).catch(function () {
 			options.removeAttribute('aria-busy');
@@ -184,6 +187,26 @@
 		});
 	});
 
+	// Started from items already in the cart (the deal nudge's link): choose
+	// them, with the options they had, in the slots they fill.
+	Object.keys(config.prefill || {}).forEach(function (index) {
+		const slot = slots[Number(index)];
+		const wanted = config.prefill[index];
+		const radio = slot && slot.querySelector('input[name="lafka_deal_product"][value="' + wanted.product_id + '"]');
+		if (!radio) {
+			return;
+		}
+		radio.checked = true;
+		loadItem(slot, wanted.product_id, function (options) {
+			Object.keys(wanted.attributes || {}).forEach(function (name) {
+				const select = options.querySelector('select[name="' + name + '"]');
+				if (select) {
+					select.value = wanted.attributes[name];
+				}
+			});
+		});
+	});
+
 	button.addEventListener('click', function () {
 		if (!complete) {
 			return;
@@ -191,7 +214,7 @@
 		button.disabled = true;
 		const label = button.textContent;
 		button.textContent = config.i18n.adding;
-		post('lafka_deal_add', { choices: JSON.stringify(choices()) }).then(function (response) {
+		post('lafka_deal_add', { choices: JSON.stringify(choices()), convert: JSON.stringify(config.convert || {}) }).then(function (response) {
 			if (!response || !response.success) {
 				button.disabled = false;
 				button.textContent = label;
@@ -199,6 +222,7 @@
 				return;
 			}
 			showError('');
+			config.convert = {}; // The cart lines it replaced are gone.
 			button.textContent = config.i18n.added;
 			// WooCommerce's add-to-cart contract: themes and the mini cart
 			// refresh from these fragments (the cart drawer listens for it).
