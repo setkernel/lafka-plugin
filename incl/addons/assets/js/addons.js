@@ -523,6 +523,9 @@ jQuery( document ).ready( function($) {
 		}
 		box.dispatchEvent( new Event( 'change', { bubbles: true } ) );
 		if ( window.jQuery ) {
+			// The totals read the prices through jQuery's .data(), which keeps the
+			// first value it read: drop it so the scaled price is read.
+			window.jQuery( box ).removeData( [ 'price', 'raw-price', 'attribute-prices', 'attribute-raw-prices' ] );
 			window.jQuery( box ).trigger( 'change' );
 		}
 	} );
