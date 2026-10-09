@@ -48,7 +48,9 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
   the same account's other unpaid (failed or pending) orders lose it; another account's or a guest's order is never
   changed. Each change re-prices the order and adds an order note. Of two orders placed at the same moment (classic or
   block), the one checked first keeps it; an order that cannot get the lock does not keep it. New: `lafka_first_order_counted_statuses()`, `lafka_first_order_retry_ids()`,
-  `lafka_first_order_paid_statuses()`, `lafka_first_order_identity_order_ids()`, `lafka_first_order_check()`, `lafka_order_discount_fee()`.
+  `lafka_first_order_paid_statuses()`, `lafka_first_order_identity_order_ids()`, `lafka_first_order_check()`,
+  `lafka_first_order_on_paid()` (an order paid with the discount after another order of the same person was gets an
+  order note and a dashboard warning with "mark reviewed"; the paid amount is never changed), `lafka_order_discount_fee()`.
 - The deal builder showed a missing required add-on as `Pizza 1: &quot;Crust&quot; is a required field.`; the message
   is plain text now (`Pizza 1: "Crust" is a required field.`).
 - A half-and-half topping showed its whole price in the product page's "Options total" when the topping was ticked

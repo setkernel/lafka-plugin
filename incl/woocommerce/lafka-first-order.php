@@ -8,10 +8,15 @@
  * (activates purely when the percent is > 0), NOT behind the BOGO module gate.
  *
  * Abuse-resistance: eligibility is intentionally limited to LOGGED-IN customers
- * with zero prior orders — a guest has no history, so a guest-eligible perk
- * could be claimed forever. Requiring an account also improves retention +
- * tracking. The eligibility test is filterable for operators who want to widen
- * it (e.g. first-order-by-billing-email at checkout).
+ * with no prior order — a guest has no history, so a guest-eligible perk
+ * could be claimed forever. A person is recognised by account, billing email
+ * and billing phone (see lafka_first_order_identity_order_ids()); one order
+ * holds the discount (see "One holder per person" below), and an order paid
+ * with it after another order of the same person was is flagged for staff.
+ * Inherent limit of any first-order offer: someone using an all-new account,
+ * email AND phone is a new customer to the shop and gets it again — keep the
+ * percentage modest, or use a WooCommerce coupon limited to one use per email.
+ * The eligibility test is filterable (`lafka_is_first_order_customer`).
  *
  * @package Lafka\Plugin\WooCommerce
  * @since   9.33.0
@@ -168,7 +173,9 @@ if ( ! function_exists( 'lafka_first_order_orders_by_phone' ) ) {
 		if ( array() === $statuses ) {
 			return array();
 		}
-		$like = '%' . $wpdb->esc_like( substr( $e164, -4 ) ) . '%';
+		// The last seven digits in order with anything between them ("555-0123",
+		// "5550123"): selective enough that the cap below is never reached.
+		$like = '%' . implode( '%', str_split( substr( preg_replace( '/\D+/', '', $e164 ), -7 ) ) ) . '%';
 		$hpos = class_exists( '\Automattic\WooCommerce\Utilities\OrderUtil' ) && \Automattic\WooCommerce\Utilities\OrderUtil::custom_orders_table_usage_is_enabled();
 		if ( $hpos ) {
 			$rows = $wpdb->get_results(
@@ -374,12 +381,15 @@ if ( ! function_exists( 'lafka_first_order_strip' ) ) {
 	function lafka_first_order_strip( WC_Order $order, string $why ): void {
 		$delta = (float) $order->get_meta( '_lafka_first_order_discount' );
 		$label = (string) $order->get_meta( '_lafka_first_order_label' );
+		$named = (string) $order->get_meta( '_lafka_first_order_fee' );
 		if ( $delta <= 0 ) {
 			return;
 		}
 		foreach ( $order->get_fees() as $item_id => $fee ) {
 			$total = (float) $fee->get_total();
-			if ( $total >= 0 || ( '' !== $label && false === strpos( $fee->get_name(), $label ) ) ) {
+			// The fee recorded when the order was placed (its name, whatever the
+			// lafka_order_discount_label filter made it).
+			if ( $total >= 0 || $fee->get_name() !== $named ) {
 				continue;
 			}
 			$left = round( $total + $delta, wc_get_price_decimals() );
@@ -426,6 +436,7 @@ if ( ! function_exists( 'lafka_first_order_record' ) ) {
 			$delta = null !== $with ? round( $with['amount'] - ( null !== $without ? $without['amount'] : 0.0 ), wc_get_price_decimals() ) : 0.0;
 			if ( $carried && $delta > 0 ) {
 				$order->update_meta_data( '_lafka_first_order_discount', $delta );
+				$order->update_meta_data( '_lafka_first_order_fee', $with['label'] );
 				$order->update_meta_data(
 					'_lafka_first_order_label',
 					sprintf(
@@ -558,6 +569,117 @@ if ( ! function_exists( 'lafka_first_order_on_pay' ) ) {
 		if ( $order instanceof WC_Order && (float) $order->get_meta( '_lafka_first_order_discount' ) > 0 ) {
 			lafka_first_order_check( $order, false );
 		}
+	}
+}
+
+if ( ! function_exists( 'lafka_first_order_on_paid' ) ) {
+	add_action( 'woocommerce_order_status_changed', 'lafka_first_order_on_paid', 10, 3 );
+	/**
+	 * When an order that holds the discount is paid (processing / completed),
+	 * look for another order of the same person (account, billing email or
+	 * phone) already paid with it. Two unpaid orders from different accounts
+	 * with the same email or phone can both hold it until one is paid; the
+	 * paid amount is never changed silently: the later order gets an order
+	 * note and is listed for staff (lafka_first_order_review_notice()).
+	 *
+	 * @since 10.4.0
+	 * @param int    $order_id Order id.
+	 * @param string $from     Old status.
+	 * @param string $to       New status.
+	 * @return void
+	 */
+	function lafka_first_order_on_paid( $order_id, $from = '', $to = '' ): void {
+		unset( $from );
+		if ( ! in_array( (string) $to, array( 'processing', 'completed' ), true ) ) {
+			return;
+		}
+		$order = wc_get_order( $order_id );
+		if ( ! $order instanceof WC_Order || (float) $order->get_meta( '_lafka_first_order_discount' ) <= 0 || '' !== (string) $order->get_meta( '_lafka_first_order_duplicate' ) ) {
+			return;
+		}
+		list( $user, $emails, $phone ) = lafka_first_order_identity_of( $order );
+		foreach ( lafka_first_order_identity_order_ids( $user, $emails, $phone, array( $order->get_id() ) ) as $id ) {
+			$other = wc_get_order( $id );
+			if ( $other instanceof WC_Order && $other->has_status( array( 'processing', 'completed', 'refunded' ) ) && (float) $other->get_meta( '_lafka_first_order_discount' ) > 0 ) {
+				$order->update_meta_data( '_lafka_first_order_duplicate', (string) $other->get_id() );
+				$review = array_map( 'absint', (array) get_option( 'lafka_first_order_review', array() ) );
+				update_option( 'lafka_first_order_review', array_values( array_unique( array_merge( $review, array( $order->get_id() ) ) ) ), false );
+				$order->add_order_note(
+					sprintf(
+						/* translators: 1: discount amount, 2: the other order number */
+						__( 'Check this order: it was paid with the first-order discount (%1$s), but order #%2$d by the same customer (account, email or phone) was already paid with it. The amount was not changed.', 'lafka-plugin' ),
+						lafka_price_plain( (float) $order->get_meta( '_lafka_first_order_discount' ) ),
+						$other->get_id()
+					)
+				);
+				$order->save();
+				return;
+			}
+		}
+	}
+}
+
+if ( ! function_exists( 'lafka_first_order_review_notice' ) ) {
+	add_action( 'admin_notices', 'lafka_first_order_review_notice' );
+	/**
+	 * Staff notice: orders flagged by lafka_first_order_on_paid() that nobody
+	 * has marked reviewed yet (the `lafka_first_order_review` option lists them).
+	 *
+	 * @since 10.4.0
+	 * @return void
+	 */
+	function lafka_first_order_review_notice(): void {
+		if ( ! current_user_can( 'manage_woocommerce' ) || ! function_exists( 'wc_get_orders' ) ) {
+			return;
+		}
+		$ids = array_slice( array_map( 'absint', (array) get_option( 'lafka_first_order_review', array() ) ), 0, 5 );
+		if ( array() === $ids ) {
+			return;
+		}
+		$links = array();
+		foreach ( $ids as $id ) {
+			$order = wc_get_order( $id );
+			if ( $order instanceof WC_Order ) {
+				$links[] = sprintf(
+					'<a href="%1$s">#%2$d</a> (<a href="%3$s">%4$s</a>)',
+					esc_url( $order->get_edit_order_url() ),
+					(int) $id,
+					esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=lafka_first_order_reviewed&order=' . (int) $id ), 'lafka_first_order_reviewed_' . (int) $id ) ),
+					esc_html__( 'mark reviewed', 'lafka-plugin' )
+				);
+			}
+		}
+		printf(
+			'<div class="notice notice-warning"><p>%1$s %2$s</p></div>',
+			esc_html__( 'First-order discount used twice by the same customer (see the order note):', 'lafka-plugin' ),
+			wp_kses_post( implode( ', ', $links ) )
+		);
+	}
+}
+
+if ( ! function_exists( 'lafka_first_order_mark_reviewed' ) ) {
+	add_action( 'admin_post_lafka_first_order_reviewed', 'lafka_first_order_mark_reviewed' );
+	/**
+	 * "Mark reviewed" on the staff notice.
+	 *
+	 * @since 10.4.0
+	 * @return void
+	 */
+	function lafka_first_order_mark_reviewed(): void {
+		$id = isset( $_GET['order'] ) ? absint( wp_unslash( $_GET['order'] ) ) : 0;
+		check_admin_referer( 'lafka_first_order_reviewed_' . $id );
+		if ( ! current_user_can( 'manage_woocommerce' ) ) {
+			wp_die( esc_html__( 'You are not allowed to do that.', 'lafka-plugin' ), 403 );
+		}
+		$order = wc_get_order( $id );
+		if ( $order instanceof WC_Order ) {
+			$order->update_meta_data( '_lafka_first_order_reviewed', (string) get_current_user_id() );
+			update_option( 'lafka_first_order_review', array_values( array_diff( array_map( 'absint', (array) get_option( 'lafka_first_order_review', array() ) ), array( $id ) ) ), false );
+			$order->add_order_note( __( 'First-order discount check marked reviewed.', 'lafka-plugin' ), 0, true );
+			$order->save();
+		}
+		wp_safe_redirect( wp_get_referer() ? wp_get_referer() : admin_url() );
+		exit;
 	}
 }
 

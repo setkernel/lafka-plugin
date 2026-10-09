@@ -408,6 +408,22 @@ that far (we deliver up to 10 km). Choose Pickup instead."), and placing the ord
 refused until they pick Pickup or a reachable address. The sentence is filterable
 (`lafka_distance_unavailable_message`).
 
+### First-order discount
+
+A percentage off a signed-in customer's first order (WooCommerce → Settings → Restaurant →
+Promotions; 0 = off). A customer is recognised by their account, their billing email and their
+billing phone: any order of their own account (unless it failed or was cancelled), or any paid
+order with the same email or phone (any account, or none), means it is not their first order.
+One order holds the discount: it is checked again when the order is placed and before it is
+paid, and a second order loses it with an order note saying why. If two unpaid orders from
+different accounts with the same email or phone are both paid later, the second gets an order
+note and a warning on the dashboard ("First-order discount used twice"); the amount is never
+changed after payment, so decide whether to follow up, then press *mark reviewed*.
+
+Someone using an all-new account, email and phone is a new customer as far as any shop can tell
+and gets the discount again. Keep the percentage modest, or use a WooCommerce coupon limited to
+one use per email instead.
+
 ### Pickup and delivery wording
 
 WooCommerce's cash on delivery reads after the order type: "Pay at pickup" / "Pay on delivery" at
