@@ -536,7 +536,7 @@ if ( ! function_exists( 'lafka_review_email_render_body' ) ) {
 			<p style="margin:0 0 24px 0;font-size:14px;line-height:1.5;color:#666;">
 				<?php
 				printf(
-					/* translators: %s: order number */
+					/* translators: %s: order number. */
 					esc_html( function_exists( '__' ) ? __( 'Order #%s', 'lafka-plugin' ) : 'Order #%s' ),
 					esc_html( $order_number )
 				);

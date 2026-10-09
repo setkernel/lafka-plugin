@@ -595,7 +595,7 @@ if ( ! class_exists( 'Lafka_Deals' ) ) {
 			}
 			if ( '' !== $when['until'] ) {
 				/* translators: %s: date. */
-				$parts[] = sprintf( __( 'until %s', 'lafka-plugin' ), wp_date( $format, strtotime( $when['until'] . ' 12:00' ) ) );
+				$parts[] = sprintf( _x( 'until %s', 'deal end date', 'lafka-plugin' ), wp_date( $format, strtotime( $when['until'] . ' 12:00' ) ) );
 			}
 			return implode( ' · ', $parts );
 		}
