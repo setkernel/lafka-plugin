@@ -157,6 +157,7 @@ if ( ! class_exists( 'Lafka_Address_Autocomplete' ) ) {
 				'debounce'   => $debounce,
 				'namespace'  => self::NAMESPACE,
 				'token'      => Lafka_Address_Search::page_token(),
+				'restNonce'  => is_user_logged_in() ? wp_create_nonce( 'wp_rest' ) : '',
 			);
 		}
 

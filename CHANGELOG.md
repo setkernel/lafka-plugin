@@ -7,6 +7,10 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
 
 ## [Unreleased]
 
+### Fixed
+- Address suggestions answered 403 for a signed-in customer (the routes read the request as a stranger's, so the
+  shopping session did not match the page token); the script now sends the REST nonce for a signed-in customer.
+
 ### Installable app
 - New gated module (Lafka → Modules → Installable app, default on; WooCommerce → Settings → Restaurant → App).
   Serves a web app manifest (`/?lafka_manifest=1`: restaurant name, WordPress site icon at 192/512 and an optional

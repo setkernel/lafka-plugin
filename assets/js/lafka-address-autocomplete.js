@@ -53,6 +53,20 @@
 	}
 
 	/**
+	 * Headers for the two routes: the page token, and for a signed-in customer the REST nonce,
+	 * without which WordPress reads the request as a stranger's and the shopping session no longer matches.
+	 *
+	 * @return {Object} Headers.
+	 */
+	function requestHeaders() {
+		const headers = { 'X-Lafka-Address-Token': config.token || '' };
+		if ( config.restNonce ) {
+			headers[ 'X-WP-Nonce' ] = config.restNonce;
+		}
+		return headers;
+	}
+
+	/**
 	 * Which address the customer is typing in. The classic framework says so;
 	 * the block checkout does not, so the focused field's id does.
 	 *
@@ -111,7 +125,7 @@
 		try {
 			const response = await window.fetch( url( config.suggestUrl, { q: query, country, session: state.session } ), {
 				credentials: 'same-origin',
-				headers: { 'X-Lafka-Address-Token': config.token || '' },
+				headers: requestHeaders(),
 				signal: controller.signal,
 			} );
 			if ( ! response.ok ) {
@@ -239,7 +253,7 @@
 		const type = state.type;
 		const response = await window.fetch( url( config.placeUrl, { id, country: country || countryOf( type ), session: state.session } ), {
 			credentials: 'same-origin',
-			headers: { 'X-Lafka-Address-Token': config.token || '' },
+			headers: requestHeaders(),
 		} );
 		const body = response.ok ? await response.json() : null;
 		const place = body && body.place;
