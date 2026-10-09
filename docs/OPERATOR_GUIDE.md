@@ -412,12 +412,16 @@ Lafka → Modules → Loyalty points (off by default), settings in WooCommerce �
 - **Earning.** A customer with an account earns points when an order is **Completed**, on the items only
   (after discounts; never tips, fees, shipping or tax). Default: 1 point per 1.00. Guests earn nothing, so
   leave WooCommerce's "Allow customers to create an account during checkout" (Settings → Accounts & Privacy)
-  on; the Loyalty screen warns when it is off. An order is awarded once, however often its status changes.
+  on; the Loyalty screen warns when it is off. An order is awarded once, however often its status changes;
+  items refunded before completion earn nothing, and an order completed again after a cancellation first
+  makes up any points that cancellation could not take back.
 - **Spending.** At checkout (classic and block) the customer chooses how many points to use (default 100 points
   = 1.00, at least 500 points, at most 50% of the items). Lafka issues a single-use WooCommerce coupon for that
   customer ("Loyalty points" in the totals) and reserves the points. They return if the coupon leaves the cart,
-  the order fails, is cancelled or refunded in full, or the coupon is not used within two hours (an hourly
-  Action Scheduler job, `lafka_loyalty_maintenance`).
+  the order is cancelled or refunded in full, its payment failed and was not retried within a day, or the
+  coupon is not used within two hours (an hourly Action Scheduler job, `lafka_loyalty_maintenance`). If a
+  cancelled order is reinstated after the customer spent those points, the order gets a note saying how much
+  of its discount points no longer cover.
 - **Refunds and cancellations** take back the same share of the points an order earned. A balance never goes
   below zero: what could not be taken back is kept as the row's shortfall.
 - **Expiry** (optional): points expire after N months without earning or spending.
@@ -425,7 +429,7 @@ Lafka → Modules → Loyalty points (off by default), settings in WooCommerce �
   completed email. On a customer's user profile in wp-admin you see the balance and history and can add or
   remove points (a ledger row with your reason). `wp lafka loyalty recalc [--user=ID] [--dry-run]` rebuilds
   every cached balance from the ledger.
-- Filters: `lafka_loyalty_earn_points`, `lafka_loyalty_reservation_ttl`.
+- Filters: `lafka_loyalty_earn_points`, `lafka_loyalty_reservation_ttl`, `lafka_loyalty_failed_grace`.
 
 ## Where settings live
 

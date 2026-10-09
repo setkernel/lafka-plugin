@@ -53,7 +53,6 @@ if ( ! class_exists( 'Lafka_Loyalty_Redeem' ) ) {
 			add_action( 'woocommerce_checkout_order_processed', array( __CLASS__, 'bind_processed' ), 10, 3 );
 			add_action( 'woocommerce_store_api_checkout_order_processed', array( __CLASS__, 'bind' ) );
 			add_action( 'woocommerce_order_status_cancelled', array( __CLASS__, 'release_order' ) );
-			add_action( 'woocommerce_order_status_failed', array( __CLASS__, 'release_order' ) );
 			add_action( 'woocommerce_order_status_refunded', array( __CLASS__, 'release_order' ) );
 			add_action( 'woocommerce_order_status_processing', array( __CLASS__, 'reserve_order' ) );
 			add_action( 'woocommerce_order_status_on-hold', array( __CLASS__, 'reserve_order' ) );
@@ -369,7 +368,9 @@ if ( ! class_exists( 'Lafka_Loyalty_Redeem' ) ) {
 		}
 
 		/**
-		 * The order failed, was cancelled or was refunded in full: return the points.
+		 * The order was cancelled or refunded in full: return the points. A failed
+		 * payment is not final (the customer usually retries the same order), so
+		 * release_stale() returns a failed order's points only after a day.
 		 *
 		 * @param int $order_id Order id.
 		 * @return void
@@ -405,8 +406,21 @@ if ( ! class_exists( 'Lafka_Loyalty_Redeem' ) ) {
 				}
 				$cycle  = (int) $coupon->get_meta( '_lafka_loyalty_cycle' ) + 1;
 				$points = (int) $coupon->get_meta( '_lafka_loyalty_points' );
-				// The order is real and paid: the points are taken as far as the customer still has them.
-				Lafka_Loyalty_Ledger::add( (int) $coupon->get_meta( '_lafka_loyalty_user' ), -$points, 'reserve', $order->get_id(), 'rereserve:' . $id . ':' . $cycle, __( 'Points used at checkout', 'lafka-plugin' ), 'clamp' );
+				// The order is real and paid: the points are taken as far as the
+				// customer still has them; anything they spent meanwhile is
+				// flagged to the shop, never silently given away.
+				$result = Lafka_Loyalty_Ledger::add( (int) $coupon->get_meta( '_lafka_loyalty_user' ), -$points, 'reserve', $order->get_id(), 'rereserve:' . $id . ':' . $cycle, __( 'Points used at checkout', 'lafka-plugin' ), 'clamp' );
+				if ( 'ok' === $result['status'] && (int) $result['shortfall'] > 0 ) {
+					$order->add_order_note(
+						sprintf(
+							/* translators: 1: points short, 2: points the discount used, 3: their value. */
+							__( 'Loyalty: this order was reinstated, but the customer had already spent %1$d of the %2$d points its discount used (%3$s not covered by points).', 'lafka-plugin' ),
+							(int) $result['shortfall'],
+							$points,
+							lafka_price_plain( Lafka_Loyalty::value_of( (int) $result['shortfall'] ) )
+						)
+					);
+				}
 				$coupon->update_meta_data( '_lafka_loyalty_state', 'reserved' );
 				$coupon->update_meta_data( '_lafka_loyalty_cycle', $cycle );
 				$coupon->save();
@@ -437,6 +451,34 @@ if ( ! class_exists( 'Lafka_Loyalty_Redeem' ) ) {
 			foreach ( (array) $ids as $id ) {
 				if ( self::release( (int) $id, __( 'Points returned: not used in time', 'lafka-plugin' ) ) ) {
 					++$count;
+				}
+			}
+			// Orders whose payment failed and was not retried within a day.
+			/**
+			 * Filters how long a failed order keeps its reserved points (seconds).
+			 *
+			 * @since 10.4.0
+			 *
+			 * @param int $seconds Default a day.
+			 */
+			$grace  = (int) apply_filters( 'lafka_loyalty_failed_grace', DAY_IN_SECONDS );
+			$failed = wc_get_orders(
+				array(
+					'status'       => 'failed',
+					'date_created' => '<' . ( time() - $grace ),
+					'limit'        => 100,
+					'return'       => 'ids',
+				)
+			);
+			foreach ( (array) $failed as $order_id ) {
+				$order = wc_get_order( (int) $order_id );
+				if ( ! $order instanceof WC_Order ) {
+					continue;
+				}
+				foreach ( self::order_coupons( $order ) as $id ) {
+					if ( (int) get_post_meta( $id, '_lafka_loyalty_order', true ) === $order->get_id() && self::release( $id, __( 'Order did not go through', 'lafka-plugin' ) ) ) {
+						++$count;
+					}
 				}
 			}
 			return $count;

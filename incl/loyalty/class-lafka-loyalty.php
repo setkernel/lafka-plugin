@@ -151,6 +151,32 @@ if ( ! class_exists( 'Lafka_Loyalty' ) ) {
 		}
 
 		/**
+		 * What an order earns on: its items after discounts, less the share
+		 * already refunded (a refund made before the order is completed must
+		 * not earn).
+		 *
+		 * @param WC_Order $order Order.
+		 * @return float
+		 */
+		public static function award_base( $order ): float {
+			return self::earn_base( $order ) * ( 1.0 - self::refunded_share( $order ) );
+		}
+
+		/**
+		 * The share of an order's items refunded so far (0 to 1).
+		 *
+		 * @param WC_Order $order Order.
+		 * @return float
+		 */
+		private static function refunded_share( $order ): float {
+			$share = 0.0;
+			foreach ( $order->get_refunds() as $refund ) {
+				$share += self::refund_share( $refund, $order );
+			}
+			return max( 0.0, min( 1.0, $share ) );
+		}
+
+		/**
 		 * Points a base earns.
 		 *
 		 * @param float         $base  Items value after discounts.
@@ -188,7 +214,16 @@ if ( ! class_exists( 'Lafka_Loyalty' ) ) {
 				return;
 			}
 			$cycle  = (int) $order->get_meta( '_lafka_loyalty_cycle' ) + 1;
-			$points = self::points_for( self::earn_base( $order ), $order );
+			$points = self::points_for( self::award_base( $order ), $order );
+			// Completed again after a cancellation whose clawback found the
+			// points already spent: the new award first covers that shortfall,
+			// so cancelling and re-completing never earns twice.
+			$owed = 0;
+			if ( $cycle > 1 ) {
+				$row  = Lafka_Loyalty_Ledger::row_by_ref( 'cancel:' . $order->get_id() . ':' . ( $cycle - 1 ) );
+				$owed = null === $row ? 0 : max( 0, (int) $row['shortfall'] );
+			}
+			$points = max( 0, $points - $owed );
 			if ( $points > 0 ) {
 				/* translators: %s: order number. */
 				$note   = sprintf( __( 'Order #%s', 'lafka-plugin' ), $order->get_order_number() );
@@ -200,6 +235,8 @@ if ( ! class_exists( 'Lafka_Loyalty' ) ) {
 			$order->update_meta_data( '_lafka_loyalty_state', 'awarded' );
 			$order->update_meta_data( '_lafka_loyalty_cycle', $cycle );
 			$order->update_meta_data( '_lafka_loyalty_earned', $points );
+			// Refunds made before the award are already out of it.
+			$order->update_meta_data( '_lafka_loyalty_refunded_at_award', self::refunded_share( $order ) );
 			$order->update_meta_data( '_lafka_loyalty_clawed', 0 );
 			$order->save_meta_data();
 		}
@@ -289,13 +326,14 @@ if ( ! class_exists( 'Lafka_Loyalty' ) ) {
 				return;
 			}
 			$earned = (int) $order->get_meta( '_lafka_loyalty_earned' );
-			$share  = 0.0;
-			foreach ( $order->get_refunds() as $each ) {
-				$share += self::refund_share( $each, $order );
-			}
+			$share  = self::refunded_share( $order );
 			if ( $order->get_remaining_refund_amount() <= 0 ) {
 				$share = 1.0;
 			}
+			// Only refunds after the award count against it: the award was
+			// already made on the items left after earlier refunds.
+			$before = min( 0.999999, max( 0.0, (float) $order->get_meta( '_lafka_loyalty_refunded_at_award' ) ) );
+			$share  = max( 0.0, ( $share - $before ) / ( 1.0 - $before ) );
 			$target = (int) round( $earned * min( 1.0, $share ) );
 			$take   = $target - (int) $order->get_meta( '_lafka_loyalty_clawed' );
 			/* translators: %s: order number. */
