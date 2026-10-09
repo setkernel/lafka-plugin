@@ -32,9 +32,15 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
   is unchanged. The method also only looks up a destination the quote guard calls complete (street + postcode, or
   what the country needs) even when the guard is switched off. New: cart extension field `delivery_quote_pending`.
 - A first-time customer whose card was declined lost the first-order discount on the retry: the failed order counted
-  as a prior order, so the retry was priced without the discount and placed as a second order. Orders that failed,
-  are awaiting payment, were cancelled or are checkout drafts no longer count; the retry keeps the discount and
-  WooCommerce pays the same order.
+  as a prior order, so the retry was priced without the discount and placed as a second order. Failed, cancelled and
+  draft orders no longer count, nor does the order the checkout is retrying (`order_awaiting_payment` / the Store API
+  draft), so the retry keeps the discount and WooCommerce pays the same order. Pending, on-hold, processing, completed
+  and refunded orders still count, and the discount is checked again once the order exists (classic
+  `woocommerce_checkout_order_created`, block `woocommerce_store_api_checkout_order_processed`, both before payment):
+  when the customer has another counted order with a lower id (an earlier unpaid order, or a first order placed at the
+  same moment in another tab) it comes off the new order, totals are recalculated and an order note says why. New:
+  `lafka_first_order_counted_statuses()`, `lafka_first_order_retry_ids()`, `lafka_first_order_revalidate()`,
+  `lafka_order_discount_fee()`.
 - The deal builder showed a missing required add-on as `Pizza 1: &quot;Crust&quot; is a required field.`; the message
   is plain text now (`Pizza 1: "Crust" is a required field.`).
 - A half-and-half topping showed its whole price in the product page's "Options total" when the topping was ticked

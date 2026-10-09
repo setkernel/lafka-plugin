@@ -35,22 +35,55 @@ if ( ! function_exists( 'lafka_first_order_discount_percent' ) ) {
 
 if ( ! function_exists( 'lafka_is_first_order_customer' ) ) {
 	/**
-	 * Whether the current visitor qualifies as a first-time customer.
-	 * Logged-in + no prior order that went through. An order whose payment
-	 * failed, one still awaiting payment, a cancelled one and a checkout draft
-	 * do not count, so a declined card does not cost the customer the discount
-	 * on the retry. Filterable.
+	 * The order statuses that make a customer no longer "first order": every
+	 * status except failed, cancelled and the block checkout's draft. A pending
+	 * order counts (it can still be paid, e.g. through a payment link), so a
+	 * customer cannot open several discounted orders and pay them all.
+	 *
+	 * @since 10.4.0
+	 * @return string[]
+	 */
+	function lafka_first_order_counted_statuses(): array {
+		$all = function_exists( 'wc_get_order_statuses' ) ? array_keys( wc_get_order_statuses() ) : array();
+		return array_values( array_diff( $all, array( 'wc-failed', 'wc-cancelled', 'wc-checkout-draft' ) ) );
+	}
+}
+
+if ( ! function_exists( 'lafka_first_order_retry_ids' ) ) {
+	/**
+	 * The order this checkout is (re)paying, which never counts against
+	 * itself: the classic checkout's `order_awaiting_payment` and the block
+	 * checkout's Store API draft order.
+	 *
+	 * @since 10.4.0
+	 * @return int[]
+	 */
+	function lafka_first_order_retry_ids(): array {
+		$session = function_exists( 'WC' ) && isset( WC()->session ) && is_object( WC()->session ) ? WC()->session : null;
+		if ( null === $session ) {
+			return array();
+		}
+		return array_values( array_filter( array( absint( $session->get( 'order_awaiting_payment' ) ), absint( $session->get( 'store_api_draft_order' ) ) ) ) );
+	}
+}
+
+if ( ! function_exists( 'lafka_is_first_order_customer' ) ) {
+	/**
+	 * Whether the current visitor qualifies as a first-time customer:
+	 * logged in, and no counted order (lafka_first_order_counted_statuses())
+	 * other than the one this checkout is retrying, so a declined card's retry
+	 * keeps the discount. Filterable.
 	 *
 	 * @return bool
 	 */
 	function lafka_is_first_order_customer(): bool {
 		$eligible = false;
-		if ( is_user_logged_in() && function_exists( 'wc_get_orders' ) && function_exists( 'wc_get_order_statuses' ) ) {
-			$statuses = array_diff( array_keys( wc_get_order_statuses() ), array( 'wc-pending', 'wc-failed', 'wc-cancelled', 'wc-checkout-draft' ) );
+		if ( is_user_logged_in() && function_exists( 'wc_get_orders' ) ) {
 			$prior    = wc_get_orders(
 				array(
 					'customer_id' => get_current_user_id(),
-					'status'      => $statuses,
+					'status'      => lafka_first_order_counted_statuses(),
+					'exclude'     => lafka_first_order_retry_ids(),
 					'limit'       => 1,
 					'return'      => 'ids',
 				)
@@ -61,10 +94,110 @@ if ( ! function_exists( 'lafka_is_first_order_customer' ) ) {
 	}
 }
 
+if ( ! function_exists( 'lafka_first_order_force' ) ) {
+	/**
+	 * Override eligibility for the rest of the request (true / false), or
+	 * clear the override (null). Used to price an order with and without the
+	 * first-order discount when it is re-checked at order creation.
+	 *
+	 * @since 10.4.0
+	 * @param bool|null $state  Forced state, or null to clear it.
+	 * @param bool      $read   True to only read the current override.
+	 * @return bool|null The override in force.
+	 */
+	function lafka_first_order_force( ?bool $state = null, bool $read = false ): ?bool {
+		static $forced = null;
+		if ( ! $read ) {
+			$forced = $state;
+		}
+		return $forced;
+	}
+}
+
 if ( ! function_exists( 'lafka_first_order_eligible' ) ) {
 	/** @return bool Feature on AND visitor qualifies. */
 	function lafka_first_order_eligible(): bool {
+		$forced = lafka_first_order_force( null, true );
+		if ( null !== $forced ) {
+			return $forced && lafka_first_order_discount_percent() > 0;
+		}
 		return lafka_first_order_discount_percent() > 0 && lafka_is_first_order_customer();
+	}
+}
+
+if ( ! function_exists( 'lafka_first_order_revalidate' ) ) {
+	add_action( 'woocommerce_checkout_order_created', 'lafka_first_order_revalidate' );
+	add_action( 'woocommerce_store_api_checkout_order_processed', 'lafka_first_order_revalidate' );
+	/**
+	 * Check the first-order discount again once the order exists (classic:
+	 * woocommerce_checkout_order_created; block: Store API order processed;
+	 * both before payment). When the customer has another counted order with
+	 * a lower id (an earlier unpaid order, or a first order placed at the
+	 * same moment in another tab), the discount comes off this order: the
+	 * combined discount fee is re-priced without it, totals are recalculated
+	 * and an order note says why. The lower id keeps it, so two concurrent
+	 * first orders can never both keep it.
+	 *
+	 * @since 10.4.0
+	 * @param mixed $order The order just created.
+	 * @return void
+	 */
+	function lafka_first_order_revalidate( $order ): void {
+		if ( ! $order instanceof WC_Order || $order->get_customer_id() <= 0 || lafka_first_order_discount_percent() <= 0 ) {
+			return;
+		}
+		$earlier = wc_get_orders(
+			array(
+				'customer_id' => $order->get_customer_id(),
+				'status'      => lafka_first_order_counted_statuses(),
+				'exclude'     => array( $order->get_id() ),
+				'orderby'     => 'ID',
+				'order'       => 'ASC',
+				'limit'       => 1,
+				'return'      => 'ids',
+			)
+		);
+		if ( array() === $earlier || (int) $earlier[0] > $order->get_id() ) {
+			return;
+		}
+		$cart = function_exists( 'WC' ) && isset( WC()->cart ) ? WC()->cart : null;
+		if ( ! is_object( $cart ) ) {
+			return;
+		}
+		lafka_first_order_force( true );
+		$with = lafka_order_discount_fee( $cart );
+		lafka_first_order_force( false );
+		$without = lafka_order_discount_fee( $cart );
+		lafka_first_order_force( null );
+
+		$removed = false;
+		foreach ( $order->get_fees() as $item_id => $fee ) {
+			if ( null !== $with && $fee->get_name() === $with['label'] && (float) $fee->get_total() < 0 ) {
+				$order->remove_item( $item_id );
+				$removed = true;
+			}
+		}
+		if ( ! $removed ) {
+			return;
+		}
+		if ( null !== $without ) {
+			$fee = new WC_Order_Item_Fee();
+			$fee->set_name( $without['label'] );
+			$fee->set_amount( (string) -$without['amount'] );
+			$fee->set_total( (string) -$without['amount'] );
+			$fee->set_tax_class( $without['tax_class'] );
+			$fee->set_tax_status( $without['taxable'] ? 'taxable' : 'none' );
+			$order->add_item( $fee );
+		}
+		$order->calculate_totals( true );
+		$order->add_order_note(
+			sprintf(
+				/* translators: %d: the customer's earlier order number */
+				__( 'First-order discount removed: the customer already has order #%d.', 'lafka-plugin' ),
+				(int) $earlier[0]
+			)
+		);
+		$order->save();
 	}
 }
 
@@ -257,9 +390,27 @@ if ( ! function_exists( 'lafka_order_discount_apply' ) ) {
 		if ( ! is_object( $cart ) ) {
 			return;
 		}
+		$fee = lafka_order_discount_fee( $cart );
+		if ( null !== $fee ) {
+			$cart->add_fee( $fee['label'], -$fee['amount'], $fee['taxable'], $fee['tax_class'] );
+		}
+	}
+}
+
+if ( ! function_exists( 'lafka_order_discount_fee' ) ) {
+	/**
+	 * The combined order-level discount for a cart: its label, amount and tax
+	 * treatment, or null when no promo applies. One computation for the cart
+	 * fee and for re-pricing an order (lafka_first_order_revalidate()).
+	 *
+	 * @since 10.4.0
+	 * @param \WC_Cart $cart Cart.
+	 * @return array{label:string,amount:float,taxable:bool,tax_class:string}|null
+	 */
+	function lafka_order_discount_fee( $cart ): ?array {
 		$components = apply_filters( 'lafka_order_discount_components', array(), $cart );
 		if ( ! is_array( $components ) || array() === $components ) {
-			return;
+			return null;
 		}
 		$percents = array();
 		$fixed    = 0.0;
@@ -282,7 +433,7 @@ if ( ! function_exists( 'lafka_order_discount_apply' ) ) {
 			}
 		}
 		if ( array() === $percents && $fixed <= 0.0 ) {
-			return;
+			return null;
 		}
 		$already = 0.0;
 		if ( method_exists( $cart, 'get_discount_total' ) ) {
@@ -290,7 +441,7 @@ if ( ! function_exists( 'lafka_order_discount_apply' ) ) {
 		}
 		$amount = lafka_order_discount_combined( (float) $cart->get_subtotal(), $percents, $fixed, $already );
 		if ( $amount <= 0.0 ) {
-			return;
+			return null;
 		}
 		$label = array() === $labels ? __( 'Discount', 'lafka-plugin' ) : implode( ' + ', $labels );
 		/**
@@ -306,8 +457,11 @@ if ( ! function_exists( 'lafka_order_discount_apply' ) ) {
 		// un-discounted line subtotals. The discount thus reduces the taxable
 		// base, consistent with BOGO; a non-taxable fee (the old behaviour) left
 		// tax on the full pre-discount subtotal and over-charged the order.
-		$tax_class = lafka_order_discount_tax_class( $cart );
-		$taxable   = function_exists( 'wc_tax_enabled' ) ? (bool) wc_tax_enabled() : true;
-		$cart->add_fee( $label, -$amount, $taxable, $tax_class );
+		return array(
+			'label'     => $label,
+			'amount'    => $amount,
+			'taxable'   => function_exists( 'wc_tax_enabled' ) ? (bool) wc_tax_enabled() : true,
+			'tax_class' => lafka_order_discount_tax_class( $cart ),
+		);
 	}
 }
