@@ -8,6 +8,10 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
 ## [Unreleased]
 
 ### Fixed
+- The block checkout said "Ship", "Shipping address" and "Shipping options" where the rest of the site says
+  Delivery. Its blocks now default to "Pickup or delivery" / "Delivery" / "Delivery address" / "Delivery options"
+  through their own label attributes (render_block), unless the merchant set those labels in the editor. New filter:
+  `lafka_blocks_checkout_labels`.
 - The block checkout's own Ship / Pickup toggle and the site's Pickup / Delivery preference (header, drawer,
   `lafka_order_method`) disagreed: choosing Ship at checkout left the header on Pickup, and the header did not move
   the toggle. The customer's toggle now goes through `window.lafka.fulfilment.set()` (the preference's one writer),

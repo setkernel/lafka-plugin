@@ -22,6 +22,12 @@
  * The integration is registered only when the WooCommerce Blocks IntegrationRegistry
  * is present and only in blocks checkout mode.
  *
+ * Wording: the block checkout says "Ship" and "Shipping address" where the rest
+ * of the site says Delivery. The checkout's own block attributes carry those
+ * labels (the same ones the merchant can edit in the editor), so the rendered
+ * blocks get Delivery defaults through render_block when the merchant has not
+ * set their own (filter `lafka_blocks_checkout_labels`).
+ *
  * @package Lafka\Plugin\Checkout
  * @since   10.0.0
  */
@@ -56,6 +62,72 @@ if ( ! class_exists( 'Lafka_Blocks_Integration' )
 		public static function init() {
 			add_action( 'woocommerce_blocks_cart_block_registration', array( __CLASS__, 'register_integration' ) );
 			add_action( 'woocommerce_blocks_checkout_block_registration', array( __CLASS__, 'register_integration' ) );
+			foreach ( array_keys( self::labels() ) as $block_name ) {
+				add_filter( 'render_block_' . $block_name, array( __CLASS__, 'label_block' ), 10, 2 );
+			}
+		}
+
+		/**
+		 * Delivery wording for the block checkout: block name => attribute => text.
+		 *
+		 * @return array<string, array<string, string>>
+		 */
+		public static function labels(): array {
+			$labels = array(
+				'woocommerce/checkout-shipping-method-block'  => array(
+					'title'        => __( 'Pickup or delivery', 'lafka-plugin' ),
+					'shippingText' => __( 'Delivery', 'lafka-plugin' ),
+				),
+				'woocommerce/checkout-shipping-address-block' => array(
+					'title' => __( 'Delivery address', 'lafka-plugin' ),
+				),
+				'woocommerce/checkout-shipping-methods-block' => array(
+					'title' => __( 'Delivery options', 'lafka-plugin' ),
+				),
+			);
+
+			/**
+			 * Filter the block checkout's delivery wording (block attribute defaults).
+			 * Return an empty array for a block to keep WooCommerce's own words.
+			 *
+			 * @since 10.4.0
+			 * @param array<string, array<string, string>> $labels Block name => attribute => text.
+			 */
+			return (array) apply_filters( 'lafka_blocks_checkout_labels', $labels );
+		}
+
+		/**
+		 * render_block_{name}: give the checkout block the Delivery wording as
+		 * its attributes (WooCommerce reads them from the block's data-*
+		 * attributes), unless the merchant set that attribute in the editor.
+		 *
+		 * @param mixed $html  Rendered block.
+		 * @param mixed $block Parsed block.
+		 * @return mixed
+		 */
+		public static function label_block( $html, $block ) {
+			if ( ! is_string( $html ) || '' === $html || ! is_array( $block ) || ! class_exists( 'WP_HTML_Tag_Processor' )
+				|| ! class_exists( 'Lafka_Checkout_Mode' ) || ! Lafka_Checkout_Mode::is_blocks() ) {
+				return $html;
+			}
+			$name   = (string) ( $block['blockName'] ?? '' );
+			$labels = self::labels();
+			$set    = (array) ( $block['attrs'] ?? array() );
+			$tags   = new WP_HTML_Tag_Processor( $html );
+			if ( empty( $labels[ $name ] ) || ! $tags->next_tag() ) {
+				return $html;
+			}
+			foreach ( (array) $labels[ $name ] as $attribute => $text ) {
+				if ( array_key_exists( $attribute, $set ) || '' === (string) $text ) {
+					continue;
+				}
+				$data = 'data-' . strtolower( (string) preg_replace( '/([a-z])([A-Z])/', '$1-$2', (string) $attribute ) );
+				if ( null === $tags->get_attribute( $data ) ) {
+					$tags->set_attribute( $data, (string) $text );
+				}
+			}
+
+			return $tags->get_updated_html();
 		}
 
 		/**
