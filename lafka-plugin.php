@@ -411,6 +411,9 @@ require_once plugin_dir_path( __FILE__ ) . 'incl/order-tracking/lafka-order-trac
 // Loyalty points: earned on completed orders, redeemed at checkout through a coupon (off by default).
 require_once plugin_dir_path( __FILE__ ) . 'incl/loyalty/lafka-loyalty-bootstrap.php';
 
+// Text messages: SMS / WhatsApp order updates for customers who opt in, and the WhatsApp chat link (off by default).
+require_once plugin_dir_path( __FILE__ ) . 'incl/notify/lafka-notify-bootstrap.php';
+
 /**
  * v9.25.0 (Phase 1C — Analytics + SEO + Conversion plan):
  *

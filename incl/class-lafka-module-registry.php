@@ -344,6 +344,31 @@ if ( ! class_exists( 'Lafka_Module_Registry' ) ) {
 				)
 			);
 
+			// ---- Text messages (a WooCommerce yes/no option; the settings live with it) ----
+			self::register(
+				new Lafka_Module(
+					array(
+						'id'              => 'notify',
+						'label'           => esc_html__( 'Text messages', 'lafka-plugin' ),
+						'description'     => esc_html__( 'Tell customers who opt in at checkout when their order is accepted, ready or out for delivery, by SMS (Twilio) or WhatsApp, with the tracker link. Adds a free "Message us on WhatsApp" link to the order confirmation and the Contact page.', 'lafka-plugin' ),
+						'category'        => 'operations',
+						'storage'         => 'option',
+						'default_enabled' => false,
+						'get_enabled'     => static function () {
+							return 'yes' === lafka_setting( 'lafka_notify_enabled', 'no' );
+						},
+						'set_enabled'     => static function ( bool $enabled ) {
+							update_option( 'lafka_notify_enabled', $enabled ? 'yes' : 'no' );
+						},
+						'is_configured'   => static function () {
+							return class_exists( 'Lafka_Notify' ) && null !== Lafka_Notify::adapter();
+						},
+						'settings_path'   => 'admin.php?page=wc-settings&tab=lafka_restaurant&section=notify',
+						'docs_slug'       => 'text-messages',
+					)
+				)
+			);
+
 			// ---- New-order alerts (a checkbox flag in the 'lafka' option array) ----
 			// Stored as a '1'/'0' checkbox (NOT the 'enabled'/'disabled' sentinel the
 			// five flags above use), so it gets bespoke truthy getter/setter rather

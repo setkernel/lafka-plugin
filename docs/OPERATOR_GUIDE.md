@@ -405,6 +405,29 @@ that far (we deliver up to 10 km). Choose Pickup instead."), and placing the ord
 refused until they pick Pickup or a reachable address. The sentence is filterable
 (`lafka_distance_unavailable_message`).
 
+### Text messages
+
+Turn it on under WooCommerce → Settings → Restaurant → Text messages (or Lafka → Modules → Text messages).
+Pick a channel and fill in its details:
+
+- Twilio SMS: Account SID, Auth token, and a From number or a Messaging Service SID.
+- WhatsApp Cloud API: Phone number ID and a permanent access token. WhatsApp only lets a business start a chat
+  with a template Meta approved, so for each message give the template name and the placeholders that fill its
+  variables, in order (for example `{name},{order},{track_url}`); a message without a template is not sent.
+
+Customers then see an unticked box at checkout ("Text me updates about this order. Order updates only, no
+marketing."), on the classic and the block checkout, and must give a phone number. Nothing is sent to anyone who
+did not tick it. The order records that they agreed, when, the exact wording, and their number. Messages are about
+the order only (CASL allows these transactional messages; do not use this for promotions). Choose which events
+send: received and completed are off by default; accepted, ready for pickup, out for delivery and cancelled are on
+(accepted and ready need the Kitchen display). Saved keys are never shown again: leave the box blank to keep one,
+type REMOVE to clear it. "Save and send test message" sends one message to a number you type. Failures retry a few
+times (after 1, 5 and 25 minutes), then leave an order note and a line in WooCommerce → Status → Logs (source
+`lafka-notify`, no message text, only the last two digits of the number).
+
+The free "Message us on WhatsApp" link (wa.me, your restaurant phone) shows under the order tracker and on the
+Contact page; it needs no account. Print it elsewhere with the `[lafka_whatsapp]` shortcode.
+
 ### Loyalty points
 
 Lafka → Modules → Loyalty points (off by default), settings in WooCommerce → Settings → Restaurant → Loyalty.

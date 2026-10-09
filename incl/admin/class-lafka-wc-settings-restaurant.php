@@ -121,6 +121,10 @@ if ( ! function_exists( 'lafka_define_wc_settings_restaurant_class' ) ) {
 						return $this->get_loyalty_settings();
 					default:
 						return $this->get_hours_settings();
+					case 'notify':
+						return class_exists( 'Lafka_Notify_Settings' ) ? Lafka_Notify_Settings::fields() : array();
+					case 'app':
+						return $this->get_app_settings();
 				}
 			}
 

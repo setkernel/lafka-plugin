@@ -7,6 +7,22 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
 
 ## [Unreleased]
 
+### Text messages
+- New gated module (Lafka → Modules → Text messages, default off; WooCommerce → Settings → Restaurant → Text
+  messages). Customers who tick an unticked opt-in at checkout (classic `woocommerce_checkout_fields`; block
+  Additional Checkout Fields API) get SMS (Twilio) or WhatsApp Cloud API template messages when their order is
+  received (optional), accepted, ready for pickup, out for delivery, completed (optional) or cancelled/rejected,
+  each with its own on/off and text with `{name}`, `{order}`, `{restaurant}`, `{eta}`, `{track_url}`. Consent
+  (yes, time, the wording shown, the E.164 number) is stored on the order; sending is an Action Scheduler job,
+  idempotent per order and event, retried with a growing delay and logged to the `lafka-notify` source without the
+  text and with only the last two digits of the number. Credentials are stored without autoload and the access
+  keys are never printed (type REMOVE to clear one). "Save and send test message" button. Free "Message us on
+  WhatsApp" wa.me link under the order tracker and via `do_action( 'lafka_whatsapp_link' )` /
+  `[lafka_whatsapp]`. New: `Lafka_Notify`, `Lafka_Notify_Adapter` (+ Twilio, WhatsApp), `Lafka_Notify_Checkout`,
+  `Lafka_Notify_Links`, `lafka_phone_to_e164()`, filters `lafka_notify_adapters`, `lafka_notify_message`,
+  `lafka_notify_retry_delay`, `lafka_notify_whatsapp_api_version`, `lafka_whatsapp_link_hooks`,
+  `lafka_whatsapp_link_phone`, `lafka_whatsapp_link_html`, `lafka_phone_to_e164`.
+
 ### Loyalty points
 - New gated module (Lafka → Modules → Loyalty points, default off; WooCommerce → Settings → Restaurant →
   Loyalty). Points are earned on Completed orders (items only, once per order), spent at checkout on the classic
