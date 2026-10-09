@@ -52,12 +52,53 @@ if ( ! class_exists( 'Lafka_Address_Search' ) ) {
 		const NUMBER_AFTER_STREET = array( 'DE', 'AT', 'CH', 'NL', 'BE', 'ES', 'IT', 'PT', 'SE', 'NO', 'DK', 'FI', 'PL', 'CZ', 'SK', 'HU', 'GR', 'TR', 'BR', 'AR', 'CL', 'CO', 'HR', 'SI', 'RS', 'RO', 'BG', 'IS' );
 
 		/**
-		 * Hook the REST routes.
+		 * Hook the REST routes and the budget field.
 		 *
 		 * @return void
 		 */
 		public static function init(): void {
 			add_action( 'rest_api_init', array( __CLASS__, 'register_routes' ) );
+			add_filter( 'woocommerce_general_settings', array( __CLASS__, 'general_settings' ) );
+		}
+
+		/**
+		 * WooCommerce → Settings → General: the daily budget of paid Google
+		 * searches, right after WooCommerce's own address autocomplete settings
+		 * (only when a Maps key makes Google the provider).
+		 *
+		 * @param array $settings General settings.
+		 * @return array
+		 */
+		public static function general_settings( $settings ): array {
+			$settings = (array) $settings;
+			if ( ! self::module_enabled() || '' === lafka_google_maps_key() ) {
+				return $settings;
+			}
+			$field = array(
+				'id'                => 'lafka_address_google_daily_sessions',
+				'title'             => __( 'Google address searches per day', 'lafka-plugin' ),
+				'desc_tip'          => __( 'Lafka address search uses Google Places (billed by Google per search) up to this many searches a day, then the free Photon service until midnight. 0 = never use Google.', 'lafka-plugin' ),
+				'type'              => 'number',
+				'default'           => '500',
+				'css'               => 'width: 90px;',
+				'custom_attributes' => array(
+					'min'  => '0',
+					'step' => '1',
+				),
+			);
+			$after = 0;
+			foreach ( $settings as $index => $setting ) {
+				$id = is_array( $setting ) ? (string) ( $setting['id'] ?? '' ) : '';
+				if ( in_array( $id, array( 'woocommerce_address_autocomplete_enabled', 'woocommerce_address_autocomplete_provider' ), true ) ) {
+					$after = (int) $index + 1;
+				}
+			}
+			if ( 0 === $after ) {
+				return $settings;
+			}
+			array_splice( $settings, $after, 0, array( $field ) );
+
+			return $settings;
 		}
 
 		/**
