@@ -8,6 +8,9 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
 ## [Unreleased]
 
 ### Fixed
+- The block cart and checkout showed the loyalty redemption as its raw coupon code ("loyalty-xxxx"); it now reads
+  "Loyalty points" like the classic checkout, through WooCommerce's `coupons` checkout filter (the `lafka-loyalty`
+  cart extension now carries the coupon code). The points panel stays on the checkout only.
 - The block checkout said "Ship", "Shipping address" and "Shipping options" where the rest of the site says
   Delivery. Its blocks now default to "Pickup or delivery" / "Delivery" / "Delivery address" / "Delivery options"
   through their own label attributes (render_block), unless the merchant set those labels in the editor. New filter:

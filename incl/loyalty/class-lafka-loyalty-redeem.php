@@ -136,6 +136,7 @@ if ( ! class_exists( 'Lafka_Loyalty_Redeem' ) ) {
 				'max_free'      => $free,
 				'can_redeem'    => $user > 0 && null === $coupon && $max >= $min,
 				'applied'       => $applied,
+				'coupon'        => $coupon ? $coupon->get_code() : '',
 				'applied_text'  => Lafka_Loyalty::format( $applied ),
 				'applied_worth' => lafka_price_plain( Lafka_Loyalty::value_of( $applied ) ),
 				'max_text'      => Lafka_Loyalty::format( $max ),
@@ -634,7 +635,16 @@ if ( ! class_exists( 'Lafka_Loyalty_Redeem' ) ) {
 		 * @return void
 		 */
 		public static function assets(): void {
-			if ( ! function_exists( 'is_checkout' ) || ! is_checkout() || is_wc_endpoint_url( 'order-received' ) ) {
+			if ( ! function_exists( 'is_checkout' ) || is_wc_endpoint_url( 'order-received' ) ) {
+				return;
+			}
+			// The block cart shows the redemption coupon too: it needs the label.
+			if ( is_cart() && wp_script_is( 'wc-blocks-checkout', 'registered' ) ) {
+				$blocks = lafka_plugin_script_path( 'incl/loyalty/assets/js/lafka-loyalty-blocks.min.js' );
+				wp_enqueue_script( 'lafka-loyalty-blocks', plugins_url( $blocks, LAFKA_PLUGIN_FILE ), array( 'wp-element', 'wp-plugins', 'wp-data', 'wc-blocks-data-store', 'wc-blocks-checkout' ), lafka_plugin_asset_version( $blocks ), true );
+				return;
+			}
+			if ( ! is_checkout() ) {
 				return;
 			}
 			$classic = lafka_plugin_script_path( 'assets/js/lafka-loyalty.min.js' );
@@ -643,7 +653,7 @@ if ( ! class_exists( 'Lafka_Loyalty_Redeem' ) ) {
 
 			if ( wp_script_is( 'wc-blocks-checkout', 'registered' ) ) {
 				$blocks = lafka_plugin_script_path( 'incl/loyalty/assets/js/lafka-loyalty-blocks.min.js' );
-				wp_enqueue_script( 'lafka-loyalty-blocks', plugins_url( $blocks, LAFKA_PLUGIN_FILE ), array( 'wp-element', 'wp-plugins', 'wp-data', 'wc-blocks-checkout' ), lafka_plugin_asset_version( $blocks ), true );
+				wp_enqueue_script( 'lafka-loyalty-blocks', plugins_url( $blocks, LAFKA_PLUGIN_FILE ), array( 'wp-element', 'wp-plugins', 'wp-data', 'wc-blocks-data-store', 'wc-blocks-checkout' ), lafka_plugin_asset_version( $blocks ), true );
 			}
 		}
 
@@ -741,6 +751,7 @@ if ( ! class_exists( 'Lafka_Loyalty_Redeem' ) ) {
 				'max_free'      => $field( 'integer', 'Most points this cart could redeem counting the reserved ones.' ),
 				'can_redeem'    => $field( 'boolean', 'Whether points can be redeemed now.' ),
 				'applied'       => $field( 'integer', 'Points redeemed on this cart.' ),
+				'coupon'        => $field( 'string', 'Code of the coupon that carries the redeemed points (\'\' when none).' ),
 				'applied_text'  => $field( 'string', 'Redeemed points, formatted.' ),
 				'applied_worth' => $field( 'string', 'Redeemed points in money.' ),
 				'max_text'      => $field( 'string', 'Maximum, formatted.' ),

@@ -4,7 +4,9 @@
  * globals). The state comes from the `lafka-loyalty` cart extension; using or
  * returning points goes back through extensionCartUpdate and the cart
  * recalculates with WooCommerce's own coupon. Emits namespaced `lafka-loyalty`
- * markup; the theme owns the styling.
+ * markup; the theme owns the styling. The coupon that carries the points is
+ * listed as "Loyalty points" in the cart and checkout totals (WooCommerce's
+ * `coupons` checkout filter), as on the classic checkout, not by its code.
  */
 ( function () {
 	'use strict';
@@ -28,7 +30,7 @@
 		const [ points, setPoints ] = useState( '' );
 		const [ error, setError ] = useState( '' );
 		const [ busy, setBusy ] = useState( false );
-		if ( ! data.applies ) {
+		if ( ! data.applies || props.context === 'woocommerce/cart' ) {
 			return null;
 		}
 		const text = data.text || {};
@@ -120,6 +122,25 @@
 			el( 'p', { className: 'lafka-loyalty__title' }, text.title ),
 			...body
 		);
+	}
+
+	// The redemption coupon reads "Loyalty points", not its code.
+	if ( wc.blocksCheckout.registerCheckoutFilters ) {
+		wc.blocksCheckout.registerCheckoutFilters( 'lafka-loyalty', {
+			coupons: function ( coupons ) {
+				const cartStore = wp.data && wp.data.select ? wp.data.select( 'wc/store/cart' ) : null;
+				const cart = cartStore && cartStore.getCartData ? cartStore.getCartData() : null;
+				const data = ( cart && cart.extensions && cart.extensions[ 'lafka-loyalty' ] ) || {};
+				const code = String( data.coupon || '' ).toLowerCase();
+				const label = ( data.text && data.text.title ) || '';
+				if ( ! code || ! label || ! Array.isArray( coupons ) ) {
+					return coupons;
+				}
+				return coupons.map( function ( coupon ) {
+					return coupon && String( coupon.code ).toLowerCase() === code ? Object.assign( {}, coupon, { label: label } ) : coupon;
+				} );
+			},
+		} );
 	}
 
 	wp.plugins.registerPlugin( 'lafka-loyalty', {
