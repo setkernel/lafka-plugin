@@ -501,7 +501,8 @@ if ( ! class_exists( 'Lafka_Deals_Builder' ) ) {
 					wc_clear_notices();
 					if ( ! $engine->validate_add_cart_item( true, $item->get_id(), 1, $post_data ) ) {
 						foreach ( wc_get_notices( 'error' ) as $notice ) {
-							$errors[] = $slot['label'] . ': ' . wp_strip_all_tags( (string) ( $notice['notice'] ?? '' ) );
+							// A notice is HTML (the add-on engine escapes its quotes); the builder shows plain text.
+							$errors[] = $slot['label'] . ': ' . html_entity_decode( wp_strip_all_tags( (string) ( $notice['notice'] ?? '' ) ), ENT_QUOTES | ENT_HTML5, 'UTF-8' );
 						}
 						wc_clear_notices();
 						continue;

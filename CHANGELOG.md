@@ -31,6 +31,8 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
   (cart-extensions update `lafka` → `quote_delivery`); a cached address is priced at once, and the classic checkout
   is unchanged. The method also only looks up a destination the quote guard calls complete (street + postcode, or
   what the country needs) even when the guard is switched off. New: cart extension field `delivery_quote_pending`.
+- The deal builder showed a missing required add-on as `Pizza 1: &quot;Crust&quot; is a required field.`; the message
+  is plain text now (`Pizza 1: "Crust" is a required field.`).
 - A half-and-half topping showed its whole price in the product page's "Options total" when the topping was ticked
   before its half was chosen (Mushrooms left half: $2.00 shown, $1.00 charged): the totals read a price jQuery had
   cached. The cart always charged the right amount; the product page now shows it too.
