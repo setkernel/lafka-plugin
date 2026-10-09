@@ -114,6 +114,51 @@ class Lafka_Engine_Cart {
 	}
 
 	/**
+	 * Saved add-ons (an abandoned cart's copy, kept for days) rebuilt from the
+	 * product's add-ons as they are now, so a price changed since is the one
+	 * charged. A choice the product no longer offers makes the result null:
+	 * the line cannot be rebuilt as the customer chose it.
+	 *
+	 * @param array $stored     The `addons` of a saved cart line.
+	 * @param int   $product_id Product (parent) id.
+	 * @return array|null Fresh add-ons, or null when one no longer exists.
+	 */
+	public static function reprice_addons( array $stored, int $product_id ): ?array {
+		$groups = $product_id > 0 ? Lafka_Engine_Helper::get_product_addons( $product_id ) : array();
+		$fresh  = array();
+		foreach ( $stored as $entry ) {
+			$entry = (array) $entry;
+			$name  = (string) ( $entry['name'] ?? '' );
+			$found = null;
+			foreach ( $groups as $group ) {
+				$group = (array) $group;
+				if ( isset( $entry['choice'] ) ) {
+					// A list choice ("olives--left"): the group's field prices it.
+					$field = ( $group['name'] ?? '' ) === $name ? Lafka_Engine_Field_Factory::create( $group, array( (string) $entry['choice'] ) ) : null;
+					$data  = $field ? $field->get_cart_item_data() : false;
+					$found = is_array( $data ) && array() !== $data ? reset( $data ) : null;
+				} elseif ( 'textarea' === ( $group['type'] ?? '' ) ) {
+					// Typed text: the entry is named after its option.
+					$field = Lafka_Engine_Field_Factory::create( $group, array() );
+					foreach ( (array) ( $group['options'] ?? array() ) as $option ) {
+						if ( $field && null === $found && $field->get_option_label( (array) $option ) === $name ) {
+							$found = array_merge( $entry, array( 'price' => $field->get_option_price( (array) $option ) ) );
+						}
+					}
+				}
+				if ( null !== $found ) {
+					break;
+				}
+			}
+			if ( null === $found ) {
+				return null;
+			}
+			$fresh[] = $found;
+		}
+		return $fresh;
+	}
+
+	/**
 	 * Format addons for cart and mini-cart display.
 	 *
 	 * @param array $other_data

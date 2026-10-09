@@ -13,6 +13,9 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
   `cart_contents`); the link hands it to WooCommerce's session (starting one for a browser that has none, as when
   the email is opened on another device), and WooCommerce re-checks every line as the cart loads. Rows captured
   before keep the old item-by-item restore.
+- A resumed abandoned cart charged the add-on and deal prices of the day it was saved. Add-ons are now re-priced
+  from the product as it is (`Lafka_Engine_Cart::reprice_addons()`; a line whose choice no longer exists is left
+  out with a notice), and deal lines are left out with a link to choose the deal again, as "Order again" does.
 - Under the Promotions delivery minimum the block checkout (and the classic checkout's place-order refusal) said
   "We can't deliver to this address. Check the street and postcode" although the address was fine; they now say
   "Delivery is available on orders over $30.00. Add $7.00 more to your cart for delivery." (the cart notice's

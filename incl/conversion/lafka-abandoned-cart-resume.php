@@ -98,15 +98,16 @@ if ( ! function_exists( 'lafka_ac_restore_cart_from_payload' ) ) {
 			$cart->empty_cart();
 		}
 		// Rows captured since 10.4.0 carry the session form of the cart: hand it to
-		// WooCommerce's session, which rebuilds and re-checks every line (stock,
-		// add-on prices, deal groups) when the cart page loads it.
+		// WooCommerce's session, which rebuilds every line (product prices, stock)
+		// when the cart page loads it. Add-on and deal prices travel inside the
+		// lines, so they are refreshed first (lafka_ac_fresh_session_cart()).
 		$session = isset( $payload['session'] ) && is_array( $payload['session'] ) ? $payload['session'] : array();
 		if ( array() !== $session && isset( $wc->session ) && is_object( $wc->session ) && method_exists( $wc->session, 'set' ) ) {
 			// A fresh browser (the email link) has no session cookie yet.
 			if ( method_exists( $wc->session, 'has_session' ) && ! $wc->session->has_session() && method_exists( $wc->session, 'set_customer_session_cookie' ) ) {
 				$wc->session->set_customer_session_cookie( true );
 			}
-			$wc->session->set( 'cart', $session );
+			$wc->session->set( 'cart', lafka_ac_fresh_session_cart( $session ) );
 			return;
 		}
 		if ( ! method_exists( $cart, 'add_to_cart' ) ) {
@@ -122,6 +123,51 @@ if ( ! function_exists( 'lafka_ac_restore_cart_from_payload' ) ) {
 			}
 			$cart->add_to_cart( $product_id, $quantity, $variation_id );
 		}
+	}
+}
+
+if ( ! function_exists( 'lafka_ac_fresh_session_cart' ) ) {
+	/**
+	 * The saved cart at today's prices. The row may be days old, and a line
+	 * carries the add-on prices and deal item prices of the moment it was
+	 * added: add-ons are re-priced from the product as it is now (a line whose
+	 * choice is gone is left out), and deal lines are left out for the
+	 * customer to choose again, as "Order again" does.
+	 *
+	 * @param array $session Session form of the saved cart.
+	 * @return array
+	 */
+	function lafka_ac_fresh_session_cart( array $session ): array {
+		$deals   = array();
+		$dropped = false;
+		foreach ( $session as $key => $line ) {
+			if ( ! is_array( $line ) ) {
+				unset( $session[ $key ] );
+				continue;
+			}
+			if ( isset( $line['lafka_deal']['deal_id'] ) ) {
+				$deals[ (int) $line['lafka_deal']['deal_id'] ] = true;
+				unset( $session[ $key ] );
+				continue;
+			}
+			if ( empty( $line['addons'] ) || ! class_exists( 'Lafka_Engine_Cart' ) ) {
+				continue;
+			}
+			$addons = Lafka_Engine_Cart::reprice_addons( (array) $line['addons'], (int) ( $line['product_id'] ?? 0 ) );
+			if ( null === $addons ) {
+				unset( $session[ $key ] );
+				$dropped = true;
+				continue;
+			}
+			$session[ $key ]['addons'] = $addons;
+		}
+		if ( array() !== $deals && class_exists( 'Lafka_Deals_Cart' ) ) {
+			Lafka_Deals_Cart::notify_reordered_deals( array_keys( $deals ) );
+		}
+		if ( $dropped && function_exists( 'wc_add_notice' ) ) {
+			wc_add_notice( __( 'An item in your saved order has changed since, so it was left out. Please add it again.', 'lafka-plugin' ), 'notice' );
+		}
+		return $session;
 	}
 }
 
