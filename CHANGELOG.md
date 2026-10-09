@@ -45,6 +45,9 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
   what the country needs) even when the guard is switched off. New: cart extension field `delivery_quote_pending`.
 - The abandoned-cart recovery email logged "Undefined variable $email_instance" twice per send; the email passes
   itself to WooCommerce's email header and footer.
+- Classic checkout tips: pressing Enter in the "Other" amount field submitted the checkout and placed the order with the
+  previous tip, and an amount typed just before tapping Place order could be charged as the old tip. Enter now applies
+  the amount, and the tip in the submitted form is the one charged.
 - Abandoned-cart capture never saw an email typed on the classic checkout unless the customer then changed an address
   field or the shipping choice (WooCommerce only refreshes the order review for those), so a pickup customer who typed
   their email and left was never captured. While capture is on, the email field refreshes the order review.

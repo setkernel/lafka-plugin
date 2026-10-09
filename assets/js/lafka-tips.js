@@ -46,6 +46,19 @@
 		}
 	});
 
+	// Enter in the amount field applies the tip; it must not submit the
+	// checkout form (that placed the order with the previous tip).
+	document.addEventListener('keydown', function (event) {
+		if (event.key === 'Enter' && event.target.name === 'lafka_tip_amount' && event.target.closest('[data-lafka-tips]')) {
+			event.preventDefault();
+			const other = event.target.closest('label').querySelector('input[type="radio"]');
+			if (other) {
+				other.checked = true;
+			}
+			save();
+		}
+	});
+
 	document.addEventListener('input', function (event) {
 		if (event.target.name === 'lafka_tip_amount' && event.target.closest('[data-lafka-tips]')) {
 			markOtherAndSave(event.target);

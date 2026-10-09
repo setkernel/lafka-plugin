@@ -49,6 +49,7 @@ if ( ! class_exists( 'Lafka_Tips' ) ) {
 			add_action( 'woocommerce_review_order_before_order_total', array( __CLASS__, 'render_classic' ) );
 			add_action( 'wp_ajax_lafka_set_tip', array( __CLASS__, 'ajax_set' ) );
 			add_action( 'wp_ajax_nopriv_lafka_set_tip', array( __CLASS__, 'ajax_set' ) );
+			add_action( 'woocommerce_checkout_process', array( __CLASS__, 'checkout_posted' ) );
 			add_action( 'wp_enqueue_scripts', array( __CLASS__, 'assets' ) );
 			add_action( 'woocommerce_checkout_order_processed', array( __CLASS__, 'clear' ) );
 			add_action( 'woocommerce_store_api_checkout_order_processed', array( __CLASS__, 'clear' ) );
@@ -238,6 +239,38 @@ if ( ! class_exists( 'Lafka_Tips' ) ) {
 			check_ajax_referer( 'lafka_tips', 'nonce' );
 			$tip   = isset( $_POST['tip'] ) ? sanitize_text_field( wp_unslash( $_POST['tip'] ) ) : 'none';
 			$value = isset( $_POST['amount'] ) ? (float) wc_format_decimal( sanitize_text_field( wp_unslash( $_POST['amount'] ) ) ) : 0.0;
+			self::set_from( $tip, $value );
+			wp_send_json_success();
+		}
+
+		/**
+		 * Classic checkout submit: the tip the form shows is the one charged,
+		 * even when the customer typed an amount and placed the order before
+		 * the field's own save finished (the radios and the amount field are
+		 * inside the checkout form). Runs before WooCommerce recalculates the
+		 * totals for the order; the checkout nonce is WooCommerce's.
+		 *
+		 * @since 10.4.0
+		 * @return void
+		 */
+		public static function checkout_posted(): void {
+			$nonce = isset( $_POST['woocommerce-process-checkout-nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['woocommerce-process-checkout-nonce'] ) ) : '';
+			if ( ! self::applies() || ! wp_verify_nonce( $nonce, 'woocommerce-process_checkout' ) || ! isset( $_POST['lafka_tip'] ) ) {
+				return;
+			}
+			$tip   = sanitize_text_field( wp_unslash( $_POST['lafka_tip'] ) );
+			$value = isset( $_POST['lafka_tip_amount'] ) ? (float) wc_format_decimal( sanitize_text_field( wp_unslash( $_POST['lafka_tip_amount'] ) ) ) : 0.0;
+			self::set_from( $tip, $value );
+		}
+
+		/**
+		 * Store a choice as the form sends it ('none', 'percent:<n>' or 'amount').
+		 *
+		 * @param string $tip   Choice.
+		 * @param float  $value Typed amount.
+		 * @return void
+		 */
+		private static function set_from( string $tip, float $value ): void {
 			if ( 0 === strpos( $tip, 'percent:' ) ) {
 				self::set( 'percent', (float) substr( $tip, 8 ) );
 			} elseif ( 'amount' === $tip ) {
@@ -245,7 +278,6 @@ if ( ! class_exists( 'Lafka_Tips' ) ) {
 			} else {
 				self::set( 'none', 0.0 );
 			}
-			wp_send_json_success();
 		}
 
 		/**
