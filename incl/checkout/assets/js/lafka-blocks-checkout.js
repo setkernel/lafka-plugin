@@ -57,7 +57,7 @@
 		const threshold = parseFloat( lafka.free_delivery_threshold ) || 0;
 		const remaining = parseFloat( lafka.free_delivery_remaining ) || 0;
 
-		if ( ! ( threshold > 0 ) ) {
+		if ( ! props || props.context !== 'woocommerce/cart' || ! ( threshold > 0 ) ) {
 			return null;
 		}
 
@@ -96,9 +96,12 @@
 		return el( ExperimentalOrderMeta, null, el( FreeDeliveryProgress ) );
 	}
 
+	// WooCommerce mounts one PluginArea for the cart and the checkout, scoped
+	// 'woocommerce-checkout' (a 'woocommerce-cart' scope never renders); the
+	// progress bar shows on the cart only (props.context).
 	registerPlugin( 'lafka-free-delivery', {
 		render: renderFreeDelivery,
-		scope: 'woocommerce-cart',
+		scope: 'woocommerce-checkout',
 	} );
 
 	/* ------------------------------------------------------------------ *
@@ -180,11 +183,8 @@
 		return el( ShippingSlot, null, el( DeliveryAddressNotice ) );
 	}
 
-	registerPlugin( 'lafka-delivery-quote-cart', {
-		render: renderDeliveryAddressNotice,
-		scope: 'woocommerce-cart',
-	} );
-	registerPlugin( 'lafka-delivery-quote-checkout', {
+	// One registration serves the cart and the checkout (one PluginArea).
+	registerPlugin( 'lafka-delivery-quote', {
 		render: renderDeliveryAddressNotice,
 		scope: 'woocommerce-checkout',
 	} );
