@@ -31,6 +31,7 @@ if ( ! function_exists( 'lafka_notify_boot' ) ) {
 		if ( is_admin() ) {
 			Lafka_Notify_Settings::init();
 		}
+		Lafka_Notify_Checkout::privacy_init();
 		if ( ! Lafka_Notify::enabled() ) {
 			return;
 		}

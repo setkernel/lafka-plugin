@@ -45,6 +45,18 @@ if ( ! class_exists( 'Lafka_Notify_Checkout' ) ) {
 		}
 
 		/**
+		 * The consent is personal data: WooCommerce's own order exporter and
+		 * eraser cover it, whether or not the module is still on.
+		 *
+		 * @return void
+		 */
+		public static function privacy_init(): void {
+			add_filter( 'woocommerce_privacy_export_order_personal_data_props', array( __CLASS__, 'privacy_props' ) );
+			add_filter( 'woocommerce_privacy_export_order_personal_data_prop', array( __CLASS__, 'privacy_value' ), 10, 3 );
+			add_action( 'woocommerce_privacy_remove_order_personal_data', array( __CLASS__, 'privacy_erase' ) );
+		}
+
+		/**
 		 * Whether the checkout offers the opt-in.
 		 *
 		 * @return bool
@@ -192,6 +204,55 @@ if ( ! class_exists( 'Lafka_Notify_Checkout' ) ) {
 			$order->update_meta_data( Lafka_Notify::META_TIME, gmdate( 'c' ) );
 			$order->update_meta_data( Lafka_Notify::META_TEXT, self::wording() );
 			$order->update_meta_data( Lafka_Notify::META_PHONE, $e164 );
+		}
+
+		/**
+		 * WooCommerce personal-data export: add the text-message consent.
+		 *
+		 * @param array $props Prop => label.
+		 * @return array
+		 */
+		public static function privacy_props( $props ): array {
+			$props                         = (array) $props;
+			$props['lafka_notify_consent'] = __( 'Text message updates', 'lafka-plugin' );
+			return $props;
+		}
+
+		/**
+		 * The consent's value in the export: when, to what wording, which number.
+		 *
+		 * @param mixed    $value Value so far.
+		 * @param string   $prop  Prop.
+		 * @param WC_Order $order Order.
+		 * @return mixed
+		 */
+		public static function privacy_value( $value, $prop, $order ) {
+			if ( 'lafka_notify_consent' !== $prop || ! $order instanceof WC_Order || 'yes' !== $order->get_meta( Lafka_Notify::META_OPTIN ) ) {
+				return $value;
+			}
+			return sprintf(
+				/* translators: 1: date and time (UTC), 2: the wording agreed to, 3: phone number. */
+				__( 'Agreed on %1$s (UTC) to "%2$s", number %3$s', 'lafka-plugin' ),
+				(string) $order->get_meta( Lafka_Notify::META_TIME ),
+				(string) $order->get_meta( Lafka_Notify::META_TEXT ),
+				(string) $order->get_meta( Lafka_Notify::META_PHONE )
+			);
+		}
+
+		/**
+		 * WooCommerce personal-data erasure of an order: remove the consent and the number.
+		 *
+		 * @param WC_Order $order Order (already saved by WooCommerce).
+		 * @return void
+		 */
+		public static function privacy_erase( $order ): void {
+			if ( ! $order instanceof WC_Order ) {
+				return;
+			}
+			foreach ( array( Lafka_Notify::META_OPTIN, Lafka_Notify::META_TIME, Lafka_Notify::META_TEXT, Lafka_Notify::META_PHONE ) as $key ) {
+				$order->delete_meta_data( $key );
+			}
+			$order->save_meta_data();
 		}
 
 		/**
