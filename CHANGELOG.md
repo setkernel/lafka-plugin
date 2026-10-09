@@ -7,6 +7,8 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
 
 ## [Unreleased]
 
+## [10.4.0] — 2026-10-09
+
 ### Fixed
 - The first-order / slow-day / combo discount gave back less tax than it removed when the order had a tip:
   WooCommerce spreads a negative fee's tax over every cost, the non-taxable tip included, so a tipping customer paid
@@ -125,6 +127,63 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
   New: `Lafka_Schema::ensure()`, `Lafka_Schema::watch_switches()`.
 - Address suggestions answered 403 for a signed-in customer (the routes read the request as a stranger's, so the
   shopping session did not match the page token); the script now sends the REST nonce for a signed-in customer.
+
+- **A delivery order no longer silently becomes a pickup.** On the classic
+  checkout, a customer who chose Delivery and typed an address that brought no
+  delivery rate (out of range, or the distance lookup failed) got the only rate
+  left, Pickup, and the order went through as a pickup. The checkout now refuses
+  it and says to check the address or choose Pickup ("Collect it myself instead"
+  on the form). Choosing Delivery on the checkout itself opens the address.
+- Address lookups (`lafka/v1/geocode`) were rate-limited by values the visitor
+  controls (session cookie, browser string, forwarded-for IP), so the per-visitor
+  limit could be bypassed and the site-wide cap used up; they are now limited per
+  account, else per connection IP.
+- The cart drawer could suggest a Deal as a one-tap extra (then refuse the add).
+- The location popup's Start Order read accent-on-accent; it is now a button.
+- The order-hours schedule editor used jQuery APIs removed in jQuery 4
+  (`$.isArray`, `$.isFunction`); patched in the vendored jquery.schedule.
+- A branch whose map location was cleared kept its old location.
+- "Pick the delivery map only when the address cannot be found" with "Mandatory"
+  refused every order whose address was found.
+- The location popup measured branch delivery radii in km even when the branch is set
+  to miles.
+- Abandoned carts were never captured on the block checkout; they are now captured
+  as the email is typed and marked recovered when the order is placed.
+- The WP Consent API alone (no consent manager) failed open: every tag and
+  server-side send ran as consented. It is trusted only once a consent type is
+  registered.
+- `/llms.txt` and the menu documents were served on sites that discourage search
+  engines; the home page now links to `/llms.txt`.
+- `lafka_get_option()` read keys that moved to the Customizer from the stale
+  `lafka` option whenever the plugin was active (`lafka_pre_get_option` filter).
+- The branch info box kept the branch picker's address after the customer changed
+  it on the block checkout.
+- Default-on modules (Product add-ons, Deals) now load on a fresh install; before,
+  add-ons never loaded until the Modules page was saved.
+- A mandatory delivery pin refused every block-checkout delivery order (and every
+  classic one without a map); a pin is required only where the checkout can show one.
+- The block checkout announced the Promotions delivery minimum even with Promotions
+  off; BOGO at 0% still showed its labels and banner; BOGO prices were restored from
+  the session after a price change.
+- Branch selection: posted fields were garbled by sanitisation, branch geocodes never
+  saved, the modal printed as an inert block without its script, and a jQuery 3
+  `.load()` call threw.
+- `LAFKA_PLUGIN_VERSION` was never defined (config-bundle exports had no version).
+- Translations and the cron self-heal ran before `init` (WordPress 6.7+ notice).
+- A Customizer save warned and did not refresh the cached home hero.
+- Backslashes were stripped from category FAQs, branch hours, the seeded polygon and
+  the same-request last-order cookie.
+- Promo tooltips never matched their default zone: the theme default
+  `promo_tooltip_N_position` was `above_price` while the plugin compared against
+  `above-price`, so an unsaved tooltip never rendered on the product page. The zone
+  slugs now live in one place (`lafka_promo_tooltip_zones()`), and
+  `lafka_promo_tooltip_position()` accepts the underscore form and falls back to
+  `above-price`. The hook priorities (9 / 11 / 39) come from the same map.
+- The foodmenu metabox no longer reads the retired `foodmenu_currency` option; it
+  always shows the WooCommerce currency (WooCommerce is a required plugin).
+- `[lafka_counter]` no longer fatals on `add_icon="true"` when WPBakery is not
+  installed (it called a WPBakery function); icon fonts are enqueued by
+  `lafka_icon_element_fonts_enqueue()`, now defined in `shortcodes/shortcodes.php`.
 
 ### Installable app
 - New gated module (Lafka → Modules → Installable app, default on; WooCommerce → Settings → Restaurant → App).
@@ -270,198 +329,9 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
 - The appearance meta boxes (page layout, header style, page subtitle, top menu, sidebars, product
   video, gallery type) moved to the theme; the meta keys are unchanged.
 
-### Changed
-- **Built on WooCommerce, not beside it** (extensions work out of the box):
-  - The cart drawer fires WooCommerce's mini-cart actions
-    (`woocommerce_before_mini_cart`, `woocommerce_before_mini_cart_contents`,
-    `woocommerce_mini_cart_contents`, the three `woocommerce_widget_shopping_cart_*_buttons`
-    actions, `woocommerce_after_mini_cart`); its rows use the cart-item filters core's
-    mini-cart uses (`woocommerce_widget_cart_item_visible`, `_cart_item_thumbnail`,
-    `_cart_item_subtotal`; the struck-through deal price is a priority-5 callback on the
-    subtotal filter); one `lafka_cart_drawer_render_items()` renders the list for the page
-    and the AJAX fragment.
-  - Free delivery over the threshold no longer zeroes other plugins' delivery rates. The
-    threshold follows the zone's WooCommerce Free Shipping minimum amount when the zone has
-    one; `lafka_free_delivery_method_ids` opts methods in (none by default). Sites still on
-    Distance Rate Shipping: opt `distance_rate` in, or move to Delivery by distance.
-  - The Cart and Checkout pages are never edited automatically: switching between blocks and
-    the classic shortcodes is a button on Lafka → Modules, once, with undo (the old
-    `admin_init` rewrite and its done-flag are gone).
-  - A closed store no longer makes every product non-purchasable (`woocommerce_is_purchasable`)
-    or removes WooCommerce's checkout buttons: a closed card is added next to them and the
-    existing gates (add-to-cart validation, classic checkout, Store API) refuse. Lists and
-    the drawer upsell read `lafka_add_to_cart_blocked()`/`Lafka_Order_Hours::is_add_to_cart_blocked()`.
-  - The shop-archive subcategory filter removal moved to the theme (archive only); the cart
-    page no longer removes `woocommerce_output_all_notices` from the login form.
-  - Declares `product_block_editor` compatibility as false (Deals and the add-on tabs are
-    classic-editor only).
-
-### Added
-- **Checkout address suggestions through WooCommerce's own address-autocomplete system.** A "Lafka address
-  search" provider (`incl/address-autocomplete/`) lists itself in WooCommerce → Settings → General →
-  Address autocomplete and works on the classic and the block checkout (WooCommerce draws the list, with
-  its keyboard and screen-reader support). It searches through server routes (`lafka/v1/address/suggest`
-  and `/place`: same-site, rate limited, cached): Google Places (New) when the one Maps key is set, else
-  Photon (OpenStreetMap data; Nominatim forbids search-as-you-type), biased to the store point and cut
-  to the selling countries; 4 characters and a 400 ms pause at least; at most 5 suggestions. A chosen
-  suggestion fills address, city, province/state, postcode and country in WooCommerce's formats and hands
-  its point to the delivery price like the checkout pin (classic: the pin field; block: a Store API update,
-  namespace `lafka-address-autocomplete`), so the distance resolver's pin tolerance still applies. Module
-  switch Lafka → Modules → Address suggestions (on by default; customers see nothing until the
-  WooCommerce setting is on). Filters `lafka_address_autocomplete_countries`, `lafka_address_photon_endpoint`,
-  `lafka_address_photon_params`, `lafka_address_google_endpoint`, `lafka_address_autocomplete_bias_radius`,
-  `lafka_address_autocomplete_debounce`, `lafka_address_number_after_street`. Service disclosure added to readme.txt.
-  The routes need a page token printed only on the checkout and tied to the shopper's session
-  (cart not empty), count Google searches as billing sessions against a daily budget
-  (`lafka_address_google_daily_sessions`, default 500; Photon takes over when it is used up), cap
-  searches per session and Google searches per minute, and keep the keyless path rate limited. A search
-  answered from the cache still lets the customer choose the place; a session is counted against the daily
-  budget at its first paid Google call (refused once the budget is used up), and the place lookup shares the
-  per-minute Google cap.
-- Block checkout: when delivery was chosen and no delivery rate is on offer, the `lafka` cart
-  extension carries `delivery_unavailable_message` (the distance method's reason, else the
-  plain "we can't deliver") that the block cart/checkout shows under the shipping options,
-  and placing the order is refused through the Store API
-  (`Lafka_Fulfilment::validate_store_api_checkout`), like the classic checkout. One shared
-  `lafka_shipping_has_delivery_rate()`.
-- Hooks: `lafka_free_delivery_method_ids`. Cart/Checkout page switch handlers
-  `lafka_checkout_pages_apply` / `lafka_checkout_pages_undo`.
-
-### Removed
 - The kitchen display's customer progress bar and its `lafka_kds_customer_status` AJAX
   action: Order tracking replaces them (the Customer Poll Interval setting still sets the poll).
 
-### Added
-- **Delivery by distance** (`lafka_distance`): a native WooCommerce shipping method for
-  zones, replacing the paid Distance Rate Shipping extension. Distance bands (up to N km
-  or miles gives a fee, plus an optional amount per unit), a maximum distance, straight
-  line x road factor (keyless) or driving distance (Google Routes with the one Maps key,
-  or an OSRM server through `lafka_distance_osrm_endpoint`), tax status, and free over
-  the store's free-delivery threshold. It measures from the chosen branch or the store
-  point to the checkout pin, else to a cached server-side geocode of the address; a
-  geocode or route failure, a street-less match or an address beyond the maximum offers
-  no rate (with a plain explanation and a `shipping` log line), never a guessed price.
-  The distance shows under the rate ("Delivery · 4.2 km") and on the order, emails and
-  the kitchen display. Classic checkout: a new pin reprices the order.
-- `wp lafka shipping migrate-drs [--apply]`: prints every Distance Rate Shipping
-  instance (zone, rules, settings; never the API key), the equivalent bands and what
-  cannot be mapped; `--apply` adds a disabled copy to the same zone to compare.
-- **Order tracking** module (Lafka → Modules, on by default): a status stepper on the
-  order confirmation (classic, and the order-confirmation block of block themes) and
-  in My Account → view order, from the kitchen statuses when the kitchen display is on
-  or the WooCommerce status otherwise; ETA from the kitchen estimate or the chosen
-  timeslot; restaurant phone and pickup or delivery address; live updates through a
-  read-only, order-key-authorised, rate-limited endpoint
-  (`/wp-json/lafka/v1/order-status/{id}`); a Track your order button in WooCommerce's
-  processing, on-hold and completed emails; "Order this again" and "Track" in My
-  Account → Orders and a guest reorder on the confirmation. Order-again no longer
-  re-adds Deal lines: it leaves them out and links to the deal to choose again.
-- **Deals** (`lafka_deal` product type): "any 2 pizzas for $20" where the customer
-  picks each item and its options. Slots by category or hand-picked items, locked
-  options (e.g. size), optional add-on items, premiums that pay the difference;
-  server-priced builder on the product page; each item a quantity-locked cart line,
-  the deal price split across them; BOGO and the combo discount skip deal lines.
-  Lafka → Modules → Deals (on by default).
-- **Half and half**: add-on groups can offer Left / Whole / Right per option; a half
-  costs half (`lafka_addon_half_price_factor`).
-- **Tips** at checkout (classic and block): suggested percentages, a custom amount,
-  every order or delivery only; a non-taxable fee line.
-- **Analytics**: Google Ads purchase conversions with enhanced-conversion data; Meta
-  Pixel standard events; server-side Meta Conversions API and GA4 Measurement
-  Protocol (Action Scheduler, consent-gated, deduplicated); the full GA4 funnel on
-  the block cart and checkout; `view_item_list` on the menu page; purchase items at
-  the price paid.
-- **TikTok Pixel** (direct mode) with standard events and consent hold/grant.
-- **WP Consent API**: with a compatible consent plugin active, Lafka's banner stands
-  down and all tags (and server-side conversions) follow its statistics / marketing
-  decisions; Lafka declares compatibility.
-- **Maps without an API key**: every map (store location, delivery-zone editor, branch
-  addresses, location popup, checkout pin, `[lafka_shipping_areas]`) works with
-  OpenStreetMap (Leaflet 1.9.4, bundled) when no Google Maps key is set; a key switches
-  them to Google. Addresses are looked up server-side through Nominatim, cached and
-  rate limited (`lafka/v1/geocode`, `lafka/v1/admin/geocode`;
-  `lafka_geocoder_endpoint` for your own geocoder). The checkout pin map gains "Use my
-  location" and a draggable pin.
-- **Search**: `OrderAction` on the restaurant schema; ready-to-paste order links for
-  Google Business Profile, Apple Business Connect and Bing Places under Search & AI.
-- Deals can run on chosen weekdays and between dates ("Two for Tuesday"); outside
-  them the deal page says when it runs and a deal left in a cart is removed.
-- Demo seed: a delivery zone and block-checkout pickup, a Deal, half-and-half
-  toppings and tips.
-
-### Changed
-- **Maps, one source.** Every map opens on `lafka_get_map_default_view()`: the store
-  point, else the WooCommerce province / state, else the country, else Canada (never
-  Brussels, Sydney or 0,0). The store point is the business geo: the Shipping Settings
-  map now saves it there (a pre-10.4 pin is still read until the page is saved), and
-  the "Set Store Location" mode is gone. The Google Maps key lives only in
-  `lafka[google_maps_api_key]`: a copy in the Shipping Settings option is moved there
-  once and the second and secondary key fields and their sync hooks are removed (an
-  emptied field now removes the key). The Delivery areas module counts as configured
-  once the store has a location.
-- The checkout pin requirement applies wherever the classic pin map can show, which is
-  now always on the classic checkout (no key needed).
-- The location popup's delivery and pickup icons come from the theme's icon set (with
-  a built-in fallback); the Flaticon glyphs had been blank since the font was removed.
-- The four shipping-areas scripts are readable, documented sources again; the
-  client-side rate filtering for the retired Lafka shipping method, the unused debug
-  output and their styles are removed.
-- Demo seed: the demo restaurant, its zone, branch and WooCommerce store address and
-  base region are in Halifax, Nova Scotia (CAD), matching its coordinates.
-- Tracking settings moved from theme_mods to one plugin option, `lafka_tracking`
-  (migrated once), so they survive a theme switch. Clarity and the Meta Pixel load from
-  the effective consent (banner decision, else your defaults); direct GA4 receives
-  every event, not only ecommerce ones.
-- With an SEO plugin active, Lafka keeps emitting its restaurant, menu and FAQ
-  schema instead of dropping everything.
-- **No lint rule is switched off any more.** ESLint now enforces `no-var`, `prefer-const`,
-  `no-prototype-builtins`, `no-redeclare`, `no-unused-vars`, `no-empty`, `no-useless-escape`,
-  `no-useless-assignment` and `no-shadow-restricted-names` everywhere, including the
-  shipping-areas and branch scripts that used to be exempt; the only ignored files are
-  the vendored flatpickr and jquery.schedule libraries and minified output. Stylelint
-  has no `null` overrides left: named colours became hex, icon-font declarations gained a
-  generic fallback family, duplicate declarations were removed, and the few
-  `no-descending-specificity` hits were resolved by moving rules only where the cascade
-  result is identical. `selector-class-pattern` / `selector-id-pattern` are configured to
-  the real naming convention (lowercase kebab/snake, BEM, third-party prefixes) instead of
-  being disabled; see CONTRIBUTING.md. Rebuilt the `.min.js` files from the updated sources.
-- **Strict lint, no suppressions.** PHPCS now runs plain `WordPress-Extra` with no
-  excluded sniffs and warnings fail the run. Every inline lint-suppression comment is gone;
-  ESLint is at zero warnings. Class files are `class-lafka-*.php`, the widgets are
-  `Lafka_*_Widget` classes registered from `widgets/lafka-widget-registration.php`
-  (`LafkaMobileGroupedWalker` stays as a `class_alias`), `Lafka_WCVS()` is now
-  `lafka_wcvs()` (PHP function names are case-insensitive, so old calls still work).
-- Plugin-owned hooks without a `lafka_` prefix were renamed (`get_product_addons`,
-  `product_addons_field_prefix`, the `wc_product_addon` start/end/options actions,
-  the `lafka-product-addons` and `lafka-wcs` hooks, ...). The old names still fire
-  through `apply_filters_deprecated()` / `do_action_deprecated()`.
-- Security fixes: nonce and capability checks on the product add-on, nutrition,
-  serves, swatch, WCML price and contact-form save paths; classic-checkout hooks
-  read the posted time slot, delivery pin and gateway only after the
-  `woocommerce-process_checkout` nonce verifies; read-only request parameters go
-  through `filter_input()`; SQL identifiers use `%i`; pre-built HTML is escaped or
-  passed through `wp_kses()` allowlists; the web-push sender uses the WordPress
-  HTTP API and sodium base64.
-- New floors: WordPress 7.0, PHP 8.3, WooCommerce 11.0 (tested up to WordPress 7.1
-  / WooCommerce 11.2), declared in the plugin header, `readme.txt`, `composer.json`
-  and `.phpcs.xml.dist` (`testVersion 8.3-`, `minimum_wp_version 7.0`).
-  The plugin header is the single source for the floors; the README has a
-  "Requirements & compatibility" section.
-- Compat code for older WordPress / WooCommerce removed: `function_exists()` /
-  `method_exists()` guards and fallbacks for `wp_date()`, `wp_timezone()`,
-  `wp_timezone_string()`, `wp_parse_url()`, `wp_print_inline_script_tag()`,
-  `wp_get_environment_type()`, `wp_doing_ajax()`, `wp_generate_uuid4()`,
-  `wp_using_ext_object_cache()`, `get_site_icon_url()`, `get_term_meta()`,
-  `wp_get_attachment_image_url()`, `register_rest_route()`, `wp_strip_all_tags()`,
-  `WP_Sitemaps_Renderer`, and the WooCommerce `LoggingUtil` / `WC_AJAX` /
-  `WC_Install` methods. HPOS and legacy order storage are both still supported.
-- **Documentation consolidated**: `COMPATIBILITY.md` moved into the README
-  ("Requirements & compatibility"), `CREDITS.md` into `readme.txt` ("Third-party
-  libraries"), the flatpickr locale notes into CONTRIBUTING.md, and
-  `docs/DIAGNOSTICS.md`, `LOCAL_SEO.md`, `PERFORMANCE.md` and `TRACKING.md` into one
-  `docs/OPERATOR_GUIDE.md`.
-
-### Removed
 - The Magnific Popup dependency (loaded from the theme's directory, so the location
   popup failed under any other theme): the popup is a native `<dialog>`. Also the
   unused jQuery UI dialog stylesheet it enqueued.
@@ -547,63 +417,190 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
   `add_to_cart_text` / `woocommerce_add_to_cart_url` filters, which WooCommerce 11 never
   applies (`woocommerce_product_add_to_cart_text` / `_url` stay).
 
-### Fixed
-- **A delivery order no longer silently becomes a pickup.** On the classic
-  checkout, a customer who chose Delivery and typed an address that brought no
-  delivery rate (out of range, or the distance lookup failed) got the only rate
-  left, Pickup, and the order went through as a pickup. The checkout now refuses
-  it and says to check the address or choose Pickup ("Collect it myself instead"
-  on the form). Choosing Delivery on the checkout itself opens the address.
-- Address lookups (`lafka/v1/geocode`) were rate-limited by values the visitor
-  controls (session cookie, browser string, forwarded-for IP), so the per-visitor
-  limit could be bypassed and the site-wide cap used up; they are now limited per
-  account, else per connection IP.
-- The cart drawer could suggest a Deal as a one-tap extra (then refuse the add).
-- The location popup's Start Order read accent-on-accent; it is now a button.
-- The order-hours schedule editor used jQuery APIs removed in jQuery 4
-  (`$.isArray`, `$.isFunction`); patched in the vendored jquery.schedule.
-- A branch whose map location was cleared kept its old location.
-- "Pick the delivery map only when the address cannot be found" with "Mandatory"
-  refused every order whose address was found.
-- The location popup measured branch delivery radii in km even when the branch is set
-  to miles.
-- Abandoned carts were never captured on the block checkout; they are now captured
-  as the email is typed and marked recovered when the order is placed.
-- The WP Consent API alone (no consent manager) failed open: every tag and
-  server-side send ran as consented. It is trusted only once a consent type is
-  registered.
-- `/llms.txt` and the menu documents were served on sites that discourage search
-  engines; the home page now links to `/llms.txt`.
-- `lafka_get_option()` read keys that moved to the Customizer from the stale
-  `lafka` option whenever the plugin was active (`lafka_pre_get_option` filter).
-- The branch info box kept the branch picker's address after the customer changed
-  it on the block checkout.
-- Default-on modules (Product add-ons, Deals) now load on a fresh install; before,
-  add-ons never loaded until the Modules page was saved.
-- A mandatory delivery pin refused every block-checkout delivery order (and every
-  classic one without a map); a pin is required only where the checkout can show one.
-- The block checkout announced the Promotions delivery minimum even with Promotions
-  off; BOGO at 0% still showed its labels and banner; BOGO prices were restored from
-  the session after a price change.
-- Branch selection: posted fields were garbled by sanitisation, branch geocodes never
-  saved, the modal printed as an inert block without its script, and a jQuery 3
-  `.load()` call threw.
-- `LAFKA_PLUGIN_VERSION` was never defined (config-bundle exports had no version).
-- Translations and the cron self-heal ran before `init` (WordPress 6.7+ notice).
-- A Customizer save warned and did not refresh the cached home hero.
-- Backslashes were stripped from category FAQs, branch hours, the seeded polygon and
-  the same-request last-order cookie.
-- Promo tooltips never matched their default zone: the theme default
-  `promo_tooltip_N_position` was `above_price` while the plugin compared against
-  `above-price`, so an unsaved tooltip never rendered on the product page. The zone
-  slugs now live in one place (`lafka_promo_tooltip_zones()`), and
-  `lafka_promo_tooltip_position()` accepts the underscore form and falls back to
-  `above-price`. The hook priorities (9 / 11 / 39) come from the same map.
-- The foodmenu metabox no longer reads the retired `foodmenu_currency` option; it
-  always shows the WooCommerce currency (WooCommerce is a required plugin).
-- `[lafka_counter]` no longer fatals on `add_icon="true"` when WPBakery is not
-  installed (it called a WPBakery function); icon fonts are enqueued by
-  `lafka_icon_element_fonts_enqueue()`, now defined in `shortcodes/shortcodes.php`.
+### Changed
+- **Built on WooCommerce, not beside it** (extensions work out of the box):
+  - The cart drawer fires WooCommerce's mini-cart actions
+    (`woocommerce_before_mini_cart`, `woocommerce_before_mini_cart_contents`,
+    `woocommerce_mini_cart_contents`, the three `woocommerce_widget_shopping_cart_*_buttons`
+    actions, `woocommerce_after_mini_cart`); its rows use the cart-item filters core's
+    mini-cart uses (`woocommerce_widget_cart_item_visible`, `_cart_item_thumbnail`,
+    `_cart_item_subtotal`; the struck-through deal price is a priority-5 callback on the
+    subtotal filter); one `lafka_cart_drawer_render_items()` renders the list for the page
+    and the AJAX fragment.
+  - Free delivery over the threshold no longer zeroes other plugins' delivery rates. The
+    threshold follows the zone's WooCommerce Free Shipping minimum amount when the zone has
+    one; `lafka_free_delivery_method_ids` opts methods in (none by default). Sites still on
+    Distance Rate Shipping: opt `distance_rate` in, or move to Delivery by distance.
+  - The Cart and Checkout pages are never edited automatically: switching between blocks and
+    the classic shortcodes is a button on Lafka → Modules, once, with undo (the old
+    `admin_init` rewrite and its done-flag are gone).
+  - A closed store no longer makes every product non-purchasable (`woocommerce_is_purchasable`)
+    or removes WooCommerce's checkout buttons: a closed card is added next to them and the
+    existing gates (add-to-cart validation, classic checkout, Store API) refuse. Lists and
+    the drawer upsell read `lafka_add_to_cart_blocked()`/`Lafka_Order_Hours::is_add_to_cart_blocked()`.
+  - The shop-archive subcategory filter removal moved to the theme (archive only); the cart
+    page no longer removes `woocommerce_output_all_notices` from the login form.
+  - Declares `product_block_editor` compatibility as false (Deals and the add-on tabs are
+    classic-editor only).
+
+- **Maps, one source.** Every map opens on `lafka_get_map_default_view()`: the store
+  point, else the WooCommerce province / state, else the country, else Canada (never
+  Brussels, Sydney or 0,0). The store point is the business geo: the Shipping Settings
+  map now saves it there (a pre-10.4 pin is still read until the page is saved), and
+  the "Set Store Location" mode is gone. The Google Maps key lives only in
+  `lafka[google_maps_api_key]`: a copy in the Shipping Settings option is moved there
+  once and the second and secondary key fields and their sync hooks are removed (an
+  emptied field now removes the key). The Delivery areas module counts as configured
+  once the store has a location.
+- The checkout pin requirement applies wherever the classic pin map can show, which is
+  now always on the classic checkout (no key needed).
+- The location popup's delivery and pickup icons come from the theme's icon set (with
+  a built-in fallback); the Flaticon glyphs had been blank since the font was removed.
+- The four shipping-areas scripts are readable, documented sources again; the
+  client-side rate filtering for the retired Lafka shipping method, the unused debug
+  output and their styles are removed.
+- Demo seed: the demo restaurant, its zone, branch and WooCommerce store address and
+  base region are in Halifax, Nova Scotia (CAD), matching its coordinates.
+- Tracking settings moved from theme_mods to one plugin option, `lafka_tracking`
+  (migrated once), so they survive a theme switch. Clarity and the Meta Pixel load from
+  the effective consent (banner decision, else your defaults); direct GA4 receives
+  every event, not only ecommerce ones.
+- With an SEO plugin active, Lafka keeps emitting its restaurant, menu and FAQ
+  schema instead of dropping everything.
+- **No lint rule is switched off any more.** ESLint now enforces `no-var`, `prefer-const`,
+  `no-prototype-builtins`, `no-redeclare`, `no-unused-vars`, `no-empty`, `no-useless-escape`,
+  `no-useless-assignment` and `no-shadow-restricted-names` everywhere, including the
+  shipping-areas and branch scripts that used to be exempt; the only ignored files are
+  the vendored flatpickr and jquery.schedule libraries and minified output. Stylelint
+  has no `null` overrides left: named colours became hex, icon-font declarations gained a
+  generic fallback family, duplicate declarations were removed, and the few
+  `no-descending-specificity` hits were resolved by moving rules only where the cascade
+  result is identical. `selector-class-pattern` / `selector-id-pattern` are configured to
+  the real naming convention (lowercase kebab/snake, BEM, third-party prefixes) instead of
+  being disabled; see CONTRIBUTING.md. Rebuilt the `.min.js` files from the updated sources.
+- **Strict lint, no suppressions.** PHPCS now runs plain `WordPress-Extra` with no
+  excluded sniffs and warnings fail the run. Every inline lint-suppression comment is gone;
+  ESLint is at zero warnings. Class files are `class-lafka-*.php`, the widgets are
+  `Lafka_*_Widget` classes registered from `widgets/lafka-widget-registration.php`
+  (`LafkaMobileGroupedWalker` stays as a `class_alias`), `Lafka_WCVS()` is now
+  `lafka_wcvs()` (PHP function names are case-insensitive, so old calls still work).
+- Plugin-owned hooks without a `lafka_` prefix were renamed (`get_product_addons`,
+  `product_addons_field_prefix`, the `wc_product_addon` start/end/options actions,
+  the `lafka-product-addons` and `lafka-wcs` hooks, ...). The old names still fire
+  through `apply_filters_deprecated()` / `do_action_deprecated()`.
+- Security fixes: nonce and capability checks on the product add-on, nutrition,
+  serves, swatch, WCML price and contact-form save paths; classic-checkout hooks
+  read the posted time slot, delivery pin and gateway only after the
+  `woocommerce-process_checkout` nonce verifies; read-only request parameters go
+  through `filter_input()`; SQL identifiers use `%i`; pre-built HTML is escaped or
+  passed through `wp_kses()` allowlists; the web-push sender uses the WordPress
+  HTTP API and sodium base64.
+- New floors: WordPress 7.0, PHP 8.3, WooCommerce 11.0 (tested up to WordPress 7.1
+  / WooCommerce 11.2), declared in the plugin header, `readme.txt`, `composer.json`
+  and `.phpcs.xml.dist` (`testVersion 8.3-`, `minimum_wp_version 7.0`).
+  The plugin header is the single source for the floors; the README has a
+  "Requirements & compatibility" section.
+- Compat code for older WordPress / WooCommerce removed: `function_exists()` /
+  `method_exists()` guards and fallbacks for `wp_date()`, `wp_timezone()`,
+  `wp_timezone_string()`, `wp_parse_url()`, `wp_print_inline_script_tag()`,
+  `wp_get_environment_type()`, `wp_doing_ajax()`, `wp_generate_uuid4()`,
+  `wp_using_ext_object_cache()`, `get_site_icon_url()`, `get_term_meta()`,
+  `wp_get_attachment_image_url()`, `register_rest_route()`, `wp_strip_all_tags()`,
+  `WP_Sitemaps_Renderer`, and the WooCommerce `LoggingUtil` / `WC_AJAX` /
+  `WC_Install` methods. HPOS and legacy order storage are both still supported.
+- **Documentation consolidated**: `COMPATIBILITY.md` moved into the README
+  ("Requirements & compatibility"), `CREDITS.md` into `readme.txt` ("Third-party
+  libraries"), the flatpickr locale notes into CONTRIBUTING.md, and
+  `docs/DIAGNOSTICS.md`, `LOCAL_SEO.md`, `PERFORMANCE.md` and `TRACKING.md` into one
+  `docs/OPERATOR_GUIDE.md`.
+
+### Added
+- **Checkout address suggestions through WooCommerce's own address-autocomplete system.** A "Lafka address
+  search" provider (`incl/address-autocomplete/`) lists itself in WooCommerce → Settings → General →
+  Address autocomplete and works on the classic and the block checkout (WooCommerce draws the list, with
+  its keyboard and screen-reader support). It searches through server routes (`lafka/v1/address/suggest`
+  and `/place`: same-site, rate limited, cached): Google Places (New) when the one Maps key is set, else
+  Photon (OpenStreetMap data; Nominatim forbids search-as-you-type), biased to the store point and cut
+  to the selling countries; 4 characters and a 400 ms pause at least; at most 5 suggestions. A chosen
+  suggestion fills address, city, province/state, postcode and country in WooCommerce's formats and hands
+  its point to the delivery price like the checkout pin (classic: the pin field; block: a Store API update,
+  namespace `lafka-address-autocomplete`), so the distance resolver's pin tolerance still applies. Module
+  switch Lafka → Modules → Address suggestions (on by default; customers see nothing until the
+  WooCommerce setting is on). Filters `lafka_address_autocomplete_countries`, `lafka_address_photon_endpoint`,
+  `lafka_address_photon_params`, `lafka_address_google_endpoint`, `lafka_address_autocomplete_bias_radius`,
+  `lafka_address_autocomplete_debounce`, `lafka_address_number_after_street`. Service disclosure added to readme.txt.
+  The routes need a page token printed only on the checkout and tied to the shopper's session
+  (cart not empty), count Google searches as billing sessions against a daily budget
+  (`lafka_address_google_daily_sessions`, default 500; Photon takes over when it is used up), cap
+  searches per session and Google searches per minute, and keep the keyless path rate limited. A search
+  answered from the cache still lets the customer choose the place; a session is counted against the daily
+  budget at its first paid Google call (refused once the budget is used up), and the place lookup shares the
+  per-minute Google cap.
+- Block checkout: when delivery was chosen and no delivery rate is on offer, the `lafka` cart
+  extension carries `delivery_unavailable_message` (the distance method's reason, else the
+  plain "we can't deliver") that the block cart/checkout shows under the shipping options,
+  and placing the order is refused through the Store API
+  (`Lafka_Fulfilment::validate_store_api_checkout`), like the classic checkout. One shared
+  `lafka_shipping_has_delivery_rate()`.
+- Hooks: `lafka_free_delivery_method_ids`. Cart/Checkout page switch handlers
+  `lafka_checkout_pages_apply` / `lafka_checkout_pages_undo`.
+
+- **Delivery by distance** (`lafka_distance`): a native WooCommerce shipping method for
+  zones, replacing the paid Distance Rate Shipping extension. Distance bands (up to N km
+  or miles gives a fee, plus an optional amount per unit), a maximum distance, straight
+  line x road factor (keyless) or driving distance (Google Routes with the one Maps key,
+  or an OSRM server through `lafka_distance_osrm_endpoint`), tax status, and free over
+  the store's free-delivery threshold. It measures from the chosen branch or the store
+  point to the checkout pin, else to a cached server-side geocode of the address; a
+  geocode or route failure, a street-less match or an address beyond the maximum offers
+  no rate (with a plain explanation and a `shipping` log line), never a guessed price.
+  The distance shows under the rate ("Delivery · 4.2 km") and on the order, emails and
+  the kitchen display. Classic checkout: a new pin reprices the order.
+- `wp lafka shipping migrate-drs [--apply]`: prints every Distance Rate Shipping
+  instance (zone, rules, settings; never the API key), the equivalent bands and what
+  cannot be mapped; `--apply` adds a disabled copy to the same zone to compare.
+- **Order tracking** module (Lafka → Modules, on by default): a status stepper on the
+  order confirmation (classic, and the order-confirmation block of block themes) and
+  in My Account → view order, from the kitchen statuses when the kitchen display is on
+  or the WooCommerce status otherwise; ETA from the kitchen estimate or the chosen
+  timeslot; restaurant phone and pickup or delivery address; live updates through a
+  read-only, order-key-authorised, rate-limited endpoint
+  (`/wp-json/lafka/v1/order-status/{id}`); a Track your order button in WooCommerce's
+  processing, on-hold and completed emails; "Order this again" and "Track" in My
+  Account → Orders and a guest reorder on the confirmation. Order-again no longer
+  re-adds Deal lines: it leaves them out and links to the deal to choose again.
+- **Deals** (`lafka_deal` product type): "any 2 pizzas for $20" where the customer
+  picks each item and its options. Slots by category or hand-picked items, locked
+  options (e.g. size), optional add-on items, premiums that pay the difference;
+  server-priced builder on the product page; each item a quantity-locked cart line,
+  the deal price split across them; BOGO and the combo discount skip deal lines.
+  Lafka → Modules → Deals (on by default).
+- **Half and half**: add-on groups can offer Left / Whole / Right per option; a half
+  costs half (`lafka_addon_half_price_factor`).
+- **Tips** at checkout (classic and block): suggested percentages, a custom amount,
+  every order or delivery only; a non-taxable fee line.
+- **Analytics**: Google Ads purchase conversions with enhanced-conversion data; Meta
+  Pixel standard events; server-side Meta Conversions API and GA4 Measurement
+  Protocol (Action Scheduler, consent-gated, deduplicated); the full GA4 funnel on
+  the block cart and checkout; `view_item_list` on the menu page; purchase items at
+  the price paid.
+- **TikTok Pixel** (direct mode) with standard events and consent hold/grant.
+- **WP Consent API**: with a compatible consent plugin active, Lafka's banner stands
+  down and all tags (and server-side conversions) follow its statistics / marketing
+  decisions; Lafka declares compatibility.
+- **Maps without an API key**: every map (store location, delivery-zone editor, branch
+  addresses, location popup, checkout pin, `[lafka_shipping_areas]`) works with
+  OpenStreetMap (Leaflet 1.9.4, bundled) when no Google Maps key is set; a key switches
+  them to Google. Addresses are looked up server-side through Nominatim, cached and
+  rate limited (`lafka/v1/geocode`, `lafka/v1/admin/geocode`;
+  `lafka_geocoder_endpoint` for your own geocoder). The checkout pin map gains "Use my
+  location" and a draggable pin.
+- **Search**: `OrderAction` on the restaurant schema; ready-to-paste order links for
+  Google Business Profile, Apple Business Connect and Bing Places under Search & AI.
+- Deals can run on chosen weekdays and between dates ("Two for Tuesday"); outside
+  them the deal page says when it runs and a deal left in a cart is removed.
+- Demo seed: a delivery zone and block-checkout pickup, a Deal, half-and-half
+  toppings and tips.
 
 ## [10.3.0] — 2026-09-25
 

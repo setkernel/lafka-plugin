@@ -226,6 +226,11 @@ complete, authoritative changelog and downloadable releases, see:
 
 https://github.com/setkernel/lafka-plugin/releases
 
+= 10.4.0 =
+* New modules: driving-distance delivery fees (a WooCommerce shipping method), address suggestions through WooCommerce's address autocomplete, live order tracking, loyalty points (WooCommerce coupons), opt-in text messages (Twilio / WhatsApp), installable app, tips, half-and-half, deal pricing modes and conditions.
+* One source of truth for settings, hours, money and fulfilment; WooCommerce's own mechanisms (shipping zones, Store API, coupons, privacy tools) used throughout.
+* Tested end to end in a browser on classic and block checkout; fixes include the kitchen display after a refund, abandoned-cart capture and resume, tip and discount tax, BOGO rounding, first-order discount abuse and retries.
+
 = 10.3.0 =
 * Live-site QA sharpening: checkout mode follows the Checkout page (addresses required for delivery/card on classic), delivery orders keep the typed street, pickup → delivery flow, Friday/Saturday "closed" fix, drawer prices with BOGO, BOGO banner that never covers the header, no layout shift, lighter pages, cleaner SEO (canonicals, titles, descriptions, OG), closed user enumeration.
 
@@ -270,6 +275,9 @@ https://github.com/setkernel/lafka-plugin/releases
 * See the GitHub releases page for the full history.
 
 == Upgrade Notice ==
+
+= 10.4.0 =
+Pairs with Lafka theme 7.4.0. Plugin settings move from the theme to options automatically. Order tracking and the installable app are on by default (address suggestions stay inactive until a key is saved); loyalty, text messages and the other new modules are off until switched on in Lafka → Modules. Click-test a pickup and a delivery order after upgrading.
 
 = 10.3.0 =
 Pairs with Lafka theme 7.3.0. Click-test pickup and delivery checkout after upgrading. Anonymous /wp-json/wp/v2/users now returns 401.
