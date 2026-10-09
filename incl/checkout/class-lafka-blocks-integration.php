@@ -103,6 +103,7 @@ if ( ! class_exists( 'Lafka_Blocks_Integration' )
 					'wp-plugins',
 					'wp-data',
 					'wp-i18n',
+					'wc-blocks-data-store',
 					'wc-blocks-checkout',
 					'wc-settings',
 					'lafka-core',
@@ -148,6 +149,7 @@ if ( ! class_exists( 'Lafka_Blocks_Integration' )
 					'chooseTime'            => __( 'Choose a time', 'lafka-plugin' ),
 					'loadingSlots'          => __( 'Loading times…', 'lafka-plugin' ),
 					'noSlots'               => __( 'No times available for this date.', 'lafka-plugin' ),
+					'deliveryQuotePending'  => __( 'Checking the delivery price for your address…', 'lafka-plugin' ),
 				),
 			);
 		}

@@ -572,6 +572,10 @@ if ( ! class_exists( 'Lafka_Fulfilment' ) ) {
 			if ( '' !== $reason ) {
 				return $reason;
 			}
+			// The delivery price is still waiting for the customer to finish the address.
+			if ( class_exists( 'Lafka_Distance_Shipping' ) && Lafka_Distance_Shipping::quote_pending() ) {
+				return '';
+			}
 			if ( 'delivery' !== self::preference() || lafka_shipping_has_delivery_rate() ) {
 				return '';
 			}

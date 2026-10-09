@@ -8,6 +8,13 @@ of CONTRIBUTING.md). Older history lives in git tags + GitHub Releases.
 ## [Unreleased]
 
 ### Fixed
+- Distance delivery on the block checkout looked up every half-typed street ("15", "1500 Bar", …) because
+  WooCommerce saves the address on each pause in typing. While WooCommerce saves the address
+  (`cart/update-customer`) an address that was never looked up is now left unpriced ("Checking the delivery price
+  for your address…"), and the block checkout asks for the price once the customer leaves the address fields
+  (cart-extensions update `lafka` → `quote_delivery`); a cached address is priced at once, and the classic checkout
+  is unchanged. The method also only looks up a destination the quote guard calls complete (street + postcode, or
+  what the country needs) even when the guard is switched off. New: cart extension field `delivery_quote_pending`.
 - Switching Loyalty on and writing to its points ledger in the same request failed (the table was only created on
   the next page load). A module's table is now created the moment its switch is turned on (`lafka_loyalty_enabled`,
   `lafka_ac_enabled`, `lafka_push_enabled`), and the ledger makes sure its table exists before its first write.

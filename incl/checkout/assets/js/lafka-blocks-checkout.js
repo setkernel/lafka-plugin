@@ -15,6 +15,9 @@
  *   · Timeslot picker — SlotFill on the block CHECKOUT, driven by the existing
  *     `time_slots_for_date` AJAX endpoint, pushing the selection through the
  *     `lafka` cart/extensions update callback.
+ *   · Delivery quote after the address — WooCommerce saves the address while it
+ *     is typed; the server prices a new address only when asked, so this sends
+ *     `quote_delivery` once the customer has left the address fields.
  *
  * Emits stable, namespaced `lafka-` markup only. The theme owns all styling.
  */
@@ -153,6 +156,13 @@
 	// `lafka` cart extension; this tells the customer why delivery is missing.
 	function DeliveryAddressNotice( props ) {
 		const lafka = ( props && props.extensions && props.extensions.lafka ) || {};
+		if ( lafka.delivery_quote_pending ) {
+			return el(
+				'p',
+				{ className: 'lafka-block-delivery-quote-notice', role: 'status' },
+				i18n.deliveryQuotePending || 'Checking the delivery price for your address…'
+			);
+		}
 		// No delivery rate on offer (out of range, address not found): the same
 		// specific sentence the classic cart and checkout show, in place of
 		// WooCommerce's generic "no shipping options" text.
@@ -188,6 +198,47 @@
 		render: renderDeliveryAddressNotice,
 		scope: 'woocommerce-checkout',
 	} );
+
+	/* ------------------------------------------------------------------ *
+	 *  Delivery quote once the address is finished (block checkout)
+	 * ------------------------------------------------------------------ */
+
+	// WooCommerce saves the address on every pause in typing; the server does
+	// not look up an address it has never seen while that happens (the cart
+	// extension says `delivery_quote_pending`). Once the customer is out of the
+	// address fields and the save has landed, ask for the price, once per address.
+	const ADDRESS_FIELD = /^(shipping|billing)-(address_1|address_2|city|state|postcode|country)$/;
+	let quotedAddress = '';
+
+	function maybeQuoteDelivery() {
+		const cartStore = wp.data && wp.data.select ? wp.data.select( 'wc/store/cart' ) : null;
+		if ( ! cartStore || ! extensionCartUpdate || ! cartStore.getCartData ) {
+			return;
+		}
+		const cart = cartStore.getCartData();
+		const lafka = ( cart && cart.extensions && cart.extensions.lafka ) || {};
+		if ( ! lafka.delivery_quote_pending || cartStore.isCustomerDataUpdating() ) {
+			return;
+		}
+		const active = document.activeElement;
+		if ( active && active.id && ADDRESS_FIELD.test( active.id ) ) {
+			return;
+		}
+		const address = cartStore.getCustomerData().shippingAddress || {};
+		const key = [ address.country, address.state, address.postcode, address.city, address.address_1 ].join( '|' );
+		if ( key === quotedAddress ) {
+			return;
+		}
+		quotedAddress = key;
+		extensionCartUpdate( { namespace: 'lafka', data: { quote_delivery: true } } );
+	}
+
+	if ( wp.data && wp.data.subscribe ) {
+		wp.data.subscribe( maybeQuoteDelivery, 'wc/store/cart' );
+		document.addEventListener( 'focusout', function () {
+			window.setTimeout( maybeQuoteDelivery, 0 );
+		} );
+	}
 
 	/* ------------------------------------------------------------------ *
 	 *  Timeslot picker (block checkout)

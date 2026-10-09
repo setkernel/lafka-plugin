@@ -10,6 +10,18 @@
  * placed for, and added to the shipping package, so WooCommerce's own rate
  * cache is keyed by it. A pin never outlives an edit of the address.
  *
+ * Geocoding on the block checkout: WooCommerce pushes the address to the
+ * Store API (cart/update-customer) whenever the customer pauses typing, so a
+ * half-typed street ("1500 Bar") would be looked up on every pause. In those
+ * requests an address that was never geocoded is not looked up: the package is
+ * marked as waiting and the method offers no rate yet. The block checkout asks
+ * for the quote once the customer leaves the address fields (the `lafka`
+ * cart-extensions update `quote_delivery`), and every other request (cart
+ * load, rate choice, place-order) prices the address as before. An address
+ * already in the geocoder cache is priced at once. The classic checkout
+ * (admin-ajax order review, refreshed on change, not on keystrokes) is
+ * unchanged.
+ *
  * @package Lafka\Plugin\ShippingDistance
  * @since   10.4.0
  */
@@ -29,6 +41,17 @@ if ( ! class_exists( 'Lafka_Distance_Shipping' ) ) {
 		/** WC session key: why the last calculation offered no rate. */
 		const SESSION_REASON = 'lafka_distance_reason';
 
+		/** Package key: the address lookup waits until the customer leaves the address. */
+		const PACKAGE_DEFERRED = 'lafka_lookup_deferred';
+
+		/**
+		 * The REST route this request is serving (each member of a Store API
+		 * batch in turn), '' outside REST.
+		 *
+		 * @var string
+		 */
+		private static $rest_route = '';
+
 		/**
 		 * Hook everything.
 		 *
@@ -41,6 +64,8 @@ if ( ! class_exists( 'Lafka_Distance_Shipping' ) ) {
 			add_action( 'woocommerce_checkout_update_order_review', array( __CLASS__, 'capture_pin_from_review' ) );
 			add_action( 'woocommerce_checkout_process', array( __CLASS__, 'capture_pin_from_checkout' ), 1 );
 			add_filter( 'woocommerce_cart_shipping_packages', array( __CLASS__, 'add_pin_to_packages' ), 20 );
+			add_filter( 'rest_request_before_callbacks', array( __CLASS__, 'note_rest_route' ), 10, 3 );
+			add_filter( 'woocommerce_cart_shipping_packages', array( __CLASS__, 'mark_deferred_lookups' ), 25 );
 
 			add_filter( 'woocommerce_package_rates', array( __CLASS__, 'label_rates' ), 10, 1 );
 			add_action( 'woocommerce_after_shipping_rate', array( __CLASS__, 'render_distance_note' ) );
@@ -185,6 +210,106 @@ if ( ! class_exists( 'Lafka_Distance_Shipping' ) ) {
 		}
 
 		/* ------------------------------------------------------------------ *
+		 *  Address lookups while the customer types (block checkout)
+		 * ------------------------------------------------------------------ */
+
+		/**
+		 * Remember which REST route is being served (batch members included).
+		 *
+		 * @param mixed $response Response so far (returned unchanged).
+		 * @param mixed $handler  Route handler.
+		 * @param mixed $request  WP_REST_Request.
+		 * @return mixed
+		 */
+		public static function note_rest_route( $response, $handler, $request ) {
+			unset( $handler );
+			if ( $request instanceof WP_REST_Request ) {
+				self::$rest_route = (string) $request->get_route();
+			}
+
+			return $response;
+		}
+
+		/**
+		 * Whether this request is WooCommerce saving the address the customer
+		 * is typing on the block checkout (Store API cart/update-customer).
+		 *
+		 * @return bool
+		 */
+		public static function is_address_push(): bool {
+			return 1 === preg_match( '#^/wc/store(/v\d+)?/cart/update-customer$#', self::$rest_route );
+		}
+
+		/**
+		 * Whether pricing this destination now would mean a fresh address
+		 * lookup during an address push: an address that is not in the
+		 * geocoder cache yet.
+		 *
+		 * @param array $destination WooCommerce package destination.
+		 * @return bool
+		 */
+		public static function lookup_deferred( array $destination ): bool {
+			if ( ! self::is_address_push() ) {
+				return false;
+			}
+			if ( ! class_exists( 'Lafka_Geocoder' ) || '' === trim( (string) ( $destination['address_1'] ?? $destination['address'] ?? '' ) ) ) {
+				return false;
+			}
+
+			return null === Lafka_Geocoder::cached_search( Lafka_Distance_Resolver::address_line( $destination ) );
+		}
+
+		/**
+		 * Mark the packages whose address lookup waits, so WooCommerce caches
+		 * the waiting answer apart from the priced one.
+		 *
+		 * @param mixed $packages Shipping packages.
+		 * @return mixed
+		 */
+		public static function mark_deferred_lookups( $packages ) {
+			if ( ! is_array( $packages ) || ! self::is_address_push() ) {
+				return $packages;
+			}
+			foreach ( $packages as $i => $package ) {
+				if ( is_array( $package ) && self::lookup_deferred( (array) ( $package['destination'] ?? array() ) ) ) {
+					$packages[ $i ][ self::PACKAGE_DEFERRED ] = true;
+				}
+			}
+
+			return $packages;
+		}
+
+		/**
+		 * Whether the delivery price is waiting for the customer to finish the
+		 * address (no delivery rate yet, and no other reason).
+		 *
+		 * @return bool
+		 */
+		public static function quote_pending(): bool {
+			$wc     = function_exists( 'WC' ) ? WC() : null;
+			$reason = ( is_object( $wc ) && isset( $wc->session ) && is_object( $wc->session ) ) ? $wc->session->get( self::SESSION_REASON ) : null;
+
+			return is_array( $reason ) && 'pending' === ( $reason['kind'] ?? '' ) && ! lafka_shipping_has_delivery_rate();
+		}
+
+		/**
+		 * Price the address now: forget WooCommerce's cached rates so the next
+		 * calculation looks the address up (the block checkout asks once the
+		 * customer has left the address fields).
+		 *
+		 * @return void
+		 */
+		public static function requote(): void {
+			$wc = function_exists( 'WC' ) ? WC() : null;
+			if ( ! is_object( $wc ) || ! isset( $wc->session ) || ! is_object( $wc->session ) || ! isset( $wc->cart ) || ! is_object( $wc->cart ) ) {
+				return;
+			}
+			foreach ( array_keys( (array) $wc->cart->get_shipping_packages() ) as $key ) {
+				$wc->session->set( 'shipping_for_package_' . $key, null );
+			}
+		}
+
+		/* ------------------------------------------------------------------ *
 		 *  Why there is no rate
 		 * ------------------------------------------------------------------ */
 
@@ -209,7 +334,7 @@ if ( ! class_exists( 'Lafka_Distance_Shipping' ) ) {
 		public static function reason_message(): string {
 			$wc     = function_exists( 'WC' ) ? WC() : null;
 			$reason = ( is_object( $wc ) && isset( $wc->session ) && is_object( $wc->session ) ) ? $wc->session->get( self::SESSION_REASON ) : null;
-			if ( ! is_array( $reason ) || lafka_shipping_has_delivery_rate() ) {
+			if ( ! is_array( $reason ) || 'pending' === ( $reason['kind'] ?? '' ) || lafka_shipping_has_delivery_rate() ) {
 				return '';
 			}
 			switch ( $reason['kind'] ?? '' ) {

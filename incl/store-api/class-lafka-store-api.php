@@ -418,6 +418,12 @@ if ( ! class_exists( 'Lafka_Store_Api' ) ) {
 				),
 				'delivery_address_message'     => $string_prop( __( 'Customer-facing explanation shown while delivery prices are withheld.', 'lafka-plugin' ) ),
 				'delivery_unavailable_message' => $string_prop( __( 'Customer-facing reason no delivery rate is on offer (we cannot find the address, it is beyond our delivery range); empty while delivery is available.', 'lafka-plugin' ) ),
+				'delivery_quote_pending'       => array(
+					'description' => __( 'Whether the delivery price waits for the customer to finish the address (send quote_delivery to price it).', 'lafka-plugin' ),
+					'type'        => 'boolean',
+					'context'     => array( 'view', 'edit' ),
+					'readonly'    => true,
+				),
 			);
 		}
 
@@ -477,6 +483,9 @@ if ( ! class_exists( 'Lafka_Store_Api' ) ) {
 				// use (the distance method's reasons, else a plain "we can't deliver").
 				// Not while the quote guard is still waiting for an address.
 				'delivery_unavailable_message' => ( ! $address_required && class_exists( 'Lafka_Fulfilment' ) ) ? Lafka_Fulfilment::delivery_unavailable_message() : '',
+				// The delivery price waits until the customer leaves the address fields
+				// (Lafka_Distance_Shipping); the block checkout then sends `quote_delivery`.
+				'delivery_quote_pending'       => ! $address_required && class_exists( 'Lafka_Distance_Shipping' ) && Lafka_Distance_Shipping::quote_pending(),
 			);
 		}
 
@@ -486,7 +495,8 @@ if ( ! class_exists( 'Lafka_Store_Api' ) ) {
 
 		/**
 		 * Handle POST /cart/extensions { namespace: lafka, data: {...} }. Accepts
-		 * any of { order_type, branch_id, checkout_date, checkout_timeslot } and
+		 * any of { order_type, branch_id, checkout_date, checkout_timeslot,
+		 * quote_delivery } and
 		 * writes them to the WC session exactly like the classic AJAX endpoints,
 		 * reusing the select_branch validation predicates (taxonomy constraint,
 		 * legit-branch allow-list, order-type capability). Invalid input throws a
@@ -504,6 +514,10 @@ if ( ! class_exists( 'Lafka_Store_Api' ) ) {
 
 			if ( array_key_exists( 'checkout_date', $data ) || array_key_exists( 'checkout_timeslot', $data ) ) {
 				self::apply_timeslot_update( $data );
+			}
+
+			if ( ! empty( $data['quote_delivery'] ) && class_exists( 'Lafka_Distance_Shipping' ) ) {
+				Lafka_Distance_Shipping::requote();
 			}
 		}
 

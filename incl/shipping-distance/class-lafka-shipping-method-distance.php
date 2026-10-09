@@ -312,12 +312,20 @@ if ( ! class_exists( 'Lafka_Shipping_Method_Distance' ) && class_exists( 'WC_Shi
 			Lafka_Distance_Shipping::set_reason( null );
 			$package = is_array( $package ) ? $package : array();
 
-			// Never geocode a half-typed address: the guard would withhold the rate anyway.
+			// Never geocode a half-typed address: only a destination complete by the
+			// quote guard's rules (street + postcode, or what the country needs) is
+			// looked up, whether or not the guard withholds the other rates.
 			$destination = (array) ( $package['destination'] ?? array() );
-			if ( class_exists( 'Lafka_Delivery_Quote_Guard' ) && Lafka_Delivery_Quote_Guard::is_enabled() && ! Lafka_Delivery_Quote_Guard::destination_is_complete( $destination ) ) {
+			if ( class_exists( 'Lafka_Delivery_Quote_Guard' ) && ! Lafka_Delivery_Quote_Guard::destination_is_complete( $destination ) ) {
 				return;
 			}
 			if ( '' === trim( (string) ( $destination['address_1'] ?? $destination['address'] ?? '' ) ) ) {
+				return;
+			}
+			// The block checkout is still saving the address as it is typed: no
+			// lookup yet (Lafka_Distance_Shipping::mark_deferred_lookups()).
+			if ( ! empty( $package[ Lafka_Distance_Shipping::PACKAGE_DEFERRED ] ) ) {
+				Lafka_Distance_Shipping::set_reason( array( 'kind' => 'pending' ) );
 				return;
 			}
 
