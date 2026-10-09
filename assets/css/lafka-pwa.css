@@ -7,7 +7,7 @@
 .lafka-install-card {
 	position: fixed;
 	right: 16px;
-	bottom: calc(16px + var(--lafka-consent-banner-h, 0px));
+	bottom: calc(16px + var(--lafka-consent-banner-h, 0px) + var(--lafka-bottom-bar-h, 0px));
 	z-index: calc(var(--lafka-z-toast, 1100) - 30);
 	width: 340px;
 	max-width: calc(100vw - 32px);
